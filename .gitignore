@@ -1,0 +1,22 @@
+# ROS 2 build products
+**/build/
+**/install/
+**/log/
+
+# FAIRINO ROS 2 vendor source is fetched locally because the upstream ROS
+# repository does not declare a repository-wide license.
+robot_ws/src/vendor/
+
+# Python/editor cache
+**/__pycache__/
+.pytest_cache/
+*.py[cod]
+.vscode/
+.idea/
+
+# Per-computer device identity and runtime output
+config/ksmc.env
+runtime/
+
+# Third-party DroidCam source is fetched at the pinned revision by the installer.
+camera2_droidcam/vendor/

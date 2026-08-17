@@ -1,0 +1,151 @@
+digraph KSMC_Software {
+  graph [
+    rankdir=TB,
+    bgcolor="white",
+    pad="0.22",
+    nodesep="0.28",
+    ranksep="0.58",
+    splines=ortho,
+    compound=true,
+    fontname="Noto Sans CJK KR",
+    label="KSMC 스마트 제조 셀 — ROS 2 소프트웨어 아키텍처",
+    labelloc=t,
+    fontsize=24
+  ];
+  node [
+    shape=box,
+    style="rounded,filled",
+    color="#334155",
+    fillcolor="#F8FAFC",
+    fontname="Noto Sans CJK KR",
+    fontsize=11,
+    margin="0.13,0.08"
+  ];
+  edge [
+    color="#2563EB",
+    fontcolor="#334155",
+    fontname="Noto Sans CJK KR",
+    fontsize=9,
+    arrowsize=0.7
+  ];
+
+  subgraph cluster_io {
+    label="1. 장치 인터페이스 계층";
+    color="#2563EB";
+    fillcolor="#EFF6FF";
+    style="rounded,filled";
+    d435_driver [label="realsense2_camera\nRGB / aligned depth / CameraInfo", fillcolor="#DBEAFE"];
+    s22_bridge [label="camera2 bridge (개발 예정)\n/compressed image", fillcolor="#FEF3C7", color="#D97706"];
+    gopro_node [label="gopro_camera3_node (후순위)\n/camera3/image_raw/compressed", fillcolor="#F1F5F9", color="#94A3B8"];
+    fr5_bridge [label="FAIRINO ROS command server\nMoveCart·그리퍼 / nonrt_state", fillcolor="#DCFCE7", color="#16A34A"];
+    turtle_driver [label="TurtleBot ROS driver\ncmd_vel / joint_states / odom", fillcolor="#FFEDD5", color="#EA580C"];
+  }
+
+  subgraph cluster_perception {
+    label="2. 비전·상태 인식 계층";
+    color="#7C3AED";
+    fillcolor="#F5F3FF";
+    style="rounded,filled";
+    d435_perception [label="D435 근접 RGB-D 인식\n부품 mask·center·yaw·depth\nChArUco/Fiducial", fillcolor="#EDE9FE"];
+    s22_board [label="S22 Board/Arrival Vision\npre-stop·stop·board XY/yaw", fillcolor="#FEF3C7", color="#D97706"];
+    s22_inspection [label="S22 조립 전수검사\n누락·위치·방향·오부품", fillcolor="#FEF3C7", color="#D97706"];
+    monitor [label="GoPro 보조 모니터링\n녹화·사람/장애물 후보", fillcolor="#F1F5F9", color="#94A3B8"];
+    robot_state [label="FR5 상태 해석\nBase/Flange/TCP·오류·motion_done", fillcolor="#DCFCE7"];
+    conveyor_state [label="컨베이어 상태 해석\n속도·정지·timeout", fillcolor="#FFEDD5"];
+  }
+
+  subgraph cluster_world {
+    label="3. 좌표계·공정 모델 계층";
+    color="#0F766E";
+    fillcolor="#F0FDFA";
+    style="rounded,filled";
+    tf_manager [
+      label="Coordinate / TF Manager\nbase·flange·tcp·camera·board·part\nHand-Eye + S22 Eye-to-Hand",
+      fillcolor="#CCFBF1",
+      penwidth=2
+    ];
+    recipes [label="CAD·Board Layout·Part Recipe\n6 recipes / 25 slots\n높이·파지폭·허용오차", fillcolor="#D1FAE5"];
+    pick_planner [label="Pick Target Planner\nT_base_flange × T_flange_camera\n× P_camera_part", fillcolor="#D1FAE5"];
+    place_planner [label="Place Target Planner\nT_base_board × T_board_slot\nBase +Z 안전 접근", fillcolor="#D1FAE5"];
+    quality_gate [label="Pose Quality / Consistency Gate\nreprojection·depth·jump·두 카메라 비교", fillcolor="#FEE2E2", color="#DC2626"];
+  }
+
+  subgraph cluster_control {
+    label="4. 공정 조정·안전 계층";
+    color="#DC2626";
+    fillcolor="#FFF7ED";
+    style="rounded,filled";
+    orchestrator [
+      label="Cell Orchestrator / State Machine\nIDLE → CONVEY → ALIGN → PICK → PLACE\n→ INSPECT → PASS/FAIL → RELEASE",
+      fillcolor="#FED7AA",
+      color="#EA580C",
+      penwidth=2
+    ];
+    interlock [
+      label="Safety Interlock + Watchdog\nFR5 작업 중 벨트 정지\n영상/통신 timeout·좌표 jump 차단",
+      fillcolor="#FEE2E2",
+      color="#DC2626",
+      penwidth=2
+    ];
+  }
+
+  subgraph cluster_execution {
+    label="5. 실행·결과 계층";
+    color="#16A34A";
+    fillcolor="#F0FDF4";
+    style="rounded,filled";
+    robot_exec [label="FR5 Motion + Gripper Executor\ndry-run·안전 높이·저속 하강", fillcolor="#DCFCE7"];
+    conveyor_ctrl [label="Conveyor Controller\nRUN_FAST·PRESTOP·ALIGN·HOLD_STOP", fillcolor="#FFEDD5", color="#EA580C"];
+    result [label="Inspection Result + Process Logger\nslot별 오차·PASS/FAIL·이미지·CSV", fillcolor="#E0E7FF"];
+    ui_adapter [label="Unity GUI / Digital Twin\n공정 상태·로봇 pose·PASS/FAIL", fillcolor="#E0E7FF", color="#6366F1"];
+  }
+
+  d435_driver -> d435_perception [label="RGB-D"];
+  s22_bridge -> s22_board [label="영상"];
+  s22_bridge -> s22_inspection [label="영상"];
+  gopro_node -> monitor [label="영상", style=dashed, color="#94A3B8"];
+  fr5_bridge -> robot_state [label="/nonrt_state_data"];
+  turtle_driver -> conveyor_state [label="joint/odom"];
+
+  d435_perception -> tf_manager [label="P_camera_part / fiducial"];
+  s22_board -> tf_manager [label="T_camera_s22_board"];
+  robot_state -> tf_manager [label="T_base_flange / TCP"];
+  recipes -> pick_planner [label="part recipe"];
+  recipes -> place_planner [label="board slot"];
+  tf_manager -> pick_planner [label="Base pick pose"];
+  tf_manager -> place_planner [label="T_base_board"];
+  d435_perception -> quality_gate [label="depth·검출 품질"];
+  s22_board -> quality_gate [label="board pose 품질"];
+  pick_planner -> quality_gate [label="pick 후보"];
+  place_planner -> quality_gate [label="place 후보"];
+
+  quality_gate -> orchestrator [label="VALID / REJECT"];
+  s22_board -> orchestrator [label="arrival·aligned"];
+  s22_inspection -> orchestrator [label="검사 결과"];
+  robot_state -> interlock [label="robot state"];
+  conveyor_state -> interlock [label="belt state"];
+  monitor -> interlock [label="보조 stop 후보", style=dashed, color="#94A3B8"];
+  interlock -> orchestrator [label="PERMIT / FAULT", color="#DC2626", penwidth=1.8];
+
+  orchestrator -> robot_exec [label="Pick/Place 단계", color="#16A34A", penwidth=1.6];
+  orchestrator -> conveyor_ctrl [label="Run/Stop 단계", color="#16A34A", penwidth=1.6];
+  interlock -> robot_exec [label="허가·정지", color="#DC2626", penwidth=1.8];
+  interlock -> conveyor_ctrl [label="허가·정지", color="#DC2626", penwidth=1.8];
+  robot_exec -> fr5_bridge [label="MoveCart / Gripper", color="#16A34A"];
+  conveyor_ctrl -> turtle_driver [label="/conveyor/cmd_vel", color="#16A34A"];
+  s22_inspection -> result [label="slot 결과"];
+  orchestrator -> result [label="공정 이력"];
+  robot_state -> result [label="오류·완료"];
+  conveyor_state -> result [label="정지 이력"];
+  result -> ui_adapter [label="상태·PASS/FAIL", color="#6366F1"];
+  orchestrator -> ui_adapter [label="공정 상태", color="#6366F1"];
+
+  legend [
+    shape=note,
+    label="색상·상태\n초록: FR5 실행\n주황: S22/컨베이어\n보라·청록: 비전·좌표 핵심\n빨강: 검증·안전 차단\n회색 점선: 후순위 기능",
+    fillcolor="#FFFFFF",
+    color="#CBD5E1",
+    fontsize=9
+  ];
+  legend -> ui_adapter [style=invis];
+}

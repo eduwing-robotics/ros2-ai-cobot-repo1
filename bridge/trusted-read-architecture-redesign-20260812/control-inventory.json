@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "kind": "google-docs-trusted-read-context",
+  "target": {
+    "documentId": "1E1vdtc80XqmClC_7l0EV4oabBd8hvPEEHcWAR3qWRhE",
+    "title": "KSMC 팀 하드웨어·소프트웨어 아키텍처",
+    "revisionId": "AIroW35WJNL7V1zkb8ihmFs35li5I42xpbm3TQBjuo90vtSIKXiKRfsstoBJiZ0eqD302eqLw6dZnu8xxDC0CKVviFxNgPyO4K3qaGW6zg",
+    "documentUrl": "https://docs.google.com/document/d/1E1vdtc80XqmClC_7l0EV4oabBd8hvPEEHcWAR3qWRhE",
+    "selectedTabId": null
+  },
+  "dropdownMetadata": {
+    "status": "unavailable",
+    "resolvedTool": null,
+    "authoritative": false,
+    "count": 0
+  },
+  "derivedControlInventory": {
+    "hasProtectedControls": false,
+    "authoritativeDropdownCount": 0,
+    "opaqueControlCount": 0,
+    "nativeElementCounts": {
+      "inlineObjectElement": 2
+    },
+    "tabsScanned": [
+      "t.0"
+    ],
+    "controls": [],
+    "nativeElements": [
+      {
+        "type": "inlineObjectElement",
+        "startIndex": 173,
+        "endIndex": 174,
+        "tabId": "t.0",
+        "segmentId": null,
+        "container": {
+          "kind": "paragraph",
+          "path": "root.tabs[0].body.content[4]",
+          "tabId": "t.0",
+          "segmentId": null,
+          "startIndex": 173,
+          "endIndex": 175,
+          "namedStyleType": "NORMAL_TEXT",
+          "listId": null,
+          "nestingLevel": null,
+          "table": null
+        },
+        "properties": {
+          "inlineObjectId": "kix.bo3lxjc18x8",
+          "textStyle": {}
+        }
+      },
+      {
+        "type": "inlineObjectElement",
+        "startIndex": 571,
+        "endIndex": 572,
+        "tabId": "t.0",
+        "segmentId": null,
+        "container": {
+          "kind": "paragraph",
+          "path": "root.tabs[0].body.content[13]",
+          "tabId": "t.0",
+          "segmentId": null,
+          "startIndex": 571,
+          "endIndex": 573,
+          "namedStyleType": "NORMAL_TEXT",
+          "listId": null,
+          "nestingLevel": null,
+          "table": null
+        },
+        "properties": {
+          "inlineObjectId": "kix.5nj4516l050g",
+          "textStyle": {}
+        }
+      }
+    ]
+  },
+  "editGuidance": {
+    "advisoryOnly": true,
+    "requiresTargetedPreservation": false,
+    "recommendedBehavior": "No protected controls were detected in the scanned scope.",
+    "warnings": []
+  }
+}

@@ -1,0 +1,126 @@
+digraph KSMC_Hardware {
+  graph [
+    rankdir=TB,
+    bgcolor="white",
+    pad="0.25",
+    nodesep="0.42",
+    ranksep="0.72",
+    splines=ortho,
+    fontname="Noto Sans CJK KR",
+    label="KSMC 스마트 제조 셀 — 하드웨어 아키텍처",
+    labelloc=t,
+    fontsize=24
+  ];
+  node [
+    shape=box,
+    style="rounded,filled",
+    color="#334155",
+    fillcolor="#F8FAFC",
+    fontname="Noto Sans CJK KR",
+    fontsize=12,
+    margin="0.14,0.10"
+  ];
+  edge [
+    color="#475569",
+    fontcolor="#334155",
+    fontname="Noto Sans CJK KR",
+    fontsize=10,
+    arrowsize=0.75
+  ];
+
+  subgraph cluster_compute {
+    label="통합 제어·연산";
+    color="#2563EB";
+    fillcolor="#EFF6FF";
+    style="rounded,filled";
+    laptop [
+      label="ROS 2 통합 노트북\nUbuntu 24.04 / ROS 2 Jazzy\n비전·좌표변환·공정제어·로그",
+      fillcolor="#DBEAFE",
+      color="#1D4ED8",
+      penwidth=2
+    ];
+    storage [label="캘리브레이션·Recipe·공정 결과\nJSON / CSV / 이미지 로그", fillcolor="#E0E7FF"];
+    ui [
+      label="Unity GUI / Digital Twin\n공정 상태·3D 시각화",
+      fillcolor="#F1F5F9",
+      color="#64748B"
+    ];
+    laptop -> storage [label="저장"];
+    laptop -> ui [dir=both, color="#64748B", label="상태·고수준 명령"];
+  }
+
+  subgraph cluster_robot {
+    label="FR5 정밀 조립 장치";
+    color="#16A34A";
+    fillcolor="#F0FDF4";
+    style="rounded,filled";
+    fr5_ctrl [label="FAIRINO FR5 Controller\nWebApp / ROS 명령 서버", fillcolor="#DCFCE7"];
+    fr5 [label="FAIRINO FR5 Robot Arm", fillcolor="#DCFCE7", penwidth=2];
+    flange [label="Flange / toolcoord1\nTCP 후보: [-2,-2,157] mm", fillcolor="#ECFCCB"];
+    gripper [label="DH Robotics PGEA-100-40\n+ 제작 핑거", fillcolor="#ECFCCB"];
+    d435 [
+      label="Intel RealSense D435\nEye-in-Hand 측면 브래킷\nRGB + aligned depth",
+      fillcolor="#D1FAE5",
+      penwidth=2
+    ];
+    fr5_ctrl -> fr5 [label="서보 제어"];
+    fr5 -> flange [label="기계 결합"];
+    flange -> gripper [label="파지 장치"];
+    d435 -> gripper [dir=none, style=dashed, label="강체 장착"];
+  }
+
+  subgraph cluster_station {
+    label="이송·조립 스테이션";
+    color="#EA580C";
+    fillcolor="#FFF7ED";
+    style="rounded,filled";
+    turtle [label="TurtleBot 구동계\n바퀴 모터·엔코더", fillcolor="#FFEDD5", penwidth=2];
+    roller [label="구동 롤러", fillcolor="#FFEDD5"];
+    belt [label="자체 제작 컨베이어 벨트", fillcolor="#FFEDD5"];
+    board [label="패키지 기판 / 인터포저 모형", fillcolor="#FEF3C7"];
+    assembly [label="조립 위치\nBoard frame + 25 slots", fillcolor="#FEF3C7", penwidth=2];
+    tray [label="고대비 부품 트레이\n6 Recipe / 25 Parts", fillcolor="#FEF3C7"];
+    s22 [
+      label="Galaxy S22\n상부 고정 Eye-to-Hand\n도착·기판 pose·전수검사",
+      fillcolor="#FDE68A",
+      penwidth=2
+    ];
+    turtle -> roller [label="기계 구동"];
+    roller -> belt [label="벨트 이송"];
+    belt -> board [label="기판 이동"];
+    board -> assembly [label="정지·정렬"];
+    s22 -> assembly [label="상부 촬영", color="#D97706"];
+  }
+
+  subgraph cluster_monitor {
+    label="전체 셀 보조 감시";
+    color="#64748B";
+    fillcolor="#F8FAFC";
+    style="rounded,filled,dashed";
+    gopro [
+      label="GoPro HERO11\n상단 모서리 광각\n공정 기록·보조 위험영역",
+      fillcolor="#F1F5F9",
+      color="#94A3B8"
+    ];
+    estop [label="FR5 물리 비상정지·안전 기능\n카메라 감시로 대체 불가", fillcolor="#FEE2E2", color="#DC2626", penwidth=2];
+  }
+
+  laptop -> fr5_ctrl [dir=both, label="Ethernet\n명령 / 상태", color="#2563EB", penwidth=1.6];
+  d435 -> laptop [label="USB 3.x\nRGB-D", color="#2563EB", penwidth=1.6];
+  s22 -> laptop [label="Wi-Fi/USB 영상 스트림\n연결 방식 확정 필요", color="#EA580C", penwidth=1.5];
+  laptop -> turtle [dir=both, label="ROS 2 DDS\ncmd_vel / 상태", color="#EA580C", penwidth=1.5];
+  gopro -> laptop [label="USB 네트워크 영상\n후순위", style=dashed, color="#94A3B8"];
+  gripper -> tray [label="Pick", color="#16A34A", penwidth=1.5];
+  gripper -> assembly [label="Place / 검사 자세", color="#16A34A", penwidth=1.5];
+  gopro -> assembly [label="셀 관제", style=dashed, color="#94A3B8"];
+  estop -> fr5_ctrl [label="물리 안전", color="#DC2626", penwidth=1.8];
+
+  legend [
+    shape=note,
+    label="선 의미\n파랑: 데이터·로봇 네트워크\n주황: 컨베이어·S22 연동\n초록: 실제 조립 동작\n빨강: 물리 안전\n점선: 후순위 또는 연결 방식 TBD",
+    fillcolor="#FFFFFF",
+    color="#CBD5E1",
+    fontsize=10
+  ];
+  legend -> storage [style=invis];
+}

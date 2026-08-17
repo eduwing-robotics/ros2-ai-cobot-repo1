@@ -1,0 +1,3605 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "Action completed."
+    }
+  ],
+  "structuredContent": {
+    "documentId": "1E1vdtc80XqmClC_7l0EV4oabBd8hvPEEHcWAR3qWRhE",
+    "title": "KSMC 팀 하드웨어·소프트웨어 아키텍처",
+    "revisionId": "AIroW35WJNL7V1zkb8ihmFs35li5I42xpbm3TQBjuo90vtSIKXiKRfsstoBJiZ0eqD302eqLw6dZnu8xxDC0CKVviFxNgPyO4K3qaGW6zg",
+    "suggestionsViewMode": "SUGGESTIONS_INLINE",
+    "url": null,
+    "body": null,
+    "tabs": [
+      {
+        "tabId": "t.0",
+        "title": "Tab 1",
+        "parentTabId": null,
+        "index": 0,
+        "nestingLevel": null,
+        "iconEmoji": null,
+        "body": {
+          "content": [
+            {
+              "endIndex": 1,
+              "sectionBreak": {
+                "sectionStyle": {
+                  "columnSeparatorStyle": "NONE",
+                  "contentDirection": "LEFT_TO_RIGHT",
+                  "sectionType": "CONTINUOUS"
+                }
+              }
+            },
+            {
+              "startIndex": 1,
+              "endIndex": 24,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 1,
+                    "endIndex": 24,
+                    "textRun": {
+                      "content": "KSMC 팀 하드웨어·소프트웨어 아키텍처\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "headingId": "h.k6dlssavt5qz",
+                  "namedStyleType": "TITLE",
+                  "direction": "LEFT_TO_RIGHT"
+                }
+              }
+            },
+            {
+              "startIndex": 24,
+              "endIndex": 160,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 24,
+                    "endIndex": 160,
+                    "textRun": {
+                      "content": "FR5 기반 반도체 패키지형 전자모듈 정밀 조립·검사 스마트 제조 셀의 팀 전체 목표 아키텍처다. 기판 이송, 비전 좌표 계산, 부품 Pick/Place, 조립 검사, PASS/FAIL과 GUI 시각화를 하나의 ROS 2 시스템으로 연결한다.\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT"
+                }
+              }
+            },
+            {
+              "startIndex": 160,
+              "endIndex": 173,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 160,
+                    "endIndex": 173,
+                    "textRun": {
+                      "content": "1. 하드웨어 아키텍처\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "headingId": "h.2oy81zqafmum",
+                  "namedStyleType": "HEADING_1",
+                  "direction": "LEFT_TO_RIGHT"
+                }
+              }
+            },
+            {
+              "startIndex": 173,
+              "endIndex": 175,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 173,
+                    "endIndex": 174,
+                    "inlineObjectElement": {
+                      "inlineObjectId": "kix.bo3lxjc18x8",
+                      "textStyle": {}
+                    }
+                  },
+                  {
+                    "startIndex": 174,
+                    "endIndex": 175,
+                    "textRun": {
+                      "content": "\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT"
+                }
+              }
+            },
+            {
+              "startIndex": 175,
+              "endIndex": 224,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 175,
+                    "endIndex": 224,
+                    "textRun": {
+                      "content": "그림 1. FR5, 3대 카메라, TurtleBot 컨베이어와 통합 노트북의 물리 연결\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT"
+                }
+              }
+            },
+            {
+              "startIndex": 224,
+              "endIndex": 283,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 224,
+                    "endIndex": 283,
+                    "textRun": {
+                      "content": "FAIRINO FR5와 DH Robotics PGEA-100-40 및 제작 핑거가 실제 조립을 수행한다.\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.fp6g3rihxzt",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 283,
+              "endIndex": 352,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 283,
+                    "endIndex": 352,
+                    "textRun": {
+                      "content": "Intel RealSense D435는 그리퍼 측면 Eye-in-Hand 카메라로 RGB-D 근접 좌표와 높이를 제공한다.\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.fp6g3rihxzt",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 352,
+              "endIndex": 422,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 352,
+                    "endIndex": 422,
+                    "textRun": {
+                      "content": "Galaxy S22는 조립 위치 상부 Eye-to-Hand 카메라로 기판 도착, 위치·회전과 조립 완료 전수검사를 담당한다.\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.fp6g3rihxzt",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 422,
+              "endIndex": 458,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 422,
+                    "endIndex": 458,
+                    "textRun": {
+                      "content": "TurtleBot 구동륜이 자체 제작 컨베이어 롤러를 구동한다.\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.fp6g3rihxzt",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 458,
+              "endIndex": 500,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 458,
+                    "endIndex": 500,
+                    "textRun": {
+                      "content": "GoPro HERO11은 전체 공정 기록과 보조 위험영역 감시를 담당한다.\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.fp6g3rihxzt",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 500,
+              "endIndex": 557,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 500,
+                    "endIndex": 557,
+                    "textRun": {
+                      "content": "ROS 2 통합 노트북은 카메라, FR5, 컨베이어, 공정 로그와 Unity GUI/DT를 연결한다.\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.fp6g3rihxzt",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 557,
+              "endIndex": 571,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 557,
+                    "endIndex": 571,
+                    "textRun": {
+                      "content": "2. 소프트웨어 아키텍처\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "headingId": "h.du5ijn8zqgw9",
+                  "namedStyleType": "HEADING_1",
+                  "direction": "LEFT_TO_RIGHT"
+                }
+              }
+            },
+            {
+              "startIndex": 571,
+              "endIndex": 573,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 571,
+                    "endIndex": 572,
+                    "inlineObjectElement": {
+                      "inlineObjectId": "kix.5nj4516l050g",
+                      "textStyle": {}
+                    }
+                  },
+                  {
+                    "startIndex": 572,
+                    "endIndex": 573,
+                    "textRun": {
+                      "content": "\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT"
+                }
+              }
+            },
+            {
+              "startIndex": 573,
+              "endIndex": 605,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 573,
+                    "endIndex": 605,
+                    "textRun": {
+                      "content": "그림 2. ROS 2 장치·비전·좌표·공정제어·실행 계층\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT"
+                }
+              }
+            },
+            {
+              "startIndex": 605,
+              "endIndex": 673,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 605,
+                    "endIndex": 673,
+                    "textRun": {
+                      "content": "장치 인터페이스 계층: D435, S22, GoPro, FR5 command server, TurtleBot driver\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.110dd6z9ffp4",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 673,
+              "endIndex": 726,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 673,
+                    "endIndex": 726,
+                    "textRun": {
+                      "content": "비전·상태 인식 계층: 부품 RGB-D, 기판 도착·pose, 조립 검사, 로봇·컨베이어 상태\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.110dd6z9ffp4",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 726,
+              "endIndex": 814,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 726,
+                    "endIndex": 814,
+                    "textRun": {
+                      "content": "좌표계·공정 모델 계층: TF, Hand-Eye, S22 Eye-to-Hand, CAD layout, part recipe, Pick/Place target\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.110dd6z9ffp4",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 814,
+              "endIndex": 873,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 814,
+                    "endIndex": 873,
+                    "textRun": {
+                      "content": "공정 조정·안전 계층: Cell Orchestrator, Safety Interlock, Watchdog\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.110dd6z9ffp4",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 873,
+              "endIndex": 924,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 873,
+                    "endIndex": 924,
+                    "textRun": {
+                      "content": "실행·결과 계층: FR5·그리퍼 실행, 컨베이어 제어, 검사 로그, Unity GUI/DT\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.110dd6z9ffp4",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 924,
+              "endIndex": 940,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 924,
+                    "endIndex": 940,
+                    "textRun": {
+                      "content": "3. 전체 공정 데이터 흐름\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "headingId": "h.7vq4i2i6hrxt",
+                  "namedStyleType": "HEADING_1",
+                  "direction": "LEFT_TO_RIGHT"
+                }
+              }
+            },
+            {
+              "startIndex": 940,
+              "endIndex": 989,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 940,
+                    "endIndex": 989,
+                    "textRun": {
+                      "content": "S22가 컨베이어에서 기판 도착을 검출하고 pre-stop과 stop 오차를 계산한다.\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.arj6dzdsy910",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 989,
+              "endIndex": 1058,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 989,
+                    "endIndex": 1058,
+                    "textRun": {
+                      "content": "Conveyor Controller가 TurtleBot 속도를 조절하고 완전 정지 후 assembly ready를 만든다.\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.arj6dzdsy910",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 1058,
+              "endIndex": 1118,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 1058,
+                    "endIndex": 1118,
+                    "textRun": {
+                      "content": "S22가 기판 frame과 Base 기준 XY·yaw를 확정하고 CAD의 25개 slot 좌표를 변환한다.\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.arj6dzdsy910",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 1118,
+              "endIndex": 1176,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 1118,
+                    "endIndex": 1176,
+                    "textRun": {
+                      "content": "D435가 고대비 부품 트레이에서 6개 recipe 중 대상 부품의 중심·yaw·depth를 계산한다.\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.arj6dzdsy910",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 1176,
+              "endIndex": 1226,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 1176,
+                    "endIndex": 1226,
+                    "textRun": {
+                      "content": "Coordinate/TF Manager가 카메라 좌표를 FR5 Base 좌표로 변환한다.\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.arj6dzdsy910",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 1226,
+              "endIndex": 1292,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 1226,
+                    "endIndex": 1292,
+                    "textRun": {
+                      "content": "Quality Gate가 reprojection, depth, 좌표 jump와 두 카메라 결과 일치 여부를 검사한다.\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.arj6dzdsy910",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 1292,
+              "endIndex": 1354,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 1292,
+                    "endIndex": 1354,
+                    "textRun": {
+                      "content": "Cell Orchestrator가 FR5 Pick, 안전 접근, Place와 그리퍼 동작을 순서대로 실행한다.\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.arj6dzdsy910",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 1354,
+              "endIndex": 1412,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 1354,
+                    "endIndex": 1412,
+                    "textRun": {
+                      "content": "FR5가 검사 시야에서 후퇴하면 S22가 전체 slot을 검사하고 불확실한 곳은 D435가 재검사한다.\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.arj6dzdsy910",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 1412,
+              "endIndex": 1468,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 1412,
+                    "endIndex": 1468,
+                    "textRun": {
+                      "content": "PASS/FAIL, slot별 위치·방향·높이 오차와 이미지 경로를 저장하고 다음 기판을 이송한다.\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.arj6dzdsy910",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 1468,
+              "endIndex": 1479,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 1468,
+                    "endIndex": 1479,
+                    "textRun": {
+                      "content": "4. 핵심 좌표변환\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "headingId": "h.h4gq9at8j2xo",
+                  "namedStyleType": "HEADING_1",
+                  "direction": "LEFT_TO_RIGHT"
+                }
+              }
+            },
+            {
+              "startIndex": 1479,
+              "endIndex": 1508,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 1479,
+                    "endIndex": 1508,
+                    "textRun": {
+                      "content": "D435 Eye-in-Hand Pick/근접 좌표:\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT"
+                }
+              }
+            },
+            {
+              "startIndex": 1508,
+              "endIndex": 1580,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 1508,
+                    "endIndex": 1580,
+                    "textRun": {
+                      "content": "T_base_part = T_base_flange × T_flange_camera_d435 × T_camera_d435_part\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT"
+                }
+              }
+            },
+            {
+              "startIndex": 1580,
+              "endIndex": 1612,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 1580,
+                    "endIndex": 1612,
+                    "textRun": {
+                      "content": "S22 Eye-to-Hand Board/Place 좌표:\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT"
+                }
+              }
+            },
+            {
+              "startIndex": 1612,
+              "endIndex": 1680,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 1612,
+                    "endIndex": 1680,
+                    "textRun": {
+                      "content": "T_base_slot = T_base_camera_s22 × T_camera_s22_board × T_board_slot\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT"
+                }
+              }
+            },
+            {
+              "startIndex": 1680,
+              "endIndex": 1817,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 1680,
+                    "endIndex": 1817,
+                    "textRun": {
+                      "content": "TCP/toolcoord1과 T_flange_camera_d435는 서로 다른 변환이다. TCP 값을 Hand-Eye에 다시 더하지 않는다. 안전 접근 높이는 목표를 Base frame으로 완전히 변환한 뒤 Robot Base +Z에 적용한다.\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT"
+                }
+              }
+            },
+            {
+              "startIndex": 1817,
+              "endIndex": 1833,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 1817,
+                    "endIndex": 1833,
+                    "textRun": {
+                      "content": "5. 주요 ROS 인터페이스\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "headingId": "h.96nxbqh083xr",
+                  "namedStyleType": "HEADING_1",
+                  "direction": "LEFT_TO_RIGHT"
+                }
+              }
+            },
+            {
+              "startIndex": 1833,
+              "endIndex": 1886,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 1833,
+                    "endIndex": 1886,
+                    "textRun": {
+                      "content": "/camera/camera/color/image_raw/compressed — D435 RGB\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.7ozhf3b9154s",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 1886,
+              "endIndex": 1955,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 1886,
+                    "endIndex": 1955,
+                    "textRun": {
+                      "content": "/camera/camera/aligned_depth_to_color/image_raw — D435 aligned depth\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.7ozhf3b9154s",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 1955,
+              "endIndex": 2009,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 1955,
+                    "endIndex": 2009,
+                    "textRun": {
+                      "content": "/nonrt_state_data — FR5 Base/Flange/TCP, 오류와 동작 완료 상태\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.7ozhf3b9154s",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 2009,
+              "endIndex": 2048,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 2009,
+                    "endIndex": 2048,
+                    "textRun": {
+                      "content": "/camera2/image_raw/compressed — S22 영상\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.7ozhf3b9154s",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 2048,
+              "endIndex": 2097,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 2048,
+                    "endIndex": 2097,
+                    "textRun": {
+                      "content": "/conveyor/cmd_vel, /conveyor/state — 컨베이어 명령과 상태\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.7ozhf3b9154s",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 2097,
+              "endIndex": 2153,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 2097,
+                    "endIndex": 2153,
+                    "textRun": {
+                      "content": "/board/pose_base, /assembly/ready — 기판 Base pose와 조립 허가\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.7ozhf3b9154s",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 2153,
+              "endIndex": 2197,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 2153,
+                    "endIndex": 2197,
+                    "textRun": {
+                      "content": "/inspection/result — slot별 검사와 최종 PASS/FAIL\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.7ozhf3b9154s",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 2197,
+              "endIndex": 2243,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 2197,
+                    "endIndex": 2243,
+                    "textRun": {
+                      "content": "/camera3/image_raw/compressed — GoPro 전체 셀 영상\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.7ozhf3b9154s",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 2243,
+              "endIndex": 2255,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 2243,
+                    "endIndex": 2255,
+                    "textRun": {
+                      "content": "6. 안전 설계 원칙\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "headingId": "h.37njlrhjuctk",
+                  "namedStyleType": "HEADING_1",
+                  "direction": "LEFT_TO_RIGHT"
+                }
+              }
+            },
+            {
+              "startIndex": 2255,
+              "endIndex": 2287,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 2255,
+                    "endIndex": 2287,
+                    "textRun": {
+                      "content": "FR5가 조립 구역에 있을 때 컨베이어 이동을 차단한다.\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.bn7250l7be9f",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 2287,
+              "endIndex": 2324,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 2287,
+                    "endIndex": 2324,
+                    "textRun": {
+                      "content": "컨베이어 이동 중에는 FR5가 조립 구역에 진입하지 못하게 한다.\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.bn7250l7be9f",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 2324,
+              "endIndex": 2378,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 2324,
+                    "endIndex": 2378,
+                    "textRun": {
+                      "content": "영상·DDS·노드 timeout 시 Watchdog이 공정 허가를 취소하고 컨베이어를 정지한다.\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.bn7250l7be9f",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 2378,
+              "endIndex": 2448,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 2378,
+                    "endIndex": 2448,
+                    "textRun": {
+                      "content": "NaN/Inf, depth invalid, 큰 좌표 jump와 calibration 미적용 상태에서는 로봇 이동을 금지한다.\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.bn7250l7be9f",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 2448,
+              "endIndex": 2488,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 2448,
+                    "endIndex": 2488,
+                    "textRun": {
+                      "content": "초기에는 dry-run과 안전 높이 접근 후에만 실제 동작을 허가한다.\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.bn7250l7be9f",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 2488,
+              "endIndex": 2532,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 2488,
+                    "endIndex": 2532,
+                    "textRun": {
+                      "content": "GoPro 사람 감지는 보조 계층이며 FR5 물리 비상정지를 대체하지 않는다.\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.bn7250l7be9f",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 2532,
+              "endIndex": 2541,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 2532,
+                    "endIndex": 2541,
+                    "textRun": {
+                      "content": "7. 구현 상태\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "headingId": "h.60tn1rbyha8f",
+                  "namedStyleType": "HEADING_1",
+                  "direction": "LEFT_TO_RIGHT"
+                }
+              }
+            },
+            {
+              "startIndex": 2541,
+              "endIndex": 2551,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 2541,
+                    "endIndex": 2551,
+                    "textRun": {
+                      "content": "구현·검증된 기반\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "headingId": "h.942x4ah5yomv",
+                  "namedStyleType": "HEADING_2",
+                  "direction": "LEFT_TO_RIGHT"
+                }
+              }
+            },
+            {
+              "startIndex": 2551,
+              "endIndex": 2581,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 2551,
+                    "endIndex": 2581,
+                    "textRun": {
+                      "content": "FR5 ROS 상태 수신과 command server\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.jo58vejdgz8t",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 2581,
+              "endIndex": 2633,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 2581,
+                    "endIndex": 2633,
+                    "textRun": {
+                      "content": "D435 1920×1080 RGB, aligned depth와 Eye-in-Hand 좌표변환\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.jo58vejdgz8t",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 2633,
+              "endIndex": 2669,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 2633,
+                    "endIndex": 2669,
+                    "textRun": {
+                      "content": "dry-run, 안전 접근과 RGB-D 테스트 물체 첫 Pick\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.jo58vejdgz8t",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 2669,
+              "endIndex": 2695,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 2669,
+                    "endIndex": 2695,
+                    "textRun": {
+                      "content": "GoPro HERO11 ROS 영상 발행 코드\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.jo58vejdgz8t",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 2695,
+              "endIndex": 2724,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 2695,
+                    "endIndex": 2724,
+                    "textRun": {
+                      "content": "Unity/OBJ board layout 후보 추출\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.jo58vejdgz8t",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 2724,
+              "endIndex": 2742,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 2724,
+                    "endIndex": 2742,
+                    "textRun": {
+                      "content": "통합을 위해 이어서 구현할 기능\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "headingId": "h.z1rcrmj8rzsj",
+                  "namedStyleType": "HEADING_2",
+                  "direction": "LEFT_TO_RIGHT"
+                }
+              }
+            },
+            {
+              "startIndex": 2742,
+              "endIndex": 2787,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 2742,
+                    "endIndex": 2787,
+                    "textRun": {
+                      "content": "S22 ROS 영상 bridge, intrinsic과 Eye-to-Hand 보정\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.4q53youphtmn",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 2787,
+              "endIndex": 2828,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 2787,
+                    "endIndex": 2828,
+                    "textRun": {
+                      "content": "기판 구멍/Fiducial 기반 board pose와 컨베이어 도착 검출\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.4q53youphtmn",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 2828,
+              "endIndex": 2873,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 2828,
+                    "endIndex": 2873,
+                    "textRun": {
+                      "content": "TurtleBot Conveyor Controller와 FR5 interlock\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.4q53youphtmn",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 2873,
+              "endIndex": 2898,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 2873,
+                    "endIndex": 2898,
+                    "textRun": {
+                      "content": "6개 recipe·25개 slot 순차 조립\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.4q53youphtmn",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 2898,
+              "endIndex": 2948,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 2898,
+                    "endIndex": 2948,
+                    "textRun": {
+                      "content": "S22 전수검사, D435 근접 재검사, 공정 Orchestrator와 통합 launch\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  }
+                },
+                "bullet": {
+                  "listId": "kix.4q53youphtmn",
+                  "textStyle": {
+                    "underline": false
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 2948,
+              "endIndex": 2949,
+              "paragraph": {
+                "elements": [
+                  {
+                    "startIndex": 2948,
+                    "endIndex": 2949,
+                    "textRun": {
+                      "content": "\n",
+                      "textStyle": {}
+                    }
+                  }
+                ],
+                "paragraphStyle": {
+                  "namedStyleType": "NORMAL_TEXT",
+                  "direction": "LEFT_TO_RIGHT"
+                }
+              }
+            }
+          ]
+        },
+        "headers": null,
+        "footers": null,
+        "footnotes": null,
+        "documentStyle": {
+          "background": {
+            "color": {}
+          },
+          "pageNumberStart": 1,
+          "marginTop": {
+            "magnitude": 42,
+            "unit": "PT"
+          },
+          "marginBottom": {
+            "magnitude": 42,
+            "unit": "PT"
+          },
+          "marginRight": {
+            "magnitude": 42,
+            "unit": "PT"
+          },
+          "marginLeft": {
+            "magnitude": 42,
+            "unit": "PT"
+          },
+          "pageSize": {
+            "height": {
+              "magnitude": 841.8897637795277,
+              "unit": "PT"
+            },
+            "width": {
+              "magnitude": 595.2755905511812,
+              "unit": "PT"
+            }
+          },
+          "marginHeader": {
+            "magnitude": 36,
+            "unit": "PT"
+          },
+          "marginFooter": {
+            "magnitude": 36,
+            "unit": "PT"
+          },
+          "useCustomHeaderFooterMargins": true,
+          "documentFormat": {
+            "documentMode": "PAGES"
+          }
+        },
+        "suggestedDocumentStyleChanges": null,
+        "namedStyles": {
+          "styles": [
+            {
+              "namedStyleType": "NORMAL_TEXT",
+              "textStyle": {
+                "bold": false,
+                "italic": false,
+                "underline": false,
+                "strikethrough": false,
+                "smallCaps": false,
+                "backgroundColor": {},
+                "foregroundColor": {
+                  "color": {
+                    "rgbColor": {}
+                  }
+                },
+                "fontSize": {
+                  "magnitude": 11,
+                  "unit": "PT"
+                },
+                "weightedFontFamily": {
+                  "fontFamily": "Arial",
+                  "weight": 400
+                },
+                "baselineOffset": "NONE"
+              },
+              "paragraphStyle": {
+                "namedStyleType": "NORMAL_TEXT",
+                "alignment": "START",
+                "lineSpacing": 115,
+                "direction": "LEFT_TO_RIGHT",
+                "spacingMode": "COLLAPSE_LISTS",
+                "spaceAbove": {
+                  "unit": "PT"
+                },
+                "spaceBelow": {
+                  "unit": "PT"
+                },
+                "borderBetween": {
+                  "color": {},
+                  "width": {
+                    "unit": "PT"
+                  },
+                  "padding": {
+                    "unit": "PT"
+                  },
+                  "dashStyle": "SOLID"
+                },
+                "borderTop": {
+                  "color": {},
+                  "width": {
+                    "unit": "PT"
+                  },
+                  "padding": {
+                    "unit": "PT"
+                  },
+                  "dashStyle": "SOLID"
+                },
+                "borderBottom": {
+                  "color": {},
+                  "width": {
+                    "unit": "PT"
+                  },
+                  "padding": {
+                    "unit": "PT"
+                  },
+                  "dashStyle": "SOLID"
+                },
+                "borderLeft": {
+                  "color": {},
+                  "width": {
+                    "unit": "PT"
+                  },
+                  "padding": {
+                    "unit": "PT"
+                  },
+                  "dashStyle": "SOLID"
+                },
+                "borderRight": {
+                  "color": {},
+                  "width": {
+                    "unit": "PT"
+                  },
+                  "padding": {
+                    "unit": "PT"
+                  },
+                  "dashStyle": "SOLID"
+                },
+                "indentFirstLine": {
+                  "unit": "PT"
+                },
+                "indentStart": {
+                  "unit": "PT"
+                },
+                "indentEnd": {
+                  "unit": "PT"
+                },
+                "keepLinesTogether": false,
+                "keepWithNext": false,
+                "avoidWidowAndOrphan": true,
+                "shading": {
+                  "backgroundColor": {}
+                },
+                "pageBreakBefore": false
+              }
+            },
+            {
+              "namedStyleType": "HEADING_1",
+              "textStyle": {
+                "fontSize": {
+                  "magnitude": 20,
+                  "unit": "PT"
+                }
+              },
+              "paragraphStyle": {
+                "namedStyleType": "NORMAL_TEXT",
+                "direction": "LEFT_TO_RIGHT",
+                "spaceAbove": {
+                  "magnitude": 20,
+                  "unit": "PT"
+                },
+                "spaceBelow": {
+                  "magnitude": 6,
+                  "unit": "PT"
+                },
+                "keepLinesTogether": true,
+                "keepWithNext": true,
+                "pageBreakBefore": false
+              }
+            },
+            {
+              "namedStyleType": "HEADING_2",
+              "textStyle": {
+                "bold": false,
+                "fontSize": {
+                  "magnitude": 16,
+                  "unit": "PT"
+                }
+              },
+              "paragraphStyle": {
+                "namedStyleType": "NORMAL_TEXT",
+                "direction": "LEFT_TO_RIGHT",
+                "spaceAbove": {
+                  "magnitude": 18,
+                  "unit": "PT"
+                },
+                "spaceBelow": {
+                  "magnitude": 6,
+                  "unit": "PT"
+                },
+                "keepLinesTogether": true,
+                "keepWithNext": true,
+                "pageBreakBefore": false
+              }
+            },
+            {
+              "namedStyleType": "HEADING_3",
+              "textStyle": {
+                "bold": false,
+                "foregroundColor": {
+                  "color": {
+                    "rgbColor": {
+                      "red": 0.2627451,
+                      "green": 0.2627451,
+                      "blue": 0.2627451
+                    }
+                  }
+                },
+                "fontSize": {
+                  "magnitude": 14,
+                  "unit": "PT"
+                }
+              },
+              "paragraphStyle": {
+                "namedStyleType": "NORMAL_TEXT",
+                "direction": "LEFT_TO_RIGHT",
+                "spaceAbove": {
+                  "magnitude": 16,
+                  "unit": "PT"
+                },
+                "spaceBelow": {
+                  "magnitude": 4,
+                  "unit": "PT"
+                },
+                "keepLinesTogether": true,
+                "keepWithNext": true,
+                "pageBreakBefore": false
+              }
+            },
+            {
+              "namedStyleType": "HEADING_4",
+              "textStyle": {
+                "foregroundColor": {
+                  "color": {
+                    "rgbColor": {
+                      "red": 0.4,
+                      "green": 0.4,
+                      "blue": 0.4
+                    }
+                  }
+                },
+                "fontSize": {
+                  "magnitude": 12,
+                  "unit": "PT"
+                }
+              },
+              "paragraphStyle": {
+                "namedStyleType": "NORMAL_TEXT",
+                "direction": "LEFT_TO_RIGHT",
+                "spaceAbove": {
+                  "magnitude": 14,
+                  "unit": "PT"
+                },
+                "spaceBelow": {
+                  "magnitude": 4,
+                  "unit": "PT"
+                },
+                "keepLinesTogether": true,
+                "keepWithNext": true,
+                "pageBreakBefore": false
+              }
+            },
+            {
+              "namedStyleType": "HEADING_5",
+              "textStyle": {
+                "foregroundColor": {
+                  "color": {
+                    "rgbColor": {
+                      "red": 0.4,
+                      "green": 0.4,
+                      "blue": 0.4
+                    }
+                  }
+                },
+                "fontSize": {
+                  "magnitude": 11,
+                  "unit": "PT"
+                }
+              },
+              "paragraphStyle": {
+                "namedStyleType": "NORMAL_TEXT",
+                "direction": "LEFT_TO_RIGHT",
+                "spaceAbove": {
+                  "magnitude": 12,
+                  "unit": "PT"
+                },
+                "spaceBelow": {
+                  "magnitude": 4,
+                  "unit": "PT"
+                },
+                "keepLinesTogether": true,
+                "keepWithNext": true,
+                "pageBreakBefore": false
+              }
+            },
+            {
+              "namedStyleType": "HEADING_6",
+              "textStyle": {
+                "italic": true,
+                "foregroundColor": {
+                  "color": {
+                    "rgbColor": {
+                      "red": 0.4,
+                      "green": 0.4,
+                      "blue": 0.4
+                    }
+                  }
+                },
+                "fontSize": {
+                  "magnitude": 11,
+                  "unit": "PT"
+                }
+              },
+              "paragraphStyle": {
+                "namedStyleType": "NORMAL_TEXT",
+                "direction": "LEFT_TO_RIGHT",
+                "spaceAbove": {
+                  "magnitude": 12,
+                  "unit": "PT"
+                },
+                "spaceBelow": {
+                  "magnitude": 4,
+                  "unit": "PT"
+                },
+                "keepLinesTogether": true,
+                "keepWithNext": true,
+                "pageBreakBefore": false
+              }
+            },
+            {
+              "namedStyleType": "TITLE",
+              "textStyle": {
+                "fontSize": {
+                  "magnitude": 26,
+                  "unit": "PT"
+                }
+              },
+              "paragraphStyle": {
+                "namedStyleType": "NORMAL_TEXT",
+                "direction": "LEFT_TO_RIGHT",
+                "spaceAbove": {
+                  "unit": "PT"
+                },
+                "spaceBelow": {
+                  "magnitude": 3,
+                  "unit": "PT"
+                },
+                "keepLinesTogether": true,
+                "keepWithNext": true,
+                "pageBreakBefore": false
+              }
+            },
+            {
+              "namedStyleType": "SUBTITLE",
+              "textStyle": {
+                "italic": false,
+                "foregroundColor": {
+                  "color": {
+                    "rgbColor": {
+                      "red": 0.4,
+                      "green": 0.4,
+                      "blue": 0.4
+                    }
+                  }
+                },
+                "fontSize": {
+                  "magnitude": 15,
+                  "unit": "PT"
+                },
+                "weightedFontFamily": {
+                  "fontFamily": "Arial",
+                  "weight": 400
+                }
+              },
+              "paragraphStyle": {
+                "namedStyleType": "NORMAL_TEXT",
+                "direction": "LEFT_TO_RIGHT",
+                "spaceAbove": {
+                  "unit": "PT"
+                },
+                "spaceBelow": {
+                  "magnitude": 16,
+                  "unit": "PT"
+                },
+                "keepLinesTogether": true,
+                "keepWithNext": true,
+                "pageBreakBefore": false
+              }
+            }
+          ]
+        },
+        "suggestedNamedStylesChanges": null,
+        "lists": {
+          "kix.110dd6z9ffp4": {
+            "listProperties": {
+              "nestingLevels": [
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "●",
+                  "glyphFormat": "%0",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "○",
+                  "glyphFormat": "%1",
+                  "indentFirstLine": {
+                    "magnitude": 54,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 72,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "■",
+                  "glyphFormat": "%2",
+                  "indentFirstLine": {
+                    "magnitude": 90,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 108,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "●",
+                  "glyphFormat": "%3",
+                  "indentFirstLine": {
+                    "magnitude": 126,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 144,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "○",
+                  "glyphFormat": "%4",
+                  "indentFirstLine": {
+                    "magnitude": 162,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 180,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "■",
+                  "glyphFormat": "%5",
+                  "indentFirstLine": {
+                    "magnitude": 198,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 216,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "●",
+                  "glyphFormat": "%6",
+                  "indentFirstLine": {
+                    "magnitude": 234,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 252,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "○",
+                  "glyphFormat": "%7",
+                  "indentFirstLine": {
+                    "magnitude": 270,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 288,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "■",
+                  "glyphFormat": "%8",
+                  "indentFirstLine": {
+                    "magnitude": 306,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 324,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                }
+              ]
+            }
+          },
+          "kix.4q53youphtmn": {
+            "listProperties": {
+              "nestingLevels": [
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "●",
+                  "glyphFormat": "%0",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "○",
+                  "glyphFormat": "%1",
+                  "indentFirstLine": {
+                    "magnitude": 54,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 72,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "■",
+                  "glyphFormat": "%2",
+                  "indentFirstLine": {
+                    "magnitude": 90,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 108,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "●",
+                  "glyphFormat": "%3",
+                  "indentFirstLine": {
+                    "magnitude": 126,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 144,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "○",
+                  "glyphFormat": "%4",
+                  "indentFirstLine": {
+                    "magnitude": 162,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 180,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "■",
+                  "glyphFormat": "%5",
+                  "indentFirstLine": {
+                    "magnitude": 198,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 216,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "●",
+                  "glyphFormat": "%6",
+                  "indentFirstLine": {
+                    "magnitude": 234,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 252,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "○",
+                  "glyphFormat": "%7",
+                  "indentFirstLine": {
+                    "magnitude": 270,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 288,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "■",
+                  "glyphFormat": "%8",
+                  "indentFirstLine": {
+                    "magnitude": 306,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 324,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                }
+              ]
+            }
+          },
+          "kix.7ozhf3b9154s": {
+            "listProperties": {
+              "nestingLevels": [
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "●",
+                  "glyphFormat": "%0",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "○",
+                  "glyphFormat": "%1",
+                  "indentFirstLine": {
+                    "magnitude": 54,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 72,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "■",
+                  "glyphFormat": "%2",
+                  "indentFirstLine": {
+                    "magnitude": 90,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 108,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "●",
+                  "glyphFormat": "%3",
+                  "indentFirstLine": {
+                    "magnitude": 126,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 144,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "○",
+                  "glyphFormat": "%4",
+                  "indentFirstLine": {
+                    "magnitude": 162,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 180,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "■",
+                  "glyphFormat": "%5",
+                  "indentFirstLine": {
+                    "magnitude": 198,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 216,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "●",
+                  "glyphFormat": "%6",
+                  "indentFirstLine": {
+                    "magnitude": 234,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 252,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "○",
+                  "glyphFormat": "%7",
+                  "indentFirstLine": {
+                    "magnitude": 270,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 288,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "■",
+                  "glyphFormat": "%8",
+                  "indentFirstLine": {
+                    "magnitude": 306,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 324,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                }
+              ]
+            }
+          },
+          "kix.arj6dzdsy910": {
+            "listProperties": {
+              "nestingLevels": [
+                {
+                  "bulletAlignment": "START",
+                  "glyphType": "DECIMAL",
+                  "glyphFormat": "%0.",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphType": "ALPHA",
+                  "glyphFormat": "%1.",
+                  "indentFirstLine": {
+                    "magnitude": 54,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 72,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "END",
+                  "glyphType": "ROMAN",
+                  "glyphFormat": "%2.",
+                  "indentFirstLine": {
+                    "magnitude": 90,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 108,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphType": "DECIMAL",
+                  "glyphFormat": "%3.",
+                  "indentFirstLine": {
+                    "magnitude": 126,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 144,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphType": "ALPHA",
+                  "glyphFormat": "%4.",
+                  "indentFirstLine": {
+                    "magnitude": 162,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 180,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "END",
+                  "glyphType": "ROMAN",
+                  "glyphFormat": "%5.",
+                  "indentFirstLine": {
+                    "magnitude": 198,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 216,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphType": "DECIMAL",
+                  "glyphFormat": "%6.",
+                  "indentFirstLine": {
+                    "magnitude": 234,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 252,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphType": "ALPHA",
+                  "glyphFormat": "%7.",
+                  "indentFirstLine": {
+                    "magnitude": 270,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 288,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "END",
+                  "glyphType": "ROMAN",
+                  "glyphFormat": "%8.",
+                  "indentFirstLine": {
+                    "magnitude": 306,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 324,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                }
+              ]
+            }
+          },
+          "kix.bn7250l7be9f": {
+            "listProperties": {
+              "nestingLevels": [
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "●",
+                  "glyphFormat": "%0",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "○",
+                  "glyphFormat": "%1",
+                  "indentFirstLine": {
+                    "magnitude": 54,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 72,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "■",
+                  "glyphFormat": "%2",
+                  "indentFirstLine": {
+                    "magnitude": 90,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 108,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "●",
+                  "glyphFormat": "%3",
+                  "indentFirstLine": {
+                    "magnitude": 126,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 144,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "○",
+                  "glyphFormat": "%4",
+                  "indentFirstLine": {
+                    "magnitude": 162,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 180,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "■",
+                  "glyphFormat": "%5",
+                  "indentFirstLine": {
+                    "magnitude": 198,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 216,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "●",
+                  "glyphFormat": "%6",
+                  "indentFirstLine": {
+                    "magnitude": 234,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 252,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "○",
+                  "glyphFormat": "%7",
+                  "indentFirstLine": {
+                    "magnitude": 270,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 288,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "■",
+                  "glyphFormat": "%8",
+                  "indentFirstLine": {
+                    "magnitude": 306,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 324,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                }
+              ]
+            }
+          },
+          "kix.fp6g3rihxzt": {
+            "listProperties": {
+              "nestingLevels": [
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "●",
+                  "glyphFormat": "%0",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "○",
+                  "glyphFormat": "%1",
+                  "indentFirstLine": {
+                    "magnitude": 54,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 72,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "■",
+                  "glyphFormat": "%2",
+                  "indentFirstLine": {
+                    "magnitude": 90,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 108,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "●",
+                  "glyphFormat": "%3",
+                  "indentFirstLine": {
+                    "magnitude": 126,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 144,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "○",
+                  "glyphFormat": "%4",
+                  "indentFirstLine": {
+                    "magnitude": 162,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 180,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "■",
+                  "glyphFormat": "%5",
+                  "indentFirstLine": {
+                    "magnitude": 198,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 216,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "●",
+                  "glyphFormat": "%6",
+                  "indentFirstLine": {
+                    "magnitude": 234,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 252,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "○",
+                  "glyphFormat": "%7",
+                  "indentFirstLine": {
+                    "magnitude": 270,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 288,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "■",
+                  "glyphFormat": "%8",
+                  "indentFirstLine": {
+                    "magnitude": 306,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 324,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                }
+              ]
+            }
+          },
+          "kix.jo58vejdgz8t": {
+            "listProperties": {
+              "nestingLevels": [
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "●",
+                  "glyphFormat": "%0",
+                  "indentFirstLine": {
+                    "magnitude": 18,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 36,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "○",
+                  "glyphFormat": "%1",
+                  "indentFirstLine": {
+                    "magnitude": 54,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 72,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "■",
+                  "glyphFormat": "%2",
+                  "indentFirstLine": {
+                    "magnitude": 90,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 108,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "●",
+                  "glyphFormat": "%3",
+                  "indentFirstLine": {
+                    "magnitude": 126,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 144,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "○",
+                  "glyphFormat": "%4",
+                  "indentFirstLine": {
+                    "magnitude": 162,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 180,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "■",
+                  "glyphFormat": "%5",
+                  "indentFirstLine": {
+                    "magnitude": 198,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 216,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "●",
+                  "glyphFormat": "%6",
+                  "indentFirstLine": {
+                    "magnitude": 234,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 252,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "○",
+                  "glyphFormat": "%7",
+                  "indentFirstLine": {
+                    "magnitude": 270,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 288,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                },
+                {
+                  "bulletAlignment": "START",
+                  "glyphSymbol": "■",
+                  "glyphFormat": "%8",
+                  "indentFirstLine": {
+                    "magnitude": 306,
+                    "unit": "PT"
+                  },
+                  "indentStart": {
+                    "magnitude": 324,
+                    "unit": "PT"
+                  },
+                  "textStyle": {
+                    "underline": false
+                  },
+                  "startNumber": 1
+                }
+              ]
+            }
+          }
+        },
+        "namedRanges": null,
+        "inlineObjects": {
+          "kix.5nj4516l050g": {
+            "objectId": "kix.5nj4516l050g",
+            "inlineObjectProperties": {
+              "embeddedObject": {
+                "imageProperties": {
+                  "contentUri": "https://lh7-rt.googleusercontent.com/docsz/AD_4nXd5lIiP5qcCvzZ5GlzRjvq_z_QbKviXN7B0Lvj9fLBP2LSp8KH38kK1S6JhPN8rRwadAbtbuEme2Kcp-kI-ADeGz63rAoKY6g7AZloTC38QCxGfEss7yVZ8wEFA9ocUC1JALD99GuQVkMqSpNVujn_V6OVgRl0u6SIj3RkfDnlKY2WiDg=s2048?key=jKVXJp0bH0k1-m5S72FIUA",
+                  "sourceUri": "https://sdmntprindiasocentral.oaiusercontent.com/files/00000000-16f0-8211-b4a9-c6d003cfa3f0/raw?se=2026-08-12T14%3A10%3A26Z&sp=r&sv=2026-02-06&sr=b&scid=17b7a0ff-8dea-4a8f-9871-aac2c10619fe&skoid=0765b554-4b90-4fa2-9d6d-0055a2427910&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-08-11T23%3A16%3A01Z&ske=2026-08-12T23%3A16%3A01Z&sks=b&skv=2026-02-06&sig=lzRZQYRKX0zuFRTR0PzdxNfEhVu6rEjE8LjA0orH%2BIY%3D",
+                  "cropProperties": {}
+                },
+                "embeddedObjectBorder": {
+                  "color": {
+                    "color": {
+                      "rgbColor": {}
+                    }
+                  },
+                  "width": {
+                    "unit": "PT"
+                  },
+                  "dashStyle": "SOLID",
+                  "propertyState": "NOT_RENDERED"
+                },
+                "size": {
+                  "height": {
+                    "magnitude": 210.2,
+                    "unit": "PT"
+                  },
+                  "width": {
+                    "magnitude": 499.79442724458204,
+                    "unit": "PT"
+                  }
+                },
+                "marginTop": {
+                  "magnitude": 9,
+                  "unit": "PT"
+                },
+                "marginBottom": {
+                  "magnitude": 9,
+                  "unit": "PT"
+                },
+                "marginRight": {
+                  "magnitude": 9,
+                  "unit": "PT"
+                },
+                "marginLeft": {
+                  "magnitude": 9,
+                  "unit": "PT"
+                }
+              }
+            }
+          },
+          "kix.bo3lxjc18x8": {
+            "objectId": "kix.bo3lxjc18x8",
+            "inlineObjectProperties": {
+              "embeddedObject": {
+                "imageProperties": {
+                  "contentUri": "https://lh7-rt.googleusercontent.com/docsz/AD_4nXdj-UdrtGX-n_n9dj2xmVBapi7iUb9JVfgJW5IAVdKoUC6j7_jylz7sPwuEB9n6LhA9ccQZ-7UA0aoz4PCx7s2K6lDem3xaxsr89VLJtCyIREuX6O401tfq5Zy2sVOl5N6HmZw2OJgeaFhqP8dUNSzWPsm4zmv4UfggfvqT_UyjcM6rYsax=s2048?key=jKVXJp0bH0k1-m5S72FIUA",
+                  "sourceUri": "https://sdmntprkoreacentral.oaiusercontent.com/files/00000000-f464-8206-8fd3-c11a69511595/raw?se=2026-08-12T14%3A10%3A41Z&sp=r&sv=2026-02-06&sr=b&scid=5386ac68-7734-4096-a989-cd0b8c31222a&skoid=0765b554-4b90-4fa2-9d6d-0055a2427910&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-08-11T23%3A40%3A54Z&ske=2026-08-12T23%3A40%3A54Z&sks=b&skv=2026-02-06&sig=EFUckbp85GpEPoGWG7SVniC1YBaQVx1xRr4F0HofwF0%3D",
+                  "cropProperties": {}
+                },
+                "embeddedObjectBorder": {
+                  "color": {
+                    "color": {
+                      "rgbColor": {}
+                    }
+                  },
+                  "width": {
+                    "unit": "PT"
+                  },
+                  "dashStyle": "SOLID",
+                  "propertyState": "NOT_RENDERED"
+                },
+                "size": {
+                  "height": {
+                    "magnitude": 493.2,
+                    "unit": "PT"
+                  },
+                  "width": {
+                    "magnitude": 434.9591152336782,
+                    "unit": "PT"
+                  }
+                },
+                "marginTop": {
+                  "magnitude": 9,
+                  "unit": "PT"
+                },
+                "marginBottom": {
+                  "magnitude": 9,
+                  "unit": "PT"
+                },
+                "marginRight": {
+                  "magnitude": 9,
+                  "unit": "PT"
+                },
+                "marginLeft": {
+                  "magnitude": 9,
+                  "unit": "PT"
+                }
+              }
+            }
+          }
+        },
+        "positionedObjects": null,
+        "documentId": "1E1vdtc80XqmClC_7l0EV4oabBd8hvPEEHcWAR3qWRhE",
+        "document_url": "https://docs.google.com/document/d/1E1vdtc80XqmClC_7l0EV4oabBd8hvPEEHcWAR3qWRhE"
+      }
+    ],
+    "document_url": "https://docs.google.com/document/d/1E1vdtc80XqmClC_7l0EV4oabBd8hvPEEHcWAR3qWRhE"
+  },
+  "isError": false
+}

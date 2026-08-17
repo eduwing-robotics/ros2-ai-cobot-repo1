@@ -1,0 +1,263 @@
+{
+  "warning": "Exploratory result: camera mount moved; do not use for robot motion until validated.",
+  "sample_count": 32,
+  "best": {
+    "euler_convention": "xyz",
+    "method": "TSAI",
+    "camera_to_flange": {
+      "rotation_matrix": [
+        [
+          0.9904213703133531,
+          -0.1377240509709021,
+          0.009879018715646865
+        ],
+        [
+          0.13519445695458313,
+          0.9527082047759359,
+          -0.27215718870051653
+        ],
+        [
+          0.028070768343155555,
+          0.2708858843439015,
+          0.9622020939635536
+        ]
+      ],
+      "translation_m": [
+        -0.11493860709375785,
+        0.0016326353485425216,
+        0.30792225040599136
+      ]
+    },
+    "fixed_target_in_base_median": {
+      "rotation_matrix": [
+        [
+          -0.19651474054196066,
+          -0.9783353668769932,
+          -0.06512961436539616
+        ],
+        [
+          -0.7273903531693395,
+          0.19000543912314777,
+          -0.6593945762741787
+        ],
+        [
+          0.6574840156733164,
+          -0.0822061008762679,
+          -0.7489705776015578
+        ]
+      ],
+      "translation_m": [
+        0.15102662149184592,
+        -0.32693115745121226,
+        -0.1865004662797826
+      ]
+    },
+    "validation": {
+      "translation_median_mm": 93.8353337005951,
+      "translation_mean_mm": 95.93856835580044,
+      "translation_max_mm": 170.31655218773963,
+      "rotation_median_deg": 62.378296365408616,
+      "rotation_mean_deg": 77.2356749805376,
+      "rotation_max_deg": 142.15006326054558,
+      "translation_errors_mm": [
+        61.139335131470816,
+        56.15017319008291,
+        75.00596357657503,
+        94.48754948103641,
+        77.08073897168842,
+        108.00691666069704,
+        132.0635840910575,
+        111.34478183758004,
+        126.77221858752306,
+        79.63003368672192,
+        105.28725079546628,
+        100.1919031284632,
+        66.29636191699925,
+        67.68314029082337,
+        90.5825420459726,
+        107.79629474730956,
+        95.34846287742602,
+        59.00877816763332,
+        93.18311792015378,
+        112.6103481119353,
+        49.71079790768288,
+        30.947027005011982,
+        135.85904952315738,
+        69.7187917017281,
+        107.42428139443008,
+        98.41470888109163,
+        147.1972311493986,
+        90.31774719647764,
+        170.31655218773963,
+        167.62567348578662,
+        92.31255002812892,
+        90.52028170836479
+      ],
+      "rotation_errors_deg": [
+        103.18655343952398,
+        21.704475965499714,
+        63.380124314597055,
+        100.90499893846953,
+        55.95443998596236,
+        55.91631963639567,
+        60.357287824679176,
+        83.84936116417698,
+        97.6625366676215,
+        46.0717197907196,
+        53.08671013496072,
+        82.62989288417133,
+        49.43158887250573,
+        50.9001148134175,
+        59.69366474831309,
+        116.85267456030702,
+        123.66595790953835,
+        106.2911989934632,
+        103.09767204119868,
+        105.26475495892143,
+        127.55802880544931,
+        42.78256849961965,
+        45.78110437907277,
+        61.376468416220185,
+        51.76619124157252,
+        26.57222688375302,
+        138.83651607722226,
+        64.14673789112433,
+        142.15006326054558,
+        135.22370007647456,
+        40.709519235839515,
+        54.73642696586653
+      ]
+    },
+    "score": 218.59192643141233
+  },
+  "candidate_summary": [
+    {
+      "euler_convention": "xyz",
+      "method": "TSAI",
+      "translation_median_mm": 93.8353337005951,
+      "translation_max_mm": 170.31655218773963,
+      "rotation_median_deg": 62.378296365408616,
+      "rotation_max_deg": 142.15006326054558
+    },
+    {
+      "euler_convention": "xyz",
+      "method": "HORAUD",
+      "translation_median_mm": 99.57857526894799,
+      "translation_max_mm": 243.29633985190347,
+      "rotation_median_deg": 64.2964093288964,
+      "rotation_max_deg": 137.85662830279298
+    },
+    {
+      "euler_convention": "zyx",
+      "method": "TSAI",
+      "translation_median_mm": 98.26108724406646,
+      "translation_max_mm": 320.8180948214641,
+      "rotation_median_deg": 70.63396775057952,
+      "rotation_max_deg": 177.85173130347442
+    },
+    {
+      "euler_convention": "ZYX",
+      "method": "TSAI",
+      "translation_median_mm": 112.19396505440204,
+      "translation_max_mm": 361.9238397952737,
+      "rotation_median_deg": 68.31250175163933,
+      "rotation_max_deg": 139.78336215537985
+    },
+    {
+      "euler_convention": "zyx",
+      "method": "PARK",
+      "translation_median_mm": 160.0902205850597,
+      "translation_max_mm": 439.9970857087518,
+      "rotation_median_deg": 67.81895448518975,
+      "rotation_max_deg": 114.98596284562558
+    },
+    {
+      "euler_convention": "XYZ",
+      "method": "TSAI",
+      "translation_median_mm": 123.49907830946188,
+      "translation_max_mm": 323.3615412811089,
+      "rotation_median_deg": 88.54231855455743,
+      "rotation_max_deg": 154.10764864733994
+    },
+    {
+      "euler_convention": "ZYX",
+      "method": "PARK",
+      "translation_median_mm": 174.83647788435644,
+      "translation_max_mm": 419.62630510878324,
+      "rotation_median_deg": 68.06976936425838,
+      "rotation_max_deg": 113.82696984032258
+    },
+    {
+      "euler_convention": "xyz",
+      "method": "PARK",
+      "translation_median_mm": 129.21834307794862,
+      "translation_max_mm": 406.06882873510176,
+      "rotation_median_deg": 91.7885911338339,
+      "rotation_max_deg": 180.0
+    },
+    {
+      "euler_convention": "zyx",
+      "method": "HORAUD",
+      "translation_median_mm": 174.9897789437951,
+      "translation_max_mm": 499.1688396557277,
+      "rotation_median_deg": 70.15912846691529,
+      "rotation_max_deg": 135.0665086068632
+    },
+    {
+      "euler_convention": "ZYX",
+      "method": "HORAUD",
+      "translation_median_mm": 188.20297116977923,
+      "translation_max_mm": 425.7934656738627,
+      "rotation_median_deg": 67.64463649676912,
+      "rotation_max_deg": 136.76738348765346
+    },
+    {
+      "euler_convention": "ZYX",
+      "method": "DANIILIDIS",
+      "translation_median_mm": 228.78228010219112,
+      "translation_max_mm": 438.68287035274335,
+      "rotation_median_deg": 65.85515874756169,
+      "rotation_max_deg": 135.71978102936876
+    },
+    {
+      "euler_convention": "xyz",
+      "method": "DANIILIDIS",
+      "translation_median_mm": 213.6229378934918,
+      "translation_max_mm": 413.6609092006662,
+      "rotation_median_deg": 81.06310522719062,
+      "rotation_max_deg": 147.5945410437056
+    },
+    {
+      "euler_convention": "zyx",
+      "method": "DANIILIDIS",
+      "translation_median_mm": 241.2784013224947,
+      "translation_max_mm": 516.746954356577,
+      "rotation_median_deg": 69.44156985990114,
+      "rotation_max_deg": 179.51506907767842
+    },
+    {
+      "euler_convention": "XYZ",
+      "method": "HORAUD",
+      "translation_median_mm": 242.22378533926394,
+      "translation_max_mm": 450.6660563556562,
+      "rotation_median_deg": 70.00145280722955,
+      "rotation_max_deg": 136.4790339320275
+    },
+    {
+      "euler_convention": "XYZ",
+      "method": "DANIILIDIS",
+      "translation_median_mm": 248.77644920821194,
+      "translation_max_mm": 464.6346483771102,
+      "rotation_median_deg": 76.70971379708791,
+      "rotation_max_deg": 141.44799618093643
+    },
+    {
+      "euler_convention": "XYZ",
+      "method": "PARK",
+      "translation_median_mm": 221.6973521330189,
+      "translation_max_mm": 397.5736878061522,
+      "rotation_median_deg": 91.36138922413053,
+      "rotation_max_deg": 180.0
+    }
+  ]
+}

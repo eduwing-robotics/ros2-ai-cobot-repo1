@@ -1,0 +1,31 @@
+{
+  "bridgeVersion": "3.6",
+  "kind": "google-docs-trusted-read-receipt",
+  "status": "complete",
+  "target": {
+    "documentId": "1E1vdtc80XqmClC_7l0EV4oabBd8hvPEEHcWAR3qWRhE",
+    "title": "KSMC 팀 하드웨어·소프트웨어 아키텍처",
+    "revisionId": "AIroW35WJNL7V1zkb8ihmFs35li5I42xpbm3TQBjuo90vtSIKXiKRfsstoBJiZ0eqD302eqLw6dZnu8xxDC0CKVviFxNgPyO4K3qaGW6zg",
+    "documentUrl": "https://docs.google.com/document/d/1E1vdtc80XqmClC_7l0EV4oabBd8hvPEEHcWAR3qWRhE",
+    "selectedTabId": null
+  },
+  "dropdownMetadata": {
+    "status": "unavailable",
+    "resolvedTool": null,
+    "authoritative": false,
+    "count": 0
+  },
+  "controlAwareness": {
+    "hasProtectedControls": false,
+    "authoritativeDropdownCount": 0,
+    "opaqueControlCount": 0,
+    "affectedParagraphCount": 0,
+    "nativeElementCounts": {
+      "inlineObjectElement": 2
+    },
+    "preservationRequired": false,
+    "recommendedBehavior": "No protected controls were detected in the scanned scope."
+  },
+  "warnings": [],
+  "error": null
+}

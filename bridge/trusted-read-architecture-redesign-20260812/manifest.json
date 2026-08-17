@@ -1,0 +1,59 @@
+{
+  "bridgeVersion": "3.6",
+  "kind": "google-docs-trusted-read",
+  "status": "complete",
+  "outputDir": "/home/hc/KSMC/bridge/trusted-read-architecture-redesign-20260812",
+  "target": {
+    "documentId": "1E1vdtc80XqmClC_7l0EV4oabBd8hvPEEHcWAR3qWRhE",
+    "title": "KSMC 팀 하드웨어·소프트웨어 아키텍처",
+    "revisionId": "AIroW35WJNL7V1zkb8ihmFs35li5I42xpbm3TQBjuo90vtSIKXiKRfsstoBJiZ0eqD302eqLw6dZnu8xxDC0CKVviFxNgPyO4K3qaGW6zg",
+    "documentUrl": "https://docs.google.com/document/d/1E1vdtc80XqmClC_7l0EV4oabBd8hvPEEHcWAR3qWRhE",
+    "selectedTabId": null
+  },
+  "dropdownMetadata": {
+    "status": "unavailable",
+    "resolvedTool": null,
+    "authoritative": false,
+    "count": 0
+  },
+  "controlAwareness": {
+    "hasProtectedControls": false,
+    "authoritativeDropdownCount": 0,
+    "opaqueControlCount": 0,
+    "affectedParagraphCount": 0,
+    "nativeElementCounts": {
+      "inlineObjectElement": 2
+    },
+    "preservationRequired": false,
+    "recommendedBehavior": "No protected controls were detected in the scanned scope."
+  },
+  "warnings": [],
+  "files": {
+    "document_result": {
+      "path": "/home/hc/KSMC/bridge/trusted-read-architecture-redesign-20260812/document-result.json",
+      "bytes": 116681,
+      "sha256": "6de6bd7b3f4c34f7b151131991e7e0830248269678e71fec619807ffbfbbe399"
+    },
+    "control_inventory": {
+      "path": "/home/hc/KSMC/bridge/trusted-read-architecture-redesign-20260812/control-inventory.json",
+      "bytes": 2331,
+      "sha256": "1b04e2999b907e6d32c03a41fb5ee48352f2892064f72c10af09c95e7c5e45c6"
+    },
+    "document_outline": {
+      "path": "/home/hc/KSMC/bridge/trusted-read-architecture-redesign-20260812/document-outline.json",
+      "bytes": 31612,
+      "sha256": "fb879ccf69c5eff35921116fcd5761376b9534015c1b51cd6a8e30b4f2ae68f5"
+    },
+    "document_text": {
+      "path": "/home/hc/KSMC/bridge/trusted-read-architecture-redesign-20260812/document-text.md",
+      "bytes": 9150,
+      "sha256": "aa4166ee390b2f9bd168d4ad7c0129c9c06a508f1ef79e51ab3e970fd52305cb"
+    },
+    "receipt": {
+      "path": "/home/hc/KSMC/bridge/trusted-read-architecture-redesign-20260812/receipt.json",
+      "bytes": 1022,
+      "sha256": "152b2d86f909ff279ec56bfd01b96d4a2a60bf99eb59805a94943ae570cb1a27"
+    }
+  },
+  "error": null
+}

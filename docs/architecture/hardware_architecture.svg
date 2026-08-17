@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#0F172A" flood-opacity="0.10"/>
+    </filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="9" refY="6" orient="auto-start-reverse" markerUnits="strokeWidth">
+      <path d="M1,1 L10,6 L1,11 Z" fill="#64748B"/>
+    </marker>
+    <marker id="flow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M1,1 L11,6 L1,11 Z" fill="#0F766E"/>
+    </marker>
+    <style>
+      text { font-family: "Noto Sans CJK KR", "Noto Sans KR", sans-serif; fill: #0F172A; }
+      .title { font-size: 42px; font-weight: 800; letter-spacing: -0.8px; }
+      .subtitle { font-size: 20px; font-weight: 500; fill: #64748B; }
+      .card-title { font-size: 30px; font-weight: 800; fill: #FFFFFF; }
+      .card-subtitle { font-size: 15px; font-weight: 600; fill: #FFFFFF; opacity: 0.82; letter-spacing: 1.2px; }
+      .item { font-size: 23px; font-weight: 600; }
+      .main-item { font-size: 25px; font-weight: 650; }
+      .edge-label { font-size: 17px; font-weight: 700; fill: #475569; }
+      .footer { font-size: 17px; font-weight: 600; fill: #0F766E; }
+    </style>
+  </defs>
+
+  <rect width="1920" height="1080" fill="#F8FAFC"/>
+  <text x="960" y="64" text-anchor="middle" class="title">KSMC 하드웨어 아키텍처</text>
+  <text x="960" y="104" text-anchor="middle" class="subtitle">FR5 정밀 조립 셀의 5개 물리 서브시스템</text>
+
+  <!-- Network links -->
+  <g fill="none" stroke="#64748B" stroke-width="4" stroke-linecap="round" marker-start="url(#arrow)" marker-end="url(#arrow)">
+    <path d="M510 315 L680 410"/>
+    <path d="M1410 315 L1240 410"/>
+    <path d="M510 795 L680 670"/>
+    <path d="M1410 795 L1240 670"/>
+  </g>
+  <g>
+    <rect x="520" y="339" width="150" height="42" rx="21" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <text x="595" y="367" text-anchor="middle" class="edge-label">Ethernet / Wi-Fi</text>
+    <rect x="1254" y="339" width="152" height="42" rx="21" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <text x="1330" y="367" text-anchor="middle" class="edge-label">USB 3.x / Network</text>
+    <rect x="522" y="719" width="146" height="42" rx="21" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <text x="595" y="747" text-anchor="middle" class="edge-label">FR5 Ethernet</text>
+    <rect x="1253" y="719" width="154" height="42" rx="21" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <text x="1330" y="747" text-anchor="middle" class="edge-label">ROS 2 Network</text>
+  </g>
+
+  <!-- GUI / DT -->
+  <g filter="url(#shadow)">
+    <rect x="60" y="140" width="450" height="350" rx="28" fill="#FFFFFF"/>
+    <path d="M88 140 H482 Q510 140 510 168 V230 H60 V168 Q60 140 88 140 Z" fill="#6366F1"/>
+  </g>
+  <text x="92" y="184" class="card-title">GUI / DT</text>
+  <text x="92" y="214" class="card-subtitle">OPERATOR STATION</text>
+  <g class="item">
+    <circle cx="94" cy="270" r="6" fill="#6366F1"/><text x="116" y="278">Unity Workstation</text>
+    <circle cx="94" cy="318" r="6" fill="#6366F1"/><text x="116" y="326">Monitor / Display</text>
+    <circle cx="94" cy="366" r="6" fill="#6366F1"/><text x="116" y="374">Keyboard · Mouse</text>
+    <circle cx="94" cy="414" r="6" fill="#6366F1"/><text x="116" y="422">Cell Network</text>
+    <circle cx="94" cy="462" r="6" fill="#6366F1"/><text x="116" y="470">공정 결과 표시</text>
+  </g>
+
+  <!-- Main Server -->
+  <g filter="url(#shadow)">
+    <rect x="680" y="290" width="560" height="500" rx="32" fill="#FFFFFF" stroke="#BFDBFE" stroke-width="2"/>
+    <path d="M712 290 H1208 Q1240 290 1240 322 V395 H680 V322 Q680 290 712 290 Z" fill="#2563EB"/>
+  </g>
+  <text x="960" y="340" text-anchor="middle" class="card-title" style="font-size:36px">Main Server</text>
+  <text x="960" y="374" text-anchor="middle" class="card-subtitle">CELL COMPUTING &amp; NETWORK HUB</text>
+  <g class="main-item">
+    <circle cx="734" cy="445" r="7" fill="#2563EB"/><text x="760" y="454">Ubuntu 24.04 PC / Laptop</text>
+    <circle cx="734" cy="505" r="7" fill="#2563EB"/><text x="760" y="514">ROS 2 Jazzy</text>
+    <circle cx="734" cy="565" r="7" fill="#2563EB"/><text x="760" y="574">Ethernet / Wi-Fi</text>
+    <circle cx="734" cy="625" r="7" fill="#2563EB"/><text x="760" y="634">Calibration · Recipe Storage</text>
+    <circle cx="734" cy="685" r="7" fill="#2563EB"/><text x="760" y="694">Process / Inspection Log</text>
+    <circle cx="734" cy="745" r="7" fill="#2563EB"/><text x="760" y="754">ROS Device Integration</text>
+  </g>
+
+  <!-- AI / Vision Hardware -->
+  <g filter="url(#shadow)">
+    <rect x="1410" y="140" width="450" height="350" rx="28" fill="#FFFFFF"/>
+    <path d="M1438 140 H1832 Q1860 140 1860 168 V230 H1410 V168 Q1410 140 1438 140 Z" fill="#8B5CF6"/>
+  </g>
+  <text x="1442" y="184" class="card-title">AI Server / Vision</text>
+  <text x="1442" y="214" class="card-subtitle">CAMERAS &amp; VISION COMPUTE</text>
+  <g class="item" style="font-size:21px">
+    <circle cx="1444" cy="270" r="6" fill="#8B5CF6"/><text x="1466" y="278">Vision 연산 PC (통합 가능)</text>
+    <circle cx="1444" cy="318" r="6" fill="#8B5CF6"/><text x="1466" y="326">RealSense D435 · FR5 장착</text>
+    <circle cx="1444" cy="366" r="6" fill="#8B5CF6"/><text x="1466" y="374">Galaxy S22 · 조립 위치 상부</text>
+    <circle cx="1444" cy="414" r="6" fill="#8B5CF6"/><text x="1466" y="422">GoPro HERO11 · 셀 상단</text>
+    <circle cx="1444" cy="462" r="6" fill="#8B5CF6"/><text x="1466" y="470">카메라 거치대 · 조명</text>
+  </g>
+
+  <!-- FR5 Hardware -->
+  <g filter="url(#shadow)">
+    <rect x="60" y="620" width="450" height="350" rx="28" fill="#FFFFFF"/>
+    <path d="M88 620 H482 Q510 620 510 648 V710 H60 V648 Q60 620 88 620 Z" fill="#16A34A"/>
+  </g>
+  <text x="92" y="664" class="card-title">FR5</text>
+  <text x="92" y="694" class="card-subtitle">ROBOT ASSEMBLY UNIT</text>
+  <g class="item">
+    <circle cx="94" cy="750" r="6" fill="#16A34A"/><text x="116" y="758">FR5 Controller</text>
+    <circle cx="94" cy="798" r="6" fill="#16A34A"/><text x="116" y="806">FAIRINO FR5 Robot Arm</text>
+    <circle cx="94" cy="846" r="6" fill="#16A34A"/><text x="116" y="854">PGEA-100-40 Gripper</text>
+    <circle cx="94" cy="894" r="6" fill="#16A34A"/><text x="116" y="902">Custom Fingers</text>
+    <circle cx="94" cy="942" r="6" fill="#16A34A"/><text x="116" y="950">Physical E-stop</text>
+  </g>
+
+  <!-- Conveyor Hardware -->
+  <g filter="url(#shadow)">
+    <rect x="1410" y="620" width="450" height="350" rx="28" fill="#FFFFFF"/>
+    <path d="M1438 620 H1832 Q1860 620 1860 648 V710 H1410 V648 Q1410 620 1438 620 Z" fill="#EA580C"/>
+  </g>
+  <text x="1442" y="664" class="card-title">Conveyor</text>
+  <text x="1442" y="694" class="card-subtitle">TURTLEBOT-BASED TRANSFER</text>
+  <g class="item">
+    <circle cx="1444" cy="750" r="6" fill="#EA580C"/><text x="1466" y="758">TurtleBot Drive System</text>
+    <circle cx="1444" cy="798" r="6" fill="#EA580C"/><text x="1466" y="806">Wheel Motor / Encoder</text>
+    <circle cx="1444" cy="846" r="6" fill="#EA580C"/><text x="1466" y="854">Drive Roller</text>
+    <circle cx="1444" cy="894" r="6" fill="#EA580C"/><text x="1466" y="902">Belt / Frame</text>
+    <circle cx="1444" cy="942" r="6" fill="#EA580C"/><text x="1466" y="950">Board / Assembly Station</text>
+  </g>
+
+  <!-- Physical process flow -->
+  <path d="M1410 1005 H520" fill="none" stroke="#0F766E" stroke-width="4" stroke-linecap="round" marker-end="url(#flow)"/>
+  <rect x="821" y="984" width="278" height="42" rx="21" fill="#ECFDF5" stroke="#99F6E4"/>
+  <text x="960" y="1012" text-anchor="middle" class="footer">기판 공급 → FR5 정밀 조립</text>
+</svg>
