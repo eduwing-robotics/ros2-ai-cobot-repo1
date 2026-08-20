@@ -1,0 +1,852 @@
+{
+  "schema_version": 2,
+  "source": "/home/hc/My project/Assets/RobotArm/PcbPickCoordinates.csv",
+  "status": "Unity-derived physical-scale candidate; validate on the printed board before robot execution",
+  "coordinate_convention": {
+    "origin": "geometric center of the physical PCB top surface",
+    "x": "Unity +X in the board plane",
+    "y": "Unity +Z in the board plane",
+    "z": "height above PCB top; nominal only",
+    "units": "mm"
+  },
+  "board": {
+    "name": "motherBoard",
+    "size_mm": {
+      "x": 139.0,
+      "y": 110.0
+    },
+    "unity_source_size_mm": {
+      "x": 140.0,
+      "y": 110.337
+    },
+    "unity_to_physical_scale": {
+      "x": 0.9928571428571429,
+      "y": 0.9969457208370719
+    }
+  },
+  "expected_robot_part_counts": {
+    "GPU": 1,
+    "HBM": 8,
+    "Power Module": 4,
+    "VRM": 5,
+    "Inductor": 2,
+    "SMD Capacitor": 5
+  },
+  "model_robot_part_counts": {
+    "HBM": 8,
+    "Inductor": 2,
+    "GPU": 1,
+    "SMD Capacitor": 5,
+    "VRM": 5,
+    "Power Module": 4
+  },
+  "count_mismatches": {},
+  "unresolved_required_parts": [],
+  "warnings": [
+    "XY values are scaled CAD candidates, not measured robot-base coordinates.",
+    "Top Z and nominal component heights must be checked with aligned depth/calipers.",
+    "Keep physical slot overrides until every regenerated slot is validated by TCP hover."
+  ],
+  "placements": [
+    {
+      "slot_id": "ai_gpu",
+      "part_id": "AI_GPU",
+      "recipe": "gpu",
+      "component_type": "GPU",
+      "source_name": "AI GPU",
+      "center_board_mm": {
+        "x": 0.0,
+        "y": 0.0004984728604138323
+      },
+      "top_z_mm_nominal": 9.839,
+      "long_axis_deg_in_board": 90.0,
+      "rotation_y_deg_unity": 0.0,
+      "nominal_size_mm": {
+        "x": 29.504338571428573,
+        "y": 56.93208080698224,
+        "height": 6.6383
+      },
+      "model_local_size_mm": {
+        "x": 29.7166,
+        "y": 57.1065,
+        "height": 6.6383
+      },
+      "unity_export": {
+        "board_x_from_min_mm": 70.0,
+        "board_y_from_min_mm": 55.169,
+        "board_z_from_top_mm": 9.839,
+        "world_x_m": 0.0,
+        "world_y_m": 0.009839,
+        "world_z_m": 0.0
+      }
+    },
+    {
+      "slot_id": "hbm_01",
+      "part_id": "HBM_01",
+      "recipe": "hbm",
+      "component_type": "HBM",
+      "source_name": "HBM 01",
+      "center_board_mm": {
+        "x": -23.82857142857143,
+        "y": -24.424671687647844
+      },
+      "top_z_mm_nominal": 13.008,
+      "long_axis_deg_in_board": 90.0,
+      "rotation_y_deg_unity": 0.0,
+      "nominal_size_mm": {
+        "x": 10.17341,
+        "y": 14.266293265178499,
+        "height": 9.8151
+      },
+      "model_local_size_mm": {
+        "x": 10.2466,
+        "y": 14.31,
+        "height": 9.8151
+      },
+      "unity_export": {
+        "board_x_from_min_mm": 46.0,
+        "board_y_from_min_mm": 30.669,
+        "board_z_from_top_mm": 13.008,
+        "world_x_m": -0.024,
+        "world_y_m": 0.013008,
+        "world_z_m": -0.0245
+      }
+    },
+    {
+      "slot_id": "hbm_02",
+      "part_id": "HBM_02",
+      "recipe": "hbm",
+      "component_type": "HBM",
+      "source_name": "HBM 02",
+      "center_board_mm": {
+        "x": -23.82857142857143,
+        "y": -8.27415101008728
+      },
+      "top_z_mm_nominal": 13.008,
+      "long_axis_deg_in_board": 90.0,
+      "rotation_y_deg_unity": 0.0,
+      "nominal_size_mm": {
+        "x": 10.17341,
+        "y": 14.266293265178499,
+        "height": 9.8151
+      },
+      "model_local_size_mm": {
+        "x": 10.2466,
+        "y": 14.31,
+        "height": 9.8151
+      },
+      "unity_export": {
+        "board_x_from_min_mm": 46.0,
+        "board_y_from_min_mm": 46.869,
+        "board_z_from_top_mm": 13.008,
+        "world_x_m": -0.024,
+        "world_y_m": 0.013008,
+        "world_z_m": -0.0083
+      }
+    },
+    {
+      "slot_id": "hbm_03",
+      "part_id": "HBM_03",
+      "recipe": "hbm",
+      "component_type": "HBM",
+      "source_name": "HBM 03",
+      "center_board_mm": {
+        "x": -23.82857142857143,
+        "y": 8.175453383724406
+      },
+      "top_z_mm_nominal": 13.008,
+      "long_axis_deg_in_board": 90.0,
+      "rotation_y_deg_unity": 0.0,
+      "nominal_size_mm": {
+        "x": 10.17341,
+        "y": 14.266293265178499,
+        "height": 9.8151
+      },
+      "model_local_size_mm": {
+        "x": 10.2466,
+        "y": 14.31,
+        "height": 9.8151
+      },
+      "unity_export": {
+        "board_x_from_min_mm": 46.0,
+        "board_y_from_min_mm": 63.369,
+        "board_z_from_top_mm": 13.008,
+        "world_x_m": -0.024,
+        "world_y_m": 0.013008,
+        "world_z_m": 0.0082
+      }
+    },
+    {
+      "slot_id": "hbm_04",
+      "part_id": "HBM_04",
+      "recipe": "hbm",
+      "component_type": "HBM",
+      "source_name": "HBM 04",
+      "center_board_mm": {
+        "x": -23.82857142857143,
+        "y": 24.026890345033856
+      },
+      "top_z_mm_nominal": 13.008,
+      "long_axis_deg_in_board": 90.0,
+      "rotation_y_deg_unity": 0.0,
+      "nominal_size_mm": {
+        "x": 10.17341,
+        "y": 14.266293265178499,
+        "height": 9.8151
+      },
+      "model_local_size_mm": {
+        "x": 10.2466,
+        "y": 14.31,
+        "height": 9.8151
+      },
+      "unity_export": {
+        "board_x_from_min_mm": 46.0,
+        "board_y_from_min_mm": 79.269,
+        "board_z_from_top_mm": 13.008,
+        "world_x_m": -0.024,
+        "world_y_m": 0.013008,
+        "world_z_m": 0.0241
+      }
+    },
+    {
+      "slot_id": "hbm_05",
+      "part_id": "HBM_05",
+      "recipe": "hbm",
+      "component_type": "HBM",
+      "source_name": "HBM 05",
+      "center_board_mm": {
+        "x": 23.53071428571429,
+        "y": -24.424671687647844
+      },
+      "top_z_mm_nominal": 13.008,
+      "long_axis_deg_in_board": 90.0,
+      "rotation_y_deg_unity": 0.0,
+      "nominal_size_mm": {
+        "x": 10.17341,
+        "y": 14.266293265178499,
+        "height": 9.8151
+      },
+      "model_local_size_mm": {
+        "x": 10.2466,
+        "y": 14.31,
+        "height": 9.8151
+      },
+      "unity_export": {
+        "board_x_from_min_mm": 93.7,
+        "board_y_from_min_mm": 30.669,
+        "board_z_from_top_mm": 13.008,
+        "world_x_m": 0.0237,
+        "world_y_m": 0.013008,
+        "world_z_m": -0.0245
+      }
+    },
+    {
+      "slot_id": "hbm_06",
+      "part_id": "HBM_06",
+      "recipe": "hbm",
+      "component_type": "HBM",
+      "source_name": "HBM 06",
+      "center_board_mm": {
+        "x": 23.53071428571429,
+        "y": -8.27415101008728
+      },
+      "top_z_mm_nominal": 13.008,
+      "long_axis_deg_in_board": 90.0,
+      "rotation_y_deg_unity": 0.0,
+      "nominal_size_mm": {
+        "x": 10.17341,
+        "y": 14.266293265178499,
+        "height": 9.8151
+      },
+      "model_local_size_mm": {
+        "x": 10.2466,
+        "y": 14.31,
+        "height": 9.8151
+      },
+      "unity_export": {
+        "board_x_from_min_mm": 93.7,
+        "board_y_from_min_mm": 46.869,
+        "board_z_from_top_mm": 13.008,
+        "world_x_m": 0.0237,
+        "world_y_m": 0.013008,
+        "world_z_m": -0.0083
+      }
+    },
+    {
+      "slot_id": "hbm_07",
+      "part_id": "HBM_07",
+      "recipe": "hbm",
+      "component_type": "HBM",
+      "source_name": "HBM 07",
+      "center_board_mm": {
+        "x": 23.53071428571429,
+        "y": 8.175453383724406
+      },
+      "top_z_mm_nominal": 13.008,
+      "long_axis_deg_in_board": 90.0,
+      "rotation_y_deg_unity": 0.0,
+      "nominal_size_mm": {
+        "x": 10.17341,
+        "y": 14.266293265178499,
+        "height": 9.8151
+      },
+      "model_local_size_mm": {
+        "x": 10.2466,
+        "y": 14.31,
+        "height": 9.8151
+      },
+      "unity_export": {
+        "board_x_from_min_mm": 93.7,
+        "board_y_from_min_mm": 63.369,
+        "board_z_from_top_mm": 13.008,
+        "world_x_m": 0.0237,
+        "world_y_m": 0.013008,
+        "world_z_m": 0.0082
+      }
+    },
+    {
+      "slot_id": "hbm_08",
+      "part_id": "HBM_08",
+      "recipe": "hbm",
+      "component_type": "HBM",
+      "source_name": "HBM 08",
+      "center_board_mm": {
+        "x": 23.53071428571429,
+        "y": 24.026890345033856
+      },
+      "top_z_mm_nominal": 13.008,
+      "long_axis_deg_in_board": 90.0,
+      "rotation_y_deg_unity": 0.0,
+      "nominal_size_mm": {
+        "x": 10.17341,
+        "y": 14.266293265178499,
+        "height": 9.8151
+      },
+      "model_local_size_mm": {
+        "x": 10.2466,
+        "y": 14.31,
+        "height": 9.8151
+      },
+      "unity_export": {
+        "board_x_from_min_mm": 93.7,
+        "board_y_from_min_mm": 79.269,
+        "board_z_from_top_mm": 13.008,
+        "world_x_m": 0.0237,
+        "world_y_m": 0.013008,
+        "world_z_m": 0.0241
+      }
+    },
+    {
+      "slot_id": "inductor_01",
+      "part_id": "Inductor_01",
+      "recipe": "right_white_black",
+      "component_type": "Inductor",
+      "source_name": "Inductor 01",
+      "center_board_mm": {
+        "x": -59.67369285714286,
+        "y": 32.87179278030035
+      },
+      "top_z_mm_nominal": 9.721,
+      "long_axis_deg_in_board": 0.0,
+      "rotation_y_deg_unity": 0.0,
+      "nominal_size_mm": {
+        "x": 9.30168142857143,
+        "y": 9.339985680234193,
+        "height": 8.5222
+      },
+      "model_local_size_mm": {
+        "x": 9.3686,
+        "y": 9.3686,
+        "height": 8.5222
+      },
+      "unity_export": {
+        "board_x_from_min_mm": 9.897,
+        "board_y_from_min_mm": 88.141,
+        "board_z_from_top_mm": 9.721,
+        "world_x_m": -0.060103,
+        "world_y_m": 0.009721,
+        "world_z_m": 0.032972
+      }
+    },
+    {
+      "slot_id": "inductor_02",
+      "part_id": "Inductor_02",
+      "recipe": "right_white_black",
+      "component_type": "Inductor",
+      "source_name": "Inductor 02",
+      "center_board_mm": {
+        "x": -59.67369285714286,
+        "y": 44.2967907410932
+      },
+      "top_z_mm_nominal": 9.721,
+      "long_axis_deg_in_board": 0.0,
+      "rotation_y_deg_unity": 0.0,
+      "nominal_size_mm": {
+        "x": 9.30168142857143,
+        "y": 9.339985680234193,
+        "height": 8.5222
+      },
+      "model_local_size_mm": {
+        "x": 9.3686,
+        "y": 9.3686,
+        "height": 8.5222
+      },
+      "unity_export": {
+        "board_x_from_min_mm": 9.897,
+        "board_y_from_min_mm": 99.601,
+        "board_z_from_top_mm": 9.721,
+        "world_x_m": -0.060103,
+        "world_y_m": 0.009721,
+        "world_z_m": 0.044432
+      }
+    },
+    {
+      "slot_id": "power_module_01",
+      "part_id": "Power_Module_01",
+      "recipe": "long_orange",
+      "component_type": "Power Module",
+      "source_name": "Power Module 01",
+      "center_board_mm": {
+        "x": 47.14681428571429,
+        "y": 0.31054859204074314
+      },
+      "top_z_mm_nominal": 5.992,
+      "long_axis_deg_in_board": 90.0,
+      "rotation_y_deg_unity": 0.0,
+      "nominal_size_mm": {
+        "x": 12.043357142857143,
+        "y": 59.80587654186719,
+        "height": 4.7848
+      },
+      "model_local_size_mm": {
+        "x": 12.13,
+        "y": 59.9891,
+        "height": 4.7848
+      },
+      "unity_export": {
+        "board_x_from_min_mm": 117.486,
+        "board_y_from_min_mm": 55.48,
+        "board_z_from_top_mm": 5.992,
+        "world_x_m": 0.047486,
+        "world_y_m": 0.005992,
+        "world_z_m": 0.000311
+      }
+    },
+    {
+      "slot_id": "power_module_02",
+      "part_id": "Power_Module_02",
+      "recipe": "long_orange",
+      "component_type": "Power Module",
+      "source_name": "Power Module 02",
+      "center_board_mm": {
+        "x": -46.584857142857146,
+        "y": 0.31054859204074314
+      },
+      "top_z_mm_nominal": 5.992,
+      "long_axis_deg_in_board": 90.0,
+      "rotation_y_deg_unity": 0.0,
+      "nominal_size_mm": {
+        "x": 12.043357142857143,
+        "y": 59.80587654186719,
+        "height": 4.7848
+      },
+      "model_local_size_mm": {
+        "x": 12.13,
+        "y": 59.9891,
+        "height": 4.7848
+      },
+      "unity_export": {
+        "board_x_from_min_mm": 23.08,
+        "board_y_from_min_mm": 55.48,
+        "board_z_from_top_mm": 5.992,
+        "world_x_m": -0.04692,
+        "world_y_m": 0.005992,
+        "world_z_m": 0.000311
+      }
+    },
+    {
+      "slot_id": "power_module_03",
+      "part_id": "Power_Module_03",
+      "recipe": "long_orange",
+      "component_type": "Power Module",
+      "source_name": "Power Module 03",
+      "center_board_mm": {
+        "x": 0.13999285714286244,
+        "y": -43.896018561316694
+      },
+      "top_z_mm_nominal": 5.992,
+      "long_axis_deg_in_board": 0.0,
+      "rotation_y_deg_unity": 90.0,
+      "nominal_size_mm": {
+        "x": 59.56060642857143,
+        "y": 12.092951593753682,
+        "height": 4.7848
+      },
+      "model_local_size_mm": {
+        "x": 12.13,
+        "y": 59.9891,
+        "height": 4.7848
+      },
+      "unity_export": {
+        "board_x_from_min_mm": 70.141,
+        "board_y_from_min_mm": 11.138,
+        "board_z_from_top_mm": 5.992,
+        "world_x_m": 0.000141,
+        "world_y_m": 0.005992,
+        "world_z_m": -0.044031
+      }
+    },
+    {
+      "slot_id": "power_module_04",
+      "part_id": "Power_Module_04",
+      "recipe": "long_orange",
+      "component_type": "Power Module",
+      "source_name": "Power Module 04",
+      "center_board_mm": {
+        "x": 0.13999285714286244,
+        "y": 43.73551030026192
+      },
+      "top_z_mm_nominal": 5.992,
+      "long_axis_deg_in_board": 0.0,
+      "rotation_y_deg_unity": 90.0,
+      "nominal_size_mm": {
+        "x": 59.56060642857143,
+        "y": 12.092951593753682,
+        "height": 4.7848
+      },
+      "model_local_size_mm": {
+        "x": 12.13,
+        "y": 59.9891,
+        "height": 4.7848
+      },
+      "unity_export": {
+        "board_x_from_min_mm": 70.141,
+        "board_y_from_min_mm": 99.038,
+        "board_z_from_top_mm": 5.992,
+        "world_x_m": 0.000141,
+        "world_y_m": 0.005992,
+        "world_z_m": 0.043869
+      }
+    },
+    {
+      "slot_id": "smd_capacitor_01",
+      "part_id": "SMD_Capacitor_01",
+      "recipe": "right_white_brown",
+      "component_type": "SMD Capacitor",
+      "source_name": "SMD Capacitor 01",
+      "center_board_mm": {
+        "x": -60.76285714285715,
+        "y": 17.912622239140084
+      },
+      "top_z_mm_nominal": 4.229,
+      "long_axis_deg_in_board": 90.0,
+      "rotation_y_deg_unity": 0.0,
+      "nominal_size_mm": {
+        "x": 3.808699285714286,
+        "y": 6.780526931129177,
+        "height": 3.0238
+      },
+      "model_local_size_mm": {
+        "x": 3.8361,
+        "y": 6.8013,
+        "height": 3.0238
+      },
+      "unity_export": {
+        "board_x_from_min_mm": 8.8,
+        "board_y_from_min_mm": 73.136,
+        "board_z_from_top_mm": 4.229,
+        "world_x_m": -0.0612,
+        "world_y_m": 0.004229,
+        "world_z_m": 0.017967
+      }
+    },
+    {
+      "slot_id": "smd_capacitor_02",
+      "part_id": "SMD_Capacitor_02",
+      "recipe": "right_white_brown",
+      "component_type": "SMD Capacitor",
+      "source_name": "SMD Capacitor 02",
+      "center_board_mm": {
+        "x": -60.76285714285715,
+        "y": 0.5627758594125224
+      },
+      "top_z_mm_nominal": 4.229,
+      "long_axis_deg_in_board": 90.0,
+      "rotation_y_deg_unity": 0.0,
+      "nominal_size_mm": {
+        "x": 3.808699285714286,
+        "y": 6.780526931129177,
+        "height": 3.0238
+      },
+      "model_local_size_mm": {
+        "x": 3.8361,
+        "y": 6.8013,
+        "height": 3.0238
+      },
+      "unity_export": {
+        "board_x_from_min_mm": 8.8,
+        "board_y_from_min_mm": 55.733,
+        "board_z_from_top_mm": 4.229,
+        "world_x_m": -0.0612,
+        "world_y_m": 0.004229,
+        "world_z_m": 0.000564
+      }
+    },
+    {
+      "slot_id": "smd_capacitor_03",
+      "part_id": "SMD_Capacitor_03",
+      "recipe": "right_white_brown",
+      "component_type": "SMD Capacitor",
+      "source_name": "SMD Capacitor 03",
+      "center_board_mm": {
+        "x": -60.76285714285715,
+        "y": -16.185912250650283
+      },
+      "top_z_mm_nominal": 4.229,
+      "long_axis_deg_in_board": 90.0,
+      "rotation_y_deg_unity": 0.0,
+      "nominal_size_mm": {
+        "x": 3.808699285714286,
+        "y": 6.780526931129177,
+        "height": 3.0238
+      },
+      "model_local_size_mm": {
+        "x": 3.8361,
+        "y": 6.8013,
+        "height": 3.0238
+      },
+      "unity_export": {
+        "board_x_from_min_mm": 8.8,
+        "board_y_from_min_mm": 38.933,
+        "board_z_from_top_mm": 4.229,
+        "world_x_m": -0.0612,
+        "world_y_m": 0.004229,
+        "world_z_m": -0.016236
+      }
+    },
+    {
+      "slot_id": "smd_capacitor_04",
+      "part_id": "SMD_Capacitor_04",
+      "recipe": "right_white_brown",
+      "component_type": "SMD Capacitor",
+      "source_name": "SMD Capacitor 04",
+      "center_board_mm": {
+        "x": -60.76285714285715,
+        "y": -33.43307322113162
+      },
+      "top_z_mm_nominal": 4.229,
+      "long_axis_deg_in_board": 90.0,
+      "rotation_y_deg_unity": 0.0,
+      "nominal_size_mm": {
+        "x": 3.808699285714286,
+        "y": 6.780526931129177,
+        "height": 3.0238
+      },
+      "model_local_size_mm": {
+        "x": 3.8361,
+        "y": 6.8013,
+        "height": 3.0238
+      },
+      "unity_export": {
+        "board_x_from_min_mm": 8.8,
+        "board_y_from_min_mm": 21.633,
+        "board_z_from_top_mm": 4.229,
+        "world_x_m": -0.0612,
+        "world_y_m": 0.004229,
+        "world_z_m": -0.033536
+      }
+    },
+    {
+      "slot_id": "smd_capacitor_05",
+      "part_id": "SMD_Capacitor_05",
+      "recipe": "right_white_brown",
+      "component_type": "SMD Capacitor",
+      "source_name": "SMD Capacitor 05",
+      "center_board_mm": {
+        "x": -41.63447142857143,
+        "y": 39.18545003036153
+      },
+      "top_z_mm_nominal": 4.228,
+      "long_axis_deg_in_board": 0.0,
+      "rotation_y_deg_unity": 90.0,
+      "nominal_size_mm": {
+        "x": 6.752719285714286,
+        "y": 3.8243834797030916,
+        "height": 3.0238
+      },
+      "model_local_size_mm": {
+        "x": 3.8361,
+        "y": 6.8013,
+        "height": 3.0238
+      },
+      "unity_export": {
+        "board_x_from_min_mm": 28.066,
+        "board_y_from_min_mm": 94.474,
+        "board_z_from_top_mm": 4.228,
+        "world_x_m": -0.041934,
+        "world_y_m": 0.004228,
+        "world_z_m": 0.039305
+      }
+    },
+    {
+      "slot_id": "vrm_01",
+      "part_id": "VRM_01",
+      "recipe": "left_black_block",
+      "component_type": "VRM",
+      "source_name": "VRM 01",
+      "center_board_mm": {
+        "x": 61.07064285714285,
+        "y": -36.348142508859226
+      },
+      "top_z_mm_nominal": 6.401,
+      "long_axis_deg_in_board": 90.0,
+      "rotation_y_deg_unity": 0.0,
+      "nominal_size_mm": {
+        "x": 10.92142857142857,
+        "y": 13.957240091719006,
+        "height": 5.2025
+      },
+      "model_local_size_mm": {
+        "x": 11.0,
+        "y": 14.0,
+        "height": 5.2025
+      },
+      "unity_export": {
+        "board_x_from_min_mm": 131.51,
+        "board_y_from_min_mm": 18.709,
+        "board_z_from_top_mm": 6.401,
+        "world_x_m": 0.06151,
+        "world_y_m": 0.006401,
+        "world_z_m": -0.03646
+      }
+    },
+    {
+      "slot_id": "vrm_02",
+      "part_id": "VRM_02",
+      "recipe": "left_black_block",
+      "component_type": "VRM",
+      "source_name": "VRM 02",
+      "center_board_mm": {
+        "x": 61.07064285714285,
+        "y": -18.14391364637429
+      },
+      "top_z_mm_nominal": 6.401,
+      "long_axis_deg_in_board": 90.0,
+      "rotation_y_deg_unity": 0.0,
+      "nominal_size_mm": {
+        "x": 10.92142857142857,
+        "y": 13.957240091719006,
+        "height": 5.2025
+      },
+      "model_local_size_mm": {
+        "x": 11.0,
+        "y": 14.0,
+        "height": 5.2025
+      },
+      "unity_export": {
+        "board_x_from_min_mm": 131.51,
+        "board_y_from_min_mm": 36.969,
+        "board_z_from_top_mm": 6.401,
+        "world_x_m": 0.06151,
+        "world_y_m": 0.006401,
+        "world_z_m": -0.0182
+      }
+    },
+    {
+      "slot_id": "vrm_03",
+      "part_id": "VRM_03",
+      "recipe": "left_black_block",
+      "component_type": "VRM",
+      "source_name": "VRM 03",
+      "center_board_mm": {
+        "x": 61.07064285714285,
+        "y": -0.1988906713069963
+      },
+      "top_z_mm_nominal": 6.401,
+      "long_axis_deg_in_board": 90.0,
+      "rotation_y_deg_unity": 0.0,
+      "nominal_size_mm": {
+        "x": 10.92142857142857,
+        "y": 13.957240091719006,
+        "height": 5.2025
+      },
+      "model_local_size_mm": {
+        "x": 11.0,
+        "y": 14.0,
+        "height": 5.2025
+      },
+      "unity_export": {
+        "board_x_from_min_mm": 131.51,
+        "board_y_from_min_mm": 54.969,
+        "board_z_from_top_mm": 6.401,
+        "world_x_m": 0.06151,
+        "world_y_m": 0.006401,
+        "world_z_m": -0.0002
+      }
+    },
+    {
+      "slot_id": "vrm_04",
+      "part_id": "VRM_04",
+      "recipe": "left_black_block",
+      "component_type": "VRM",
+      "source_name": "VRM 04",
+      "center_board_mm": {
+        "x": 61.07064285714285,
+        "y": 18.005338191177934
+      },
+      "top_z_mm_nominal": 6.401,
+      "long_axis_deg_in_board": 90.0,
+      "rotation_y_deg_unity": 0.0,
+      "nominal_size_mm": {
+        "x": 10.92142857142857,
+        "y": 13.957240091719006,
+        "height": 5.2025
+      },
+      "model_local_size_mm": {
+        "x": 11.0,
+        "y": 14.0,
+        "height": 5.2025
+      },
+      "unity_export": {
+        "board_x_from_min_mm": 131.51,
+        "board_y_from_min_mm": 73.229,
+        "board_z_from_top_mm": 6.401,
+        "world_x_m": 0.06151,
+        "world_y_m": 0.006401,
+        "world_z_m": 0.01806
+      }
+    },
+    {
+      "slot_id": "vrm_05",
+      "part_id": "VRM_05",
+      "recipe": "left_black_block",
+      "component_type": "VRM",
+      "source_name": "VRM 05",
+      "center_board_mm": {
+        "x": 61.07064285714285,
+        "y": 36.48871185549725
+      },
+      "top_z_mm_nominal": 6.401,
+      "long_axis_deg_in_board": 90.0,
+      "rotation_y_deg_unity": 0.0,
+      "nominal_size_mm": {
+        "x": 10.92142857142857,
+        "y": 13.957240091719006,
+        "height": 5.2025
+      },
+      "model_local_size_mm": {
+        "x": 11.0,
+        "y": 14.0,
+        "height": 5.2025
+      },
+      "unity_export": {
+        "board_x_from_min_mm": 131.51,
+        "board_y_from_min_mm": 91.769,
+        "board_z_from_top_mm": 6.401,
+        "world_x_m": 0.06151,
+        "world_y_m": 0.006401,
+        "world_z_m": 0.0366
+      }
+    }
+  ]
+}

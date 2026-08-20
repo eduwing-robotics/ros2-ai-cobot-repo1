@@ -1,0 +1,11 @@
+path: dataset
+train: images/train
+val: images/val
+
+names:
+  0: gpu
+  1: hbm
+  2: black_block
+  3: cap_small
+  4: marked_white
+  5: long_orange

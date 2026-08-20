@@ -1,0 +1,59 @@
+conveyor_roi:
+  image_topic: /camera2/image_raw/compressed
+  annotated_topic: /vision/conveyor/stop_image/compressed
+  jpeg_quality: 90
+
+  # Image travel direction is left -> right. The TurtleBot wheel command used
+  # to produce this physical direction is negative_x and is configured in the
+  # motion wrapper, not here.
+  #
+  # Both lines use the PCB trailing edge. Positions are normalized (0.0-1.0)
+  # so they can be tuned after the final conveyor and S22 mounts are installed.
+  stop_lines:
+    assembly:
+      axis: x
+      # Current tilted S22 pose: empty PCB body trailing edge ~= 565.94 px.
+      position: 0.29491513
+      span_start: 0.24
+      span_end: 0.86
+    inspection:
+      axis: x
+      # Current tilted S22 pose: assembled PCB body trailing edge ~= 1344 px.
+      position: 0.70036477
+      span_start: 0.24
+      span_end: 0.86
+
+  # The two stations must have room for one complete PCB plus clearance between
+  # their trailing-edge stop poses. If the observed PCB is too long for the
+  # configured spacing, stop_line_ready becomes false and motion is inhibited.
+  station_spacing:
+    minimum_normalized_separation: 0.25
+    minimum_board_lengths: 1.10
+    minimum_clearance_px: 20
+
+  board_detection:
+    travel_direction: positive_x
+    # Wide search range allows one PCB at each stop line to be tracked at once.
+    search_x_start: 0.02
+    search_x_end: 0.98
+    # Fixed S22 conveyor belt band. Excluding the workspace above/below the
+    # belt prevents the TurtleBot body, tripod, tools, and table objects from
+    # being classified as PCBs.
+    search_y_start: 0.42
+    search_y_end: 0.76
+    dark_threshold: 105
+    close_kernel_px: 13
+    min_area_fraction: 0.03
+    max_area_fraction: 0.30
+    min_aspect_ratio: 1.25
+    max_aspect_ratio: 1.90
+    min_rectangularity: 0.78
+    # Ignore the narrow fixture grip tab when estimating the PCB body centre.
+    body_span_ratio: 0.68
+    # The latest-frame USB camera path and strict belt/shape filters make a
+    # single crossing frame reliable. Waiting for five frames visibly delayed
+    # the stop after the board edge had already crossed the line.
+    stable_crossing_frames: 1
+    rearm_upstream_frames: 5
+    rearm_margin_px: 30
+    reset_missing_frames: 15

@@ -1,0 +1,13 @@
+target_type: charuco
+dictionary: DICT_5X5_50
+squares_x: 5
+squares_y: 7
+square_length_m: 0.0336
+marker_length_m: 0.0168
+image_topic: /camera/camera/color/image_raw/compressed
+camera_info_topic: /camera/camera/color/camera_info
+robot_state_topic: /nonrt_state_data
+tcp_target_correction_tool_mm:
+  x: 0.0
+  y: 0.0
+  z: 0.0

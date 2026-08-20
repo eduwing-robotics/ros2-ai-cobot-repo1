@@ -1,0 +1,13 @@
+{
+  "status": "factory_camera_info_candidate_not_active",
+  "source": "D435 ROS CameraInfo at 1920x1080 used by the established active pipeline",
+  "image_width": 1920,
+  "image_height": 1080,
+  "camera_matrix": [
+    [1358.391845703125, 0.0, 966.632568359375],
+    [0.0, 1356.906982421875, 569.7604370117188],
+    [0.0, 0.0, 1.0]
+  ],
+  "distortion_model": "plumb_bob",
+  "distortion_coefficients": [0.0, 0.0, 0.0, 0.0, 0.0]
+}

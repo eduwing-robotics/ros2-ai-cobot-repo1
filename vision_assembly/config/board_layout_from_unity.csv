@@ -1,0 +1,26 @@
+slot_id,component_type,recipe,source_name,x_board_mm,y_board_mm,top_z_mm_nominal,long_axis_deg,rotation_y_deg_unity,size_x_mm,size_y_mm,height_mm_nominal
+ai_gpu,GPU,gpu,AI GPU,0.000,0.000,9.839,90.000,0.000,29.504,56.932,6.638
+hbm_01,HBM,hbm,HBM 01,-23.829,-24.425,13.008,90.000,0.000,10.173,14.266,9.815
+hbm_02,HBM,hbm,HBM 02,-23.829,-8.274,13.008,90.000,0.000,10.173,14.266,9.815
+hbm_03,HBM,hbm,HBM 03,-23.829,8.175,13.008,90.000,0.000,10.173,14.266,9.815
+hbm_04,HBM,hbm,HBM 04,-23.829,24.027,13.008,90.000,0.000,10.173,14.266,9.815
+hbm_05,HBM,hbm,HBM 05,23.531,-24.425,13.008,90.000,0.000,10.173,14.266,9.815
+hbm_06,HBM,hbm,HBM 06,23.531,-8.274,13.008,90.000,0.000,10.173,14.266,9.815
+hbm_07,HBM,hbm,HBM 07,23.531,8.175,13.008,90.000,0.000,10.173,14.266,9.815
+hbm_08,HBM,hbm,HBM 08,23.531,24.027,13.008,90.000,0.000,10.173,14.266,9.815
+inductor_01,Inductor,right_white_black,Inductor 01,-59.674,32.872,9.721,0.000,0.000,9.302,9.340,8.522
+inductor_02,Inductor,right_white_black,Inductor 02,-59.674,44.297,9.721,0.000,0.000,9.302,9.340,8.522
+power_module_01,Power Module,long_orange,Power Module 01,47.147,0.311,5.992,90.000,0.000,12.043,59.806,4.785
+power_module_02,Power Module,long_orange,Power Module 02,-46.585,0.311,5.992,90.000,0.000,12.043,59.806,4.785
+power_module_03,Power Module,long_orange,Power Module 03,0.140,-43.896,5.992,0.000,90.000,59.561,12.093,4.785
+power_module_04,Power Module,long_orange,Power Module 04,0.140,43.736,5.992,0.000,90.000,59.561,12.093,4.785
+smd_capacitor_01,SMD Capacitor,right_white_brown,SMD Capacitor 01,-60.763,17.913,4.229,90.000,0.000,3.809,6.781,3.024
+smd_capacitor_02,SMD Capacitor,right_white_brown,SMD Capacitor 02,-60.763,0.563,4.229,90.000,0.000,3.809,6.781,3.024
+smd_capacitor_03,SMD Capacitor,right_white_brown,SMD Capacitor 03,-60.763,-16.186,4.229,90.000,0.000,3.809,6.781,3.024
+smd_capacitor_04,SMD Capacitor,right_white_brown,SMD Capacitor 04,-60.763,-33.433,4.229,90.000,0.000,3.809,6.781,3.024
+smd_capacitor_05,SMD Capacitor,right_white_brown,SMD Capacitor 05,-41.634,39.185,4.228,0.000,90.000,6.753,3.824,3.024
+vrm_01,VRM,left_black_block,VRM 01,61.071,-36.348,6.401,90.000,0.000,10.921,13.957,5.202
+vrm_02,VRM,left_black_block,VRM 02,61.071,-18.144,6.401,90.000,0.000,10.921,13.957,5.202
+vrm_03,VRM,left_black_block,VRM 03,61.071,-0.199,6.401,90.000,0.000,10.921,13.957,5.202
+vrm_04,VRM,left_black_block,VRM 04,61.071,18.005,6.401,90.000,0.000,10.921,13.957,5.202
+vrm_05,VRM,left_black_block,VRM 05,61.071,36.489,6.401,90.000,0.000,10.921,13.957,5.202
