@@ -1,6 +1,7 @@
 {
   "schema_version": 2,
   "source": "/home/hc/My project/Assets/RobotArm/PcbPickCoordinates.csv",
+  "fixture_layout": "vision_assembly/config/fixture_layout.json",
   "status": "Unity-derived physical-scale candidate; validate on the printed board before robot execution",
   "coordinate_convention": {
     "origin": "geometric center of the physical PCB top surface",

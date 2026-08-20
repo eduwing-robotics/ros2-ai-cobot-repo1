@@ -8,6 +8,7 @@
     "y": 110.0
   },
   "source": "/home/hc/My project/Assets/RobotArm/PcbPickCoordinates.csv",
+  "fixture_layout": "vision_assembly/config/fixture_layout.json",
   "status": "Unity-derived physical-scale candidate; re-register after final fixture and S22 installation",
   "component_types": {
     "GPU": {

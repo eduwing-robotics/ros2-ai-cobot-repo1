@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "name": "pcb_fixture_cube001",
+  "source": "/home/hc/My project/Assets/RobotArm/Fixture/Cube.001.fbx",
+  "source_scene": "/home/hc/My project/Assets/Scenes/PcbAssemblyScene.unity",
+  "status": "Unity-derived fixture reference; verify against the manufactured fixture before robot execution",
+  "units": "mm",
+  "coordinate_frame": {
+    "name": "board_center",
+    "origin": "geometric center of the PCB top surface",
+    "x": "board width direction; Unity +X",
+    "y": "board depth direction; Unity +Z; fixture handle points toward +Y",
+    "z": "upward from the PCB top surface; Unity +Y"
+  },
+  "board": {
+    "size_mm": {
+      "x": 139.0,
+      "y": 110.0
+    },
+    "fixture_seating": "fixture broad upper support surface is aligned with the PCB underside",
+    "board_pose_rule": "the four inner PCB mounting holes are concentric with the four fixture pins"
+  },
+  "fixture": {
+    "asset_name": "Cube.001.fbx",
+    "nominal_outer_size_mm": {
+      "x": 85.29513,
+      "y": 124.82180
+    },
+    "handle_direction": "board +Y / north",
+    "pin_pattern": {
+      "count": 4,
+      "pattern_center_board_mm": [0.0, 0.0],
+      "spacing_mm": {
+        "x": 70.49,
+        "y": 99.14
+      },
+      "centers_board_mm": [
+        [-35.245, -49.57],
+        [-35.245, 49.57],
+        [35.245, -49.57],
+        [35.245, 49.57]
+      ],
+      "purpose": "registration pins into the inner four PCB mounting holes"
+    },
+    "alignment_from_unity": {
+      "pin_pattern_center_x_ratio_of_fixture_bounds": 0.00375,
+      "pin_pattern_center_y_ratio_of_fixture_bounds": 0.06061,
+      "rotation_rule": "rotate the FBX so its thin axis is Unity +Y, then orient the handle toward board +Y",
+      "support_surface_height_mm": null,
+      "support_surface_note": "computed from fixture mesh in Unity; measure the printed fixture before descent"
+    }
+  },
+  "robot_use": {
+    "target_coordinates_reference": "vision_assembly/config/board_layout_from_unity.json",
+    "transform_rule": "detect the physical board pose, then apply board-relative part coordinates; do not use fixture coordinates as robot-base coordinates",
+    "collision_rule": "keep the gripper and part above the board target until board pose and fixture seating are validated",
+    "absolute_robot_base_calibration_required": true
+  },
+  "verification_checklist": [
+    "Confirm the handle is on the board +Y/north side.",
+    "Confirm all four pins enter the inner four PCB holes without force.",
+    "Measure the actual pin spacing and board seating height.",
+    "Capture the board pose after the PCB is seated in the fixture.",
+    "Validate each placement slot with a TCP hover before lowering."
+  ]
+}

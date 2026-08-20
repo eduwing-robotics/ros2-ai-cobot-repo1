@@ -13,6 +13,8 @@
 - `config/board_layout_from_unity.json`: 전체 메타데이터와 안전 경고 포함.
 - `config/board_layout_from_unity.csv`: 슬롯 좌표 검토용 표.
 - `config/board_layout_from_unity.svg`: 평면 배치 검토 및 발표용 그림.
+- `config/fixture_layout.json`: 전체 Unity 프로젝트 없이 로봇이 사용할 지그의
+  기판 정렬, 4핀 위치, 손잡이 방향 및 검증 조건.
 
 ## 다시 생성
 
@@ -28,6 +30,11 @@ SMD Capacitor 5로 총 25개가 포함되어 있다. 이전 24개 export에서 �
 이 레이아웃은 CAD-derived candidate다. 실제 출력물 크기, 기판 frame 방향,
 부품 높이를 검증하기 전에는 FR5 실행 좌표로 사용하지 않는다. 배치 Z는 OBJ
 bounds만 믿지 않고 검출된 기판 평면, aligned depth, 실측 recipe 높이로 만든다.
+
+지그를 사용하는 경우 `fixture_layout.json`을 함께 확인한다. 지그는 기판
+좌표계의 원점과 방향을 정하는 기준이며, 지그 좌표를 로봇 Base 좌표로 직접
+사용하지 않는다. 실제 지그에 기판을 안착한 뒤 S22 또는 D435로 기판 pose를
+검출하고, 그 pose에 board-relative 부품 좌표를 적용한다.
 # Vision Assembly
 
 ## 빈 기판 좌표 dry-run

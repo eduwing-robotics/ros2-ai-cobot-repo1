@@ -14,6 +14,7 @@
     "y": 0.996941833034905
   },
   "origin": "geometric center of the physical board",
+  "fixture_layout": "vision_assembly/config/fixture_layout.json",
   "canonical_orientation": {
     "defined_from": "D435 reference image captured 2026-08-13 with empty board left and assembled board right",
     "visual_rule": "dense gold pad cluster at upper-right; asymmetric lower-right pad cluster",
