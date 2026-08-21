@@ -1,0 +1,4 @@
+/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_adapter/vision_interfaces:msg/Part.idl
+/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_adapter/vision_interfaces:msg/Detections.idl
+/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_adapter/vision_interfaces:msg/Inspection.idl
+/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_adapter/vision_interfaces:msg/VisionStatus.idl

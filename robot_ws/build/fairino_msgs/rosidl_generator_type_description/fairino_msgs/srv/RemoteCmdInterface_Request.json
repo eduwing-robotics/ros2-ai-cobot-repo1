@@ -1,0 +1,26 @@
+{
+  "type_description_msg": {
+    "type_description": {
+      "type_name": "fairino_msgs/srv/RemoteCmdInterface_Request",
+      "fields": [
+        {
+          "name": "cmd_str",
+          "type": {
+            "type_id": 17,
+            "capacity": 0,
+            "string_capacity": 0,
+            "nested_type_name": ""
+          },
+          "default_value": ""
+        }
+      ]
+    },
+    "referenced_type_descriptions": []
+  },
+  "type_hashes": [
+    {
+      "type_name": "fairino_msgs/srv/RemoteCmdInterface_Request",
+      "hash_string": "RIHS01_30bff1305f4150c10f851a2f61610d21177fa151a7c863f5c18d9e374aa40cc1"
+    }
+  ]
+}

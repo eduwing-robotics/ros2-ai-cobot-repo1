@@ -1,0 +1,40 @@
+// generated from rosidl_adapter/resource/msg.idl.em
+// with input from vision_interfaces/msg/Part.msg
+// generated code does not contain a copyright notice
+
+
+module vision_interfaces {
+  module msg {
+    struct Part {
+      string name;
+
+      int32 class_id;
+
+      float score;
+
+      int32 x;
+
+      int32 y;
+
+      int32 width;
+
+      int32 height;
+
+      float angle_deg;
+
+      boolean angle_valid;
+
+      float depth_m;
+
+      boolean depth_valid;
+
+      float camera_x_m;
+
+      float camera_y_m;
+
+      float camera_z_m;
+
+      boolean position_valid;
+    };
+  };
+};

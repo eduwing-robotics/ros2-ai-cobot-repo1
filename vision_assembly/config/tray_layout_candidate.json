@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "status": "validated_overlay_after_tape_removal",
+  "tray_id": "main_component_tray",
+  "observation_pose_id": "operator_saved_tray_overview",
+  "reference_image": "vision_assembly/data/tray_reference_no_tape.jpg",
+  "annotation_image": "vision_assembly/data/tray_sections_final.jpg",
+  "reference_image_size_px": {
+    "width": 1920,
+    "height": 1080
+  },
+  "reference_camera_profile": "1920x1080x15_rgb_with_aligned_depth_enabled",
+  "part_specs_file": "vision_assembly/config/part_specs_candidate.json",
+  "coordinate_convention": "pixel ROI is [x_min, y_min, x_max, y_max]; normalized ROI uses image width and height",
+  "warnings": [
+    "These ROIs were registered from taped physical dividers and rechecked after tape removal in a 1920x1080 RGB-D observation.",
+    "Validate repeated returns to the saved observation pose before computing grasp targets.",
+    "Do not use ROI centers as robot targets; detect each part and apply Camera-to-Base Hand-Eye transformation."
+  ],
+  "bins": [
+    {
+      "bin_id": "black_block_bin",
+      "part_type": "black_block",
+      "part_spec_id": "black_block",
+      "display_name": "VRM (전압 조정 모듈)",
+      "expected_count": 5,
+      "section_polygon_normalized": [[0.2708, 0.0648], [0.5068, 0.0648], [0.5068, 0.4259], [0.2708, 0.4259]],
+      "roi_px": [525, 75, 970, 455],
+      "roi_normalized": [0.2734, 0.0694, 0.5052, 0.4213],
+      "detector_hint": "dark_contour_on_light_background"
+    },
+    {
+      "bin_id": "long_orange_bin",
+      "part_type": "long_orange",
+      "part_spec_id": "long_orange",
+      "display_name": "Power Module (전원 모듈)",
+      "expected_count": 4,
+      "section_polygon_normalized": [[0.5068, 0.0648], [0.8083, 0.0648], [0.8083, 0.5157], [0.5068, 0.5157]],
+      "roi_px": [980, 75, 1545, 550],
+      "roi_normalized": [0.5104, 0.0694, 0.8047, 0.5093],
+      "detector_hint": "orange_hsv_and_rotated_rectangle"
+    },
+    {
+      "bin_id": "marked_white_bin",
+      "part_type": "marked_white",
+      "part_spec_id": "marked_white",
+      "display_name": "Inductor (인덕터)",
+      "expected_count": 2,
+      "section_polygon_normalized": [[0.2708, 0.4259], [0.3724, 0.4259], [0.3724, 0.6824], [0.2708, 0.6824]],
+      "roi_px": [525, 465, 710, 730],
+      "roi_normalized": [0.2734, 0.4306, 0.3698, 0.6759],
+      "detector_hint": "ring_or_marked_light_part"
+    },
+    {
+      "bin_id": "right_white_brown_bin",
+      "part_type": "right_white_brown",
+      "part_spec_id": "right_white_brown",
+      "display_name": "SMD Capacitor (SMD 커패시터)",
+      "expected_count": 5,
+      "section_polygon_normalized": [[0.3724, 0.4259], [0.5047, 0.4259], [0.5047, 0.6824], [0.3724, 0.6824]],
+      "roi_px": [720, 465, 960, 730],
+      "roi_normalized": [0.3750, 0.4306, 0.5000, 0.6759],
+      "detector_hint": "light_hsv_and_small_rotated_rectangle"
+    },
+    {
+      "bin_id": "gpu_bin",
+      "part_type": "gpu",
+      "part_spec_id": "gpu",
+      "display_name": "GPU",
+      "expected_count": 1,
+      "section_polygon_normalized": [[0.2708, 0.6824], [0.5286, 0.6824], [0.5286, 0.8981], [0.2708, 0.8981]],
+      "roi_px": [525, 745, 1005, 965],
+      "roi_normalized": [0.2734, 0.6898, 0.5234, 0.8935],
+      "detector_hint": "large_dark_rectangle_with_marking"
+    },
+    {
+      "bin_id": "hbm_bin",
+      "part_type": "hbm",
+      "part_spec_id": "hbm",
+      "display_name": "HBM",
+      "expected_count": 8,
+      "section_polygon_normalized": [[0.5286, 0.5157], [0.8083, 0.5157], [0.8083, 0.8981], [0.5286, 0.8981]],
+      "roi_px": [1025, 570, 1545, 965],
+      "roi_normalized": [0.5339, 0.5278, 0.8047, 0.8935],
+      "detector_hint": "dark_contour_on_light_background"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "package_name": "vision_interfaces",
+  "output_dir": "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_type_description/vision_interfaces",
+  "idl_tuples": [
+    "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_adapter/vision_interfaces:msg/Part.idl",
+    "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_adapter/vision_interfaces:msg/Detections.idl",
+    "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_adapter/vision_interfaces:msg/Inspection.idl",
+    "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_adapter/vision_interfaces:msg/VisionStatus.idl"
+  ],
+  "include_paths": [
+    "std_msgs:/opt/ros/jazzy/share/std_msgs",
+    "builtin_interfaces:/opt/ros/jazzy/share/builtin_interfaces"
+  ]
+}

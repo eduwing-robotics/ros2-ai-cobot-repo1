@@ -1,0 +1,3 @@
+[INFO] [1787222469.797931318] [tray_section_viewer]: Tray registration reference: /home/juchan-yoon/FR5_robot_control/vision_assembly/data/tray_reference_no_tape.jpg
+[INFO] [1787222469.798245833] [tray_section_viewer]: Reference features: 117; no robot commands are sent
+[INFO] [1787222469.840137554] [tray_section_viewer]: Tray state=TRACKING, matches=64, inliers=60

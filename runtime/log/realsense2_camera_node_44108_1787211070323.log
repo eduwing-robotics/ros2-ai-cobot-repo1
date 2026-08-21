@@ -1,0 +1,32 @@
+[INFO] [1787211070.368626143] [camera.camera]: RealSense ROS v4.58.1
+[INFO] [1787211070.368667028] [camera.camera]: Built with LibRealSense v2.58.1
+[INFO] [1787211070.368671854] [camera.camera]: Running with LibRealSense v2.58.1
+[INFO] [1787211070.452084762] [camera.camera]: Device with serial number 254622074096 was found.
+
+[INFO] [1787211070.452217957] [camera.camera]: Device with physical ID /sys/devices/pci0000:00/0000:00:14.0/usb2/2-4/2-4:1.0/video4linux/video0 was found.
+[INFO] [1787211070.452243309] [camera.camera]: Device with name Intel RealSense D435 was found.
+[INFO] [1787211070.452735348] [camera.camera]: Device with port number 2-4 was found.
+[INFO] [1787211070.452754410] [camera.camera]: Device USB type: 3.2
+[INFO] [1787211070.452768380] [camera.camera]: Resetting device...
+[INFO] [1787211072.465862455] [camera.camera]: Device with serial number 254622074096 was found.
+
+[INFO] [1787211072.465986987] [camera.camera]: Device with physical ID /sys/devices/pci0000:00/0000:00:14.0/usb2/2-4/2-4:1.0/video4linux/video0 was found.
+[INFO] [1787211072.466016914] [camera.camera]: Device with name Intel RealSense D435 was found.
+[INFO] [1787211072.466529220] [camera.camera]: Device with port number 2-4 was found.
+[INFO] [1787211072.466550625] [camera.camera]: Device USB type: 3.2
+[INFO] [1787211072.466693408] [camera.camera]: getParameters...
+[INFO] [1787211072.467711656] [camera.camera]: JSON file is not provided
+[INFO] [1787211072.467738184] [camera.camera]: Device Name: Intel RealSense D435
+[INFO] [1787211072.467752993] [camera.camera]: Device Serial No: 254622074096
+[INFO] [1787211072.467766651] [camera.camera]: Device physical port: /sys/devices/pci0000:00/0000:00:14.0/usb2/2-4/2-4:1.0/video4linux/video0
+[INFO] [1787211072.467783893] [camera.camera]: Device FW version: 5.17.0.10
+[INFO] [1787211072.467807295] [camera.camera]: Device Product ID: 0x0B07
+[INFO] [1787211072.467822592] [camera.camera]: Sync Mode: Off
+[INFO] [1787211072.565955202] [camera.camera]: Set ROS param depth_module.depth_profile to default: 848x480x30
+[INFO] [1787211072.566982004] [camera.camera]: Set ROS param depth_module.infra_profile to default: 848x480x30
+[WARN] [1787211072.575024616] [camera.camera]: re-enable the stream for the change to take effect.
+[INFO] [1787211072.578481396] [camera.camera]: Stopping Sensor: RGB Camera
+[INFO] [1787211072.590890260] [camera.camera]: Starting Sensor: RGB Camera
+[INFO] [1787211072.597845861] [camera.camera]: Open profile: stream_type: Color(0), Format: RGB8, Width: 1920, Height: 1080, FPS: 15
+[INFO] [1787211072.601503309] [camera.camera]: RealSense Node Is Up!
+[INFO] [1787211119.637097295] [rclcpp]: signal_handler(SIGINT/SIGTERM)

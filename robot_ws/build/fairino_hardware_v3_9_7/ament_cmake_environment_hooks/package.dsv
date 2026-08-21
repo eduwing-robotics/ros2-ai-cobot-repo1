@@ -1,0 +1,4 @@
+source;share/fairino_hardware_v3_9_7/local_setup.bash
+source;share/fairino_hardware_v3_9_7/local_setup.dsv
+source;share/fairino_hardware_v3_9_7/local_setup.sh
+source;share/fairino_hardware_v3_9_7/local_setup.zsh

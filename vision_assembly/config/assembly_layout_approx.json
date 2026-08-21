@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "name": "semiconductor_package_assembly_approximate_layout",
+  "coordinate_frame": "board_center",
+  "units": "mm",
+  "board_size_mm": {"x": 139.0, "y": 110.0},
+  "status": "approximate; re-register after final table and S22 installation",
+  "captured_image": "vision_assembly/data/all_parts_layout_raw.jpg",
+  "component_types": {
+    "GPU": {
+      "count": 1,
+      "slots": [
+        {"id": "gpu_01", "x_mm": 1.56, "y_mm": -0.32, "long_axis_board_deg": 0.0}
+      ]
+    },
+    "HBM": {
+      "count": 8,
+      "slots": [
+        {"id": "hbm_01", "x_mm": -23.83, "y_mm": -24.43, "long_axis_board_deg": 90.0},
+        {"id": "hbm_02", "x_mm": -23.83, "y_mm": -8.27, "long_axis_board_deg": 90.0},
+        {"id": "hbm_03", "x_mm": -23.83, "y_mm": 8.17, "long_axis_board_deg": 90.0},
+        {"id": "hbm_04", "x_mm": -23.83, "y_mm": 24.03, "long_axis_board_deg": 90.0},
+        {"id": "hbm_05", "x_mm": 23.53, "y_mm": -24.43, "long_axis_board_deg": 90.0},
+        {"id": "hbm_06", "x_mm": 23.53, "y_mm": -8.27, "long_axis_board_deg": 90.0},
+        {"id": "hbm_07", "x_mm": 23.53, "y_mm": 8.17, "long_axis_board_deg": 90.0},
+        {"id": "hbm_08", "x_mm": 23.53, "y_mm": 24.03, "long_axis_board_deg": 90.0}
+      ]
+    },
+    "Power Module": {
+      "count": 5,
+      "slots": [
+        {"id": "power_module_01", "x_mm": 61.07, "y_mm": -36.35, "long_axis_board_deg": 90.0},
+        {"id": "power_module_02", "x_mm": 61.07, "y_mm": -18.14, "long_axis_board_deg": 90.0},
+        {"id": "power_module_03", "x_mm": 61.07, "y_mm": -0.20, "long_axis_board_deg": 90.0},
+        {"id": "power_module_04", "x_mm": 61.07, "y_mm": 18.00, "long_axis_board_deg": 90.0},
+        {"id": "power_module_05", "x_mm": 61.07, "y_mm": 36.49, "long_axis_board_deg": 90.0}
+      ]
+    },
+    "VRM": {
+      "count": 2,
+      "slots": [
+        {"id": "vrm_01", "x_mm": -60.70, "y_mm": -45.00, "long_axis_board_deg": 0.0},
+        {"id": "vrm_02", "x_mm": -60.70, "y_mm": -33.60, "long_axis_board_deg": 0.0}
+      ]
+    },
+    "Inductor": {
+      "count": 4,
+      "slots": [
+        {"id": "inductor_01", "x_mm": -46.58, "y_mm": 0.31, "long_axis_board_deg": 90.0},
+        {"id": "inductor_02", "x_mm": 0.14, "y_mm": -43.90, "long_axis_board_deg": 0.0},
+        {"id": "inductor_03", "x_mm": 0.14, "y_mm": 43.74, "long_axis_board_deg": 0.0},
+        {"id": "inductor_04", "x_mm": 47.15, "y_mm": 0.31, "long_axis_board_deg": 90.0}
+      ]
+    },
+    "SMD Capacitor": {
+      "count": 5,
+      "aliases": ["SMD Capacitior"],
+      "slots": [
+        {"id": "smd_capacitor_01", "x_mm": -40.95, "y_mm": -39.21, "long_axis_board_deg": 0.0},
+        {"id": "smd_capacitor_02", "x_mm": -60.43, "y_mm": -17.97, "long_axis_board_deg": 90.0},
+        {"id": "smd_capacitor_03", "x_mm": -59.98, "y_mm": -1.38, "long_axis_board_deg": 90.0},
+        {"id": "smd_capacitor_04", "x_mm": -60.39, "y_mm": 15.59, "long_axis_board_deg": 90.0},
+        {"id": "smd_capacitor_05", "x_mm": -60.25, "y_mm": 32.47, "long_axis_board_deg": 90.0}
+      ]
+    }
+  }
+}

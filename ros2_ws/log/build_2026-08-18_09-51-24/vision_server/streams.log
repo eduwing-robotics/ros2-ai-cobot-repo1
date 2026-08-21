@@ -1,0 +1,43 @@
+[0.598s] Invoking command in '/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_server': AMENT_PREFIX_PATH=/home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_interfaces:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_interfaces:${CMAKE_PREFIX_PATH} DEBUGINFOD_URLS=https://debuginfod.ubuntu.com LD_LIBRARY_PATH=/home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_interfaces/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_server/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/lib/python3.12/site-packages:/home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_interfaces/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_server/build --no-deps symlink_data
+[0.831s] running develop
+[0.967s] running egg_info
+[0.967s] creating vision_server.egg-info
+[0.980s] writing vision_server.egg-info/PKG-INFO
+[0.980s] writing dependency_links to vision_server.egg-info/dependency_links.txt
+[0.981s] writing entry points to vision_server.egg-info/entry_points.txt
+[0.981s] writing requirements to vision_server.egg-info/requires.txt
+[0.981s] writing top-level names to vision_server.egg-info/top_level.txt
+[0.981s] writing manifest file 'vision_server.egg-info/SOURCES.txt'
+[1.011s] reading manifest file 'vision_server.egg-info/SOURCES.txt'
+[1.011s] writing manifest file 'vision_server.egg-info/SOURCES.txt'
+[1.027s] running build_ext
+[1.027s] Creating /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/lib/python3.12/site-packages/vision-server.egg-link (link to .)
+[1.027s] Installing assembly_inspector script to /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/lib/vision_server
+[1.027s] Installing camera_manager script to /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/lib/vision_server
+[1.027s] Installing conveyor_controller script to /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/lib/vision_server
+[1.027s] Installing conveyor_roi script to /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/lib/vision_server
+[1.027s] Installing part_detector script to /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/lib/vision_server
+[1.027s] Installing vision_mock script to /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/lib/vision_server
+[1.027s] 
+[1.027s] Installed /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_server
+[1.028s] running symlink_data
+[1.028s] creating /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/ament_index
+[1.028s] creating /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/ament_index/resource_index
+[1.028s] creating /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/ament_index/resource_index/packages
+[1.028s] symbolically linking /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_server/resource/vision_server -> /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/ament_index/resource_index/packages
+[1.028s] symbolically linking /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_server/package.xml -> /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/vision_server
+[1.028s] symbolically linking /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_server/README.md -> /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/vision_server
+[1.028s] creating /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/vision_server/config
+[1.028s] symbolically linking /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_server/config/dataset.yaml -> /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/vision_server/config
+[1.028s] symbolically linking /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_server/config/parts.yaml -> /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/vision_server/config
+[1.028s] symbolically linking /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_server/config/yolo.yaml -> /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/vision_server/config
+[1.028s] symbolically linking /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_server/config/cameras.yaml -> /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/vision_server/config
+[1.028s] symbolically linking /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_server/config/inspection.yaml -> /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/vision_server/config
+[1.028s] symbolically linking /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_server/config/conveyor_roi.yaml -> /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/vision_server/config
+[1.028s] creating /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/vision_server/launch
+[1.028s] symbolically linking /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_server/launch/conveyor_roi.launch.py -> /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/vision_server/launch
+[1.028s] symbolically linking /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_server/launch/vision.launch.py -> /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/vision_server/launch
+[1.028s] symbolically linking /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_server/launch/mock.launch.py -> /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/vision_server/launch
+[1.028s] creating /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/vision_server/models
+[1.028s] symbolically linking /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_server/models/README.md -> /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/vision_server/models
+[1.049s] Invoked command in '/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_server' returned '0': AMENT_PREFIX_PATH=/home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_interfaces:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_interfaces:${CMAKE_PREFIX_PATH} DEBUGINFOD_URLS=https://debuginfod.ubuntu.com LD_LIBRARY_PATH=/home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_interfaces/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_server/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/lib/python3.12/site-packages:/home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_interfaces/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_server/build --no-deps symlink_data

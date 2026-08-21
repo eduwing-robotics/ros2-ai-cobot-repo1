@@ -1,0 +1,7 @@
+Metadata-Version: 2.1
+Name: vision-server
+Version: 0.1.0
+Summary: AI/Vision server for the assembly cell
+Maintainer: Project Team
+Maintainer-email: project@example.com
+License: Apache-2.0

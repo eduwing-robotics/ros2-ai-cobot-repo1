@@ -1,0 +1,6 @@
+setup.py
+vision_interfaces/__init__.py
+vision_interfaces.egg-info/PKG-INFO
+vision_interfaces.egg-info/SOURCES.txt
+vision_interfaces.egg-info/dependency_links.txt
+vision_interfaces.egg-info/top_level.txt

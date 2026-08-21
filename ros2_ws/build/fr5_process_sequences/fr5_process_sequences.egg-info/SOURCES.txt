@@ -1,0 +1,12 @@
+package.xml
+setup.cfg
+setup.py
+fr5_process_sequences/__init__.py
+fr5_process_sequences/planner.py
+fr5_process_sequences.egg-info/PKG-INFO
+fr5_process_sequences.egg-info/SOURCES.txt
+fr5_process_sequences.egg-info/dependency_links.txt
+fr5_process_sequences.egg-info/requires.txt
+fr5_process_sequences.egg-info/top_level.txt
+fr5_process_sequences.egg-info/zip-safe
+resource/fr5_process_sequences

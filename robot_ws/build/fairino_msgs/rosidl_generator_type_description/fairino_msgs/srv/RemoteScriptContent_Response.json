@@ -1,0 +1,26 @@
+{
+  "type_description_msg": {
+    "type_description": {
+      "type_name": "fairino_msgs/srv/RemoteScriptContent_Response",
+      "fields": [
+        {
+          "name": "res",
+          "type": {
+            "type_id": 17,
+            "capacity": 0,
+            "string_capacity": 0,
+            "nested_type_name": ""
+          },
+          "default_value": ""
+        }
+      ]
+    },
+    "referenced_type_descriptions": []
+  },
+  "type_hashes": [
+    {
+      "type_name": "fairino_msgs/srv/RemoteScriptContent_Response",
+      "hash_string": "RIHS01_09614db1bff2d838f9793f79dd9eec1721be2708b57e54a2285766c4c9d3a439"
+    }
+  ]
+}

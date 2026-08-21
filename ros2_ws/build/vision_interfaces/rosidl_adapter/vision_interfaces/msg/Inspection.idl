@@ -1,0 +1,37 @@
+// generated from rosidl_adapter/resource/msg.idl.em
+// with input from vision_interfaces/msg/Inspection.msg
+// generated code does not contain a copyright notice
+
+#include "std_msgs/msg/Header.idl"
+
+module vision_interfaces {
+  module msg {
+    struct Inspection {
+      std_msgs::msg::Header header;
+
+      string camera;
+
+      string board_id;
+
+      string recipe_id;
+
+      string status;
+
+      int32 expected_total;
+
+      int32 found_total;
+
+      sequence<string> names;
+
+      sequence<int32> expected;
+
+      sequence<int32> found;
+
+      sequence<string> slot_ids;
+
+      sequence<string> slot_status;
+
+      sequence<string> errors;
+    };
+  };
+};

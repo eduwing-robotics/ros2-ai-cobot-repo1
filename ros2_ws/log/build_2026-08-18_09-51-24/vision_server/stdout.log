@@ -1,0 +1,41 @@
+running develop
+running egg_info
+creating vision_server.egg-info
+writing vision_server.egg-info/PKG-INFO
+writing dependency_links to vision_server.egg-info/dependency_links.txt
+writing entry points to vision_server.egg-info/entry_points.txt
+writing requirements to vision_server.egg-info/requires.txt
+writing top-level names to vision_server.egg-info/top_level.txt
+writing manifest file 'vision_server.egg-info/SOURCES.txt'
+reading manifest file 'vision_server.egg-info/SOURCES.txt'
+writing manifest file 'vision_server.egg-info/SOURCES.txt'
+running build_ext
+Creating /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/lib/python3.12/site-packages/vision-server.egg-link (link to .)
+Installing assembly_inspector script to /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/lib/vision_server
+Installing camera_manager script to /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/lib/vision_server
+Installing conveyor_controller script to /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/lib/vision_server
+Installing conveyor_roi script to /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/lib/vision_server
+Installing part_detector script to /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/lib/vision_server
+Installing vision_mock script to /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/lib/vision_server
+
+Installed /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_server
+running symlink_data
+creating /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/ament_index
+creating /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/ament_index/resource_index
+creating /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/ament_index/resource_index/packages
+symbolically linking /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_server/resource/vision_server -> /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/ament_index/resource_index/packages
+symbolically linking /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_server/package.xml -> /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/vision_server
+symbolically linking /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_server/README.md -> /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/vision_server
+creating /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/vision_server/config
+symbolically linking /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_server/config/dataset.yaml -> /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/vision_server/config
+symbolically linking /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_server/config/parts.yaml -> /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/vision_server/config
+symbolically linking /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_server/config/yolo.yaml -> /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/vision_server/config
+symbolically linking /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_server/config/cameras.yaml -> /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/vision_server/config
+symbolically linking /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_server/config/inspection.yaml -> /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/vision_server/config
+symbolically linking /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_server/config/conveyor_roi.yaml -> /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/vision_server/config
+creating /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/vision_server/launch
+symbolically linking /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_server/launch/conveyor_roi.launch.py -> /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/vision_server/launch
+symbolically linking /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_server/launch/vision.launch.py -> /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/vision_server/launch
+symbolically linking /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_server/launch/mock.launch.py -> /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/vision_server/launch
+creating /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/vision_server/models
+symbolically linking /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_server/models/README.md -> /home/juchan-yoon/FR5_robot_control/ros2_ws/install/vision_server/share/vision_server/models

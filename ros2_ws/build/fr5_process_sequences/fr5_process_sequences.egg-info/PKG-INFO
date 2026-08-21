@@ -1,0 +1,7 @@
+Metadata-Version: 2.1
+Name: fr5-process-sequences
+Version: 0.1.0
+Summary: Safety-gated dry-run process sequence planning for the FR5 cell.
+Maintainer: Lucas
+Maintainer-email: lucas@example.com
+License: Apache-2.0

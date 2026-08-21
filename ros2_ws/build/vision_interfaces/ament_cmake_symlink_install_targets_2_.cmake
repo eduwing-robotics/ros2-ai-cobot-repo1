@@ -1,0 +1,1 @@
+ament_cmake_symlink_install_targets("TARGET_FILES" "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_py/vision_interfaces/vision_interfaces_s__rosidl_typesupport_c.so" "TARGETS" "vision_interfaces_s__rosidl_typesupport_c" "DESTINATION" "lib/python3.12/site-packages/vision_interfaces")

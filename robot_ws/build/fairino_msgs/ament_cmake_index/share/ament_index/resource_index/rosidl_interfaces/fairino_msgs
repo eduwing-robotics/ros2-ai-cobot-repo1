@@ -1,0 +1,6 @@
+msg/RobotNonrtState.idl
+msg/RobotNonrtState.msg
+srv/RemoteCmdInterface.idl
+srv/RemoteCmdInterface.srv
+srv/RemoteScriptContent.idl
+srv/RemoteScriptContent.srv

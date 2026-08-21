@@ -1,0 +1,9 @@
+source;share/fr5_process_sequences/hook/pythonpath.ps1
+source;share/fr5_process_sequences/hook/pythonpath.dsv
+source;share/fr5_process_sequences/hook/pythonpath.sh
+source;share/fr5_process_sequences/hook/ament_prefix_path.ps1
+source;share/fr5_process_sequences/hook/ament_prefix_path.dsv
+source;share/fr5_process_sequences/hook/ament_prefix_path.sh
+source;../../build/fr5_process_sequences/share/fr5_process_sequences/hook/pythonpath_develop.ps1
+source;../../build/fr5_process_sequences/share/fr5_process_sequences/hook/pythonpath_develop.dsv
+source;../../build/fr5_process_sequences/share/fr5_process_sequences/hook/pythonpath_develop.sh

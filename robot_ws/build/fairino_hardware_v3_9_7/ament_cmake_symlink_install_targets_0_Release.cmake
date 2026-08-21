@@ -1,0 +1,1 @@
+ament_cmake_symlink_install_targets("TARGET_FILES" "/home/juchan-yoon/FR5_robot_control/robot_ws/build/fairino_hardware_v3_9_7/ros2_cmd_server" "TARGETS" "ros2_cmd_server" "DESTINATION" "lib/fairino_hardware_v3_9_7")

@@ -1,0 +1,832 @@
+{
+  "schema_version": 1,
+  "source": "/home/hc/Downloads/Board_obj",
+  "assembly": "ITEAM.prefab",
+  "status": "CAD-derived candidate; verify on the printed board before robot execution",
+  "coordinate_convention": {
+    "origin": "geometric center of motherBoard OBJ after Unity prefab transforms",
+    "x": "Unity +X in the board plane",
+    "y": "Unity +Z in the board plane",
+    "z": "Unity +Y upward; not used as an automatic placement height",
+    "millimeters_per_model_unit": 10.0
+  },
+  "board": {
+    "name": "motherBoard",
+    "size_mm": {
+      "x": 140.0,
+      "y": 110.33742000000001,
+      "height": 5.09549
+    },
+    "center_model_units": [
+      -17.27,
+      -0.35022549999999997,
+      1.36
+    ]
+  },
+  "expected_robot_part_counts": {
+    "gpu": 1,
+    "hbm": 8,
+    "left_black_block": 5,
+    "right_white_brown": 5,
+    "right_white_black": 2,
+    "long_orange": 4
+  },
+  "model_robot_part_counts": {
+    "gpu": 1,
+    "hbm": 8,
+    "left_black_block": 5,
+    "long_orange": 4,
+    "right_white_black": 2,
+    "right_white_brown": 4
+  },
+  "count_mismatches": {
+    "right_white_brown": {
+      "expected": 5,
+      "model": 4
+    }
+  },
+  "unresolved_required_parts": [
+    {
+      "recipe": "right_white_brown",
+      "missing_count": 1,
+      "center_board_mm": null,
+      "status": "missing from supplied Unity assembly; corrected CAD/assembly required"
+    }
+  ],
+  "warnings": [
+    "CAD planar coordinates are candidates until checked against the actual print.",
+    "Nominal heights come from OBJ bounds and must be measured with a caliper.",
+    "Placement Z must come from the detected board plane/Depth plus a verified recipe height.",
+    "The model contains four right_white_brown instances, while the project list expects five."
+  ],
+  "placements": [
+    {
+      "name": "nvidia",
+      "asset": "nvidia",
+      "recipe": "gpu",
+      "source_model": "ASt/nvidia.obj",
+      "center_model_units": [
+        -17.113,
+        0.0437495,
+        1.327984
+      ],
+      "root_position_model_units": [
+        -17.933,
+        -0.587,
+        -0.232
+      ],
+      "child_offset_model_units": [
+        0.82,
+        0.0,
+        1.56
+      ],
+      "nominal_size_mm": {
+        "x": 29.7166,
+        "y": 57.106500000000004,
+        "height": 6.638310000000001
+      },
+      "long_axis_deg_in_board": -90.0,
+      "center_board_mm": {
+        "x": 1.5700000000000003,
+        "y": -0.32016000000000044
+      },
+      "slot_id": "gpu_01"
+    },
+    {
+      "name": "Sk_hynix",
+      "asset": "Sk_hynix",
+      "recipe": "hbm",
+      "source_model": "ASt/Sk_hynix.obj",
+      "center_model_units": [
+        -19.6700495,
+        0.20483049999999992,
+        -1.0900029
+      ],
+      "root_position_model_units": [
+        -17.27,
+        -0.584752,
+        -3.4900029
+      ],
+      "child_offset_model_units": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "nominal_size_mm": {
+        "x": 10.246649999999999,
+        "y": 14.309960000000002,
+        "height": 9.81511
+      },
+      "long_axis_deg_in_board": -90.0,
+      "center_board_mm": {
+        "x": -24.000495000000015,
+        "y": -24.500029000000005
+      },
+      "slot_id": "hbm_01"
+    },
+    {
+      "name": "Sk_hynix (1)",
+      "asset": "Sk_hynix",
+      "recipe": "hbm",
+      "source_model": "ASt/Sk_hynix.obj",
+      "center_model_units": [
+        -19.6700495,
+        0.20483049999999992,
+        0.5299999999999998
+      ],
+      "root_position_model_units": [
+        -17.27,
+        -0.584752,
+        -1.87
+      ],
+      "child_offset_model_units": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "nominal_size_mm": {
+        "x": 10.246649999999999,
+        "y": 14.309960000000002,
+        "height": 9.81511
+      },
+      "long_axis_deg_in_board": -90.0,
+      "center_board_mm": {
+        "x": -24.000495000000015,
+        "y": -8.300000000000002
+      },
+      "slot_id": "hbm_02"
+    },
+    {
+      "name": "Sk_hynix (2)",
+      "asset": "Sk_hynix",
+      "recipe": "hbm",
+      "source_model": "ASt/Sk_hynix.obj",
+      "center_model_units": [
+        -19.6700495,
+        0.20483049999999992,
+        2.1799999999999997
+      ],
+      "root_position_model_units": [
+        -17.27,
+        -0.584752,
+        -0.22
+      ],
+      "child_offset_model_units": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "nominal_size_mm": {
+        "x": 10.246649999999999,
+        "y": 14.309960000000002,
+        "height": 9.81511
+      },
+      "long_axis_deg_in_board": -90.0,
+      "center_board_mm": {
+        "x": -24.000495000000015,
+        "y": 8.199999999999996
+      },
+      "slot_id": "hbm_03"
+    },
+    {
+      "name": "Sk_hynix (3)",
+      "asset": "Sk_hynix",
+      "recipe": "hbm",
+      "source_model": "ASt/Sk_hynix.obj",
+      "center_model_units": [
+        -19.6700495,
+        0.20483049999999992,
+        3.77
+      ],
+      "root_position_model_units": [
+        -17.27,
+        -0.584752,
+        1.37
+      ],
+      "child_offset_model_units": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "nominal_size_mm": {
+        "x": 10.246649999999999,
+        "y": 14.309960000000002,
+        "height": 9.81511
+      },
+      "long_axis_deg_in_board": -90.0,
+      "center_board_mm": {
+        "x": -24.000495000000015,
+        "y": 24.1
+      },
+      "slot_id": "hbm_04"
+    },
+    {
+      "name": "Sk_hynix (4)",
+      "asset": "Sk_hynix",
+      "recipe": "hbm",
+      "source_model": "ASt/Sk_hynix.obj",
+      "center_model_units": [
+        -14.9000495,
+        0.20483049999999992,
+        -1.0900029
+      ],
+      "root_position_model_units": [
+        -12.5,
+        -0.584752,
+        -3.4900029
+      ],
+      "child_offset_model_units": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "nominal_size_mm": {
+        "x": 10.246649999999999,
+        "y": 14.309960000000002,
+        "height": 9.81511
+      },
+      "long_axis_deg_in_board": -90.0,
+      "center_board_mm": {
+        "x": 23.699505,
+        "y": -24.500029000000005
+      },
+      "slot_id": "hbm_05"
+    },
+    {
+      "name": "Sk_hynix (5)",
+      "asset": "Sk_hynix",
+      "recipe": "hbm",
+      "source_model": "ASt/Sk_hynix.obj",
+      "center_model_units": [
+        -14.9000495,
+        0.20483049999999992,
+        0.5299999999999998
+      ],
+      "root_position_model_units": [
+        -12.5,
+        -0.584752,
+        -1.87
+      ],
+      "child_offset_model_units": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "nominal_size_mm": {
+        "x": 10.246649999999999,
+        "y": 14.309960000000002,
+        "height": 9.81511
+      },
+      "long_axis_deg_in_board": -90.0,
+      "center_board_mm": {
+        "x": 23.699505,
+        "y": -8.300000000000002
+      },
+      "slot_id": "hbm_06"
+    },
+    {
+      "name": "Sk_hynix (6)",
+      "asset": "Sk_hynix",
+      "recipe": "hbm",
+      "source_model": "ASt/Sk_hynix.obj",
+      "center_model_units": [
+        -14.9000495,
+        0.20483049999999992,
+        2.1799999999999997
+      ],
+      "root_position_model_units": [
+        -12.5,
+        -0.584752,
+        -0.22
+      ],
+      "child_offset_model_units": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "nominal_size_mm": {
+        "x": 10.246649999999999,
+        "y": 14.309960000000002,
+        "height": 9.81511
+      },
+      "long_axis_deg_in_board": -90.0,
+      "center_board_mm": {
+        "x": 23.699505,
+        "y": 8.199999999999996
+      },
+      "slot_id": "hbm_07"
+    },
+    {
+      "name": "Sk_hynix (7)",
+      "asset": "Sk_hynix",
+      "recipe": "hbm",
+      "source_model": "ASt/Sk_hynix.obj",
+      "center_model_units": [
+        -14.9000495,
+        0.20483049999999992,
+        3.77
+      ],
+      "root_position_model_units": [
+        -12.5,
+        -0.584752,
+        1.37
+      ],
+      "child_offset_model_units": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "nominal_size_mm": {
+        "x": 10.246649999999999,
+        "y": 14.309960000000002,
+        "height": 9.81511
+      },
+      "long_axis_deg_in_board": -90.0,
+      "center_board_mm": {
+        "x": 23.699505,
+        "y": 24.1
+      },
+      "slot_id": "hbm_08"
+    },
+    {
+      "name": "BlackBox1",
+      "asset": "BlackBox1",
+      "recipe": "left_black_block",
+      "source_model": "ASt/BlackBox1.obj",
+      "center_model_units": [
+        -11.119,
+        -0.22315400000000007,
+        -2.285999
+      ],
+      "root_position_model_units": [
+        -17.259,
+        -0.55,
+        -2.286
+      ],
+      "child_offset_model_units": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "nominal_size_mm": {
+        "x": 11.000000000000005,
+        "y": 14.0,
+        "height": 5.20254
+      },
+      "long_axis_deg_in_board": -90.0,
+      "center_board_mm": {
+        "x": 61.51,
+        "y": -36.45999
+      },
+      "slot_id": "left_black_block_01"
+    },
+    {
+      "name": "BlackBox1 (1)",
+      "asset": "BlackBox1",
+      "recipe": "left_black_block",
+      "source_model": "ASt/BlackBox1.obj",
+      "center_model_units": [
+        -11.119,
+        -0.22315400000000007,
+        -0.45999900000000005
+      ],
+      "root_position_model_units": [
+        -17.259,
+        -0.55,
+        -0.46
+      ],
+      "child_offset_model_units": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "nominal_size_mm": {
+        "x": 11.000000000000005,
+        "y": 14.0,
+        "height": 5.20254
+      },
+      "long_axis_deg_in_board": -90.0,
+      "center_board_mm": {
+        "x": 61.51,
+        "y": -18.19999
+      },
+      "slot_id": "left_black_block_02"
+    },
+    {
+      "name": "BlackBox1 (2)",
+      "asset": "BlackBox1",
+      "recipe": "left_black_block",
+      "source_model": "ASt/BlackBox1.obj",
+      "center_model_units": [
+        -11.119,
+        -0.22315400000000007,
+        1.340001
+      ],
+      "root_position_model_units": [
+        -17.259,
+        -0.55,
+        1.34
+      ],
+      "child_offset_model_units": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "nominal_size_mm": {
+        "x": 11.000000000000005,
+        "y": 14.0,
+        "height": 5.20254
+      },
+      "long_axis_deg_in_board": -90.0,
+      "center_board_mm": {
+        "x": 61.51,
+        "y": -0.199990000000001
+      },
+      "slot_id": "left_black_block_03"
+    },
+    {
+      "name": "BlackBox1 (3)",
+      "asset": "BlackBox1",
+      "recipe": "left_black_block",
+      "source_model": "ASt/BlackBox1.obj",
+      "center_model_units": [
+        -11.119,
+        -0.22315400000000007,
+        3.166001
+      ],
+      "root_position_model_units": [
+        -17.259,
+        -0.55,
+        3.166
+      ],
+      "child_offset_model_units": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "nominal_size_mm": {
+        "x": 11.000000000000005,
+        "y": 14.0,
+        "height": 5.20254
+      },
+      "long_axis_deg_in_board": -90.0,
+      "center_board_mm": {
+        "x": 61.51,
+        "y": 18.06001
+      },
+      "slot_id": "left_black_block_04"
+    },
+    {
+      "name": "BlackBox1 (4)",
+      "asset": "BlackBox1",
+      "recipe": "left_black_block",
+      "source_model": "ASt/BlackBox1.obj",
+      "center_model_units": [
+        -11.119,
+        -0.22315400000000007,
+        5.020001
+      ],
+      "root_position_model_units": [
+        -17.259,
+        -0.55,
+        5.02
+      ],
+      "child_offset_model_units": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "nominal_size_mm": {
+        "x": 11.000000000000005,
+        "y": 14.0,
+        "height": 5.20254
+      },
+      "long_axis_deg_in_board": -90.0,
+      "center_board_mm": {
+        "x": 61.51,
+        "y": 36.60001
+      },
+      "slot_id": "left_black_block_05"
+    },
+    {
+      "name": "YellowBar (1)",
+      "asset": "YellowBar",
+      "recipe": "long_orange",
+      "source_model": "ASt/YellowBar.obj",
+      "center_model_units": [
+        -21.9619645,
+        -0.22626601000000005,
+        1.3910862
+      ],
+      "root_position_model_units": [
+        -26.71,
+        -0.458,
+        0.72
+      ],
+      "child_offset_model_units": [
+        0.048,
+        -0.11687201,
+        0.6710862
+      ],
+      "nominal_size_mm": {
+        "x": 12.130010000000002,
+        "y": 59.98910000000001,
+        "height": 4.78478
+      },
+      "long_axis_deg_in_board": -90.0,
+      "center_board_mm": {
+        "x": -46.91964500000001,
+        "y": 0.3108619999999984
+      },
+      "slot_id": "long_orange_01"
+    },
+    {
+      "name": "YellowBar (2)",
+      "asset": "YellowBar",
+      "recipe": "long_orange",
+      "source_model": "ASt/YellowBar.obj",
+      "center_model_units": [
+        -17.255913800000002,
+        -0.22626601000000005,
+        -3.043035500000001
+      ],
+      "root_position_model_units": [
+        -17.927,
+        -0.458,
+        1.705
+      ],
+      "child_offset_model_units": [
+        0.048,
+        -0.11687201,
+        0.6710862
+      ],
+      "nominal_size_mm": {
+        "x": 12.130010000000002,
+        "y": 59.98910000000001,
+        "height": 4.78478
+      },
+      "long_axis_deg_in_board": -1.2722218725854064e-14,
+      "center_board_mm": {
+        "x": 0.14086199999997717,
+        "y": -44.030355000000014
+      },
+      "slot_id": "long_orange_02"
+    },
+    {
+      "name": "YellowBar (3)",
+      "asset": "YellowBar",
+      "recipe": "long_orange",
+      "source_model": "ASt/YellowBar.obj",
+      "center_model_units": [
+        -17.255913800000002,
+        -0.22626601000000005,
+        5.746964499999998
+      ],
+      "root_position_model_units": [
+        -17.927,
+        -0.458,
+        10.495
+      ],
+      "child_offset_model_units": [
+        0.048,
+        -0.11687201,
+        0.6710862
+      ],
+      "nominal_size_mm": {
+        "x": 12.130010000000002,
+        "y": 59.98910000000001,
+        "height": 4.78478
+      },
+      "long_axis_deg_in_board": -1.2722218725854064e-14,
+      "center_board_mm": {
+        "x": 0.14086199999997717,
+        "y": 43.86964499999998
+      },
+      "slot_id": "long_orange_03"
+    },
+    {
+      "name": "YellowBar",
+      "asset": "YellowBar",
+      "recipe": "long_orange",
+      "source_model": "ASt/YellowBar.obj",
+      "center_model_units": [
+        -12.521451500000001,
+        -0.22626601000000005,
+        1.3910862
+      ],
+      "root_position_model_units": [
+        -17.269487,
+        -0.458,
+        0.72
+      ],
+      "child_offset_model_units": [
+        0.048,
+        -0.11687201,
+        0.6710862
+      ],
+      "nominal_size_mm": {
+        "x": 12.130010000000002,
+        "y": 59.98910000000001,
+        "height": 4.78478
+      },
+      "long_axis_deg_in_board": -90.0,
+      "center_board_mm": {
+        "x": 47.48548499999998,
+        "y": 0.3108619999999984
+      },
+      "slot_id": "long_orange_04"
+    },
+    {
+      "name": "cap_Big",
+      "asset": "cap_Big",
+      "recipe": "right_white_black",
+      "source_model": "ASt/cap_Big.obj",
+      "center_model_units": [
+        -23.280267,
+        -0.024728500000000042,
+        4.657199
+      ],
+      "root_position_model_units": [
+        -17.29,
+        -0.55,
+        1.37
+      ],
+      "child_offset_model_units": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "nominal_size_mm": {
+        "x": 9.368619999999996,
+        "y": 9.36862,
+        "height": 8.52217
+      },
+      "long_axis_deg_in_board": -90.0,
+      "center_board_mm": {
+        "x": -60.10266999999999,
+        "y": 32.97199
+      },
+      "slot_id": "right_white_black_01"
+    },
+    {
+      "name": "cap_Big (1)",
+      "asset": "cap_Big",
+      "recipe": "right_white_black",
+      "source_model": "ASt/cap_Big.obj",
+      "center_model_units": [
+        -23.280267,
+        -0.024728500000000042,
+        5.803199
+      ],
+      "root_position_model_units": [
+        -17.29,
+        -0.55,
+        2.516
+      ],
+      "child_offset_model_units": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "nominal_size_mm": {
+        "x": 9.368619999999996,
+        "y": 9.36862,
+        "height": 8.52217
+      },
+      "long_axis_deg_in_board": -90.0,
+      "center_board_mm": {
+        "x": -60.10266999999999,
+        "y": 44.43199
+      },
+      "slot_id": "right_white_black_02"
+    },
+    {
+      "name": "cap_small (3)",
+      "asset": "cap_small",
+      "recipe": "right_white_brown",
+      "source_model": "ASt/cap_small.obj",
+      "center_model_units": [
+        -23.3200255,
+        -0.26150306,
+        -1.9635500000000001
+      ],
+      "root_position_model_units": [
+        -17.236536,
+        -0.49971706,
+        -3.73
+      ],
+      "child_offset_model_units": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "nominal_size_mm": {
+        "x": 3.836149999999998,
+        "y": 6.8012999999999995,
+        "height": 3.0237600000000002
+      },
+      "long_axis_deg_in_board": -90.0,
+      "center_board_mm": {
+        "x": -60.500255,
+        "y": -33.2355
+      },
+      "slot_id": "right_white_brown_01"
+    },
+    {
+      "name": "cap_small (2)",
+      "asset": "cap_small",
+      "recipe": "right_white_brown",
+      "source_model": "ASt/cap_small.obj",
+      "center_model_units": [
+        -23.3200255,
+        -0.26150306,
+        -0.23355000000000015
+      ],
+      "root_position_model_units": [
+        -17.236536,
+        -0.49971706,
+        -2.0
+      ],
+      "child_offset_model_units": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "nominal_size_mm": {
+        "x": 3.836149999999998,
+        "y": 6.8012999999999995,
+        "height": 3.0237600000000002
+      },
+      "long_axis_deg_in_board": -90.0,
+      "center_board_mm": {
+        "x": -60.500255,
+        "y": -15.935500000000003
+      },
+      "slot_id": "right_white_brown_02"
+    },
+    {
+      "name": "cap_small (1)",
+      "asset": "cap_small",
+      "recipe": "right_white_brown",
+      "source_model": "ASt/cap_small.obj",
+      "center_model_units": [
+        -23.3200255,
+        -0.26150306,
+        1.4464499999999998
+      ],
+      "root_position_model_units": [
+        -17.236536,
+        -0.49971706,
+        -0.32
+      ],
+      "child_offset_model_units": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "nominal_size_mm": {
+        "x": 3.836149999999998,
+        "y": 6.8012999999999995,
+        "height": 3.0237600000000002
+      },
+      "long_axis_deg_in_board": -90.0,
+      "center_board_mm": {
+        "x": -60.500255,
+        "y": 0.8644999999999969
+      },
+      "slot_id": "right_white_brown_03"
+    },
+    {
+      "name": "cap_small",
+      "asset": "cap_small",
+      "recipe": "right_white_brown",
+      "source_model": "ASt/cap_small.obj",
+      "center_model_units": [
+        -23.3200255,
+        -0.26150306,
+        3.186693
+      ],
+      "root_position_model_units": [
+        -17.236536,
+        -0.49971706,
+        1.420243
+      ],
+      "child_offset_model_units": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "nominal_size_mm": {
+        "x": 3.836149999999998,
+        "y": 6.8012999999999995,
+        "height": 3.0237600000000002
+      },
+      "long_axis_deg_in_board": -90.0,
+      "center_board_mm": {
+        "x": -60.500255,
+        "y": 18.26693
+      },
+      "slot_id": "right_white_brown_04"
+    }
+  ]
+}

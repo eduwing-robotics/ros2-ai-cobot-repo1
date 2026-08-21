@@ -1,0 +1,15 @@
+build/
+install/
+log/
+runtime/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+config/ksmc.env
+*.bag
+*.db3
+
+# Runtime observations are regenerated on the connected cell.
+calibration/data/*_last.json
+vision_assembly/data/*_last.json
+

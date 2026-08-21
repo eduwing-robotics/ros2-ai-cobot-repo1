@@ -1,0 +1,114 @@
+[INFO] [1787210588.862612312] [camera.camera]: RealSense ROS v4.58.1
+[INFO] [1787210588.862652052] [camera.camera]: Built with LibRealSense v2.58.1
+[INFO] [1787210588.862656148] [camera.camera]: Running with LibRealSense v2.58.1
+[WARN] [1787210588.947587880] [camera.camera]: Device 1/1 failed with exception: set_xu(...). xioctl(UVCIOC_CTRL_QUERY) failed on control 1 Last Error: Protocol error
+[ERROR] [1787210588.947688464] [camera.camera]: The requested device with  is NOT found. Will Try again.
+[INFO] [1787210595.036216631] [camera.camera]: Device with serial number 254622074096 was found.
+
+[INFO] [1787210595.036352889] [camera.camera]: Device with physical ID /sys/devices/pci0000:00/0000:00:14.0/usb2/2-1/2-1:1.0/video4linux/video4 was found.
+[INFO] [1787210595.036383625] [camera.camera]: Device with name Intel RealSense D435 was found.
+[INFO] [1787210595.036887374] [camera.camera]: Device with port number 2-1 was found.
+[INFO] [1787210595.036908564] [camera.camera]: Device USB type: 3.2
+[INFO] [1787210595.037024566] [camera.camera]: getParameters...
+[INFO] [1787210595.038306496] [camera.camera]: JSON file is not provided
+[INFO] [1787210595.038334206] [camera.camera]: Device Name: Intel RealSense D435
+[INFO] [1787210595.038348709] [camera.camera]: Device Serial No: 254622074096
+[INFO] [1787210595.038375981] [camera.camera]: Device physical port: /sys/devices/pci0000:00/0000:00:14.0/usb2/2-1/2-1:1.0/video4linux/video4
+[INFO] [1787210595.038397060] [camera.camera]: Device FW version: 5.17.0.10
+[INFO] [1787210595.038413635] [camera.camera]: Device Product ID: 0x0B07
+[INFO] [1787210595.038452842] [camera.camera]: Sync Mode: Off
+[INFO] [1787210595.139614821] [camera.camera]: Device with serial number 254622074096 was found.
+
+[INFO] [1787210595.139689304] [camera.camera]: Device with physical ID /sys/devices/pci0000:00/0000:00:14.0/usb2/2-1/2-1:1.0/video4linux/video4 was found.
+[INFO] [1787210595.139702759] [camera.camera]: Device with name Intel RealSense D435 was found.
+[INFO] [1787210595.139967506] [camera.camera]: Device with port number 2-1 was found.
+[INFO] [1787210595.139979156] [camera.camera]: Device USB type: 3.2
+[INFO] [1787210595.140709449] [camera.camera]: getParameters...
+[INFO] [1787210595.141233380] [camera.camera]: JSON file is not provided
+[INFO] [1787210595.141250971] [camera.camera]: Device Name: Intel RealSense D435
+[INFO] [1787210595.141261761] [camera.camera]: Device Serial No: 254622074096
+[INFO] [1787210595.141271095] [camera.camera]: Device physical port: /sys/devices/pci0000:00/0000:00:14.0/usb2/2-1/2-1:1.0/video4linux/video4
+[INFO] [1787210595.141286297] [camera.camera]: Device FW version: 5.17.0.10
+[INFO] [1787210595.141295491] [camera.camera]: Device Product ID: 0x0B07
+[INFO] [1787210595.141309413] [camera.camera]: Sync Mode: Off
+[ERROR] [1787210595.239476374] [camera.camera]: An error has occurred while calling sensor for: depth_module.auto_gain_limit:set_xu(...). xioctl(UVCIOC_CTRL_QUERY) failed on control 1 Last Error: Protocol error
+[ERROR] [1787210595.240694490] [camera.camera]: An error has occurred while calling sensor for: depth_module.auto_gain_limit_toggle:set_xu(...). xioctl(UVCIOC_CTRL_QUERY) failed on control 1 Last Error: Protocol error
+[INFO] [1787210595.246681842] [camera.camera]: Set ROS param depth_module.depth_profile to default: 848x480x30
+[INFO] [1787210595.247839019] [camera.camera]: Set ROS param depth_module.infra_profile to default: 848x480x30
+[WARN] [1787210595.254894514] [camera.camera]: re-enable the stream for the change to take effect.
+[INFO] [1787210595.258192171] [camera.camera]: Stopping Sensor: RGB Camera
+[INFO] [1787210595.270824519] [camera.camera]: Starting Sensor: RGB Camera
+[INFO] [1787210595.276749041] [camera.camera]: Open profile: stream_type: Color(0), Format: RGB8, Width: 1920, Height: 1080, FPS: 15
+[INFO] [1787210595.281237002] [camera.camera]: RealSense Node Is Up!
+[ERROR] [1787210596.446174312] [camera.camera]: The device has been disconnected!
+[INFO] [1787210596.446295851] [camera.camera]: Stop Sensor: RGB Camera
+[INFO] [1787210596.446307900] [camera.camera]: Close Sensor. 
+[INFO] [1787210596.539372125] [camera.camera]: Close Sensor - Done. 
+[INFO] [1787210596.698005647] [camera.camera]: Checking new devices...
+[INFO] [1787210596.700989204] [camera.camera]: Device with serial number 254622074096 was found.
+
+[INFO] [1787210596.701012861] [camera.camera]: Device with physical ID /sys/devices/pci0000:00/0000:00:14.0/usb2/2-1/2-1:1.0/video4linux/video0 was found.
+[INFO] [1787210596.701017596] [camera.camera]: Device with name Intel RealSense D435 was found.
+[INFO] [1787210596.701124409] [camera.camera]: Device with port number 2-1 was found.
+[INFO] [1787210596.701128624] [camera.camera]: Device USB type: 3.2
+[INFO] [1787210596.701149303] [camera.camera]: getParameters...
+[INFO] [1787210596.701595505] [camera.camera]: JSON file is not provided
+[INFO] [1787210596.701603491] [camera.camera]: Device Name: Intel RealSense D435
+[INFO] [1787210596.701606883] [camera.camera]: Device Serial No: 254622074096
+[INFO] [1787210596.701610253] [camera.camera]: Device physical port: /sys/devices/pci0000:00/0000:00:14.0/usb2/2-1/2-1:1.0/video4linux/video0
+[INFO] [1787210596.701614397] [camera.camera]: Device FW version: 5.17.0.10
+[INFO] [1787210596.701617685] [camera.camera]: Device Product ID: 0x0B07
+[INFO] [1787210596.701620582] [camera.camera]: Sync Mode: Off
+[ERROR] [1787210596.791608043] [camera.camera]: An error has occurred while calling sensor for: depth_module.inter_cam_sync_mode:set_xu(...). xioctl(UVCIOC_CTRL_QUERY) failed on control 1 Last Error: Protocol error
+[INFO] [1787210596.802330445] [camera.camera]: Set ROS param depth_module.depth_profile to default: 848x480x30
+[INFO] [1787210596.803856111] [camera.camera]: Set ROS param depth_module.infra_profile to default: 848x480x30
+[WARN] [1787210596.815433987] [camera.camera]: re-enable the stream for the change to take effect.
+[INFO] [1787210596.820035901] [camera.camera]: Stopping Sensor: RGB Camera
+[INFO] [1787210596.823560173] [camera.camera]: Starting Sensor: RGB Camera
+[INFO] [1787210596.832863529] [camera.camera]: Open profile: stream_type: Color(0), Format: RGB8, Width: 1920, Height: 1080, FPS: 15
+[INFO] [1787210596.835918106] [camera.camera]: RealSense Node Is Up!
+[WARN] [1787210630.008718118] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210635.013704713] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210640.018878116] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210645.024074055] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210650.029256959] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210655.034422950] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210660.039613096] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210665.044760945] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210670.049973785] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210675.055051393] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210680.060228490] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210685.065260344] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210690.070504701] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210695.075449339] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210700.080587486] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210705.085812744] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210710.090924920] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210715.096054182] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210720.101190022] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210725.106260047] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210730.111440935] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210735.116539338] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210740.121692550] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210745.126775478] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210750.131910805] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210755.137039469] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210760.142228847] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210765.147496612] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210770.152678357] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210775.157746276] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210780.162851858] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210785.168016495] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210790.173121515] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210795.178227511] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210800.183425770] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210805.188586304] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210810.193763393] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210815.198833304] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210820.204201381] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210825.209233613] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210830.214471390] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210835.219468426] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210840.224793562] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[WARN] [1787210845.229916865] [camera.camera]: XXX Hardware Notification:Frames didn't arrived within 5 seconds,1.78721e+12,Warn,Frames Timeout
+[INFO] [1787210845.615112026] [rclcpp]: signal_handler(SIGINT/SIGTERM)

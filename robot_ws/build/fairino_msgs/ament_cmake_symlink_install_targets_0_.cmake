@@ -1,0 +1,1 @@
+ament_cmake_symlink_install_targets("TARGET_FILES" "/home/juchan-yoon/FR5_robot_control/robot_ws/build/fairino_msgs/rosidl_generator_py/fairino_msgs/fairino_msgs_s__rosidl_typesupport_fastrtps_c.so" "TARGETS" "fairino_msgs_s__rosidl_typesupport_fastrtps_c" "DESTINATION" "lib/python3.12/site-packages/fairino_msgs")

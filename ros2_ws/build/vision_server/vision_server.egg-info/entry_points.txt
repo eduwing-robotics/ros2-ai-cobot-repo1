@@ -1,0 +1,7 @@
+[console_scripts]
+assembly_inspector = vision_server.assembly_inspector:main
+camera_manager = vision_server.camera_manager:main
+conveyor_controller = vision_server.conveyor_controller:main
+conveyor_roi = vision_server.conveyor_roi:main
+part_detector = vision_server.part_detector:main
+vision_mock = vision_server.vision_mock:main

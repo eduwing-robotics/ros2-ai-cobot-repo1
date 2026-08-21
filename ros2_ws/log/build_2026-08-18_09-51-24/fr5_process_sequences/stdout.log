@@ -1,0 +1,20 @@
+running develop
+running egg_info
+creating fr5_process_sequences.egg-info
+writing fr5_process_sequences.egg-info/PKG-INFO
+writing dependency_links to fr5_process_sequences.egg-info/dependency_links.txt
+writing requirements to fr5_process_sequences.egg-info/requires.txt
+writing top-level names to fr5_process_sequences.egg-info/top_level.txt
+writing manifest file 'fr5_process_sequences.egg-info/SOURCES.txt'
+reading manifest file 'fr5_process_sequences.egg-info/SOURCES.txt'
+writing manifest file 'fr5_process_sequences.egg-info/SOURCES.txt'
+running build_ext
+Creating /home/juchan-yoon/FR5_robot_control/ros2_ws/install/fr5_process_sequences/lib/python3.12/site-packages/fr5-process-sequences.egg-link (link to .)
+
+Installed /home/juchan-yoon/FR5_robot_control/ros2_ws/build/fr5_process_sequences
+running symlink_data
+creating /home/juchan-yoon/FR5_robot_control/ros2_ws/install/fr5_process_sequences/share/ament_index
+creating /home/juchan-yoon/FR5_robot_control/ros2_ws/install/fr5_process_sequences/share/ament_index/resource_index
+creating /home/juchan-yoon/FR5_robot_control/ros2_ws/install/fr5_process_sequences/share/ament_index/resource_index/packages
+symbolically linking /home/juchan-yoon/FR5_robot_control/ros2_ws/build/fr5_process_sequences/resource/fr5_process_sequences -> /home/juchan-yoon/FR5_robot_control/ros2_ws/install/fr5_process_sequences/share/ament_index/resource_index/packages
+symbolically linking /home/juchan-yoon/FR5_robot_control/ros2_ws/build/fr5_process_sequences/package.xml -> /home/juchan-yoon/FR5_robot_control/ros2_ws/install/fr5_process_sequences/share/fr5_process_sequences

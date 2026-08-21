@@ -1,0 +1,6 @@
+1787210376.7687047 [INFO] [launch]: All log files can be found below /home/juchan-yoon/FR5_robot_control/runtime/log/2026-08-20-16-19-36-767974-juchan-yoon-System-Product-Name-41881
+1787210376.7688096 [INFO] [launch]: Default logging verbosity is set to INFO
+1787210376.8243220 [INFO] [launch.user]: 🚀 Launching as Normal ROS Node
+1787210376.8301063 [INFO] [realsense2_camera_node-1]: process started with pid [41915]
+1787210384.7325556 [WARNING] [launch]: user interrupted with ctrl-c (SIGINT)
+1787210385.2010996 [INFO] [realsense2_camera_node-1]: process has finished cleanly [pid 41915]

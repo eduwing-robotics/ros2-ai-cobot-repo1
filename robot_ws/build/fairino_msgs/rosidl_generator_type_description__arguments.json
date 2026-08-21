@@ -1,0 +1,14 @@
+{
+  "package_name": "fairino_msgs",
+  "output_dir": "/home/juchan-yoon/FR5_robot_control/robot_ws/build/fairino_msgs/rosidl_generator_type_description/fairino_msgs",
+  "idl_tuples": [
+    "/home/juchan-yoon/FR5_robot_control/robot_ws/build/fairino_msgs/rosidl_adapter/fairino_msgs:srv/RemoteCmdInterface.idl",
+    "/home/juchan-yoon/FR5_robot_control/robot_ws/build/fairino_msgs/rosidl_adapter/fairino_msgs:srv/RemoteScriptContent.idl",
+    "/home/juchan-yoon/FR5_robot_control/robot_ws/build/fairino_msgs/rosidl_adapter/fairino_msgs:msg/RobotNonrtState.idl"
+  ],
+  "include_paths": [
+    "std_msgs:/opt/ros/jazzy/share/std_msgs",
+    "builtin_interfaces:/opt/ros/jazzy/share/builtin_interfaces",
+    "service_msgs:/opt/ros/jazzy/share/service_msgs"
+  ]
+}

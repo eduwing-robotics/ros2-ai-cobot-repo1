@@ -1,0 +1,2 @@
+[INFO] [1787217236.967031603] [tray_section_viewer]: Loaded tray layout: /home/juchan-yoon/FR5_robot_control/vision_assembly/config/tray_layout_candidate.json
+[INFO] [1787217236.967279238] [tray_section_viewer]: Publishing annotated image: /vision/tray/sections_image/compressed

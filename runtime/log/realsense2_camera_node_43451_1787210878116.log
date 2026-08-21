@@ -1,0 +1,105 @@
+[INFO] [1787210878.162682070] [camera.camera]: RealSense ROS v4.58.1
+[INFO] [1787210878.162724545] [camera.camera]: Built with LibRealSense v2.58.1
+[INFO] [1787210878.162729182] [camera.camera]: Running with LibRealSense v2.58.1
+[WARN] [1787210878.245823637] [camera.camera]: Device 1/1 failed with exception: set_xu(...). xioctl(UVCIOC_CTRL_QUERY) failed on control 1 Last Error: Protocol error
+[ERROR] [1787210878.245922230] [camera.camera]: The requested device with  is NOT found. Will Try again.
+[INFO] [1787210880.257765557] [camera.camera]: Device with serial number 254622074096 was found.
+
+[INFO] [1787210880.257884075] [camera.camera]: Device with physical ID /sys/devices/pci0000:00/0000:00:14.0/usb2/2-1/2-1:1.0/video4linux/video0 was found.
+[INFO] [1787210880.257908671] [camera.camera]: Device with name Intel RealSense D435 was found.
+[INFO] [1787210880.258423032] [camera.camera]: Device with port number 2-1 was found.
+[INFO] [1787210880.258443603] [camera.camera]: Device USB type: 3.2
+[INFO] [1787210880.258456922] [camera.camera]: Resetting device...
+[INFO] [1787210882.273263195] [camera.camera]: Device with serial number 254622074096 was found.
+
+[INFO] [1787210882.273393276] [camera.camera]: Device with physical ID /sys/devices/pci0000:00/0000:00:14.0/usb2/2-1/2-1:1.0/video4linux/video0 was found.
+[INFO] [1787210882.273440560] [camera.camera]: Device with name Intel RealSense D435 was found.
+[INFO] [1787210882.273977640] [camera.camera]: Device with port number 2-1 was found.
+[INFO] [1787210882.274026425] [camera.camera]: Device USB type: 3.2
+[INFO] [1787210882.274222966] [camera.camera]: getParameters...
+[INFO] [1787210882.276075232] [camera.camera]: JSON file is not provided
+[INFO] [1787210882.276134594] [camera.camera]: Device Name: Intel RealSense D435
+[INFO] [1787210882.276201524] [camera.camera]: Device Serial No: 254622074096
+[INFO] [1787210882.276238440] [camera.camera]: Device physical port: /sys/devices/pci0000:00/0000:00:14.0/usb2/2-1/2-1:1.0/video4linux/video0
+[INFO] [1787210882.276280494] [camera.camera]: Device FW version: 5.17.0.10
+[INFO] [1787210882.276315731] [camera.camera]: Device Product ID: 0x0B07
+[INFO] [1787210882.276349151] [camera.camera]: Sync Mode: Off
+[INFO] [1787210882.369061228] [camera.camera]: Device with serial number 254622074096 was found.
+
+[INFO] [1787210882.369156204] [camera.camera]: Device with physical ID /sys/devices/pci0000:00/0000:00:14.0/usb2/2-1/2-1:1.0/video4linux/video0 was found.
+[INFO] [1787210882.369178325] [camera.camera]: Device with name Intel RealSense D435 was found.
+[INFO] [1787210882.369506174] [camera.camera]: Device with port number 2-1 was found.
+[INFO] [1787210882.369521156] [camera.camera]: Device USB type: 3.2
+[INFO] [1787210882.370101249] [camera.camera]: getParameters...
+[INFO] [1787210882.370688865] [camera.camera]: JSON file is not provided
+[INFO] [1787210882.370706769] [camera.camera]: Device Name: Intel RealSense D435
+[INFO] [1787210882.370717795] [camera.camera]: Device Serial No: 254622074096
+[INFO] [1787210882.370729681] [camera.camera]: Device physical port: /sys/devices/pci0000:00/0000:00:14.0/usb2/2-1/2-1:1.0/video4linux/video0
+[INFO] [1787210882.370751977] [camera.camera]: Device FW version: 5.17.0.10
+[INFO] [1787210882.370761429] [camera.camera]: Device Product ID: 0x0B07
+[INFO] [1787210882.370770045] [camera.camera]: Sync Mode: Off
+[INFO] [1787210882.471197014] [camera.camera]: Device with serial number 254622074096 was found.
+
+[INFO] [1787210882.471274071] [camera.camera]: Device with physical ID /sys/devices/pci0000:00/0000:00:14.0/usb2/2-1/2-1:1.0/video4linux/video0 was found.
+[INFO] [1787210882.471289985] [camera.camera]: Device with name Intel RealSense D435 was found.
+[INFO] [1787210882.471596554] [camera.camera]: Device with port number 2-1 was found.
+[INFO] [1787210882.471610430] [camera.camera]: Device USB type: 3.2
+[INFO] [1787210882.472496131] [camera.camera]: getParameters...
+[INFO] [1787210882.473056823] [camera.camera]: JSON file is not provided
+[INFO] [1787210882.473072595] [camera.camera]: Device Name: Intel RealSense D435
+[INFO] [1787210882.473083675] [camera.camera]: Device Serial No: 254622074096
+[INFO] [1787210882.473093665] [camera.camera]: Device physical port: /sys/devices/pci0000:00/0000:00:14.0/usb2/2-1/2-1:1.0/video4linux/video0
+[INFO] [1787210882.473106182] [camera.camera]: Device FW version: 5.17.0.10
+[INFO] [1787210882.473115771] [camera.camera]: Device Product ID: 0x0B07
+[INFO] [1787210882.473124002] [camera.camera]: Sync Mode: Off
+[INFO] [1787210882.574215269] [camera.camera]: Device with serial number 254622074096 was found.
+
+[INFO] [1787210882.574331196] [camera.camera]: Device with physical ID /sys/devices/pci0000:00/0000:00:14.0/usb2/2-1/2-1:1.0/video4linux/video0 was found.
+[INFO] [1787210882.574350603] [camera.camera]: Device with name Intel RealSense D435 was found.
+[INFO] [1787210882.574660157] [camera.camera]: Device with port number 2-1 was found.
+[INFO] [1787210882.574674484] [camera.camera]: Device USB type: 3.2
+[INFO] [1787210882.575698477] [camera.camera]: getParameters...
+[INFO] [1787210882.576298637] [camera.camera]: JSON file is not provided
+[INFO] [1787210882.576315333] [camera.camera]: Device Name: Intel RealSense D435
+[INFO] [1787210882.576326980] [camera.camera]: Device Serial No: 254622074096
+[INFO] [1787210882.576336632] [camera.camera]: Device physical port: /sys/devices/pci0000:00/0000:00:14.0/usb2/2-1/2-1:1.0/video4linux/video0
+[INFO] [1787210882.576348895] [camera.camera]: Device FW version: 5.17.0.10
+[INFO] [1787210882.576358392] [camera.camera]: Device Product ID: 0x0B07
+[INFO] [1787210882.576367515] [camera.camera]: Sync Mode: Off
+[ERROR] [1787210882.664129525] [camera.camera]: An error has occurred while calling sensor for: depth_module.inter_cam_sync_mode:set_xu(...). xioctl(UVCIOC_CTRL_QUERY) failed on control 1 Last Error: Protocol error
+[ERROR] [1787210882.668744044] [camera.camera]: An error has occurred while calling sensor for: depth_module.auto_gain_limit:set_xu(...). xioctl(UVCIOC_CTRL_QUERY) failed on control 1 Last Error: Protocol error
+[INFO] [1787210882.676059917] [camera.camera]: Set ROS param depth_module.depth_profile to default: 848x480x30
+[INFO] [1787210882.677339648] [camera.camera]: Set ROS param depth_module.infra_profile to default: 848x480x30
+[WARN] [1787210882.687422973] [camera.camera]: re-enable the stream for the change to take effect.
+[INFO] [1787210882.691785756] [camera.camera]: Stopping Sensor: RGB Camera
+[INFO] [1787210882.704544993] [camera.camera]: Starting Sensor: RGB Camera
+[INFO] [1787210882.710374983] [camera.camera]: Open profile: stream_type: Color(0), Format: RGB8, Width: 1920, Height: 1080, FPS: 15
+[INFO] [1787210882.714128456] [camera.camera]: RealSense Node Is Up!
+[ERROR] [1787210883.676578075] [camera.camera]: The device has been disconnected!
+[INFO] [1787210883.676697871] [camera.camera]: Stop Sensor: RGB Camera
+[INFO] [1787210883.676709881] [camera.camera]: Close Sensor. 
+[INFO] [1787210883.730181698] [camera.camera]: Close Sensor - Done. 
+[INFO] [1787210883.904885948] [camera.camera]: Checking new devices...
+[INFO] [1787210883.907835278] [camera.camera]: Device with serial number 254622074096 was found.
+
+[INFO] [1787210883.907861349] [camera.camera]: Device with physical ID /sys/devices/pci0000:00/0000:00:14.0/usb2/2-1/2-1:1.0/video4linux/video0 was found.
+[INFO] [1787210883.907867203] [camera.camera]: Device with name Intel RealSense D435 was found.
+[INFO] [1787210883.907981958] [camera.camera]: Device with port number 2-1 was found.
+[INFO] [1787210883.907987377] [camera.camera]: Device USB type: 3.2
+[INFO] [1787210883.908004803] [camera.camera]: getParameters...
+[INFO] [1787210883.908546442] [camera.camera]: JSON file is not provided
+[INFO] [1787210883.908565341] [camera.camera]: Device Name: Intel RealSense D435
+[INFO] [1787210883.908570917] [camera.camera]: Device Serial No: 254622074096
+[INFO] [1787210883.908576454] [camera.camera]: Device physical port: /sys/devices/pci0000:00/0000:00:14.0/usb2/2-1/2-1:1.0/video4linux/video0
+[INFO] [1787210883.908583926] [camera.camera]: Device FW version: 5.17.0.10
+[INFO] [1787210883.908589016] [camera.camera]: Device Product ID: 0x0B07
+[INFO] [1787210883.908594077] [camera.camera]: Sync Mode: Off
+[INFO] [1787210884.007126412] [camera.camera]: Set ROS param depth_module.depth_profile to default: 848x480x30
+[INFO] [1787210884.008404974] [camera.camera]: Set ROS param depth_module.infra_profile to default: 848x480x30
+[WARN] [1787210884.015552920] [camera.camera]: re-enable the stream for the change to take effect.
+[INFO] [1787210884.018604342] [camera.camera]: Stopping Sensor: RGB Camera
+[WARN] [1787210884.021165362] [camera.camera]: No intrinsics available for this stream profile. Using zeroed intrinsics as default.
+[INFO] [1787210884.021655074] [camera.camera]: Starting Sensor: RGB Camera
+[INFO] [1787210884.027275945] [camera.camera]: Open profile: stream_type: Color(0), Format: RGB8, Width: 1920, Height: 1080, FPS: 15
+[INFO] [1787210884.029957344] [camera.camera]: RealSense Node Is Up!
+[INFO] [1787210888.412521850] [rclcpp]: signal_handler(SIGINT/SIGTERM)

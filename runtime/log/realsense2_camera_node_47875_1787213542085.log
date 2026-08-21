@@ -1,0 +1,82 @@
+[INFO] [1787213542.136171462] [camera.camera]: RealSense ROS v4.58.1
+[INFO] [1787213542.136218789] [camera.camera]: Built with LibRealSense v2.58.1
+[INFO] [1787213542.136223643] [camera.camera]: Running with LibRealSense v2.58.1
+[INFO] [1787213542.144356033] [camera.camera]: Device with serial number 254622074096 was found.
+
+[INFO] [1787213542.144383905] [camera.camera]: Device with physical ID /sys/devices/pci0000:00/0000:00:14.0/usb2/2-4/2-4:1.0/video4linux/video0 was found.
+[INFO] [1787213542.144390086] [camera.camera]: Device with name Intel RealSense D435 was found.
+[INFO] [1787213542.144501432] [camera.camera]: Device with port number 2-4 was found.
+[INFO] [1787213542.144505693] [camera.camera]: Device USB type: 3.2
+[INFO] [1787213542.144508910] [camera.camera]: Resetting device...
+[INFO] [1787213544.155316677] [camera.camera]: Device with serial number 254622074096 was found.
+
+[INFO] [1787213544.155436299] [camera.camera]: Device with physical ID /sys/devices/pci0000:00/0000:00:14.0/usb2/2-4/2-4:1.0/video4linux/video0 was found.
+[INFO] [1787213544.155461879] [camera.camera]: Device with name Intel RealSense D435 was found.
+[INFO] [1787213544.155928273] [camera.camera]: Device with port number 2-4 was found.
+[INFO] [1787213544.155948965] [camera.camera]: Device USB type: 3.2
+[INFO] [1787213544.156082824] [camera.camera]: getParameters...
+[INFO] [1787213544.158517555] [camera.camera]: JSON file is not provided
+[INFO] [1787213544.158610758] [camera.camera]: Device Name: Intel RealSense D435
+[INFO] [1787213544.158654552] [camera.camera]: Device Serial No: 254622074096
+[INFO] [1787213544.158691536] [camera.camera]: Device physical port: /sys/devices/pci0000:00/0000:00:14.0/usb2/2-4/2-4:1.0/video4linux/video0
+[INFO] [1787213544.158732428] [camera.camera]: Device FW version: 5.17.0.10
+[INFO] [1787213544.158767143] [camera.camera]: Device Product ID: 0x0B07
+[INFO] [1787213544.158800336] [camera.camera]: Sync Mode: On
+[WARN] [1787213544.251507040] [camera.camera]: re-enable the stream for the change to take effect.
+[INFO] [1787213544.252175755] [camera.camera]: Set ROS param depth_module.infra_profile to default: 848x480x30
+[WARN] [1787213544.258177598] [camera.camera]: re-enable the stream for the change to take effect.
+[INFO] [1787213544.261468302] [camera.camera]: Stopping Sensor: Depth Module
+[INFO] [1787213544.261498583] [camera.camera]: Stopping Sensor: RGB Camera
+[INFO] [1787213544.274656021] [camera.camera]: Starting Sensor: Depth Module
+[INFO] [1787213544.279258774] [camera.camera]: Open profile: stream_type: Depth(0), Format: Z16, Width: 1280, Height: 720, FPS: 15
+[INFO] [1787213544.300390482] [camera.camera]: Starting Sensor: RGB Camera
+[INFO] [1787213544.316282752] [camera.camera]: Open profile: stream_type: Color(0), Format: RGB8, Width: 1920, Height: 1080, FPS: 15
+[INFO] [1787213544.323990291] [camera.camera]: RealSense Node Is Up!
+[WARN] [1787220441.543199076] [camera.camera]: XXX Hardware Notification:Incomplete video frame detected!
+Size 672520 out of 4147455 bytes (16%),1.78722e+12,Warn,Frame Corrupted
+[WARN] [1787220443.790190923] [camera.camera]: XXX Hardware Notification:Incomplete video frame detected!
+Size 1393416 out of 1843455 bytes (75%),1.78722e+12,Warn,Frame Corrupted
+[WARN] [1787220446.837856005] [camera.camera]: XXX Hardware Notification:Incomplete video frame detected!
+Size 3621640 out of 4147455 bytes (87%),1.78722e+12,Warn,Frame Corrupted
+[WARN] [1787220450.993688144] [camera.camera]: XXX Hardware Notification:Incomplete video frame detected!
+Size 1164040 out of 1843455 bytes (63%),1.78722e+12,Warn,Frame Corrupted
+[WARN] [1787220451.242757632] [camera.camera]: XXX Hardware Notification:Incomplete video frame detected!
+Size 3785480 out of 4147455 bytes (91%),1.78722e+12,Warn,Frame Corrupted
+[WARN] [1787220456.685416987] [camera.camera]: XXX Hardware Notification:Incomplete video frame detected!
+Size 2016008 out of 4147455 bytes (48%),1.78722e+12,Warn,Frame Corrupted
+[WARN] [1787220457.802547251] [camera.camera]: XXX Hardware Notification:Incomplete video frame detected!
+Size 1458952 out of 1843455 bytes (79%),1.78722e+12,Warn,Frame Corrupted
+[WARN] [1787220461.714303393] [camera.camera]: XXX Hardware Notification:Incomplete video frame detected!
+Size 3556104 out of 4147455 bytes (85%),1.78722e+12,Warn,Frame Corrupted
+[WARN] [1787220464.403161219] [camera.camera]: XXX Hardware Notification:Incomplete video frame detected!
+Size 967432 out of 1843455 bytes (52%),1.78722e+12,Warn,Frame Corrupted
+[WARN] [1787220467.434997937] [camera.camera]: XXX Hardware Notification:Incomplete video frame detected!
+Size 2540296 out of 4147455 bytes (61%),1.78722e+12,Warn,Frame Corrupted
+[WARN] [1787220471.213083102] [camera.camera]: XXX Hardware Notification:Incomplete video frame detected!
+Size 1557256 out of 1843455 bytes (84%),1.78722e+12,Warn,Frame Corrupted
+[WARN] [1787220472.366589967] [camera.camera]: XXX Hardware Notification:Incomplete video frame detected!
+Size 2016008 out of 4147455 bytes (48%),1.78722e+12,Warn,Frame Corrupted
+[WARN] [1787220477.015956119] [camera.camera]: XXX Hardware Notification:Incomplete video frame detected!
+Size 1491720 out of 1843455 bytes (80%),1.78722e+12,Warn,Frame Corrupted
+[WARN] [1787220479.397328120] [camera.camera]: XXX Hardware Notification:Incomplete video frame detected!
+Size 3785480 out of 4147455 bytes (91%),1.78722e+12,Warn,Frame Corrupted
+[WARN] [1787220483.532790885] [camera.camera]: XXX Hardware Notification:Incomplete video frame detected!
+Size 3785480 out of 4147455 bytes (91%),1.78722e+12,Warn,Frame Corrupted
+[WARN] [1787220484.614742188] [camera.camera]: XXX Hardware Notification:Incomplete video frame detected!
+Size 738056 out of 1843455 bytes (40%),1.78722e+12,Warn,Frame Corrupted
+[WARN] [1787220488.252827254] [camera.camera]: XXX Hardware Notification:Incomplete video frame detected!
+Size 2704136 out of 4147455 bytes (65%),1.78722e+12,Warn,Frame Corrupted
+[WARN] [1787220493.316631256] [camera.camera]: XXX Hardware Notification:Incomplete video frame detected!
+Size 2147080 out of 4147455 bytes (51%),1.78722e+12,Warn,Frame Corrupted
+[WARN] [1787220493.893742183] [camera.camera]: XXX Hardware Notification:Incomplete video frame detected!
+Size 1229576 out of 1843455 bytes (66%),1.78722e+12,Warn,Frame Corrupted
+[WARN] [1787220497.281973305] [camera.camera]: XXX Hardware Notification:Incomplete video frame detected!
+Size 4113160 out of 4147455 bytes (99%),1.78722e+12,Warn,Frame Corrupted
+[WARN] [1787220501.526793766] [camera.camera]: XXX Hardware Notification:Incomplete video frame detected!
+Size 2540296 out of 4147455 bytes (61%),1.78722e+12,Warn,Frame Corrupted
+[WARN] [1787220501.824916011] [camera.camera]: XXX Hardware Notification:Incomplete video frame detected!
+Size 279304 out of 1843455 bytes (15%),1.78722e+12,Warn,Frame Corrupted
+[WARN] [1787220506.084776048] [camera.camera]: XXX Hardware Notification:Incomplete video frame detected!
+Size 3916552 out of 4147455 bytes (94%),1.78722e+12,Warn,Frame Corrupted
+[WARN] [1787220508.498332395] [camera.camera]: XXX Hardware Notification:Incomplete video frame detected!
+Size 443144 out of 1843455 bytes (24%),1.78722e+12,Warn,Frame Corrupted

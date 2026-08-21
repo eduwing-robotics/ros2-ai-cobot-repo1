@@ -1,0 +1,1033 @@
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:402:71: warning: backslash and newline separated by space
+  402 |         const std::shared_ptr<remote_cmd_server_srv_msg::Request> req,\
+      |                                                                        
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:741:5: warning: multi-line comment [-Wcomment]
+  741 |     //RCLCPP_INFO(rclcpp::get_logger(LOGGER_NAME),"settoolcoord:%d,%f,%f,%f,%f,%f,%f,%d,%d",\
+      |     ^
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:2411:5: warning: multi-line comment [-Wcomment]
+ 2411 |     // RCLCPP_INFO(rclcpp::get_logger(LOGGER_NAME),"焊接状态参数:%i,%i",\
+      |     ^
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:2414:5: warning: multi-line comment [-Wcomment]
+ 2414 |     // return std::string(std::to_string(res) + "," + std::to_string(state.breakOffState) + \
+      |     ^
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:2584:51: warning: backslash and newline separated by space
+ 2584 |                 std::to_string(pos.rpy.ry) + "," +\
+      |                                                    
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/fairino_hardware_interface.cpp:175:5: warning: multi-line comment [-Wcomment]
+  175 |     //RCLCPP_INFO(rclcpp::get_logger("FairinoHardwareInterface"), "System successfully read: %f,%f,%f,%f,%f,%f",_jnt_position_state[0],\
+      |     ^
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/fairino_hardware_interface.cpp:194:9: warning: multi-line comment [-Wcomment]
+  194 |         //RCLCPP_INFO(rclcpp::get_logger("FairinoHardwareInterface"), "ServoJ下发位置:%f,%f,%f,%f,%f,%f",\
+      |         ^
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/examples/src/srv_test_client.cpp: In constructor ‘srv_test_node::srv_test_node(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/examples/src/srv_test_client.cpp:9:16: warning: unused variable ‘count’ [-Wunused-variable]
+    9 |     static int count = 0;
+      |                ^~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/CNDE_thread.cpp: In constructor ‘CNDE_recv_thread::CNDE_recv_thread(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/CNDE_thread.cpp:53:14: warning: unused variable ‘recv_size’ [-Wunused-variable]
+   53 |         auto recv_size = recvfrom(_socketfd1,buf,256,0,(struct sockaddr*)udp_client1,&addr_len);
+      |              ^~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:58:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   58 |     "ROS2 command server created,ready to connect robot",
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:59:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   59 |     "fairino_hardware:",
+      |     ^~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:60:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   60 |     "Adapt to software version of robot:",
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:61:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   61 |     "Package build time:",
+      |     ^~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:62:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   62 |     "Robot connect failed! try to reconnect...",
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:63:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   63 |     "Robot connect failed! program about to exit",
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:64:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   64 |     "Robot connected!",
+      |     ^~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:65:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   65 |     "Receive ROS command,command name&parameters:",
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:66:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   66 |     "Command error:invalid fucntion name",
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:67:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   67 |     "Invalid parameter,please check data types of input parameters",
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:68:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   68 |     "Parameter out of range,please check value of input parameters",
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:69:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   69 |     "Incorrect parameter number,please check numbers of input parameters",
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:70:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   70 |     "Illegal parameters,parameters consist of number,dot and letters,space in not allowed",
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:71:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   71 |     "Illegal command format,you must follow the format:'function name(parameters)'",
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:72:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   72 |     "Number of joint position is 6, please check parameter number",
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:73:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   73 |     "Joint pos container index out of range",
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:74:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   74 |     "Parameter fomart:index,j1pos...j6pos,please input correct format",
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:75:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   75 |     "Number of cartesean position is 6, please check parameter number",
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:76:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   76 |     "Parameter fomart:index,x,y,z,r,p,y,please input correct format",
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:77:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   77 |     "Invalid command GET parameter",
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:78:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   78 |     "Illegal command GET parameter,format:[JNT|CART],[index]",
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:79:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   79 |     "Joint/Cartesean position container index out of range",
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:80:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   80 |     "Forward kinematic error occur,please check input point",
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:81:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   81 |     "Inverse kinematic error occur,please check input point",
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:82:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   82 |     "Invalid container index,can't find the point",
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:83:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   83 |     "Ready to create state feedback client socket",
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:84:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   84 |     "Error:socket create failed",
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:85:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   85 |     "Socket created,ready to connect robot...",
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:86:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   86 |     "Error:failed to connect robot state feedback port,program about to exit!",
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:87:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   87 |     "Connected to robot state feedback port",
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:88:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   88 |     "Failed to set socket keep alive",
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:89:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   89 |     "Keep alive:recreate socket failed, try again after 3sec",
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:90:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   90 |     "Keep alive:reconnect robot failed, try again after 3sec",
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:91:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   91 |     "Keep alive:reconnect success!",
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:92:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   92 |     "Keep alive:thread exit!",
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:93:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   93 |     "State feedback socket disconnected, please check your network",
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:94:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   94 |     "The volumn of state feedback data is smaller than expected, please check robot sofeware version",
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:95:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   95 |     "The volumn of state feedback data is larger than expected, please check robot sofeware version",
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:96:5: warning: ISO C++ forbids converting a string constant to ‘char*’ [-Wwrite-strings]
+   96 |     "The sumcheck of state feedback data is failed, drop the data and search frame head again"
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In constructor ‘robot_command_thread::robot_command_thread(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:364:9: warning: unused variable ‘rnt’ [-Wunused-variable]
+  364 |     int rnt = _ptr_robot->SetRobotRealtimeStateConfig(states, 8);
+      |         ^~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::defJntPosition(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:553:16: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<JointPos>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+  553 |         if(idx > _cmd_jnt_pos_list.size()+1 || idx <= 0){//如果大于当前容器最大值+1,那么要报错,因为序列容器中间无法留空
+      |            ~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:556:22: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<JointPos>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+  556 |         }else if(idx <= _cmd_jnt_pos_list.size()){//如果是小于等于当前的容量,那么就是点位信息覆盖
+      |                  ~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:561:22: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<JointPos>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+  561 |         }else if(idx == _cmd_jnt_pos_list.size()+1){//添加元素
+      |                  ~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::defCartPosition(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:603:16: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<DescPose>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+  603 |         if(idx > _cmd_cart_pos_list.size()+1 || idx <= 0){//如果大于当前容器最大值+1,那么要报错,因为序列容器中间无法留空
+      |            ~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:606:22: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<DescPose>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+  606 |         }else if(idx <= _cmd_cart_pos_list.size()){//如果是小于等于当前的容量,那么就是点位信息覆盖
+      |                  ~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:614:22: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<DescPose>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+  614 |         }else if(idx == _cmd_cart_pos_list.size()+1){//添加元素
+      |                  ~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::getVariable(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:644:20: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<JointPos>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+  644 |             if(idx <= _cmd_jnt_pos_list.size() && idx > 0){
+      |                ~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:658:24: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<DescPose>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+  658 |                 if(idx <= _cmd_cart_pos_list.size() && idx > 0){
+      |                    ~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::ComputeTool(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:751:59: warning: unused parameter ‘para’ [-Wunused-parameter]
+  751 | std::string robot_command_thread::ComputeTool(std::string para){
+      |                                               ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::ComputeTcp4(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:764:59: warning: unused parameter ‘para’ [-Wunused-parameter]
+  764 | std::string robot_command_thread::ComputeTcp4(std::string para){
+      |                                               ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::SetCollisionStrategy(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:975:9: warning: unused variable ‘strategy’ [-Wunused-variable]
+  975 |     int strategy = std::stoi(list.front().c_str());list.pop_front();
+      |         ^~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::ExtAxisGetCoord(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1364:63: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 1364 | std::string robot_command_thread::ExtAxisGetCoord(std::string para){
+      |                                                   ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::ExtAxisComputeECoordSys(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1483:71: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 1483 | std::string robot_command_thread::ExtAxisComputeECoordSys(std::string para){
+      |                                                           ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::ExtDevLoadUDPDriver(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1519:67: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 1519 | std::string robot_command_thread::ExtDevLoadUDPDriver(std::string para){
+      |                                                       ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::MoveJ(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1604:18: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<JointPos>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+ 1604 |         if(index > _cmd_jnt_pos_list.size()){
+      |            ~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1617:18: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<DescPose>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+ 1617 |         if(index > _cmd_cart_pos_list.size()){
+      |            ~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::MoveL(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1697:18: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<JointPos>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+ 1697 |         if(index > _cmd_jnt_pos_list.size()){
+      |            ~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1708:18: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<DescPose>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+ 1708 |         if(index > _cmd_cart_pos_list.size()){
+      |            ~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::MoveC(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1793:18: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<JointPos>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+ 1793 |         if(index > _cmd_jnt_pos_list.size() || index2 > _cmd_jnt_pos_list.size()){
+      |            ~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1793:55: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<JointPos>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+ 1793 |         if(index > _cmd_jnt_pos_list.size() || index2 > _cmd_jnt_pos_list.size()){
+      |                                                ~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1809:18: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<DescPose>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+ 1809 |         if(index > _cmd_cart_pos_list.size() || index2 > _cmd_cart_pos_list.size()){
+      |            ~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1809:56: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<DescPose>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+ 1809 |         if(index > _cmd_cart_pos_list.size() || index2 > _cmd_cart_pos_list.size()){
+      |                                                 ~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1768:13: warning: unused variable ‘search’ [-Wunused-variable]
+ 1768 |     uint8_t search = this->get_parameter("MoveL_search").as_int();
+      |             ^~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::Circle(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1871:54: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 1871 | std::string robot_command_thread::Circle(std::string para){
+      |                                          ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::SplinePTP(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1938:18: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<JointPos>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+ 1938 |         if(index > _cmd_jnt_pos_list.size()){
+      |            ~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::NewSplinePoint(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:2024:18: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<DescPose>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+ 2024 |         if(index > _cmd_cart_pos_list.size()){
+      |            ~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::PointsOffsetDisable(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:2105:67: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 2105 | std::string robot_command_thread::PointsOffsetDisable(std::string para){
+      |                                                       ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::ScriptStart(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:2290:59: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 2290 | std::string robot_command_thread::ScriptStart(std::string para){
+      |                                               ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::ScriptStop(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:2299:58: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 2299 | std::string robot_command_thread::ScriptStop(std::string para){
+      |                                              ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::ScriptPause(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:2309:59: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 2309 | std::string robot_command_thread::ScriptPause(std::string para){
+      |                                               ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::ScriptResume(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:2319:60: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 2319 | std::string robot_command_thread::ScriptResume(std::string para){
+      |                                                ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetVersion(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:2329:58: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 2329 | std::string robot_command_thread::GetVersion(std::string para){
+      |                                              ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetMsgVersion(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:2340:61: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 2340 | std::string robot_command_thread::GetMsgVersion(std::string para){
+      |                                                 ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetRobotVersion(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:2350:63: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 2350 | std::string robot_command_thread::GetRobotVersion(std::string para){
+      |                                                   ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetControllerVersion(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:2361:68: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 2361 | std::string robot_command_thread::GetControllerVersion(std::string para){
+      |                                                        ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetDHCompensation(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:2390:65: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 2390 | std::string robot_command_thread::GetDHCompensation(std::string para){
+      |                                                     ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetWeldingBreakOffState(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:2416:1: warning: no return statement in function returning non-void [-Wreturn-type]
+ 2416 | }
+      | ^
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:2407:71: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 2407 | std::string robot_command_thread::GetWeldingBreakOffState(std::string para){
+      |                                                           ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetErrorCode(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:2423:60: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 2423 | std::string robot_command_thread::GetErrorCode(std::string para){
+      |                                                ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::TractorHoming(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:2468:61: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 2468 | std::string robot_command_thread::TractorHoming(std::string para){
+      |                                                 ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::TractorStop(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:2511:59: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 2511 | std::string robot_command_thread::TractorStop(std::string para){
+      |                                               ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::MoveTrajectoryJ(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:2560:63: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 2560 | std::string robot_command_thread::MoveTrajectoryJ(std::string para){
+      |                                                   ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetTrajectoryPointNum(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:2596:69: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 2596 | std::string robot_command_thread::GetTrajectoryPointNum(std::string para){
+      |                                                         ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetLuaList(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:2672:58: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 2672 | std::string robot_command_thread::GetLuaList(std::string para){
+      |                                              ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::WeldingGetCheckArcInterruptionParam(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:2778:83: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 2778 | std::string robot_command_thread::WeldingGetCheckArcInterruptionParam(std::string para){
+      |                                                                       ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::WeldingGetReWeldAfterBreakOffParam(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:2810:82: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 2810 | std::string robot_command_thread::WeldingGetReWeldAfterBreakOffParam(std::string para){
+      |                                                                      ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::WeldingStartReWeldAfterBreakOff(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:2824:79: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 2824 | std::string robot_command_thread::WeldingStartReWeldAfterBreakOff(std::string para){
+      |                                                                   ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::WeldingAbortWeldAfterBreakOff(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:2833:77: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 2833 | std::string robot_command_thread::WeldingAbortWeldAfterBreakOff(std::string para){
+      |                                                                 ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetDIConfig(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:2919:59: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 2919 | std::string robot_command_thread::GetDIConfig(std::string para){
+      |                                               ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetDOConfig(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:2975:59: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 2975 | std::string robot_command_thread::GetDOConfig(std::string para){
+      |                                               ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetToolDIConfig(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:3022:63: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 3022 | std::string robot_command_thread::GetToolDIConfig(std::string para){
+      |                                                   ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetDIConfigLevel(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:3056:64: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 3056 | std::string robot_command_thread::GetDIConfigLevel(std::string para){
+      |                                                    ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetToolDIConfigLevel(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:3129:68: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 3129 | std::string robot_command_thread::GetToolDIConfigLevel(std::string para){
+      |                                                        ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetStandardDILevel(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:3161:66: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 3161 | std::string robot_command_thread::GetStandardDILevel(std::string para){
+      |                                                      ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetStandardDOLevel(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:3197:66: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 3197 | std::string robot_command_thread::GetStandardDOLevel(std::string para){
+      |                                                      ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::ExtDevGetUDPComParam(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:3254:68: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 3254 | std::string robot_command_thread::ExtDevGetUDPComParam(std::string para){
+      |                                                        ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/CNDE_thread.cpp: In constructor ‘CNDE_recv_thread::CNDE_recv_thread(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/CNDE_thread.cpp:71:18: warning: ignoring return value of ‘int ftruncate(int, __off_t)’ declared with attribute ‘warn_unused_result’ [-Wunused-result]
+   71 |         ftruncate(_shm_fd,SHM_SHARED_DATA_SIZE);//预留10000byte空间容量
+      |         ~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::WeldingGetCurrentRelation(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:3816:73: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 3816 | std::string robot_command_thread::WeldingGetCurrentRelation(std::string para){
+      |                                                             ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::WeldingGetVoltageRelation(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:3838:73: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 3838 | std::string robot_command_thread::WeldingGetVoltageRelation(std::string para){
+      |                                                             ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetExDevProtocol(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:3856:64: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 3856 | std::string robot_command_thread::GetExDevProtocol(std::string para){
+      |                                                    ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::AuxServoGetAcc(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:3896:62: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 3896 | std::string robot_command_thread::AuxServoGetAcc(std::string para){
+      |                                                  ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::AuxServoGetEmergencyStopAcc(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:3911:75: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 3911 | std::string robot_command_thread::AuxServoGetEmergencyStopAcc(std::string para){
+      |                                                               ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::ExtDevUDPClientComReset(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:3942:71: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 3942 | std::string robot_command_thread::ExtDevUDPClientComReset(std::string para){
+      |                                                           ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::ExtDevUDPClientComClose(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:3952:71: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 3952 | std::string robot_command_thread::ExtDevUDPClientComClose(std::string para){
+      |                                                           ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetCtrlOpenLUAName(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:3962:66: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 3962 | std::string robot_command_thread::GetCtrlOpenLUAName(std::string para){
+      |                                                      ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::AllOpenLuaDelete(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:3990:64: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 3990 | std::string robot_command_thread::AllOpenLuaDelete(std::string para){
+      |                                                    ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetSDKVersion(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:4015:61: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 4015 | std::string robot_command_thread::GetSDKVersion(std::string para){
+      |                                                 ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetControllerIP(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:4026:63: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 4026 | std::string robot_command_thread::GetControllerIP(std::string para){
+      |                                                   ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::IsInDragTeach(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:4037:61: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 4037 | std::string robot_command_thread::IsInDragTeach(std::string para){
+      |                                                 ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::PauseMotion(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:4342:59: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 4342 | std::string robot_command_thread::PauseMotion(std::string para){
+      |                                               ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::ResumeMotion(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:4351:60: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 4351 | std::string robot_command_thread::ResumeMotion(std::string para){
+      |                                                ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetAxlePointRecordBtnState(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:4361:74: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 4361 | std::string robot_command_thread::GetAxlePointRecordBtnState(std::string para){
+      |                                                              ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetToolDO(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:4373:57: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 4373 | std::string robot_command_thread::GetToolDO(std::string para){
+      |                                             ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetDO(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:4386:53: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 4386 | std::string robot_command_thread::GetDO(std::string para){
+      |                                         ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::ComputeExTCF(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:4477:60: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 4477 | std::string robot_command_thread::ComputeExTCF(std::string para){
+      |                                                ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetRobotInstallAngle(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:4566:68: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 4566 | std::string robot_command_thread::GetRobotInstallAngle(std::string para){
+      |                                                        ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetSystemClock(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:5021:62: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 5021 | std::string robot_command_thread::GetSystemClock(std::string para){
+      |                                                  ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetRobotCurJointsConfig(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:5032:71: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 5032 | std::string robot_command_thread::GetRobotCurJointsConfig(std::string para){
+      |                                                           ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetDefaultTransVel(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:5043:66: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 5043 | std::string robot_command_thread::GetDefaultTransVel(std::string para){
+      |                                                      ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetRobotMotionDone(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:5054:66: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 5054 | std::string robot_command_thread::GetRobotMotionDone(std::string para){
+      |                                                      ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetRobotErrorCode(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:5066:65: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 5066 | std::string robot_command_thread::GetRobotErrorCode(std::string para){
+      |                                                     ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetMotionQueueLength(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:5106:68: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 5106 | std::string robot_command_thread::GetMotionQueueLength(std::string para){
+      |                                                        ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::SetTPDParam(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:5132:11: warning: unused variable ‘data’ [-Wunused-variable]
+ 5132 |     float data[20];
+      |           ^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::SetTPDStart(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:5157:11: warning: unused variable ‘data’ [-Wunused-variable]
+ 5157 |     float data[20];
+      |           ^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::SetWebTPDStop(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:5166:61: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 5166 | std::string robot_command_thread::SetWebTPDStop(std::string para){
+      |                                                 ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetCurrentLine(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:5402:62: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 5402 | std::string robot_command_thread::GetCurrentLine(std::string para){
+      |                                                  ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::ProgramRun(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:5412:58: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 5412 | std::string robot_command_thread::ProgramRun(std::string para){
+      |                                              ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::ProgramPause(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:5421:60: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 5421 | std::string robot_command_thread::ProgramPause(std::string para){
+      |                                                ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::ProgramResume(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:5430:61: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 5430 | std::string robot_command_thread::ProgramResume(std::string para){
+      |                                                 ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::ProgramStop(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:5439:59: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 5439 | std::string robot_command_thread::ProgramStop(std::string para){
+      |                                               ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetProgramState(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:5449:63: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 5449 | std::string robot_command_thread::GetProgramState(std::string para){
+      |                                                   ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetGripperConfig(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:5485:64: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 5485 | std::string robot_command_thread::GetGripperConfig(std::string para){
+      |                                                    ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetGripperMotionDone(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:5503:68: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 5503 | std::string robot_command_thread::GetGripperMotionDone(std::string para){
+      |                                                        ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetGripperActivateStatus(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:5518:72: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 5518 | std::string robot_command_thread::GetGripperActivateStatus(std::string para){
+      |                                                            ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetGripperCurPosition(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:5533:69: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 5533 | std::string robot_command_thread::GetGripperCurPosition(std::string para){
+      |                                                         ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetGripperCurSpeed(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:5548:66: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 5548 | std::string robot_command_thread::GetGripperCurSpeed(std::string para){
+      |                                                      ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetGripperCurCurrent(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:5563:68: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 5563 | std::string robot_command_thread::GetGripperCurCurrent(std::string para){
+      |                                                        ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetGripperVoltage(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:5578:65: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 5578 | std::string robot_command_thread::GetGripperVoltage(std::string para){
+      |                                                     ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetGripperTemp(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:5593:62: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 5593 | std::string robot_command_thread::GetGripperTemp(std::string para){
+      |                                                  ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetGripperRotNum(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:5608:64: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 5608 | std::string robot_command_thread::GetGripperRotNum(std::string para){
+      |                                                    ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetGripperRotSpeed(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:5623:66: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 5623 | std::string robot_command_thread::GetGripperRotSpeed(std::string para){
+      |                                                      ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetGripperRotTorque(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:5638:67: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 5638 | std::string robot_command_thread::GetGripperRotTorque(std::string para){
+      |                                                       ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::FT_GetConfig(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:5728:60: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 5728 | std::string robot_command_thread::FT_GetConfig(std::string para){
+      |                                                ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::FT_PdIdenCompute(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:5808:64: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 5808 | std::string robot_command_thread::FT_PdIdenCompute(std::string para){
+      |                                                    ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::FT_PdCogIdenCompute(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:5837:67: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 5837 | std::string robot_command_thread::FT_PdCogIdenCompute(std::string para){
+      |                                                       ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::FT_CalCenterStart(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:6163:65: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 6163 | std::string robot_command_thread::FT_CalCenterStart(std::string para){
+      |                                                     ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::FT_CalCenterEnd(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:6173:63: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 6173 | std::string robot_command_thread::FT_CalCenterEnd(std::string para){
+      |                                                   ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::FT_ComplianceStop(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:6204:65: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 6204 | std::string robot_command_thread::FT_ComplianceStop(std::string para){
+      |                                                     ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::LoadIdentifyDynFilterInit(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:6213:73: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 6213 | std::string robot_command_thread::LoadIdentifyDynFilterInit(std::string para){
+      |                                                             ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::LoadIdentifyDynVarInit(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:6222:70: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 6222 | std::string robot_command_thread::LoadIdentifyDynVarInit(std::string para){
+      |                                                          ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::ConveyorPointIORecord(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:6301:69: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 6301 | std::string robot_command_thread::ConveyorPointIORecord(std::string para){
+      |                                                         ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::ConveyorPointARecord(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:6310:68: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 6310 | std::string robot_command_thread::ConveyorPointARecord(std::string para){
+      |                                                        ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::ConveyorRefPointRecord(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:6319:70: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 6319 | std::string robot_command_thread::ConveyorRefPointRecord(std::string para){
+      |                                                          ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::ConveyorPointBRecord(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:6328:68: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 6328 | std::string robot_command_thread::ConveyorPointBRecord(std::string para){
+      |                                                        ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::ConveyorTrackEnd(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:6382:64: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 6382 | std::string robot_command_thread::ConveyorTrackEnd(std::string para){
+      |                                                    ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetSSHKeygen(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:6466:60: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 6466 | std::string robot_command_thread::GetSSHKeygen(std::string para){
+      |                                                ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetRobotEmergencyStopState(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:6523:74: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 6523 | std::string robot_command_thread::GetRobotEmergencyStopState(std::string para){
+      |                                                              ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetSDKComState(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:6535:62: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 6535 | std::string robot_command_thread::GetSDKComState(std::string para){
+      |                                                  ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetSafetyStopState(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:6548:66: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 6548 | std::string robot_command_thread::GetSafetyStopState(std::string para){
+      |                                                      ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetHardwareVersion(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:6569:66: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 6569 | std::string robot_command_thread::GetHardwareVersion(std::string para){
+      |                                                      ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetFirmwareVersion(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:6599:66: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 6599 | std::string robot_command_thread::GetFirmwareVersion(std::string para){
+      |                                                      ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::MoveAOStop(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:6955:58: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 6955 | std::string robot_command_thread::MoveAOStop(std::string para){
+      |                                              ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::MoveToolAOStop(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:6985:62: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 6985 | std::string robot_command_thread::MoveToolAOStop(std::string para){
+      |                                                  ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::ExtDevUnloadUDPDriver(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:6994:69: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 6994 | std::string robot_command_thread::ExtDevUnloadUDPDriver(std::string para){
+      |                                                         ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::PositionorComputeECoordSys(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:7154:74: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 7154 | std::string robot_command_thread::PositionorComputeECoordSys(std::string para){
+      |                                                              ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetForceAndTorqueDragState(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:7491:74: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 7491 | std::string robot_command_thread::GetForceAndTorqueDragState(std::string para){
+      |                                                              ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetForceSensorPayload(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:7539:69: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 7539 | std::string robot_command_thread::GetForceSensorPayload(std::string para){
+      |                                                         ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetForceSensorPayloadCog(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:7551:72: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 7551 | std::string robot_command_thread::GetForceSensorPayloadCog(std::string para){
+      |                                                            ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::ForceSensorAutoComputeLoad(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:7567:74: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 7567 | std::string robot_command_thread::ForceSensorAutoComputeLoad(std::string para){
+      |                                                              ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::ForceSensorComputeLoad(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:7598:70: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 7598 | std::string robot_command_thread::ForceSensorComputeLoad(std::string para){
+      |                                                          ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::AxleSensorConfigGet(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:7739:67: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 7739 | std::string robot_command_thread::AxleSensorConfigGet(std::string para){
+      |                                                       ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetRobotRealtimeStateSamplePeriod(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:8056:81: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 8056 | std::string robot_command_thread::GetRobotRealtimeStateSamplePeriod(std::string para){
+      |                                                                     ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetJointDriverTemperature(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:8067:73: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 8067 | std::string robot_command_thread::GetJointDriverTemperature(std::string para){
+      |                                                             ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetJointDriverTorque(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:8081:68: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 8081 | std::string robot_command_thread::GetJointDriverTorque(std::string para){
+      |                                                        ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::ArcWeldTraceReplayStart(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:8095:71: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 8095 | std::string robot_command_thread::ArcWeldTraceReplayStart(std::string para){
+      |                                                           ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::ArcWeldTraceReplayEnd(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:8105:69: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 8105 | std::string robot_command_thread::ArcWeldTraceReplayEnd(std::string para){
+      |                                                         ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::AngularSpeedEnd(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:8170:63: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 8170 | std::string robot_command_thread::AngularSpeedEnd(std::string para){
+      |                                                   ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetSoftwareUpgradeState(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:8196:71: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 8196 | std::string robot_command_thread::GetSoftwareUpgradeState(std::string para){
+      |                                                           ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetAxleCommunicationParam(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:8208:73: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 8208 | std::string robot_command_thread::GetAxleCommunicationParam(std::string para){
+      |                                                             ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetAxleLuaEnableStatus(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:8290:70: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 8290 | std::string robot_command_thread::GetAxleLuaEnableStatus(std::string para){
+      |                                                          ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetAxleLuaEnableDeviceType(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:8326:74: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 8326 | std::string robot_command_thread::GetAxleLuaEnableDeviceType(std::string para){
+      |                                                              ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetAxleLuaEnableDevice(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:8346:70: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 8346 | std::string robot_command_thread::GetAxleLuaEnableDevice(std::string para){
+      |                                                          ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::SetAxleLuaGripperFunc(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:8380:9: warning: ISO C++ forbids variable length array ‘func’ [-Wvla]
+ 8380 |     int func[len];
+      |         ^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::SetSysServoBootMode(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:8468:67: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 8468 | std::string robot_command_thread::SetSysServoBootMode(std::string para){
+      |                                                       ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::SingularAvoidEnd(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:8529:64: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 8529 | std::string robot_command_thread::SingularAvoidEnd(std::string para){
+      |                                                    ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::PtpFIRPlanningEnd(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:8555:65: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 8555 | std::string robot_command_thread::PtpFIRPlanningEnd(std::string para){
+      |                                                     ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::LinArcFIRPlanningEnd(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:8585:68: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 8585 | std::string robot_command_thread::LinArcFIRPlanningEnd(std::string para){
+      |                                                        ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::LaserTrackingLaserOff(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:8634:69: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 8634 | std::string robot_command_thread::LaserTrackingLaserOff(std::string para){
+      |                                                         ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::LaserTrackingTrackOff(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:8649:69: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 8649 | std::string robot_command_thread::LaserTrackingTrackOff(std::string para){
+      |                                                         ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::LaserTrackingSearchStop(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:8759:71: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 8759 | std::string robot_command_thread::LaserTrackingSearchStop(std::string para){
+      |                                                           ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::UnLoadPosSensorDriver(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:8818:69: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 8818 | std::string robot_command_thread::UnLoadPosSensorDriver(std::string para){
+      |                                                         ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::MoveLTR(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:8861:55: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 8861 | std::string robot_command_thread::MoveLTR(std::string para){
+      |                                           ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::WeaveChangeEnd(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:9020:62: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 9020 | std::string robot_command_thread::WeaveChangeEnd(std::string para){
+      |                                                  ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::MoveTrajectoryLA(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:9061:64: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 9061 | std::string robot_command_thread::MoveTrajectoryLA(std::string para){
+      |                                                    ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::CustomCollisionDetectionEnd(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:9103:75: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 9103 | std::string robot_command_thread::CustomCollisionDetectionEnd(std::string para){
+      |                                                               ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetRobotSN(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:9188:58: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 9188 | std::string robot_command_thread::GetRobotSN(std::string para){
+      |                                              ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::ShutDownRobotOS(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:9199:63: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 9199 | std::string robot_command_thread::ShutDownRobotOS(std::string para){
+      |                                                   ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::ConveyorComDetectTrigger(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:9223:72: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 9223 | std::string robot_command_thread::ConveyorComDetectTrigger(std::string para){
+      |                                                            ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::WeldingSetVoltageGradualChangeEnd(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:9255:81: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 9255 | std::string robot_command_thread::WeldingSetVoltageGradualChangeEnd(std::string para){
+      |                                                                     ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::WeldingSetCurrentGradualChangeEnd(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:9287:81: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 9287 | std::string robot_command_thread::WeldingSetCurrentGradualChangeEnd(std::string para){
+      |                                                                     ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetSmarttoolBtnState(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:9298:68: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 9298 | std::string robot_command_thread::GetSmarttoolBtnState(std::string para){
+      |                                                        ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetWideBoxTempFanMonitorParam(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:9328:77: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 9328 | std::string robot_command_thread::GetWideBoxTempFanMonitorParam(std::string para){
+      |                                                                 ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::FocusEnd(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:9404:56: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 9404 | std::string robot_command_thread::FocusEnd(std::string para){
+      |                                            ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetFieldBusConfig(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:9594:65: warning: unused parameter ‘para’ [-Wunused-parameter]
+ 9594 | std::string robot_command_thread::GetFieldBusConfig(std::string para){
+      |                                                     ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetCurToolCoord(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:10012:63: warning: unused parameter ‘para’ [-Wunused-parameter]
+10012 | std::string robot_command_thread::GetCurToolCoord(std::string para){
+      |                                                   ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetCurWObjCoord(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:10027:63: warning: unused parameter ‘para’ [-Wunused-parameter]
+10027 | std::string robot_command_thread::GetCurWObjCoord(std::string para){
+      |                                                   ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetCurExToolCoord(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:10042:65: warning: unused parameter ‘para’ [-Wunused-parameter]
+10042 | std::string robot_command_thread::GetCurExToolCoord(std::string para){
+      |                                                     ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetCurExAxisCoord(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:10057:65: warning: unused parameter ‘para’ [-Wunused-parameter]
+10057 | std::string robot_command_thread::GetCurExAxisCoord(std::string para){
+      |                                                     ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetKernelUpgradeResult(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:10087:70: warning: unused parameter ‘para’ [-Wunused-parameter]
+10087 | std::string robot_command_thread::GetKernelUpgradeResult(std::string para){
+      |                                                          ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::JointSensitivityCalibration(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:10209:75: warning: unused parameter ‘para’ [-Wunused-parameter]
+10209 | std::string robot_command_thread::JointSensitivityCalibration(std::string para){
+      |                                                               ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::JointSensitivityCollect(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:10227:71: warning: unused parameter ‘para’ [-Wunused-parameter]
+10227 | std::string robot_command_thread::JointSensitivityCollect(std::string para){
+      |                                                           ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::MotionQueueClear(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:10247:64: warning: unused parameter ‘para’ [-Wunused-parameter]
+10247 | std::string robot_command_thread::MotionQueueClear(std::string para){
+      |                                                    ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetSlavePortErrCounter(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:10265:70: warning: unused parameter ‘para’ [-Wunused-parameter]
+10265 | std::string robot_command_thread::GetSlavePortErrCounter(std::string para){
+      |                                                          ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetVelFeedForwardRatio(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:10345:70: warning: unused parameter ‘para’ [-Wunused-parameter]
+10345 | std::string robot_command_thread::GetVelFeedForwardRatio(std::string para){
+      |                                                          ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::RobotMCULogCollect(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:10359:66: warning: unused parameter ‘para’ [-Wunused-parameter]
+10359 | std::string robot_command_thread::RobotMCULogCollect(std::string para){
+      |                                                      ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::JointHysteresisError(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:10571:68: warning: unused parameter ‘para’ [-Wunused-parameter]
+10571 | std::string robot_command_thread::JointHysteresisError(std::string para){
+      |                                                        ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::JointRepeatability(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:10586:66: warning: unused parameter ‘para’ [-Wunused-parameter]
+10586 | std::string robot_command_thread::JointRepeatability(std::string para){
+      |                                                      ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::TCPGetRecordFlangePos(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:10775:69: warning: unused parameter ‘para’ [-Wunused-parameter]
+10775 | std::string robot_command_thread::TCPGetRecordFlangePos(std::string para){
+      |                                                         ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetAxleGenComCycleData(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:10835:9: warning: ISO C++ forbids variable length array ‘cycleData’ [-Wvla]
+10835 |     int cycleData[len];
+      |         ^~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::SndRcvAxleGenComCmdData(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:10858:9: warning: ISO C++ forbids variable length array ‘sndBuff’ [-Wvla]
+10858 |     int sndBuff[lenSnd];
+      |         ^~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:10865:9: warning: ISO C++ forbids variable length array ‘rcvData’ [-Wvla]
+10865 |     int rcvData[lenRcv];
+      |         ^~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::OriginPointWeaveEnd(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:10977:67: warning: unused parameter ‘para’ [-Wunused-parameter]
+10977 | std::string robot_command_thread::OriginPointWeaveEnd(std::string para){
+      |                                                       ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::CloseRPC(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:11433:56: warning: unused parameter ‘para’ [-Wunused-parameter]
+11433 | std::string robot_command_thread::CloseRPC(std::string para){
+      |                                            ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetSoftwareVersion(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:11445:66: warning: unused parameter ‘para’ [-Wunused-parameter]
+11445 | std::string robot_command_thread::GetSoftwareVersion(std::string para){
+      |                                                      ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetRobotRealtimeStateConfig(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:11479:75: warning: unused parameter ‘para’ [-Wunused-parameter]
+11479 | std::string robot_command_thread::GetRobotRealtimeStateConfig(std::string para){
+      |                                                               ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetRobotRealTimeState(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:11495:69: warning: unused parameter ‘para’ [-Wunused-parameter]
+11495 | std::string robot_command_thread::GetRobotRealTimeState(std::string para){
+      |                                                         ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::ClearDexterousHandsError(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:11635:72: warning: unused parameter ‘para’ [-Wunused-parameter]
+11635 | std::string robot_command_thread::ClearDexterousHandsError(std::string para){
+      |                                                            ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::GetWeaveBackCenterConfig(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:11696:72: warning: unused parameter ‘para’ [-Wunused-parameter]
+11696 | std::string robot_command_thread::GetWeaveBackCenterConfig(std::string para){
+      |                                                            ~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘void robot_command_thread::_ping_recv_callback()’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:11962:9: warning: unused variable ‘tmpres’ [-Wunused-variable]
+11962 |     int tmpres = _ptr_robot->GetSDKComState(&state);
+      |         ^~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/fairino_hardware_interface.cpp: In member function ‘virtual hardware_interface::CallbackReturn fairino_hardware::FairinoHardwareInterface::on_init(const hardware_interface::HardwareInfo&)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/fairino_hardware_interface.cpp:6:53: warning: ‘virtual rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn hardware_interface::HardwareComponentInterface::on_init(const hardware_interface::HardwareInfo&)’ is deprecated: Use on_init(const HardwareComponentInterfaceParams & params) instead. [-Wdeprecated-declarations]
+    6 |     if (hardware_interface::SystemInterface::on_init(sysinfo) != hardware_interface::CallbackReturn::SUCCESS) {
+      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~
+In file included from /opt/ros/jazzy/include/hardware_interface/hardware_interface/system_interface.hpp:18,
+                 from /home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/include/fairino_hardware/fairino_hardware_interface.hpp:7,
+                 from /home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/fairino_hardware_interface.cpp:1:
+/opt/ros/jazzy/include/hardware_interface/hardware_interface/hardware_component_interface.hpp:140:26: note: declared here
+  140 |   virtual CallbackReturn on_init(const HardwareInfo & hardware_info);
+      |                          ^~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/fairino_hardware_interface.cpp: In member function ‘virtual hardware_interface::CallbackReturn fairino_hardware::FairinoHardwareInterface::on_activate(const rclcpp_lifecycle::State&)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/fairino_hardware_interface.cpp:105:105: warning: unused parameter ‘previous_state’ [-Wunused-parameter]
+  105 | hardware_interface::CallbackReturn FairinoHardwareInterface::on_activate(const rclcpp_lifecycle::State& previous_state)
+      |                                                                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/fairino_hardware_interface.cpp: In member function ‘virtual hardware_interface::CallbackReturn fairino_hardware::FairinoHardwareInterface::on_deactivate(const rclcpp_lifecycle::State&)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/fairino_hardware_interface.cpp:151:107: warning: unused parameter ‘previous_state’ [-Wunused-parameter]
+  151 | hardware_interface::CallbackReturn FairinoHardwareInterface::on_deactivate(const rclcpp_lifecycle::State& previous_state)
+      |                                                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/fairino_hardware_interface.cpp: In member function ‘virtual hardware_interface::return_type fairino_hardware::FairinoHardwareInterface::read(const rclcpp::Time&, const rclcpp::Duration&)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/fairino_hardware_interface.cpp:173:42: warning: statement has no effect [-Wunused-value]
+  173 |         hardware_interface::return_type::ERROR;
+      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/fairino_hardware_interface.cpp:163:84: warning: unused parameter ‘time’ [-Wunused-parameter]
+  163 | hardware_interface::return_type FairinoHardwareInterface::read(const rclcpp::Time& time,const rclcpp::Duration& period)
+      |                                                                ~~~~~~~~~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/fairino_hardware_interface.cpp:163:113: warning: unused parameter ‘period’ [-Wunused-parameter]
+  163 | hardware_interface::return_type FairinoHardwareInterface::read(const rclcpp::Time& time,const rclcpp::Duration& period)
+      |                                                                                         ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/fairino_hardware_interface.cpp: In member function ‘virtual hardware_interface::return_type fairino_hardware::FairinoHardwareInterface::write(const rclcpp::Time&, const rclcpp::Duration&)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/fairino_hardware_interface.cpp:182:85: warning: unused parameter ‘time’ [-Wunused-parameter]
+  182 | hardware_interface::return_type FairinoHardwareInterface::write(const rclcpp::Time& time,const rclcpp::Duration& period)
+      |                                                                 ~~~~~~~~~~~~~~~~~~~~^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/fairino_hardware_interface.cpp:182:114: warning: unused parameter ‘period’ [-Wunused-parameter]
+  182 | hardware_interface::return_type FairinoHardwareInterface::write(const rclcpp::Time& time,const rclcpp::Duration& period)
+      |                                                                                          ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::getVariable(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:676:1: warning: control reaches end of non-void function [-Wreturn-type]
+  676 | }
+      | ^
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::MoveJ(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1656:51: warning: ‘speed’ may be used uninitialized [-Wmaybe-uninitialized]
+ 1656 |         ovl,&extpos,blendT,offset_flag,&offsetpos));
+      |                                                   ^
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1575:9: note: ‘speed’ was declared here
+ 1575 |     int speed,tool,user;
+      |         ^~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1656:51: warning: ‘tool’ may be used uninitialized [-Wmaybe-uninitialized]
+ 1656 |         ovl,&extpos,blendT,offset_flag,&offsetpos));
+      |                                                   ^
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1575:15: note: ‘tool’ was declared here
+ 1575 |     int speed,tool,user;
+      |               ^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1656:51: warning: ‘user’ may be used uninitialized [-Wmaybe-uninitialized]
+ 1656 |         ovl,&extpos,blendT,offset_flag,&offsetpos));
+      |                                                   ^
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1575:20: note: ‘user’ was declared here
+ 1575 |     int speed,tool,user;
+      |                    ^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::MoveL(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1746:47: warning: ‘speed’ may be used uninitialized [-Wmaybe-uninitialized]
+ 1746 |         &extpos,search,offset_flag,&offsetpos));
+      |                                               ^
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1668:9: note: ‘speed’ was declared here
+ 1668 |     int speed,tool,user;
+      |         ^~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1746:47: warning: ‘tool’ may be used uninitialized [-Wmaybe-uninitialized]
+ 1746 |         &extpos,search,offset_flag,&offsetpos));
+      |                                               ^
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1668:15: note: ‘tool’ was declared here
+ 1668 |     int speed,tool,user;
+      |               ^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1746:47: warning: ‘user’ may be used uninitialized [-Wmaybe-uninitialized]
+ 1746 |         &extpos,search,offset_flag,&offsetpos));
+      |                                               ^
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1668:20: note: ‘user’ was declared here
+ 1668 |     int speed,tool,user;
+      |                    ^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::MoveC(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1868:43: warning: ‘speed’ may be used uninitialized [-Wmaybe-uninitialized]
+ 1868 |         offset_flag,&offsetpos,ovl,blendR));
+      |                                           ^
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1759:9: note: ‘speed’ was declared here
+ 1759 |     int speed,tool,user;
+      |         ^~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1868:43: warning: ‘tool’ may be used uninitialized [-Wmaybe-uninitialized]
+ 1868 |         offset_flag,&offsetpos,ovl,blendR));
+      |                                           ^
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1759:15: note: ‘tool’ was declared here
+ 1759 |     int speed,tool,user;
+      |               ^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1868:43: warning: ‘user’ may be used uninitialized [-Wmaybe-uninitialized]
+ 1868 |         offset_flag,&offsetpos,ovl,blendR));
+      |                                           ^
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1759:20: note: ‘user’ was declared here
+ 1759 |     int speed,tool,user;
+      |                    ^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::SplinePTP(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1965:57: warning: ‘speed’ may be used uninitialized [-Wmaybe-uninitialized]
+ 1965 |                                 tool,user,speed,acc,ovl));
+      |                                                         ^
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1925:9: note: ‘speed’ was declared here
+ 1925 |     int speed,tool,user;
+      |         ^~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1965:57: warning: ‘tool’ may be used uninitialized [-Wmaybe-uninitialized]
+ 1965 |                                 tool,user,speed,acc,ovl));
+      |                                                         ^
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1925:15: note: ‘tool’ was declared here
+ 1925 |     int speed,tool,user;
+      |               ^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1965:57: warning: ‘user’ may be used uninitialized [-Wmaybe-uninitialized]
+ 1965 |                                 tool,user,speed,acc,ovl));
+      |                                                         ^
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:1925:20: note: ‘user’ was declared here
+ 1925 |     int speed,tool,user;
+      |                    ^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp: In member function ‘std::string robot_command_thread::NewSplinePoint(std::string)’:
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:2053:37: warning: ‘speed’ may be used uninitialized [-Wmaybe-uninitialized]
+ 2053 |             acc,ovl,blendR,lastflag));
+      |                                     ^
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:2007:9: note: ‘speed’ was declared here
+ 2007 |     int speed,tool,user;
+      |         ^~~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:2053:37: warning: ‘tool’ may be used uninitialized [-Wmaybe-uninitialized]
+ 2053 |             acc,ovl,blendR,lastflag));
+      |                                     ^
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:2007:15: note: ‘tool’ was declared here
+ 2007 |     int speed,tool,user;
+      |               ^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:2053:37: warning: ‘user’ may be used uninitialized [-Wmaybe-uninitialized]
+ 2053 |             acc,ovl,blendR,lastflag));
+      |                                     ^
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:2007:20: note: ‘user’ was declared here
+ 2007 |     int speed,tool,user;
+      |                    ^~~~
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:2053:37: warning: ‘lastflag’ may be used uninitialized [-Wmaybe-uninitialized]
+ 2053 |             acc,ovl,blendR,lastflag));
+      |                                     ^
+/home/juchan-yoon/FR5_robot_control/robot_ws/src/vendor/frcobot_ros2/fairino_hardware_v3_9_7/src/command_server.cpp:2008:13: note: ‘lastflag’ was declared here
+ 2008 |     uint8_t lastflag;
+      |             ^~~~~~~~

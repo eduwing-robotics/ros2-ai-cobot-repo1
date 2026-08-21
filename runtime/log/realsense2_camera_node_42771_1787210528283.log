@@ -1,0 +1,82 @@
+[INFO] [1787210528.330877317] [camera.camera]: RealSense ROS v4.58.1
+[INFO] [1787210528.330917192] [camera.camera]: Built with LibRealSense v2.58.1
+[INFO] [1787210528.330921969] [camera.camera]: Running with LibRealSense v2.58.1
+[INFO] [1787210528.420222367] [camera.camera]: Device with serial number 254622074096 was found.
+
+[INFO] [1787210528.420324588] [camera.camera]: Device with physical ID /sys/devices/pci0000:00/0000:00:14.0/usb2/2-1/2-1:1.0/video4linux/video0 was found.
+[INFO] [1787210528.420354190] [camera.camera]: Device with name Intel RealSense D435 was found.
+[INFO] [1787210528.420846592] [camera.camera]: Device with port number 2-1 was found.
+[INFO] [1787210528.420866894] [camera.camera]: Device USB type: 3.2
+[INFO] [1787210528.420973565] [camera.camera]: getParameters...
+[INFO] [1787210528.421773482] [camera.camera]: JSON file is not provided
+[INFO] [1787210528.421806352] [camera.camera]: Device Name: Intel RealSense D435
+[INFO] [1787210528.421823798] [camera.camera]: Device Serial No: 254622074096
+[INFO] [1787210528.421839395] [camera.camera]: Device physical port: /sys/devices/pci0000:00/0000:00:14.0/usb2/2-1/2-1:1.0/video4linux/video0
+[INFO] [1787210528.421864303] [camera.camera]: Device FW version: 5.17.0.10
+[INFO] [1787210528.421879602] [camera.camera]: Device Product ID: 0x0B07
+[INFO] [1787210528.421894254] [camera.camera]: Sync Mode: On
+[INFO] [1787210528.514995835] [camera.camera]: Device with serial number 254622074096 was found.
+
+[INFO] [1787210528.515090720] [camera.camera]: Device with physical ID /sys/devices/pci0000:00/0000:00:14.0/usb2/2-1/2-1:1.0/video4linux/video0 was found.
+[INFO] [1787210528.515113602] [camera.camera]: Device with name Intel RealSense D435 was found.
+[INFO] [1787210528.515587592] [camera.camera]: Device with port number 2-1 was found.
+[INFO] [1787210528.515606842] [camera.camera]: Device USB type: 3.2
+[INFO] [1787210528.516439058] [camera.camera]: getParameters...
+[INFO] [1787210528.516981506] [camera.camera]: JSON file is not provided
+[INFO] [1787210528.517005429] [camera.camera]: Device Name: Intel RealSense D435
+[INFO] [1787210528.517021974] [camera.camera]: Device Serial No: 254622074096
+[INFO] [1787210528.517037955] [camera.camera]: Device physical port: /sys/devices/pci0000:00/0000:00:14.0/usb2/2-1/2-1:1.0/video4linux/video0
+[INFO] [1787210528.517056752] [camera.camera]: Device FW version: 5.17.0.10
+[INFO] [1787210528.517070778] [camera.camera]: Device Product ID: 0x0B07
+[INFO] [1787210528.517084149] [camera.camera]: Sync Mode: On
+[ERROR] [1787210528.607549846] [camera.camera]: An error has occurred while calling sensor for: depth_module.auto_gain_limit:set_xu(...). xioctl(UVCIOC_CTRL_QUERY) failed on control 1 Last Error: Protocol error
+[ERROR] [1787210528.608786334] [camera.camera]: An error has occurred while calling sensor for: depth_module.auto_gain_limit_toggle:set_xu(...). xioctl(UVCIOC_CTRL_QUERY) failed on control 1 Last Error: Protocol error
+[WARN] [1787210528.614642689] [camera.camera]: re-enable the stream for the change to take effect.
+[INFO] [1787210528.615617921] [camera.camera]: Set ROS param depth_module.infra_profile to default: 848x480x30
+[WARN] [1787210528.622598533] [camera.camera]: re-enable the stream for the change to take effect.
+[INFO] [1787210528.627390809] [camera.camera]: Stopping Sensor: Depth Module
+[INFO] [1787210528.627420911] [camera.camera]: Stopping Sensor: RGB Camera
+[WARN] [1787210528.709016109] [camera.camera]: No intrinsics available for this stream profile. Using zeroed intrinsics as default.
+[INFO] [1787210528.709796412] [camera.camera]: Starting Sensor: Depth Module
+[INFO] [1787210528.714446357] [camera.camera]: Open profile: stream_type: Depth(0), Format: Z16, Width: 1280, Height: 720, FPS: 15
+[WARN] [1787210528.720413576] [camera.camera]: No intrinsics available for this stream profile. Using zeroed intrinsics as default.
+[INFO] [1787210528.731174510] [camera.camera]: Starting Sensor: RGB Camera
+[INFO] [1787210528.741381277] [camera.camera]: Open profile: stream_type: Color(0), Format: RGB8, Width: 1920, Height: 1080, FPS: 15
+[INFO] [1787210528.755803583] [camera.camera]: RealSense Node Is Up!
+[WARN] [1787210528.911921918] [camera.camera]: frame's time domain is HARDWARE_CLOCK. Timestamps may reset periodically.
+[ERROR] [1787210529.832704305] [camera.camera]: The device has been disconnected!
+[INFO] [1787210529.832854425] [camera.camera]: Stop Sensor: Depth Module
+[INFO] [1787210529.832880597] [camera.camera]: Close Sensor. 
+[INFO] [1787210529.833405858] [camera.camera]: Close Sensor - Done. 
+[INFO] [1787210529.833437870] [camera.camera]: Stop Sensor: RGB Camera
+[INFO] [1787210529.833450531] [camera.camera]: Close Sensor. 
+[INFO] [1787210529.834566769] [camera.camera]: Close Sensor - Done. 
+[INFO] [1787210530.823269837] [camera.camera]: Checking new devices...
+[INFO] [1787210530.827688709] [camera.camera]: Device with serial number 254622074096 was found.
+
+[INFO] [1787210530.827761143] [camera.camera]: Device with physical ID /sys/devices/pci0000:00/0000:00:14.0/usb2/2-1/2-1:1.0/video4linux/video4 was found.
+[INFO] [1787210530.827783801] [camera.camera]: Device with name Intel RealSense D435 was found.
+[INFO] [1787210530.828291774] [camera.camera]: Device with port number 2-1 was found.
+[INFO] [1787210530.828310695] [camera.camera]: Device USB type: 3.2
+[INFO] [1787210530.828366677] [camera.camera]: getParameters...
+[INFO] [1787210530.831129091] [camera.camera]: JSON file is not provided
+[INFO] [1787210530.831180572] [camera.camera]: Device Name: Intel RealSense D435
+[INFO] [1787210530.831205748] [camera.camera]: Device Serial No: 254622074096
+[INFO] [1787210530.831224999] [camera.camera]: Device physical port: /sys/devices/pci0000:00/0000:00:14.0/usb2/2-1/2-1:1.0/video4linux/video4
+[INFO] [1787210530.831245356] [camera.camera]: Device FW version: 5.17.0.10
+[INFO] [1787210530.831261308] [camera.camera]: Device Product ID: 0x0B07
+[INFO] [1787210530.831275082] [camera.camera]: Sync Mode: On
+[ERROR] [1787210530.919259062] [camera.camera]: An error has occurred while calling sensor for: depth_module.inter_cam_sync_mode:set_xu(...). xioctl(UVCIOC_CTRL_QUERY) failed on control 1 Last Error: Protocol error
+[ERROR] [1787210530.921127568] [camera.camera]: An error has occurred while calling sensor for: depth_module.emitter_always_on:set_xu(...). xioctl(UVCIOC_CTRL_QUERY) failed on control 1 Last Error: Protocol error
+[ERROR] [1787210530.923068866] [camera.camera]: An error has occurred while calling sensor for: depth_module.auto_gain_limit:set_xu(...). xioctl(UVCIOC_CTRL_QUERY) failed on control 1 Last Error: Protocol error
+[WARN] [1787210530.929084287] [camera.camera]: re-enable the stream for the change to take effect.
+[INFO] [1787210530.929766774] [camera.camera]: Set ROS param depth_module.infra_profile to default: 848x480x30
+[WARN] [1787210530.935486413] [camera.camera]: re-enable the stream for the change to take effect.
+[INFO] [1787210530.938191297] [camera.camera]: Stopping Sensor: Depth Module
+[INFO] [1787210530.938214117] [camera.camera]: Stopping Sensor: RGB Camera
+[INFO] [1787210530.942215454] [camera.camera]: Starting Sensor: Depth Module
+[INFO] [1787210530.946943028] [camera.camera]: Open profile: stream_type: Depth(0), Format: Z16, Width: 1280, Height: 720, FPS: 15
+[INFO] [1787210530.978544696] [camera.camera]: Starting Sensor: RGB Camera
+[INFO] [1787210530.998206884] [camera.camera]: Open profile: stream_type: Color(0), Format: RGB8, Width: 1920, Height: 1080, FPS: 15
+[INFO] [1787210531.002394293] [camera.camera]: RealSense Node Is Up!
+[INFO] [1787210543.972101086] [rclcpp]: signal_handler(SIGINT/SIGTERM)

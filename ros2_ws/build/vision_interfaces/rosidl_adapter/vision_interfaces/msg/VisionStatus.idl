@@ -1,0 +1,27 @@
+// generated from rosidl_adapter/resource/msg.idl.em
+// with input from vision_interfaces/msg/VisionStatus.msg
+// generated code does not contain a copyright notice
+
+#include "std_msgs/msg/Header.idl"
+
+module vision_interfaces {
+  module msg {
+    struct VisionStatus {
+      std_msgs::msg::Header header;
+
+      boolean ready;
+
+      boolean model_loaded;
+
+      sequence<string> cameras;
+
+      sequence<string> active_cameras;
+
+      sequence<string> missing_cameras;
+
+      uint64 inference_count;
+
+      string message;
+    };
+  };
+};

@@ -1,0 +1,30 @@
+[INFO] [1787210376.979426463] [camera.camera]: RealSense ROS v4.58.1
+[INFO] [1787210376.979483764] [camera.camera]: Built with LibRealSense v2.58.1
+[INFO] [1787210376.979490727] [camera.camera]: Running with LibRealSense v2.58.1
+[WARN] [1787210377.083765330] [camera.camera]: Device 1/1 failed with exception: set_xu(...). xioctl(UVCIOC_CTRL_QUERY) failed on control 1 Last Error: Protocol error
+[ERROR] [1787210377.083866045] [camera.camera]: The requested device with  is NOT found. Will Try again.
+[INFO] [1787210379.096620900] [camera.camera]: Device with serial number 254622074096 was found.
+
+[INFO] [1787210379.096737000] [camera.camera]: Device with physical ID /sys/devices/pci0000:00/0000:00:14.0/usb2/2-1/2-1:1.0/video4linux/video0 was found.
+[INFO] [1787210379.096767000] [camera.camera]: Device with name Intel RealSense D435 was found.
+[INFO] [1787210379.097276858] [camera.camera]: Device with port number 2-1 was found.
+[INFO] [1787210379.097297820] [camera.camera]: Device USB type: 3.2
+[INFO] [1787210379.097311828] [camera.camera]: Resetting device...
+[WARN] [1787210381.113514897] [camera.camera]: Device 1/1 failed with exception: set_xu(...). xioctl(UVCIOC_CTRL_QUERY) failed on control 1 Last Error: Protocol error
+[ERROR] [1787210381.113624235] [camera.camera]: The requested device with serial number 254622074096 is NOT found. Will Try again.
+[INFO] [1787210383.129652056] [camera.camera]: Device with serial number 254622074096 was found.
+
+[INFO] [1787210383.129757152] [camera.camera]: Device with physical ID /sys/devices/pci0000:00/0000:00:14.0/usb2/2-1/2-1:1.0/video4linux/video0 was found.
+[INFO] [1787210383.129775367] [camera.camera]: Device with name Intel RealSense D435 was found.
+[INFO] [1787210383.130157613] [camera.camera]: Device with port number 2-1 was found.
+[INFO] [1787210383.130173495] [camera.camera]: Device USB type: 3.2
+[INFO] [1787210383.130583057] [camera.camera]: getParameters...
+[INFO] [1787210383.131821130] [camera.camera]: JSON file is not provided
+[INFO] [1787210383.131846140] [camera.camera]: Device Name: Intel RealSense D435
+[INFO] [1787210383.131858567] [camera.camera]: Device Serial No: 254622074096
+[INFO] [1787210383.131869732] [camera.camera]: Device physical port: /sys/devices/pci0000:00/0000:00:14.0/usb2/2-1/2-1:1.0/video4linux/video0
+[INFO] [1787210383.131884024] [camera.camera]: Device FW version: 5.17.0.10
+[INFO] [1787210383.131894706] [camera.camera]: Device Product ID: 0x0B07
+[INFO] [1787210383.131910264] [camera.camera]: Sync Mode: On
+[ERROR] [1787210383.210900655] [camera.camera]: Error starting device: set_xu(...). xioctl(UVCIOC_CTRL_QUERY) failed on control 1 Last Error: Protocol error
+[INFO] [1787210384.732401506] [rclcpp]: signal_handler(SIGINT/SIGTERM)

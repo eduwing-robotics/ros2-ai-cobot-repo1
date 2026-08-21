@@ -1,0 +1,41 @@
+cameras:
+  d435:
+    enabled: true
+    source_topic: /camera/camera/color/image_raw/compressed
+    output_topic: /vision/camera/d435
+    transport: compressed
+    role: close_pick_depth_and_alignment
+    run_yolo: true
+    required_for_ready: true
+    relay_max_fps: 15.0
+    yolo_max_fps: 8.0
+    depth_topic: /camera/camera/aligned_depth_to_color/image_raw
+    camera_info_topic: /camera/camera/color/camera_info
+    depth_scale_m_per_unit: 0.001
+    depth_max_age_sec: 0.20
+    depth_sync_tolerance_sec: 0.10
+    depth_roi_fraction: 0.35
+    depth_min_m: 0.05
+    depth_max_m: 1.50
+
+  s22:
+    enabled: true
+    source_topic: /camera2/image_raw/compressed
+    output_topic: /vision/camera/s22
+    transport: compressed
+    role: board_arrival_pose_count_and_inspection
+    run_yolo: true
+    required_for_ready: true
+    relay_max_fps: 15.0
+    yolo_max_fps: 5.0
+
+  gopro:
+    enabled: true
+    source_topic: /camera3/image_raw/compressed
+    output_topic: /vision/camera/gopro
+    transport: compressed
+    role: cell_monitoring
+    run_yolo: false
+    required_for_ready: false
+    relay_max_fps: 15.0
+    yolo_max_fps: 2.0

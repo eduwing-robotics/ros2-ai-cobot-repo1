@@ -1,0 +1,8 @@
+msg/Detections.idl
+msg/Detections.msg
+msg/Inspection.idl
+msg/Inspection.msg
+msg/Part.idl
+msg/Part.msg
+msg/VisionStatus.idl
+msg/VisionStatus.msg

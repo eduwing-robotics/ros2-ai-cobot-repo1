@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "status": "cad_candidates_not_robot_ready",
+  "units": "mm",
+  "source": {"repository": "https://github.com/eduwing-robotics/ros2-ai-cobot-repo1", "branch": "vision-robot-conveyor-control", "layout_file": "vision_assembly/config/board_layout_from_unity.json", "runtime_message_file": "ros2_ws/src/vision_interfaces/msg/Part.msg", "small_part_test_file": "calibration/data/small_part_last.json", "pick_test_file": "calibration/scripts/full_pick_place_same_spot.py", "retrieved_date": "2026-08-20"},
+  "warnings": [
+    "Dimensions are Unity/OBJ bounds and must be verified on the physical parts with calipers before robot execution.",
+    "The current display-name mapping follows the validated tray layout and differs from some semantic names in the source branch.",
+    "Part centers in the tray are dynamic detections; an ROI or CAD placement center must never be used directly as a grasp target.",
+    "The generic grasp defaults came from a single small-part same-spot test and are not validated per part type."
+  ],
+  "parts": {
+    "gpu": {"display_name": "GPU", "source_asset": "nvidia", "expected_tray_count": 1, "nominal_size_mm": {"x": 29.7166, "y": 57.1065, "height": 6.63831}, "dimension_status": "cad_candidate_needs_caliper_validation"},
+    "hbm": {"display_name": "HBM", "source_asset": "Sk_hynix", "expected_tray_count": 8, "nominal_size_mm": {"x": 10.24665, "y": 14.30996, "height": 9.81511}, "dimension_status": "cad_candidate_needs_caliper_validation"},
+    "black_block": {"display_name": "VRM (전압 조정 모듈)", "source_asset": "BlackBox1", "expected_tray_count": 5, "nominal_size_mm": {"x": 11.0, "y": 14.0, "height": 5.20254}, "dimension_status": "cad_candidate_needs_caliper_validation"},
+    "long_orange": {"display_name": "Power Module (전원 모듈)", "source_asset": "YellowBar", "expected_tray_count": 4, "nominal_size_mm": {"x": 12.13001, "y": 59.9891, "height": 4.78478}, "dimension_status": "cad_candidate_needs_caliper_validation"},
+    "marked_white": {"display_name": "Inductor (인덕터)", "source_asset": "cap_Big", "expected_tray_count": 2, "nominal_size_mm": {"x": 9.36862, "y": 9.36862, "height": 8.52217}, "dimension_status": "cad_candidate_needs_caliper_validation"},
+    "right_white_brown": {"display_name": "SMD Capacitor (SMD 커패시터)", "source_asset": "cap_small", "expected_tray_count": 5, "nominal_size_mm": {"x": 3.83615, "y": 6.8013, "height": 3.02376}, "dimension_status": "cad_candidate_needs_caliper_validation"}
+  },
+  "runtime_detection_contract": {"per_instance_fields": ["name", "class_id", "score", "center_pixel_x", "center_pixel_y", "bbox_width_px", "bbox_height_px", "angle_deg", "depth_m", "camera_x_m", "camera_y_m", "camera_z_m"], "status": "message_schema_exists_but_tray_instance_detector_not_yet_implemented"},
+  "historical_small_part_test": {"part_size_input_mm": [6.0, 3.5, 2.5], "measured_contour_long_short_mm": [7.59142, 4.321317], "note": "Historical single-part dry-run only; its center and pose are not reusable for the current tray."},
+  "generic_pick_test_defaults": {"approach_offset_mm": 100.0, "extra_descent_mm": 5.0, "lift_mm": 50.0, "retreat_mm": 50.0, "gripper_open_position": 100, "gripper_close_position": 5, "grasp_descent_speed_percent": 15, "status": "small_part_test_defaults_not_validated_per_part"}
+}

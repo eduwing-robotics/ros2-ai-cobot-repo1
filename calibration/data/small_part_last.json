@@ -1,0 +1,42 @@
+{
+  "timestamp_unix": 1786684478.5423346,
+  "mode": "dry_run_no_robot_motion",
+  "detected_cell_col_row": [
+    3,
+    3
+  ],
+  "part_size_input_mm": [
+    6.0,
+    3.5,
+    2.5
+  ],
+  "part_center_board_mm": [
+    119.1451237487793,
+    112.53319458007813
+  ],
+  "part_center_camera_mm": [
+    21.143941296666227,
+    -45.827605593634274,
+    213.71743550572563
+  ],
+  "part_center_base_mm": [
+    -349.25193647578135,
+    -31.108478073587193,
+    -10.251531062643288
+  ],
+  "contour_long_short_mm": [
+    7.591419677734375,
+    4.32131706237793
+  ],
+  "long_axis_angle_board_deg": 57.094757080078125,
+  "long_axis_angle_base_deg": 123.76762023524526,
+  "part_color_profile": "light",
+  "median_hsv": [
+    20.0,
+    42.0,
+    140.0
+  ],
+  "base_jitter_median_mm": 0.011533794035112488,
+  "base_jitter_max_mm": 0.02742860709990488,
+  "frames": 30
+}
