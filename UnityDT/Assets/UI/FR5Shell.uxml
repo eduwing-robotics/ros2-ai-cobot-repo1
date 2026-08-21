@@ -1,0 +1,130 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <ui:Style src="project://database/Assets/UI/FR5Theme.uss" />
+    <!--
+      공통 셸 — 상단 바 + 페이지 레일.
+      5개 페이지가 이 템플릿 하나를 인스턴스로 물어 쓴다. 페이지마다 따로 적으면
+      항목과 순서가 갈라진다 (실제로 갈라져 있었다).
+
+      값은 FR5ShellBinder 가 채운다. 활성 탭 표시는 FR5PageRouter 가 붙인다.
+      아이콘은 이미지 에셋 없이 요소 조합으로 그린다.
+
+      탭 높이 96 은 내용에서 나온 값이다. 아이콘 26 + 여백 6 + 영문 라벨 24 + 국문
+      라벨 24 = 80 이라 80px 로는 국문 라벨이 다음 탭 아이콘 밑으로 들어갔다.
+    -->
+    <ui:VisualElement name="shell" picking-mode="Ignore" style="position:absolute; left:0; top:0; right:0; bottom:0;">
+
+        <!-- ===================== 상단 바 ===================== -->
+        <ui:VisualElement name="topbar" class="panel row" style="position:absolute; left:0; top:0; right:0; height:64px; border-left-width:0; border-right-width:0; border-top-width:0; padding-left:30px; padding-right:30px;">
+            <ui:Label text="FR5" style="color:rgb(226,236,241); font-size:22px; -unity-font-style:bold; letter-spacing:1.4px;" />
+            <ui:Label text="FAIRINO · CELL A" class="micro" style="margin-left:14px;" />
+
+            <ui:VisualElement class="row" style="margin-left:44px;">
+                <ui:Label text="MODE" class="micro" style="margin-right:12px;" />
+                <ui:Button name="mode-mock" class="chip chip--accent"><ui:Label text="MOCK" class="chip__text" /></ui:Button>
+                <ui:Button name="mode-real" class="chip" style="margin-left:6px;"><ui:Label text="REAL" class="chip__text" /></ui:Button>
+            </ui:VisualElement>
+
+            <ui:VisualElement class="row" style="margin-left:36px;">
+                <ui:Label text="ROBOT" class="micro" style="margin-right:12px;" />
+                <ui:VisualElement name="robot-state-chip" class="chip"><ui:Label name="robot-state-text" text="—" class="chip__text" /></ui:VisualElement>
+            </ui:VisualElement>
+
+            <ui:VisualElement class="row" style="margin-left:36px;">
+                <ui:Label text="LINK" class="micro" style="margin-right:12px;" />
+                <ui:VisualElement name="link-joint-dot" class="dot" />
+                <ui:Label name="link-joint-age" text="—" class="muted" style="margin-left:8px; margin-right:16px; font-size:12px;" />
+                <ui:VisualElement name="link-image-dot" class="dot" />
+                <ui:Label name="link-image-age" text="—" class="muted" style="margin-left:8px; font-size:12px;" />
+            </ui:VisualElement>
+
+            <ui:VisualElement class="row" style="margin-left:36px;">
+                <ui:Label text="JOB" class="micro" style="margin-right:12px;" />
+                <ui:Label name="job-id" text="—" style="color:rgb(226,236,241); -unity-font-style:bold;" />
+                <ui:VisualElement class="gauge" style="width:120px; margin-left:14px;">
+                    <ui:VisualElement name="job-progress-fill" class="gauge__fill" style="width:0;" />
+                </ui:VisualElement>
+                <ui:Label name="job-progress-text" text="—" style="color:rgb(226,236,241); -unity-font-style:bold; margin-left:12px;" />
+            </ui:VisualElement>
+
+            <ui:VisualElement class="row" style="margin-left:32px;">
+                <ui:Label text="CYCLE" class="micro" style="margin-right:12px;" />
+                <ui:Label name="cycle-value" text="—" style="color:rgb(226,236,241); -unity-font-style:bold;" />
+            </ui:VisualElement>
+
+            <ui:VisualElement class="row" style="margin-left:32px;">
+                <ui:Label text="SPEED" class="micro" style="margin-right:12px;" />
+                <ui:VisualElement class="gauge" style="width:76px;">
+                    <ui:VisualElement name="speed-fill" class="gauge__fill gauge__fill--neutral" style="width:45%;" />
+                </ui:VisualElement>
+                <ui:Label name="speed-value" text="45 %" style="color:rgb(226,236,241); -unity-font-style:bold; margin-left:10px;" />
+            </ui:VisualElement>
+
+            <ui:VisualElement class="spacer" />
+            <ui:Button name="stop-all-button" text="■  STOP" class="btn btn--danger" style="width:160px; height:40px; font-size:17px; letter-spacing:2.4px;" />
+        </ui:VisualElement>
+
+        <!--
+          알람 띠 — 평상시 display:none. Error / Disconnected 일 때만 나타난다.
+          RobotStatusManager 의 ErrorLabel · ErrorDetail 을 그대로 보여준다.
+        -->
+        <ui:VisualElement name="alarm-banner" style="position:absolute; left:88px; top:64px; right:0; height:44px; display:none; background-color:rgba(240,71,90,0.16); border-top-width:2px; border-top-color:rgb(240,71,90); flex-direction:row; align-items:center; padding-left:24px; padding-right:24px;">
+            <ui:VisualElement name="alarm-dot" class="dot dot--bad" />
+            <ui:Label name="alarm-label" text="—" class="bad" style="margin-left:12px; font-size:14px; letter-spacing:1.2px;" />
+            <ui:Label name="alarm-detail" text="" style="color:rgb(214,160,168); font-size:13px; margin-left:16px;" />
+        </ui:VisualElement>
+
+        <!-- ===================== 페이지 레일 ===================== -->
+        <ui:VisualElement name="navrail" class="panel" style="position:absolute; left:0; top:64px; bottom:0; width:88px; border-left-width:0; border-bottom-width:0; align-items:center; padding-top:44px;">
+
+            <!-- RUN — 진행 막대 3개 -->
+            <ui:Button name="nav-run" class="tab" style="width:88px; height:96px; align-items:center; margin:0;">
+                <ui:VisualElement class="icon">
+                    <ui:VisualElement class="ink" style="position:absolute; left:2px; bottom:4px; width:5px; height:8px;" />
+                    <ui:VisualElement class="ink" style="position:absolute; left:10px; bottom:4px; width:5px; height:14px;" />
+                    <ui:VisualElement class="ink" style="position:absolute; left:18px; bottom:4px; width:5px; height:20px;" />
+                </ui:VisualElement>
+                <ui:Label text="RUN" class="tab__text" /><ui:Label text="운전" class="micro" />
+            </ui:Button>
+
+            <!-- INSPECT — 렌즈(원 + 중심점) -->
+            <ui:Button name="nav-inspect" class="tab" style="width:88px; height:96px; align-items:center; margin:0;">
+                <ui:VisualElement class="icon">
+                    <ui:VisualElement class="ring" style="position:absolute; left:2px; top:2px; width:22px; height:22px; border-radius:11px;" />
+                    <ui:VisualElement class="ink" style="position:absolute; left:10px; top:10px; width:6px; height:6px; border-radius:3px;" />
+                </ui:VisualElement>
+                <ui:Label text="INSPECT" class="tab__text" /><ui:Label text="검사" class="micro" />
+            </ui:Button>
+
+            <!-- MANUAL — 꺾인 관절 팔 -->
+            <ui:Button name="nav-manual" class="tab" style="width:88px; height:96px; align-items:center; margin:0;">
+                <ui:VisualElement class="icon">
+                    <ui:VisualElement class="ink" style="position:absolute; left:3px; bottom:3px; width:5px; height:16px;" />
+                    <ui:VisualElement class="ink" style="position:absolute; left:3px; top:3px; width:18px; height:5px;" />
+                    <ui:VisualElement class="ink" style="position:absolute; right:2px; top:8px; width:6px; height:6px; border-radius:3px;" />
+                </ui:VisualElement>
+                <ui:Label text="MANUAL" class="tab__text" /><ui:Label text="수동" class="micro" />
+            </ui:Button>
+
+            <!-- QUALITY — 슬롯 2x2 (한 칸 불량) -->
+            <ui:Button name="nav-quality" class="tab" style="width:88px; height:96px; align-items:center; margin:0;">
+                <ui:VisualElement class="icon">
+                    <ui:VisualElement class="ink" style="position:absolute; left:2px; top:2px; width:9px; height:9px;" />
+                    <ui:VisualElement class="ink" style="position:absolute; right:2px; top:2px; width:9px; height:9px;" />
+                    <ui:VisualElement class="ink" style="position:absolute; left:2px; bottom:2px; width:9px; height:9px;" />
+                    <ui:VisualElement class="ink ink--bad" style="position:absolute; right:2px; bottom:2px; width:9px; height:9px;" />
+                </ui:VisualElement>
+                <ui:Label text="QUALITY" class="tab__text" /><ui:Label text="품질" class="micro" />
+            </ui:Button>
+
+            <!-- SETUP — 다이얼(원 + 지시선) -->
+            <ui:Button name="nav-setup" class="tab" style="width:88px; height:96px; align-items:center; margin:0;">
+                <ui:VisualElement class="icon">
+                    <ui:VisualElement class="ring" style="position:absolute; left:3px; top:3px; width:20px; height:20px; border-radius:10px;" />
+                    <ui:VisualElement class="ink" style="position:absolute; left:11px; top:0; width:4px; height:8px;" />
+                    <ui:VisualElement class="ink" style="position:absolute; left:11px; bottom:0; width:4px; height:8px;" />
+                </ui:VisualElement>
+                <ui:Label text="SETUP" class="tab__text" /><ui:Label text="설정" class="micro" />
+            </ui:Button>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

@@ -1,0 +1,92 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <ui:Style src="project://database/Assets/UI/FR5Theme.uss" />
+    <ui:Template src="project://database/Assets/UI/FR5Shell.uxml" name="FR5Shell" />
+    <!--
+      RUN · 작업 요청 — Docs/ui/mock-02-run-request.svg
+      활성 작업이 없을 때의 RUN 상태다. 요청 → 진행이 같은 자리에서 이어진다.
+      실데이터: 모드 · 워치독 · 활성작업 · START 실행 (FR5RequestBinder)
+      샘플데이터: 제품 목록 · 재고 · 예상소요  → 조회 API 가 생기면 교체
+    -->
+    <ui:VisualElement name="fr5-request" class="page fr5--mock">
+
+        
+
+        <!-- 좌 : 제품 미리보기 -->
+        <ui:VisualElement name="product-panel" class="panel" style="position:absolute; left:112px; top:88px; width:620px; height:912px;">
+            <ui:VisualElement class="panel__spine" />
+            <ui:VisualElement class="panel__head">
+                <ui:Label text="PRODUCT" class="panel__title" />
+                <ui:VisualElement class="spacer" />
+                <ui:Label name="product-slot-count" text="product_slots 8" class="panel__badge" />
+            </ui:VisualElement>
+            <ui:VisualElement class="panel__body">
+                <ui:Label name="product-name" text="HBM3 CARRIER" class="value value--lg" />
+                <ui:Label name="product-meta" text="PRD-A · v3" class="muted" style="margin-top:6px;" />
+                <ui:VisualElement class="rule" style="margin-top:18px; margin-bottom:18px;" />
+
+                <ui:VisualElement class="sect"><ui:VisualElement class="sect__tick" /><ui:Label text="SLOT PREVIEW" class="sect__title" /></ui:VisualElement>
+                <!-- TODO(API): product_slots 조회로 동적 생성. 지금은 샘플 8행 고정 -->
+                <ui:VisualElement name="slot-list" class="row vlist" style="flex-wrap:wrap;" />
+
+                <ui:VisualElement class="rule" style="margin-top:18px; margin-bottom:18px;" />
+                <ui:VisualElement class="sect"><ui:VisualElement class="sect__tick" /><ui:Label text="RECIPE" class="sect__title" /></ui:VisualElement>
+                <ui:VisualElement class="row">
+                    <ui:Label name="recipe-version" text="mock-r1" style="color:rgb(226,236,241);" />
+                    <ui:VisualElement name="recipe-match-chip" class="chip chip--good" style="margin-left:16px;"><ui:Label text="VERSION MATCH" class="chip__text" /></ui:VisualElement>
+                </ui:VisualElement>
+                <ui:Label text="불일치 시 노드가 goal 을 거부한다. 요청 전에 여기서 보인다." class="muted" style="margin-top:12px;" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- 우 : 요청 폼 -->
+        <ui:VisualElement name="request-panel" class="panel" style="position:absolute; left:756px; top:88px; width:1140px; height:912px;">
+            <ui:VisualElement class="panel__spine" />
+            <ui:VisualElement class="panel__head">
+                <ui:Label text="작업 요청" class="panel__title" />
+                <ui:VisualElement class="spacer" />
+                <ui:Label text="AssemblyJob · goal" class="panel__badge" />
+            </ui:VisualElement>
+            <ui:VisualElement class="panel__body">
+
+                <ui:VisualElement class="sect"><ui:VisualElement class="sect__tick" /><ui:Label text="1   완성체" class="sect__title" /><ui:VisualElement class="spacer" /><ui:Label text="products.is_selectable" class="sect__unit" /></ui:VisualElement>
+                <!-- TODO(API): products 조회. 지금은 샘플 3행을 바인더가 생성한다 -->
+                <ui:VisualElement name="product-list" class="vlist" style="margin-bottom:16px;" />
+
+                <ui:VisualElement class="sect"><ui:VisualElement class="sect__tick" /><ui:Label text="2   수량" class="sect__title" /><ui:VisualElement class="spacer" /><ui:Label text="jobs.requested_quantity" class="sect__unit" /></ui:VisualElement>
+                <ui:VisualElement class="row" style="margin-bottom:16px;">
+                    <ui:Button name="qty-minus" text="−" class="btn" style="width:48px; font-size:20px;" />
+                    <ui:Label name="qty-value" text="1" class="value value--xl" style="width:150px; font-size:40px; -unity-text-align:middle-center;" />
+                    <ui:Button name="qty-plus" text="+" class="btn" style="width:48px; font-size:20px;" />
+                    <ui:VisualElement style="margin-left:32px;">
+                        <ui:Label name="qty-max" text="최대 —" class="muted" />
+                        <ui:Label name="qty-eta" text="예상 소요 —" class="muted" style="margin-top:6px;" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <ui:VisualElement class="sect"><ui:VisualElement class="sect__tick" /><ui:Label text="3   재고 사전 검증" class="sect__title" /><ui:VisualElement class="spacer" /><ui:Label text="전체 수량분 · 노드 응답" class="sect__unit" /></ui:VisualElement>
+                <ui:VisualElement class="trow trow--head">
+                    <ui:Label text="SLOT" class="tcell tcell--head" style="width:280px;" />
+                    <ui:Label text="PART" class="tcell tcell--head" style="width:220px;" />
+                    <ui:Label text="필요" class="tcell tcell--head tcell--num" style="width:120px;" />
+                    <ui:Label text="보유" class="tcell tcell--head tcell--num" style="width:120px;" />
+                    <ui:Label text="판정" class="tcell tcell--head tcell--num" style="width:160px;" />
+                </ui:VisualElement>
+                <!-- TODO(API): 재고 사전 검증은 조립 노드 응답으로 채운다. 지금은 샘플 -->
+                <ui:VisualElement name="stock-list" class="vlist" style="margin-bottom:16px;" />
+
+                <ui:VisualElement class="sect"><ui:VisualElement class="sect__tick" /><ui:Label text="4   실행 인터록" class="sect__title" /><ui:VisualElement class="spacer" /><ui:Label text="모두 충족해야 START" class="sect__unit" /></ui:VisualElement>
+                <ui:VisualElement name="interlock-list" class="row vlist" style="flex-wrap:wrap; margin-bottom:14px;" />
+
+                <ui:VisualElement class="spacer" />
+                <ui:Button name="start-button" text="START" class="btn btn--accent" style="height:64px; font-size:22px; letter-spacing:6px;" />
+                <ui:Label name="start-reason" text="" class="bad" style="margin-top:8px; -unity-text-align:middle-center;" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!--
+          공통 셸: 상단 바 + 페이지 레일 + 알람 띠.
+          맨 마지막에 둔다 — 알람 띠가 페이지 패널 위로 그려져야 하기 때문이다.
+        -->
+        <ui:Instance template="FR5Shell" name="shell" class="shell-host" />
+    </ui:VisualElement>
+</ui:UXML>

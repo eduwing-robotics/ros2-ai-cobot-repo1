@@ -1,0 +1,69 @@
+# Nested repository metadata
+**/.git/
+
+# Unity generated files
+UnityDT/[Ll]ibrary/
+UnityDT/[Tt]emp/
+UnityDT/[Oo]bj/
+UnityDT/[Bb]uild/
+UnityDT/[Bb]uilds/
+UnityDT/[Ll]ogs/
+UnityDT/[Uu]ser[Ss]ettings/
+UnityDT/.vs/
+UnityDT/.vscode/
+UnityDT/.idea/
+UnityDT/MemoryCaptures/
+UnityDT/Recordings/
+UnityDT/*.csproj
+UnityDT/*.sln
+UnityDT/*.slnx
+UnityDT/*.user
+UnityDT/*.userprefs
+UnityDT/*.suo
+UnityDT/*.unityproj
+UnityDT/*.tmp
+UnityDT/*.pidb
+UnityDT/*.booproj
+UnityDT/*.svd
+UnityDT/*.pdb
+UnityDT/*.mdb
+UnityDT/sysinfo.txt
+
+# Python local files
+**/__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Local secrets (keep shareable templates)
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.sample
+*.pem
+*.key
+*.p12
+*.pfx
+*.kdbx
+
+# ROS/colcon generated files
+**/build/
+**/install/
+**/log/
+**/build_current/
+**/log_current/
+
+# Editor and diagnostic files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.~lock.*
+*.stackdump
+*.dmp
+*.crash
+UnityDT/mono_crash.*.blob

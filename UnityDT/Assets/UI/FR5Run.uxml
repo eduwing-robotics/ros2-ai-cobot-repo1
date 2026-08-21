@@ -1,0 +1,185 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <ui:Style src="project://database/Assets/UI/FR5Theme.uss" />
+    <ui:Template src="project://database/Assets/UI/FR5Shell.uxml" name="FR5Shell" />
+    <!--
+      RUN · 작업 실행 중 — Docs/ui/mock-01-run.svg 확정안
+      가운데 508..1500 × 88..896 은 어떤 요소도 침범하지 않는다. 로봇이 움직이는 영역이다.
+      실데이터: 관절 · TCP · RPY · 그리퍼 · 워치독 · 모드 · 링크 (FR5RunBinder)
+      TCP · RPY · SAFETY 는 Real 전용이라 Mock 에서는 접는다 — 그래야 좌측 열이 예산에 맞는다
+      샘플데이터: 작업 진행 · 유닛 · 스텝 · 이벤트  [TODO(API)]
+    -->
+    <ui:VisualElement name="fr5-run" class="page fr5--mock">
+
+        
+
+        <!--
+          ========================= 가운데 =========================
+          508..1500 × 88..896 은 비워 둔다. page 배경이 투명이라 3D 트윈이 그대로 보인다.
+          여기에 요소를 놓지 말 것. 로봇이 움직이는 영역이다.
+        -->
+
+        <!-- ========================= 좌 · 로봇 계기 ========================= -->
+        <ui:VisualElement name="robot-panel" class="panel" style="position:absolute; left:112px; top:88px; width:372px; height:808px;">
+            <ui:VisualElement class="panel__spine" />
+            <ui:VisualElement class="panel__head">
+                <ui:Label text="ROBOT · FR5-01" class="panel__title" />
+                <ui:VisualElement class="spacer" />
+                <ui:Label text="휘발 · 표시 전용" class="panel__badge" />
+            </ui:VisualElement>
+            <!--
+              세로 예산 — 실측 기준이다. 모두 편 Real 상태에서 내용 하단이 y=876,
+              패널 바닥이 y=896 이라 여유가 20px 뿐이다. 항목을 더 넣으려면 반드시
+              무언가를 빼야 한다. 예산을 넘겨도 이제는 구분선·게이지가 조용히 눌리지
+              않고(테마의 flex-shrink:0) 패널 밖으로 삐져나오므로 눈에 보인다.
+            -->
+            <ui:VisualElement class="panel__body">
+
+                <!--
+                  POSE — TCP 와 RPY 는 같은 포즈의 두 축이라 제목 하나를 나눠 쓴다.
+                  Mock Backend 는 두 값을 채우지 않으므로 Mock 에서는 블록째 접는다.
+                -->
+                <ui:VisualElement name="pose-block" class="vlist">
+                    <ui:VisualElement class="sect"><ui:VisualElement class="sect__tick" /><ui:Label text="TCP · RPY" class="sect__title" /><ui:VisualElement class="spacer" /><ui:Label text="mm · deg · base" class="sect__unit" /></ui:VisualElement>
+                    <ui:VisualElement name="tcp-row" class="row vlist" style="margin-bottom:10px;" />
+                    <ui:VisualElement name="rpy-row" class="row vlist" />
+                    <ui:VisualElement class="rule" style="margin-top:14px;" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="sect" style="margin-top:14px;"><ui:VisualElement class="sect__tick" /><ui:Label text="JOINTS" class="sect__title" /><ui:VisualElement class="spacer" /><ui:Label text="deg · 리미트 대비" class="sect__unit" /></ui:VisualElement>
+                <ui:VisualElement name="joint-list" class="vlist" style="margin-bottom:14px;" />
+
+                <ui:VisualElement class="rule" style="margin-bottom:14px;" />
+                <ui:VisualElement class="sect"><ui:VisualElement class="sect__tick" /><ui:Label text="GRIPPER" class="sect__title" /><ui:VisualElement class="spacer" /><ui:Label text="mm" class="sect__unit" /></ui:VisualElement>
+                <ui:VisualElement class="row">
+                    <ui:VisualElement name="gripper-state-chip" class="chip"><ui:Label name="gripper-state-text" text="—" class="chip__text" /></ui:VisualElement>
+                    <ui:VisualElement class="spacer" />
+                    <ui:Label name="gripper-value" text="—" class="value value--lg" />
+                </ui:VisualElement>
+                <ui:VisualElement class="gauge" style="margin-top:10px;">
+                    <ui:VisualElement name="gripper-fill" class="gauge__fill" />
+                </ui:VisualElement>
+
+                <!-- /nonrt_state_data 로만 오는 값들. Mock 은 채우지 않으므로 접는다. -->
+                <ui:VisualElement name="safety-block" class="vlist">
+                    <ui:VisualElement class="rule" style="margin-top:14px; margin-bottom:14px;" />
+                    <ui:VisualElement class="sect"><ui:VisualElement class="sect__tick" /><ui:Label text="SAFETY · REAL" class="sect__title" /><ui:VisualElement class="spacer" /><ui:Label name="real-source" text="—" class="sect__unit" /></ui:VisualElement>
+                    <ui:VisualElement name="real-status" class="vlist" />
+                </ui:VisualElement>
+                <!-- 접은 자리에 빈칸을 남기지 않고, 왜 없는지를 한 줄로 답한다. -->
+                <ui:Label name="mock-note" text="TCP · RPY · SAFETY — Real 연결에서만 들어온다" class="muted" style="font-size:11px; margin-top:14px;" />
+
+                <ui:VisualElement class="spacer" />
+                <ui:VisualElement class="rule" style="margin-bottom:12px;" />
+                <ui:VisualElement class="row">
+                    <ui:VisualElement name="watchdog-dot" class="dot" />
+                    <ui:Label text="WATCHDOG" class="micro" style="margin-left:10px;" />
+                    <ui:VisualElement class="spacer" />
+                    <ui:Label name="watchdog-value" text="—" class="muted" />
+                </ui:VisualElement>
+                <ui:Label name="tool-value" text="tool Z —" class="muted" style="font-size:12px; margin-top:8px;" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- ========================= 우 · 작업 진행 ========================= -->
+        <ui:VisualElement name="job-panel" class="panel" style="position:absolute; left:1524px; top:88px; width:372px; height:368px;">
+            <ui:VisualElement class="panel__spine" />
+            <ui:VisualElement class="panel__head">
+                <ui:Label text="ASSEMBLY JOB" class="panel__title" />
+                <ui:VisualElement class="spacer" />
+                <ui:Label text="영속 · DB 기록" class="panel__badge" style="color:rgb(62,207,142);" />
+            </ui:VisualElement>
+            <ui:VisualElement class="panel__body">
+                <!-- TODO(API): jobs · units 조회로 교체 -->
+                <ui:Label name="job-product" text="—" class="value value--lg" style="font-size:26px;" />
+                <ui:Label name="job-recipe" text="—" class="muted" style="margin-top:2px;" />
+                <ui:VisualElement class="rule" style="margin-top:12px; margin-bottom:12px;" />
+
+                <!--
+                  완료 수량 · 유닛 틱 10칸 · 잔여 · OK/NG 를 뺐다. MVP 는 수량 1대라
+                  "10대 중 6대" 축이 실재하지 않는다 — 채울 데이터가 없는 그림이었다.
+                  수량 2개 이상과 작업 큐가 생기면(todo.md) 되돌린다. 비운 자리는
+                  채우지 않고 VISION 에 넘겼다. 카메라가 4:3 을 꽉 채우지 못하고 있었다.
+                -->
+                <ui:VisualElement class="sect"><ui:VisualElement class="sect__tick" /><ui:Label text="CURRENT UNIT" class="sect__title" /><ui:VisualElement class="spacer" /><ui:Label text="unit_phase" class="sect__unit" /></ui:VisualElement>
+                <ui:VisualElement class="row">
+                    <ui:Label name="unit-phase" text="—" class="value" style="font-size:22px;" />
+                </ui:VisualElement>
+                <ui:Label name="unit-step" text="—" class="muted vlist" style="margin-top:6px; font-size:13px;" />
+
+                <ui:VisualElement class="spacer" />
+                <ui:VisualElement class="row">
+                    <ui:Button name="job-pause-button" text="PAUSE" class="btn" style="width:104px;" />
+                    <ui:Button name="job-step-button" text="STEP" class="btn" style="width:104px; margin-left:10px;" />
+                    <ui:Button name="job-abort-button" text="ABORT" class="btn btn--danger" style="width:104px; margin-left:10px;" />
+                </ui:VisualElement>
+                <ui:Label name="abort-note" text="ABORT — 취소 계약 미구현 (API.md 4.3)" class="muted" style="font-size:11px; margin-top:2px; -unity-text-align:middle-right;" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- ========================= 우 · 비전 ========================= -->
+        <!--
+          프레임 338 x 254 = 4:3 정확히. 카메라 텍스처가 640x480 이고 Image 는
+          ScaleToFit 이라, 이전 338 x 150 에서는 200 x 150 으로만 그려지고 좌우
+          138px 이 레터박스로 죽었다. 폭은 우측 열 372 로 고정이므로 높이로 맞춘다.
+        -->
+        <ui:VisualElement name="vision-panel" class="panel" style="position:absolute; left:1524px; top:528px; width:372px; height:368px;">
+            <ui:VisualElement class="panel__spine" />
+            <ui:VisualElement class="panel__head">
+                <ui:Label text="VISION" class="panel__title" />
+                <ui:VisualElement class="spacer" />
+                <ui:Label text="board/image" class="panel__badge" />
+            </ui:VisualElement>
+            <ui:VisualElement style="flex-grow:1; padding:16px;">
+                <ui:VisualElement name="vision-frame" style="flex-grow:1; background-color:rgb(20,28,36);">
+                    <ui:Image name="camera-image" style="position:absolute; left:0; top:0; right:0; bottom:0;" />
+                    <ui:VisualElement name="vision-empty" class="empty">
+                        <ui:Label text="영상 없음" class="empty__title" style="font-size:14px;" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement class="row" style="margin-top:10px;">
+                    <ui:Label name="vision-stats" text="—" class="muted" style="font-size:11px;" />
+                    <ui:VisualElement class="spacer" />
+                    <ui:Label text="INSPECT →" class="accent" style="font-size:11px;" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- =================== 하단 · 조립 진행 ===================
+          부품 타입별 슬롯 진행이다. 스텝 레일이 아니다 — 레시피의 한 스텝은
+          "부품 하나를 슬롯 하나에 올리는 것"이고 approach/insert/retract 는 그
+          스텝 안의 모션이다 (Docs/Recipe.md). 이전의 8단계 레일은 한 스텝의
+          속을 작업 전체의 진행으로 그린 것이라 구조와 맞지 않았다.
+
+          칸 수와 순서는 씬의 기판(ItemManager)이, 어디까지 놓였는지는 조립
+          피드백(AssemblyProgressManager)이 답한다. 샘플 상수가 없다.
+        -->
+        <ui:VisualElement name="progress-panel" class="panel" style="position:absolute; left:112px; top:920px; width:1388px; height:136px;">
+            <ui:VisualElement class="panel__spine" />
+            <ui:VisualElement class="panel__head">
+                <ui:Label text="ASSEMBLY PROGRESS" class="panel__title" />
+                <ui:Label text="휘발 · 표시 전용" class="panel__badge" style="margin-left:20px;" />
+                <ui:VisualElement class="spacer" />
+                <ui:Label name="progress-now" text="—" class="muted" style="font-size:13px;" />
+                <ui:Label name="progress-count" text="—" class="value" style="font-size:20px; margin-left:20px;" />
+            </ui:VisualElement>
+            <ui:VisualElement name="progress-groups" class="row vlist" style="flex-grow:1; padding-left:24px; padding-right:24px; justify-content:center;" />
+        </ui:VisualElement>
+
+        <!-- ========================= 하단 · 이벤트 ========================= -->
+        <ui:VisualElement name="events-panel" class="panel" style="position:absolute; left:1524px; top:920px; width:372px; height:136px;">
+            <ui:VisualElement class="panel__spine" />
+            <ui:VisualElement class="panel__head">
+                <ui:Label text="EVENTS" class="panel__title" />
+                <ui:VisualElement class="spacer" />
+                <ui:Label name="events-summary" text="—" class="panel__badge" />
+            </ui:VisualElement>
+            <ui:VisualElement name="event-list" class="vlist" style="padding-left:18px; padding-right:18px; padding-top:10px;" />
+        </ui:VisualElement>
+
+        <!--
+          공통 셸: 상단 바 + 페이지 레일 + 알람 띠.
+          맨 마지막에 둔다 — 알람 띠가 페이지 패널 위로 그려져야 하기 때문이다.
+        -->
+        <ui:Instance template="FR5Shell" name="shell" class="shell-host" />
+    </ui:VisualElement>
+</ui:UXML>

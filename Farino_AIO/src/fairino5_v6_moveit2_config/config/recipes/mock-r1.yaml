@@ -1,0 +1,48 @@
+# Common assembly order and motion settings used by Mock and Real executors.
+recipe_version: mock-r1
+frame: base_link
+gripper_opening_percent: 0
+
+# Calibration ceiling: ItemReady and AssemblyReady temporarily reuse Home because
+# safe taught joint values do not exist yet. Replace these before real execution.
+joint_points:
+  home: [0, -90, 90, -90, -90, 0]
+  item_ready: [0, -90, 90, -90, -90, 0]
+  assembly_ready: [0, -90, 90, -90, -90, 0]
+
+motion:
+  approach_dz_mm: 100.0
+  retract_dz_mm: 100.0
+
+sequence:
+  per_step: [home, item_ready, pick, home, assembly_ready, place]
+  after_all: [home]
+
+# Order mirrors SampleScene ItemManger. A type's source and slot indices advance
+# in the listed order: 8, 4, 1, 5, 2, 5.
+steps:
+  - {order: 1,  part_id: HBM, slot_code: HBM-01}
+  - {order: 2,  part_id: HBM, slot_code: HBM-02}
+  - {order: 3,  part_id: HBM, slot_code: HBM-03}
+  - {order: 4,  part_id: HBM, slot_code: HBM-04}
+  - {order: 5,  part_id: HBM, slot_code: HBM-05}
+  - {order: 6,  part_id: HBM, slot_code: HBM-06}
+  - {order: 7,  part_id: HBM, slot_code: HBM-07}
+  - {order: 8,  part_id: HBM, slot_code: HBM-08}
+  - {order: 9,  part_id: PM, slot_code: PM-01}
+  - {order: 10, part_id: PM, slot_code: PM-02}
+  - {order: 11, part_id: PM, slot_code: PM-03}
+  - {order: 12, part_id: PM, slot_code: PM-04}
+  - {order: 13, part_id: GPU, slot_code: GPU-01}
+  - {order: 14, part_id: CAP, slot_code: CAP-01}
+  - {order: 15, part_id: CAP, slot_code: CAP-02}
+  - {order: 16, part_id: CAP, slot_code: CAP-03}
+  - {order: 17, part_id: CAP, slot_code: CAP-04}
+  - {order: 18, part_id: CAP, slot_code: CAP-05}
+  - {order: 19, part_id: IND, slot_code: IND-01}
+  - {order: 20, part_id: IND, slot_code: IND-02}
+  - {order: 21, part_id: VRM, slot_code: VRM-01}
+  - {order: 22, part_id: VRM, slot_code: VRM-02}
+  - {order: 23, part_id: VRM, slot_code: VRM-03}
+  - {order: 24, part_id: VRM, slot_code: VRM-04}
+  - {order: 25, part_id: VRM, slot_code: VRM-05}

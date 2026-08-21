@@ -1,0 +1,265 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-labelledby="t d">
+  <title id="t">FR5 HUD — SETUP (연결 진단과 설정)</title>
+  <desc id="d">ROS 토픽 수신 상태를 가로줄만으로 구분한 표, 워치독 임계, 좌표계·단위, 디지털 I/O 틱과 로그 내보내기가 있는 설정 화면 목업.</desc>
+
+  <defs>
+    <linearGradient id="stage" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1c2833"/><stop offset="1" stop-color="#080d13"/>
+    </linearGradient>
+    <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#28343f"/><stop offset="1" stop-color="#111820"/>
+    </linearGradient>
+    <linearGradient id="scrimT" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#04070a" stop-opacity=".95"/>
+      <stop offset="1" stop-color="#04070a" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="scrimB" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#04070a" stop-opacity=".95"/>
+      <stop offset="1" stop-color="#04070a" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="scrimR" x1="1" y1="0" x2="0" y2="0">
+      <stop offset="0" stop-color="#04070a" stop-opacity=".92"/>
+      <stop offset="1" stop-color="#04070a" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="scrimL" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#04070a" stop-opacity=".92"/>
+      <stop offset="1" stop-color="#04070a" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="vig" cx="50%" cy="46%" r="72%">
+      <stop offset="0" stop-color="#000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000" stop-opacity=".55"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="50%" cy="0%" r="90%">
+      <stop offset="0" stop-color="#16222e" stop-opacity=".7"/>
+      <stop offset="1" stop-color="#070b10" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="cam" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2c3b47"/><stop offset="1" stop-color="#10171e"/>
+    </linearGradient>
+    <style>
+      text { font-family: Inter, Pretendard, "Noto Sans KR", system-ui, sans-serif; }
+      .mi { fill:#7f93a4; font-size:12px; letter-spacing:2.2px; font-weight:700 }
+      .lb { fill:#93a8b8; font-size:14px; letter-spacing:2.4px; font-weight:700 }
+      .bd { fill:#cbd8e2; font-size:16px }
+      .sm { fill:#9fb1bf; font-size:15px }
+      .mu { fill:#6b7e8f; font-size:14px }
+      .vl { fill:#eef6fb; font-size:26px; font-weight:700 }
+      .v2 { fill:#f4fbff; font-size:34px; font-weight:700; letter-spacing:-.4px }
+      .v3 { fill:#f6fcff; font-size:52px; font-weight:800; letter-spacing:-1.4px }
+      .dp { fill:#f8fdff; font-size:88px; font-weight:800; letter-spacing:-4px }
+      .ac { fill:#facc33 } .ok { fill:#3ecf8e } .warn { fill:#f6ad37 } .bad { fill:#f0475a }
+    </style>
+  </defs>
+  <rect width="1920" height="1080" fill="#070b10"/>
+  <rect width="1920" height="1080" fill="url(#glow)"/>
+<rect x="0" y="0" width="1920" height="64" fill="#04070a" fill-opacity=".7"/>
+<line x1="0" y1="64" x2="1920" y2="64" stroke="#ffffff" stroke-opacity=".10"/>
+<rect x="0" y="63" width="300" height="2" fill="#facc33" fill-opacity=".55"/>
+<text x="48" y="42" fill="#f8fdff" font-size="27" font-weight="800" letter-spacing="1.5">FR5</text>
+<text x="112" y="42" class="mu" font-size="14">FAIRINO · CELL A</text>
+<text x="288" y="30" class="mi">MODE</text>
+<text x="288" y="52" fill="#facc33" font-size="19" font-weight="800" letter-spacing="3">MOCK</text>
+<text x="370" y="52" fill="#3d4a56" font-size="19" font-weight="800" letter-spacing="3">REAL</text>
+<text x="520" y="30" class="mi">LINK</text>
+<circle cx="524" cy="46" r="4" fill="#3ecf8e"/>
+<text x="536" y="52" class="sm" font-size="14">joint_states</text>
+<text x="670" y="52" text-anchor="end" class="mu" font-size="13">31 ms</text>
+<circle cx="684" cy="46" r="4" fill="#3ecf8e"/>
+<text x="696" y="52" class="sm" font-size="14">board/image</text>
+<text x="830" y="52" text-anchor="end" class="mu" font-size="13">68 ms</text>
+<circle cx="844" cy="46" r="4" fill="#46545f"/>
+<text x="856" y="52" class="sm" font-size="14">assembly/fb</text>
+<text x="990" y="52" text-anchor="end" class="mu" font-size="13">idle</text>
+<text x="1020" y="30" class="mi">JOB</text>
+<text x="1020" y="52" fill="#eaf3f8" font-size="17" font-weight="700">JOB-20260807-0142</text>
+<rect x="1246" y="38" width="170" height="6" rx="3.0" fill="#ffffff" fill-opacity=".07"/>
+<rect x="1246" y="38" width="102" height="6" rx="3.0" fill="#facc33" fill-opacity=".9"/>
+<text x="1432" y="52" fill="#eaf3f8" font-size="17" font-weight="700">6 / 10</text>
+<text x="1518" y="30" class="mi">CYCLE</text>
+<text x="1518" y="52" fill="#eaf3f8" font-size="17" font-weight="700">00:01:24</text>
+<text x="1704" y="30" text-anchor="end" fill="#3ecf8e" font-size="13" font-weight="700" letter-spacing="1.6">LINKED</text>
+<circle cx="1716" cy="26" r="4" fill="#3ecf8e"/>
+<text x="1716" y="52" text-anchor="end" class="mu" font-size="12" letter-spacing="1.4">SERVO · RESET</text>
+<rect x="1744" y="14" width="128" height="40" rx="4" fill="#f0475a" fill-opacity=".18" stroke="#f0475a" stroke-opacity=".75"/>
+<circle cx="1770" cy="34" r="7" fill="#ff8f9b"/>
+<text x="1788" y="41" fill="#ff8f9b" font-size="19" font-weight="800" letter-spacing="2.6">STOP</text>
+<rect x="30.0" y="160" width="28" height="28" rx="6" fill="none" stroke="#5a6b79" stroke-opacity=".55" stroke-width="1.8"/>
+<text x="44.0" y="204" text-anchor="middle" fill="#5a6b79" font-size="11.5" font-weight="800" letter-spacing="1">RUN</text>
+<text x="44.0" y="220" text-anchor="middle" fill="#4a5764" font-size="11">운전</text>
+<rect x="30.0" y="278" width="28" height="28" rx="6" fill="none" stroke="#5a6b79" stroke-opacity=".55" stroke-width="1.8"/>
+<text x="44.0" y="322" text-anchor="middle" fill="#5a6b79" font-size="11.5" font-weight="800" letter-spacing="1">INSPECT</text>
+<text x="44.0" y="338" text-anchor="middle" fill="#4a5764" font-size="11">검사</text>
+<rect x="30.0" y="396" width="28" height="28" rx="6" fill="none" stroke="#5a6b79" stroke-opacity=".55" stroke-width="1.8"/>
+<text x="44.0" y="440" text-anchor="middle" fill="#5a6b79" font-size="11.5" font-weight="800" letter-spacing="1">MANUAL</text>
+<text x="44.0" y="456" text-anchor="middle" fill="#4a5764" font-size="11">수동</text>
+<rect x="30.0" y="514" width="28" height="28" rx="6" fill="none" stroke="#5a6b79" stroke-opacity=".55" stroke-width="1.8"/>
+<text x="44.0" y="558" text-anchor="middle" fill="#5a6b79" font-size="11.5" font-weight="800" letter-spacing="1">QUALITY</text>
+<text x="44.0" y="574" text-anchor="middle" fill="#4a5764" font-size="11">품질</text>
+<rect x="0" y="628" width="3" height="76" fill="#facc33"/>
+<rect x="30.0" y="632" width="28" height="28" rx="6" fill="none" stroke="#facc33" stroke-opacity=".9" stroke-width="1.8"/>
+<text x="44.0" y="676" text-anchor="middle" fill="#facc33" font-size="11.5" font-weight="800" letter-spacing="1">SETUP</text>
+<text x="44.0" y="692" text-anchor="middle" fill="#4a5764" font-size="11">설정</text>
+<line x1="0" y1="1036" x2="1920" y2="1036" stroke="#ffffff" stroke-opacity=".08"/>
+<circle cx="48" cy="1059" r="4" fill="#5a6b79"/>
+<text x="64" y="1064" class="sm" font-size="14">10:20:14   SETUP   watchdog 임계 50 ms 저장됨</text>
+<text x="1872" y="1064" text-anchor="end" class="mu" font-size="13" letter-spacing="1.4">EVENTS  ·  ALARM 0</text>
+<text x="136" y="140" fill="#facc33" font-size="17" font-weight="700" letter-spacing="2">연결</text>
+<rect x="136" y="149" width="24" height="2" fill="#facc33"/>
+<text x="304" y="140" fill="#8296a6" font-size="17" font-weight="700" letter-spacing="2">좌표계 · 단위</text>
+<text x="472" y="140" fill="#8296a6" font-size="17" font-weight="700" letter-spacing="2">I/O</text>
+<text x="640" y="140" fill="#8296a6" font-size="17" font-weight="700" letter-spacing="2">뷰</text>
+<text x="808" y="140" fill="#8296a6" font-size="17" font-weight="700" letter-spacing="2">캘리브레이션</text>
+<text x="976" y="140" fill="#8296a6" font-size="17" font-weight="700" letter-spacing="2">로그</text>
+<line x1="136" y1="168" x2="1872" y2="168" stroke="#ffffff" stroke-opacity=".10"/>
+<rect x="136" y="205" width="3" height="14" fill="#facc33"/>
+<text x="150" y="216" class="lb">ROS INTERFACE</text>
+<text x="152" y="238" class="mu" font-size="13">API.md 기준  ·  endpoint 127.0.0.1:10000  ·  MOCK 구성</text>
+<text x="136" y="288" class="mi" font-size="11" >NAME</text>
+<text x="536" y="288" class="mi" font-size="11" >TYPE</text>
+<text x="836" y="288" class="mi" font-size="11" >DIR</text>
+<text x="946" y="288" class="mi" font-size="11" >RATE</text>
+<text x="1066" y="288" class="mi" font-size="11" >LAST</text>
+<text x="1196" y="288" class="mi" font-size="11" text-anchor="end">STATE</text>
+<line x1="136" y1="304" x2="1196" y2="304" stroke="#ffffff" stroke-opacity=".055"/>
+<text x="136" y="330" class="bd" font-size="15" font-family="monospace">/joint_states</text>
+<text x="536" y="330" class="mu" font-size="13" font-family="monospace">sensor_msgs/JointState</text>
+<text x="836" y="330" fill="#3a96ff" font-size="12" font-weight="700" letter-spacing="1.4">SUB</text>
+<text x="946" y="330" class="sm" font-size="14">32 Hz</text>
+<text x="1066" y="330" class="sm" font-size="14">31 ms</text>
+<text x="1196" y="330" text-anchor="end" fill="#3ecf8e" font-size="13" font-weight="700" letter-spacing="1.2">OK</text>
+<line x1="136" y1="346" x2="1196" y2="346" stroke="#ffffff" stroke-opacity=".055"/>
+<text x="136" y="372" class="bd" font-size="15" font-family="monospace">/vision/board/image/compressed</text>
+<text x="536" y="372" class="mu" font-size="13" font-family="monospace">sensor_msgs/CompressedImage</text>
+<text x="836" y="372" fill="#3a96ff" font-size="12" font-weight="700" letter-spacing="1.4">SUB</text>
+<text x="946" y="372" class="sm" font-size="14">30 Hz</text>
+<text x="1066" y="372" class="sm" font-size="14">68 ms</text>
+<text x="1196" y="372" text-anchor="end" fill="#3ecf8e" font-size="13" font-weight="700" letter-spacing="1.2">OK</text>
+<line x1="136" y1="388" x2="1196" y2="388" stroke="#ffffff" stroke-opacity=".055"/>
+<text x="136" y="414" class="bd" font-size="15" font-family="monospace">/vision/board/capture/target_pose</text>
+<text x="536" y="414" class="mu" font-size="13" font-family="monospace">geometry_msgs/PoseStamped</text>
+<text x="836" y="414" fill="#3a96ff" font-size="12" font-weight="700" letter-spacing="1.4">SUB</text>
+<text x="946" y="414" class="sm" font-size="14">2 Hz</text>
+<text x="1066" y="414" class="sm" font-size="14">412 ms</text>
+<text x="1196" y="414" text-anchor="end" fill="#3ecf8e" font-size="13" font-weight="700" letter-spacing="1.2">OK</text>
+<line x1="136" y1="430" x2="1196" y2="430" stroke="#ffffff" stroke-opacity=".055"/>
+<text x="136" y="456" class="bd" font-size="15" font-family="monospace">/vision/board/selected_target</text>
+<text x="536" y="456" class="mu" font-size="13" font-family="monospace">std_msgs/String</text>
+<text x="836" y="456" fill="#3a96ff" font-size="12" font-weight="700" letter-spacing="1.4">SUB</text>
+<text x="946" y="456" class="sm" font-size="14">—</text>
+<text x="1066" y="456" class="sm" font-size="14">3.2 s</text>
+<text x="1196" y="456" text-anchor="end" fill="#5a6b79" font-size="13" font-weight="700" letter-spacing="1.2">IDLE</text>
+<line x1="136" y1="472" x2="1196" y2="472" stroke="#ffffff" stroke-opacity=".055"/>
+<text x="136" y="498" class="bd" font-size="15" font-family="monospace">/unity/assembly/start</text>
+<text x="536" y="498" class="mu" font-size="13" font-family="monospace">fairino_msgs/RemoteCmdInterface</text>
+<text x="836" y="498" fill="#3ecf8e" font-size="12" font-weight="700" letter-spacing="1.4">SRV</text>
+<text x="946" y="498" class="sm" font-size="14">—</text>
+<text x="1066" y="498" class="sm" font-size="14">—</text>
+<text x="1196" y="498" text-anchor="end" fill="#3ecf8e" font-size="13" font-weight="700" letter-spacing="1.2">READY</text>
+<line x1="136" y1="514" x2="1196" y2="514" stroke="#ffffff" stroke-opacity=".055"/>
+<text x="136" y="540" class="bd" font-size="15" font-family="monospace">/unity/assembly/feedback</text>
+<text x="536" y="540" class="mu" font-size="13" font-family="monospace">std_msgs/String</text>
+<text x="836" y="540" fill="#3a96ff" font-size="12" font-weight="700" letter-spacing="1.4">SUB</text>
+<text x="946" y="540" class="sm" font-size="14">—</text>
+<text x="1066" y="540" class="sm" font-size="14">—</text>
+<text x="1196" y="540" text-anchor="end" fill="#5a6b79" font-size="13" font-weight="700" letter-spacing="1.2">IDLE</text>
+<line x1="136" y1="556" x2="1196" y2="556" stroke="#ffffff" stroke-opacity=".055"/>
+<text x="136" y="582" class="bd" font-size="15" font-family="monospace">/unity/joint_target</text>
+<text x="536" y="582" class="mu" font-size="13" font-family="monospace">sensor_msgs/JointState</text>
+<text x="836" y="582" fill="#facc33" font-size="12" font-weight="700" letter-spacing="1.4">PUB</text>
+<text x="946" y="582" class="sm" font-size="14">—</text>
+<text x="1066" y="582" class="sm" font-size="14">12 s</text>
+<text x="1196" y="582" text-anchor="end" fill="#3ecf8e" font-size="13" font-weight="700" letter-spacing="1.2">OK</text>
+<line x1="136" y1="598" x2="1196" y2="598" stroke="#ffffff" stroke-opacity=".055"/>
+<text x="136" y="624" class="bd" font-size="15" font-family="monospace">/unity/movej_target</text>
+<text x="536" y="624" class="mu" font-size="13" font-family="monospace">geometry_msgs/PoseStamped</text>
+<text x="836" y="624" fill="#facc33" font-size="12" font-weight="700" letter-spacing="1.4">PUB</text>
+<text x="946" y="624" class="sm" font-size="14">—</text>
+<text x="1066" y="624" class="sm" font-size="14">—</text>
+<text x="1196" y="624" text-anchor="end" fill="#5a6b79" font-size="13" font-weight="700" letter-spacing="1.2">IDLE</text>
+<line x1="136" y1="640" x2="1196" y2="640" stroke="#ffffff" stroke-opacity=".055"/>
+<text x="136" y="666" class="bd" font-size="15" font-family="monospace">/unity/tcp_target</text>
+<text x="536" y="666" class="mu" font-size="13" font-family="monospace">geometry_msgs/PoseStamped</text>
+<text x="836" y="666" fill="#facc33" font-size="12" font-weight="700" letter-spacing="1.4">PUB</text>
+<text x="946" y="666" class="sm" font-size="14">—</text>
+<text x="1066" y="666" class="sm" font-size="14">—</text>
+<text x="1196" y="666" text-anchor="end" fill="#5a6b79" font-size="13" font-weight="700" letter-spacing="1.2">IDLE</text>
+<line x1="136" y1="682" x2="1196" y2="682" stroke="#ffffff" stroke-opacity=".055"/>
+<text x="136" y="708" class="bd" font-size="15" font-family="monospace">/unity/gripper_target</text>
+<text x="536" y="708" class="mu" font-size="13" font-family="monospace">std_msgs/Float32</text>
+<text x="836" y="708" fill="#facc33" font-size="12" font-weight="700" letter-spacing="1.4">PUB</text>
+<text x="946" y="708" class="sm" font-size="14">—</text>
+<text x="1066" y="708" class="sm" font-size="14">48 s</text>
+<text x="1196" y="708" text-anchor="end" fill="#3ecf8e" font-size="13" font-weight="700" letter-spacing="1.2">OK</text>
+<line x1="136" y1="724" x2="1196" y2="724" stroke="#ffffff" stroke-opacity=".055"/>
+<text x="136" y="750" class="bd" font-size="15" font-family="monospace">/twin_visual/status</text>
+<text x="536" y="750" class="mu" font-size="13" font-family="monospace">std_msgs/String</text>
+<text x="836" y="750" fill="#3a96ff" font-size="12" font-weight="700" letter-spacing="1.4">SUB</text>
+<text x="946" y="750" class="sm" font-size="14">—</text>
+<text x="1066" y="750" class="sm" font-size="14">48 s</text>
+<text x="1196" y="750" text-anchor="end" fill="#3ecf8e" font-size="13" font-weight="700" letter-spacing="1.2">OK</text>
+<line x1="136" y1="766" x2="1196" y2="766" stroke="#ffffff" stroke-opacity=".055"/>
+<text x="136" y="792" class="bd" font-size="15" font-family="monospace">/nonrt_state_data</text>
+<text x="536" y="792" class="mu" font-size="13" font-family="monospace">fairino_msgs/RobotNonrtState</text>
+<text x="836" y="792" fill="#3a96ff" font-size="12" font-weight="700" letter-spacing="1.4">SUB</text>
+<text x="946" y="792" class="sm" font-size="14">—</text>
+<text x="1066" y="792" class="sm" font-size="14">—</text>
+<text x="1196" y="792" text-anchor="end" fill="#46545f" font-size="13" font-weight="700" letter-spacing="1.2">OFF</text>
+<text x="136" y="862" class="mu" font-size="13">LAST 는 지연이 아니라 마지막 수신 이후 경과다. 로봇 샘플 시각 기준 지연은 잴 수 없다.</text>
+<rect x="1300" y="205" width="3" height="14" fill="#facc33"/>
+<text x="1314" y="216" class="lb">WATCHDOG</text>
+<line x1="1300" y1="254" x2="1872" y2="254" stroke="#ffffff" stroke-opacity=".07"/>
+<text x="1300" y="284" class="mi" font-size="11">WARN</text>
+<text x="1300" y="316" class="v2" font-size="32">100 ms</text>
+<text x="1872" y="316" text-anchor="end" class="mu" font-size="13">도트 노랑</text>
+<line x1="1300" y1="344" x2="1872" y2="344" stroke="#ffffff" stroke-opacity=".07"/>
+<text x="1300" y="374" class="mi" font-size="11">BAD</text>
+<text x="1300" y="406" class="v2" font-size="32">500 ms</text>
+<text x="1872" y="406" text-anchor="end" class="mu" font-size="13">실행 차단</text>
+<line x1="1300" y1="434" x2="1872" y2="434" stroke="#ffffff" stroke-opacity=".07"/>
+<text x="1300" y="464" class="mi" font-size="11">STALE</text>
+<text x="1300" y="496" class="v2" font-size="32">1000 ms</text>
+<text x="1872" y="496" text-anchor="end" class="mu" font-size="13">값 회색</text>
+<text x="1300" y="552" class="mu" font-size="13">BAD 상태에서는 START · APPLY 가 잠긴다 (실행 인터록).</text>
+<line x1="1300" y1="596" x2="1872" y2="596" stroke="#ffffff" stroke-opacity=".10"/>
+<rect x="1300" y="629" width="3" height="14" fill="#facc33"/>
+<text x="1314" y="640" class="lb">FRAME · UNIT</text>
+<text x="1300" y="700" class="mu" font-size="14">기준 좌표계</text>
+<text x="1460" y="700" fill="#8296a6" font-size="16" font-weight="700" letter-spacing="2">world</text>
+<text x="1570" y="700" fill="#facc33" font-size="16" font-weight="700" letter-spacing="2">base</text>
+<rect x="1570" y="709" width="46" height="2" fill="#facc33"/>
+<text x="1680" y="700" fill="#8296a6" font-size="16" font-weight="700" letter-spacing="2">tool</text>
+<text x="1300" y="762" class="mu" font-size="14">길이</text>
+<text x="1460" y="762" fill="#8296a6" font-size="16" font-weight="700" letter-spacing="2">m</text>
+<text x="1570" y="762" fill="#facc33" font-size="16" font-weight="700" letter-spacing="2">mm</text>
+<rect x="1570" y="771" width="23" height="2" fill="#facc33"/>
+<text x="1300" y="824" class="mu" font-size="14">각도</text>
+<text x="1460" y="824" fill="#facc33" font-size="16" font-weight="700" letter-spacing="2">deg</text>
+<rect x="1460" y="833" width="35" height="2" fill="#facc33"/>
+<text x="1570" y="824" fill="#8296a6" font-size="16" font-weight="700" letter-spacing="2">rad</text>
+<text x="1300" y="906" class="mu" font-size="13">화면의 모든 수치가 이 설정을 따른다.</text>
+<text x="1300" y="928" class="mu" font-size="13">Unity↔ROS 변환은 항상 m·rad 로 전송된다.</text>
+<line x1="136" y1="900" x2="1196" y2="900" stroke="#ffffff" stroke-opacity=".10"/>
+<rect x="136" y="933" width="3" height="14" fill="#facc33"/>
+<text x="150" y="944" class="lb">DIGITAL I/O</text>
+<text x="136" y="990" class="mu" font-size="14" letter-spacing="1.4">DI</text>
+<rect x="180" y="980" width="26" height="12" fill="#3ecf8e" fill-opacity=".85"/>
+<rect x="220" y="980" width="26" height="12" fill="#ffffff" fill-opacity=".08"/>
+<rect x="260" y="980" width="26" height="12" fill="#3ecf8e" fill-opacity=".85"/>
+<rect x="300" y="980" width="26" height="12" fill="#3ecf8e" fill-opacity=".85"/>
+<rect x="340" y="980" width="26" height="12" fill="#ffffff" fill-opacity=".08"/>
+<rect x="380" y="980" width="26" height="12" fill="#ffffff" fill-opacity=".08"/>
+<rect x="420" y="980" width="26" height="12" fill="#ffffff" fill-opacity=".08"/>
+<rect x="460" y="980" width="26" height="12" fill="#3ecf8e" fill-opacity=".85"/>
+<text x="136" y="1024" class="mu" font-size="14" letter-spacing="1.4">DO</text>
+<rect x="180" y="1014" width="26" height="12" fill="#ffffff" fill-opacity=".08"/>
+<rect x="220" y="1014" width="26" height="12" fill="#3ecf8e" fill-opacity=".85"/>
+<rect x="260" y="1014" width="26" height="12" fill="#ffffff" fill-opacity=".08"/>
+<rect x="300" y="1014" width="26" height="12" fill="#ffffff" fill-opacity=".08"/>
+<rect x="340" y="1014" width="26" height="12" fill="#ffffff" fill-opacity=".08"/>
+<rect x="380" y="1014" width="26" height="12" fill="#3ecf8e" fill-opacity=".85"/>
+<rect x="420" y="1014" width="26" height="12" fill="#ffffff" fill-opacity=".08"/>
+<rect x="460" y="1014" width="26" height="12" fill="#ffffff" fill-opacity=".08"/>
+<text x="536" y="1024" class="mu" font-size="13">tool offset Z +142.0 mm   ·   payload 1.85 kg</text>
+<text x="896" y="990" class="mu" font-size="13">뷰 프리셋  OVERVIEW / TOOL / TOP / FREE</text>
+<text x="896" y="1014" class="mu" font-size="13">로그  세션 내보내기 · 관절 스트림 기록 · 셀프 테스트</text>
+</svg>

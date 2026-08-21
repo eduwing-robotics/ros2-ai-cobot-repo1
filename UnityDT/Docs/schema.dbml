@@ -1,0 +1,114 @@
+// production 스키마 — dbdiagram.io 붙여넣기용
+// https://dbdiagram.io/d
+// 상세 계약과 칼럼 평가는 Docs/DB.md를 참고한다.
+// part_catalog · defect_report 스키마와의 연동은 Docs/DB3.md를 참고한다.
+// 이 파일은 production 스키마만 정의한다. 다른 스키마로 나가는 외래키는 만들지 않는다.
+
+Table parts {
+  part_id varchar [pk]
+  part_name varchar [not null]
+  part_category varchar [not null, note: 'GPU, HBM, HEATSINK 등 부품 분류']
+  stock_quantity int [not null, default: 0, note: '현재고. 0 이상']
+
+  Note: '부품 기준정보와 현재고. 재고 이력은 저장하지 않는다'
+}
+
+Table products {
+  product_id bigint [pk, increment]
+  product_code varchar [not null]
+  product_name varchar [not null]
+  product_version varchar [not null]
+  is_selectable boolean [not null, default: true]
+  definition_locked_at timestamptz [note: '첫 작업 생성 후 제품과 슬롯 정의를 잠근 시각']
+
+  Note: '사용자가 선택할 완성체의 한 버전'
+
+  Indexes {
+    (product_code, product_version) [unique]
+  }
+}
+
+Table product_slots {
+  product_slot_id bigint [pk, increment]
+  product_id bigint [not null]
+  slot_code varchar [not null, note: 'Unity와 검사 시스템이 공유하는 장착 위치 코드']
+  part_id varchar [not null]
+
+  Note: '한 행 = 완성체의 물리 슬롯 한 곳 = 부품 하나. 구조만 정의하고 조립 순서는 담지 않는다'
+
+  Indexes {
+    (product_id, slot_code) [unique]
+    (part_id)
+  }
+}
+
+Table jobs {
+  job_id bigint [pk, increment]
+  product_id bigint [not null]
+  requested_quantity int [not null, note: '1 이상']
+  recipe_version varchar [not null, note: '이 작업을 실행한 조립 레시피 버전. 레시피 본문은 백엔드가 소유한다']
+  job_status varchar [not null, default: 'PENDING', note: 'PENDING, RUNNING, COMPLETED, FAILED, CANCELLED']
+  requested_at timestamptz [not null]
+  job_started_at timestamptz
+  job_finished_at timestamptz
+
+  Note: '사용자가 선택한 완성체와 요청 수량 한 건'
+
+  Indexes {
+    (product_id, job_status)
+    (requested_at)
+    (product_id, recipe_version)
+  }
+}
+
+Table units {
+  unit_id bigint [pk, increment]
+  job_id bigint [not null]
+  unit_sequence_in_job int [not null, note: '작업 안에서 1부터 시작하는 완성품 순번']
+  unit_status varchar [not null, default: 'RUNNING', note: 'RUNNING, COMPLETED, FAILED']
+  inspection_result varchar [not null, default: 'PENDING', note: 'PENDING, PASS, FAIL']
+  inspection_image_path varchar
+  assembly_started_at timestamptz [not null]
+  assembly_completed_at timestamptz
+  inspected_at timestamptz
+
+  Note: '실제로 조립을 시작한 완성품 한 대와 최종 검사 결과'
+
+  Indexes {
+    (job_id, unit_sequence_in_job) [unique]
+    (inspected_at)
+  }
+}
+
+Table unit_defects {
+  unit_defect_id bigint [pk, increment]
+  unit_id bigint [not null]
+  product_slot_id bigint [not null]
+  defect_type varchar [not null, note: 'MISSING, POSITION_ERROR, ORIENTATION_ERROR, CRACK']
+
+  Note: '최종 검사에서 불량으로 판정된 슬롯만 저장한다'
+
+  Indexes {
+    (unit_id, product_slot_id) [unique]
+    (product_slot_id)
+  }
+}
+
+TableGroup "production · 기준정보" [color: #2D5F9A] {
+  parts
+  products
+  product_slots
+}
+
+TableGroup "production · 실행·검사" [color: #C97316] {
+  jobs
+  units
+  unit_defects
+}
+
+Ref: product_slots.product_id > products.product_id
+Ref: product_slots.part_id > parts.part_id
+Ref: jobs.product_id > products.product_id
+Ref: units.job_id > jobs.job_id
+Ref: unit_defects.unit_id > units.unit_id
+Ref: unit_defects.product_slot_id > product_slots.product_slot_id

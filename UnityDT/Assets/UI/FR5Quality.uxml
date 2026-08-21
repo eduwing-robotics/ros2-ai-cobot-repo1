@@ -1,0 +1,107 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <ui:Style src="project://database/Assets/UI/FR5Theme.uss" />
+    <ui:Template src="project://database/Assets/UI/FR5Shell.uxml" name="FR5Shell" />
+    <!--
+      QUALITY · 누적 불량률과 대책서 — Docs/ui/mock-05-quality.svg
+      조회 성격이라 실시간 갱신이 없다. 진입 시 1회 + 수동 새로고침.
+
+      실데이터: 없음.
+      Unity 는 DB 에 직접 접속하지 않는다(Architecture.md). Architecture 가 확장점으로
+      남겨 둔 HTTP 어댑터가 생겨야 이 페이지가 채워진다. 그전까지는 샘플이 뜨고
+      상단에 "샘플 데이터" 배지가 붙는다.
+    -->
+    <ui:VisualElement name="fr5-quality" class="page fr5--mock">
+
+
+        
+
+        
+
+        <!-- 조회 조건 -->
+        <ui:VisualElement name="filter-panel" class="panel row" style="position:absolute; left:112px; top:88px; width:1784px; height:76px; padding-left:24px; padding-right:24px;">
+            <ui:VisualElement class="panel__spine" />
+            <!-- TODO(API): 기간·제품·레시피·유형 필터는 조회 API 파라미터로 넘긴다 -->
+            <ui:VisualElement style="width:280px;"><ui:Label text="기간" class="micro" /><ui:Label name="filter-period" text="최근 90일" class="value" style="font-size:18px; margin-top:4px;" /></ui:VisualElement>
+            <ui:VisualElement style="width:340px;"><ui:Label text="제품" class="micro" /><ui:Label name="filter-product" text="HBM3 CARRIER v3" class="value" style="font-size:18px; margin-top:4px;" /></ui:VisualElement>
+            <ui:VisualElement style="width:240px;"><ui:Label text="레시피" class="micro" /><ui:Label name="filter-recipe" text="전체" class="value" style="font-size:18px; margin-top:4px;" /></ui:VisualElement>
+            <ui:VisualElement style="width:240px;"><ui:Label text="불량 유형" class="micro" /><ui:Label name="filter-defect" text="전체" class="value" style="font-size:18px; margin-top:4px;" /></ui:VisualElement>
+            <ui:VisualElement class="spacer" />
+            <ui:VisualElement name="source-chip" class="chip" style="margin-right:16px;">
+                <ui:Label name="source-text" text="—" class="chip__text" />
+            </ui:VisualElement>
+            <ui:Button name="refresh-button" text="새로고침" class="btn" style="width:110px; height:32px; margin-right:20px;" />
+            <ui:VisualElement style="align-items:flex-end;">
+                <ui:Label name="filter-count" text="—" class="muted" style="font-size:12px;" />
+                <ui:Label name="filter-note" text="조회 전용 · production 읽기" class="warn" style="font-size:12px; margin-top:4px;" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- 슬롯별 불량률 -->
+        <ui:VisualElement name="slot-panel" class="panel" style="position:absolute; left:112px; top:188px; width:940px; height:520px;">
+            <ui:VisualElement class="panel__spine" />
+            <ui:VisualElement class="panel__head">
+                <ui:Label text="SLOT DEFECT RATE" class="panel__title" />
+                <ui:VisualElement class="spacer" />
+                <ui:Label name="slot-threshold" text="임계 0.30%" class="panel__badge" />
+            </ui:VisualElement>
+            <!-- TODO(API): production 집계. 슬롯별 누적 불량률 -->
+            <ui:VisualElement name="slot-grid" class="row vlist" style="flex-wrap:wrap; padding:18px;" />
+        </ui:VisualElement>
+
+        <!-- 부품·유형별 -->
+        <ui:VisualElement name="part-panel" class="panel" style="position:absolute; left:1076px; top:188px; width:820px; height:520px;">
+            <ui:VisualElement class="panel__spine" />
+            <ui:VisualElement class="panel__head">
+                <ui:Label text="PART DEFECT RATE" class="panel__title" />
+                <ui:VisualElement class="spacer" />
+                <ui:Label text="부품 · 유형별" class="panel__badge" />
+            </ui:VisualElement>
+            <ui:VisualElement class="panel__body">
+                <ui:VisualElement class="trow trow--head">
+                    <ui:Label text="PART" class="tcell tcell--head" style="width:180px;" />
+                    <ui:Label text="TYPE" class="tcell tcell--head" style="width:180px;" />
+                    <ui:Label text="불량 / 검사" class="tcell tcell--head tcell--num" style="width:220px;" />
+                    <ui:Label text="RATE" class="tcell tcell--head tcell--num" style="width:200px;" />
+                </ui:VisualElement>
+                <!-- TODO(API): defect_report.thresholds 와 대조해 임계 초과를 판정한다 -->
+                <ui:VisualElement name="part-list" class="vlist" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- 레시피 전후 -->
+        <ui:VisualElement name="recipe-panel" class="panel" style="position:absolute; left:112px; top:732px; width:940px; height:240px;">
+            <ui:VisualElement class="panel__spine" />
+            <ui:VisualElement class="panel__head">
+                <ui:Label text="RECIPE A / B" class="panel__title" />
+                <ui:VisualElement class="spacer" />
+                <ui:Label name="recipe-note" text="개선 전후 비교" class="panel__badge" />
+            </ui:VisualElement>
+            <!-- TODO(API): alert_countermeasures.applied_recipe_version 기준 전후 집계 -->
+            <ui:VisualElement name="recipe-compare" class="row vlist" style="padding:18px;" />
+        </ui:VisualElement>
+
+        <!-- 대책서 -->
+        <ui:VisualElement name="alert-panel" class="panel" style="position:absolute; left:1076px; top:732px; width:820px; height:240px;">
+            <ui:VisualElement class="panel__spine" />
+            <ui:VisualElement class="panel__head">
+                <ui:Label text="DEFECT REPORT · alerts" class="panel__title" />
+                <ui:VisualElement class="spacer" />
+                <ui:Label name="alert-summary" text="—" class="panel__badge" />
+            </ui:VisualElement>
+            <!-- TODO(API): defect_report.alerts 조회 -->
+            <ui:VisualElement name="alert-list" class="vlist" style="padding-left:18px; padding-right:18px;" />
+        </ui:VisualElement>
+
+        <!-- 출처 고지 -->
+        <ui:VisualElement class="panel" style="position:absolute; left:112px; top:988px; right:24px; padding:12px 18px 12px 18px;">
+            <ui:Label text="Unity 는 DB 에 직접 접속하지 않는다. 이 페이지는 ROS2 로 채울 수 없고, Architecture.md 가 확장점으로 남겨 둔 HTTP 어댑터(GET /parts/defect-rate 등)가 생겨야 데이터가 들어온다." class="muted" style="font-size:12px;" />
+            <ui:Label text="production units · unit_defects      ·      defect_report thresholds · alerts      ·      part_catalog part_candidates" class="muted" style="font-size:12px; margin-top:6px; color:rgb(74,84,94);" />
+        </ui:VisualElement>
+
+        <!--
+          공통 셸: 상단 바 + 페이지 레일 + 알람 띠.
+          맨 마지막에 둔다 — 알람 띠가 페이지 패널 위로 그려져야 하기 때문이다.
+        -->
+        <ui:Instance template="FR5Shell" name="shell" class="shell-host" />
+    </ui:VisualElement>
+</ui:UXML>

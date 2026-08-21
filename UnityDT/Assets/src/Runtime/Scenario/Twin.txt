@@ -1,0 +1,29 @@
+트윈 시나리오.
+moveit Mock설정으로 켠뒤 moveit을 통해 경로 이동을 요청하며 Unity에서는 새도잉으로 움직임 시각화 하며 실제 시나리오 무결성 여부를 검증한다.
+모든 로봇 명령들은 행동이 끝나고 그 다음 행동을 진행한다.
+모든 IK좌표는 TCP 좌표기준 -> 그리퍼 끝이 목표 좌표에 도달하도록 진행한다.
+
+인스펙터 설정 변수
+
+Sameple -> 완성된 기판 샘플 prefab
+
+PCB -> 조립할 prefab(Sample에서 부품 위치만 흐트려 논거)
+itmems -> 조립할 부품 배열
+
+ItemReadyPoint -> 부품 집기전 준비 좌표
+AssemblyReadyPoint -> 부품 조립전 준비 좌표
+
+
+==== 전체 조립시 까지 해당 작업 반복 =====
+2. 로봇 setHome으로 HomePose 이동
+3. 로봇 IK로 부품 AseembleReadyPoint로 이동
+4. 로봇 IK로 조립할 부품중 배열 최상단 부품위치로 이동 (x, z만, 부품 회전값 있을시 그리퍼 연결된 joint 회전)
+5. 로봇 Gripper 부품 위치로 하강
+7. gripper 부품 집기 (부품 부모 gripper로 이동 -> 그리퍼랑 따라 움직이게)
+6. 로봇 수직 이동전 행동 위치로 복귀
+7. 로봇 IK로 AssemblyReadyPoint로 이동
+8. 로봇 Sample prefab 기반으로 해당 부품 조립 위치 상단으로 이동 (x, z만, 부품 회전값 있을시 그리퍼 연결된 joint 회전)
+5. 로봇 Gripper 부품 위치로 하강
+7. gripper 부품 놓기 (부품 PCB로 이동 -> 다시 원래 부모로)
+6. 로봇 수직 이동전 행동 위치로 복귀
+==== 전체 조립시 까지 해당 작업 반복 =====

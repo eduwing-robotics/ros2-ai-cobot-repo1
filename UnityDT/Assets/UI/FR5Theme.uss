@@ -1,0 +1,278 @@
+/*
+  FR5 공용 테마 — Docs/ui/mock-01-run.svg 에서 확정한 패널 언어.
+
+  원칙 (Docs/UI.md 6절)
+    · 대비를 배경에 맡기지 않는다. 패널은 93% 불투명한 계기 표면이다.
+      트윈에서 배경은 변수이므로 스크림·글자그림자로는 가독성이 상수가 되지 않는다.
+    · 액센트(MOCK 노랑 / REAL 파랑)는 모드와 "지금 여기"에만 쓴다.
+    · 정상에는 색을 주지 않는다(--c-ok 는 회색). 이상만 색을 얻는다.
+    · 테두리는 "눌러야 하는 것"에만 붙인다.
+
+  격자: 상단 바 64 / 페이지 레일 88 / 여백 24 → 좌 112, 우 1896
+  PanelSettings 는 ScaleWithScreenSize · 1920x1080 이므로 px 가 목업과 1:1 이다.
+*/
+
+/*
+  변수는 :root 뿐 아니라 .page 에도 건다.
+  <ui:Style> 로 붙인 스타일시트에서 :root 가 항상 페이지 루트에 걸리지는 않아
+  var() 가 통째로 해석되지 않고 패널이 투명해지는 일이 있었다.
+*/
+:root, /*
+  <ui:Instance> 는 TemplateContainer 로 들어가며 기본이 흐름 배치다.
+  그대로 두면 셸이 내용 높이(45px)로 눌려 레일이 잘린다.
+*/
+.shell-host {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+}
+
+.page {
+    --c-panel: rgba(10, 15, 20, 0.97);
+    --c-sunk: rgba(255, 255, 255, 0.05);
+    --c-sunk-2: rgba(255, 255, 255, 0.07);
+    --c-line: rgba(255, 255, 255, 0.09);
+    --c-edge: rgba(255, 255, 255, 0.16);
+
+    --c-ink: rgb(226, 236, 241);
+    --c-ink-2: rgb(147, 165, 178);
+    --c-ink-3: rgb(96, 112, 124);
+    --c-ink-4: rgb(74, 84, 94);
+
+    --c-real: rgb(58, 150, 255);
+    --c-mock: rgb(250, 204, 51);
+    --c-accent: var(--c-real);
+
+    --c-ok: rgb(143, 166, 180);
+    --c-warn: rgb(246, 173, 55);
+    --c-bad: rgb(240, 71, 90);
+    --c-bad-ink: rgb(255, 143, 155);
+
+    --fs-micro: 11px;
+    --fs-label: 12px;
+    --fs-body: 15px;
+    --fs-value: 20px;
+}
+
+.fr5--mock { --c-accent: var(--c-mock); }
+
+/*
+  <ui:Instance> 는 TemplateContainer 로 들어가며 기본이 흐름 배치다.
+  그대로 두면 셸이 내용 높이(45px)로 눌려 레일이 잘린다.
+*/
+.shell-host {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+}
+
+.page {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    background-color: rgba(0, 0, 0, 0);
+    color: var(--c-ink-2);
+    font-size: var(--fs-body);
+}
+
+/*
+  flex-shrink 를 0 으로 둔다. 세로로 쌓인 계기에서 이 값이 1 이면, 내용이 한 줄만
+  넘쳐도 구분선·섹션 제목·게이지가 height 0 으로 눌려 조용히 사라진다.
+  (ROBOT 패널이 실제로 이 상태였다. 넘침은 잘리는 편이 낫다 — 보이니까 고친다)
+*/
+.row { flex-direction: row; align-items: center; flex-shrink: 0; }
+.spacer { flex-grow: 1; }
+.rule { height: 1px; background-color: var(--c-line); flex-shrink: 0; }
+
+/* ============================ 패널 ============================ */
+
+.panel {
+    background-color: var(--c-panel);
+    border-width: 1px;
+    border-color: var(--c-line);
+}
+
+/* 좌측 3px 액센트 척추. 헤더 박스를 따로 세우지 않는다. */
+.panel__spine {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background-color: var(--c-accent);
+}
+
+.panel__head {
+    height: 40px;
+    flex-direction: row;
+    align-items: center;
+    padding-left: 18px;
+    padding-right: 14px;
+    border-bottom-width: 1px;
+    border-bottom-color: var(--c-line);
+}
+
+.panel__title {
+    color: var(--c-ink-2);
+    font-size: var(--fs-label);
+    letter-spacing: 1.4px;
+    -unity-font-style: bold;
+}
+
+.panel__badge { color: var(--c-ink-3); font-size: var(--fs-micro); letter-spacing: 1.2px; }
+.panel__body { padding: 18px; flex-grow: 1; }
+
+/* 섹션 제목 — 2px 액센트 조각 + 라벨 */
+.sect { flex-direction: row; align-items: center; margin-bottom: 10px; flex-shrink: 0; }
+.sect__tick { width: 2px; height: 11px; background-color: var(--c-accent); opacity: 0.8; margin-right: 8px; }
+.sect__title { color: var(--c-ink-3); font-size: var(--fs-micro); letter-spacing: 1.2px; -unity-font-style: bold; }
+.sect__unit { color: var(--c-ink-3); font-size: var(--fs-micro); letter-spacing: 1.2px; }
+
+/* ============================ 텍스트 ============================ */
+
+/*
+  포괄 규칙(.page Label)은 쓰지 않는다. 특이성이 (0,1,1)이라 .value / .micro 같은
+  단일 클래스 규칙(0,1,0)을 전부 이겨 글자 크기가 한 값으로 눌린다.
+  기본값은 상속되는 .page 에 걸어 클래스 규칙이 항상 이기게 한다.
+*/
+.micro { color: var(--c-ink-3); font-size: var(--fs-micro); letter-spacing: 1.2px; -unity-font-style: bold; }
+.muted { color: var(--c-ink-3); font-size: 13px; }
+.value { color: var(--c-ink); font-size: var(--fs-value); -unity-font-style: bold; }
+.value--lg { font-size: 28px; }
+.value--xl { font-size: 52px; letter-spacing: -2px; }
+.accent { color: var(--c-accent); -unity-font-style: bold; }
+.bad { color: var(--c-bad-ink); -unity-font-style: bold; }
+.warn { color: var(--c-warn); -unity-font-style: bold; }
+.mono { -unity-font-definition: initial; font-size: 13px; }
+
+/* ============================ 조각 ============================ */
+
+.dot { width: 8px; height: 8px; border-radius: 4px; background-color: var(--c-ink-4); }
+.dot--ok { background-color: var(--c-ok); }
+.dot--good { background-color: rgb(62, 207, 142); }
+.dot--warn { background-color: var(--c-warn); }
+.dot--bad { background-color: var(--c-bad); }
+
+.gauge { height: 7px; background-color: var(--c-sunk-2); flex-shrink: 0; }
+.gauge__fill { height: 7px; width: 0; background-color: var(--c-accent); }
+.gauge__fill--neutral { background-color: var(--c-ok); }
+.gauge__fill--warn { background-color: var(--c-warn); }
+
+.chip {
+    height: 24px;
+    padding-left: 10px; padding-right: 10px;
+    align-items: center; justify-content: center;
+    border-width: 1px;
+    border-color: var(--c-edge);
+    background-color: rgba(255, 255, 255, 0.04);
+}
+.chip__text { color: var(--c-ink-2); font-size: var(--fs-micro); letter-spacing: 1.1px; -unity-font-style: bold; }
+.chip--accent { border-color: var(--c-accent); background-color: rgba(250, 204, 51, 0.14); }
+.chip--accent .chip__text { color: var(--c-accent); }
+.chip--bad { border-color: var(--c-bad); background-color: rgba(240, 71, 90, 0.14); }
+.chip--bad .chip__text { color: var(--c-bad-ink); }
+.chip--good { border-color: rgb(62, 207, 142); background-color: rgba(62, 207, 142, 0.12); }
+.chip--good .chip__text { color: rgb(62, 207, 142); }
+
+/* 테두리는 눌러야 하는 것에만 */
+.btn {
+    height: 40px;
+    margin: 0;
+    padding: 0;
+    border-width: 1px;
+    border-color: var(--c-edge);
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--c-ink);
+    font-size: 13px;
+    letter-spacing: 1.4px;
+    -unity-font-style: bold;
+}
+.btn:hover { background-color: rgba(255, 255, 255, 0.1); }
+.btn:disabled { border-color: var(--c-line); background-color: rgba(255, 255, 255, 0.02); color: var(--c-ink-4); }
+.btn--accent { border-color: var(--c-accent); background-color: rgba(250, 204, 51, 0.16); color: var(--c-accent); }
+.btn--danger { border-color: rgba(240, 71, 90, 0.55); background-color: rgba(240, 71, 90, 0.1); color: var(--c-bad-ink); }
+
+/* 밑줄 탭 */
+.tab { background-color: rgba(0, 0, 0, 0); border-width: 0; padding: 0; margin: 0; margin-right: 28px; align-items: flex-start; }
+.tab__text { color: rgb(130, 150, 166); font-size: 13px; letter-spacing: 1.6px; -unity-font-style: bold; }
+.tab__bar { height: 2px; width: 0; margin-top: 6px; background-color: var(--c-accent); }
+.tab--on .tab__text { color: var(--c-accent); }
+
+/*
+  페이지 레일 아이콘 — 이미지 에셋 없이 요소 조합으로 그린다.
+  .icon 은 26x26 캔버스, 자식은 .ink(면) 또는 .ring(테두리)으로 모양을 만든다.
+*/
+.icon {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    margin-bottom: 6px;
+}
+.ink { background-color: rgb(96, 112, 124); }
+.ring { border-width: 2px; border-color: rgb(96, 112, 124); }
+.ink--bad { background-color: var(--c-bad); opacity: 0.75; }
+
+.tab--on .ink { background-color: var(--c-accent); }
+.tab--on .ring { border-color: var(--c-accent); }
+.tab--on .ink--bad { background-color: var(--c-bad); opacity: 1; }
+
+/*
+  슬롯 칩 — 완성체의 장착 위치 하나.
+  같은 그림을 요청 · 검사 · 품질이 재사용한다 (Docs/UI.md 5.3).
+*/
+.slotchip {
+    width: 138px;
+    height: 62px;
+    margin-right: 8px;
+    margin-bottom: 8px;
+    padding-left: 10px;
+    justify-content: center;
+    border-left-width: 3px;
+    border-left-color: rgba(143, 166, 180, 0.45);
+    background-color: rgba(255, 255, 255, 0.035);
+}
+.slotchip--target { border-left-color: var(--c-accent); background-color: rgba(250, 204, 51, 0.10); }
+.slotchip--bad { border-left-color: var(--c-bad); background-color: rgba(240, 71, 90, 0.10); }
+.slotchip__code { color: var(--c-ink); font-size: 13px; -unity-font-style: bold; }
+.slotchip__part { color: var(--c-ink-3); font-size: 11px; margin-top: 3px; }
+.tab--on .tab__bar { width: 100%; }
+
+/*
+  조립 진행 — 부품 타입 하나가 묶음 하나, 칸 하나가 슬롯 하나다.
+  레시피의 한 스텝이 곧 슬롯 하나이므로 칸을 세는 것이 곧 스텝을 세는 것이다
+  (Docs/Recipe.md). 같은 칸 어휘를 INSPECT · QUALITY 의 슬롯 맵이 재사용한다.
+*/
+.grp { flex-grow: 1; flex-shrink: 0; margin-right: 16px; }
+.grp__head { flex-direction: row; align-items: center; margin-bottom: 9px; }
+.grp__name { color: var(--c-ink-2); font-size: var(--fs-micro); letter-spacing: 1.2px; -unity-font-style: bold; }
+.grp__count { color: var(--c-ink-3); font-size: var(--fs-micro); -unity-font-style: bold; }
+.grp__cells { flex-direction: row; align-items: center; }
+/* 액센트는 "지금 여기" 하나에만 — 진행 중인 묶음이다 */
+.grp--now .grp__name { color: var(--c-accent); }
+.grp--now .grp__count { color: var(--c-ink); }
+
+/* 놓인 칸은 회색이다. 정상에는 색을 주지 않는다 */
+.cell { width: 15px; height: 15px; margin-right: 4px; background-color: var(--c-sunk-2); flex-shrink: 0; }
+.cell--done { background-color: var(--c-ok); }
+.cell--now { background-color: var(--c-accent); }
+.cell--bad { background-color: var(--c-bad); }
+
+/* 표 — 세로줄과 바깥 테두리를 두지 않는다 */
+.trow { flex-direction: row; align-items: center; min-height: 42px; flex-shrink: 0; border-bottom-width: 1px; border-bottom-color: rgba(255, 255, 255, 0.055); }
+.trow--head { height: 28px; border-bottom-color: var(--c-line); }
+.trow--sel { background-color: rgba(250, 204, 51, 0.07); }
+.trow--bad { background-color: rgba(240, 71, 90, 0.08); }
+.tcell { color: var(--c-ink-2); font-size: 14px; }
+.tcell--head { color: var(--c-ink-3); font-size: 10px; letter-spacing: 1.2px; -unity-font-style: bold; }
+.tcell--num { -unity-text-align: middle-right; color: var(--c-ink); -unity-font-style: bold; }
+
+/* 빈 상태 — 0 을 그리지 않는다 */
+/*
+  런타임에 자식이 채워지는 컨테이너. flex 기본값(shrink:1)이면 형제가 커질 때
+  이 컨테이너가 눌리고 자식이 밖으로 넘쳐 다음 섹션과 겹친다.
+*/
+.vlist { flex-shrink: 0; }
+
+.empty { flex-grow: 1; align-items: center; justify-content: center; }
+.empty__title { color: var(--c-ink-3); font-size: 16px; -unity-font-style: bold; letter-spacing: 1.4px; }
+.empty__desc { color: var(--c-ink-4); font-size: 13px; margin-top: 10px; }
+/*
+  조회 경로가 아직 없는 자리. 붉은색이 아니라 warn 이다 — 미연결은 이상이지만 위험은
+  아니고, 아직 안 붙은 화면이 많아 붉게 칠하면 진짜 이상(불량·비상정지)이 묻힌다.
+*/
+.empty__title--miss { color: var(--c-warn); }

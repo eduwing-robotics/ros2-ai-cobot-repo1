@@ -1,0 +1,156 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <ui:Style src="project://database/Assets/UI/FR5Theme.uss" />
+    <ui:Template src="project://database/Assets/UI/FR5Shell.uxml" name="FR5Shell" />
+    <!--
+      MANUAL · 수동 조그 — Docs/ui/mock-04-manual.svg
+      작업 흐름 밖이다. jobs·units 를 만들지 않고 DB 에 아무것도 기록하지 않는다.
+      실데이터: 관절 ACTUAL · TCP · RPY · 그리퍼 · APPLY/OPEN/CLOSE (FR5ManualBinder)
+      샘플데이터: 없음. 이 페이지는 거의 전부 실제로 붙는다.
+    -->
+    <ui:VisualElement name="fr5-manual" class="page fr5--mock">
+
+
+        
+
+        
+
+        <!-- 경고 띠 : 이 경로는 실적이 아니다 -->
+        <ui:VisualElement name="manual-banner" style="position:absolute; left:88px; top:64px; right:0; height:66px; background-color:rgba(246,173,55,0.10); border-top-width:2px; border-top-color:rgba(246,173,55,0.7); padding-left:24px; justify-content:center;">
+            <ui:Label text="수동 조작 — 작업 흐름 밖입니다" class="warn" style="font-size:18px;" />
+            <ui:Label text="jobs · units 를 만들지 않고 DB에 아무것도 기록하지 않습니다.  지금은 화면만 만든 단계라 APPLY · 그리퍼 · 모드 전환이 로봇으로 나가지 않습니다." style="color:rgb(194,164,99); font-size:13px; margin-top:4px;" />
+        </ui:VisualElement>
+
+        <!-- 좌 : TCP 조그 -->
+        <ui:VisualElement name="tcp-panel" class="panel" style="position:absolute; left:112px; top:154px; width:560px; height:742px;">
+            <ui:VisualElement class="panel__spine" />
+            <ui:VisualElement class="panel__head">
+                <ui:Label text="TCP JOG" class="panel__title" />
+                <ui:VisualElement class="spacer" />
+                <ui:Label text="/unity/tcp_target · mm · BASE" class="panel__badge" />
+            </ui:VisualElement>
+            <ui:VisualElement class="panel__body">
+                <!-- TODO(API): ± 는 /unity/tcp_target 발행이 필요하다. 지금은 표시만 -->
+                <ui:VisualElement name="tcp-list" class="vlist" />
+                <ui:VisualElement class="spacer" />
+                <ui:VisualElement class="rule" style="margin-bottom:16px;" />
+                <ui:VisualElement class="sect"><ui:VisualElement class="sect__tick" /><ui:Label text="GRIPPER" class="sect__title" /></ui:VisualElement>
+                <ui:VisualElement class="row">
+                    <ui:VisualElement name="gripper-state-chip" class="chip"><ui:Label name="gripper-state-text" text="—" class="chip__text" /></ui:VisualElement>
+                    <ui:VisualElement class="spacer" />
+                    <ui:Label name="gripper-value" text="—" class="value value--lg" />
+                </ui:VisualElement>
+                <ui:VisualElement class="gauge" style="margin-top:14px;">
+                    <ui:VisualElement name="gripper-fill" class="gauge__fill" />
+                </ui:VisualElement>
+                <ui:VisualElement class="row" style="margin-top:16px;">
+                    <ui:Button name="gripper-open-button" text="OPEN" class="btn" style="width:150px;" />
+                    <ui:Button name="gripper-close-button" text="CLOSE" class="btn" style="width:150px; margin-left:12px;" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- 우 : 관절 조그 -->
+        <ui:VisualElement name="jog-panel" class="panel" style="position:absolute; left:696px; top:154px; width:1200px; height:742px;">
+            <ui:VisualElement class="panel__spine" />
+            <ui:VisualElement class="panel__head">
+                <ui:Label text="JOINT JOG   J1 – J6" class="panel__title" />
+                <ui:VisualElement class="spacer" />
+                <ui:Label text="deg · /unity/joint_target" class="panel__badge" />
+            </ui:VisualElement>
+            <ui:VisualElement class="panel__body">
+                <!-- ManualJointPanel 이 조회하는 이름 계약: jog-N-slider / -actual / -target -->
+                <ui:VisualElement name="ghost-callout" class="row" style="margin-bottom:16px;">
+                    <ui:Label text="GHOST PREVIEW" class="micro" style="margin-right:16px;" />
+                    <ui:Label name="ghost-hint" text="슬라이더를 움직이면 목표 자세가 반투명으로 미리 보입니다" class="muted" style="font-size:12px;" />
+                    <ui:VisualElement class="spacer" />
+                    <ui:Label text="APPLY 를 눌러야 로봇이 움직입니다" class="warn" style="font-size:12px;" />
+                </ui:VisualElement>
+                <ui:VisualElement name="jog-1-row" class="row" style="height:92px; border-bottom-width:1px; border-bottom-color:rgba(255,255,255,0.055);">
+                    <ui:Label text="J1" class="value" style="width:66px;" />
+                    <ui:VisualElement style="width:140px;">
+                        <ui:Label text="ACTUAL" class="micro" />
+                        <ui:Label name="jog-1-actual" text="—" style="color:rgb(203,216,226); font-size:21px; -unity-font-style:bold; margin-top:4px;" />
+                    </ui:VisualElement>
+                    <ui:VisualElement style="width:140px;">
+                        <ui:Label text="TARGET" class="micro" />
+                        <ui:Label name="jog-1-target" text="—" class="accent" style="font-size:21px; margin-top:4px;" />
+                    </ui:VisualElement>
+                    <ui:Slider name="jog-1-slider" low-value="-175" high-value="175" value="0" style="flex-grow:1; margin-left:24px; margin-right:8px;" />
+                </ui:VisualElement>
+                <ui:VisualElement name="jog-2-row" class="row" style="height:92px; border-bottom-width:1px; border-bottom-color:rgba(255,255,255,0.055);">
+                    <ui:Label text="J2" class="value" style="width:66px;" />
+                    <ui:VisualElement style="width:140px;">
+                        <ui:Label text="ACTUAL" class="micro" />
+                        <ui:Label name="jog-2-actual" text="—" style="color:rgb(203,216,226); font-size:21px; -unity-font-style:bold; margin-top:4px;" />
+                    </ui:VisualElement>
+                    <ui:VisualElement style="width:140px;">
+                        <ui:Label text="TARGET" class="micro" />
+                        <ui:Label name="jog-2-target" text="—" class="accent" style="font-size:21px; margin-top:4px;" />
+                    </ui:VisualElement>
+                    <ui:Slider name="jog-2-slider" low-value="-265" high-value="85" value="0" style="flex-grow:1; margin-left:24px; margin-right:8px;" />
+                </ui:VisualElement>
+                <ui:VisualElement name="jog-3-row" class="row" style="height:92px; border-bottom-width:1px; border-bottom-color:rgba(255,255,255,0.055);">
+                    <ui:Label text="J3" class="value" style="width:66px;" />
+                    <ui:VisualElement style="width:140px;">
+                        <ui:Label text="ACTUAL" class="micro" />
+                        <ui:Label name="jog-3-actual" text="—" style="color:rgb(203,216,226); font-size:21px; -unity-font-style:bold; margin-top:4px;" />
+                    </ui:VisualElement>
+                    <ui:VisualElement style="width:140px;">
+                        <ui:Label text="TARGET" class="micro" />
+                        <ui:Label name="jog-3-target" text="—" class="accent" style="font-size:21px; margin-top:4px;" />
+                    </ui:VisualElement>
+                    <ui:Slider name="jog-3-slider" low-value="-162" high-value="162" value="0" style="flex-grow:1; margin-left:24px; margin-right:8px;" />
+                </ui:VisualElement>
+                <ui:VisualElement name="jog-4-row" class="row" style="height:92px; border-bottom-width:1px; border-bottom-color:rgba(255,255,255,0.055);">
+                    <ui:Label text="J4" class="value" style="width:66px;" />
+                    <ui:VisualElement style="width:140px;">
+                        <ui:Label text="ACTUAL" class="micro" />
+                        <ui:Label name="jog-4-actual" text="—" style="color:rgb(203,216,226); font-size:21px; -unity-font-style:bold; margin-top:4px;" />
+                    </ui:VisualElement>
+                    <ui:VisualElement style="width:140px;">
+                        <ui:Label text="TARGET" class="micro" />
+                        <ui:Label name="jog-4-target" text="—" class="accent" style="font-size:21px; margin-top:4px;" />
+                    </ui:VisualElement>
+                    <ui:Slider name="jog-4-slider" low-value="-265" high-value="85" value="0" style="flex-grow:1; margin-left:24px; margin-right:8px;" />
+                </ui:VisualElement>
+                <ui:VisualElement name="jog-5-row" class="row" style="height:92px; border-bottom-width:1px; border-bottom-color:rgba(255,255,255,0.055);">
+                    <ui:Label text="J5" class="value" style="width:66px;" />
+                    <ui:VisualElement style="width:140px;">
+                        <ui:Label text="ACTUAL" class="micro" />
+                        <ui:Label name="jog-5-actual" text="—" style="color:rgb(203,216,226); font-size:21px; -unity-font-style:bold; margin-top:4px;" />
+                    </ui:VisualElement>
+                    <ui:VisualElement style="width:140px;">
+                        <ui:Label text="TARGET" class="micro" />
+                        <ui:Label name="jog-5-target" text="—" class="accent" style="font-size:21px; margin-top:4px;" />
+                    </ui:VisualElement>
+                    <ui:Slider name="jog-5-slider" low-value="-175" high-value="175" value="0" style="flex-grow:1; margin-left:24px; margin-right:8px;" />
+                </ui:VisualElement>
+                <ui:VisualElement name="jog-6-row" class="row" style="height:92px; border-bottom-width:1px; border-bottom-color:rgba(255,255,255,0.055);">
+                    <ui:Label text="J6" class="value" style="width:66px;" />
+                    <ui:VisualElement style="width:140px;">
+                        <ui:Label text="ACTUAL" class="micro" />
+                        <ui:Label name="jog-6-actual" text="—" style="color:rgb(203,216,226); font-size:21px; -unity-font-style:bold; margin-top:4px;" />
+                    </ui:VisualElement>
+                    <ui:VisualElement style="width:140px;">
+                        <ui:Label text="TARGET" class="micro" />
+                        <ui:Label name="jog-6-target" text="—" class="accent" style="font-size:21px; margin-top:4px;" />
+                    </ui:VisualElement>
+                    <ui:Slider name="jog-6-slider" low-value="-175" high-value="175" value="0" style="flex-grow:1; margin-left:24px; margin-right:8px;" />
+                </ui:VisualElement>
+                <ui:VisualElement class="spacer" />
+                <ui:VisualElement class="row" style="margin-top:16px;">
+                    <ui:Button name="jog-home-button" text="HOME" class="btn" style="width:200px;" />
+                    <ui:Button name="jog-cancel-button" text="CANCEL" class="btn" style="width:200px; margin-left:12px;" />
+                    <ui:VisualElement class="spacer" />
+                    <ui:Button name="jog-apply-button" text="APPLY" class="btn btn--accent" style="width:260px; font-size:16px;" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!--
+          공통 셸: 상단 바 + 페이지 레일 + 알람 띠.
+          맨 마지막에 둔다 — 알람 띠가 페이지 패널 위로 그려져야 하기 때문이다.
+        -->
+        <ui:Instance template="FR5Shell" name="shell" class="shell-host" />
+    </ui:VisualElement>
+</ui:UXML>

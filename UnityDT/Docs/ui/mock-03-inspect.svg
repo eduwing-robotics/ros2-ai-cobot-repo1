@@ -1,0 +1,207 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-labelledby="t d">
+  <title id="t">FR5 HUD — INSPECT (검사 판정)</title>
+  <desc id="d">카메라 영상이 화면 대부분을 차지하고 오른쪽에 큰 PASS/FAIL 판정과 불량 슬롯, 아래에 작업 내 완성품 세그먼트 바가 있는 목업.</desc>
+
+  <defs>
+    <linearGradient id="stage" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1c2833"/><stop offset="1" stop-color="#080d13"/>
+    </linearGradient>
+    <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#28343f"/><stop offset="1" stop-color="#111820"/>
+    </linearGradient>
+    <linearGradient id="scrimT" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#04070a" stop-opacity=".95"/>
+      <stop offset="1" stop-color="#04070a" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="scrimB" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#04070a" stop-opacity=".95"/>
+      <stop offset="1" stop-color="#04070a" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="scrimR" x1="1" y1="0" x2="0" y2="0">
+      <stop offset="0" stop-color="#04070a" stop-opacity=".92"/>
+      <stop offset="1" stop-color="#04070a" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="scrimL" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#04070a" stop-opacity=".92"/>
+      <stop offset="1" stop-color="#04070a" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="vig" cx="50%" cy="46%" r="72%">
+      <stop offset="0" stop-color="#000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000" stop-opacity=".55"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="50%" cy="0%" r="90%">
+      <stop offset="0" stop-color="#16222e" stop-opacity=".7"/>
+      <stop offset="1" stop-color="#070b10" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="cam" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2c3b47"/><stop offset="1" stop-color="#10171e"/>
+    </linearGradient>
+    <style>
+      text { font-family: Inter, Pretendard, "Noto Sans KR", system-ui, sans-serif; }
+      .mi { fill:#7f93a4; font-size:12px; letter-spacing:2.2px; font-weight:700 }
+      .lb { fill:#93a8b8; font-size:14px; letter-spacing:2.4px; font-weight:700 }
+      .bd { fill:#cbd8e2; font-size:16px }
+      .sm { fill:#9fb1bf; font-size:15px }
+      .mu { fill:#6b7e8f; font-size:14px }
+      .vl { fill:#eef6fb; font-size:26px; font-weight:700 }
+      .v2 { fill:#f4fbff; font-size:34px; font-weight:700; letter-spacing:-.4px }
+      .v3 { fill:#f6fcff; font-size:52px; font-weight:800; letter-spacing:-1.4px }
+      .dp { fill:#f8fdff; font-size:88px; font-weight:800; letter-spacing:-4px }
+      .ac { fill:#facc33 } .ok { fill:#3ecf8e } .warn { fill:#f6ad37 } .bad { fill:#f0475a }
+    </style>
+  </defs>
+  <rect width="1920" height="1080" fill="#070b10"/>
+  <rect width="1920" height="1080" fill="url(#glow)"/>
+<rect x="0" y="0" width="1920" height="64" fill="#04070a" fill-opacity=".7"/>
+<line x1="0" y1="64" x2="1920" y2="64" stroke="#ffffff" stroke-opacity=".10"/>
+<rect x="0" y="63" width="300" height="2" fill="#facc33" fill-opacity=".55"/>
+<text x="48" y="42" fill="#f8fdff" font-size="27" font-weight="800" letter-spacing="1.5">FR5</text>
+<text x="112" y="42" class="mu" font-size="14">FAIRINO · CELL A</text>
+<text x="288" y="30" class="mi">MODE</text>
+<text x="288" y="52" fill="#facc33" font-size="19" font-weight="800" letter-spacing="3">MOCK</text>
+<text x="370" y="52" fill="#3d4a56" font-size="19" font-weight="800" letter-spacing="3">REAL</text>
+<text x="520" y="30" class="mi">LINK</text>
+<circle cx="524" cy="46" r="4" fill="#3ecf8e"/>
+<text x="536" y="52" class="sm" font-size="14">joint_states</text>
+<text x="670" y="52" text-anchor="end" class="mu" font-size="13">31 ms</text>
+<circle cx="684" cy="46" r="4" fill="#3ecf8e"/>
+<text x="696" y="52" class="sm" font-size="14">board/image</text>
+<text x="830" y="52" text-anchor="end" class="mu" font-size="13">68 ms</text>
+<circle cx="844" cy="46" r="4" fill="#46545f"/>
+<text x="856" y="52" class="sm" font-size="14">assembly/fb</text>
+<text x="990" y="52" text-anchor="end" class="mu" font-size="13">idle</text>
+<text x="1020" y="30" class="mi">JOB</text>
+<text x="1020" y="52" fill="#eaf3f8" font-size="17" font-weight="700">JOB-20260807-0142</text>
+<rect x="1246" y="38" width="170" height="6" rx="3.0" fill="#ffffff" fill-opacity=".07"/>
+<rect x="1246" y="38" width="102" height="6" rx="3.0" fill="#facc33" fill-opacity=".9"/>
+<text x="1432" y="52" fill="#eaf3f8" font-size="17" font-weight="700">6 / 10</text>
+<text x="1518" y="30" class="mi">CYCLE</text>
+<text x="1518" y="52" fill="#eaf3f8" font-size="17" font-weight="700">00:01:24</text>
+<text x="1704" y="30" text-anchor="end" fill="#3ecf8e" font-size="13" font-weight="700" letter-spacing="1.6">LINKED</text>
+<circle cx="1716" cy="26" r="4" fill="#3ecf8e"/>
+<text x="1716" y="52" text-anchor="end" class="mu" font-size="12" letter-spacing="1.4">SERVO · RESET</text>
+<rect x="1744" y="14" width="128" height="40" rx="4" fill="#f0475a" fill-opacity=".18" stroke="#f0475a" stroke-opacity=".75"/>
+<circle cx="1770" cy="34" r="7" fill="#ff8f9b"/>
+<text x="1788" y="41" fill="#ff8f9b" font-size="19" font-weight="800" letter-spacing="2.6">STOP</text>
+<rect x="30.0" y="160" width="28" height="28" rx="6" fill="none" stroke="#5a6b79" stroke-opacity=".55" stroke-width="1.8"/>
+<text x="44.0" y="204" text-anchor="middle" fill="#5a6b79" font-size="11.5" font-weight="800" letter-spacing="1">RUN</text>
+<text x="44.0" y="220" text-anchor="middle" fill="#4a5764" font-size="11">운전</text>
+<rect x="0" y="274" width="3" height="76" fill="#facc33"/>
+<rect x="30.0" y="278" width="28" height="28" rx="6" fill="none" stroke="#facc33" stroke-opacity=".9" stroke-width="1.8"/>
+<text x="44.0" y="322" text-anchor="middle" fill="#facc33" font-size="11.5" font-weight="800" letter-spacing="1">INSPECT</text>
+<text x="44.0" y="338" text-anchor="middle" fill="#4a5764" font-size="11">검사</text>
+<rect x="30.0" y="396" width="28" height="28" rx="6" fill="none" stroke="#5a6b79" stroke-opacity=".55" stroke-width="1.8"/>
+<text x="44.0" y="440" text-anchor="middle" fill="#5a6b79" font-size="11.5" font-weight="800" letter-spacing="1">MANUAL</text>
+<text x="44.0" y="456" text-anchor="middle" fill="#4a5764" font-size="11">수동</text>
+<rect x="30.0" y="514" width="28" height="28" rx="6" fill="none" stroke="#5a6b79" stroke-opacity=".55" stroke-width="1.8"/>
+<text x="44.0" y="558" text-anchor="middle" fill="#5a6b79" font-size="11.5" font-weight="800" letter-spacing="1">QUALITY</text>
+<text x="44.0" y="574" text-anchor="middle" fill="#4a5764" font-size="11">품질</text>
+<rect x="30.0" y="632" width="28" height="28" rx="6" fill="none" stroke="#5a6b79" stroke-opacity=".55" stroke-width="1.8"/>
+<text x="44.0" y="676" text-anchor="middle" fill="#5a6b79" font-size="11.5" font-weight="800" letter-spacing="1">SETUP</text>
+<text x="44.0" y="692" text-anchor="middle" fill="#4a5764" font-size="11">설정</text>
+<line x1="0" y1="1036" x2="1920" y2="1036" stroke="#ffffff" stroke-opacity=".08"/>
+<circle cx="48" cy="1059" r="4" fill="#f0475a"/>
+<text x="64" y="1064" class="sm" font-size="14">10:42:34   INSPECT   UNIT 3 FAIL · MLCC-02 MISALIGN</text>
+<text x="1872" y="1064" text-anchor="end" class="mu" font-size="13" letter-spacing="1.4">EVENTS  ·  ALARM 0</text>
+<rect x="136" y="132" width="1000" height="760" fill="url(#cam)"/>
+<text x="136" y="110" class="mi">INSPECTION CAMERA  ·  /vision/board/image/compressed</text>
+<text x="696" y="110" fill="#facc33" font-size="13" font-weight="700" letter-spacing="2">OVERLAY</text>
+<rect x="696" y="119" width="66" height="2" fill="#facc33"/>
+<text x="812" y="110" fill="#8296a6" font-size="13" font-weight="700" letter-spacing="2">FREEZE</text>
+<text x="928" y="110" fill="#8296a6" font-size="13" font-weight="700" letter-spacing="2">SNAP</text>
+<text x="1044" y="110" fill="#8296a6" font-size="13" font-weight="700" letter-spacing="2">GRID</text>
+<rect x="226" y="242" width="820" height="530" rx="8" fill="#1f4d41" fill-opacity=".85"/>
+<rect x="276" y="302" width="220" height="140" fill="none" stroke="#3ecf8e" stroke-opacity=".45" stroke-width="1.5"/>
+<text x="276" y="292" fill="#3ecf8e" font-size="14" font-weight="700">SK_HYNIX-01</text>
+<rect x="546" y="302" width="220" height="140" fill="none" stroke="#3ecf8e" stroke-opacity=".45" stroke-width="1.5"/>
+<text x="546" y="292" fill="#3ecf8e" font-size="14" font-weight="700">SK_HYNIX-02</text>
+<rect x="816" y="302" width="180" height="140" fill="none" stroke="#3ecf8e" stroke-opacity=".45" stroke-width="1.5"/>
+<text x="816" y="292" fill="#3ecf8e" font-size="14" font-weight="700">GPU-01</text>
+<rect x="276" y="542" width="160" height="120" fill="none" stroke="#3ecf8e" stroke-opacity=".45" stroke-width="1.5"/>
+<text x="276" y="532" fill="#3ecf8e" font-size="14" font-weight="700">MLCC-01</text>
+<rect x="486" y="542" width="160" height="120" fill="none" stroke="#f0475a" stroke-opacity=".95" stroke-width="3"/>
+<text x="486" y="532" fill="#f0475a" font-size="14" font-weight="700">MLCC-02</text>
+<text x="486" y="688" class="bad" font-size="16" font-weight="800" letter-spacing="1.2">MISALIGN 1.8 mm</text>
+<rect x="696" y="542" width="300" height="120" fill="none" stroke="#3ecf8e" stroke-opacity=".45" stroke-width="1.5"/>
+<text x="696" y="532" fill="#3ecf8e" font-size="14" font-weight="700">HS-01</text>
+<text x="136" y="918" class="mu" font-size="13">1280×720 · 30 FPS · frame 10:42:34.118   ·   inspection_image_path 로 저장됨</text>
+<rect x="1230" y="165" width="3" height="14" fill="#f0475a"/>
+<text x="1244" y="176" class="lb">INSPECTION RESULT · UNIT 3</text>
+<text x="1872" y="176" fill="#3ecf8e" font-size="12" font-weight="700" letter-spacing="1.6" text-anchor="end">영속 · DB 기록</text>
+<text x="1230" y="284" class="bad" font-size="104" font-weight="800" letter-spacing="-4">FAIL</text>
+<text x="1872" y="270" text-anchor="end" class="v2">72.1%</text>
+<text x="1872" y="294" text-anchor="end" class="mu" font-size="13">confidence</text>
+<line x1="1230" y1="322" x2="1872" y2="322" stroke="#ffffff" stroke-opacity=".07"/>
+<circle cx="1235" cy="346" r="4.5" fill="#3ecf8e"/>
+<text x="1252" y="352" class="lb" font-size="13">SOLDER</text>
+<text x="1872" y="352" text-anchor="end" fill="#cbd8e2" font-size="18" font-weight="400">PASS</text>
+<line x1="1230" y1="378" x2="1872" y2="378" stroke="#ffffff" stroke-opacity=".07"/>
+<circle cx="1235" cy="402" r="4.5" fill="#f0475a"/>
+<text x="1252" y="408" class="lb" font-size="13">ALIGNMENT</text>
+<text x="1872" y="408" text-anchor="end" fill="#ff8f9b" font-size="18" font-weight="700">FAIL · 1.8 mm</text>
+<line x1="1230" y1="434" x2="1872" y2="434" stroke="#ffffff" stroke-opacity=".07"/>
+<circle cx="1235" cy="458" r="4.5" fill="#3ecf8e"/>
+<text x="1252" y="464" class="lb" font-size="13">PIN COUNT</text>
+<text x="1872" y="464" text-anchor="end" fill="#cbd8e2" font-size="18" font-weight="400">288 / 288</text>
+<line x1="1230" y1="490" x2="1872" y2="490" stroke="#ffffff" stroke-opacity=".07"/>
+<circle cx="1235" cy="514" r="4.5" fill="#3ecf8e"/>
+<text x="1252" y="520" class="lb" font-size="13">OFFSET</text>
+<text x="1872" y="520" text-anchor="end" fill="#cbd8e2" font-size="18" font-weight="400">X +0.18  Y −0.24</text>
+<line x1="1230" y1="606" x2="1872" y2="606" stroke="#ffffff" stroke-opacity=".10"/>
+<text x="1230" y="648" class="mi">DEFECT MAP · unit_defects</text>
+<text x="1872" y="648" text-anchor="end" class="mu" font-size="13">불량 슬롯만 기록된다</text>
+<rect x="1230" y="680" width="134" height="2" fill="#3ecf8e" fill-opacity=".35"/>
+<text x="1230" y="704" fill="#8296a6" font-size="14" font-weight="700">SK_HYNIX-01</text>
+<text x="1230" y="724" class="mu" font-size="12">HBM3</text>
+<rect x="1390" y="680" width="134" height="2" fill="#3ecf8e" fill-opacity=".35"/>
+<text x="1390" y="704" fill="#8296a6" font-size="14" font-weight="700">SK_HYNIX-02</text>
+<text x="1390" y="724" class="mu" font-size="12">HBM3</text>
+<rect x="1550" y="680" width="134" height="2" fill="#3ecf8e" fill-opacity=".35"/>
+<text x="1550" y="704" fill="#8296a6" font-size="14" font-weight="700">GPU-01</text>
+<text x="1550" y="724" class="mu" font-size="12">GPU-DIE</text>
+<rect x="1710" y="680" width="134" height="2" fill="#3ecf8e" fill-opacity=".35"/>
+<text x="1710" y="704" fill="#8296a6" font-size="14" font-weight="700">MLCC-01</text>
+<text x="1710" y="724" class="mu" font-size="12">C-001</text>
+<rect x="1230" y="756" width="134" height="4" fill="#f0475a" fill-opacity=".95"/>
+<text x="1230" y="780" fill="#ff8f9b" font-size="14" font-weight="700">MLCC-02</text>
+<text x="1230" y="800" class="bad" font-size="12" font-weight="700">MISALIGN</text>
+<rect x="1390" y="756" width="134" height="2" fill="#3ecf8e" fill-opacity=".35"/>
+<text x="1390" y="780" fill="#8296a6" font-size="14" font-weight="700">HS-01</text>
+<text x="1390" y="800" class="mu" font-size="12">HEATSINK</text>
+<rect x="1550" y="756" width="134" height="2" fill="#3ecf8e" fill-opacity=".35"/>
+<text x="1550" y="780" fill="#8296a6" font-size="14" font-weight="700">VRM-01</text>
+<text x="1550" y="800" class="mu" font-size="12">BOOST-IC</text>
+<rect x="1710" y="756" width="134" height="2" fill="#3ecf8e" fill-opacity=".35"/>
+<text x="1710" y="780" fill="#8296a6" font-size="14" font-weight="700">CONN-01</text>
+<text x="1710" y="800" class="mu" font-size="12">CONN</text>
+<text x="1230" y="860" class="mu" font-size="13" font-family="monospace">unit_defects(unit_id=3, slot_code=MLCC-02, defect_type=<tspan class="bad">MISALIGN</tspan>)</text>
+<text x="136" y="950" class="mi">JOB UNITS · JOB-20260807-0142</text>
+<text x="1872" y="950" text-anchor="end" class="mu" font-size="13">yield 80.0%   ·   units 6 / 10</text>
+<rect x="136" y="982" width="165" height="8" fill="#3ecf8e" fill-opacity=".85"/>
+<text x="136" y="1014" fill="#3ecf8e" font-size="15" font-weight="700">1</text>
+<text x="164" y="1014" fill="#3ecf8e" font-size="13">PASS</text>
+<rect x="311" y="982" width="165" height="8" fill="#3ecf8e" fill-opacity=".85"/>
+<text x="311" y="1014" fill="#3ecf8e" font-size="15" font-weight="700">2</text>
+<text x="339" y="1014" fill="#3ecf8e" font-size="13">PASS</text>
+<rect x="485" y="976" width="165" height="14" fill="#f0475a" fill-opacity=".85"/>
+<text x="485" y="1014" fill="#f0475a" font-size="15" font-weight="700">3</text>
+<text x="513" y="1014" fill="#f0475a" font-size="13">FAIL</text>
+<rect x="660" y="982" width="165" height="8" fill="#3ecf8e" fill-opacity=".85"/>
+<text x="660" y="1014" fill="#3ecf8e" font-size="15" font-weight="700">4</text>
+<text x="688" y="1014" fill="#3ecf8e" font-size="13">PASS</text>
+<rect x="834" y="982" width="165" height="8" fill="#3ecf8e" fill-opacity=".85"/>
+<text x="834" y="1014" fill="#3ecf8e" font-size="15" font-weight="700">5</text>
+<text x="862" y="1014" fill="#3ecf8e" font-size="13">PASS</text>
+<rect x="1009" y="982" width="165" height="8" fill="#3ecf8e" fill-opacity=".85"/>
+<text x="1009" y="1014" fill="#3ecf8e" font-size="15" font-weight="700">6</text>
+<text x="1037" y="1014" fill="#3ecf8e" font-size="13">PASS</text>
+<rect x="1184" y="982" width="165" height="8" fill="#facc33" fill-opacity=".85"/>
+<text x="1184" y="1014" fill="#facc33" font-size="15" font-weight="700">7</text>
+<text x="1212" y="1014" fill="#facc33" font-size="13">RUN</text>
+<rect x="1358" y="982" width="165" height="8" fill="#ffffff" fill-opacity=".10"/>
+<text x="1358" y="1014" fill="#46545f" font-size="15" font-weight="700">8</text>
+<rect x="1533" y="982" width="165" height="8" fill="#ffffff" fill-opacity=".10"/>
+<text x="1533" y="1014" fill="#46545f" font-size="15" font-weight="700">9</text>
+<rect x="1707" y="982" width="165" height="8" fill="#ffffff" fill-opacity=".10"/>
+<text x="1707" y="1014" fill="#46545f" font-size="15" font-weight="700">10</text>
+</svg>
