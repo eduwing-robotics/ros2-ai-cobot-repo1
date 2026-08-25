@@ -1,24 +1,19 @@
 # Farino_AIO
 
-FR5 협동로봇의 조립 작업과 Mock 시나리오를 모아 둔 작업 공간입니다.
+FR5 MoveIt 구성, Mock 조립 노드와 선택적 PostgreSQL bridge를 포함하는 ROS2 workspace입니다.
 
-## 현재 구현된 기능
+## 현재 기능
 
-- FR5 로봇 모형과 기본 제어 자원
-- HBM 조립체 Mock 조립 시나리오
-- Mock 생산 이력 기록 경로
-- 카메라·보정·Pick & Place 참고 작업 파일
+- MoveIt 기반 Mock 수동 이동과 고정 레시피 Pick·Place
+- `/unity/assembly/start` 서비스와 `/unity/assembly/feedback` 토픽
+- 실행 중 중복 조립·수동 명령 차단
+- `mock_db_mvp` bridge를 통한 Job·Unit·재고·검사 기록
+- Mock 검사 PASS/FAIL 확률과 seed 설정
 
-## TODO
+## 문서
 
-- HBM 조립체의 실제 로봇 조립 작업 완성
-- 검사 결과와 불량 슬롯 기록 연결
-- Mock과 실제 로봇 작업의 반복 검증
-
-## 폴더 구조
-
-```text
-Farino_AIO/
-├── src/        로봇, 모형, 메시지와 Mock 작업
-└── notebooks/  카메라·보정·참고 작업 파일
-```
+- [프로젝트 기능 목표](../overview.md)
+- [작업 계획](../TODO.md)
+- [Unity ↔ ROS2 API](../UnityDT/Docs/API.md)
+- [현재 시스템 구조](../UnityDT/Docs/Architecture.md)
+- [DB 핵심 설계](../UnityDT/Docs/DB.md)

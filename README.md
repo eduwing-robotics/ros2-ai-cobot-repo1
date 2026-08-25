@@ -1,51 +1,24 @@
 # HBM 조립체 디지털 트윈
 
-HBM 조립체 패키지 보드를 대상으로 한 디지털 트윈 작업 공간입니다. 화면, 메인 서버, 로봇 작업 공간, Unity 연결 패키지를 함께 관리합니다.
+FR5, Unity 디지털 트윈, ROS2/MoveIt, MainServer와 PostgreSQL을 연결해 HBM 조립체의 Mock 조립과 생산·검사 기록을 다루는 작업 공간입니다.
 
-## 프로젝트 구성
+기능 목표와 현재 범위는 [프로젝트 개요](overview.md) 한 문서에서 관리하고, 미구현 작업은 [TODO](TODO.md)에서 관리합니다.
 
-- `UnityDT/` — 조립체 디지털 트윈 화면과 조립 시나리오
-- `MAIN_SERVER/` — 제품·부품·재고·작업·품질 조회와 조립 요청 창구
-- `Farino_AIO/` — FR5 로봇 작업과 Mock 시나리오
-- `Ros2UnityEndopoint_PKG/` — Unity와 로봇 작업 공간을 연결하는 패키지
+## 구성
 
-## 프로젝트 기능 정의
+- `UnityDT/` — Unity 작업 화면, 조립 Scenario와 Mock/Real backend 선택
+- `MAIN_SERVER/` — 제품·재고·작업 조회와 조립 실행 HTTP API
+- `Farino_AIO/` — FR5 MoveIt, Mock 조립 노드와 DB bridge
+- `Ros2UnityEndopoint_PKG/` — Unity와 ROS2 연결 패키지
+- `DATA_STATION/DB/` — PostgreSQL 스키마, 기준정보와 권한 SQL
 
-HBM 조립체 패키지 보드를 대상으로, 조립 요청부터 Mock 조립 실행, 생산·검사 이력 확인과 품질 개선까지를 하나의 흐름으로 관리하는 디지털 트윈 작업 공간입니다.
+## 기준 문서
 
-```text
-제품·재고 확인 → Mock 조립 실행 → 생산·검사 결과 기록 → 품질 현황 확인 → 불량대책서
-```
-
-- **조립 요청과 생산 가능 여부 확인** — 제품 구성, 필요 부품과 재고를 확인하고 조립 작업을 관리합니다.
-- **디지털 트윈 조립 운전** — Unity 화면에서 HBM 조립체의 Mock 조립과 작업 진행 상태를 확인합니다.
-- **생산·검사 이력 관리** — 완성품 단위의 조립 결과, PASS/FAIL 및 불량 슬롯 정보를 누적합니다.
-- **품질 개선 지원** — 슬롯·부품별 불량 현황을 바탕으로 품질 화면과 불량대책서를 연결합니다. 화면 연동과 대책서 생성은 진행 중입니다.
-
-## 현재 구현된 기능
-
-- HBM 조립체 보드의 Mock 조립 시나리오와 진행 화면
-- 제품·부품·재고·작업 조회 및 조립 요청 API
-- Mock 생산 이력과 불량 샘플 데이터
-- Unity와 로봇 작업 공간의 연결 경로
-
-## TODO
-
-- 검사 결과와 불량률을 Unity 화면에 연결
-- 불량대책서 생성 기능 완성
-- 실제 로봇 조립과 검사 결과 연동
-
-## 폴더 구조
-
-```text
-.
-├── UnityDT/
-├── MAIN_SERVER/
-├── Farino_AIO/
-└── Ros2UnityEndopoint_PKG/
-```
-
-## 세부 문서
-
-- [UnityDT 구성 문서](UnityDT/Docs/Architecture.md)
-- [메인 서버 API 문서](MAIN_SERVER/Main_serverAPI.md)
+- [프로젝트 기능 목표와 현재 상태](overview.md)
+- [작업 계획](TODO.md)
+- [현재 시스템 구조](UnityDT/Docs/Architecture.md)
+- [Unity ↔ ROS2 API](UnityDT/Docs/API.md)
+- [MainServer HTTP API](MAIN_SERVER/Main_serverAPI.md)
+- [production 핵심 DB 설계](UnityDT/Docs/DB.md)
+- [3개 스키마 통합 설계](UnityDT/Docs/DB3.md)
+- [조립 레시피 규격](UnityDT/Docs/Recipe.md)

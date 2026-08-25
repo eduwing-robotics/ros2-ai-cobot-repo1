@@ -1,33 +1,23 @@
 # UnityDT
 
-HBM 조립체 패키지 보드를 화면에서 확인하고 Mock 조립을 재생하는 디지털 트윈 프로젝트입니다.
+HBM 조립체의 Unity 디지털 트윈, 운전 UI, Scenario와 Mock/Real robot backend를 포함합니다.
 
-## 현재 구현된 기능
+## 현재 기능
 
-- HBM 조립체 보드와 작업 셀의 3D 화면
-- 조립 진행, 검사, 수동 조작, 품질 화면 구성
-- Mock 조립 시나리오의 부품 배치와 진행 상태 표시
-- 제품·재고·조립 요청 화면 구성
+- FR5 관절·TCP·그리퍼 상태 표시
+- RUN, INSPECT, MANUAL, QUALITY 페이지
+- `RobotMaster`의 단일 Mock/Real backend 선택과 의존성 주입
+- Mock 자동 조립 요청, feedback 기반 진행 표시와 메모리 스냅샷 복구
+- 주입된 `IRobotControl` 기반 수동 조작
 
-## TODO
+Real 자동 조립과 MainServer 조회 데이터의 UI 연결은 아직 완료되지 않았습니다.
 
-- 검사 결과와 불량 이력을 화면에 표시
-- 품질 화면의 슬롯·부품별 불량률 표시
-- 제품·재고·조립 요청 화면을 메뉴 흐름에 연결
-- 실제 로봇 조립과 검사 결과 표시
+## 문서
 
-## 폴더 구조
-
-```text
-UnityDT/
-├── Assets/          화면, 씬, 조립체 자산과 동작 코드
-├── Docs/            세부 문서
-├── Packages/        프로젝트 패키지 목록
-├── ProjectSettings/ 프로젝트 설정
-└── Captures/        화면 기록
-```
-
-## 세부 문서
-
-- [구성 문서](Docs/Architecture.md)
-- [화면 구성 문서](Docs/UI.md)
+- [프로젝트 기능 목표](../overview.md)
+- [작업 계획](../TODO.md)
+- [현재 시스템 구조](Docs/Architecture.md)
+- [Unity ↔ ROS2 API](Docs/API.md)
+- [현재 UI](Docs/UI.md)
+- [DB 핵심 설계](Docs/DB.md)
+- [조립 레시피 규격](Docs/Recipe.md)

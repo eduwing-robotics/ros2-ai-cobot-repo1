@@ -8,8 +8,8 @@ Real 구성은 기본적으로 비활성 상태다.
 
 Unity는 ROS-TCP Endpoint 노드(`/UnityEndpoint`)를 통해 ROS2와 통신한다.
 
-`4.3`의 자동 조립 인터페이스는 Mock MVP를 위한 임시 계약이다. 장기 목표인
-[Architecture.md](./Architecture.md)의 Action·DB·복구 구조를 완전히 구현한 것으로 보지 않는다.
+`4.3`의 자동 조립 인터페이스가 현재 Mock MVP의 실행 계약이다. 전체 실행 경계는
+[Architecture.md](./Architecture.md), HTTP 진입점은 [MainServer API](../../MAIN_SERVER/Main_serverAPI.md)를 따른다.
 
 ## 2. 빠른 참조
 
@@ -65,8 +65,9 @@ Mock과 Real이 동일하게 구독하는 비전 인터페이스다.
 | ROS2 → Unity | `/unity/assembly/feedback` | `std_msgs/String` | 실행 단계와 최종 결과 callback |
 
 MVP는 고정 레시피, 수량 1개, 동시 작업 1건만 허용한다. 실행 중인 작업이 있으면 새 요청을
-거부한다. ROS 메모리 스냅샷으로 Unity 재접속 시 시각화 진행 상태를 복구하지만 작업 큐,
-취소와 DB 영속 기록은 제공하지 않는다.
+거부한다. ROS 메모리 스냅샷으로 Unity 재접속 시 시각화 진행 상태를 복구하지만 작업 큐와
+취소는 제공하지 않는다. `mock_sim.py` 직접 실행에는 DB 기록이 없고, `mock_db_bridge`를 사용하면
+같은 외부 계약을 유지하면서 Job·Unit·재고·검사 결과를 `production`에 기록한다.
 
 #### 시작 요청과 응답
 
@@ -129,8 +130,8 @@ Unity가 활성화되면 같은 서비스에 `{"command":"status"}`를 보내 �
 
 Unity는 `placed_count`까지 기존 부품/슬롯 순서로 재배치하고
 `held_step_order`가 있으면 해당 부품을 Mock 그리퍼에 다시 부착한 뒤 새 callback을 계속
-반영한다. 이 스냅샷은 ROS 노드 재시작 시 사라지므로 영속 작업 복구는 DB 기록 단계가
-책임진다.
+반영한다. 이 스냅샷은 ROS 노드 재시작 시 사라지며, 현재 DB 기록도 실행 중 작업의 자동 재개를
+제공하지 않는다.
 
 #### feedback 형식
 
@@ -160,9 +161,9 @@ Unity는 `placed_count`까지 기존 부품/슬롯 순서로 재배치하고
 각 callback에서 가상 부품의 attach/detach를 처리한다. `COMPLETED`와 `FAILED`는 terminal
 상태이며 작업당 하나만 발행한다.
 
-`IRobotScenarioControl.ExecuteAsync()`는 `COMPLETED`를 받은 뒤에만 성공으로 끝난다.
-`FAILED` 또는 terminal callback 타임아웃은 호출자에게 실패로 전달한다. Mock과 Real 구현은
-전송 방식과 무관하게 이 성공·실패·타임아웃 의미를 동일하게 제공한다.
+`MockAsyncPlay.ExecuteAsync()`는 `COMPLETED`를 받은 뒤에만 성공으로 끝난다.
+`FAILED` 또는 terminal callback 타임아웃은 호출자에게 실패로 전달한다. Real 자동 조립은 현재
+미지원이며 구현 계획은 [TODO](../../TODO.md)에서 관리한다.
 
 ## 5. Real 인터페이스
 

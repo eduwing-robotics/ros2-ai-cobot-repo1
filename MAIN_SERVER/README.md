@@ -1,34 +1,28 @@
 # MAIN_SERVER
 
-조립체 제품, 부품, 재고, 작업 상태와 품질 정보를 한곳에서 조회하고 조립 요청을 받는 메인 서버입니다.
+제품·부품·재고·작업·검사 결과를 조회하고 조립 요청을 ROS2 bridge로 전달하는 HTTP 서버입니다.
 
-## 현재 구현된 기능
+## 현재 기능
 
-- 제품 구성과 필요한 부품·재고 조회
-- 부품 정보와 생산 가능 수량 조회
-- 작업과 완성품 검사 이력 조회
-- 슬롯·부품별 누적 불량률 조회
-- Mock/Real 공통 조립 요청과 현재 조립 상태 조회
-- Mock 화면 확인용 생산·불량 샘플 데이터
+- 제품, 슬롯·부품 구성과 생산 가능 수량 조회
+- 요청 수량 기준 재고·부족분 조회
+- Job, Unit, 검사와 불량 슬롯 조회
+- 제품별 슬롯 불량률 조회
+- 조립 시작 요청과 현재/최근 조립 스냅샷 조회
+- `MAIN_SERVER_MODE=mock|real` 실행 설정 검증
 
-## TODO
+조립 route는 ROS2 `/unity/assembly/start` 서비스를 호출하므로 ROS2와 Farino workspace가 source된 환경이 필요합니다. DB 조회는 읽기 전용 DSN을 사용합니다.
 
-- 불량 임계 판단과 대책서 생성 완성
-- Unity 검사·품질 화면과 조회 결과 연결
-- 실제 작업 결과와 생산 이력의 운영 검증
-
-## 폴더 구조
-
-```text
-MAIN_SERVER/
-├── data/       부품 데이터시트
-├── templates/  불량대책서 양식
-├── server.py   서버 진입점
-├── queries.py  조회 처리
-└── test_server.py  확인용 테스트
+```bash
+MAIN_SERVER_MODE=mock \
+MAIN_SERVER_DB_DSN='dbname=main_unity_mock_test' \
+python3 MAIN_SERVER/server.py
 ```
 
-## 세부 문서
+## 문서
 
-- [API 목록과 응답 형식](Main_serverAPI.md)
-- [서버 설계 문서](Design.md)
+- [HTTP API 계약](Main_serverAPI.md)
+- [프로젝트 기능 목표](../overview.md)
+- [작업 계획](../TODO.md)
+- [현재 시스템 구조](../UnityDT/Docs/Architecture.md)
+- [DB 핵심 설계](../UnityDT/Docs/DB.md)

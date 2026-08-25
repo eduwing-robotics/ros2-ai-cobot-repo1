@@ -1,7 +1,0 @@
-Calibration.cs -> 카메라로 인식된 PCB 기판의 Pose를 보정해 유니티에 실제 PCB 기판 위치와 회전을 표현한다.
-VisionDetector.cs -> Inspector에서 지정한 부품 정보를 사용해 JSON API로 비전 인식을 요청한다.
-CamVisionReceiver.cs -> RealCam으로 들어오는 화면 영상을 수신·디코딩해 GUI에 표시한다.
-
-CamMaster.cs -> 위 컴포넌트를 Facade처럼 묶고 RequestDetection() 등 외부 호출 진입점을 제공한다. (추후 시나리오에서 호출할 수 있도록)
-
-해당 스크립트들은 컴포넌트 요소로 작성해 역할 책임군을 나누고 추후 시나리오/수동 제어 등에서 활용할 수 있는 독립 객체로 사용한다.
