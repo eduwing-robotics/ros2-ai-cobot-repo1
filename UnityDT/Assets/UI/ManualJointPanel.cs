@@ -184,6 +184,8 @@ namespace MainUnity.UI
         void Bind()
         {
             VisualElement root = GetComponent<UIDocument>().rootVisualElement;
+            if (root == null)
+                return;
             hudRoot = Find<VisualElement>(root, names.hudRoot);
             monitorPane = Find<VisualElement>(root, names.monitorPane);
             manualPane = Find<VisualElement>(root, names.manualPane);
