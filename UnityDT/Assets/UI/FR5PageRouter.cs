@@ -8,6 +8,7 @@
 // 이라는 같은 이름의 버튼을 갖고 있으므로, 라우터가 모든 문서에서 한 번에 등록한다.
 
 using System;
+using MainUnity.Runtime.Robot.Assembly;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -61,6 +62,9 @@ namespace MainUnity.UI
         readonly System.Collections.Generic.HashSet<UIDocument> wiredDocuments =
             new System.Collections.Generic.HashSet<UIDocument>();
 
+        UIDocument requestDocument;
+        AssemblyProgressManager assemblyProgress;
+        bool progressSubscribed;
         FR5Page current;
 
         /// <summary>현재 열린 페이지다.</summary>
@@ -70,11 +74,22 @@ namespace MainUnity.UI
         {
             wiredDocuments.Clear();
             current = startPage;
+            ResolveRequestDocument();
+            ResolveProgress();
             Apply();
+        }
+
+        void OnDisable()
+        {
+            if (progressSubscribed && assemblyProgress != null)
+                assemblyProgress.ProgressChanged -= OnProgressChanged;
+            progressSubscribed = false;
         }
 
         void Update()
         {
+            if (ResolveProgress() && current == FR5Page.Run)
+                Apply();
             // UIDocument 는 활성화된 뒤에야 rootVisualElement 를 만든다. 켜진 문서 중
             // 아직 등록하지 않은 것만 한 번씩 등록한다.
             //
@@ -82,16 +97,58 @@ namespace MainUnity.UI
             // 받은 인스턴스와 PointerUp 을 받는 인스턴스가 달라져 클릭이 완결되지 않는다.
             // (전환이 먹지 않던 원인이 이것이었다)
             foreach (PageEntry entry in pages)
+                WireDocument(entry?.document);
+            WireDocument(requestDocument);
+        }
+
+        void ResolveRequestDocument()
+        {
+            if (requestDocument != null) return;
+
+            FR5RequestBinder binder = GetComponentInChildren<FR5RequestBinder>(true);
+            requestDocument = binder != null ? binder.GetComponent<UIDocument>() : null;
+        }
+
+        bool ResolveProgress()
+        {
+            AssemblyProgressManager next = GetComponent<UIMaster>()?.AssemblyProgress;
+            if (next == assemblyProgress)
             {
-                if (entry?.document == null) continue;
-                if (wiredDocuments.Contains(entry.document)) continue;
-
-                VisualElement root = entry.document.rootVisualElement;
-                if (root == null) continue;
-
-                Wire(root);
-                wiredDocuments.Add(entry.document);
+                if (!progressSubscribed && assemblyProgress != null)
+                {
+                    assemblyProgress.ProgressChanged += OnProgressChanged;
+                    progressSubscribed = true;
+                }
+                return false;
             }
+
+            if (progressSubscribed && assemblyProgress != null)
+                assemblyProgress.ProgressChanged -= OnProgressChanged;
+            assemblyProgress = next;
+            progressSubscribed = false;
+            if (assemblyProgress != null)
+            {
+                assemblyProgress.ProgressChanged += OnProgressChanged;
+                progressSubscribed = true;
+            }
+            return true;
+        }
+
+        void OnProgressChanged(AssemblyProgressFrame frame)
+        {
+            if (current == FR5Page.Run)
+                Apply();
+        }
+
+        void WireDocument(UIDocument document)
+        {
+            if (document == null || wiredDocuments.Contains(document)) return;
+
+            VisualElement root = document.rootVisualElement;
+            if (root == null) return;
+
+            Wire(root);
+            wiredDocuments.Add(document);
         }
 
         /// <summary>한 문서의 nav 버튼을 한 번만 등록한다.</summary>
@@ -128,21 +185,40 @@ namespace MainUnity.UI
         /// <summary>활성 페이지 하나만 켠다. 나머지는 꺼서 Update 비용을 없앤다.</summary>
         void Apply()
         {
+            UIDocument selected = DocumentFor(current);
             foreach (PageEntry entry in pages)
             {
                 // 파괴 중인 문서를 만날 수 있다. gameObject 까지 확인한다.
                 if (entry?.document == null || entry.document.gameObject == null) continue;
-                bool on = entry.page == current;
-
-                // 꺼지는 문서는 비주얼 트리가 사라지므로 등록 기록도 지운다.
-                // 다시 켜질 때 Update 가 새 트리에 한 번 등록한다.
-                if (!on) wiredDocuments.Remove(entry.document);
-
-                if (entry.document.gameObject.activeSelf != on)
-                    entry.document.gameObject.SetActive(on);
-                if (entry.document.enabled != on)
-                    entry.document.enabled = on;
+                SetDocumentActive(entry.document, entry.document == selected);
             }
+            SetDocumentActive(requestDocument, requestDocument == selected);
+        }
+
+        UIDocument DocumentFor(FR5Page page)
+        {
+            if (page == FR5Page.Run && requestDocument != null &&
+                (assemblyProgress?.Latest == null || assemblyProgress.Latest.IsTerminal))
+                return requestDocument;
+
+            foreach (PageEntry entry in pages)
+                if (entry != null && entry.page == page)
+                    return entry.document;
+            return null;
+        }
+
+        void SetDocumentActive(UIDocument document, bool on)
+        {
+            if (document == null || document.gameObject == null) return;
+
+            // 꺼지는 문서는 비주얼 트리가 사라지므로 등록 기록도 지운다.
+            // 다시 켜질 때 Update 가 새 트리에 한 번 등록한다.
+            if (!on) wiredDocuments.Remove(document);
+
+            if (document.gameObject.activeSelf != on)
+                document.gameObject.SetActive(on);
+            if (document.enabled != on)
+                document.enabled = on;
         }
     }
 }

@@ -11,6 +11,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using MainUnity.Runtime.Robot;
+using MainUnity.Runtime.Robot.Assembly;
 using MainUnity.Runtime.Robot.Status;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -330,8 +331,10 @@ namespace MainUnity.UI
         void RefreshMode()
         {
             RobotRunState state = statusManager != null ? statusManager.State : RobotRunState.Disconnected;
+            AssemblyProgressFrame progress = uiMaster != null ? uiMaster.AssemblyProgress?.Latest : null;
+            bool active = state == RobotRunState.Running || (progress != null && !progress.IsTerminal);
             if (jobSummary != null)
-                jobSummary.text = state == RobotRunState.Running ? "실행 중" : "활성 작업 없음";
+                jobSummary.text = active ? "실행 중" : "활성 작업 없음";
         }
 
         void RefreshInterlocks()
@@ -340,7 +343,8 @@ namespace MainUnity.UI
 
             bool linked = statusManager != null && statusManager.Latest != null;
             RobotRunState state = statusManager != null ? statusManager.State : RobotRunState.Disconnected;
-            bool idle = state != RobotRunState.Running;
+            AssemblyProgressFrame progress = uiMaster != null ? uiMaster.AssemblyProgress?.Latest : null;
+            bool idle = state != RobotRunState.Running && (progress == null || progress.IsTerminal);
             bool mock = uiMaster == null || uiMaster.IsSimulated;
 
             var checks = new List<(string, bool)>

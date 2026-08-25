@@ -179,7 +179,7 @@ namespace MainUnity.UI
 
         /// <summary>이름이 비어 있으면 조회를 건너뛴다. Q() 는 null 이름에 예외를 던진다.</summary>
         static T Find<T>(VisualElement root, string name) where T : VisualElement =>
-            string.IsNullOrEmpty(name) ? null : root.Q<T>(name);
+            string.IsNullOrEmpty(name) ? null : UnityEngine.UIElements.UQueryExtensions.Q<T>(root, name, System.Array.Empty<string>());
 
         void Bind()
         {
