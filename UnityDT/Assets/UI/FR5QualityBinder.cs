@@ -49,7 +49,7 @@ namespace MainUnity.UI
         {
             if (loadRoutine != null) StopCoroutine(loadRoutine);
             loadRoutine = null;
-            refresh?.clicked -= Reload;
+            if (refresh != null) refresh.clicked -= Reload;
             refresh = null;
             root = null;
         }
