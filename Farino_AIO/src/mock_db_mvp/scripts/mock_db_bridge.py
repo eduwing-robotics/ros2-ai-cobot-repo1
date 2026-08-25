@@ -82,6 +82,8 @@ def unavailable_snapshot(message):
         "available": False,
         "active": False,
         "request_id": "",
+        "job_id": 0,
+        "unit_id": 0,
         "recipe_version": "",
         "state": "IDLE",
         "placed_count": 0,
@@ -98,6 +100,8 @@ def assembly_snapshot(active, state, error_code="", message=""):
     completed = state == "COMPLETED"
     return {
         "available": True,
+        "job_id": active["job_id"],
+        "unit_id": active["unit_id"],
         "active": state in RELAY_STATES,
         "request_id": active["request_id"],
         "recipe_version": RECIPE_VERSION,
@@ -135,12 +139,15 @@ def self_check():
     })
     assert parse_command(command)[0] == "start"
     assert parse_command('{"command":"status"}')[0] == "status"
+    assert unavailable_snapshot("offline")["job_id"] == 0
     assert choose_inspection(random.Random(1), 0.0, []) == ("PASS", [])
     result, defects = choose_inspection(random.Random(1), 1.0, ["SLOT-01"])
     assert result == "FAIL" and defects[0]["slot_code"] == "SLOT-01"
     assert failed_feedback(request_id, "DB_ERROR", "x")["state"] == "FAILED"
     active = {
         "request_id": request_id,
+        "job_id": 11,
+        "unit_id": 22,
         "placed_count": 1,
         "expected_step_count": 2,
         "held_step_order": 0,
@@ -148,6 +155,8 @@ def self_check():
         "held_slot_code": "",
     }
     assert assembly_snapshot(active, "PLACED")["active"]
+    assert assembly_snapshot(active, "PLACED")["job_id"] == 11
+    assert assembly_snapshot(active, "PLACED")["unit_id"] == 22
     completed = assembly_snapshot(active, "COMPLETED")
     assert not completed["active"] and completed["placed_count"] == 2
 
