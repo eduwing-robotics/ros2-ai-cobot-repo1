@@ -251,8 +251,15 @@ namespace MainUnity.Runtime.Robot.Mock
                 MockObservation[] observations = BuildObservations();
                 RestoreSnapshot(snapshot, observations);
                 recovering = false;
-                // 복구 직후에도 화면이 "작업 없음" 으로 남지 않게 현재 지점을 알린다.
-                Report(heldItem != null ? AssemblyState.Picked : AssemblyState.Placed, null);
+                Report(snapshot.state switch
+                {
+                    Started => AssemblyState.Started,
+                    Picked => AssemblyState.Picked,
+                    Placed => AssemblyState.Placed,
+                    Completed => AssemblyState.Completed,
+                    Failed => AssemblyState.Failed,
+                    _ => throw new InvalidOperationException("Unknown Mock assembly state.")
+                }, null, snapshot.state == Failed ? snapshot.message : null);
                 foreach (AssemblyFeedback feedback in bufferedFeedback.ToArray())
                     HandleFeedback(feedback);
             }
@@ -291,7 +298,17 @@ namespace MainUnity.Runtime.Robot.Mock
             for (int index = 0; index < snapshot.placed_count; index++)
             {
                 MockObservation observation = observations[index];
-                string recoveredSlot = "recovered-" + observation.order;
+                if (!itemManager.TryGetSlotGroup(observation.part_id,
+                        out ItemManager.AssemblySlot group))
+                    throw new InvalidOperationException(
+                        "No Mock slot group for: " + observation.part_id);
+                int slotIndex = nextSlotIndices.TryGetValue(observation.part_id,
+                    out int next) ? next : 0;
+                Transform[] slots = group.Slots;
+                if (slots == null || slotIndex >= slots.Length || slots[slotIndex] == null)
+                    throw new InvalidOperationException(
+                        "No remaining Mock slot for: " + observation.part_id);
+                string recoveredSlot = slots[slotIndex].name;
                 ApplyPicked(new AssemblyFeedback
                 {
                     request_id = snapshot.request_id,
@@ -323,7 +340,7 @@ namespace MainUnity.Runtime.Robot.Mock
                 }, true);
             }
 
-            assemblyRequested = true;
+            assemblyRequested = snapshot.active;
             terminal = snapshot.active ? new TaskCompletionSource<string>() : null;
             string summary = $"Mock assembly restored: {snapshot.state}, " +
                 $"{snapshot.placed_count}/{snapshot.expected_step_count} placed.";
