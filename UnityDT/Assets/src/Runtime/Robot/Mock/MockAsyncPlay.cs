@@ -295,49 +295,56 @@ namespace MainUnity.Runtime.Robot.Mock
             activeRequestId = snapshot.request_id;
             expectedStepCount = snapshot.expected_step_count;
 
-            for (int index = 0; index < snapshot.placed_count; index++)
+            if (snapshot.active)
             {
-                MockObservation observation = observations[index];
-                if (!itemManager.TryGetSlotGroup(observation.part_id,
-                        out ItemManager.AssemblySlot group))
-                    throw new InvalidOperationException(
-                        "No Mock slot group for: " + observation.part_id);
-                int slotIndex = nextSlotIndices.TryGetValue(observation.part_id,
-                    out int next) ? next : 0;
-                Transform[] slots = group.Slots;
-                if (slots == null || slotIndex >= slots.Length || slots[slotIndex] == null)
-                    throw new InvalidOperationException(
-                        "No remaining Mock slot for: " + observation.part_id);
-                string recoveredSlot = slots[slotIndex].name;
-                ApplyPicked(new AssemblyFeedback
+                for (int index = 0; index < snapshot.placed_count; index++)
                 {
-                    request_id = snapshot.request_id,
-                    state = Picked,
-                    step_order = observation.order,
-                    part_id = observation.part_id,
-                    slot_code = recoveredSlot
-                }, true);
-                ApplyPlaced(new AssemblyFeedback
-                {
-                    request_id = snapshot.request_id,
-                    state = Placed,
-                    step_order = observation.order,
-                    part_id = observation.part_id,
-                    slot_code = recoveredSlot
-                }, true);
-            }
+                    MockObservation observation = observations[index];
+                    if (!itemManager.TryGetSlotGroup(observation.part_id,
+                            out ItemManager.AssemblySlot group))
+                        throw new InvalidOperationException(
+                            "No Mock slot group for: " + observation.part_id);
+                    int slotIndex = nextSlotIndices.TryGetValue(observation.part_id,
+                        out int next) ? next : 0;
+                    Transform[] slots = group.Slots;
+                    if (slots == null || slotIndex >= slots.Length || slots[slotIndex] == null)
+                        throw new InvalidOperationException(
+                            "No remaining Mock slot for: " + observation.part_id);
+                    string recoveredSlot = slots[slotIndex].name;
+                    ApplyPicked(new AssemblyFeedback
+                    {
+                        request_id = snapshot.request_id,
+                        state = Picked,
+                        step_order = observation.order,
+                        part_id = observation.part_id,
+                        slot_code = recoveredSlot
+                    }, true);
+                    ApplyPlaced(new AssemblyFeedback
+                    {
+                        request_id = snapshot.request_id,
+                        state = Placed,
+                        step_order = observation.order,
+                        part_id = observation.part_id,
+                        slot_code = recoveredSlot
+                    }, true);
+                }
 
-            if (snapshot.held_step_order > 0)
-            {
-                MockObservation observation = observations[snapshot.held_step_order - 1];
-                ApplyPicked(new AssemblyFeedback
+                if (snapshot.held_step_order > 0)
                 {
-                    request_id = snapshot.request_id,
-                    state = Picked,
-                    step_order = observation.order,
-                    part_id = snapshot.held_part_id,
-                    slot_code = snapshot.held_slot_code
-                }, true);
+                    MockObservation observation = observations[snapshot.held_step_order - 1];
+                    ApplyPicked(new AssemblyFeedback
+                    {
+                        request_id = snapshot.request_id,
+                        state = Picked,
+                        step_order = observation.order,
+                        part_id = snapshot.held_part_id,
+                        slot_code = snapshot.held_slot_code
+                    }, true);
+                }
+            }
+            else
+            {
+                lastPlacedStepOrder = snapshot.placed_count;
             }
 
             assemblyRequested = snapshot.active;
