@@ -7,7 +7,7 @@ namespace MainUnity.Runtime.ConveyBelt
     [DisallowMultipleComponent]
     public sealed class ConveyMock : MonoBehaviour
     {
-        const float MovementFrameAllowanceSeconds = 0.1f;
+        const float MovementFrameAllowanceSeconds = 1f;
         [Header("Objects")]
         [SerializeField] GameObject beltPlane;
         [SerializeField] GameObject pcb;
@@ -112,7 +112,7 @@ namespace MainUnity.Runtime.ConveyBelt
             Debug.Assert(Mathf.Approximately(MoveDistance(0.05f, 0.1f), 0.05f));
             Debug.Assert(Mathf.Approximately(MoveDistance(1f, 0.1f), 0.1f));
             Debug.Assert(Mathf.Approximately(0.515f / 0.01f +
-                MovementFrameAllowanceSeconds, 51.6f));
+                MovementFrameAllowanceSeconds, 52.5f));
         }
 
         Task MoveToAsync(Transform stopPoint, string stopPointName)
