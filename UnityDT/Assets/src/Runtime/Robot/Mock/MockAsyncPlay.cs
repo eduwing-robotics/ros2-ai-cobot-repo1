@@ -717,6 +717,7 @@ namespace MainUnity.Runtime.Robot.Mock
 
         RosPoseRequest ToRosPoseRequest(Pose tcpTarget, string targetName)
         {
+            tcpTarget.rotation = DownwardTcpRotation(tcpTarget.rotation);
             if (!control.TryGetRosTcpTarget(tcpTarget, out Vector3 positionMillimeters,
                     out Quaternion rotation))
                 throw new InvalidOperationException(
@@ -733,6 +734,13 @@ namespace MainUnity.Runtime.Robot.Mock
                 },
                 xyzw = new[] { rotation.x, rotation.y, rotation.z, rotation.w }
             };
+        }
+
+        static Quaternion DownwardTcpRotation(Quaternion unityTargetRotation)
+        {
+            float halfYawRadians = unityTargetRotation.eulerAngles.y * Mathf.Deg2Rad * 0.5f;
+            return new Quaternion(-Mathf.Sin(halfYawRadians), 0f,
+                Mathf.Cos(halfYawRadians), 0f);
         }
 
         void FailActive(string error)
