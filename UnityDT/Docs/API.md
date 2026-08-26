@@ -21,11 +21,12 @@ Unity는 ROS-TCP Endpoint 노드(`/UnityEndpoint`)를 통해 ROS2와 통신한�
 | TCP 직선 이동 | `/unity/tcp_target` 토픽 | `/fairino_remote_command_service` 서비스 |
 | 그리퍼 제어 | `/unity/gripper_target` 토픽 | `/fairino_remote_command_service` 서비스 |
 | 로봇 상태 수신 | `/joint_states` 토픽 | `/nonrt_state_data` 토픽 |
-| 명령 결과 확인 | `/twin_visual/status` 토픽 | 자동: `/real/assembly/progress`, 개별 명령: 서비스 응답 |
+| 명령 결과 확인 | `/twin_visual/status` 토픽 | 자동: `/real/assembly/progress`, 개별 이동: 서비스 응답 + `/nonrt_state_data` 완료 상태 |
 | 비전 결과 수신 | `/vision/board/*` 토픽 | `/vision/board/*` 토픽 |
 
-> Real의 공통 `IRobotControl.MoveJ`와 수동 관절 제어는 현재 연결되어 있지 않다.
-> `/fairino_remote_command_service`의 이동 요청은 `RealMoveControl`에서 사용한다.
+> Real의 공통 `IRobotControl.MoveJ`는 `RealRobotControl`이 `/fairino_remote_command_service`로
+> 요청하고 `/nonrt_state_data`의 실제 완료 상태까지 기다린다. Scene의 세 티칭 포인트를
+> 배정해야 사용할 수 있으며, 수동 관절 직접 제어는 아직 지원하지 않는다.
 
 ## 3. 공통 인터페이스
 

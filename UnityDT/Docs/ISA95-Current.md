@@ -183,15 +183,17 @@ E-STOP 관련 코드는 전부 수신 전용이다 — Real `/nonrt_state_data`�
 
 ### Real 경로
 
-`RealStatusSubscriber`가 `/nonrt_state_data`를 받고 `RealMoveControl`이
-`/fairino_remote_command_service`로 이동을 요청한다. 다만 다음 두 곳이 미지원이다.
+`RealStatusSubscriber`가 `/nonrt_state_data`를 받고 `RealRobotControl`이
+`/fairino_remote_command_service`로 이동을 요청한 뒤 실제 완료 상태까지 기다린다.
+다만 다음 두 기능은 미지원이다.
 
 | 파일 | 상태 |
 |---|---|
 | `RealAssemblyScenarioControl.cs:13` | 자동 조립 `NotSupportedException` |
-| `RealRobotControl.cs:24` | 일부 수동 제어 `NotSupportedException` |
+| `RealRobotControl.TrySetJointTarget` | 수동 관절 직접 제어 미구현 |
 
-즉 **Real은 상태 수신과 일부 이동만 되고 자동 조립은 되지 않는다.**
+즉 **Real은 상태 수신과 티칭 포인트 이동이 가능하지만, Scene의 티칭 포인트 배정이 필요하고
+자동 조립은 되지 않는다.**
 
 ### 비전 (Mock · Real 공통)
 
