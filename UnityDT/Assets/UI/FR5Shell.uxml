@@ -24,17 +24,21 @@
                 <ui:Button name="mode-real" class="chip" style="margin-left:6px;"><ui:Label text="REAL" class="chip__text" /></ui:Button>
             </ui:VisualElement>
 
+            <!--
+              상단 바는 두 무리다.
+
+              앞무리(MODE · ROBOT · JOB)는 조작자가 0.5초 안에 봐야 하는 것이다 —
+              지금 어느 모드인가 · 로봇이 살아 있는가 · 작업이 어디까지 갔는가.
+              뒷무리(LINK · CYCLE · SPEED)는 궁금할 때 찾아보는 것이다.
+
+              이전에는 여섯 항목이 같은 11px 라벨 · 같은 흰색 값으로 나란히 있어서
+              DISCONNECTED 와 45 % 가 같은 무게로 보였다. 무리 사이에 선을 하나 긋고
+              뒷무리 값을 한 단계 내려(ink-2) 앞무리만 흰색(ink)으로 남긴다.
+              선은 나누기만 한다 — 색을 더 쓰지 않는다.
+            -->
             <ui:VisualElement class="row" style="margin-left:36px;">
                 <ui:Label text="ROBOT" class="micro" style="margin-right:12px;" />
-                <ui:VisualElement name="robot-state-chip" class="chip"><ui:Label name="robot-state-text" text="—" class="chip__text" /></ui:VisualElement>
-            </ui:VisualElement>
-
-            <ui:VisualElement class="row" style="margin-left:36px;">
-                <ui:Label text="LINK" class="micro" style="margin-right:12px;" />
-                <ui:VisualElement name="link-joint-dot" class="dot" />
-                <ui:Label name="link-joint-age" text="—" class="muted" style="margin-left:8px; margin-right:16px; font-size:12px;" />
-                <ui:VisualElement name="link-image-dot" class="dot" />
-                <ui:Label name="link-image-age" text="—" class="muted" style="margin-left:8px; font-size:12px;" />
+                <ui:VisualElement name="robot-state-chip" class="chip" style="height:28px;"><ui:Label name="robot-state-text" text="—" class="chip__text" style="font-size:12px;" /></ui:VisualElement>
             </ui:VisualElement>
 
             <ui:VisualElement class="row" style="margin-left:36px;">
@@ -46,9 +50,20 @@
                 <ui:Label name="job-progress-text" text="—" style="color:rgb(226,236,241); -unity-font-style:bold; margin-left:12px;" />
             </ui:VisualElement>
 
+            <!-- 무리 경계 -->
+            <ui:VisualElement style="width:1px; height:26px; background-color:rgba(255,255,255,0.16); margin-left:36px;" />
+
+            <ui:VisualElement class="row" style="margin-left:32px;">
+                <ui:Label text="LINK" class="micro" style="margin-right:12px;" />
+                <ui:VisualElement name="link-joint-dot" class="dot" />
+                <ui:Label name="link-joint-age" text="—" class="muted" style="margin-left:8px; margin-right:16px; font-size:12px;" />
+                <ui:VisualElement name="link-image-dot" class="dot" />
+                <ui:Label name="link-image-age" text="—" class="muted" style="margin-left:8px; font-size:12px;" />
+            </ui:VisualElement>
+
             <ui:VisualElement class="row" style="margin-left:32px;">
                 <ui:Label text="CYCLE" class="micro" style="margin-right:12px;" />
-                <ui:Label name="cycle-value" text="—" style="color:rgb(226,236,241); -unity-font-style:bold;" />
+                <ui:Label name="cycle-value" text="—" style="color:rgb(147,165,178); -unity-font-style:bold;" />
             </ui:VisualElement>
 
             <ui:VisualElement class="row" style="margin-left:32px;">
@@ -56,7 +71,7 @@
                 <ui:VisualElement class="gauge" style="width:76px;">
                     <ui:VisualElement name="speed-fill" class="gauge__fill gauge__fill--neutral" style="width:45%;" />
                 </ui:VisualElement>
-                <ui:Label name="speed-value" text="45 %" style="color:rgb(226,236,241); -unity-font-style:bold; margin-left:10px;" />
+                <ui:Label name="speed-value" text="45 %" style="color:rgb(147,165,178); -unity-font-style:bold; margin-left:10px;" />
             </ui:VisualElement>
 
             <ui:VisualElement class="spacer" />
@@ -66,8 +81,13 @@
         <!--
           알람 띠 — 평상시 display:none. Error / Disconnected 일 때만 나타난다.
           RobotStatusManager 의 ErrorLabel · ErrorDetail 을 그대로 보여준다.
+
+          배경에 알파를 남기지 않는다. 이 띠는 패널이 아니라 3D 위에 바로 뜨는데,
+          셀 렌더가 밝아서 반투명이면 글자가 씻겨 나갔다. 아래 값은 원래의
+          rgba(240,71,90,0.16) 을 패널색 위에 미리 합성한 것이다 — 보이는 색은 같고
+          배경에만 의존하지 않는다.
         -->
-        <ui:VisualElement name="alarm-banner" style="position:absolute; left:88px; top:64px; right:0; height:44px; display:none; background-color:rgba(240,71,90,0.16); border-top-width:2px; border-top-color:rgb(240,71,90); flex-direction:row; align-items:center; padding-left:24px; padding-right:24px;">
+        <ui:VisualElement name="alarm-banner" style="position:absolute; left:88px; top:64px; right:0; height:44px; display:none; background-color:rgb(47,24,31); border-top-width:2px; border-top-color:rgb(240,71,90); flex-direction:row; align-items:center; padding-left:24px; padding-right:24px;">
             <ui:VisualElement name="alarm-dot" class="dot dot--bad" />
             <ui:Label name="alarm-label" text="—" class="bad" style="margin-left:12px; font-size:14px; letter-spacing:1.2px;" />
             <ui:Label name="alarm-detail" text="" style="color:rgb(214,160,168); font-size:13px; margin-left:16px;" />
@@ -134,6 +154,34 @@
                     <ui:VisualElement class="ink" style="position:absolute; left:11px; bottom:0; width:4px; height:8px;" />
                 </ui:VisualElement>
                 <ui:Label text="SETUP" class="tab__text" /><ui:Label text="설정" class="micro" />
+            </ui:Button>
+
+            <!--
+              트윈 집중 — 보조 패널(.panel--aux)을 접어 3D 를 드러낸다.
+
+              상단 바가 아니라 레일 맨 아래에 둔다. 상단 바는 이미 30px 여백까지 합쳐
+              1890px 을 쓰고 있어 한 칸도 남지 않았고, 무엇보다 이것은 "어느 화면인가"가
+              아니라 "그 화면을 어떻게 보는가"라서 페이지 탭과 같은 무리가 아니다.
+              그래서 spacer 로 떼어 놓고 선을 하나 긋는다.
+
+              보조 패널이 없는 화면(검사 · 품질 · 요청)에서는 FR5ShellBinder 가 숨긴다.
+              눌러도 아무 일도 없는 버튼은 고장으로 보인다.
+            -->
+            <ui:VisualElement class="spacer" />
+            <ui:VisualElement style="width:44px; height:1px; background-color:rgba(255,255,255,0.09);" />
+            <ui:Button name="view-focus" class="tab" style="width:88px; height:96px; align-items:center; margin:0; margin-top:14px; margin-bottom:22px;">
+                <!-- 아이콘: 네 귀퉁이만 남긴 뷰파인더 틀 -->
+                <ui:VisualElement class="icon">
+                    <ui:VisualElement class="ink" style="position:absolute; left:0; top:0; width:9px; height:3px;" />
+                    <ui:VisualElement class="ink" style="position:absolute; left:0; top:0; width:3px; height:9px;" />
+                    <ui:VisualElement class="ink" style="position:absolute; right:0; top:0; width:9px; height:3px;" />
+                    <ui:VisualElement class="ink" style="position:absolute; right:0; top:0; width:3px; height:9px;" />
+                    <ui:VisualElement class="ink" style="position:absolute; left:0; bottom:0; width:9px; height:3px;" />
+                    <ui:VisualElement class="ink" style="position:absolute; left:0; bottom:0; width:3px; height:9px;" />
+                    <ui:VisualElement class="ink" style="position:absolute; right:0; bottom:0; width:9px; height:3px;" />
+                    <ui:VisualElement class="ink" style="position:absolute; right:0; bottom:0; width:3px; height:9px;" />
+                </ui:VisualElement>
+                <ui:Label text="TWIN" class="tab__text" /><ui:Label text="집중" class="micro" />
             </ui:Button>
         </ui:VisualElement>
     </ui:VisualElement>

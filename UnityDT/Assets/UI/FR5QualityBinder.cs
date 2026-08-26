@@ -184,10 +184,10 @@ namespace MainUnity.UI
                 PartTotal total = pair.Value;
                 var row = new VisualElement();
                 row.AddToClassList("trow");
-                AddCell(row, total.name, 180);
-                AddCell(row, pair.Key, 180);
-                AddCell(row, $"{total.defective} / {total.inspected}", 220);
-                AddCell(row, total.inspected == 0 ? "—" : $"{100f * total.defective / total.inspected:0.##}%", 200);
+                AddCell(row, total.name, 300);
+                AddCell(row, pair.Key, 200);
+                AddCell(row, $"{total.defective} / {total.inspected}", 140, true);
+                AddCell(row, total.inspected == 0 ? "—" : $"{100f * total.defective / total.inspected:0.##}%", 100, true);
                 if (total.defective > 0) row.AddToClassList("trow--bad");
                 list?.Add(row);
             }
@@ -205,10 +205,15 @@ namespace MainUnity.UI
             FR5EmptyState.Fill(root.Q<VisualElement>("part-list"), message, 190f);
         }
 
-        static void AddCell(VisualElement row, string text, float width)
+        /// <summary>
+        /// 표의 한 칸이다. 수치 칸은 머리글과 같이 오른쪽 정렬한다 — 머리글만 tcell--num 이라
+        /// 값과 머리글이 서로 다른 축에 서 있었고, 자릿수가 어긋나 불량률을 눈으로 못 비볐다.
+        /// </summary>
+        static void AddCell(VisualElement row, string text, float width, bool num = false)
         {
             var cell = new Label(text);
             cell.AddToClassList("tcell");
+            if (num) cell.AddToClassList("tcell--num");
             cell.style.width = width;
             row.Add(cell);
         }

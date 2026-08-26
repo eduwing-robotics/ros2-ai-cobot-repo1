@@ -6,8 +6,10 @@
 //   3. 어떤 조회가 붙으면 채워지는지 이름을 적는다 (`jobs 조회`, `GET /alerts` …).
 //      그래야 화면이 곧 남은 작업 목록이 된다.
 //
-// 색은 `--c-warn` 이다. 붉은색(`--c-bad`)은 불량·비상정지에 남겨 둔다 — 연결이 없는 것은
-// 이상이지만 위험은 아니고, 화면 전체가 붉어지면 진짜 이상이 묻힌다 (Docs/UI.md 6절).
+// 색은 주지 않는다. 붉은색(`--c-bad`)을 불량·비상정지에 남겨 두는 것과 같은 이유로
+// 노란색(`--c-warn`)도 아껴야 한다 — 미연결 자리가 한 화면에 서너 개씩 있어서, 이 자리를
+// 노랗게 칠하면 화면이 통째로 노래지고 진짜 이상이 묻힌다. 부재는 이상이 아니라 없음이다.
+// 무엇이 없는지는 색이 아니라 `source` 문구가 설명한다 (Docs/UI.md 6절).
 
 using UnityEngine.UIElements;
 
@@ -53,7 +55,18 @@ namespace MainUnity.UI
         {
             if (label == null) return;
             label.text = Title;
-            label.EnableInClassList("warn", true);
+            label.EnableInClassList("miss", true);
+        }
+
+        /// <summary>
+        /// 실제 값이 들어오는 자리다. <see cref="Missing"/> 이 남긴 표시를 반드시 걷어낸다 —
+        /// 걷어내지 않으면 값이 채워진 뒤에도 "없음" 색이 그대로 남는다.
+        /// </summary>
+        public static void Present(Label label, string text)
+        {
+            if (label == null) return;
+            label.text = text;
+            label.EnableInClassList("miss", false);
         }
 
         /// <summary>값 밑에 붙는 사유 줄이다. 어떤 조회가 필요한지만 적는다.</summary>

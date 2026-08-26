@@ -165,19 +165,22 @@ namespace MainUnity.UI
 
         void ShowUnits(int jobId, Unit[] units, Unit selected)
         {
-            if (jobSummary != null) jobSummary.text = "JOB #" + jobId + " · UNIT #" + selected.unit_id;
+            FR5EmptyState.Present(jobSummary, "JOB #" + jobId + " · UNIT #" + selected.unit_id);
             if (unitsSummary != null) unitsSummary.text = units.Length + " UNIT";
             string result = string.IsNullOrEmpty(selected.inspection_result) ? "PENDING" : selected.inspection_result;
             if (verdictValue != null)
             {
-                verdictValue.text = result;
+                FR5EmptyState.Present(verdictValue, result);
                 verdictValue.EnableInClassList("bad", result == "FAIL");
                 verdictValue.EnableInClassList("warn", result == "PENDING");
             }
             FR5EmptyState.Detail(verdictScore, string.IsNullOrEmpty(selected.inspected_at) ? "검사 완료 대기" : selected.inspected_at);
             checkList?.Clear();
-            checkList?.Add(new Label("UNIT STATUS · " + selected.unit_status));
-            checkList?.Add(new Label("INSPECTION · " + result));
+            // 실행 실패와 검사 불량은 다른 사실이지만, 둘 다 이상이므로 둘 다 색을 얻는다.
+            // 색 없이 적으면 FAILED 가 정상 항목과 같은 무게로 보인다(Docs/UI.md 6절).
+            checkList?.Add(CheckLine("UNIT STATUS · " + selected.unit_status,
+                selected.unit_status == "FAILED"));
+            checkList?.Add(CheckLine("INSPECTION · " + result, result == "FAIL"));
 
             Defect[] defects = selected.defects ?? Array.Empty<Defect>();
             defectGrid?.Clear();
@@ -197,7 +200,10 @@ namespace MainUnity.UI
                 string unitResult = string.IsNullOrEmpty(unit.inspection_result) ? "PENDING" : unit.inspection_result;
                 var item = new Label("#" + unit.unit_sequence_in_job + "  " + unitResult);
                 item.AddToClassList("chip");
-                if (unit.unit_id == selected.unit_id) item.AddToClassList("chip--good");
+                // 선택은 "지금 여기"이므로 액센트다. 이전에는 chip--good(초록)이었는데,
+                // 초록은 이 화면에서 합격을 뜻하므로 PENDING·FAIL 인 대를 골라도 합격처럼
+                // 보였다. 판정은 판정 색으로만 말한다.
+                if (unit.unit_id == selected.unit_id) item.AddToClassList("chip--accent");
                 if (unit.inspection_result == "FAIL") item.AddToClassList("chip--bad");
                 unitStrip?.Add(item);
             }
@@ -242,6 +248,14 @@ namespace MainUnity.UI
                 cameraStats.text = fresh
                     ? $"수신 중 · 마지막 프레임 {age * 1000:0} ms 전"
                     : "수신 없음";
+        }
+
+        /// <summary>판정 목록의 한 줄이다. 이상일 때만 색을 얻는다.</summary>
+        static Label CheckLine(string text, bool bad)
+        {
+            var line = new Label(text);
+            if (bad) line.AddToClassList("bad");
+            return line;
         }
     }
 }

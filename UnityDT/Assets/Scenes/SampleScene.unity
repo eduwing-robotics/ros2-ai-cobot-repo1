@@ -2610,7 +2610,6 @@ MonoBehaviour:
   statusManager: {fileID: 70281098}
   maxAbsJointDegrees: 360
   maxAbsTcpMillimeters: 10000
-  downwardRotationDegrees: {x: 180, y: 0, z: 0}
   itemReadyPoint: {fileID: 1441210805}
   assemblyReadyPoint: {fileID: 1802677963}
   homeToleranceDegrees: 0.1
@@ -2782,79 +2781,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.015, y: 0.018, z: 0.015}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!1001 &405881023
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: -8679921383154817045, guid: c2fd7d089a62f4c0aa1ee6042a7a8297, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 0.01
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: c2fd7d089a62f4c0aa1ee6042a7a8297, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 0.01
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: c2fd7d089a62f4c0aa1ee6042a7a8297, type: 3}
-      propertyPath: m_LocalScale.z
-      value: 0.01
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: c2fd7d089a62f4c0aa1ee6042a7a8297, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0.048099995
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: c2fd7d089a62f4c0aa1ee6042a7a8297, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: -0.047497258
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: c2fd7d089a62f4c0aa1ee6042a7a8297, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: -0.6663
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: c2fd7d089a62f4c0aa1ee6042a7a8297, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: c2fd7d089a62f4c0aa1ee6042a7a8297, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: c2fd7d089a62f4c0aa1ee6042a7a8297, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: c2fd7d089a62f4c0aa1ee6042a7a8297, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: c2fd7d089a62f4c0aa1ee6042a7a8297, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: c2fd7d089a62f4c0aa1ee6042a7a8297, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: c2fd7d089a62f4c0aa1ee6042a7a8297, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -7635826562936255635, guid: c2fd7d089a62f4c0aa1ee6042a7a8297, type: 3}
-      propertyPath: 'm_Materials.Array.data[0]'
-      value: 
-      objectReference: {fileID: 2100000, guid: 063d57c7eae386efda07d46497656657, type: 2}
-    - target: {fileID: 919132149155446097, guid: c2fd7d089a62f4c0aa1ee6042a7a8297, type: 3}
-      propertyPath: m_Name
-      value: ItemTray (1)
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: c2fd7d089a62f4c0aa1ee6042a7a8297, type: 3}
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -3038,24 +2964,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainUnity.UI.ManualJointPanel
   uiMaster: {fileID: 0}
-  robotMaster: {fileID: 70281099}
   statusManager: {fileID: 1697528799}
   ghostMaster: {fileID: 1060664736}
   names:
-    hudRoot: fr5-manual
-    monitorPane: 
-    manualPane: 
-    planningPane: 
-    planningList: 
-    ioPane: 
-    monitorTab: 
-    manualTab: 
-    planningTab: 
-    ioTab: 
     gripperOpenButton: gripper-open-button
     gripperCloseButton: gripper-close-button
-    mockModeButton: mode-mock
-    realModeButton: mode-real
     applyButton: jog-apply-button
     cancelButton: jog-cancel-button
     homeButton: jog-home-button
@@ -3604,7 +3517,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2c2035eec8a9091c38ab67fd9e4746f6, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.018099993
+      value: -0.0897
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2c2035eec8a9091c38ab67fd9e4746f6, type: 3}
       propertyPath: m_LocalPosition.y
@@ -3612,7 +3525,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2c2035eec8a9091c38ab67fd9e4746f6, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.6328
+      value: -0.7444
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2c2035eec8a9091c38ab67fd9e4746f6, type: 3}
       propertyPath: m_LocalRotation.w
@@ -8205,7 +8118,6 @@ MonoBehaviour:
   statusManager: {fileID: 1156818446}
   maxAbsJointDegrees: 360
   maxAbsTcpMillimeters: 10000
-  downwardRotationDegrees: {x: 180, y: 0, z: 0}
   itemReadyPoint: {fileID: 0}
   assemblyReadyPoint: {fileID: 0}
   homeToleranceDegrees: 0.1
@@ -8365,7 +8277,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2c2035eec8a9091c38ab67fd9e4746f6, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.039100006
+      value: -0.1216
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2c2035eec8a9091c38ab67fd9e4746f6, type: 3}
       propertyPath: m_LocalPosition.y
@@ -8373,7 +8285,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2c2035eec8a9091c38ab67fd9e4746f6, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.6328
+      value: -0.7455
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2c2035eec8a9091c38ab67fd9e4746f6, type: 3}
       propertyPath: m_LocalRotation.w
@@ -8556,7 +8468,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2c2035eec8a9091c38ab67fd9e4746f6, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.0397
+      value: -0.1551
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2c2035eec8a9091c38ab67fd9e4746f6, type: 3}
       propertyPath: m_LocalPosition.y
@@ -8564,7 +8476,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2c2035eec8a9091c38ab67fd9e4746f6, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.698
+      value: -0.7478
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2c2035eec8a9091c38ab67fd9e4746f6, type: 3}
       propertyPath: m_LocalRotation.w
@@ -11543,7 +11455,6 @@ MonoBehaviour:
   statusManager: {fileID: 1697528799}
   maxAbsJointDegrees: 360
   maxAbsTcpMillimeters: 10000
-  downwardRotationDegrees: {x: 180, y: 0, z: 0}
   itemReadyPoint: {fileID: 0}
   assemblyReadyPoint: {fileID: 0}
   homeToleranceDegrees: 0.1
@@ -14498,6 +14409,63 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 31e247e70d6c74bf5893f674ea5e72de, type: 3}
   m_PrefabInstance: {fileID: 211431435}
   m_PrefabAsset: {fileID: 0}
+--- !u!1001 &2095660938
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: b47cfe7d1c5a7cac597bce40f3665ed6, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.007
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b47cfe7d1c5a7cac597bce40f3665ed6, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.054997265
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b47cfe7d1c5a7cac597bce40f3665ed6, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0.637
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b47cfe7d1c5a7cac597bce40f3665ed6, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b47cfe7d1c5a7cac597bce40f3665ed6, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b47cfe7d1c5a7cac597bce40f3665ed6, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b47cfe7d1c5a7cac597bce40f3665ed6, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b47cfe7d1c5a7cac597bce40f3665ed6, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b47cfe7d1c5a7cac597bce40f3665ed6, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b47cfe7d1c5a7cac597bce40f3665ed6, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: b47cfe7d1c5a7cac597bce40f3665ed6, type: 3}
+      propertyPath: m_Name
+      value: Tray
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: b47cfe7d1c5a7cac597bce40f3665ed6, type: 3}
 --- !u!1001 &2108074527
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -16300,6 +16268,6 @@ SceneRoots:
   - {fileID: 1545851028}
   - {fileID: 1701525595}
   - {fileID: 1917364536}
-  - {fileID: 405881023}
   - {fileID: 1750376582}
   - {fileID: 1010564058}
+  - {fileID: 2095660938}

@@ -192,7 +192,7 @@ namespace MainUnity.UI
                 return;
             }
 
-            productName.text = selectedProduct.product_name;
+            FR5EmptyState.Present(productName, selectedProduct.product_name);
             productMeta.text = $"{selectedProduct.product_code} · {selectedProduct.product_version}";
             productSlotCount.text = $"product_slots {selectedProduct.slots?.Length ?? 0}";
         }

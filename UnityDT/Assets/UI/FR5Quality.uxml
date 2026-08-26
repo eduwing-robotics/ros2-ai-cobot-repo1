@@ -10,7 +10,7 @@
       남겨 둔 HTTP 어댑터가 생겨야 이 페이지가 채워진다. 그전까지는 샘플이 뜨고
       상단에 "샘플 데이터" 배지가 붙는다.
     -->
-    <ui:VisualElement name="fr5-quality" class="page fr5--mock">
+    <ui:VisualElement name="fr5-quality" class="page page--dim fr5--mock">
 
 
         
@@ -58,10 +58,10 @@
             </ui:VisualElement>
             <ui:VisualElement class="panel__body">
                 <ui:VisualElement class="trow trow--head">
-                    <ui:Label text="PART" class="tcell tcell--head" style="width:180px;" />
-                    <ui:Label text="TYPE" class="tcell tcell--head" style="width:180px;" />
-                    <ui:Label text="불량 / 검사" class="tcell tcell--head tcell--num" style="width:220px;" />
-                    <ui:Label text="RATE" class="tcell tcell--head tcell--num" style="width:200px;" />
+                    <ui:Label text="PART" class="tcell tcell--head" style="width:300px;" />
+                    <ui:Label text="TYPE" class="tcell tcell--head" style="width:200px;" />
+                    <ui:Label text="불량 / 검사" class="tcell tcell--head tcell--num" style="width:140px;" />
+                    <ui:Label text="RATE" class="tcell tcell--head tcell--num" style="width:100px;" />
                 </ui:VisualElement>
                 <!-- TODO(API): defect_report.thresholds 와 대조해 임계 초과를 판정한다 -->
                 <ui:VisualElement name="part-list" class="vlist" />

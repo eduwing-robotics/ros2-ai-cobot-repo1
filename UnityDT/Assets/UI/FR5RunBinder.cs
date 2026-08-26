@@ -362,7 +362,12 @@ namespace MainUnity.UI
         void RefreshUnitLine(AssemblyProgressFrame frame)
         {
             if (unitPhase != null)
+            {
                 unitPhase.text = frame != null ? frame.State.ToString().ToUpperInvariant() : "IDLE";
+                // FAILED 가 RUNNING·IDLE 과 같은 무게로 보이면 실패를 못 알아본다.
+                // 진행 중은 색을 얻지 않는다 — 이상만 색을 얻는다(Docs/UI.md 6절).
+                SetTone(unitPhase, frame != null && frame.State == AssemblyState.Failed ? "bad" : "none");
+            }
 
             if (unitStep == null) return;
             if (frame == null)

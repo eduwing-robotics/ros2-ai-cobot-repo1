@@ -122,7 +122,7 @@
           ScaleToFit 이라, 이전 338 x 150 에서는 200 x 150 으로만 그려지고 좌우
           138px 이 레터박스로 죽었다. 폭은 우측 열 372 로 고정이므로 높이로 맞춘다.
         -->
-        <ui:VisualElement name="vision-panel" class="panel" style="position:absolute; left:1524px; top:528px; width:372px; height:368px;">
+        <ui:VisualElement name="vision-panel" class="panel panel--aux" style="position:absolute; left:1524px; top:528px; width:372px; height:368px;">
             <ui:VisualElement class="panel__spine" />
             <ui:VisualElement class="panel__head">
                 <ui:Label text="VISION" class="panel__title" />
@@ -153,7 +153,7 @@
           칸 수와 순서는 씬의 기판(ItemManager)이, 어디까지 놓였는지는 조립
           피드백(AssemblyProgressManager)이 답한다. 샘플 상수가 없다.
         -->
-        <ui:VisualElement name="progress-panel" class="panel" style="position:absolute; left:112px; top:920px; width:1388px; height:136px;">
+        <ui:VisualElement name="progress-panel" class="panel panel--aux" style="position:absolute; left:112px; top:920px; width:1388px; height:136px;">
             <ui:VisualElement class="panel__spine" />
             <ui:VisualElement class="panel__head">
                 <ui:Label text="ASSEMBLY PROGRESS" class="panel__title" />
@@ -166,7 +166,7 @@
         </ui:VisualElement>
 
         <!-- ========================= 하단 · 이벤트 ========================= -->
-        <ui:VisualElement name="events-panel" class="panel" style="position:absolute; left:1524px; top:920px; width:372px; height:136px;">
+        <ui:VisualElement name="events-panel" class="panel panel--aux" style="position:absolute; left:1524px; top:920px; width:372px; height:136px;">
             <ui:VisualElement class="panel__spine" />
             <ui:VisualElement class="panel__head">
                 <ui:Label text="EVENTS" class="panel__title" />

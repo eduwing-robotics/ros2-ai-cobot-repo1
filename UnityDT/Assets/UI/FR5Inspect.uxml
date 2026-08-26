@@ -7,7 +7,7 @@
       실데이터: 카메라 영상 · 스트리밍 상태 (FR5InspectBinder)
       샘플데이터: 판정 · 불량 슬롯 · 유닛 목록  → 검사 연동이 생기면 교체
     -->
-    <ui:VisualElement name="fr5-inspect" class="page fr5--mock">
+    <ui:VisualElement name="fr5-inspect" class="page page--dim fr5--mock">
 
 
         

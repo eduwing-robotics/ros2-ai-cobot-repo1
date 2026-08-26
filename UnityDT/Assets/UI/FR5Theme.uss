@@ -2,8 +2,9 @@
   FR5 공용 테마 — Docs/ui/mock-01-run.svg 에서 확정한 패널 언어.
 
   원칙 (Docs/UI.md 6절)
-    · 대비를 배경에 맡기지 않는다. 패널은 93% 불투명한 계기 표면이다.
+    · 대비를 배경에 맡기지 않는다. 패널은 완전히 불투명한 계기 표면이다.
       트윈에서 배경은 변수이므로 스크림·글자그림자로는 가독성이 상수가 되지 않는다.
+      알파를 조금이라도 남기면 밝은 셀 렌더가 그만큼 비쳐 대비가 배경에 종속된다.
     · 액센트(MOCK 노랑 / REAL 파랑)는 모드와 "지금 여기"에만 쓴다.
     · 정상에는 색을 주지 않는다(--c-ok 는 회색). 이상만 색을 얻는다.
     · 테두리는 "눌러야 하는 것"에만 붙인다.
@@ -27,20 +28,39 @@
 }
 
 .page {
-    --c-panel: rgba(10, 15, 20, 0.97);
+    /* 알파 없음. 0.97 은 밝은 배경 위에서 실측 밝기 편차 5, 페이지에 따라 45 까지 벌어졌다 */
+    --c-panel: rgb(10, 15, 20);
     --c-sunk: rgba(255, 255, 255, 0.05);
     --c-sunk-2: rgba(255, 255, 255, 0.07);
     --c-line: rgba(255, 255, 255, 0.09);
     --c-edge: rgba(255, 255, 255, 0.16);
 
+    /*
+      ink-3 는 화면의 모든 라벨(.micro · .sect__title · .panel__badge · 표 머리)이다.
+      11~12px 로 쓰이므로 본문 기준 4.5:1 을 넘겨야 한다. 이전 값 rgb(96,112,124) 는
+      패널 위에서 3.0:1 이라 현장 조명에서 읽히지 않았다.
+      ink-4 는 비활성·부연이라 그래픽 기준 3:1 만 넘긴다 (이전 2.0:1).
+    */
     --c-ink: rgb(226, 236, 241);
     --c-ink-2: rgb(147, 165, 178);
-    --c-ink-3: rgb(96, 112, 124);
-    --c-ink-4: rgb(74, 84, 94);
+    --c-ink-3: rgb(132, 148, 160);
+    --c-ink-4: rgb(100, 112, 122);
 
     --c-real: rgb(58, 150, 255);
     --c-mock: rgb(250, 204, 51);
     --c-accent: var(--c-real);
+
+    /*
+      액센트의 "채움"도 변수여야 한다.
+
+      USS 에는 color-mix 도 rgba(var(--x), a) 도 없어서, 지금까지 칩·버튼·선택행의
+      배경이 rgba(250,204,51,...) 로 직접 적혀 있었다. 그래서 REAL 로 바꾸면 테두리와
+      글자만 파랗게 변하고 채움은 노란 채로 남아, 한 화면에 액센트가 둘이 됐다.
+      (액센트가 둘이면 어느 쪽도 "지금 여기"를 뜻하지 못한다.)
+    */
+    --c-accent-fill: rgba(58, 150, 255, 0.16);
+    --c-accent-wash: rgba(58, 150, 255, 0.10);
+    --c-accent-tint: rgba(58, 150, 255, 0.07);
 
     --c-ok: rgb(143, 166, 180);
     --c-warn: rgb(246, 173, 55);
@@ -53,15 +73,11 @@
     --fs-value: 20px;
 }
 
-.fr5--mock { --c-accent: var(--c-mock); }
-
-/*
-  <ui:Instance> 는 TemplateContainer 로 들어가며 기본이 흐름 배치다.
-  그대로 두면 셸이 내용 높이(45px)로 눌려 레일이 잘린다.
-*/
-.shell-host {
-    position: absolute;
-    left: 0; top: 0; right: 0; bottom: 0;
+.fr5--mock {
+    --c-accent: var(--c-mock);
+    --c-accent-fill: rgba(250, 204, 51, 0.16);
+    --c-accent-wash: rgba(250, 204, 51, 0.10);
+    --c-accent-tint: rgba(250, 204, 51, 0.07);
 }
 
 .page {
@@ -71,6 +87,43 @@
     color: var(--c-ink-2);
     font-size: var(--fs-body);
 }
+
+/*
+  조회 화면(INSPECT · QUALITY)의 배경 스크림.
+
+  RUN · MANUAL 에서 트윈은 근거다 — 로봇이 실제로 어떻게 움직이는지가 화면의 내용이다.
+  그러나 불량률 표와 판정 목록을 보는 동안 뒤에서 밝은 셀 렌더가 계속 움직이는 것은
+  정보가 아니라 소음이다. 움직임은 시선을 끌기 때문에 값을 읽는 일과 경쟁한다.
+
+  트윈을 끄지는 않는다. 어디를 보고 있는지는 남겨 두고 밝기만 눌러, 패널 사이 여백으로
+  새어 들어오던 밝은 면을 계기와 같은 어둠으로 되돌린다.
+*/
+.page--dim { background-color: rgba(8, 12, 16, 0.82); }
+
+/*
+  트윈 집중(declutter) — 상단 바의 TWIN 칩이 페이지 뿌리에 .page--focus 를 붙인다.
+
+  왜 필요한가. 이 화면은 계기이면서 동시에 트윈이다. 계기를 다 펼치면 RUN 에서 화면의
+  절반, MANUAL 에서 3/4 이 불투명한 패널로 덮인다 — 로봇을 보면서 조그하라고 만든
+  화면인데 정작 로봇이 안 보였다.
+
+  패널을 반투명하게 만드는 방향은 이미 한 번 실패했다(위 --c-panel 주석). 대비를
+  배경에 맡길 수 없으니 남는 답은 하나다: 덮는 넓이 자체를 줄인다. 항공 HUD 연구가
+  declutter 모드를 "있으면 좋은 것"이 아니라 요건으로 두는 이유와 같고, 3D 도구들이
+  전부 패널 접기 단축키를 두는 이유와도 같다.
+
+  무엇을 지우는가. 지금 당장 봐야 하는 것(로봇 상태 · 작업 · 조그)은 남기고, 궁금할 때
+  찾아보는 것(영상 · 이벤트 · 이력 · 진행 표)만 .panel--aux 로 표시해 지운다.
+  상단 바 · 페이지 레일 · 알람 띠는 절대 지우지 않는다 — 알람이 declutter 로 사라지면
+  declutter 가 위험이 된다.
+
+  visibility 가 아니라 display 다. visibility 는 자리를 남겨 아래 패널이 밀리지 않지만,
+  여기서는 자리 자체가 목적이다.
+*/
+.page--focus .panel--aux { display: none; }
+
+/* 집중 중에는 조회 화면의 스크림도 걷는다 — 스크림은 패널을 읽을 때만 필요하다. */
+.page--focus.page--dim { background-color: rgba(8, 12, 16, 0.35); }
 
 /*
   flex-shrink 를 0 으로 둔다. 세로로 쌓인 계기에서 이 값이 1 이면, 내용이 한 줄만
@@ -162,7 +215,11 @@
     background-color: rgba(255, 255, 255, 0.04);
 }
 .chip__text { color: var(--c-ink-2); font-size: var(--fs-micro); letter-spacing: 1.1px; -unity-font-style: bold; }
-.chip--accent { border-color: var(--c-accent); background-color: rgba(250, 204, 51, 0.14); }
+/* 누를 수 있는 칩(MODE · TWIN)만 반응한다. 상태 표시용 칩은 Button 이 아니라 무반응이다. */
+Button.chip { transition-property: background-color; transition-duration: 120ms; }
+Button.chip:hover { background-color: rgba(255, 255, 255, 0.09); }
+Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
+.chip--accent { border-color: var(--c-accent); background-color: var(--c-accent-fill); }
 .chip--accent .chip__text { color: var(--c-accent); }
 .chip--bad { border-color: var(--c-bad); background-color: rgba(240, 71, 90, 0.14); }
 .chip--bad .chip__text { color: var(--c-bad-ink); }
@@ -182,14 +239,29 @@
     letter-spacing: 1.4px;
     -unity-font-style: bold;
 }
+/*
+  눌린 느낌.
+
+  이 화면은 터치 패널에서도 쓴다. 터치에는 hover 가 없으므로, 눌렀다는 확인이
+  :hover 에만 있으면 손가락으로는 아무 확인도 못 받는다. :active 를 따로 준다.
+  전환은 120ms 다 — 계기에서 애니메이션은 값보다 늦으면 안 되고, 0ms 면 눌렀는지
+  안 눌렸는지 구분이 안 된다.
+*/
+.btn { transition-property: background-color, border-color; transition-duration: 120ms; }
 .btn:hover { background-color: rgba(255, 255, 255, 0.1); }
+.btn:active { background-color: rgba(255, 255, 255, 0.18); border-color: var(--c-edge); }
+.btn--accent:active { background-color: var(--c-accent-fill); border-color: var(--c-accent); }
+.btn--danger:active { background-color: rgba(240, 71, 90, 0.24); }
 .btn:disabled { border-color: var(--c-line); background-color: rgba(255, 255, 255, 0.02); color: var(--c-ink-4); }
-.btn--accent { border-color: var(--c-accent); background-color: rgba(250, 204, 51, 0.16); color: var(--c-accent); }
+.btn--accent { border-color: var(--c-accent); background-color: var(--c-accent-fill); color: var(--c-accent); }
 .btn--danger { border-color: rgba(240, 71, 90, 0.55); background-color: rgba(240, 71, 90, 0.1); color: var(--c-bad-ink); }
 
 /* 밑줄 탭 */
-.tab { background-color: rgba(0, 0, 0, 0); border-width: 0; padding: 0; margin: 0; margin-right: 28px; align-items: flex-start; }
-#navrail .tab--on { border-width: 1px; border-color: var(--c-accent); border-radius: 6px; background-color: rgba(250, 204, 51, 0.10); }
+/* margin-right 는 지웠다 — 가로 탭 시절 값이라 세로 레일에서는 탭을 14px 왼쪽으로 밀 뿐이다. */
+.tab { background-color: rgba(0, 0, 0, 0); border-width: 0; padding: 0; margin: 0; align-items: flex-start; transition-property: background-color; transition-duration: 120ms; }
+#navrail .tab:hover { background-color: rgba(255, 255, 255, 0.05); }
+#navrail .tab:active { background-color: rgba(255, 255, 255, 0.09); }
+#navrail .tab--on { border-width: 1px; border-color: var(--c-accent); border-radius: 6px; background-color: var(--c-accent-wash); }
 .tab__text { color: rgb(130, 150, 166); font-size: 13px; letter-spacing: 1.6px; -unity-font-style: bold; }
 .tab__bar { height: 2px; width: 0; margin-top: 6px; background-color: var(--c-accent); }
 .tab--on .tab__text { color: var(--c-accent); }
@@ -204,8 +276,8 @@
     flex-shrink: 0;
     margin-bottom: 6px;
 }
-.ink { background-color: rgb(96, 112, 124); }
-.ring { border-width: 2px; border-color: rgb(96, 112, 124); }
+.ink { background-color: rgb(132, 148, 160); }
+.ring { border-width: 2px; border-color: rgb(132, 148, 160); }
 .ink--bad { background-color: var(--c-bad); opacity: 0.75; }
 
 .tab--on .ink { background-color: var(--c-accent); }
@@ -227,7 +299,7 @@
     border-left-color: rgba(143, 166, 180, 0.45);
     background-color: rgba(255, 255, 255, 0.035);
 }
-.slotchip--target { border-left-color: var(--c-accent); background-color: rgba(250, 204, 51, 0.10); }
+.slotchip--target { border-left-color: var(--c-accent); background-color: var(--c-accent-wash); }
 .slotchip--bad { border-left-color: var(--c-bad); background-color: rgba(240, 71, 90, 0.10); }
 .slotchip__code { color: var(--c-ink); font-size: 13px; -unity-font-style: bold; }
 .slotchip__part { color: var(--c-ink-3); font-size: 11px; margin-top: 3px; }
@@ -256,9 +328,20 @@
 /* 표 — 세로줄과 바깥 테두리를 두지 않는다 */
 .trow { flex-direction: row; align-items: center; min-height: 42px; flex-shrink: 0; border-bottom-width: 1px; border-bottom-color: rgba(255, 255, 255, 0.055); }
 .trow--head { height: 28px; border-bottom-color: var(--c-line); }
-.trow--sel { background-color: rgba(250, 204, 51, 0.07); }
+.trow--sel { background-color: var(--c-accent-tint); }
 .trow--bad { background-color: rgba(240, 71, 90, 0.08); }
-.tcell { color: var(--c-ink-2); font-size: 14px; }
+/*
+  칸은 넘치면 잘린다. 기본값이면 Label 이 제 너비를 넘어 옆 칸 위로 그려져서 두 칸의
+  글자가 겹친다 (PART DEFECT RATE 의 부품명 · 유형이 실제로 이 상태였다).
+  겹친 글자는 둘 다 못 읽지만, 잘린 글자는 잘렸다는 것이 보인다.
+*/
+.tcell {
+    color: var(--c-ink-2);
+    font-size: 14px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
 .tcell--head { color: var(--c-ink-3); font-size: 10px; letter-spacing: 1.2px; -unity-font-style: bold; }
 .tcell--num { -unity-text-align: middle-right; color: var(--c-ink); -unity-font-style: bold; }
 
@@ -273,7 +356,18 @@
 .empty__title { color: var(--c-ink-3); font-size: 16px; -unity-font-style: bold; letter-spacing: 1.4px; }
 .empty__desc { color: var(--c-ink-4); font-size: 13px; margin-top: 10px; }
 /*
-  조회 경로가 아직 없는 자리. 붉은색이 아니라 warn 이다 — 미연결은 이상이지만 위험은
-  아니고, 아직 안 붙은 화면이 많아 붉게 칠하면 진짜 이상(불량·비상정지)이 묻힌다.
+  조회 경로가 아직 없는 자리.
+
+  이전에는 warn(노랑)이었다. 그런데 미연결 자리가 한 화면에 3~4개씩 있어(QUALITY 4개,
+  INSPECT 3개) 화면이 통째로 노래졌고, 그러면 진짜 이상이 묻힌다 — 붉은색을 아껴 둔
+  이유와 정확히 같은 이유로 노란색도 아껴야 했다. 게다가 이 노랑은 MOCK 모드 액센트와
+  같은 계열이라 "지금 MOCK" 신호까지 함께 흐려졌다.
+
+  부재는 이상이 아니라 없음이다. 그래서 무채색으로 두되, 본문(--c-ink-3)보다 한 단계
+  밝게 해서 "이 자리의 주된 낱말"이라는 것만 남긴다. 무엇이 없는지는 .empty__desc 가
+  적는다 — 색이 아니라 글자가 설명하게 한다.
 */
-.empty__title--miss { color: var(--c-warn); }
+.empty__title--miss { color: var(--c-ink-2); }
+
+/* 값 한 칸이 비어 있을 때. 위와 같은 이유로 무채색이다 (FR5EmptyState.Missing) */
+.miss { color: var(--c-ink-2); }

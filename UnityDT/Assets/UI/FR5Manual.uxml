@@ -14,14 +14,30 @@
 
         
 
-        <!-- 경고 띠 : 이 경로는 실적이 아니다 -->
-        <ui:VisualElement name="manual-banner" style="position:absolute; left:88px; top:64px; right:0; height:66px; background-color:rgba(246,173,55,0.10); border-top-width:2px; border-top-color:rgba(246,173,55,0.7); padding-left:24px; justify-content:center;">
+        <!--
+          경고 띠 : 이 경로는 실적이 아니다.
+
+          top 은 64 가 아니라 108 이다. 64 는 셸의 alarm-banner(top:64 · height:44) 자리이고,
+          그 띠는 로봇 미연결이면 켜진다 — 두 띠가 같은 좌표에 있어 글자가 서로를 뭉갰다.
+          알람 띠 자리는 켜지든 안 켜지든 항상 비워 둔다. 알람은 어느 화면에서도 무엇에도
+          가리지 않아야 하고, 알람 유무에 따라 아래 배치가 흔들리면 그것대로 못 읽는다.
+        -->
+        <ui:VisualElement name="manual-banner" style="position:absolute; left:88px; top:108px; right:0; height:66px; background-color:rgb(34,31,24); border-top-width:2px; border-top-color:rgba(246,173,55,0.7); padding-left:24px; justify-content:center;">
             <ui:Label text="수동 조작 — 작업 흐름 밖입니다" class="warn" style="font-size:18px;" />
             <ui:Label text="jobs · units 를 만들지 않고 DB에 아무것도 기록하지 않습니다.  지금은 화면만 만든 단계라 APPLY · 그리퍼 · 모드 전환이 로봇으로 나가지 않습니다." style="color:rgb(194,164,99); font-size:13px; margin-top:4px;" />
         </ui:VisualElement>
 
         <!-- 좌 : TCP 조그 -->
-        <ui:VisualElement name="tcp-panel" class="panel" style="position:absolute; left:112px; top:154px; width:560px; height:742px;">
+        <!--
+          두 패널을 화면 양 끝으로 밀고 가운데를 비운다.
+
+          이전에는 560 + 1200 이 붙어 있어 top/rail 까지 합쳐 화면의 74% 가 덮였다.
+          로봇을 보면서 조그하라고 만든 화면인데 로봇이 안 보였다. 폭을 줄일 수 있었던
+          이유는 슬라이더가 남아돌았기 때문이다 — 1200 에서 슬라이더 한 칸이 784px 였다.
+          760 으로 줄여도 344px 이라 6축 조그에 모자라지 않고, 그 차이가 그대로
+          가운데 572x742 짜리 트윈 창이 된다.
+        -->
+        <ui:VisualElement name="tcp-panel" class="panel panel--aux" style="position:absolute; left:112px; top:198px; width:452px; height:742px;">
             <ui:VisualElement class="panel__spine" />
             <ui:VisualElement class="panel__head">
                 <ui:Label text="TCP JOG" class="panel__title" />
@@ -50,7 +66,7 @@
         </ui:VisualElement>
 
         <!-- 우 : 관절 조그 -->
-        <ui:VisualElement name="jog-panel" class="panel" style="position:absolute; left:696px; top:154px; width:1200px; height:742px;">
+        <ui:VisualElement name="jog-panel" class="panel" style="position:absolute; left:1136px; top:198px; width:760px; height:742px;">
             <ui:VisualElement class="panel__spine" />
             <ui:VisualElement class="panel__head">
                 <ui:Label text="JOINT JOG   J1 – J6" class="panel__title" />

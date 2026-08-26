@@ -29,9 +29,15 @@ namespace MainUnity.UI
         [SerializeField] float visionStaleSeconds = 2f;
 
         VisualElement modeMock, modeReal, robotChip, linkJointDot, linkImageDot, alarmBanner;
-        Button modeMockButton, modeRealButton, stopAllButton;
+        VisualElement pageRoot;
+        Button modeMockButton, modeRealButton, stopAllButton, viewFocusButton;
         Label robotText, linkJointAge, linkImageAge, alarmLabel, alarmDetail;
         bool cached;
+        bool hasAuxPanels;
+
+        // 페이지마다 셸 인스턴스가 하나씩이라 인스턴스 필드로 두면 화면을 옮길 때마다
+        // 집중이 풀린다. 접어 둔 것은 접어 둔 채로 있어야 하므로 static 이다.
+        static bool focusMode;
 
         void OnEnable() => cached = false;
 
@@ -46,6 +52,7 @@ namespace MainUnity.UI
             RefreshState();
             RefreshLinks();
             RefreshAlarm();
+            RefreshFocus();
         }
 
         void Build()
@@ -67,6 +74,9 @@ namespace MainUnity.UI
             alarmBanner = root.Q<VisualElement>("alarm-banner");
             alarmLabel = root.Q<Label>("alarm-label");
             alarmDetail = root.Q<Label>("alarm-detail");
+            viewFocusButton = root.Q<Button>("view-focus");
+            pageRoot = root.Q<VisualElement>(className: "page");
+            hasAuxPanels = pageRoot != null && pageRoot.Q<VisualElement>(className: "panel--aux") != null;
 
             // 셸이 없는 문서에 붙었을 수 있다. 그 경우 조용히 아무것도 하지 않는다.
             cached = modeMock != null || robotChip != null || linkJointDot != null;
@@ -84,12 +94,33 @@ namespace MainUnity.UI
         {
             if (modeMockButton != null) modeMockButton.clicked += SelectMockMode;
             if (modeRealButton != null) modeRealButton.clicked += SelectRealMode;
+            if (viewFocusButton != null) viewFocusButton.clicked += ToggleFocus;
         }
 
         void UnbindCommands()
         {
             if (modeMockButton != null) modeMockButton.clicked -= SelectMockMode;
             if (modeRealButton != null) modeRealButton.clicked -= SelectRealMode;
+            if (viewFocusButton != null) viewFocusButton.clicked -= ToggleFocus;
+        }
+
+        static void ToggleFocus() => focusMode = !focusMode;
+
+        /// <summary>
+        /// 트윈 집중. 보조 패널(.panel--aux)만 접어 3D 를 드러낸다.
+        /// 상단 바 · 페이지 레일 · 알람 띠는 건드리지 않는다 — 알람이 접기로 사라지면
+        /// 접기가 위험이 된다.
+        /// </summary>
+        void RefreshFocus()
+        {
+            // 접을 것이 없는 화면(검사 · 품질 · 요청)에서는 버튼 자체를 숨긴다.
+            // 눌러도 아무 일도 없는 버튼은 고장으로 보인다.
+            if (viewFocusButton != null)
+                viewFocusButton.style.display = hasAuxPanels ? DisplayStyle.Flex : DisplayStyle.None;
+
+            bool on = focusMode && hasAuxPanels;
+            pageRoot?.EnableInClassList("page--focus", on);
+            viewFocusButton?.EnableInClassList("tab--on", on);
         }
 
         void SelectMockMode() => SelectMode(RobotOperatingMode.Mock);
@@ -125,6 +156,11 @@ namespace MainUnity.UI
             bool mock = uiMaster == null || uiMaster.IsSimulated;
             modeMock?.EnableInClassList("chip--accent", mock);
             modeReal?.EnableInClassList("chip--accent", !mock);
+
+            // 페이지 뿌리의 fr5--mock 이 --c-accent 를 정한다. 이 줄이 없으면 UXML 에
+            // 박아 둔 fr5--mock 이 그대로 남아, REAL 로 바꿔도 화면 전체 액센트가
+            // 노란 채였다 — 모드에만 쓰기로 한 색이 모드를 안 따라가고 있었다.
+            pageRoot?.EnableInClassList("fr5--mock", mock);
         }
 
         void RefreshState()
