@@ -10459,7 +10459,6 @@ GameObject:
   - component: {fileID: 1511203715}
   - component: {fileID: 1511203714}
   - component: {fileID: 1511203717}
-  - component: {fileID: 1511203718}
   - component: {fileID: 2494761539128691210}
   - component: {fileID: 2494761539128691211}
   m_Layer: 0
@@ -10540,34 +10539,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Robot.Real.FairinoRealRobotMaster
   stateSource: {fileID: 1511203716}
   shadowing: {fileID: 1511203715}
-  moveControl: {fileID: 1511203718}
   gripperRequest: {fileID: 1511203714}
   control: {fileID: 2494761539128691210}
   assemblyControl: {fileID: 2494761539128691211}
---- !u!114 &1511203718
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1511203712}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ff66d7de5e1b2bc83aa95b6e985c00d3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Robot.Real.RealMoveControl
-  serviceName: /fairino_remote_command_service
-  target: {fileID: 0}
-  positionMillimeters: {x: 0, y: 0, z: 0}
-  rotationDegrees: {x: 180, y: 0, z: 0}
-  pointIndex: 1
-  speedPercent: 20
-  tool: 1
-  user: 0
-  accelerationPercent: 100
-  overridePercent: 100
-  blendTimeMilliseconds: -1
-  configuration: -1
 --- !u!1 &1511624942
 GameObject:
   m_ObjectHideFlags: 0
@@ -15199,6 +15173,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 20a6ec4d26c64fae8e19ed4f15c6a2c1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Robot.Real.RealRobotControl
+  serviceName: /fairino_remote_command_service
+  completionTimeoutSeconds: 30
+  homePoint: {fileID: 0}
+  itemReadyPoint: {fileID: 0}
+  assemblyReadyPoint: {fileID: 0}
+  target: {fileID: 0}
+  positionMillimeters: {x: 0, y: 0, z: 0}
+  rotationDegrees: {x: 180, y: 0, z: 0}
+  pointIndex: 1
+  speedPercent: 20
+  tool: 1
+  user: 0
+  accelerationPercent: 100
+  overridePercent: 100
+  blendTimeMilliseconds: -1
+  configuration: -1
   gripperRequest: {fileID: 1511203714}
 --- !u!114 &2494761539128691211
 MonoBehaviour:
