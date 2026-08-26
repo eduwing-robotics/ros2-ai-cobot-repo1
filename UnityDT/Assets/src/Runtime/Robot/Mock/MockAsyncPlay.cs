@@ -717,13 +717,13 @@ namespace MainUnity.Runtime.Robot.Mock
 
         RosPoseRequest ToRosPoseRequest(Pose tcpTarget, string targetName)
         {
-            if (!control.TryGetRosWristTarget(tcpTarget, out Vector3 positionMillimeters,
+            if (!control.TryGetRosTcpTarget(tcpTarget, out Vector3 positionMillimeters,
                     out Quaternion rotation))
                 throw new InvalidOperationException(
-                    "Could not convert Mock " + targetName + " TCP pose to wrist3.");
+                    "Could not convert Mock " + targetName + " TCP pose to base_link.");
             if (!IsFinite(positionMillimeters) || !IsFinite(rotation))
                 throw new InvalidOperationException(
-                    "Converted Mock " + targetName + " wrist pose must be finite.");
+                    "Converted Mock " + targetName + " TCP pose must be finite.");
 
             return new RosPoseRequest
             {
