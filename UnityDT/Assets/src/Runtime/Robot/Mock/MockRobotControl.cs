@@ -45,7 +45,6 @@ namespace MainUnity.Runtime.Robot.Mock
         [SerializeField, Range(0, 100)] int closedPositionPercent;
 
         Transform robotBase;
-        Transform tcp;
         ROSConnection connection;
         bool publishersRegistered;
         bool completionSubscribed;
@@ -102,26 +101,6 @@ namespace MainUnity.Runtime.Robot.Mock
             }
 
             return ExecutePositionAsync(motion);
-        }
-
-        internal Task MoveJToAsync(Pose target) => ExecutePositionAsync(MoveJTo(target));
-        internal Task MoveLToAsync(Pose target) => ExecutePositionAsync(MoveTo(target));
-        internal Task OpenGripperAsync() => ExecutePositionAsync(OpenGripper());
-        internal Task SetGripperOpeningAsync(float openingPercent) =>
-            ExecutePositionAsync(SetGripperOpening(openingPercent));
-
-        internal Pose GetVerticalApproach(Pose target)
-        {
-            RefreshReferences();
-            if (tcp == null)
-                throw RejectOperation(RobotErrorLabel.InvalidData,
-                    "TCP transform is unavailable.");
-            if (tcp.position.y <= target.position.y)
-                throw RejectOperation(RobotErrorLabel.InvalidData,
-                    "MoveJ ready point must be above the Pick/Place target.");
-
-            return new Pose(new Vector3(target.position.x, tcp.position.y, target.position.z),
-                target.rotation);
         }
 
         Task ExecutePositionAsync(IEnumerator motion)
@@ -198,14 +177,6 @@ namespace MainUnity.Runtime.Robot.Mock
         /// <summary>Mock 직선 이동 명령을 발행하고 완료 신호까지 기다린다.</summary>
         public IEnumerator MoveTo(Pose target) =>
             Execute(() => TryMoveTo(target), "execution: complete");
-
-        /// <summary>Mock 그리퍼 열기 명령을 발행하고 완료 신호까지 기다린다.</summary>
-        public IEnumerator OpenGripper() =>
-            Execute(TryOpenGripper, "gripper: complete");
-
-        /// <summary>Mock 그리퍼 목표를 발행하고 완료 신호까지 기다린다.</summary>
-        public IEnumerator SetGripperOpening(float openingPercent) =>
-            Execute(() => TrySetGripperOpeningPercent(openingPercent), "gripper: complete");
 
         /// <summary>수동 제어 UI의 관절 목표를 Mock ROS2 관절 명령으로 발행한다.</summary>
         public bool TrySetJointTarget(IReadOnlyList<float> jointDegrees)
@@ -489,13 +460,6 @@ namespace MainUnity.Runtime.Robot.Mock
         {
             if (statusManager == null)
                 statusManager = FindAnyObjectByType<RobotStatusManager>();
-            if (tcp == null && robotBase != null)
-                foreach (Transform candidate in robotBase.GetComponentsInChildren<Transform>(true))
-                    if (candidate.name == "TCP")
-                    {
-                        tcp = candidate;
-                        break;
-                    }
         }
     }
 }

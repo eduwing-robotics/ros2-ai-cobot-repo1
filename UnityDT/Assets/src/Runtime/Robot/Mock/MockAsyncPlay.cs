@@ -736,12 +736,9 @@ namespace MainUnity.Runtime.Robot.Mock
             };
         }
 
-        static Quaternion DownwardTcpRotation(Quaternion unityTargetRotation)
-        {
-            float halfYawRadians = unityTargetRotation.eulerAngles.y * Mathf.Deg2Rad * 0.5f;
-            return new Quaternion(-Mathf.Sin(halfYawRadians), 0f,
-                Mathf.Cos(halfYawRadians), 0f);
-        }
+        static Quaternion DownwardTcpRotation(Quaternion unityTargetRotation) =>
+            Quaternion.AngleAxis(-unityTargetRotation.eulerAngles.y, Vector3.up) *
+            Quaternion.AngleAxis(180f, Vector3.forward);
 
         void FailActive(string error)
         {
