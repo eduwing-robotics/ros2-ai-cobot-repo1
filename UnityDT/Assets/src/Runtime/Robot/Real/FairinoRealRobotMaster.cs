@@ -14,15 +14,12 @@ namespace MainUnity.Runtime.Robot.Real
     {
         [SerializeField] RealStatusSubscriber stateSource;
         [SerializeField] RealShadowing shadowing;
-        [SerializeField] RealMoveControl moveControl;
-
         [SerializeField] RealGripperRequest gripperRequest;
-        [Tooltip("IRobotControl을 구현한 REAL 제어 컴포넌트.")]
-        [SerializeField] MonoBehaviour control;
+        [SerializeField] RealRobotControl control;
         [SerializeField] RealAssemblyScenarioControl assemblyControl;
 
         public IRobotStateSource StateSource => stateSource;
-        public IRobotControl Control => control as IRobotControl;
+        public IRobotControl Control => control;
         public IRobotScenarioControl ScenarioControl => assemblyControl;
 
         void Awake() => RefreshReferences();
@@ -35,7 +32,7 @@ namespace MainUnity.Runtime.Robot.Real
             AssemblyProgressManager assemblyProgress)
         {
             RefreshReferences();
-            moveControl?.Initialize(articulationRoot, statusManager);
+            control?.Initialize(articulationRoot, statusManager);
             gripperRequest?.Initialize(statusManager);
 
             shadowing?.Initialize(articulationRoot);
@@ -52,8 +49,6 @@ namespace MainUnity.Runtime.Robot.Real
                 stateSource.enabled = active;
             if (shadowing != null)
                 shadowing.enabled = active;
-            if (moveControl != null)
-                moveControl.enabled = active;
             if (gripperRequest != null)
                 gripperRequest.enabled = active;
 
@@ -69,18 +64,12 @@ namespace MainUnity.Runtime.Robot.Real
                 stateSource = GetComponentInChildren<RealStatusSubscriber>(true);
             if (shadowing == null)
                 shadowing = GetComponentInChildren<RealShadowing>(true);
-            if (moveControl == null)
-                moveControl = GetComponentInChildren<RealMoveControl>(true);
-
             if (gripperRequest == null)
                 gripperRequest = GetComponentInChildren<RealGripperRequest>(true);
+            if (control == null)
+                control = GetComponentInChildren<RealRobotControl>(true);
             if (assemblyControl == null)
                 assemblyControl = GetComponentInChildren<RealAssemblyScenarioControl>(true);
-            if (control != null && control is not IRobotControl)
-            {
-                Debug.LogError("Control must implement IRobotControl.", this);
-                control = null;
-            }
         }
 
         void Bind()
