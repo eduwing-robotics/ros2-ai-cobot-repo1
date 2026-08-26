@@ -4,7 +4,7 @@
 // 각 페이지는 자기 GameObject 에 UIDocument 하나 + 바인더를 갖고, 라우터는
 // 활성 페이지의 UIDocument 만 켠다. 비활성 페이지는 Update 가 돌지 않는다.
 //
-// 각 페이지 UXML 은 nav-run / nav-inspect / nav-manual / nav-quality / nav-setup
+// 각 페이지 UXML 은 nav-run / nav-monitor / nav-inspect / nav-manual / nav-quality / nav-setup
 // 이라는 같은 이름의 버튼을 갖고 있으므로, 라우터가 모든 문서에서 한 번에 등록한다.
 
 using System;
@@ -65,6 +65,7 @@ namespace MainUnity.UI
         UIDocument requestDocument;
         AssemblyProgressManager assemblyProgress;
         bool progressSubscribed;
+        bool monitorRequested;
         FR5Page current;
 
         /// <summary>현재 열린 페이지다.</summary>
@@ -154,6 +155,10 @@ namespace MainUnity.UI
         /// <summary>한 문서의 nav 버튼을 한 번만 등록한다.</summary>
         void Wire(VisualElement root)
         {
+            Button monitor = root.Q<Button>("nav-monitor");
+            if (monitor != null)
+                monitor.clicked += OpenMonitor;
+
             foreach ((FR5Page target, string buttonName) in NavButtons)
             {
                 Button button = root.Q<Button>(buttonName);
@@ -170,7 +175,17 @@ namespace MainUnity.UI
         public void Go(FR5Page page)
         {
             if (!IsAvailable(page)) return;
+            monitorRequested = false;
             current = page;
+            Apply();
+        }
+
+        /// <summary>진행 상태와 무관하게 실행 모니터 화면을 연다.</summary>
+        public void OpenMonitor()
+        {
+            if (!IsAvailable(FR5Page.Run)) return;
+            monitorRequested = true;
+            current = FR5Page.Run;
             Apply();
         }
 
@@ -197,7 +212,7 @@ namespace MainUnity.UI
 
         UIDocument DocumentFor(FR5Page page)
         {
-            if (page == FR5Page.Run && requestDocument != null &&
+            if (page == FR5Page.Run && !monitorRequested && requestDocument != null &&
                 (assemblyProgress?.Latest == null || assemblyProgress.Latest.IsTerminal))
                 return requestDocument;
 
