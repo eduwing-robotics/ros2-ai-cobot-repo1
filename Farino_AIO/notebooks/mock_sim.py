@@ -60,6 +60,25 @@ def quaternion_from_rpy(roll, pitch, yaw):
     )
 
 
+def quaternion_multiply(left, right):
+    lx, ly, lz, lw = left
+    rx, ry, rz, rw = right
+    return (
+        lw * rx + lx * rw + ly * rz - lz * ry,
+        lw * ry - lx * rz + ly * rw + lz * rx,
+        lw * rz + lx * ry - ly * rx + lz * rw,
+        lw * rw - lx * rx - ly * ry - lz * rz,
+    )
+
+
+def rotate_vector(quaternion, vector):
+    rotated = quaternion_multiply(
+        quaternion_multiply(quaternion, (*vector, 0.0)),
+        (-quaternion[0], -quaternion[1], -quaternion[2], quaternion[3]),
+    )
+    return rotated[:3]
+
+
 def gripper_position(opening_percent):
     return (100.0 - opening_percent) * GRIPPER_CLOSED_METERS / 100.0
 def joint_target_reached(current_radians, target_degrees, tolerance_degrees=0.1):
@@ -434,6 +453,15 @@ def self_check():
     assert snapshot["placed_count"] == 1 and snapshot["held_step_order"] == 0
     snapshot = advance_assembly_snapshot(snapshot, terminal, "mock-r1", 1)
     assert not snapshot["active"] and snapshot["state"] == "COMPLETED"
+    tcp_target = Pose()
+    tcp_target.orientation.w = 1.0
+    wrist_target = MockMoveJ.tool_target_to_wrist_target(
+        tcp_target, (3.3, 0.0, 165.5, 0.0, 0.0, 0.0)
+    )
+    assert wrist_target.position.x == -0.0033
+    assert wrist_target.position.y == 0.0
+    assert wrist_target.position.z == -0.1655
+    assert wrist_target.orientation.w == 1.0
     try:
         parse_start_command("{}")
     except ValueError:
@@ -730,6 +758,7 @@ class MockMoveJ(Node):
         target.orientation.y /= norm
         target.orientation.z /= norm
         target.orientation.w /= norm
+        target = self.tool_target_to_wrist_target(target, self.args.tool_offset)
 
         region_pose = Pose()
         region_pose.position = target.position
@@ -756,6 +785,33 @@ class MockMoveJ(Node):
         return Constraints(
             position_constraints=[position], orientation_constraints=[orientation]
         )
+
+    @staticmethod
+    def tool_target_to_wrist_target(tcp_target, tool_offset):
+        x, y, z, rx, ry, rz = tool_offset
+        tool_rotation = quaternion_from_rpy(
+            math.radians(rx), math.radians(ry), math.radians(rz)
+        )
+        tcp_rotation = (
+            tcp_target.orientation.x,
+            tcp_target.orientation.y,
+            tcp_target.orientation.z,
+            tcp_target.orientation.w,
+        )
+        wrist_rotation = quaternion_multiply(
+            tcp_rotation,
+            (-tool_rotation[0], -tool_rotation[1], -tool_rotation[2], tool_rotation[3]),
+        )
+        offset = rotate_vector(wrist_rotation, (x / 1000.0, y / 1000.0, z / 1000.0))
+        wrist_target = Pose()
+        wrist_target.position.x = tcp_target.position.x - offset[0]
+        wrist_target.position.y = tcp_target.position.y - offset[1]
+        wrist_target.position.z = tcp_target.position.z - offset[2]
+        wrist_target.orientation.x = wrist_rotation[0]
+        wrist_target.orientation.y = wrist_rotation[1]
+        wrist_target.orientation.z = wrist_rotation[2]
+        wrist_target.orientation.w = wrist_rotation[3]
+        return wrist_target
 
     def plan(self, pose_target=None):
         if not self.move_client.wait_for_server(timeout_sec=5.0):
@@ -849,6 +905,7 @@ class MockMoveJ(Node):
         target.pose.orientation.y /= norm
         target.pose.orientation.z /= norm
         target.pose.orientation.w /= norm
+        target.pose = self.tool_target_to_wrist_target(target.pose, self.args.tool_offset)
 
         request = GetCartesianPath.Request()
         request.header = target.header
@@ -1142,6 +1199,14 @@ def parse_args(argv=None):
     parser.add_argument("--acceleration", type=float, default=10.0, choices=range(1, 101))
     parser.add_argument("--frame", default="base_link")
     parser.add_argument("--tip", default="wrist3_link")
+    parser.add_argument(
+        "--tool-offset",
+        nargs=6,
+        type=float,
+        default=(3.3, 0.0, 165.5, 0.0, 0.0, 0.0),
+        metavar=("X", "Y", "Z", "RX", "RY", "RZ"),
+        help="wrist3_link to Tool TCP offset in mm/degrees",
+    )
     parser.add_argument("--preview-seconds", type=float, default=0.0)
     parser.add_argument("--max-step", type=float, default=0.005)
     parser.add_argument("--max-joint-step", type=float, default=0.35)
@@ -1162,6 +1227,8 @@ def parse_args(argv=None):
         parser.error("preview-seconds must be nonnegative and Cartesian steps positive")
     if args.min_j3_deg < 0.0:
         parser.error("min-j3-deg must be greater than or equal to 0")
+    if not all(math.isfinite(value) for value in args.tool_offset):
+        parser.error("tool-offset values must be finite")
     return args
 
 

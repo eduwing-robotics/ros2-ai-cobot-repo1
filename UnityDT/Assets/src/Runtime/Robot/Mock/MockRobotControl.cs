@@ -36,9 +36,6 @@ namespace MainUnity.Runtime.Robot.Mock
         [SerializeField, Min(1f)] float maxAbsJointDegrees = 360f;
         [SerializeField, Min(1f)] float maxAbsTcpMillimeters = 10000f;
 
-        [Header("Mock TCP")]
-        [SerializeField] Vector3 downwardRotationDegrees = new(180f, 0f, 0f);
-
         [Header("Mock Teaching Points")]
         [SerializeField] Transform itemReadyPoint;
         [SerializeField] Transform assemblyReadyPoint;
@@ -49,7 +46,6 @@ namespace MainUnity.Runtime.Robot.Mock
 
         Transform robotBase;
         Transform tcp;
-        Transform wrist3;
         ROSConnection connection;
         bool publishersRegistered;
         bool completionSubscribed;
@@ -236,50 +232,31 @@ namespace MainUnity.Runtime.Robot.Mock
 
         bool TryMoveJTo(Pose target) => TryPublishPoseTarget(target, moveJTargetTopic);
 
-        /// <summary>Unity TCP 목표를 Unity 모델의 wrist3 직선 이동 목표로 변환해 Mock ROS2에 발행한다.</summary>
+        /// <summary>Unity TCP 목표를 base_link 기준으로 Mock ROS2에 발행한다.</summary>
         public bool TryMoveTo(Pose target) => TryPublishPoseTarget(target, tcpTargetTopic);
 
         bool TryPublishPoseTarget(Pose target, string targetTopic)
         {
-            if (!TryGetRosWristTarget(target, out Vector3 positionMillimeters,
+            if (!TryGetRosTcpTarget(target, out Vector3 positionMillimeters,
                     out Quaternion rotation))
                 return false;
             return TryPublishTcpTarget(targetTopic, positionMillimeters, rotation);
         }
 
-        internal bool TryGetRosWristTarget(Pose target, out Vector3 positionMillimeters,
+        internal bool TryGetRosTcpTarget(Pose target, out Vector3 positionMillimeters,
             out Quaternion rotation)
         {
             positionMillimeters = default;
             rotation = default;
-            Vector3 tcpRotation = ToDownwardYaw(target.rotation.eulerAngles, downwardRotationDegrees);
-            Pose downwardTcpTarget = new(target.position, ToUnityRotation(tcpRotation));
-            if (!TryGetWristTarget(downwardTcpTarget, out Pose wristTarget))
-                return false;
-
-            Vector3 basePosition = robotBase.InverseTransformPoint(wristTarget.position);
-            positionMillimeters = FLU.ConvertFromRUF(basePosition) * 1000f;
-            rotation = FLU.ConvertFromRUF(wristTarget.rotation);
-            return true;
-        }
-
-        bool TryGetWristTarget(Pose tcpTarget, out Pose wristTarget)
-        {
             RefreshReferences();
-            wristTarget = default;
-            if (robotBase == null || tcp == null || wrist3 == null)
-                return Reject(RobotErrorLabel.InvalidData, "TCP or wrist3 transform is unavailable.");
+            if (robotBase == null)
+                return Reject(RobotErrorLabel.InvalidData, "Robot base transform is unavailable.");
 
-            Vector3 wristToTcp = Quaternion.Inverse(wrist3.rotation) * (tcp.position - wrist3.position);
-            Quaternion wristToTcpRotation = Quaternion.Inverse(wrist3.rotation) * tcp.rotation;
-            wristTarget = ToWristTarget(tcpTarget, wristToTcp, wristToTcpRotation);
+            Vector3 basePosition = robotBase.InverseTransformPoint(target.position);
+            Quaternion baseRotation = Quaternion.Inverse(robotBase.rotation) * target.rotation;
+            positionMillimeters = FLU.ConvertFromRUF(basePosition) * 1000f;
+            rotation = FLU.ConvertFromRUF(baseRotation);
             return true;
-        }
-
-        static Pose ToWristTarget(Pose tcpTarget, Vector3 wristToTcp, Quaternion wristToTcpRotation)
-        {
-            Quaternion wristRotation = tcpTarget.rotation * Quaternion.Inverse(wristToTcpRotation);
-            return new Pose(tcpTarget.position - wristRotation * wristToTcp, wristRotation);
         }
 
         public bool TryOpenGripper() => TrySetGripperOpeningPercent(openPositionPercent);
@@ -491,37 +468,6 @@ namespace MainUnity.Runtime.Robot.Mock
             return false;
         }
 
-        static Vector3 ToDownwardYaw(Vector3 rotationDegrees, Vector3 downwardRotationDegrees)
-        {
-            downwardRotationDegrees.z = rotationDegrees.y;
-            return downwardRotationDegrees;
-        }
-
-        static QuaternionMsg ToRosQuaternion(Vector3 rpyDegrees)
-        {
-            double roll = rpyDegrees.x * Math.PI / 180d * 0.5d;
-            double pitch = rpyDegrees.y * Math.PI / 180d * 0.5d;
-            double yaw = rpyDegrees.z * Math.PI / 180d * 0.5d;
-            double cr = Math.Cos(roll);
-            double sr = Math.Sin(roll);
-            double cp = Math.Cos(pitch);
-            double sp = Math.Sin(pitch);
-            double cy = Math.Cos(yaw);
-            double sy = Math.Sin(yaw);
-
-            return new QuaternionMsg(
-                sr * cp * cy - cr * sp * sy,
-                cr * sp * cy + sr * cp * sy,
-                cr * cp * sy - sr * sp * cy,
-                cr * cp * cy + sr * sp * sy);
-        }
-
-        static Quaternion ToUnityRotation(Vector3 rpyDegrees)
-        {
-            QuaternionMsg ros = ToRosQuaternion(rpyDegrees);
-            return FLU.ConvertToRUF(new Quaternion((float)ros.x, (float)ros.y, (float)ros.z, (float)ros.w));
-        }
-
         static bool IsFiniteInRange(float value, float maxAbsolute) =>
             float.IsFinite(value) && Mathf.Abs(value) <= maxAbsolute;
 
@@ -529,25 +475,6 @@ namespace MainUnity.Runtime.Robot.Mock
         [ContextMenu("Self Check Mock Command Conversion")]
         void SelfCheckCommandConversion()
         {
-            Debug.Assert(ToDownwardYaw(new Vector3(0f, 45f, 0f), new Vector3(180f, 0f, 0f)) ==
-                         new Vector3(180f, 0f, 45f),
-                "Mock TCP rotation must map Unity Y yaw to ROS Z yaw.");
-
-            QuaternionMsg identity = ToRosQuaternion(Vector3.zero);
-            Debug.Assert(identity.x == 0d && identity.y == 0d && identity.z == 0d && identity.w == 1d,
-                "Zero RPY must convert to the identity quaternion.");
-
-            Pose wrist = ToWristTarget(new Pose(new Vector3(1f, 2f, 3f), Quaternion.identity),
-                new Vector3(0f, 0f, 0.1f), Quaternion.identity);
-            Debug.Assert(wrist.position == new Vector3(1f, 2f, 2.9f),
-                "TCP offset must be removed in the target wrist orientation.");
-
-            QuaternionMsg ros = ToRosQuaternion(new Vector3(180f, 0f, 45f));
-            Quaternion roundTrip = FLU.ConvertFromRUF(ToUnityRotation(new Vector3(180f, 0f, 45f)));
-            Debug.Assert(Quaternion.Angle(roundTrip,
-                             new Quaternion((float)ros.x, (float)ros.y, (float)ros.z, (float)ros.w)) < 0.001f,
-                "TCP offset conversion must use the same rotation as the ROS command.");
-
             Debug.Assert(CompletionFailureLabel(null) == RobotErrorLabel.Timeout &&
                          CompletionFailureLabel("error: rejected") == RobotErrorLabel.CommandRejected,
                 "Mock completion failures must distinguish timeout from rejection.");
@@ -567,13 +494,6 @@ namespace MainUnity.Runtime.Robot.Mock
                     if (candidate.name == "TCP")
                     {
                         tcp = candidate;
-                        break;
-                    }
-            if (wrist3 == null && tcp != null)
-                for (Transform candidate = tcp.parent; candidate != null; candidate = candidate.parent)
-                    if (candidate.name == "j6" || candidate.name == "wrist3_link")
-                    {
-                        wrist3 = candidate;
                         break;
                     }
         }
