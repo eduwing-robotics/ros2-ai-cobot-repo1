@@ -7,7 +7,7 @@ namespace MainUnity.Runtime.Scenario
 {
     public sealed class Scenario : MonoBehaviour
     {
-        [SerializeField] ConveyMock conveyBelt;
+        [SerializeField] MockConveyor conveyor;
 
         IRobotScenarioControl robot;
 
@@ -19,12 +19,12 @@ namespace MainUnity.Runtime.Scenario
         [ContextMenu("Run Scenario")]
         public async void Run()
         {
-            if (robot == null || conveyBelt == null)
+            if (robot == null || conveyor == null)
                 throw new InvalidOperationException("Scenario dependencies are not initialized.");
 
-            await conveyBelt.MoveBoardToAssemblyAsync();
+            await conveyor.MoveBoardToAssemblyAsync();
             await robot.ExecuteAsync();
-            await conveyBelt.MoveBoardToInspectionAsync();
+            await conveyor.MoveBoardToInspectionAsync();
             //await resultCheck
             //DB.Update
         }

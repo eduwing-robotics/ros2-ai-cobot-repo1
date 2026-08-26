@@ -85,8 +85,8 @@ void OnValidate()
         public bool Initialize()
         {
             RefreshReferences();
-            IRobotModMatser mockBackend = mock;
-            IRobotModMatser realBackend = real;
+            IRobotBackend mockBackend = mock;
+            IRobotBackend realBackend = real;
             RobotStatusManager statusManager = Status?.StatusManager;
             AssemblyProgressManager progress = AssemblyProgress;
             mockBackend?.Initialize(articulationRoot, statusManager, progress);
@@ -97,7 +97,7 @@ void OnValidate()
             mockBackend?.SetActive(operatingMode == RobotOperatingMode.Mock);
             realBackend?.SetActive(operatingMode == RobotOperatingMode.Real);
 
-            IRobotModMatser selectedBackend = operatingMode == RobotOperatingMode.Mock
+            IRobotBackend selectedBackend = operatingMode == RobotOperatingMode.Mock
                 ? mockBackend
                 : realBackend;
             IRobotStateSource stateSource = selectedBackend?.StateSource;
