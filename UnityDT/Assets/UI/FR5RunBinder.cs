@@ -45,8 +45,9 @@ namespace MainUnity.UI
         readonly Label[] tcpValues = new Label[3];
         readonly Label[] rpyValues = new Label[3];
 
-        Label gripperText, gripperValue, watchdogValue, toolValue, visionStats, realSource, mockNote;
+        Label gripperText, gripperValue, watchdogValue, toolValue, visionStats, realSource, mockNote, abortNote;
         Label progressNow, progressCount, unitPhase, unitStep;
+        Button pauseButton, stepButton, abortButton;
         VisualElement progressHost;
         readonly List<SlotGroup> slotGroups = new();
         int planTotal;
@@ -96,6 +97,11 @@ namespace MainUnity.UI
             progressCount = root.Q<Label>("progress-count");
             unitPhase = root.Q<Label>("unit-phase");
             unitStep = root.Q<Label>("unit-step");
+            pauseButton = root.Q<Button>("job-pause-button");
+            stepButton = root.Q<Button>("job-step-button");
+            abortButton = root.Q<Button>("job-abort-button");
+            abortNote = root.Q<Label>("abort-note");
+            ConfigureJobControls();
             BuildEvents(root.Q<VisualElement>("event-list"), root.Q<Label>("events-summary"));
 
             gripperChip = root.Q<VisualElement>("gripper-state-chip");
@@ -115,6 +121,20 @@ namespace MainUnity.UI
             BuildRealStatus();
             cached = true;
         }
+        void ConfigureJobControls()
+        {
+            // 자동 조립 계약은 ExecuteAsync 하나뿐이다. 없는 제어를 UI에서 흉내 내면
+            // 작업이 멈춘 것처럼 보여 실제 장비 상태와 화면이 어긋난다.
+            pauseButton?.SetEnabled(false);
+            stepButton?.SetEnabled(false);
+            abortButton?.SetEnabled(false);
+            if (pauseButton != null) pauseButton.tooltip = "PAUSE 제어 계약이 아직 없습니다.";
+            if (stepButton != null) stepButton.tooltip = "STEP 제어 계약이 아직 없습니다.";
+            if (abortButton != null) abortButton.tooltip = "ABORT 제어 계약이 아직 없습니다.";
+            if (abortNote != null) abortNote.text = "PAUSE · STEP · ABORT 제어 계약 미구현";
+        }
+
+
 
         static void BuildAxisRow(VisualElement host, string[] axes, Label[] sink, int fontSize)
         {

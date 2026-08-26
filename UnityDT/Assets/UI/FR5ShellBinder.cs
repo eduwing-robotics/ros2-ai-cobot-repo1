@@ -29,15 +29,19 @@ namespace MainUnity.UI
         [SerializeField] float visionStaleSeconds = 2f;
 
         VisualElement modeMock, modeReal, robotChip, linkJointDot, linkImageDot, alarmBanner;
+        Button modeMockButton, modeRealButton, stopAllButton;
         Label robotText, linkJointAge, linkImageAge, alarmLabel, alarmDetail;
         bool cached;
 
         void OnEnable() => cached = false;
 
+        void OnDisable() => UnbindCommands();
+
         void Update()
         {
             if (!cached) { Build(); if (!cached) return; }
             Resolve();
+            RefreshCommandAvailability();
             RefreshMode();
             RefreshState();
             RefreshLinks();
@@ -51,6 +55,9 @@ namespace MainUnity.UI
 
             modeMock = root.Q<VisualElement>("mode-mock");
             modeReal = root.Q<VisualElement>("mode-real");
+            modeMockButton = root.Q<Button>("mode-mock");
+            modeRealButton = root.Q<Button>("mode-real");
+            stopAllButton = root.Q<Button>("stop-all-button");
             robotChip = root.Q<VisualElement>("robot-state-chip");
             robotText = root.Q<Label>("robot-state-text");
             linkJointDot = root.Q<VisualElement>("link-joint-dot");
@@ -63,6 +70,7 @@ namespace MainUnity.UI
 
             // 셸이 없는 문서에 붙었을 수 있다. 그 경우 조용히 아무것도 하지 않는다.
             cached = modeMock != null || robotChip != null || linkJointDot != null;
+            BindCommands();
         }
 
         void Resolve()
@@ -72,6 +80,44 @@ namespace MainUnity.UI
             if (statusManager == null) statusManager = uiMaster.StatusManager;
             if (vision == null) vision = uiMaster.VisionImage;
         }
+        void BindCommands()
+        {
+            if (modeMockButton != null) modeMockButton.clicked += SelectMockMode;
+            if (modeRealButton != null) modeRealButton.clicked += SelectRealMode;
+        }
+
+        void UnbindCommands()
+        {
+            if (modeMockButton != null) modeMockButton.clicked -= SelectMockMode;
+            if (modeRealButton != null) modeRealButton.clicked -= SelectRealMode;
+        }
+
+        void SelectMockMode() => SelectMode(RobotOperatingMode.Mock);
+        void SelectRealMode() => SelectMode(RobotOperatingMode.Real);
+
+        void SelectMode(RobotOperatingMode mode)
+        {
+            uiMaster?.RobotMaster?.TrySetOperatingMode(mode);
+        }
+
+        void RefreshCommandAvailability()
+        {
+            bool canChangeMode = uiMaster?.RobotMaster != null && !Application.isPlaying;
+            modeMockButton?.SetEnabled(canChangeMode);
+            modeRealButton?.SetEnabled(canChangeMode);
+            if (modeMockButton != null)
+                modeMockButton.tooltip = canChangeMode ? "Mock Backend 선택" : "운전 중에는 모드를 바꿀 수 없습니다.";
+            if (modeRealButton != null)
+                modeRealButton.tooltip = canChangeMode ? "Real Backend 선택" : "운전 중에는 모드를 바꿀 수 없습니다.";
+
+            // IRobotControl에는 정지 계약이 없다. Ghost 정지만 호출하면 실제 로봇은 계속
+            // 움직일 수 있으므로 STOP으로 연결하지 않는다.
+            stopAllButton?.SetEnabled(false);
+            if (stopAllButton != null)
+                stopAllButton.tooltip = "STOP 제어 계약이 아직 없습니다.";
+        }
+
+
 
         /// <summary>액센트 색을 쓰는 유일한 곳이다. 여기가 흐려지면 실기/모의 구분이 사라진다.</summary>
         void RefreshMode()

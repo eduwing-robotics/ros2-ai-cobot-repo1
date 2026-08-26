@@ -189,6 +189,7 @@
 
 /* 밑줄 탭 */
 .tab { background-color: rgba(0, 0, 0, 0); border-width: 0; padding: 0; margin: 0; margin-right: 28px; align-items: flex-start; }
+#navrail .tab--on { border-width: 1px; border-color: var(--c-accent); border-radius: 6px; background-color: rgba(250, 204, 51, 0.10); }
 .tab__text { color: rgb(130, 150, 166); font-size: 13px; letter-spacing: 1.6px; -unity-font-style: bold; }
 .tab__bar { height: 2px; width: 0; margin-top: 6px; background-color: var(--c-accent); }
 .tab--on .tab__text { color: var(--c-accent); }

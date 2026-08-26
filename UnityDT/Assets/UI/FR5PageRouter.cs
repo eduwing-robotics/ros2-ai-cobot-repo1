@@ -153,7 +153,7 @@ namespace MainUnity.UI
         }
 
         /// <summary>한 문서의 nav 버튼을 한 번만 등록한다.</summary>
-        void Wire(VisualElement root)
+void Wire(VisualElement root)
         {
             Button monitor = root.Q<Button>("nav-monitor");
             if (monitor != null)
@@ -167,9 +167,9 @@ namespace MainUnity.UI
                 FR5Page captured = target;
                 button.clicked += () => Go(captured);
                 button.SetEnabled(IsAvailable(target));
-                // 활성 표시는 라우터가 붙인다. 페이지 UXML 에 박아 두면 셸을 공유할 수 없다.
-                button.EnableInClassList("tab--on", target == current);
             }
+
+            RefreshNavigationVisuals(root);
         }
 
         public void Go(FR5Page page)
@@ -198,7 +198,7 @@ namespace MainUnity.UI
         }
 
         /// <summary>활성 페이지 하나만 켠다. 나머지는 꺼서 Update 비용을 없앤다.</summary>
-        void Apply()
+void Apply()
         {
             UIDocument selected = DocumentFor(current);
             foreach (PageEntry entry in pages)
@@ -208,7 +208,27 @@ namespace MainUnity.UI
                 SetDocumentActive(entry.document, entry.document == selected);
             }
             SetDocumentActive(requestDocument, requestDocument == selected);
+            RefreshNavigationVisuals();
         }
+        void RefreshNavigationVisuals()
+        {
+            foreach (PageEntry entry in pages)
+                RefreshNavigationVisuals(entry?.document?.rootVisualElement);
+            RefreshNavigationVisuals(requestDocument?.rootVisualElement);
+        }
+
+        void RefreshNavigationVisuals(VisualElement root)
+        {
+            if (root == null) return;
+
+            bool monitorActive = monitorRequested && current == FR5Page.Run;
+            root.Q<Button>("nav-monitor")?.EnableInClassList("tab--on", monitorActive);
+            foreach ((FR5Page target, string buttonName) in NavButtons)
+                root.Q<Button>(buttonName)?.EnableInClassList("tab--on",
+                    !monitorActive && target == current);
+        }
+
+
 
         UIDocument DocumentFor(FR5Page page)
         {
