@@ -1,0 +1,180 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1580" height="880" viewBox="0 0 1580 880" font-family="'Noto Sans KR','Noto Sans CJK KR','Malgun Gothic','Apple SD Gothic Neo',sans-serif">
+
+  <defs>
+    <pattern id="dots" width="12" height="12" patternUnits="userSpaceOnUse">
+      <circle cx="1.5" cy="1.5" r="1" fill="#dcdcdc"/>
+    </pattern>
+    <marker id="mb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1a73e8"/>
+    </marker>
+    <marker id="mg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#00a352"/>
+    </marker>
+    <marker id="mp" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#9933cc"/>
+    </marker>
+    <marker id="mk" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#000000"/>
+    </marker>
+  </defs>
+
+  <rect width="1580" height="880" fill="#ffffff"/>
+  <rect width="1580" height="880" fill="url(#dots)"/>
+
+  <!-- ============ GUI / DT ============ -->
+  <rect x="90" y="80" width="350" height="320" rx="6" fill="#f8cecc" stroke="#000000" stroke-width="2"/>
+  <text x="110" y="114" font-size="17" font-weight="700" fill="#000000">GUI/DT</text>
+  <rect x="118" y="238" width="64" height="44" rx="3" fill="none" stroke="#000000" stroke-width="2"/>
+  <rect x="128" y="248" width="44" height="24" rx="2" fill="none" stroke="#000000" stroke-width="1.5"/>
+  <line x1="150" y1="282" x2="150" y2="294" stroke="#000000" stroke-width="2"/>
+  <line x1="132" y1="294" x2="168" y2="294" stroke="#000000" stroke-width="2"/>
+
+  <rect x="210" y="130" width="215" height="80" rx="4" fill="#ffffff" stroke="#000000" stroke-width="2"/>
+  <text x="317" y="163" font-size="14" font-weight="700" fill="#000000" text-anchor="middle">System</text>
+  <text x="317" y="183" font-size="14" font-weight="700" fill="#000000" text-anchor="middle">Monitor</text>
+
+  <rect x="210" y="280" width="215" height="80" rx="4" fill="#ffffff" stroke="#000000" stroke-width="2"/>
+  <text x="317" y="313" font-size="14" font-weight="700" fill="#000000" text-anchor="middle">Run</text>
+  <text x="317" y="333" font-size="14" font-weight="700" fill="#000000" text-anchor="middle">Control</text>
+
+  <!-- ============ Main Server ============ -->
+  <rect x="500" y="80" width="680" height="210" rx="6" fill="#dae8fc" stroke="#000000" stroke-width="2"/>
+  <text x="520" y="114" font-size="17" font-weight="700" fill="#000000">Main Server</text>
+  <rect x="536" y="145" width="60" height="18" rx="2" fill="none" stroke="#000000" stroke-width="2"/>
+  <circle cx="545" cy="154" r="2.5" fill="#000000"/>
+  <rect x="536" y="169" width="60" height="18" rx="2" fill="none" stroke="#000000" stroke-width="2"/>
+  <circle cx="545" cy="178" r="2.5" fill="#000000"/>
+  <rect x="536" y="193" width="60" height="18" rx="2" fill="none" stroke="#000000" stroke-width="2"/>
+  <circle cx="545" cy="202" r="2.5" fill="#000000"/>
+
+  <rect x="650" y="140" width="180" height="75" rx="4" fill="#ffffff" stroke="#000000" stroke-width="2"/>
+  <text x="740" y="172" font-size="14" font-weight="700" fill="#000000" text-anchor="middle">Network</text>
+  <text x="740" y="192" font-size="14" font-weight="700" fill="#000000" text-anchor="middle">Manager</text>
+
+  <rect x="850" y="140" width="180" height="75" rx="4" fill="#ffffff" stroke="#000000" stroke-width="2"/>
+  <text x="940" y="172" font-size="14" font-weight="700" fill="#000000" text-anchor="middle">Task</text>
+  <text x="940" y="192" font-size="14" font-weight="700" fill="#000000" text-anchor="middle">Manager</text>
+
+  <ellipse cx="1110" cy="147" rx="42" ry="12" fill="#ffffff" stroke="#000000" stroke-width="2"/>
+  <path d="M1068,147 L1068,205" stroke="#000000" stroke-width="2" fill="none"/>
+  <path d="M1152,147 L1152,205" stroke="#000000" stroke-width="2" fill="none"/>
+  <path d="M1068,205 A42,12 0 0 0 1152,205" stroke="#000000" stroke-width="2" fill="none"/>
+  <ellipse cx="1110" cy="175" rx="42" ry="12" fill="none" stroke="#000000" stroke-width="1.4"/>
+
+  <!-- ============ Legend ============ -->
+  <rect x="1220" y="80" width="310" height="210" rx="6" fill="#f5f5f5" stroke="#000000" stroke-width="2" stroke-dasharray="8 5"/>
+  <line x1="1245" y1="135" x2="1320" y2="135" stroke="#1a73e8" stroke-width="2.6" marker-end="url(#mb)"/>
+  <text x="1340" y="141" font-size="16" font-weight="600" fill="#000000">ROS2</text>
+  <line x1="1245" y1="180" x2="1320" y2="180" stroke="#00a352" stroke-width="2.6" marker-end="url(#mg)"/>
+  <text x="1340" y="186" font-size="16" font-weight="600" fill="#000000">HTTP/REST</text>
+  <line x1="1245" y1="225" x2="1320" y2="225" stroke="#9933cc" stroke-width="2.6" marker-end="url(#mp)"/>
+  <text x="1340" y="231" font-size="16" font-weight="600" fill="#000000">Video Stream</text>
+
+  <!-- ============ Cell Controller ============ -->
+  <rect x="500" y="350" width="520" height="200" rx="6" fill="#ffe6cc" stroke="#000000" stroke-width="2"/>
+  <text x="520" y="384" font-size="17" font-weight="700" fill="#000000">Cell Controller</text>
+  <rect x="540" y="405" width="22" height="22" rx="3" fill="none" stroke="#000000" stroke-width="2"/>
+  <rect x="540" y="443" width="22" height="22" rx="3" fill="none" stroke="#000000" stroke-width="2"/>
+  <rect x="584" y="424" width="22" height="22" rx="3" fill="none" stroke="#000000" stroke-width="2"/>
+  <line x1="562" y1="416" x2="584" y2="431" stroke="#000000" stroke-width="1.8"/>
+  <line x1="562" y1="454" x2="584" y2="439" stroke="#000000" stroke-width="1.8"/>
+
+  <rect x="640" y="420" width="340" height="80" rx="4" fill="#ffffff" stroke="#000000" stroke-width="2"/>
+  <text x="810" y="453" font-size="14" font-weight="700" fill="#000000" text-anchor="middle">Assembly</text>
+  <text x="810" y="473" font-size="14" font-weight="700" fill="#000000" text-anchor="middle">Sequencer</text>
+
+  <!-- ============ Vision / AI Server ============ -->
+  <rect x="1060" y="350" width="470" height="200" rx="6" fill="#b0e3e6" stroke="#000000" stroke-width="2"/>
+  <text x="1080" y="384" font-size="17" font-weight="700" fill="#000000">Vision/AI Server</text>
+  <rect x="1080" y="432" width="52" height="52" rx="4" fill="none" stroke="#000000" stroke-width="2"/>
+  <text x="1106" y="466" font-size="14" font-weight="700" fill="#000000" text-anchor="middle">AI</text>
+  <line x1="1093" y1="432" x2="1093" y2="423" stroke="#000000" stroke-width="2"/>
+  <line x1="1106" y1="432" x2="1106" y2="423" stroke="#000000" stroke-width="2"/>
+  <line x1="1119" y1="432" x2="1119" y2="423" stroke="#000000" stroke-width="2"/>
+  <line x1="1093" y1="484" x2="1093" y2="493" stroke="#000000" stroke-width="2"/>
+  <line x1="1106" y1="484" x2="1106" y2="493" stroke="#000000" stroke-width="2"/>
+  <line x1="1119" y1="484" x2="1119" y2="493" stroke="#000000" stroke-width="2"/>
+
+  <rect x="1150" y="420" width="180" height="80" rx="4" fill="#ffffff" stroke="#000000" stroke-width="2"/>
+  <text x="1240" y="453" font-size="14" font-weight="700" fill="#000000" text-anchor="middle">PCB</text>
+  <text x="1240" y="473" font-size="14" font-weight="700" fill="#000000" text-anchor="middle">Alignment</text>
+
+  <rect x="1345" y="420" width="175" height="80" rx="4" fill="#ffffff" stroke="#000000" stroke-width="2"/>
+  <text x="1432" y="453" font-size="14" font-weight="700" fill="#000000" text-anchor="middle">Defect</text>
+  <text x="1432" y="473" font-size="14" font-weight="700" fill="#000000" text-anchor="middle">Inspection</text>
+
+  <!-- ============ FR5 Arm ============ -->
+  <rect x="500" y="620" width="380" height="210" rx="6" fill="#fff2cc" stroke="#000000" stroke-width="2"/>
+  <text x="520" y="654" font-size="17" font-weight="700" fill="#000000">FR5 Arm</text>
+  <line x1="545" y1="800" x2="545" y2="752" stroke="#000000" stroke-width="2.5"/>
+  <line x1="545" y1="752" x2="576" y2="726" stroke="#000000" stroke-width="2.5"/>
+  <line x1="576" y1="726" x2="576" y2="710" stroke="#000000" stroke-width="2.5"/>
+  <circle cx="545" cy="752" r="5" fill="none" stroke="#000000" stroke-width="2"/>
+  <circle cx="576" cy="726" r="5" fill="none" stroke="#000000" stroke-width="2"/>
+  <line x1="568" y1="706" x2="584" y2="706" stroke="#000000" stroke-width="2.5"/>
+  <rect x="523" y="800" width="44" height="10" rx="2" fill="none" stroke="#000000" stroke-width="2"/>
+
+  <rect x="600" y="670" width="250" height="60" rx="4" fill="#ffffff" stroke="#000000" stroke-width="2"/>
+  <text x="725" y="706" font-size="14" font-weight="700" fill="#000000" text-anchor="middle">Motion Controller</text>
+  <rect x="600" y="750" width="250" height="60" rx="4" fill="#ffffff" stroke="#000000" stroke-width="2"/>
+  <text x="725" y="786" font-size="14" font-weight="700" fill="#000000" text-anchor="middle">Gripper Control</text>
+
+  <!-- ============ Conveyor ============ -->
+  <rect x="920" y="620" width="290" height="210" rx="6" fill="#ffcce6" stroke="#000000" stroke-width="2"/>
+  <text x="940" y="654" font-size="17" font-weight="700" fill="#000000">Conveyor</text>
+  <rect x="935" y="748" width="62" height="12" rx="3" fill="none" stroke="#000000" stroke-width="2"/>
+  <circle cx="946" cy="772" r="9" fill="none" stroke="#000000" stroke-width="2"/>
+  <circle cx="968" cy="772" r="9" fill="none" stroke="#000000" stroke-width="2"/>
+  <circle cx="990" cy="772" r="9" fill="none" stroke="#000000" stroke-width="2"/>
+  <line x1="938" y1="787" x2="998" y2="787" stroke="#000000" stroke-width="2"/>
+
+  <rect x="1015" y="670" width="180" height="60" rx="4" fill="#ffffff" stroke="#000000" stroke-width="2"/>
+  <text x="1105" y="706" font-size="14" font-weight="700" fill="#000000" text-anchor="middle">Drive Controller</text>
+  <rect x="1015" y="750" width="180" height="60" rx="4" fill="#ffffff" stroke="#000000" stroke-width="2"/>
+  <text x="1105" y="786" font-size="14" font-weight="700" fill="#000000" text-anchor="middle">Position Control</text>
+
+  <!-- ============ Global Camera ============ -->
+  <rect x="1250" y="620" width="280" height="210" rx="6" fill="#d5e8d4" stroke="#000000" stroke-width="2"/>
+  <text x="1270" y="654" font-size="17" font-weight="700" fill="#000000">Global Camera</text>
+  <rect x="1265" y="680" width="245" height="65" rx="4" fill="#ffffff" stroke="#000000" stroke-width="2"/>
+  <text x="1387" y="718" font-size="14" font-weight="700" fill="#000000" text-anchor="middle">Video Streamer</text>
+  <rect x="1360" y="765" width="54" height="36" rx="4" fill="none" stroke="#000000" stroke-width="2"/>
+  <circle cx="1387" cy="783" r="10" fill="none" stroke="#000000" stroke-width="2"/>
+  <rect x="1373" y="757" width="18" height="8" rx="2" fill="none" stroke="#000000" stroke-width="2"/>
+
+  <!-- ==================== ARROWS ==================== -->
+
+  <!-- Network Manager -> System Monitor : HTTP 조회 응답 -->
+  <line x1="648" y1="170" x2="429" y2="170" stroke="#00a352" stroke-width="2.6" marker-end="url(#mg)"/>
+
+  <!-- Run Control -> Network Manager : HTTP 작업 지시 -->
+  <polyline points="427,320 700,320 700,217" fill="none" stroke="#00a352" stroke-width="2.6" marker-end="url(#mg)"/>
+
+  <!-- Network Manager <-> Task Manager -->
+  <line x1="832" y1="177" x2="848" y2="177" stroke="#000000" stroke-width="2" marker-start="url(#mk)" marker-end="url(#mk)"/>
+
+  <!-- Task Manager <-> DB -->
+  <line x1="1032" y1="177" x2="1066" y2="177" stroke="#000000" stroke-width="2" marker-start="url(#mk)" marker-end="url(#mk)"/>
+
+  <!-- Network Manager <-> Assembly Sequencer -->
+  <line x1="760" y1="217" x2="760" y2="418" stroke="#1a73e8" stroke-width="2.6" marker-start="url(#mb)" marker-end="url(#mb)"/>
+
+  <!-- Assembly Sequencer <-> Motion Controller -->
+  <line x1="700" y1="502" x2="700" y2="668" stroke="#1a73e8" stroke-width="2.6" marker-start="url(#mb)" marker-end="url(#mb)"/>
+
+  <!-- Assembly Sequencer -> Drive Controller -->
+  <polyline points="900,502 900,585 1105,585 1105,668" fill="none" stroke="#1a73e8" stroke-width="2.6" marker-end="url(#mb)"/>
+
+  <!-- PCB Alignment -> Assembly Sequencer -->
+  <line x1="1148" y1="460" x2="982" y2="460" stroke="#1a73e8" stroke-width="2.6" marker-end="url(#mb)"/>
+
+  <!-- Video Streamer -> PCB Alignment -->
+  <line x1="1300" y1="678" x2="1300" y2="502" stroke="#9933cc" stroke-width="2.6" marker-end="url(#mp)"/>
+
+  <!-- PCB Alignment -> System Monitor : HUD 영상 -->
+  <polyline points="1200,418 1200,330 470,330 470,190 429,190" fill="none" stroke="#9933cc" stroke-width="2.6" marker-end="url(#mp)"/>
+
+  <!-- Assembly Sequencer -> System Monitor : 텔레메트리 -->
+  <polyline points="638,478 490,478 490,150 429,150" fill="none" stroke="#1a73e8" stroke-width="2.6" marker-end="url(#mb)"/>
+
+</svg>

@@ -4327,6 +4327,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainUnity.UI.FR5QualityBinder
   uiMaster: {fileID: 0}
+  mainServerBaseUrl: http://127.0.0.1:8000
 --- !u!4 &561633680
 Transform:
   m_ObjectHideFlags: 0
@@ -6667,6 +6668,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MainUnity.UI.FR5InspectBinder
   uiMaster: {fileID: 0}
   vision: {fileID: 0}
+  mainServerBaseUrl: http://127.0.0.1:8000
   staleSeconds: 2
 --- !u!4 &915942459
 Transform:
@@ -10075,6 +10077,7 @@ MonoBehaviour:
   uiMaster: {fileID: 0}
   robotMaster: {fileID: 0}
   statusManager: {fileID: 0}
+  mainServerBaseUrl: http://127.0.0.1:8000
   quantity: 1
 --- !u!4 &1428069491
 Transform:
@@ -14873,6 +14876,10 @@ PrefabInstance:
     - target: {fileID: 6407090874288368824, guid: a0b855b9be022a33fa77e4c342a91d56, type: 3}
       propertyPath: m_Name
       value: ROSConnectionPrefab
+      objectReference: {fileID: 0}
+    - target: {fileID: 7937580268837813603, guid: a0b855b9be022a33fa77e4c342a91d56, type: 3}
+      propertyPath: m_RosIPAddress
+      value: 127.0.0.1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

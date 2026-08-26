@@ -1,0 +1,183 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2100" height="1215" viewBox="0 0 2100 1215" font-family="'Noto Sans KR','Noto Sans CJK KR','Malgun Gothic','Apple SD Gothic Neo',sans-serif">
+
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#e53935"/>
+    </marker>
+    <marker id="ao" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#ef8f1c"/>
+    </marker>
+    <marker id="at" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4a9d96"/>
+    </marker>
+    <marker id="ak" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#222222"/>
+    </marker>
+  </defs>
+
+  <rect width="2100" height="1215" fill="#ffffff"/>
+
+  <!-- ==================== Client Layer (점선 그룹) ==================== -->
+  <rect x="60" y="30" width="860" height="330" rx="18" fill="none" stroke="#666666" stroke-width="2.5" stroke-dasharray="6 6"/>
+  <text x="490" y="66" font-size="26" font-weight="700" fill="#222222" text-anchor="middle">Client Layer</text>
+
+  <rect x="110" y="88" width="760" height="240" rx="16" fill="#cfe2f3" stroke="#4a86c8" stroke-width="3"/>
+  <text x="175" y="170" font-size="24" font-weight="700" fill="#222222" text-anchor="middle">GUI / DT</text>
+  <text x="175" y="200" font-size="24" font-weight="700" fill="#222222" text-anchor="middle">(Unity)</text>
+  <rect x="143" y="228" width="64" height="46" rx="4" fill="none" stroke="#222222" stroke-width="3"/>
+  <rect x="153" y="238" width="44" height="26" rx="3" fill="none" stroke="#222222" stroke-width="2"/>
+  <line x1="175" y1="274" x2="175" y2="288" stroke="#222222" stroke-width="3"/>
+  <line x1="155" y1="288" x2="195" y2="288" stroke="#222222" stroke-width="3"/>
+  <line x1="245" y1="112" x2="245" y2="304" stroke="#4a86c8" stroke-width="2.5"/>
+
+  <rect x="275" y="110" width="570" height="80" rx="10" fill="#ffffff" stroke="#222222" stroke-width="2.5"/>
+  <text x="560" y="160" font-size="24" font-weight="700" fill="#222222" text-anchor="middle">Run Control</text>
+
+  <rect x="275" y="215" width="570" height="80" rx="10" fill="#ffffff" stroke="#222222" stroke-width="2.5"/>
+  <text x="560" y="265" font-size="24" font-weight="700" fill="#222222" text-anchor="middle">System Monitoring</text>
+
+  <!-- ==================== Vision / AI Server ==================== -->
+  <rect x="1150" y="88" width="570" height="240" rx="16" fill="#fff2cc" stroke="#e0a92c" stroke-width="3"/>
+  <text x="1222" y="180" font-size="24" font-weight="700" fill="#222222" text-anchor="middle">Vision</text>
+  <text x="1222" y="210" font-size="24" font-weight="700" fill="#222222" text-anchor="middle">AI Server</text>
+  <rect x="1192" y="232" width="60" height="60" rx="6" fill="none" stroke="#222222" stroke-width="3"/>
+  <text x="1222" y="272" font-size="22" font-weight="700" fill="#222222" text-anchor="middle">AI</text>
+  <line x1="1206" y1="232" x2="1206" y2="220" stroke="#222222" stroke-width="3"/>
+  <line x1="1222" y1="232" x2="1222" y2="220" stroke="#222222" stroke-width="3"/>
+  <line x1="1238" y1="232" x2="1238" y2="220" stroke="#222222" stroke-width="3"/>
+  <line x1="1206" y1="292" x2="1206" y2="304" stroke="#222222" stroke-width="3"/>
+  <line x1="1222" y1="292" x2="1222" y2="304" stroke="#222222" stroke-width="3"/>
+  <line x1="1238" y1="292" x2="1238" y2="304" stroke="#222222" stroke-width="3"/>
+  <line x1="1300" y1="112" x2="1300" y2="304" stroke="#e0a92c" stroke-width="2.5"/>
+
+  <rect x="1330" y="110" width="360" height="80" rx="10" fill="#ffffff" stroke="#222222" stroke-width="2.5"/>
+  <text x="1510" y="160" font-size="24" font-weight="700" fill="#222222" text-anchor="middle">PCB Alignment</text>
+
+  <rect x="1330" y="215" width="360" height="80" rx="10" fill="#ffffff" stroke="#222222" stroke-width="2.5"/>
+  <text x="1510" y="265" font-size="24" font-weight="700" fill="#222222" text-anchor="middle">Defect Inspection</text>
+
+  <!-- ==================== Global Camera ==================== -->
+  <rect x="1790" y="88" width="270" height="240" rx="16" fill="#e2d5f0" stroke="#8e7cc3" stroke-width="3"/>
+  <text x="1848" y="238" font-size="22" font-weight="700" fill="#222222" text-anchor="middle">Global</text>
+  <text x="1848" y="266" font-size="22" font-weight="700" fill="#222222" text-anchor="middle">Camera</text>
+  <rect x="1820" y="128" width="56" height="38" rx="5" fill="none" stroke="#222222" stroke-width="3"/>
+  <circle cx="1848" cy="147" r="11" fill="none" stroke="#222222" stroke-width="2.5"/>
+  <rect x="1832" y="119" width="20" height="9" rx="2" fill="none" stroke="#222222" stroke-width="2.5"/>
+  <line x1="1900" y1="112" x2="1900" y2="304" stroke="#8e7cc3" stroke-width="2.5"/>
+
+  <rect x="1920" y="108" width="120" height="86" rx="10" fill="#ffffff" stroke="#222222" stroke-width="2.5"/>
+  <text x="1980" y="143" font-size="20" font-weight="700" fill="#222222" text-anchor="middle">Video</text>
+  <text x="1980" y="169" font-size="20" font-weight="700" fill="#222222" text-anchor="middle">Streamer</text>
+
+  <!-- ==================== Main Server ==================== -->
+  <rect x="760" y="470" width="740" height="290" rx="16" fill="#fce5cd" stroke="#e69138" stroke-width="3"/>
+  <text x="852" y="580" font-size="26" font-weight="700" fill="#222222" text-anchor="middle">Main</text>
+  <text x="852" y="612" font-size="26" font-weight="700" fill="#222222" text-anchor="middle">Server</text>
+  <rect x="820" y="636" width="64" height="18" rx="3" fill="none" stroke="#222222" stroke-width="2.5"/>
+  <circle cx="830" cy="645" r="3" fill="#222222"/>
+  <rect x="820" y="660" width="64" height="18" rx="3" fill="none" stroke="#222222" stroke-width="2.5"/>
+  <circle cx="830" cy="669" r="3" fill="#222222"/>
+  <rect x="820" y="684" width="64" height="18" rx="3" fill="none" stroke="#222222" stroke-width="2.5"/>
+  <circle cx="830" cy="693" r="3" fill="#222222"/>
+  <line x1="940" y1="494" x2="940" y2="736" stroke="#e69138" stroke-width="2.5"/>
+
+  <rect x="970" y="500" width="500" height="82" rx="10" fill="#ffffff" stroke="#222222" stroke-width="2.5"/>
+  <text x="1220" y="533" font-size="22" font-weight="700" fill="#222222" text-anchor="middle">Communication Module</text>
+  <text x="1220" y="562" font-size="20" fill="#333333" text-anchor="middle">(REST API &amp; ROS2 Bridge)</text>
+
+  <rect x="970" y="612" width="250" height="88" rx="10" fill="#ffffff" stroke="#222222" stroke-width="2.5"/>
+  <text x="1095" y="648" font-size="22" font-weight="700" fill="#222222" text-anchor="middle">Task</text>
+  <text x="1095" y="676" font-size="22" font-weight="700" fill="#222222" text-anchor="middle">Manager</text>
+
+  <text x="1360" y="608" font-size="18" font-weight="700" fill="#222222" text-anchor="middle">DB</text>
+  <ellipse cx="1360" cy="632" rx="42" ry="13" fill="#ffffff" stroke="#222222" stroke-width="2.5"/>
+  <path d="M1318,632 L1318,690" stroke="#222222" stroke-width="2.5" fill="none"/>
+  <path d="M1402,632 L1402,690" stroke="#222222" stroke-width="2.5" fill="none"/>
+  <path d="M1318,690 A42,13 0 0 0 1402,690" stroke="#222222" stroke-width="2.5" fill="none"/>
+  <ellipse cx="1360" cy="660" rx="42" ry="13" fill="none" stroke="#222222" stroke-width="1.6"/>
+
+  <!-- ==================== Legend ==================== -->
+  <rect x="1770" y="470" width="300" height="250" rx="16" fill="#efefef" stroke="#9a9a9a" stroke-width="2.5"/>
+  <line x1="1800" y1="530" x2="1900" y2="530" stroke="#e53935" stroke-width="5" marker-end="url(#ar)"/>
+  <text x="1920" y="539" font-size="22" font-weight="700" fill="#222222">HTTP / REST</text>
+  <line x1="1800" y1="600" x2="1900" y2="600" stroke="#ef8f1c" stroke-width="5" marker-end="url(#ao)"/>
+  <text x="1920" y="609" font-size="22" font-weight="700" fill="#222222">ROS2</text>
+  <line x1="1800" y1="670" x2="1900" y2="670" stroke="#4a9d96" stroke-width="5" marker-end="url(#at)"/>
+  <text x="1920" y="679" font-size="22" font-weight="700" fill="#222222">Video</text>
+
+  <!-- ==================== Cell Layer (점선 그룹) ==================== -->
+  <rect x="60" y="845" width="1600" height="320" rx="18" fill="none" stroke="#666666" stroke-width="2.5" stroke-dasharray="6 6"/>
+  <text x="860" y="1150" font-size="24" font-weight="700" fill="#666666" text-anchor="middle">Cell Layer</text>
+
+  <!-- Robot Cell -->
+  <rect x="100" y="880" width="820" height="230" rx="16" fill="#d9ead3" stroke="#6aa84f" stroke-width="3"/>
+  <text x="172" y="960" font-size="24" font-weight="700" fill="#222222" text-anchor="middle">FR5</text>
+  <text x="172" y="990" font-size="24" font-weight="700" fill="#222222" text-anchor="middle">Robot</text>
+  <line x1="182" y1="1070" x2="182" y2="1030" stroke="#222222" stroke-width="3"/>
+  <line x1="182" y1="1030" x2="212" y2="1006" stroke="#222222" stroke-width="3"/>
+  <line x1="212" y1="1006" x2="212" y2="1020" stroke="#222222" stroke-width="3"/>
+  <circle cx="182" cy="1030" r="5" fill="none" stroke="#222222" stroke-width="2.5"/>
+  <rect x="160" y="1070" width="44" height="10" rx="2" fill="none" stroke="#222222" stroke-width="2.5"/>
+  <line x1="250" y1="904" x2="250" y2="1086" stroke="#6aa84f" stroke-width="2.5"/>
+
+  <rect x="280" y="905" width="280" height="82" rx="10" fill="#ffffff" stroke="#222222" stroke-width="2.5"/>
+  <text x="420" y="938" font-size="21" font-weight="700" fill="#222222" text-anchor="middle">Assembly</text>
+  <text x="420" y="966" font-size="21" font-weight="700" fill="#222222" text-anchor="middle">Sequencer</text>
+
+  <rect x="280" y="1008" width="280" height="82" rx="10" fill="#ffffff" stroke="#222222" stroke-width="2.5"/>
+  <text x="420" y="1041" font-size="21" font-weight="700" fill="#222222" text-anchor="middle">Motion</text>
+  <text x="420" y="1069" font-size="21" font-weight="700" fill="#222222" text-anchor="middle">Controller</text>
+
+  <rect x="610" y="905" width="280" height="82" rx="10" fill="#ffffff" stroke="#222222" stroke-width="2.5"/>
+  <text x="750" y="938" font-size="21" font-weight="700" fill="#222222" text-anchor="middle">Status</text>
+  <text x="750" y="966" font-size="21" font-weight="700" fill="#222222" text-anchor="middle">Reporter</text>
+
+  <rect x="610" y="1008" width="280" height="82" rx="10" fill="#ffffff" stroke="#222222" stroke-width="2.5"/>
+  <text x="750" y="1055" font-size="21" font-weight="700" fill="#222222" text-anchor="middle">Gripper Control</text>
+
+  <!-- Conveyor -->
+  <rect x="1150" y="880" width="470" height="230" rx="16" fill="#e2d5f0" stroke="#8e7cc3" stroke-width="3"/>
+  <text x="1222" y="985" font-size="24" font-weight="700" fill="#222222" text-anchor="middle">Conveyor</text>
+  <rect x="1188" y="1014" width="68" height="14" rx="3" fill="none" stroke="#222222" stroke-width="2.5"/>
+  <circle cx="1200" cy="1042" r="10" fill="none" stroke="#222222" stroke-width="2.5"/>
+  <circle cx="1224" cy="1042" r="10" fill="none" stroke="#222222" stroke-width="2.5"/>
+  <circle cx="1248" cy="1042" r="10" fill="none" stroke="#222222" stroke-width="2.5"/>
+  <line x1="1192" y1="1059" x2="1256" y2="1059" stroke="#222222" stroke-width="2.5"/>
+  <line x1="1300" y1="904" x2="1300" y2="1086" stroke="#8e7cc3" stroke-width="2.5"/>
+
+  <rect x="1330" y="955" width="270" height="86" rx="10" fill="#ffffff" stroke="#222222" stroke-width="2.5"/>
+  <text x="1465" y="1006" font-size="22" font-weight="700" fill="#222222" text-anchor="middle">Drive Controller</text>
+
+  <!-- ==================== ARROWS ==================== -->
+
+  <!-- Run Control <-> Communication Module : HTTP/REST -->
+  <polyline points="872,150 1000,150 1000,496" fill="none" stroke="#e53935" stroke-width="5" marker-start="url(#ar)" marker-end="url(#ar)"/>
+
+  <!-- Status Reporter -> System Monitoring : ROS2 텔레메트리 -->
+  <line x1="700" y1="903" x2="700" y2="299" stroke="#ef8f1c" stroke-width="5" marker-end="url(#ao)"/>
+
+  <!-- PCB Alignment -> System Monitoring : 영상 -->
+  <polyline points="1360,192 1360,380 600,380 600,299" fill="none" stroke="#4a9d96" stroke-width="5" marker-end="url(#at)"/>
+
+  <!-- PCB Alignment -> Communication Module : ROS2 검출 결과 -->
+  <line x1="1420" y1="192" x2="1420" y2="496" stroke="#ef8f1c" stroke-width="5" marker-end="url(#ao)"/>
+
+  <!-- Communication Module <-> Assembly Sequencer : ROS2 -->
+  <polyline points="1010,584 1010,810 420,810 420,901" fill="none" stroke="#ef8f1c" stroke-width="5" marker-start="url(#ao)" marker-end="url(#ao)"/>
+
+  <!-- Communication Module <-> Drive Controller : ROS2 -->
+  <line x1="1450" y1="584" x2="1450" y2="951" stroke="#ef8f1c" stroke-width="5" marker-start="url(#ao)" marker-end="url(#ao)"/>
+
+  <!-- Video Streamer -> PCB Alignment : 영상 -->
+  <line x1="1916" y1="150" x2="1694" y2="150" stroke="#4a9d96" stroke-width="5" marker-end="url(#at)"/>
+
+  <!-- 내부 : Communication Module <-> Task Manager -->
+  <line x1="1095" y1="584" x2="1095" y2="608" stroke="#222222" stroke-width="3" marker-start="url(#ak)" marker-end="url(#ak)"/>
+
+  <!-- 내부 : Task Manager <-> DB -->
+  <line x1="1222" y1="656" x2="1314" y2="656" stroke="#222222" stroke-width="3" marker-start="url(#ak)" marker-end="url(#ak)"/>
+
+  <!-- 내부 : Assembly Sequencer -> Motion Controller -->
+  <line x1="420" y1="989" x2="420" y2="1004" stroke="#222222" stroke-width="3" marker-end="url(#ak)"/>
+
+</svg>

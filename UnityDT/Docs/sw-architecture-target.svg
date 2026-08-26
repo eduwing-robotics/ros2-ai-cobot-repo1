@@ -1,0 +1,159 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1080" viewBox="0 0 1600 1080" font-family="'Noto Sans KR','Noto Sans CJK KR','Malgun Gothic','Apple SD Gothic Neo',sans-serif">
+
+  <defs>
+    <marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2563eb"/>
+    </marker>
+    <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/>
+    </marker>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/>
+    </marker>
+  </defs>
+
+  <rect width="1600" height="1080" fill="#ffffff"/>
+
+  <text x="40" y="38" font-size="22" font-weight="700" fill="#0f172a">목표 구조 — ISA-95 계층별 권한 정의</text>
+  <text x="40" y="62" font-size="13" fill="#475569">지시는 내려가고 보고는 올라온다. Unity는 레벨이 아니라 화면이며 아무것도 소유하지 않는다. 안전 경로만 계층을 건너뛴다.</text>
+
+  <!-- ===================== Unity (HMI) ===================== -->
+  <rect x="40" y="181" width="280" height="460" rx="8" fill="#fde4e6" stroke="#1f2937" stroke-width="2"/>
+  <text x="58" y="208" font-size="16" font-weight="700" fill="#0f172a">Unity — HMI</text>
+  <text x="58" y="228" font-size="10" fill="#9f1239">ISA-95 레벨이 아님 · 화면이다</text>
+
+  <text x="58" y="258" font-size="11" font-weight="700" fill="#15803d">소유 (책임)</text>
+  <text x="58" y="280" font-size="10" fill="#0f172a">✓ 화면 상태 (탭 · 카메라 · 뷰)</text>
+  <text x="58" y="301" font-size="10" fill="#0f172a">✓ 3D 시각 표현 · 연출</text>
+  <text x="58" y="322" font-size="10" fill="#0f172a">✓ 사용자 입력 수집</text>
+  <text x="58" y="343" font-size="10" fill="#0f172a">✓ 수동 조작(티칭) 요청</text>
+
+  <text x="58" y="384" font-size="11" font-weight="700" fill="#b91c1c">소유하지 않음</text>
+  <text x="58" y="406" font-size="10" fill="#334155">✗ 공정 순서 <tspan fill="#b91c1c">(현 Scenario 위반)</tspan></text>
+  <text x="58" y="427" font-size="10" fill="#334155">✗ 컨베이어 제어 <tspan fill="#b91c1c">(현 ConveyMock)</tspan></text>
+  <text x="58" y="448" font-size="10" fill="#334155">✗ 완료 · 실패 판정</text>
+  <text x="58" y="469" font-size="10" fill="#334155">✗ 작업 상태의 진실</text>
+  <text x="58" y="490" font-size="10" fill="#334155">✗ 좌표 · 레시피 · DB 접근</text>
+
+  <rect x="56" y="540" width="248" height="76" rx="6" fill="#ffffff" stroke="#9f1239" stroke-width="1.5"/>
+  <text x="180" y="566" font-size="11" font-weight="700" fill="#9f1239" text-anchor="middle">Unity를 꺼도 공정은 계속된다</text>
+  <text x="180" y="586" font-size="10" fill="#475569" text-anchor="middle">다시 켜면 위층에서 상태를 받아</text>
+  <text x="180" y="602" font-size="10" fill="#475569" text-anchor="middle">진행률을 복원한다</text>
+
+  <!-- ===================== Level 4 ===================== -->
+  <rect x="460" y="95" width="1100" height="56" rx="8" fill="#f8fafc" stroke="#94a3b8" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="480" y="121" font-size="15" font-weight="700" fill="#64748b">Level 4 — 없음</text>
+  <text x="480" y="140" font-size="11" fill="#94a3b8">ERP 없음. 사람이 Unity 화면에서 직접 요청한다.</text>
+
+  <!-- ===================== Level 3 ===================== -->
+  <rect x="460" y="181" width="1100" height="196" rx="8" fill="#dbeafe" stroke="#1f2937" stroke-width="2"/>
+  <text x="480" y="209" font-size="15" font-weight="700" fill="#0f172a">Level 3 — Main Server</text>
+  <text x="700" y="209" font-size="11" fill="#475569">홀 매니저 · 분 ~ 시간 · 주문 접수 · 장부 · 재고</text>
+
+  <text x="485" y="238" font-size="11" font-weight="700" fill="#15803d">소유 (책임)</text>
+  <text x="485" y="260" font-size="11" fill="#0f172a">✓ 제품 · 부품 마스터 · 재고 잔량</text>
+  <text x="485" y="281" font-size="11" fill="#0f172a">✓ 작업 지시 승인 (재고 · 동시성 · 모드 검증)</text>
+  <text x="485" y="302" font-size="11" fill="#0f172a">✓ recipe_version 확정</text>
+  <text x="485" y="323" font-size="11" fill="#0f172a">✓ Job · Unit · 검사 · 불량 기록 (장부)</text>
+  <text x="485" y="344" font-size="11" fill="#0f172a">✓ 이력 · 감사 · 품질 집계</text>
+
+  <text x="1030" y="238" font-size="11" font-weight="700" fill="#b91c1c">소유하지 않음</text>
+  <text x="1030" y="260" font-size="11" fill="#334155">✗ 액추에이터 시퀀싱</text>
+  <text x="1030" y="281" font-size="11" fill="#334155">✗ 비상정지 경로</text>
+  <text x="1030" y="302" font-size="11" fill="#334155">✗ 좌표 계산 · 모션 계획</text>
+  <text x="1030" y="323" font-size="11" fill="#334155">✗ 관절 · 영상 스트림 중계</text>
+  <text x="1030" y="344" font-size="11" fill="#334155">✗ Unity 씬 오브젝트 해석</text>
+
+  <!-- ===================== Level 2 ===================== -->
+  <rect x="460" y="427" width="1100" height="214" rx="8" fill="#fef3c7" stroke="#1f2937" stroke-width="2"/>
+  <text x="480" y="455" font-size="15" font-weight="700" fill="#0f172a">Level 2 — job_manager (ROS2)</text>
+  <text x="770" y="455" font-size="11" fill="#475569">주방장 · 초 단위 · 셀 시퀀싱</text>
+
+  <text x="485" y="484" font-size="11" font-weight="700" fill="#15803d">소유 (책임)</text>
+  <text x="485" y="506" font-size="11" fill="#0f172a">✓ 공정 상태기계 (대기→이송→정렬→조립→검사→배출)</text>
+  <text x="485" y="527" font-size="11" fill="#0f172a">✓ 컨베이어 · 로봇 · 그리퍼 시퀀싱</text>
+  <text x="485" y="548" font-size="11" fill="#0f172a">✓ 레시피 해석 · MoveIt 계획</text>
+  <text x="485" y="569" font-size="11" fill="#0f172a">✓ 비전 결과 적용 (위치 · 회전 보정)</text>
+  <text x="485" y="590" font-size="11" fill="#0f172a">✓ 완료 · 실패 · 타임아웃 판정</text>
+  <text x="485" y="611" font-size="11" fill="#0f172a">✓ 소프트 정지 · 안전 인터록</text>
+
+  <text x="1030" y="484" font-size="11" font-weight="700" fill="#b91c1c">소유하지 않음</text>
+  <text x="1030" y="506" font-size="11" fill="#334155">✗ 제품 정의 · 재고 잔량</text>
+  <text x="1030" y="527" font-size="11" fill="#334155">✗ 장부(DB) 직접 쓰기 → 이벤트로 보고</text>
+  <text x="1030" y="548" font-size="11" fill="#334155">✗ 무엇을 몇 개 만들지 결정</text>
+  <text x="1030" y="569" font-size="11" fill="#334155">✗ UI 상태 · 화면 표현</text>
+  <text x="1030" y="590" font-size="11" fill="#334155">✗ 밀리초 단위 서보 제어</text>
+
+  <!-- ===================== Level 1 ===================== -->
+  <rect x="460" y="691" width="1100" height="110" rx="8" fill="#e0e7ff" stroke="#1f2937" stroke-width="2"/>
+  <text x="480" y="719" font-size="15" font-weight="700" fill="#0f172a">Level 1 — 로봇 컨트롤러 · 컨베이어 드라이브</text>
+  <text x="920" y="719" font-size="11" fill="#475569">밀리초</text>
+  <text x="485" y="748" font-size="11" font-weight="700" fill="#15803d">소유 (책임)</text>
+  <text x="485" y="770" font-size="11" fill="#0f172a">✓ 궤적 추종 · 서보 · 힘 제어 · 관절 상태 발행</text>
+  <text x="1030" y="748" font-size="11" font-weight="700" fill="#b91c1c">소유하지 않음</text>
+  <text x="1030" y="770" font-size="11" fill="#334155">✗ 공정 순서를 모른다. 받은 목표만 실행한다</text>
+
+  <!-- ===================== Level 0 ===================== -->
+  <rect x="460" y="851" width="1100" height="110" rx="8" fill="#e2e8f0" stroke="#1f2937" stroke-width="2"/>
+  <text x="480" y="879" font-size="15" font-weight="700" fill="#0f172a">Level 0 — 물리 장비</text>
+  <text x="485" y="908" font-size="11" fill="#0f172a">FR5 6축 · 그리퍼(PGEA-100-40) · 컨베이어 · D435 카메라</text>
+  <text x="485" y="932" font-size="11" fill="#334155">물리적 실체. 소프트웨어 계층이 아니다.</text>
+
+  <rect x="1180" y="886" width="360" height="56" rx="6" fill="#fef2f2" stroke="#dc2626" stroke-width="2"/>
+  <text x="1360" y="910" font-size="12" font-weight="700" fill="#b91c1c" text-anchor="middle">E-STOP 안전회로</text>
+  <text x="1360" y="929" font-size="10" fill="#b91c1c" text-anchor="middle">하드와이어드 — SW 계층을 거치지 않음</text>
+
+  <!-- ===================== 통로 화살표 (Unity ↔ 계층) ===================== -->
+
+  <!-- A. 작업 지시 : Unity -> L3 (HTTP) -->
+  <line x1="322" y1="250" x2="456" y2="250" stroke="#16a34a" stroke-width="2.5" marker-end="url(#ag)"/>
+  <text x="389" y="234" font-size="10" font-weight="700" fill="#166534" text-anchor="middle">작업 지시</text>
+  <text x="389" y="268" font-size="9" fill="#166534" text-anchor="middle">POST /api/v1/assemblies</text>
+
+  <!-- B. 수동 조작 · 정지 : Unity -> L2 (직결) -->
+  <line x1="322" y1="500" x2="456" y2="500" stroke="#dc2626" stroke-width="2.5" marker-end="url(#ar)"/>
+  <text x="389" y="484" font-size="10" font-weight="700" fill="#b91c1c" text-anchor="middle">수동 조작 · 정지</text>
+  <text x="389" y="518" font-size="9" fill="#b91c1c" text-anchor="middle">직결 — 상위 경유 없음</text>
+
+  <!-- C. 텔레메트리 : L2 -> Unity (직결) -->
+  <line x1="456" y1="600" x2="322" y2="600" stroke="#2563eb" stroke-width="2.5" marker-end="url(#ab)"/>
+  <text x="389" y="584" font-size="10" font-weight="700" fill="#1d4ed8" text-anchor="middle">텔레메트리 직결</text>
+  <text x="389" y="618" font-size="9" fill="#1d4ed8" text-anchor="middle">joint_states · vision · feedback</text>
+
+  <!-- ===================== 계층 간 화살표 ===================== -->
+
+  <!-- L3 -> L2 지시 -->
+  <line x1="700" y1="379" x2="700" y2="423" stroke="#2563eb" stroke-width="2.5" marker-end="url(#ab)"/>
+  <text x="712" y="406" font-size="10" font-weight="700" fill="#1d4ed8">지시 ↓ 검증된 작업 지시</text>
+
+  <!-- L2 -> L3 보고 -->
+  <line x1="1150" y1="425" x2="1150" y2="381" stroke="#2563eb" stroke-width="2.5" marker-end="url(#ab)"/>
+  <text x="1000" y="406" font-size="10" font-weight="700" fill="#1d4ed8" text-anchor="end">이벤트 보고 ↑ (Main Server가 구독)</text>
+
+  <!-- L2 -> L1 -->
+  <line x1="700" y1="643" x2="700" y2="687" stroke="#2563eb" stroke-width="2.5" marker-end="url(#ab)"/>
+  <text x="712" y="670" font-size="10" font-weight="700" fill="#1d4ed8">지시 ↓ movej · 그리퍼 · 컨베이어 구동</text>
+
+  <!-- L1 -> L2 -->
+  <line x1="1150" y1="689" x2="1150" y2="645" stroke="#2563eb" stroke-width="2.5" marker-end="url(#ab)"/>
+  <text x="1000" y="670" font-size="10" font-weight="700" fill="#1d4ed8" text-anchor="end">보고 ↑ 관절 · IO 상태</text>
+
+  <!-- L1 -> L0 -->
+  <line x1="700" y1="803" x2="700" y2="847" stroke="#2563eb" stroke-width="2.5" marker-end="url(#ab)"/>
+  <text x="712" y="830" font-size="10" font-weight="700" fill="#1d4ed8">전류 · 토크</text>
+
+  <!-- L0 -> L1 -->
+  <line x1="1150" y1="849" x2="1150" y2="805" stroke="#2563eb" stroke-width="2.5" marker-end="url(#ab)"/>
+  <text x="1000" y="830" font-size="10" font-weight="700" fill="#1d4ed8" text-anchor="end">엔코더 · 센서</text>
+
+  <!-- E-STOP 하드와이어드 -->
+  <line x1="1390" y1="884" x2="1390" y2="805" stroke="#dc2626" stroke-width="3" marker-end="url(#ar)"/>
+  <text x="1402" y="850" font-size="10" font-weight="700" fill="#b91c1c">하드와이어드</text>
+
+  <!-- ===================== 하단 원리 ===================== -->
+  <line x1="40" y1="990" x2="1560" y2="990" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="40" y="1016" font-size="12" font-weight="700" fill="#0f172a">설계 원리 — 팀 ISA-95 문서</text>
+  <text x="40" y="1038" font-size="11" fill="#334155">① 기록하는 곳과 보여주는 곳을 나눈다   ② "무엇을 만드는가"와 "어떻게 만드는가"를 나눈다   ③ 지시는 내려가고 보고는 올라온다</text>
+  <text x="40" y="1062" font-size="10" fill="#b45309">※ 팀 ISA-95 문서는 Level 3을 "ROS2 노드의 DB 담당 부분"으로 뒀다. Main Server 도입 이후 Level 3은 Main Server로 옮기고, Level 2·3 겸임을 해소한다.</text>
+
+</svg>
