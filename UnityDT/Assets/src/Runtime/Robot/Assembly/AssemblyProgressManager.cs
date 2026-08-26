@@ -4,7 +4,7 @@
 // Mock 은 /unity/assembly/feedback 을, Real 은 조립 노드 계약이 생기면 그것을
 // 여기에 쓴다. UI 는 어느 쪽이 썼는지 모른 채 Latest 만 읽는다.
 //
-// 이 클래스를 두는 이유는 하나다. UI 가 MockAsyncPlay 를 직접 참조하면
+// 이 클래스를 두는 이유는 하나다. UI 가 MockAssemblyScenarioControl 을 직접 참조하면
 // Real 노드가 붙는 날 화면을 다시 써야 하고, "Mock 에서만 사는 화면" 이 하나 더
 // 생긴다. 진행 표시는 Backend 선택과 무관해야 한다.
 

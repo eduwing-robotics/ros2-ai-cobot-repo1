@@ -10,7 +10,7 @@ namespace MainUnity.Runtime.Robot.Real
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(RealShadowing))]
-    public sealed class FairinoRealRobotMaster : MonoBehaviour, IRobotModMatser
+    public sealed class FairinoRealRobotMaster : MonoBehaviour, IRobotBackend
     {
         [SerializeField] RealStatusSubscriber stateSource;
         [SerializeField] RealShadowing shadowing;
@@ -19,17 +19,17 @@ namespace MainUnity.Runtime.Robot.Real
         [SerializeField] RealGripperRequest gripperRequest;
         [Tooltip("IRobotControl을 구현한 REAL 제어 컴포넌트.")]
         [SerializeField] MonoBehaviour control;
-        [SerializeField] RealAsyncPlay asyncPlay;
+        [SerializeField] RealAssemblyScenarioControl assemblyControl;
 
         public IRobotStateSource StateSource => stateSource;
         public IRobotControl Control => control as IRobotControl;
-        public IRobotScenarioControl ScenarioControl => asyncPlay;
+        public IRobotScenarioControl ScenarioControl => assemblyControl;
 
         void Awake() => RefreshReferences();
         void OnDisable() => Unbind();
         void OnValidate() => RefreshReferences();
 
-        // TODO(API·Real): 조립 노드 계약이 생기면 asyncPlay 가 assemblyProgress 에 쓴다.
+        // TODO(API·Real): 조립 노드 계약이 생기면 assemblyControl 이 assemblyProgress 에 쓴다.
         //                 Mock 과 같은 곳에 쓰면 UI 는 바뀌지 않는다.
         public void Initialize(ArticulationBody articulationRoot, RobotStatusManager statusManager,
             AssemblyProgressManager assemblyProgress)
@@ -59,8 +59,8 @@ namespace MainUnity.Runtime.Robot.Real
 
             if (control != null)
                 control.enabled = active;
-            if (asyncPlay != null)
-                asyncPlay.enabled = active;
+            if (assemblyControl != null)
+                assemblyControl.enabled = active;
         }
 
         void RefreshReferences()
@@ -74,8 +74,8 @@ namespace MainUnity.Runtime.Robot.Real
 
             if (gripperRequest == null)
                 gripperRequest = GetComponentInChildren<RealGripperRequest>(true);
-            if (asyncPlay == null)
-                asyncPlay = GetComponentInChildren<RealAsyncPlay>(true);
+            if (assemblyControl == null)
+                assemblyControl = GetComponentInChildren<RealAssemblyScenarioControl>(true);
             if (control != null && control is not IRobotControl)
             {
                 Debug.LogError("Control must implement IRobotControl.", this);

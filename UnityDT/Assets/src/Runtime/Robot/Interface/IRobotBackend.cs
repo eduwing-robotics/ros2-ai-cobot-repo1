@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace MainUnity.Runtime.Robot.Interface
 {
-    public interface IRobotModMatser
+    public interface IRobotBackend
     {
         IRobotStateSource StateSource { get; }
         IRobotControl Control { get; }

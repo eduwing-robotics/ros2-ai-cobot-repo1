@@ -8,16 +8,16 @@ using UnityEngine;
 namespace MainUnity.Runtime.Robot.Mock
 {
     [DisallowMultipleComponent]
-    public sealed class MockRobotMaster : MonoBehaviour, IRobotModMatser
+    public sealed class MockRobotMaster : MonoBehaviour, IRobotBackend
     {
         [SerializeField] MockRobotStateSource stateSource;
         [SerializeField] MockRobotShadowing shadowing;
         [SerializeField] MockRobotControl control;
-        [SerializeField] MockAsyncPlay asyncPlay;
+        [SerializeField] MockAssemblyScenarioControl assemblyControl;
 
         public IRobotStateSource StateSource => stateSource;
         public IRobotControl Control => control;
-        public IRobotScenarioControl ScenarioControl => asyncPlay;
+        public IRobotScenarioControl ScenarioControl => assemblyControl;
 
         void OnDisable() => Unbind();
         void OnValidate() => RefreshReferences();
@@ -28,7 +28,7 @@ namespace MainUnity.Runtime.Robot.Mock
             RefreshReferences();
             shadowing?.Initialize(articulationRoot);
             control?.Initialize(articulationRoot != null ? articulationRoot.transform : null, statusManager);
-            asyncPlay?.Initialize(control, assemblyProgress);
+            assemblyControl?.Initialize(control, assemblyProgress);
         }
 
         public void SetActive(bool active)
@@ -43,8 +43,8 @@ namespace MainUnity.Runtime.Robot.Mock
                 shadowing.enabled = active;
             if (control != null)
                 control.enabled = active;
-            if (asyncPlay != null)
-                asyncPlay.enabled = active;
+            if (assemblyControl != null)
+                assemblyControl.enabled = active;
         }
 
         void RefreshReferences()
@@ -55,8 +55,8 @@ namespace MainUnity.Runtime.Robot.Mock
                 shadowing = GetComponentInChildren<MockRobotShadowing>(true);
             if (control == null)
                 control = GetComponentInChildren<MockRobotControl>(true);
-            if (asyncPlay == null)
-                asyncPlay = GetComponentInChildren<MockAsyncPlay>(true);
+            if (assemblyControl == null)
+                assemblyControl = GetComponentInChildren<MockAssemblyScenarioControl>(true);
         }
         void Bind()
         {

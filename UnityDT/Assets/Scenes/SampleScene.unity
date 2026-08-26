@@ -2638,7 +2638,7 @@ MonoBehaviour:
   stateSource: {fileID: 365101870}
   shadowing: {fileID: 3495106124279137601}
   control: {fileID: 365101871}
-  asyncPlay: {fileID: 3495106124279137603}
+  assemblyControl: {fileID: 3495106124279137603}
 --- !u!1 &372672685
 GameObject:
   m_ObjectHideFlags: 0
@@ -8150,7 +8150,7 @@ MonoBehaviour:
   stateSource: {fileID: 1156818445}
   shadowing: {fileID: 0}
   control: {fileID: 1156818440}
-  asyncPlay: {fileID: 0}
+  assemblyControl: {fileID: 0}
 --- !u!114 &1156818438
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8330,7 +8330,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e27d3099a7db5e5c29cf453bf0c63d40, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Scenario.Scenario
-  conveyBelt: {fileID: 1907331935}
+  conveyor: {fileID: 1907331935}
 --- !u!114 &1161464566
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10543,7 +10543,7 @@ MonoBehaviour:
   moveControl: {fileID: 1511203718}
   gripperRequest: {fileID: 1511203714}
   control: {fileID: 2494761539128691210}
-  asyncPlay: {fileID: 2494761539128691211}
+  assemblyControl: {fileID: 2494761539128691211}
 --- !u!114 &1511203718
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13458,7 +13458,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4d369e03f5c64ff91bf0d54831141824, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.ConveyBelt.ConveyMock
+  m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.ConveyBelt.MockConveyor
   beltPlane: {fileID: 1169279023}
   pcb: {fileID: 617625031}
   assemblyStopPoint: {fileID: 893280632}
@@ -15211,7 +15211,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 90c3c561ae399741f81765a50c2ede92, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Robot.Real.RealAsyncPlay
+  m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Robot.Real.RealAssemblyScenarioControl
 --- !u!114 &3495106124279137601
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15236,7 +15236,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 26f01d429073141a9883653961313e07, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Robot.Mock.mock_Test
+  m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Robot.Mock.MockTcpMoveDebug
   control: {fileID: 365101871}
   debugTarget: {fileID: 0}
   debugTcp: {fileID: 319422214}
@@ -15251,7 +15251,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 16f5286ecbdc0963ca4a1e0453b9940a, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Robot.Mock.MockAsyncPlay
+  m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Robot.Mock.MockAssemblyScenarioControl
   startService: /unity/assembly/start
   feedbackTopic: /unity/assembly/feedback
   recipeVersion: mock-r1

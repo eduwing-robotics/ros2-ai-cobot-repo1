@@ -5,7 +5,7 @@ using UnityEngine;
 namespace MainUnity.Runtime.ConveyBelt
 {
     [DisallowMultipleComponent]
-    public sealed class ConveyMock : MonoBehaviour
+    public sealed class MockConveyor : MonoBehaviour
     {
         const float MovementFrameAllowanceSeconds = 1f;
         [Header("Objects")]

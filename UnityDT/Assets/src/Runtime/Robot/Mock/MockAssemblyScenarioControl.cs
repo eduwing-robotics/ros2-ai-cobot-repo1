@@ -12,7 +12,7 @@ using UnityEngine;
 namespace MainUnity.Runtime.Robot.Mock
 {
     /// <summary>Mock 조립 작업을 요청하고 callback을 씬 시각화에 반영한다.</summary>
-    public sealed class MockAsyncPlay : MonoBehaviour, IRobotScenarioControl
+    public sealed class MockAssemblyScenarioControl : MonoBehaviour, IRobotScenarioControl
     {
         const string Started = "STARTED";
         const string Picked = "PICKED";

@@ -8,7 +8,7 @@ namespace MainUnity.Runtime.Robot.Mock
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(MockRobotControl))]
-    public sealed class mock_Test : MonoBehaviour
+    public sealed class MockTcpMoveDebug : MonoBehaviour
     {
         [SerializeField] MockRobotControl control;
         [SerializeField] Transform debugTarget;
