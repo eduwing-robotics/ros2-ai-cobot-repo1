@@ -151,6 +151,6 @@
           공통 셸: 상단 바 + 페이지 레일 + 알람 띠.
           맨 마지막에 둔다 — 알람 띠가 페이지 패널 위로 그려져야 하기 때문이다.
         -->
-        <ui:Instance template="FR5Shell" name="shell" class="shell-host" />
+        <ui:Instance template="FR5Shell" name="shell" class="shell-host" picking-mode="Ignore" />
     </ui:VisualElement>
 </ui:UXML>
