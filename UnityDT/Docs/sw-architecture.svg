@@ -19,7 +19,7 @@
 
   <!-- ===== Title ===== -->
   <text x="40" y="38" font-size="22" font-weight="700" fill="#0f172a">S/W Architecture — 현재 코드 기준 (2026-08-26)</text>
-  <text x="40" y="64" font-size="13" fill="#475569">Unity와 Main Server는 같은 ROS2 조립 서비스를 호출하지만 서로를 경유하지 않는다. Start 버튼은 Unity 내부 호출이고, 컨베이어도 Unity 내부(ConveyMock)에서만 동작한다.</text>
+  <text x="40" y="64" font-size="13" fill="#475569">Unity와 Main Server는 같은 ROS2 조립 서비스를 호출하지만 서로를 경유하지 않는다. Start 버튼은 Unity 내부 호출이고, 컨베이어도 Unity 내부(MockConveyor)에서만 동작한다.</text>
 
   <!-- ===== GUI/DT (Unity) ===== -->
   <rect x="40" y="90" width="380" height="300" rx="8" fill="#fde4e6" stroke="#1f2937" stroke-width="2"/>
@@ -35,10 +35,10 @@
   <text x="230" y="253" font-size="11" fill="#0f172a" text-anchor="middle">Scenario — 작업 순서 제어</text>
   <line x1="230" y1="264" x2="230" y2="280" stroke="#334155" stroke-width="1.8" marker-end="url(#ad)"/>
   <rect x="65" y="282" width="330" height="32" rx="5" fill="#ffffff" stroke="#1f2937" stroke-width="1.5"/>
-  <text x="230" y="303" font-size="11" fill="#0f172a" text-anchor="middle">ConveyMock — 컨베이어 (Unity 내부)</text>
+  <text x="230" y="303" font-size="11" fill="#0f172a" text-anchor="middle">MockConveyor — 컨베이어 (Unity 내부)</text>
   <line x1="230" y1="314" x2="230" y2="330" stroke="#334155" stroke-width="1.8" marker-end="url(#ad)"/>
   <rect x="65" y="332" width="330" height="32" rx="5" fill="#ffffff" stroke="#1f2937" stroke-width="1.5"/>
-  <text x="230" y="353" font-size="11" fill="#0f172a" text-anchor="middle">MockAsyncPlay — 조립 실행 클라이언트</text>
+  <text x="230" y="353" font-size="10" fill="#0f172a" text-anchor="middle">MockAssemblyScenarioControl — 조립 실행 클라이언트</text>
 
   <!-- ===== Main Server ===== -->
   <rect x="530" y="90" width="320" height="180" rx="8" fill="#dbeafe" stroke="#1f2937" stroke-width="2"/>
@@ -160,7 +160,7 @@
   <rect x="435" y="962" width="345" height="46" rx="5" fill="#ffffff" stroke="#94a3b8" stroke-width="2" stroke-dasharray="5 3"/>
   <text x="607" y="990" font-size="11" fill="#64748b" text-anchor="middle">Conveyor 실물 ROS2 제어</text>
   <rect x="800" y="962" width="345" height="46" rx="5" fill="#ffffff" stroke="#94a3b8" stroke-width="2" stroke-dasharray="5 3"/>
-  <text x="972" y="990" font-size="11" fill="#64748b" text-anchor="middle">Real 자동 조립 (RealAsyncPlay)</text>
+  <text x="972" y="990" font-size="10" fill="#64748b" text-anchor="middle">Real 자동 조립 (RealAssemblyScenarioControl)</text>
   <rect x="1165" y="962" width="345" height="46" rx="5" fill="#ffffff" stroke="#94a3b8" stroke-width="2" stroke-dasharray="5 3"/>
   <text x="1337" y="990" font-size="11" fill="#64748b" text-anchor="middle">AI 불량 검사 · Factory Monitoring</text>
 

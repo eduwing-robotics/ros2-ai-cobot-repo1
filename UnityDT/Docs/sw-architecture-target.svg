@@ -30,7 +30,7 @@
 
   <text x="58" y="384" font-size="11" font-weight="700" fill="#b91c1c">소유하지 않음</text>
   <text x="58" y="406" font-size="10" fill="#334155">✗ 공정 순서 <tspan fill="#b91c1c">(현 Scenario 위반)</tspan></text>
-  <text x="58" y="427" font-size="10" fill="#334155">✗ 컨베이어 제어 <tspan fill="#b91c1c">(현 ConveyMock)</tspan></text>
+  <text x="58" y="427" font-size="10" fill="#334155">✗ 컨베이어 제어 <tspan fill="#b91c1c">(현 MockConveyor)</tspan></text>
   <text x="58" y="448" font-size="10" fill="#334155">✗ 완료 · 실패 판정</text>
   <text x="58" y="469" font-size="10" fill="#334155">✗ 작업 상태의 진실</text>
   <text x="58" y="490" font-size="10" fill="#334155">✗ 좌표 · 레시피 · DB 접근</text>

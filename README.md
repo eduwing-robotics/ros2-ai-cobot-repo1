@@ -17,6 +17,7 @@ FR5, Unity 디지털 트윈, ROS2/MoveIt, MainServer와 PostgreSQL을 연결해 
 - [프로젝트 기능 목표와 현재 상태](overview.md)
 - [작업 계획](TODO.md)
 - [현재 시스템 구조](UnityDT/Docs/Architecture.md)
+- [ISA-95 기준 현재 구조](UnityDT/Docs/ISA95-Current.md)
 - [Unity ↔ ROS2 API](UnityDT/Docs/API.md)
 - [MainServer HTTP API](MAIN_SERVER/Main_serverAPI.md)
 - [production 핵심 DB 설계](UnityDT/Docs/DB.md)

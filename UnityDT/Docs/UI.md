@@ -9,7 +9,7 @@
 | RUN | 로봇 상태, 조립 진행과 Scenario 시작 경로가 있다. |
 | REQUEST | UXML과 binder가 있으나 MainServer 작업 API 연결은 완료되지 않았다. |
 | INSPECT | 카메라·검사 레이아웃이 있으나 실제 Unit·불량 조회 연결은 완료되지 않았다. |
-| MANUAL | 주입된 `IRobotControl`을 사용하는 수동 조작 화면이다. |
+| MANUAL | 로봇 상태를 표시한다. APPLY·그리퍼 실동작과 `IRobotControl` 명령 경로는 아직 연결되지 않았다. |
 | QUALITY | 레이아웃과 빈 상태가 있으나 실제 품질 조회 연결은 완료되지 않았다. |
 | SETUP | 라우터 항목만 있고 UXML은 없어 비활성이다. |
 
@@ -28,6 +28,6 @@
 - `Assets/UI/FR5Run.uxml`, `FR5RunBinder.cs`
 - `Assets/UI/FR5Request.uxml`, `FR5RequestBinder.cs`
 - `Assets/UI/FR5Inspect.uxml`, `FR5InspectBinder.cs`
-- `Assets/UI/FR5Manual.uxml`, `FR5ManualBinder.cs`
+- `Assets/UI/FR5Manual.uxml`, `FR5ManualBinder.cs`, `ManualJointPanel.cs`
 - `Assets/UI/FR5Quality.uxml`, `FR5QualityBinder.cs`
 - `Assets/UI/FR5PageRouter.cs`, `UIMaster.cs`, `FR5EmptyState.cs`

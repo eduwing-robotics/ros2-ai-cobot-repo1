@@ -5,9 +5,9 @@
 ## 전체 구조
 
 ```text
-Unity Scenario ─┬─ RobotMaster ── MockAsyncPlay ── /unity/assembly/start
+Unity Scenario ─┬─ RobotMaster ── MockAssemblyScenarioControl ── /unity/assembly/start
                 │                                  /unity/assembly/feedback
-                └─ 수동 UI ────── IRobotControl
+                └─ 수동 UI ────── 상태 표시 (실동작 명령 미연결)
 
 MainServer HTTP ── AssemblyGateway ──────────────── /unity/assembly/start
 
@@ -26,25 +26,40 @@ Unity와 MainServer는 현재 같은 ROS2 조립 서비스를 호출할 수 있�
 ```text
 RobotMaster
   ├─ Scenario에 IRobotScenarioControl 주입
-  └─ 수동 UI에 IRobotControl 제공
+  └─ 선택 backend의 상태와 IRobotControl 노출 (수동 UI 명령 미연결)
 
 Scenario
-  → ConveyMock.MoveBoardToAssemblyAsync()
+  → MockConveyor.MoveBoardToAssemblyAsync()
   → IRobotScenarioControl.ExecuteAsync()
-  → ConveyMock.MoveBoardToInspectionAsync()
+  → MockConveyor.MoveBoardToInspectionAsync()
 ```
 
 Scenario는 좌표, ROS 메시지, Mock/Real 분기와 완료 callback을 해석하지 않는다. 선택된 backend의 `ExecuteAsync()`가 입력 검증, 통신, 실제 완료, 실패와 타임아웃을 책임진다.
 
+## Unity 핵심 스크립트 책임
+
+| 소유자 | 현재 책임 |
+|---|---|
+| `RobotMaster` | Mock/Real backend 선택·초기화와 Scenario·상태·제어 계약 노출 |
+| `Scenario` | 컨베이어 이동과 조립 요청의 상위 순서 |
+| `MockAssemblyScenarioControl` | Mock 자동 조립 요청·상태 복구·feedback 완료 판정과 씬 부품 반영 |
+| `MockRobotControl` | Mock 수동·저수준 ROS 명령과 명령 완료 판정 |
+| `RealAssemblyScenarioControl` | Real 자동 조립 계약 경계. 현재는 미지원 오류 반환 |
+| `RealRobotControl` | Real 수동·저수준 제어 계약. 일부 이동·관절 명령은 미지원 |
+| `UIMaster` | 선택된 RobotMaster의 상태·진행·Scenario 참조를 UI에 제공 |
+| `FR5ManualBinder` | MANUAL 화면의 TCP·RPY·그리퍼 상태 표시. 명령은 발행하지 않음 |
+
+새 스크립트를 만들기 전에 이 표와 실제 호출자를 확인한다. 책임이 실제로 바뀌면 코드 변경과 같은 작업에서 이 표도 갱신한다.
+
 ### Mock backend
 
-`MockAsyncPlay`는 씬의 부품과 슬롯 Transform을 observation으로 만들고 `/unity/assembly/start`에 전달한다. 서비스 응답은 수락만 뜻한다. `/unity/assembly/feedback`의 terminal 상태가 `COMPLETED`일 때만 `ExecuteAsync()`가 성공한다.
+`MockAssemblyScenarioControl`은 씬의 부품과 슬롯 Transform을 observation으로 만들고 `/unity/assembly/start`에 전달한다. 서비스 응답은 수락만 뜻한다. `/unity/assembly/feedback`의 terminal 상태가 `COMPLETED`일 때만 `ExecuteAsync()`가 성공한다.
 
 활성화될 때 같은 서비스에 `status`를 요청해 ROS 메모리의 최근 스냅샷을 복구한다. 이 스냅샷은 ROS 프로세스 재시작을 넘는 영속 복구 계약이 아니다.
 
 ### Real backend
 
-Real 상태 수신과 저수준 Move/그리퍼 서비스 경로는 일부 구현되어 있다. `RealAsyncPlay.ExecuteAsync()`는 현재 `NotSupportedException`으로 실패하므로 Real 자동 조립은 지원하지 않는다.
+Real 상태 수신과 저수준 Move/그리퍼 서비스 경로는 일부 구현되어 있다. `RealAssemblyScenarioControl.ExecuteAsync()`는 현재 `NotSupportedException`으로 실패하므로 Real 자동 조립은 지원하지 않는다.
 
 ## ROS2 Mock 실행
 

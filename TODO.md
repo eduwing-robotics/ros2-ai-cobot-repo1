@@ -77,11 +77,11 @@
 - [ ] RUN에 AIO에서 전달된 `job_id`와 Unit/기판 식별자를 표시한다.
 - [ ] 로봇뿐 아니라 컨베이어와 비전의 연결·운전 상태를 공통 상태로 표시한다.
 - [ ] 확정된 PAUSE·RESUME·STOP 계약만 UI에 연결하고 미지원 버튼은 비활성 사유를 표시하거나 제거한다.
-- [ ] 사람 감지·E-STOP 시 새 로봇 명령을 차단하고 `ConveyMock.StopConveyor()`를 호출하는 안전 경계를 검증한다.
+- [ ] 사람 감지·E-STOP 시 새 로봇 명령을 차단하고 `MockConveyor.StopConveyor()`를 호출하는 안전 경계를 검증한다.
 
 ### P1 — 필수 Real·검사·이력
 
-- [ ] `RealAsyncPlay.ExecuteAsync()`를 실제 ROS2 조립 노드에 연결하고 Mock과 같은 완료·실패·타임아웃 의미를 제공한다.
+- [ ] `RealAssemblyScenarioControl.ExecuteAsync()`를 실제 ROS2 조립 노드에 연결하고 Mock과 같은 완료·실패·타임아웃 의미를 제공한다.
 - [ ] Vision Pose → Calibration → Real 조립 목표 경로를 연결한다.
 - [ ] 기존 MainServer Job·Unit API를 RUN과 INSPECT에 연결한다.
 - [ ] INSPECT에 PASS/FAIL, 불량 슬롯, 검사 이미지를 실제 값으로 표시한다.

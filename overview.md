@@ -48,7 +48,7 @@ Unity는 운전 화면과 디지털 트윈을 제공하고, ROS2/MoveIt 계층�
 ```text
 Scenario
   → 컨베이어를 조립 위치로 이동
-  → 주입된 MockAsyncPlay.ExecuteAsync()
+  → 주입된 MockAssemblyScenarioControl.ExecuteAsync()
   → /unity/assembly/start
   → mock_sim 또는 mock_db_bridge
   → /unity/assembly/feedback

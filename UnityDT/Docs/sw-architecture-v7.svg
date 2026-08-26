@@ -66,13 +66,15 @@
   <text x="790" y="300" font-size="11" fill="#555555" text-anchor="middle">ROS2 node</text>
 
   <!-- ============ Legend ============ -->
-  <rect x="1270" y="80" width="260" height="185" rx="6" fill="#f5f5f5" stroke="#000000" stroke-width="2" stroke-dasharray="8 5"/>
+  <rect x="1270" y="80" width="260" height="228" rx="6" fill="#f5f5f5" stroke="#000000" stroke-width="2" stroke-dasharray="8 5"/>
   <line x1="1292" y1="125" x2="1358" y2="125" stroke="#1a73e8" stroke-width="2.6" marker-end="url(#mb)"/>
   <text x="1378" y="131" font-size="15" font-weight="600" fill="#000000">ROS2</text>
   <line x1="1292" y1="172" x2="1358" y2="172" stroke="#00a352" stroke-width="2.6" marker-end="url(#mg)"/>
   <text x="1378" y="178" font-size="15" font-weight="600" fill="#000000">HTTP/REST</text>
   <line x1="1292" y1="219" x2="1358" y2="219" stroke="#9933cc" stroke-width="2.6" marker-end="url(#mp)"/>
   <text x="1378" y="225" font-size="15" font-weight="600" fill="#000000">Video Stream</text>
+  <rect x="1292" y="257" width="66" height="18" rx="3" fill="#ffffff" stroke="#999999" stroke-width="2" stroke-dasharray="5 3"/>
+  <text x="1378" y="272" font-size="15" font-weight="600" fill="#666666">미구현</text>
 
   <!-- ============ Global Camera ============ -->
   <rect x="90" y="518" width="330" height="240" rx="6" fill="#d5e8d4" stroke="#000000" stroke-width="2"/>
@@ -96,10 +98,10 @@
   <line x1="503" y1="686" x2="503" y2="695" stroke="#000000" stroke-width="2"/>
   <line x1="515" y1="686" x2="515" y2="695" stroke="#000000" stroke-width="2"/>
 
-  <rect x="550" y="595" width="225" height="60" rx="4" fill="#ffffff" stroke="#000000" stroke-width="2"/>
-  <text x="662" y="631" font-size="14" font-weight="700" fill="#000000" text-anchor="middle">PCB Alignment</text>
-  <rect x="550" y="670" width="225" height="60" rx="4" fill="#ffffff" stroke="#000000" stroke-width="2"/>
-  <text x="662" y="706" font-size="14" font-weight="700" fill="#000000" text-anchor="middle">Defect Inspection</text>
+  <rect x="550" y="595" width="225" height="60" rx="4" fill="#ffffff" stroke="#999999" stroke-width="2" stroke-dasharray="5 3"/>
+  <text x="662" y="631" font-size="14" font-weight="700" fill="#666666" text-anchor="middle">PCB Alignment</text>
+  <rect x="550" y="670" width="225" height="60" rx="4" fill="#ffffff" stroke="#999999" stroke-width="2" stroke-dasharray="5 3"/>
+  <text x="662" y="706" font-size="14" font-weight="700" fill="#666666" text-anchor="middle">Defect Inspection</text>
 
   <!-- ============ FR5 Arm ============ -->
   <rect x="824" y="518" width="330" height="240" rx="6" fill="#fff2cc" stroke="#000000" stroke-width="2"/>
@@ -118,18 +120,18 @@
   <text x="1027" y="706" font-size="14" font-weight="700" fill="#000000" text-anchor="middle">Gripper Control</text>
 
   <!-- ============ Conveyor ============ -->
-  <rect x="1191" y="518" width="330" height="240" rx="6" fill="#ffcce6" stroke="#000000" stroke-width="2"/>
-  <text x="1211" y="552" font-size="17" font-weight="700" fill="#000000">Conveyor</text>
+  <rect x="1191" y="518" width="330" height="240" rx="6" fill="#ffcce6" stroke="#999999" stroke-width="2" stroke-dasharray="8 5"/>
+  <text x="1211" y="552" font-size="17" font-weight="700" fill="#666666">Conveyor</text>
   <rect x="1213" y="660" width="58" height="12" rx="3" fill="none" stroke="#000000" stroke-width="2"/>
   <circle cx="1224" cy="684" r="9" fill="none" stroke="#000000" stroke-width="2"/>
   <circle cx="1245" cy="684" r="9" fill="none" stroke="#000000" stroke-width="2"/>
   <circle cx="1266" cy="684" r="9" fill="none" stroke="#000000" stroke-width="2"/>
   <line x1="1216" y1="699" x2="1274" y2="699" stroke="#000000" stroke-width="2"/>
 
-  <rect x="1290" y="595" width="220" height="60" rx="4" fill="#ffffff" stroke="#000000" stroke-width="2"/>
-  <text x="1400" y="631" font-size="14" font-weight="700" fill="#000000" text-anchor="middle">Drive Controller</text>
-  <rect x="1290" y="670" width="220" height="60" rx="4" fill="#ffffff" stroke="#000000" stroke-width="2"/>
-  <text x="1400" y="706" font-size="14" font-weight="700" fill="#000000" text-anchor="middle">Position Control</text>
+  <rect x="1290" y="595" width="220" height="60" rx="4" fill="#ffffff" stroke="#999999" stroke-width="2" stroke-dasharray="5 3"/>
+  <text x="1400" y="631" font-size="14" font-weight="700" fill="#666666" text-anchor="middle">Drive Controller</text>
+  <rect x="1290" y="670" width="220" height="60" rx="4" fill="#ffffff" stroke="#999999" stroke-width="2" stroke-dasharray="5 3"/>
+  <text x="1400" y="706" font-size="14" font-weight="700" fill="#666666" text-anchor="middle">Position Control</text>
 
   <!-- ==================== ARROWS ==================== -->
 
@@ -146,7 +148,7 @@
   <line x1="972" y1="167" x2="1034" y2="167" stroke="#000000" stroke-width="2" marker-start="url(#mk)" marker-end="url(#mk)"/>
 
   <!-- Network Manager <-> Assembly Sequencer -->
-  <line x1="680" y1="207" x2="680" y2="248" stroke="#000000" stroke-width="2" marker-start="url(#mk)" marker-end="url(#mk)"/>
+  <line x1="680" y1="205" x2="680" y2="250" stroke="#1a73e8" stroke-width="2.6" marker-start="url(#mb)" marker-end="url(#mb)"/>
 
   <!-- Assembly Sequencer -> System Monitor : 텔레메트리 -->
   <line x1="608" y1="295" x2="412" y2="295" stroke="#1a73e8" stroke-width="2.6" marker-end="url(#mb)"/>
@@ -155,16 +157,16 @@
   <line x1="940" y1="327" x2="940" y2="593" stroke="#1a73e8" stroke-width="2.6" marker-start="url(#mb)" marker-end="url(#mb)"/>
 
   <!-- Assembly Sequencer -> Drive Controller -->
-  <polyline points="955,327 955,460 1400,460 1400,593" fill="none" stroke="#1a73e8" stroke-width="2.6" marker-end="url(#mb)"/>
+  <polyline points="955,327 955,460 1400,460 1400,593" fill="none" stroke="#1a73e8" stroke-width="2.6" stroke-dasharray="7 4" marker-end="url(#mb)"/>
 
   <!-- PCB Alignment -> Assembly Sequencer -->
-  <line x1="700" y1="593" x2="700" y2="327" stroke="#1a73e8" stroke-width="2.6" marker-end="url(#mb)"/>
+  <line x1="700" y1="593" x2="700" y2="327" stroke="#1a73e8" stroke-width="2.6" stroke-dasharray="7 4" marker-end="url(#mb)"/>
 
   <!-- Video Streamer -> PCB Alignment -->
-  <line x1="412" y1="625" x2="548" y2="625" stroke="#9933cc" stroke-width="2.6" marker-end="url(#mp)"/>
+  <line x1="412" y1="625" x2="548" y2="625" stroke="#9933cc" stroke-width="2.6" stroke-dasharray="7 4" marker-end="url(#mp)"/>
 
   <!-- PCB Alignment -> System Monitor : HUD 영상 -->
-  <polyline points="560,593 560,470 440,470 440,320 412,320" fill="none" stroke="#9933cc" stroke-width="2.6" marker-end="url(#mp)"/>
+  <polyline points="560,593 560,470 440,470 440,320 412,320" fill="none" stroke="#9933cc" stroke-width="2.6" stroke-dasharray="7 4" marker-end="url(#mp)"/>
 
   <!-- footer -->
   <text x="90" y="800" font-size="11.5" fill="#555555">Unity · Main Server · Assembly Sequencer · PostgreSQL 은 모두 같은 제어 PC에서 실행된다 (127.0.0.1). 프로세스는 분리되어 있다.</text>

@@ -15,13 +15,13 @@ Unity는 ROS-TCP Endpoint 노드(`/UnityEndpoint`)를 통해 ROS2와 통신한�
 
 | 기능 | Mock 인터페이스 | Real 인터페이스 |
 | --- | --- | --- |
-| 자동 조립 | `/unity/assembly/start` 서비스 + `/unity/assembly/feedback` 토픽 | 미지원 |
+| 자동 조립 | `/unity/assembly/start` 서비스 + `/unity/assembly/feedback` 토픽 | 설계됨(미구현): `/real/assembly/start`·`status` 서비스 + `/real/assembly/progress` 토픽 |
 | 수동 관절 목표 전송 | `/unity/joint_target` 토픽 | 미지원 |
 | MoveJ 목표 전송 | `/unity/movej_target` 토픽 | `/fairino_remote_command_service` 서비스 |
 | TCP 직선 이동 | `/unity/tcp_target` 토픽 | `/fairino_remote_command_service` 서비스 |
 | 그리퍼 제어 | `/unity/gripper_target` 토픽 | `/fairino_remote_command_service` 서비스 |
 | 로봇 상태 수신 | `/joint_states` 토픽 | `/nonrt_state_data` 토픽 |
-| 명령 결과 확인 | `/twin_visual/status` 토픽 | 서비스 응답 |
+| 명령 결과 확인 | `/twin_visual/status` 토픽 | 자동: `/real/assembly/progress`, 개별 명령: 서비스 응답 |
 | 비전 결과 수신 | `/vision/board/*` 토픽 | `/vision/board/*` 토픽 |
 
 > Real의 공통 `IRobotControl.MoveJ`와 수동 관절 제어는 현재 연결되어 있지 않다.
@@ -161,9 +161,8 @@ Unity는 `placed_count`까지 기존 부품/슬롯 순서로 재배치하고
 각 callback에서 가상 부품의 attach/detach를 처리한다. `COMPLETED`와 `FAILED`는 terminal
 상태이며 작업당 하나만 발행한다.
 
-`MockAsyncPlay.ExecuteAsync()`는 `COMPLETED`를 받은 뒤에만 성공으로 끝난다.
-`FAILED` 또는 terminal callback 타임아웃은 호출자에게 실패로 전달한다. Real 자동 조립은 현재
-미지원이며 구현 계획은 [TODO](../../TODO.md)에서 관리한다.
+`MockAssemblyScenarioControl.ExecuteAsync()`는 `COMPLETED`를 받은 뒤에만 성공으로 끝난다.
+`FAILED` 또는 terminal callback 타임아웃은 호출자에게 실패로 전달한다.
 
 ## 5. Real 인터페이스
 
@@ -178,6 +177,67 @@ Unity는 `placed_count`까지 기존 부품/슬롯 순서로 재배치하고
 | 이름 | 메시지 타입 | 용도 | 발행 노드 |
 | --- | --- | --- | --- |
 | `/nonrt_state_data` | `fairino_msgs/msg/RobotNonrtState` | 실기 로봇 비실시간 상태 수신 | `fr_command_server` |
+
+### 5.3 자동 조립 Real (설계됨, 미구현)
+
+#### API 목록
+
+| 송신자 | 수신자 | 구분 | 이름 | 메시지 타입 | 목적 |
+| --- | --- | --- | --- | --- | --- |
+| Unity `RealAssemblyScenarioControl` | AIO `real_assembly` | 서비스 | `/real/assembly/start` | `real_assembly_interfaces/srv/StartAssembly` | Real 조립 시작 요청과 수락 결과 |
+| Unity `RealAssemblyScenarioControl` | AIO `real_assembly` | 서비스 | `/real/assembly/status` | `real_assembly_interfaces/srv/GetAssemblyStatus` | 현재 또는 지정 조립 작업 상태 조회 |
+| AIO `real_assembly` | Unity `RealAssemblyScenarioControl` | 토픽 | `/real/assembly/progress` | `real_assembly_interfaces/msg/AssemblyProgress` | 조립 진행과 최종 결과 전달 |
+
+#### 메시지 구성
+
+```text
+# StartAssembly.srv
+string request_id
+string recipe_version
+---
+bool accepted
+string request_id
+uint32 expected_step_count
+string error_code
+string message
+```
+
+```text
+# GetAssemblyStatus.srv
+string request_id  # 빈 문자열이면 현재 또는 마지막 작업
+---
+bool available
+bool active
+string request_id
+string recipe_version
+string state
+uint32 step_order
+uint32 expected_step_count
+uint32 placed_count
+string part_id
+string slot_code
+string error_code
+string message
+```
+
+```text
+# AssemblyProgress.msg
+string request_id
+string recipe_version
+string state
+uint32 step_order
+uint32 expected_step_count
+uint32 placed_count
+string part_id
+string slot_code
+string error_code
+string message
+```
+
+| 필드 | 허용 값 |
+| --- | --- |
+| `state` | `STARTED`, `PICKED`, `PLACED`, `COMPLETED`, `FAILED` |
+| `error_code` | `BUSY`, `INVALID_REQUEST`, `VISION_FAILED`, `COMMAND_FAILED`, `ROBOT_FAULT`, `TIMEOUT`, `INTERNAL_ERROR` |
 
 ## 6. Unity ROS-TCP Connector API
 
