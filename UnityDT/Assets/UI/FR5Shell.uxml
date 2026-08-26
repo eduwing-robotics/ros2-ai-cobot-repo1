@@ -76,16 +76,6 @@
         <!-- ===================== 페이지 레일 ===================== -->
         <ui:VisualElement name="navrail" class="panel" style="position:absolute; left:0; top:64px; bottom:0; width:88px; border-left-width:0; border-bottom-width:0; align-items:center; padding-top:44px;">
 
-            <!-- RUN — 진행 막대 3개 -->
-            <ui:Button name="nav-run" class="tab" style="width:88px; height:96px; align-items:center; margin:0;">
-                <ui:VisualElement class="icon">
-                    <ui:VisualElement class="ink" style="position:absolute; left:2px; bottom:4px; width:5px; height:8px;" />
-                    <ui:VisualElement class="ink" style="position:absolute; left:10px; bottom:4px; width:5px; height:14px;" />
-                    <ui:VisualElement class="ink" style="position:absolute; left:18px; bottom:4px; width:5px; height:20px;" />
-                </ui:VisualElement>
-                <ui:Label text="RUN" class="tab__text" /><ui:Label text="운전" class="micro" />
-            </ui:Button>
-
             <!-- MONITOR — 실행 화면을 강제로 연다. -->
             <ui:Button name="nav-monitor" class="tab" style="width:88px; height:96px; align-items:center; margin:0;">
                 <ui:VisualElement class="icon">
@@ -94,6 +84,16 @@
                     <ui:VisualElement class="ink" style="position:absolute; left:9px; top:12px; width:10px; height:4px;" />
                 </ui:VisualElement>
                 <ui:Label text="MONITOR" class="tab__text" /><ui:Label text="모니터" class="micro" />
+            </ui:Button>
+
+            <!-- RUN — 진행 막대 3개 -->
+            <ui:Button name="nav-run" class="tab" style="width:88px; height:96px; align-items:center; margin:0;">
+                <ui:VisualElement class="icon">
+                    <ui:VisualElement class="ink" style="position:absolute; left:2px; bottom:4px; width:5px; height:8px;" />
+                    <ui:VisualElement class="ink" style="position:absolute; left:10px; bottom:4px; width:5px; height:14px;" />
+                    <ui:VisualElement class="ink" style="position:absolute; left:18px; bottom:4px; width:5px; height:20px;" />
+                </ui:VisualElement>
+                <ui:Label text="RUN" class="tab__text" /><ui:Label text="운전" class="micro" />
             </ui:Button>
 
             <!-- INSPECT — 렌즈(원 + 중심점) -->
