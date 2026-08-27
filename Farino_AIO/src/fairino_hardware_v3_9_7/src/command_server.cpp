@@ -1149,8 +1149,8 @@ std::string robot_command_thread::MoveGripper(std::string para){
     int pos = std::stoi(list.front());list.pop_front();
     int veli = std::stoi(list.front());list.pop_front();
     int forcei = std::stoi(list.front());list.pop_front();
-    int max_timei = 30000;
-    uint8_t blocki = 1;
+    int max_timei = std::stoi(list.front());list.pop_front();
+    uint8_t blocki = std::stoi(list.front());
     return std::to_string(_ptr_robot->MoveGripper(index,pos,veli,forcei,max_timei,blocki,0,0,0,0));
 }
     

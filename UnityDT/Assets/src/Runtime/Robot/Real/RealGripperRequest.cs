@@ -17,6 +17,9 @@ namespace MainUnity.Runtime.Robot.Real
 
         [SerializeField] string serviceName = "/fairino_remote_command_service";
         [SerializeField, Range(0, 100)] int openingPercent = 100;
+        [SerializeField, Range(0, 100)] int speedPercent = 50;
+        [SerializeField, Range(0, 100)] int forcePercent = 30;
+        [SerializeField, Range(0, 30000)] int maxTimeMilliseconds = 3000;
 
         RealShadowing shadowing;
         RobotStatusManager statusManager;
@@ -52,6 +55,12 @@ namespace MainUnity.Runtime.Robot.Real
                 Debug.LogWarning("Gripper opening must be between 0 and 100 percent.", this);
                 return false;
             }
+            if (speedPercent < 0 || speedPercent > 100 || forcePercent < 0 || forcePercent > 100 ||
+                maxTimeMilliseconds < 0 || maxTimeMilliseconds > 30000)
+            {
+                Debug.LogWarning("Gripper speed and force must be between 0 and 100 percent, and max time between 0 and 30000 milliseconds.", this);
+                return false;
+            }
             if (!TryPrepare(out _))
                 return false;
 
@@ -60,7 +69,8 @@ namespace MainUnity.Runtime.Robot.Real
 
             requestInFlight = true;
             string command = string.Format(CultureInfo.InvariantCulture,
-                "MoveGripper({0},{1})", GripperId, opening);
+                "MoveGripper({0},{1},{2},{3},{4},0,0,0,0,0)", GripperId, opening,
+                speedPercent, forcePercent, maxTimeMilliseconds);
             Debug.Log("[FAIRINO] TX " + serviceName + ": " + command, this);
             RequestOpeningAsync(command);
             return true;

@@ -1,0 +1,153 @@
+---
+title: 프로젝트 개요
+description: HBM 조립체 디지털 트윈의 목표, 현재 범위, 시스템 경계와 완료 기준
+---
+
+# HBM 조립체 디지털 트윈
+
+Unity, ROS2/MoveIt, MainServer와 PostgreSQL을 연결해 HBM 조립체의 조립·검사·품질 확인을 Mock과 Real에서 같은 업무 의미로 제공한다.
+
+| 문서 상태 | 적용 범위 | 기준 |
+|---|---|---|
+| **CURRENT** | 저장소 전체 | 실행 코드, API 계약, DB 스키마 |
+
+!!! abstract "이 문서가 답하는 질문"
+    프로젝트가 무엇을 제공하는지, 각 시스템이 무엇을 책임지는지, 완료를 어떤 기준으로 판정하는지를 설명한다. 구체 통신 형식은 API 문서, 미구현 작업은 `TODO.md`가 소유한다.
+
+## 시스템 개요
+
+```mermaid
+flowchart LR
+    USER[운영자·외부 클라이언트]
+    UNITY[Unity Digital Twin]
+    SERVER[MainServer HTTP API]
+    ROS[ROS2 · MoveIt · Assembly]
+    DB[(PostgreSQL)]
+    CELL[Robot · Vision · Cell]
+
+    USER --> UNITY
+    USER --> SERVER
+    UNITY <-->|명령·상태| ROS
+    SERVER -->|조립 요청| ROS
+    SERVER -->|읽기| DB
+    ROS -->|mock_db_bridge 사용 시 기록| DB
+    ROS <-->|Mock · Real 일부| CELL
+```
+
+제품·재고 확인부터 품질 확인까지의 업무 흐름은 다음과 같다.
+
+```mermaid
+flowchart LR
+    A[제품·재고 확인] --> B[조립 요청] --> C[로봇 작업]
+    C --> D[검사] --> E[생산·불량 기록] --> F[품질 확인]
+```
+
+## 지원 범위
+
+| 기능 | 상태 | 현재 범위 |
+|---|---|---|
+| Unity 디지털 트윈 | **SUPPORTED** | FR5·작업 셀, RUN·INSPECT·MANUAL·QUALITY 화면 |
+| Mock 자동 조립 | **SUPPORTED** | 요청 수락부터 terminal feedback까지 |
+| MainServer | **PARTIAL** | HTTP 조회와 ROS2 조립 요청, Unity 화면 연동 일부 |
+| Real 상태·수동 제어 | **PARTIAL** | 상태 수신과 일부 저수준 명령 |
+| Real 자동 조립 | **NOT IMPLEMENTED** | `ExecuteAsync()`가 미지원 오류 반환 |
+| SETUP 화면 | **NOT IMPLEMENTED** | 라우터 항목만 존재 |
+
+!!! warning "현재 운영 제한"
+    자동 조립은 Mock, 고정 레시피 1개, 수량 1개와 동시 작업 1건만 지원한다. Real 자동 조립은 활성화하지 않는다.
+
+## 핵심 동작
+
+### Unity 디지털 트윈
+
+- `RobotMaster` 한 곳에서 Mock/Real backend를 선택한다.
+- Scenario는 주입된 `IRobotScenarioControl.ExecuteAsync()`만 호출한다.
+- 서비스 수락은 완료가 아니다. Mock 자동 조립은 `COMPLETED` feedback을 받은 뒤에만 성공한다.
+- UI는 로봇 상태, 조립 진행, TCP·그리퍼와 작업 셀을 표시한다.
+
+### Mock 자동 조립
+
+- Unity가 Scene의 부품·슬롯 Transform으로 observation을 구성한다.
+- `/unity/assembly/start`로 실행 또는 최근 상태 조회를 요청한다.
+- `/unity/assembly/feedback`으로 `STARTED`, `PICKED`, `PLACED`, `COMPLETED`, `FAILED`를 수신한다.
+- 상태 복구는 ROS 메모리의 최근 스냅샷까지만 지원하며 ROS 재시작을 넘지 않는다.
+- `mock_db_bridge`를 사용하면 Job·Unit·재고·검사 결과를 `production`에 기록한다.
+
+### MainServer
+
+- 제품, 슬롯·부품 구성, 재고 부족분, 작업·Unit과 슬롯별 불량률을 조회한다.
+- `POST /api/v1/assemblies`는 조립 요청을 `/unity/assembly/start`로 전달한다.
+- `GET /api/v1/assemblies/current`는 같은 서비스의 상태 스냅샷을 조회한다.
+- Mock/Real 모드는 HTTP 경로를 바꾸지 않고 실행 설정만 선택한다.
+
+## 실행 흐름
+
+```mermaid
+sequenceDiagram
+    actor Operator as 운영자
+    participant Unity
+    participant Scenario
+    participant Conveyor
+    participant Backend as MockAssemblyScenarioControl
+    participant ROS as ROS2 Mock / DB Bridge
+
+    Operator->>Unity: START
+    Unity->>Scenario: Run()
+    Scenario->>Conveyor: 조립 위치로 이동
+    Scenario->>Backend: ExecuteAsync()
+    Backend->>ROS: start request
+    ROS-->>Backend: accepted
+    ROS-->>Backend: STARTED · PICKED · PLACED
+    ROS-->>Backend: COMPLETED 또는 FAILED
+    Backend-->>Scenario: 실제 완료 또는 실패
+    Scenario->>Conveyor: 완료 후 검사 위치로 이동
+```
+
+`mock_db_bridge` 경로에서는 재고 차감, 검사 기록과 Job 마감이 commit된 뒤에만 외부 `COMPLETED`를 전달한다. MainServer와 Unity는 같은 ROS2 조립 서비스를 호출할 수 있지만 서로를 경유하지 않는다.
+
+## 책임 경계
+
+| 소유자 | 책임 | 소유하지 않는 것 |
+|---|---|---|
+| Unity | 화면, 3D 상태, 사용자 조작, Scenario의 상위 흐름 | DB 접근, ROS 완료 판정 |
+| `RobotMaster` | Mock/Real 선택과 계약 주입 | 좌표 변환, ROS 통신, 실행 로직 |
+| `IRobotScenarioControl` 구현 | 입력 검증, 통신, 실제 완료·실패·timeout | 상위 업무 순서 |
+| `IRobotControl` 구현 | 수동·저수준 로봇 조작 | 자동 조립 흐름 |
+| MainServer | 읽기 전용 DB 조회, HTTP 검증, ROS2 요청 전달 | Unity 오브젝트 해석, 실제 완료 판정 |
+| ROS2 조립 계층 | 레시피 검증, MoveIt 계획, 로봇·그리퍼 실행, 결과 기록 | 화면과 사용자 조작 |
+
+## 데이터 원칙
+
+| 스키마 | 책임 |
+|---|---|
+| `production` | 제품·슬롯·부품 현재고, Job, Unit, 검사와 불량 슬롯 |
+| `part_catalog` | 제조사, 공급·대체 후보, 데이터시트와 검사 체크리스트 |
+| `defect_report` | 품질 임계값, 알림, 고정 근거와 개선 결과 |
+
+- `production`에는 제품 한 대 단위의 확정 생산·검사 사실만 기록한다.
+- 관절·TCP 스트림과 조립 스텝 진행은 영속 DB에 저장하지 않는다.
+- 레시피 본문과 좌표는 파일과 Git이 소유하며 DB에는 `recipe_version`만 기록한다.
+- 스키마 간 물리 외래키는 두지 않고 각 스키마가 자기 무결성을 책임진다.
+- 검사 불량과 실행 실패를 구분한다. 정상 종료된 Unit도 검사 결과는 `FAIL`일 수 있다.
+
+## 완료 기준
+
+1. 사용자가 제품과 수량을 확인하고 조립을 요청할 수 있다.
+2. 선택된 backend가 안전 조건과 입력을 검증하고 조립·검사를 실제 완료한다.
+3. Unity가 진행 상태, 3D 동작, 실패 원인과 검사 결과를 표시한다.
+4. 완성품, 재고, 검사와 불량 위치가 일관되게 저장된다.
+5. Real 자동 조립도 Mock과 같은 성공·실패·timeout 계약을 제공한다.
+6. 품질 화면과 대책서는 저장된 근거 데이터를 사용한다.
+
+## 기준 원본
+
+| 영역 | 경로 |
+|---|---|
+| 작업 계획 | `TODO.md` |
+| 현재 시스템 구조 | `UnityDT/Docs/Architecture.md` |
+| Unity ↔ ROS2 계약 | `UnityDT/Docs/API.md` |
+| MainServer HTTP 계약 | `MAIN_SERVER/Main_serverAPI.md` |
+| production DB | `UnityDT/Docs/DB.md` |
+| 3개 스키마 | `UnityDT/Docs/DB3.md` |
+| DDL | `DATA_STATION/DB/001_schema.sql` |
+| 레시피 | `UnityDT/Docs/Recipe.md` |

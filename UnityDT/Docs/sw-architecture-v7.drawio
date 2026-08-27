@@ -1,0 +1,173 @@
+<mxGraphModel dx="1580" dy="825" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" math="0" shadow="0" adaptiveColors="auto">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <mxCell id="gui" value="GUI/DT" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#000000;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=14;spacingTop=6;fontSize=17;fontStyle=1;container=1;collapsible=0;" vertex="1" parent="1">
+      <mxGeometry x="90" y="80" width="340" height="300" as="geometry"/>
+    </mxCell>
+    <mxCell id="gui_icon" value="" style="shape=mxgraph.networks.monitor;html=1;strokeColor=#000000;fillColor=none;strokeWidth=2;" vertex="1" parent="gui">
+      <mxGeometry x="22" y="160" width="70" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="gui_run" value="Run&#10;Control" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;fontSize=14;fontStyle=1;" vertex="1" parent="gui">
+      <mxGeometry x="120" y="50" width="200" height="75" as="geometry"/>
+    </mxCell>
+    <mxCell id="gui_sys" value="System&#10;Monitor" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;fontSize=14;fontStyle=1;" vertex="1" parent="gui">
+      <mxGeometry x="120" y="170" width="200" height="75" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="ms" value="Main Server" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#000000;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=14;spacingTop=6;fontSize=17;fontStyle=1;container=1;collapsible=0;" vertex="1" parent="1">
+      <mxGeometry x="470" y="80" width="760" height="300" as="geometry"/>
+    </mxCell>
+    <mxCell id="ms_icon" value="" style="shape=mxgraph.networks.server;html=1;strokeColor=#000000;fillColor=none;strokeWidth=2;" vertex="1" parent="ms">
+      <mxGeometry x="672" y="168" width="62" height="72" as="geometry"/>
+    </mxCell>
+    <mxCell id="ms_nm" value="Network&#10;Manager" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;fontSize=14;fontStyle=1;" vertex="1" parent="ms">
+      <mxGeometry x="140" y="50" width="170" height="75" as="geometry"/>
+    </mxCell>
+    <mxCell id="ms_tm" value="Task&#10;Manager" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;fontSize=14;fontStyle=1;" vertex="1" parent="ms">
+      <mxGeometry x="330" y="50" width="170" height="75" as="geometry"/>
+    </mxCell>
+    <mxCell id="ms_db" value="PostgreSQL" style="shape=cylinder3;boundedLbl=1;backgroundOutline=1;size=13;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;fontSize=12;verticalAlign=bottom;spacingBottom=-24;" vertex="1" parent="ms">
+      <mxGeometry x="566" y="45" width="84" height="80" as="geometry"/>
+    </mxCell>
+    <mxCell id="ms_as" value="Assembly Sequencer&#10;ROS2 node" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;fontSize=14;fontStyle=1;" vertex="1" parent="ms">
+      <mxGeometry x="140" y="170" width="360" height="75" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cam" value="Global Camera" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#000000;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=14;spacingTop=6;fontSize=17;fontStyle=1;container=1;collapsible=0;" vertex="1" parent="1">
+      <mxGeometry x="90" y="518" width="330" height="240" as="geometry"/>
+    </mxCell>
+    <mxCell id="cam_icon" value="" style="shape=mxgraph.networks.web_camera;html=1;strokeColor=#000000;fillColor=none;strokeWidth=2;" vertex="1" parent="cam">
+      <mxGeometry x="20" y="115" width="62" height="52" as="geometry"/>
+    </mxCell>
+    <mxCell id="cam_vs" value="Video Streamer" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;fontSize=14;fontStyle=1;" vertex="1" parent="cam">
+      <mxGeometry x="95" y="77" width="225" height="60" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="vis" value="Vision/AI" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=#b0e3e6;strokeColor=#000000;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=14;spacingTop=6;fontSize=17;fontStyle=1;container=1;collapsible=0;" vertex="1" parent="1">
+      <mxGeometry x="457" y="518" width="330" height="240" as="geometry"/>
+    </mxCell>
+    <mxCell id="vis_icon" value="AI" style="rounded=1;arcSize=10;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=2;fontSize=14;fontStyle=1;" vertex="1" parent="vis">
+      <mxGeometry x="22" y="120" width="52" height="52" as="geometry"/>
+    </mxCell>
+    <mxCell id="vis_pcb" value="PCB Alignment" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;strokeWidth=2;dashed=1;dashPattern=5 3;fontSize=14;fontStyle=1;fontColor=#666666;" vertex="1" parent="vis">
+      <mxGeometry x="93" y="77" width="225" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="vis_def" value="Defect Inspection" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;strokeWidth=2;dashed=1;dashPattern=5 3;fontSize=14;fontStyle=1;fontColor=#666666;" vertex="1" parent="vis">
+      <mxGeometry x="93" y="152" width="225" height="60" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="arm" value="FR5 Arm" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#000000;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=14;spacingTop=6;fontSize=17;fontStyle=1;container=1;collapsible=0;" vertex="1" parent="1">
+      <mxGeometry x="824" y="518" width="330" height="240" as="geometry"/>
+    </mxCell>
+    <mxCell id="arm_mc" value="Motion Controller" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;fontSize=14;fontStyle=1;" vertex="1" parent="arm">
+      <mxGeometry x="91" y="77" width="225" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="arm_gc" value="Gripper Control" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;fontSize=14;fontStyle=1;" vertex="1" parent="arm">
+      <mxGeometry x="91" y="152" width="225" height="60" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="conv" value="Conveyor" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=#ffcce6;strokeColor=#999999;strokeWidth=2;dashed=1;dashPattern=8 5;verticalAlign=top;align=left;spacingLeft=14;spacingTop=6;fontSize=17;fontStyle=1;fontColor=#666666;container=1;collapsible=0;" vertex="1" parent="1">
+      <mxGeometry x="1191" y="518" width="330" height="240" as="geometry"/>
+    </mxCell>
+    <mxCell id="conv_dc" value="Drive Controller" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;strokeWidth=2;dashed=1;dashPattern=5 3;fontSize=14;fontStyle=1;fontColor=#666666;" vertex="1" parent="conv">
+      <mxGeometry x="99" y="77" width="220" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="conv_pc" value="Position Control" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;strokeWidth=2;dashed=1;dashPattern=5 3;fontSize=14;fontStyle=1;fontColor=#666666;" vertex="1" parent="conv">
+      <mxGeometry x="99" y="152" width="220" height="60" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="lg" value="" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#000000;strokeWidth=2;dashed=1;dashPattern=8 5;" vertex="1" parent="1">
+      <mxGeometry x="1270" y="80" width="260" height="228" as="geometry"/>
+    </mxCell>
+    <mxCell id="lg1" style="html=1;endArrow=block;endFill=1;strokeColor=#1a73e8;strokeWidth=3;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="1292" y="125" as="sourcePoint"/>
+        <mxPoint x="1358" y="125" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="lg1t" value="ROS2" style="text;html=1;align=left;verticalAlign=middle;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="1374" y="112" width="120" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="lg2" style="html=1;endArrow=block;endFill=1;strokeColor=#00a352;strokeWidth=3;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="1292" y="172" as="sourcePoint"/>
+        <mxPoint x="1358" y="172" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="lg2t" value="HTTP/REST" style="text;html=1;align=left;verticalAlign=middle;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="1374" y="159" width="140" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="lg3" style="html=1;endArrow=block;endFill=1;strokeColor=#9933cc;strokeWidth=3;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="1292" y="219" as="sourcePoint"/>
+        <mxPoint x="1358" y="219" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="lg3t" value="Video Stream" style="text;html=1;align=left;verticalAlign=middle;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="1374" y="206" width="150" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="lg4" value="" style="rounded=1;arcSize=20;html=1;fillColor=#ffffff;strokeColor=#999999;strokeWidth=2;dashed=1;dashPattern=5 3;" vertex="1" parent="1">
+      <mxGeometry x="1292" y="257" width="66" height="18" as="geometry"/>
+    </mxCell>
+    <mxCell id="lg4t" value="미구현" style="text;html=1;align=left;verticalAlign=middle;fontSize=15;fontStyle=1;fontColor=#666666;" vertex="1" parent="1">
+      <mxGeometry x="1374" y="253" width="120" height="26" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#00a352;strokeWidth=3;exitX=1;exitY=0.333;exitDx=0;exitDy=0;entryX=0;entryY=0.333;entryDx=0;entryDy=0;" edge="1" parent="1" source="gui_run" target="ms_nm">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#00a352;strokeWidth=3;exitX=0;exitY=0.8;exitDx=0;exitDy=0;entryX=1;entryY=0.267;entryDx=0;entryDy=0;" edge="1" parent="1" source="ms_nm" target="gui_sys">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="450" y="190"/>
+          <mxPoint x="450" y="270"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;startArrow=block;startFill=1;strokeColor=#000000;strokeWidth=2;exitX=1;exitY=0.493;exitDx=0;exitDy=0;entryX=0;entryY=0.493;entryDx=0;entryDy=0;" edge="1" parent="1" source="ms_nm" target="ms_tm">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;startArrow=block;startFill=1;strokeColor=#000000;strokeWidth=2;exitX=1;exitY=0.493;exitDx=0;exitDy=0;entryX=0;entryY=0.525;entryDx=0;entryDy=0;" edge="1" parent="1" source="ms_tm" target="ms_db">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;startArrow=block;startFill=1;strokeColor=#1a73e8;strokeWidth=3;exitX=0.412;exitY=1;exitDx=0;exitDy=0;entryX=0.194;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="ms_nm" target="ms_as">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#1a73e8;strokeWidth=3;exitX=0;exitY=0.6;exitDx=0;exitDy=0;entryX=1;entryY=0.6;entryDx=0;entryDy=0;" edge="1" parent="1" source="ms_as" target="gui_sys">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;startArrow=block;startFill=1;strokeColor=#1a73e8;strokeWidth=3;exitX=0.917;exitY=1;exitDx=0;exitDy=0;entryX=0.111;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="ms_as" target="arm_mc">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#1a73e8;strokeWidth=3;dashed=1;dashPattern=7 4;exitX=0.958;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="ms_as" target="conv_dc">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="955" y="460"/>
+          <mxPoint x="1400" y="460"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#1a73e8;strokeWidth=3;dashed=1;dashPattern=7 4;exitX=0.667;exitY=0;exitDx=0;exitDy=0;entryX=0.25;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="vis_pcb" target="ms_as">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#9933cc;strokeWidth=3;dashed=1;dashPattern=7 4;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="cam_vs" target="vis_pcb">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#9933cc;strokeWidth=3;dashed=1;dashPattern=7 4;exitX=0.044;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=0.933;entryDx=0;entryDy=0;" edge="1" parent="1" source="vis_pcb" target="gui_sys">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="560" y="470"/>
+          <mxPoint x="440" y="470"/>
+          <mxPoint x="440" y="320"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="foot" value="Unity · Main Server · Assembly Sequencer · PostgreSQL 은 모두 같은 제어 PC에서 실행된다 (127.0.0.1). 프로세스는 분리되어 있다." style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#555555;" vertex="1" parent="1">
+      <mxGeometry x="90" y="790" width="1000" height="26" as="geometry"/>
+    </mxCell>
+
+  </root>
+</mxGraphModel>

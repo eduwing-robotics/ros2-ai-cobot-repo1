@@ -46,8 +46,13 @@ namespace MainUnity.Static
             Transform[] items = Array.Empty<Transform>();
 
             // 이 타입을 잡을 때 사용할 그리퍼 열림 비율이다.
-            [SerializeField, Range(0f, 100f), Tooltip("이 타입을 잡을 때 사용할 그리퍼 열림 비율입니다.")]
-            float gripperOpeningPercent;
+            [SerializeField, FormerlySerializedAs("gripperOpeningPercent"), Range(0f, 100f),
+             Tooltip("이 타입을 잡을 때 사용할 그리퍼 열림 비율입니다.")]
+            float gripperGraspOpeningPercent;
+
+            // 이 타입을 놓을 때 사용할 그리퍼 열림 비율이다.
+            [SerializeField, Range(0f, 100f), Tooltip("이 타입을 놓을 때 사용할 그리퍼 열림 비율입니다.")]
+            float gripperReleaseOpeningPercent;
 
             [SerializeField, FormerlySerializedAs("gripDirection"),
              Tooltip("체크하면 세로로 집고, 해제하면 가로로 집습니다.")]
@@ -63,7 +68,10 @@ namespace MainUnity.Static
             public Transform[] Items => items;
 
             /// <summary>그룹의 그리퍼 열림 비율을 반환한다.</summary>
-            public float GripperOpeningPercent => gripperOpeningPercent;
+            public float GripperOpeningPercent => gripperGraspOpeningPercent;
+
+            /// <summary>그룹의 부품 놓기 그리퍼 열림 비율을 반환한다.</summary>
+            public float GripperReleaseOpeningPercent => gripperReleaseOpeningPercent;
 
             /// <summary>부품을 세로로 집을지 여부를 반환한다.</summary>
             public bool PickVertically => pickVertically;
