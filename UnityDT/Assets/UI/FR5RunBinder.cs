@@ -68,7 +68,7 @@ namespace MainUnity.UI
         // 가로 340px 에 그릴 수 없고, 다시 그리는 비용만 늘어난다.
         const float SampleHz = 4f;
         const int SampleCapacity = 120;
-        Sparkline gripperSpark, watchdogSpark, tcpSpark;
+        Sparkline gripperSpark, watchdogSpark;
         double nextSampleTime;
 
         // 카메라 소스. 트윈이 이미 글로벌 시점이라 GLOBAL 은 이 타일에 오지 않는다.
@@ -116,8 +116,7 @@ namespace MainUnity.UI
             VisualElement root = GetComponent<UIDocument>().rootVisualElement;
             if (root == null) return;
 
-            BuildAxisRow(root.Q<VisualElement>("tcp-row"), new[] { "X", "Y", "Z" }, tcpValues, 26);
-            BuildAxisRow(root.Q<VisualElement>("rpy-row"), new[] { "R", "P", "Y" }, rpyValues, 20);
+            BuildPoseGrid(root.Q<VisualElement>("tcp-row"));
             BuildJoints(root.Q<VisualElement>("joint-list"));
             BuildJob(root);
             progressHost = root.Q<VisualElement>("progress-groups");
@@ -248,8 +247,6 @@ namespace MainUnity.UI
             // 기울기를 읽는 것이 목적이라, 실제 변동 폭에 맞춰야 기울기가 보인다.
             if (watchdogSpark != null) watchdogSpark.Limit = watchdogLimitMilliseconds;
 
-            // TCP Z 는 Real 전용이다. Mock 에서는 pose-block 째 접히므로 보이지 않는다.
-            tcpSpark = Attach(root, "tcp-spark");
         }
 
         static Sparkline Attach(VisualElement root, string hostName)
@@ -287,15 +284,6 @@ namespace MainUnity.UI
                 else gripperSpark.ClearHistory();
             }
 
-            if (tcpSpark != null)
-            {
-                // Mock 은 TCP 를 채우지 않는다. 0 을 실측으로 오인하지 않게 비운다.
-                bool blank = frame == null ||
-                    (uiMaster != null && uiMaster.IsSimulated &&
-                     Mathf.Approximately(frame.TcpPositionMillimeters.z, 0f));
-                if (blank) tcpSpark.ClearHistory();
-                else tcpSpark.Push(frame.TcpPositionMillimeters.z);
-            }
         }
         void ConfigureJobControls()
         {
@@ -312,31 +300,54 @@ namespace MainUnity.UI
 
 
 
-        static void BuildAxisRow(VisualElement host, string[] axes, Label[] sink, int fontSize)
+        /// <summary>
+        /// TCP 와 RPY 를 3행 2열로 짠다. 같은 포즈의 두 축이므로 나란히 두면
+        /// 세로가 절반이 되고, 좌측 열의 세로 예산(Real 704px)이 그만큼 산다.
+        /// 이전에는 X|Y|Z 가로 한 줄 + R|P|Y 가로 한 줄이라 98px 를 썼다.
+        /// </summary>
+        void BuildPoseGrid(VisualElement host)
         {
             if (host == null) return;
             host.Clear();
-            for (int i = 0; i < axes.Length; i++)
+            string[] pos = { "X", "Y", "Z" };
+            string[] rot = { "R", "P", "Y" };
+            for (int i = 0; i < 3; i++)
             {
-                var box = new VisualElement { style = { width = 112 } };
-                var k = new Label(axes[i]);
-                k.AddToClassList("micro");
-                box.Add(k);
-
-                var v = new Label("—");
-                v.style.color = new Color(0.886f, 0.925f, 0.945f);
-                v.style.fontSize = fontSize;
-                v.style.unityFontStyleAndWeight = FontStyle.Bold;
-                v.style.marginTop = 4;
-                // 오른쪽 정렬이다. 왼쪽 정렬이면 412.8 에서 48.1 로 바뀔 때 소수점이
-                // 가로로 뛰어, 값이 아니라 자리가 움직이는 것처럼 보인다.
-                // (폰트에 tabular figures 가 없어 자릿수마다 폭이 다르다.)
-                v.style.width = 104;
-                v.style.unityTextAlign = TextAnchor.MiddleRight;
-                sink[i] = v;
-                box.Add(v);
-                host.Add(box);
+                var row = new VisualElement();
+                row.AddToClassList("row");
+                row.style.height = 24;
+                row.Add(AxisKey(pos[i]));
+                tcpValues[i] = AxisValue();
+                row.Add(tcpValues[i]);
+                row.Add(AxisKey(rot[i]));
+                rpyValues[i] = AxisValue();
+                row.Add(rpyValues[i]);
+                host.Add(row);
             }
+        }
+
+        static Label AxisKey(string text)
+        {
+            var k = new Label(text);
+            k.AddToClassList("micro");
+            k.style.width = 22;
+            return k;
+        }
+
+        /// <summary>
+        /// 오른쪽 정렬이다. 왼쪽 정렬이면 412.8 에서 48.1 로 바뀔 때 소수점이
+        /// 가로로 뛰어, 값이 아니라 자리가 움직이는 것처럼 보인다.
+        /// (폰트에 tabular figures 가 없어 자릿수마다 폭이 다르다.)
+        /// </summary>
+        static Label AxisValue()
+        {
+            var v = new Label("—");
+            v.style.color = new Color(0.886f, 0.925f, 0.945f);
+            v.style.fontSize = 17;
+            v.style.unityFontStyleAndWeight = FontStyle.Bold;
+            v.style.width = 134;
+            v.style.unityTextAlign = TextAnchor.MiddleRight;
+            return v;
         }
 
         void BuildJoints(VisualElement host)

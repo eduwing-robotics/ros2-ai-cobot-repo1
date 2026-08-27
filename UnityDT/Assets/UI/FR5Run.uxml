@@ -59,9 +59,6 @@
                 <ui:VisualElement class="spacer" />
                 <ui:Label name="gripper-value" text="—" class="run-val" />
             </ui:VisualElement>
-            <ui:VisualElement class="gauge" style="margin-top:8px;">
-                <ui:VisualElement name="gripper-fill" class="gauge__fill" />
-            </ui:VisualElement>
             <ui:VisualElement name="gripper-spark" class="spark" style="margin-top:6px;" />
 
             <!--
@@ -73,11 +70,9 @@
                 <ui:VisualElement class="run-sect">
                     <ui:Label text="TCP · RPY" class="run-sect__title" />
                     <ui:VisualElement class="spacer" />
-                    <ui:Label text="mm · deg · Z 30초" class="run-sect__unit" />
+                    <ui:Label text="mm · deg · base" class="run-sect__unit" />
                 </ui:VisualElement>
-                <ui:VisualElement name="tcp-row" class="row vlist" style="margin-bottom:10px;" />
-                <ui:VisualElement name="rpy-row" class="row vlist" />
-                <ui:VisualElement name="tcp-spark" class="spark" style="margin-top:2px;" />
+                <ui:VisualElement name="tcp-row" class="vlist" />
             </ui:VisualElement>
 
             <!--
@@ -107,20 +102,6 @@
             </ui:VisualElement>
             <ui:VisualElement name="watchdog-spark" class="spark" style="margin-top:4px;" />
 
-            <!--
-              레시피 버전과 요청 ID. 스텝 수가 기판 슬롯 수와 어긋났을 때
-              어느 레시피였는지 되짚을 수 있는 유일한 값이다.
-            -->
-            <ui:VisualElement class="row" style="margin-top:10px;">
-                <ui:Label text="RECIPE" class="run-sect__title" />
-                <ui:VisualElement class="spacer" />
-                <ui:Label name="recipe-version" text="—" class="run-sub" />
-            </ui:VisualElement>
-            <ui:VisualElement class="row" style="margin-top:4px;">
-                <ui:Label text="REQUEST" class="run-sect__title" />
-                <ui:VisualElement class="spacer" />
-                <ui:Label name="request-id" text="—" class="run-sub" />
-            </ui:VisualElement>
         </ui:VisualElement>
 
         <!-- ==================== 좌하 · 카메라 ====================
@@ -168,6 +149,12 @@
             <ui:VisualElement style="align-items:flex-end;">
                 <ui:Label name="progress-count" text="—" class="run-now__count" />
                 <ui:Label name="unit-step" text="—" class="run-sub" style="margin-top:4px;" />
+                <!--
+                  레시피 버전과 요청 ID. 스텝 수가 기판 슬롯 수와 어긋났을 때
+                  어느 레시피였는지 되짚을 수 있는 유일한 값이라 스텝 옆에 둔다.
+                -->
+                <ui:Label name="recipe-version" text="—" class="run-sect__unit" style="margin-top:6px;" />
+                <ui:Label name="request-id" text="—" class="run-sect__unit" style="margin-top:2px;" />
             </ui:VisualElement>
         </ui:VisualElement>
 
