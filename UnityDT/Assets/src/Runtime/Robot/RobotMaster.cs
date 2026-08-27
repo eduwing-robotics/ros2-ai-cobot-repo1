@@ -3,6 +3,7 @@ using MainUnity.Runtime.Robot.Interface;
 using MainUnity.Runtime.Robot.Mock;
 using MainUnity.Runtime.Robot.Real;
 using MainUnity.Runtime.Robot.Status;
+using MainUnity.Runtime.RobotGhost;
 using UnityEngine;
 using ScenarioController = global::MainUnity.Runtime.Scenario.Scenario;
 
@@ -27,6 +28,11 @@ namespace MainUnity.Runtime.Robot
         [SerializeField] MockRobotMaster mock;
         [SerializeField] FairinoRealRobotMaster real;
         [SerializeField] RobotStatusMaster status;
+
+        [Header("Ghost")]
+        [SerializeField] GhostMaster ghost;
+        [SerializeField] MockRobotGhostControl mockGhost;
+        [SerializeField] RealRobotGhostControl realGhost;
 
         [Tooltip("비우면 자식에서 찾습니다. 조립 진행을 Backend 와 무관하게 보관합니다.")]
         [SerializeField] AssemblyProgressManager assemblyProgress;
@@ -59,6 +65,7 @@ namespace MainUnity.Runtime.Robot
         void UseRealInEditMode() => TrySetOperatingMode(RobotOperatingMode.Real);
 
         public IRobotControl Control { get; private set; }
+        public IRobotGhostControl GhostControl { get; private set; }
         public Transform Tcp => tcp;
 
         /// <summary>선택된 Backend의 ScenarioControl을 주입받는 Scenario다. UI는 이 경로로 받는다.</summary>
@@ -97,6 +104,17 @@ void OnValidate()
             mockBackend?.SetActive(operatingMode == RobotOperatingMode.Mock);
             realBackend?.SetActive(operatingMode == RobotOperatingMode.Real);
 
+            mockGhost?.Initialize(ghost);
+            realGhost?.Initialize(ghost);
+            // ROSConnection.Unsubscribe는 같은 토픽의 모든 callback을 지우므로
+            // 둘 다 해제한 다음 선택된 Backend 하나만 구독한다.
+            mockGhost?.SetActive(false);
+            realGhost?.SetActive(false);
+            GhostControl = operatingMode == RobotOperatingMode.Mock
+                ? mockGhost
+                : realGhost;
+            GhostControl?.SetActive(true);
+
             IRobotBackend selectedBackend = operatingMode == RobotOperatingMode.Mock
                 ? mockBackend
                 : realBackend;
@@ -104,7 +122,7 @@ void OnValidate()
             Control = selectedBackend?.Control;
             scenario?.Initialize(selectedBackend?.ScenarioControl);
 
-            if (stateSource == null || Status == null)
+            if (stateSource == null || Status == null || GhostControl == null || ghost == null)
             {
                 Debug.LogError($"{operatingMode} robot backend is incomplete.", this);
                 return false;
@@ -132,6 +150,12 @@ void OnValidate()
                 mock = GetComponentInChildren<MockRobotMaster>(true);
             if (real == null)
                 real = GetComponentInChildren<FairinoRealRobotMaster>(true);
+            if (ghost == null)
+                ghost = FindAnyObjectByType<GhostMaster>(FindObjectsInactive.Include);
+            if (mockGhost == null && mock != null)
+                mockGhost = mock.GetComponentInChildren<MockRobotGhostControl>(true);
+            if (realGhost == null && real != null)
+                realGhost = real.GetComponentInChildren<RealRobotGhostControl>(true);
 
             if (articulationRoot == null)
             {
