@@ -217,13 +217,30 @@ namespace MainUnity.UI
                 //
                 // CamVisionReceiver 는 DisallowMultipleComponent 라 한 오브젝트에
                 // 둘을 못 붙인다. 칸마다 자식 오브젝트를 만들어 하나씩 얹는다.
+                //
+                // 이름으로 먼저 찾는다. 도메인 리로드로 바인더 인스턴스가 새로 생기면
+                // 필드는 비지만 앞서 만든 자식 오브젝트는 씬에 남아 있다. 확인 없이
+                // 만들면 실행할수록 수신기가 늘어 같은 토픽을 여러 번 구독하게 된다.
                 if (tile.Receiver == null)
                 {
-                    var host = new GameObject("CamReceiver " + tile.Title);
-                    host.transform.SetParent(transform, false);
-                    tile.Receiver = host.AddComponent<CamVisionReceiver>();
-                    tile.Receiver.Configure(GetComponent<UIDocument>(), tile.Topic, "cam-image-" + tile.Index);
+                    string hostName = "CamReceiver " + tile.Index;
+                    Transform found = transform.Find(hostName);
+                    if (found != null)
+                    {
+                        tile.Receiver = found.GetComponent<CamVisionReceiver>();
+                    }
+                    if (tile.Receiver == null)
+                    {
+                        var host = found != null ? found.gameObject : new GameObject(hostName);
+                        host.transform.SetParent(transform, false);
+                        tile.Receiver = host.AddComponent<CamVisionReceiver>();
+                        tile.Receiver.Configure(GetComponent<UIDocument>(), tile.Topic, "cam-image-" + tile.Index);
+                    }
                 }
+
+                // 토픽이 바뀌었으면 갈아탄다. 이름으로 되찾은 수신기는 이전 토픽을
+                // 물고 있을 수 있다.
+                tile.Receiver.TrySetTopic(tile.Topic);
 
                 // 페이지를 껐다 켜면 UIDocument 가 비주얼 트리를 새로 만든다.
                 // 수신기가 Start 에서 잡아 둔 Image 는 버려진 트리에 남으므로,
