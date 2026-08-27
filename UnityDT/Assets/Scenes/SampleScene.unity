@@ -119,119 +119,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &28622443
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 28622447}
-  - component: {fileID: 28622446}
-  - component: {fileID: 28622445}
-  - component: {fileID: 28622444}
-  m_Layer: 0
-  m_Name: wall
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!64 &28622444
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 28622443}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &28622445
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 28622443}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: fd40ae24c810fc805889e6788d033c00, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_MaskInteraction: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!33 &28622446
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 28622443}
-  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
---- !u!4 &28622447
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 28622443}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: -0.40000057, y: 4, z: 4.0999994}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 240138670}
-  m_LocalEulerAnglesHint: {x: -90, y: 0, z: 0}
 --- !u!1 &60484545
 GameObject:
   m_ObjectHideFlags: 0
@@ -501,7 +388,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eab7e9e525f60de0d8b75c27d7e5a467, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Robot.RobotMaster
-  operatingMode: 0
+  operatingMode: 1
   mock: {fileID: 365101877}
   real: {fileID: 1511203717}
   status: {fileID: 70281096}
@@ -1404,8 +1291,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1236631615}
-  - {fileID: 28622447}
-  - {fileID: 1838877123}
   - {fileID: 652435945}
   - {fileID: 538240728}
   - {fileID: 876843921}
@@ -2098,7 +1983,7 @@ GameObject:
   - component: {fileID: 330585544}
   - component: {fileID: 330585547}
   m_Layer: 0
-  m_Name: Depth Cam
+  m_Name: Robot Cam
   m_TagString: Cam1
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2145,7 +2030,7 @@ Camera:
     height: 1
   near clip plane: 0.01
   far clip plane: 1000
-  field of view: 7.1
+  field of view: 45
   orthographic: 0
   orthographic size: 5
   m_Depth: -10
@@ -2171,8 +2056,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0.28908318, y: 0.13272539, z: -0.7933}
+  m_LocalRotation: {x: 0.15880935, y: -0.69683516, z: 0.16268218, w: 0.6802462}
+  m_LocalPosition: {x: 0.86, y: 0.46, z: -0.3}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2563,7 +2448,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &365101869
 Transform:
   m_ObjectHideFlags: 0
@@ -2641,19 +2526,6 @@ MonoBehaviour:
   shadowing: {fileID: 3495106124279137601}
   control: {fileID: 365101871}
   assemblyControl: {fileID: 3495106124279137603}
---- !u!114 &3495106124279137604
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 365101868}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 19f07612a8f64610a53b9144102dd1ec, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Robot.Mock.MockRobotGhostControl
-  destinationTopic: /twin_visual/movel_preview
 --- !u!1 &372672685
 GameObject:
   m_ObjectHideFlags: 0
@@ -4160,8 +4032,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 550952892}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.27315557, y: -0.35999146, z: 0.11109539, w: 0.8851272}
-  m_LocalPosition: {x: 1.4354683, y: 0.84594256, z: -1.2093692}
+  m_LocalRotation: {x: 0.27664807, y: -0.37652814, z: 0.11889667, w: 0.87610275}
+  m_LocalPosition: {x: 1.3243788, y: 0.8645624, z: -1.2458155}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5435,6 +5307,7 @@ GameObject:
   - component: {fileID: 813333162}
   - component: {fileID: 813333163}
   - component: {fileID: 813333165}
+  - component: {fileID: 813333166}
   m_Layer: 0
   m_Name: Page - RUN
   m_TagString: Untagged
@@ -5480,7 +5353,7 @@ MonoBehaviour:
   uiMaster: {fileID: 0}
   statusManager: {fileID: 0}
   gripper: {fileID: 0}
-  vision: {fileID: 0}
+  vision: {fileID: 813333166}
   gripperStrokeMillimeters: 40
   watchdogLimitMilliseconds: 50
   robotCamTexture: {fileID: 8400000, guid: a26f561b26137c9c5b3c8519dcab2141, type: 2}
@@ -5516,6 +5389,22 @@ MonoBehaviour:
   statusManager: {fileID: 0}
   vision: {fileID: 0}
   visionStaleSeconds: 2
+--- !u!114 &813333166
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 813333161}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f97119e4c9ecd00e5bb0420e199c2a6f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Camera.CamVisionReceiver
+  targetDocument: {fileID: 813333162}
+  topicName: /camera/camera/color/image_raw/compressed
+  imageElementName: cam-image
+  staleAfterSeconds: 1
 --- !u!1001 &826049131
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6582,7 +6471,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Camera.CamVisionReceiver
   targetDocument: {fileID: 915942456}
-  topicName: /vision/board/image/compressed
+  topicName: /vision/parts_obb/image/compressed
   imageElementName: camera-image
   staleAfterSeconds: 1
 --- !u!114 &915942458
@@ -6833,7 +6722,7 @@ Camera:
     height: 1
   near clip plane: 0.02
   far clip plane: 2
-  field of view: 30
+  field of view: 32
   orthographic: 0
   orthographic size: 5
   m_Depth: -10
@@ -6859,8 +6748,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 943061420}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.000000030908623, y: -0.7071068, z: 0.7071068, w: -0.000000030908623}
-  m_LocalPosition: {x: 0.08, y: 0.16, z: -0.57}
+  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
+  m_LocalPosition: {x: 0, y: 0.46, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7054,7 +6943,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainUnity.UI.UIMaster
   robotMaster: {fileID: 70281099}
-  ghostMaster: {fileID: 0}
+  ghostMaster: {fileID: 1060664736}
   visionImage: {fileID: 915942457}
   board: {fileID: 1917364535}
 --- !u!4 &1010564058
@@ -8110,6 +7999,9 @@ MonoBehaviour:
   mock: {fileID: 1156818435}
   real: {fileID: 0}
   status: {fileID: 1156818444}
+  ghost: {fileID: 1060664736}
+  mockGhost: {fileID: 0}
+  realGhost: {fileID: 0}
   assemblyProgress: {fileID: 1156818448}
   articulationRoot: {fileID: 1710369895}
   tcp: {fileID: 671928940}
@@ -9058,8 +8950,8 @@ Transform:
   m_GameObject: {fileID: 1236631611}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.39999998, y: -1, z: -0.90000004}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 0.016, y: -1, z: -0.074}
+  m_LocalScale: {x: 0.29269466, y: 0.26493, z: 0.31746563}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 240138670}
@@ -9276,7 +9168,7 @@ Camera:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1267874762}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_ClearFlags: 1
   m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
@@ -10398,7 +10290,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1511203713
 Transform:
   m_ObjectHideFlags: 0
@@ -10476,19 +10368,6 @@ MonoBehaviour:
   gripperRequest: {fileID: 1511203714}
   control: {fileID: 2494761539128691210}
   assemblyControl: {fileID: 2494761539128691211}
---- !u!114 &2494761539128691212
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1511203712}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 49ad41fb80f44dc4b0535bb56407ec11, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Robot.Real.RealRobotGhostControl
-  destinationTopic: /twin_visual/movel_preview
 --- !u!1 &1511624942
 GameObject:
   m_ObjectHideFlags: 0
@@ -12849,119 +12728,6 @@ Transform:
   - {fileID: 1528568434}
   m_Father: {fileID: 70281091}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1838877119
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1838877123}
-  - component: {fileID: 1838877122}
-  - component: {fileID: 1838877121}
-  - component: {fileID: 1838877120}
-  m_Layer: 0
-  m_Name: wall
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!64 &1838877120
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1838877119}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &1838877121
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1838877119}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: fd40ae24c810fc805889e6788d033c00, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_MaskInteraction: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!33 &1838877122
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1838877119}
-  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
---- !u!4 &1838877123
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1838877119}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0.5, y: -0.5, z: -0.5, w: 0.5}
-  m_LocalPosition: {x: -5.3999996, y: 4, z: -0.9000001}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 240138670}
-  m_LocalEulerAnglesHint: {x: -90, y: -90, z: 0}
 --- !u!4 &1844911292 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 407949be87a049460920315d1be2c5be, type: 3}
@@ -14693,7 +14459,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7937580268837813603, guid: a0b855b9be022a33fa77e4c342a91d56, type: 3}
       propertyPath: m_RosIPAddress
-      value: 127.0.0.1
+      value: 192.168.11.5
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -15042,6 +14808,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 90c3c561ae399741f81765a50c2ede92, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Robot.Real.RealAssemblyScenarioControl
+--- !u!114 &2494761539128691212
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1511203712}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49ad41fb80f44dc4b0535bb56407ec11, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Robot.Real.RealRobotGhostControl
+  destinationTopic: /twin_visual/movel_preview
 --- !u!114 &3495106124279137601
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15089,6 +14868,19 @@ MonoBehaviour:
   itemManager: {fileID: 1917364535}
   gripperCatcher: {fileID: 319422218}
   resumeRotationOffsetDegrees: 90
+--- !u!114 &3495106124279137604
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 365101868}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 19f07612a8f64610a53b9144102dd1ec, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Robot.Mock.MockRobotGhostControl
+  destinationTopic: /twin_visual/movel_preview
 --- !u!1001 &4722948606880437937
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -75,6 +75,14 @@ namespace MainUnity.UI
         {
             wiredDocuments.Clear();
             current = startPage;
+
+            // MONITOR 가 기본 화면이다. 이 화면을 켜는 이유는 셀을 지켜보기 위해서이지
+            // 작업을 넣기 위해서가 아니다. 작업 요청은 RUN 탭을 눌러 들어간다.
+            //
+            // monitorRequested 를 여기서 정하지 않으면 이전 세션의 값이 남는다.
+            // current 는 초기화하면서 이 값만 두면 화면이 무엇으로 열릴지 예측할 수 없다.
+            monitorRequested = startPage == FR5Page.Run;
+
             ResolveRequestDocument();
             ResolveProgress();
             Apply();

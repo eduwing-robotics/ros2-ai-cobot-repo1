@@ -71,9 +71,14 @@ namespace MainUnity.UI
         Sparkline gripperSpark, watchdogSpark;
         double nextSampleTime;
 
-        // 카메라 소스. 트윈이 이미 글로벌 시점이라 GLOBAL 은 이 타일에 오지 않는다.
-        enum CamSource { Robot, Board }
-        CamSource camSource = CamSource.Robot;
+        // 카메라 소스. 이름이 아니라 실재하는 ROS 토픽으로 정의한다.
+        //   RAW    /camera/camera/color/image_raw/compressed   15 Hz · 원본 컬러
+        //   DETECT /vision/parts_obb/image/compressed          약 2 Hz · 부품 검출 오버레이
+        // 예전 기본값 /vision/board/image/compressed 는 어느 노드도 발행하지 않는다.
+        const string RawTopic = "/camera/camera/color/image_raw/compressed";
+        const string DetectTopic = "/vision/parts_obb/image/compressed";
+        enum CamSource { Raw, Detect }
+        CamSource camSource = CamSource.Raw;
         bool camExpanded;
         Image camImage;
         Label camBadge, camEmptyDesc, nowSlot, nowPart, recipeVersion, requestId, twinSource;
@@ -172,22 +177,22 @@ namespace MainUnity.UI
             if (camImage != null) camImage.scaleMode = ScaleMode.ScaleToFit;
 
             UnbindCamera();
-            if (camRobotButton != null) camRobotButton.clicked += SelectRobotCam;
-            if (camBoardButton != null) camBoardButton.clicked += SelectBoardCam;
+            if (camRobotButton != null) camRobotButton.clicked += SelectRawCam;
+            if (camBoardButton != null) camBoardButton.clicked += SelectDetectCam;
             if (camExpandButton != null) camExpandButton.clicked += ToggleCamExpand;
         }
 
         void UnbindCamera()
         {
-            if (camRobotButton != null) camRobotButton.clicked -= SelectRobotCam;
-            if (camBoardButton != null) camBoardButton.clicked -= SelectBoardCam;
+            if (camRobotButton != null) camRobotButton.clicked -= SelectRawCam;
+            if (camBoardButton != null) camBoardButton.clicked -= SelectDetectCam;
             if (camExpandButton != null) camExpandButton.clicked -= ToggleCamExpand;
         }
 
         void OnDisable() => UnbindCamera();
 
-        void SelectRobotCam() => camSource = CamSource.Robot;
-        void SelectBoardCam() => camSource = CamSource.Board;
+        void SelectRawCam() => camSource = CamSource.Raw;
+        void SelectDetectCam() => camSource = CamSource.Detect;
         void ToggleCamExpand() => camExpanded = !camExpanded;
 
         /// <summary>
@@ -199,41 +204,43 @@ namespace MainUnity.UI
         {
             if (camImage == null) return;
 
-            camRobotButton?.EnableInClassList("chip--accent", camSource == CamSource.Robot);
-            camBoardButton?.EnableInClassList("chip--accent", camSource == CamSource.Board);
+            bool raw = camSource == CamSource.Raw;
+            camRobotButton?.EnableInClassList("chip--accent", raw);
+            camBoardButton?.EnableInClassList("chip--accent", !raw);
             camExpandButton?.EnableInClassList("chip--accent", camExpanded);
             camPanel?.EnableInClassList("run-cam-panel--expanded", camExpanded);
 
-            bool mock = uiMaster == null || uiMaster.IsSimulated;
-            bool streaming = !mock && vision != null && vision.IsStreaming;
+            string topic = raw ? RawTopic : DetectTopic;
+            vision?.TrySetTopic(topic);
+
+            bool streaming = vision != null && vision.IsStreaming;
+            if (camEmpty != null)
+                camEmpty.style.display = streaming ? DisplayStyle.None : DisplayStyle.Flex;
 
             if (streaming)
             {
-                // CamVisionReceiver 가 같은 Image 에 프레임을 직접 넣는다. 덮어쓰지 않는다.
-                if (camBadge != null) camBadge.text = "ROS · /vision/board/image";
-                if (camEmpty != null) camEmpty.style.display = DisplayStyle.None;
+                double age = Time.realtimeSinceStartupAsDouble - vision.LastReceiveTimeSeconds;
+                if (camBadge != null) camBadge.text = topic + "  ·  " + (age * 1000d).ToString("0") + " ms 전";
                 return;
             }
 
-            RenderTexture texture = camSource == CamSource.Robot ? robotCamTexture : boardCamTexture;
-            string label = camSource == CamSource.Robot ? "ROBOT" : "BOARD";
-
-            if (mock && texture != null)
+            // 스트림이 없을 때만 트윈의 RenderTexture 로 대체한다. MOCK 에는 실제
+            // 카메라가 없으므로 트윈이 그 자리를 대신하는 것이 맞고, REAL 에서는
+            // 무엇이 없는지 글자로 답한다. 값을 지어내지 않는다.
+            bool mock = uiMaster == null || uiMaster.IsSimulated;
+            RenderTexture fallback = raw ? robotCamTexture : boardCamTexture;
+            if (mock && fallback != null)
             {
-                camImage.image = texture;
-                if (camBadge != null) camBadge.text = label + " · SIM · RenderTexture";
+                camImage.image = fallback;
                 if (camEmpty != null) camEmpty.style.display = DisplayStyle.None;
+                if (camBadge != null) camBadge.text = "SIM · " + fallback.name;
                 return;
             }
 
-            // 값을 지어내지 않는다. 무엇이 없는지 글자로 답한다.
             camImage.image = null;
-            if (camBadge != null) camBadge.text = label;
-            if (camEmpty != null) camEmpty.style.display = DisplayStyle.Flex;
+            if (camBadge != null) camBadge.text = topic;
             if (camEmptyDesc != null)
-                camEmptyDesc.text = mock
-                    ? "RenderTexture 미할당 · " + label
-                    : "/vision/board/image 수신 대기";
+                camEmptyDesc.text = mock ? "RenderTexture 미할당" : topic + " 수신 대기";
         }
 
         void BuildSparklines(VisualElement root)

@@ -12,7 +12,8 @@ namespace MainUnity.Runtime.Camera
     public sealed class CamVisionReceiver : MonoBehaviour
     {
         [SerializeField] UIDocument targetDocument;
-        [SerializeField] string topicName = "/vision/board/image/compressed";
+        [Tooltip("구독할 CompressedImage 토픽입니다. 실행 중 TrySetTopic 으로 바꿀 수 있습니다.")]
+        [SerializeField] string topicName = "/camera/camera/color/image_raw/compressed";
         [UxmlName("Image")]
         [SerializeField] string imageElementName = "RealdepthCam";
         [Tooltip("이 시간 동안 새 프레임이 없으면 스트림이 끊긴 것으로 본다.")]
@@ -24,6 +25,9 @@ namespace MainUnity.Runtime.Camera
 
         /// <summary>마지막으로 영상 프레임을 받은 시각이다.</summary>
         public double LastReceiveTimeSeconds { get; private set; }
+
+        /// <summary>지금 구독 중인 토픽이다.</summary>
+        public string TopicName => topicName;
 
         /// <summary>영상 프레임을 한 번이라도 받았는지다.</summary>
         public bool HasReceivedImage { get; private set; }
@@ -61,6 +65,25 @@ namespace MainUnity.Runtime.Camera
             targetImage.image = receivedTexture;
             LastReceiveTimeSeconds = UnityEngine.Time.realtimeSinceStartupAsDouble;
             HasReceivedImage = true;
+        }
+
+        /// <summary>
+        /// 구독 토픽을 바꾼다. 이전 구독을 끊고 수신 상태를 지운다 —
+        /// 지우지 않으면 이전 토픽의 마지막 프레임이 새 토픽의 영상으로 보인다.
+        /// </summary>
+        public bool TrySetTopic(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value) || value == topicName) return false;
+            if (connection != null) connection.Unsubscribe(topicName);
+
+            topicName = value;
+            HasReceivedImage = false;
+            LastReceiveTimeSeconds = 0d;
+            if (targetImage != null) targetImage.image = null;
+
+            if (connection == null) return true;
+            connection.Subscribe<CompressedImageMsg>(topicName, ReceiveImage);
+            return true;
         }
 
         void OnDestroy()

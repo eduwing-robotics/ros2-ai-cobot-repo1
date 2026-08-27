@@ -50,8 +50,8 @@
                 <ui:Label text="관측 — 카메라가 본 실제" class="run-pane__title run-pane__title--on" />
                 <ui:Label name="cam-badge" text="—" class="run-pane__source" />
                 <ui:VisualElement class="run-cam__bar">
-                    <ui:Button name="cam-source-robot" class="chip chip--accent"><ui:Label text="ROBOT" class="chip__text" /></ui:Button>
-                    <ui:Button name="cam-source-board" class="chip" style="margin-left:6px;"><ui:Label text="BOARD" class="chip__text" /></ui:Button>
+                    <ui:Button name="cam-source-robot" class="chip chip--accent"><ui:Label text="원본" class="chip__text" /></ui:Button>
+                    <ui:Button name="cam-source-board" class="chip" style="margin-left:6px;"><ui:Label text="검출" class="chip__text" /></ui:Button>
                     <ui:VisualElement class="spacer" />
                     <ui:Button name="cam-expand" class="chip"><ui:Label text="확대" class="chip__text" /></ui:Button>
                 </ui:VisualElement>
