@@ -2004,7 +2004,7 @@ Camera:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_ClearFlags: 1
   m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
@@ -5358,6 +5358,8 @@ MonoBehaviour:
   watchdogLimitMilliseconds: 50
   robotCamTexture: {fileID: 8400000, guid: a26f561b26137c9c5b3c8519dcab2141, type: 2}
   boardCamTexture: {fileID: 8400000, guid: 1ce422e539c2cd341aaba5e8f875f4e1, type: 2}
+  robotCamCamera: {fileID: 330585545}
+  boardCamCamera: {fileID: 943061422}
 --- !u!4 &813333164
 Transform:
   m_ObjectHideFlags: 0
@@ -6696,7 +6698,7 @@ Camera:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 943061420}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_ClearFlags: 1
   m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
@@ -10349,7 +10351,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Robot.Real.RealStatusSubscriber
   stateTopic: /nonrt_state_data
-  logReceivedState: 1
+  logReceivedState: 0
   logIntervalSeconds: 1
 --- !u!114 &1511203717
 MonoBehaviour:

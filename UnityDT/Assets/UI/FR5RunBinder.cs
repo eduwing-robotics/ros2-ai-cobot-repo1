@@ -48,6 +48,13 @@ namespace MainUnity.UI
         [Tooltip("BOARD 소스로 쓸 기판 카메라의 RenderTexture 입니다.")]
         [SerializeField] RenderTexture boardCamTexture;
 
+        // RenderTexture 카메라는 켜 두면 매 프레임 씬을 통째로 한 번 더 그린다.
+        // 화면에 보이는 것은 한 번에 하나뿐이므로 고른 것만 켠다.
+        [Tooltip("원본 대체용 트윈 카메라입니다. 고르지 않은 동안 꺼 둡니다.")]
+        [SerializeField] UnityEngine.Camera robotCamCamera;
+        [Tooltip("검출 대체용 기판 카메라입니다. 고르지 않은 동안 꺼 둡니다.")]
+        [SerializeField] UnityEngine.Camera boardCamCamera;
+
         readonly VisualElement[] jointFills = new VisualElement[JointCount];
         readonly Label[] jointValues = new Label[JointCount];
         readonly Label[] tcpValues = new Label[3];
@@ -177,6 +184,7 @@ namespace MainUnity.UI
             if (camImage != null) camImage.scaleMode = ScaleMode.ScaleToFit;
 
             UnbindCamera();
+            SetCamSource(camSource);
             if (camRobotButton != null) camRobotButton.clicked += SelectRawCam;
             if (camBoardButton != null) camBoardButton.clicked += SelectDetectCam;
             if (camExpandButton != null) camExpandButton.clicked += ToggleCamExpand;
@@ -184,6 +192,11 @@ namespace MainUnity.UI
 
         void UnbindCamera()
         {
+            // 이 페이지가 꺼지면 RenderTexture 카메라도 쉰다. 보이지 않는 것을
+            // 계속 그릴 이유가 없다.
+            if (robotCamCamera != null) robotCamCamera.enabled = false;
+            if (boardCamCamera != null) boardCamCamera.enabled = false;
+
             if (camRobotButton != null) camRobotButton.clicked -= SelectRawCam;
             if (camBoardButton != null) camBoardButton.clicked -= SelectDetectCam;
             if (camExpandButton != null) camExpandButton.clicked -= ToggleCamExpand;
@@ -191,8 +204,21 @@ namespace MainUnity.UI
 
         void OnDisable() => UnbindCamera();
 
-        void SelectRawCam() => camSource = CamSource.Raw;
-        void SelectDetectCam() => camSource = CamSource.Detect;
+        void SelectRawCam() => SetCamSource(CamSource.Raw);
+        void SelectDetectCam() => SetCamSource(CamSource.Detect);
+
+        /// <summary>
+        /// 소스를 바꿀 때만 구독을 갈아타고 카메라를 켠다.
+        /// 매 프레임 부르면 같은 값이어도 호출 비용이 그대로 든다.
+        /// </summary>
+        void SetCamSource(CamSource value)
+        {
+            camSource = value;
+            bool raw = value == CamSource.Raw;
+            vision?.TrySetTopic(raw ? RawTopic : DetectTopic);
+            if (robotCamCamera != null) robotCamCamera.enabled = raw;
+            if (boardCamCamera != null) boardCamCamera.enabled = !raw;
+        }
         void ToggleCamExpand() => camExpanded = !camExpanded;
 
         /// <summary>
@@ -211,8 +237,6 @@ namespace MainUnity.UI
             camPanel?.EnableInClassList("run-cam-panel--expanded", camExpanded);
 
             string topic = raw ? RawTopic : DetectTopic;
-            vision?.TrySetTopic(topic);
-
             bool streaming = vision != null && vision.IsStreaming;
             if (camEmpty != null)
                 camEmpty.style.display = streaming ? DisplayStyle.None : DisplayStyle.Flex;
@@ -224,23 +248,22 @@ namespace MainUnity.UI
                 return;
             }
 
-            // 스트림이 없을 때만 트윈의 RenderTexture 로 대체한다. MOCK 에는 실제
-            // 카메라가 없으므로 트윈이 그 자리를 대신하는 것이 맞고, REAL 에서는
-            // 무엇이 없는지 글자로 답한다. 값을 지어내지 않는다.
-            bool mock = uiMaster == null || uiMaster.IsSimulated;
+            // 스트림이 없으면 트윈의 RenderTexture 로 대체한다. MOCK 이든 REAL 이든
+            // 마찬가지다 — 빈 화면보다 트윈이라도 보이는 편이 낫고, 그것이 실측이
+            // 아니라는 사실은 배지가 SIM 이라고 밝힌다. 지어내는 것이 아니라
+            // 무엇을 보고 있는지 이름을 대는 것이다.
             RenderTexture fallback = raw ? robotCamTexture : boardCamTexture;
-            if (mock && fallback != null)
+            if (fallback != null)
             {
-                camImage.image = fallback;
+                if (camImage.image != fallback) camImage.image = fallback;
                 if (camEmpty != null) camEmpty.style.display = DisplayStyle.None;
-                if (camBadge != null) camBadge.text = "SIM · " + fallback.name;
+                if (camBadge != null) camBadge.text = "SIM · " + fallback.name + "  ·  " + topic + " 대기";
                 return;
             }
 
             camImage.image = null;
             if (camBadge != null) camBadge.text = topic;
-            if (camEmptyDesc != null)
-                camEmptyDesc.text = mock ? "RenderTexture 미할당" : topic + " 수신 대기";
+            if (camEmptyDesc != null) camEmptyDesc.text = topic + " 수신 대기";
         }
 
         void BuildSparklines(VisualElement root)
