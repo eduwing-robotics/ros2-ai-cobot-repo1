@@ -422,10 +422,17 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
 }
 
 /* 조립 진행. 트윈 위에 얹혀 화면 아래 가장자리를 덮는다. */
+/*
+  이중 시야 배치에서 계기 띠는 트윈 위에 얹힌 가장자리 층이 아니라
+  화면 폭을 차지하는 계기 선반이다. 그러므로 예외를 두지 않고 완전 불투명이다.
+  0.88 로 두었을 때 밝은 작업대가 비쳐 IDLE · 슬롯 문구가 실제로 흐렸다.
+*/
 .run-deck {
     position: absolute;
-    left: 500px; right: 0; bottom: 0; height: 140px;
-    background-color: rgba(6, 10, 14, 0.88);
+    left: 88px; right: 0; bottom: 0; height: 270px;
+    background-color: var(--c-panel);
+    border-top-width: 1px;
+    border-top-color: rgba(255, 255, 255, 0.10);
     padding-left: 26px; padding-right: 26px;
     padding-top: 14px; padding-bottom: 14px;
 }
@@ -542,3 +549,53 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
     left: 500px; top: 164px; width: auto; height: auto;
     right: 0; bottom: 140px;
 }
+
+
+/* ===== MONITOR · 이중 시야 (Docs/ui-design.md 2절) =====
+   좌우 두 그림이 같은 크기를 지키는 것이 이 배치의 전부다.
+   크기가 다르면 사람이 한쪽을 먼저 보고, 그러면 비교가 아니라 확인이 된다. */
+
+/*
+  top 은 70 이 아니라 112 다. 70 은 셸의 alarm-banner(top:64 · height:44) 자리이고,
+  그 띠는 로봇이 끊기면 켜진다. 두 창의 제목이 실제로 가려졌다.
+  알람 띠 자리는 켜지든 안 켜지든 항상 비워 둔다 (Docs/ui-design.md 2절).
+*/
+.run-pane { position: absolute; top: 112px; height: 698px; }
+
+/* 기준 쪽은 아무것도 덮지 않는다. 3D 트윈이 그대로 보이는 자리다. */
+.run-pane--twin {
+    left: 88px; width: 908px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.10);
+    padding: 18px;
+}
+/* 관측 쪽만 액센트 테두리를 얻는다. 여기가 로봇의 자기 보고와 무관한 유일한 증거다. */
+.run-pane--cam {
+    left: 1012px; width: 908px;
+    border-width: 2px;
+    border-color: var(--c-accent);
+    background-color: rgb(3, 6, 9);
+    padding: 0;
+}
+.run-pane__title {
+    position: absolute; left: 18px; top: 14px;
+    color: var(--c-ink-2); font-size: 14px;
+    letter-spacing: 2.2px; -unity-font-style: bold;
+}
+.run-pane__title--on { color: var(--c-accent); }
+.run-pane__source {
+    position: absolute; right: 18px; top: 16px;
+    color: var(--c-ink-4); font-size: 12px;
+}
+.run-pane--cam .run-cam {
+    position: absolute; left: 0; top: 0; right: 0; bottom: 0;
+    height: auto; border-bottom-width: 0;
+}
+
+/* 계기 띠의 열. 절대 배치라 열 하나가 접혀도 나머지가 밀리지 않는다. */
+.run-col {
+    position: absolute;
+    top: 22px; bottom: 20px;
+    padding-left: 22px; padding-right: 22px;
+}
+.run-col--rule { border-left-width: 1px; border-left-color: rgba(255, 255, 255, 0.09); }

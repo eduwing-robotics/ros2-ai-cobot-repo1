@@ -76,7 +76,7 @@ namespace MainUnity.UI
         CamSource camSource = CamSource.Robot;
         bool camExpanded;
         Image camImage;
-        Label camBadge, camEmptyDesc, nowSlot, nowPart, recipeVersion, requestId;
+        Label camBadge, camEmptyDesc, nowSlot, nowPart, recipeVersion, requestId, twinSource;
         VisualElement camEmpty, camPanel;
         Button camRobotButton, camBoardButton, camExpandButton;
         readonly System.Collections.Generic.List<(Label Value, System.Func<RobotStatusFrame, string> Read)> realRows = new();
@@ -150,6 +150,7 @@ namespace MainUnity.UI
             nowPart = root.Q<Label>("now-part");
             recipeVersion = root.Q<Label>("recipe-version");
             requestId = root.Q<Label>("request-id");
+            twinSource = root.Q<Label>("twin-source");
             BuildCamera(root);
             BuildSparklines(root);
             BuildRealStatus();
@@ -345,7 +346,8 @@ namespace MainUnity.UI
             v.style.color = new Color(0.886f, 0.925f, 0.945f);
             v.style.fontSize = 17;
             v.style.unityFontStyleAndWeight = FontStyle.Bold;
-            v.style.width = 134;
+            // 계기 띠의 TCP 열은 245px 다. 키 22 + 값 95 를 두 벌 놓으면 234 로 들어간다.
+            v.style.width = 95;
             v.style.unityTextAlign = TextAnchor.MiddleRight;
             return v;
         }
@@ -711,6 +713,10 @@ namespace MainUnity.UI
 
             if (realSource != null)
                 realSource.text = mock ? "Mock 미제공" : "/nonrt_state_data";
+
+            // 좌측 「기준」 창의 출처. 트윈이 무엇을 근거로 그려지는지 밝힌다.
+            if (twinSource != null)
+                twinSource.text = mock ? "SIM · joint_states" : "/nonrt_state_data";
 
             foreach ((Label value, System.Func<RobotStatusFrame, string> read) in realRows)
             {
