@@ -98,61 +98,37 @@
 
             <!-- MONITOR — 실행 화면을 강제로 연다. -->
             <ui:Button name="nav-monitor" class="tab" style="width:88px; height:96px; align-items:center; margin:0;">
-                <ui:VisualElement class="icon">
-                    <ui:VisualElement class="ring" style="position:absolute; left:2px; top:2px; width:22px; height:22px; border-radius:11px;" />
-                    <ui:VisualElement class="ink" style="position:absolute; left:12px; top:6px; width:4px; height:10px;" />
-                    <ui:VisualElement class="ink" style="position:absolute; left:9px; top:12px; width:10px; height:4px;" />
-                </ui:VisualElement>
+                <ui:VisualElement class="tab__icon" style="background-image:url(&quot;project://database/Assets/UI/Icons/nav-monitor.png&quot;);" />
                 <ui:Label text="MONITOR" class="tab__text" /><ui:Label text="모니터" class="micro" />
             </ui:Button>
 
             <!-- RUN — 진행 막대 3개 -->
             <ui:Button name="nav-run" class="tab" style="width:88px; height:96px; align-items:center; margin:0;">
-                <ui:VisualElement class="icon">
-                    <ui:VisualElement class="ink" style="position:absolute; left:2px; bottom:4px; width:5px; height:8px;" />
-                    <ui:VisualElement class="ink" style="position:absolute; left:10px; bottom:4px; width:5px; height:14px;" />
-                    <ui:VisualElement class="ink" style="position:absolute; left:18px; bottom:4px; width:5px; height:20px;" />
-                </ui:VisualElement>
+                <ui:VisualElement class="tab__icon" style="background-image:url(&quot;project://database/Assets/UI/Icons/nav-run.png&quot;);" />
                 <ui:Label text="RUN" class="tab__text" /><ui:Label text="운전" class="micro" />
             </ui:Button>
 
             <!-- INSPECT — 렌즈(원 + 중심점) -->
             <ui:Button name="nav-inspect" class="tab" style="width:88px; height:96px; align-items:center; margin:0;">
-                <ui:VisualElement class="icon">
-                    <ui:VisualElement class="ring" style="position:absolute; left:2px; top:2px; width:22px; height:22px; border-radius:11px;" />
-                    <ui:VisualElement class="ink" style="position:absolute; left:10px; top:10px; width:6px; height:6px; border-radius:3px;" />
-                </ui:VisualElement>
+                <ui:VisualElement class="tab__icon" style="background-image:url(&quot;project://database/Assets/UI/Icons/nav-inspect.png&quot;);" />
                 <ui:Label text="INSPECT" class="tab__text" /><ui:Label text="검사" class="micro" />
             </ui:Button>
 
             <!-- MANUAL — 꺾인 관절 팔 -->
             <ui:Button name="nav-manual" class="tab" style="width:88px; height:96px; align-items:center; margin:0;">
-                <ui:VisualElement class="icon">
-                    <ui:VisualElement class="ink" style="position:absolute; left:3px; bottom:3px; width:5px; height:16px;" />
-                    <ui:VisualElement class="ink" style="position:absolute; left:3px; top:3px; width:18px; height:5px;" />
-                    <ui:VisualElement class="ink" style="position:absolute; right:2px; top:8px; width:6px; height:6px; border-radius:3px;" />
-                </ui:VisualElement>
+                <ui:VisualElement class="tab__icon" style="background-image:url(&quot;project://database/Assets/UI/Icons/nav-manual.png&quot;);" />
                 <ui:Label text="MANUAL" class="tab__text" /><ui:Label text="수동" class="micro" />
             </ui:Button>
 
             <!-- QUALITY — 슬롯 2x2 (한 칸 불량) -->
             <ui:Button name="nav-quality" class="tab" style="width:88px; height:96px; align-items:center; margin:0;">
-                <ui:VisualElement class="icon">
-                    <ui:VisualElement class="ink" style="position:absolute; left:2px; top:2px; width:9px; height:9px;" />
-                    <ui:VisualElement class="ink" style="position:absolute; right:2px; top:2px; width:9px; height:9px;" />
-                    <ui:VisualElement class="ink" style="position:absolute; left:2px; bottom:2px; width:9px; height:9px;" />
-                    <ui:VisualElement class="ink ink--bad" style="position:absolute; right:2px; bottom:2px; width:9px; height:9px;" />
-                </ui:VisualElement>
+                <ui:VisualElement class="tab__icon" style="background-image:url(&quot;project://database/Assets/UI/Icons/nav-quality.png&quot;);" />
                 <ui:Label text="QUALITY" class="tab__text" /><ui:Label text="품질" class="micro" />
             </ui:Button>
 
             <!-- SETUP — 다이얼(원 + 지시선) -->
             <ui:Button name="nav-setup" class="tab" style="width:88px; height:96px; align-items:center; margin:0;">
-                <ui:VisualElement class="icon">
-                    <ui:VisualElement class="ring" style="position:absolute; left:3px; top:3px; width:20px; height:20px; border-radius:10px;" />
-                    <ui:VisualElement class="ink" style="position:absolute; left:11px; top:0; width:4px; height:8px;" />
-                    <ui:VisualElement class="ink" style="position:absolute; left:11px; bottom:0; width:4px; height:8px;" />
-                </ui:VisualElement>
+                <ui:VisualElement class="tab__icon" style="background-image:url(&quot;project://database/Assets/UI/Icons/nav-setup.png&quot;);" />
                 <ui:Label text="SETUP" class="tab__text" /><ui:Label text="설정" class="micro" />
             </ui:Button>
 
@@ -173,17 +149,7 @@
             <ui:VisualElement class="spacer" />
             <ui:VisualElement style="width:44px; height:1px; background-color:rgba(255,255,255,0.09);" />
             <ui:Button name="view-focus" class="tab" style="width:88px; height:96px; align-items:center; margin:0; margin-top:14px; margin-bottom:22px;">
-                <!-- 아이콘: 네 귀퉁이만 남긴 뷰파인더 틀 -->
-                <ui:VisualElement class="icon">
-                    <ui:VisualElement class="ink" style="position:absolute; left:0; top:0; width:9px; height:3px;" />
-                    <ui:VisualElement class="ink" style="position:absolute; left:0; top:0; width:3px; height:9px;" />
-                    <ui:VisualElement class="ink" style="position:absolute; right:0; top:0; width:9px; height:3px;" />
-                    <ui:VisualElement class="ink" style="position:absolute; right:0; top:0; width:3px; height:9px;" />
-                    <ui:VisualElement class="ink" style="position:absolute; left:0; bottom:0; width:9px; height:3px;" />
-                    <ui:VisualElement class="ink" style="position:absolute; left:0; bottom:0; width:3px; height:9px;" />
-                    <ui:VisualElement class="ink" style="position:absolute; right:0; bottom:0; width:9px; height:3px;" />
-                    <ui:VisualElement class="ink" style="position:absolute; right:0; bottom:0; width:3px; height:9px;" />
-                </ui:VisualElement>
+                <ui:VisualElement class="tab__icon" style="background-image:url(&quot;project://database/Assets/UI/Icons/view-twin.png&quot;);" />
                 <ui:Label text="TWIN" class="tab__text" /><ui:Label text="집중" class="micro" />
             </ui:Button>
         </ui:VisualElement>

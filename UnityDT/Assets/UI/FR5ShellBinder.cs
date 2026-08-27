@@ -168,15 +168,21 @@ namespace MainUnity.UI
             RobotRunState state = statusManager != null ? statusManager.State : RobotRunState.Disconnected;
             if (robotText != null) robotText.text = state.ToString().ToUpperInvariant();
 
+            // 정상에는 색을 주지 않는다 (Docs/ui-design.md 1절).
+            // RUNNING 에 초록을 주면 "정상이라는 신호"가 화면에서 가장 눈에 띄는 것이 되고,
+            // 그러면 이상이 났을 때 달라지는 것이 색 하나뿐이라 알아채기 어려워진다.
+            // 상태는 chip 안의 글자(RUNNING / IDLE / ERROR)가 이미 말한다.
             bool bad = state == RobotRunState.Disconnected || state == RobotRunState.Error;
             robotChip?.EnableInClassList("chip--bad", bad);
-            robotChip?.EnableInClassList("chip--good", state == RobotRunState.Running);
+            robotChip?.EnableInClassList("chip--good", false);
         }
 
         void RefreshLinks()
         {
             bool jointLive = statusManager != null && statusManager.Latest != null;
-            linkJointDot?.EnableInClassList("dot--good", jointLive);
+            // 링크가 살아 있는 것은 정상이므로 무채색(dot--ok)이다. 끊긴 것만 색을 얻는다.
+            linkJointDot?.EnableInClassList("dot--ok", jointLive);
+            linkJointDot?.EnableInClassList("dot--good", false);
             linkJointDot?.EnableInClassList("dot--bad", !jointLive);
             if (linkJointAge != null)
             {
@@ -189,7 +195,8 @@ namespace MainUnity.UI
             double age = vision != null ? Time.realtimeSinceStartupAsDouble - vision.LastReceiveTimeSeconds : -1;
             bool fresh = received && age >= 0 && age < visionStaleSeconds;
 
-            linkImageDot?.EnableInClassList("dot--good", fresh);
+            linkImageDot?.EnableInClassList("dot--ok", fresh);
+            linkImageDot?.EnableInClassList("dot--good", false);
             linkImageDot?.EnableInClassList("dot--bad", received && !fresh);
             if (linkImageAge != null)
                 linkImageAge.text = fresh ? $"{age * 1000:0} ms" : "board/image";

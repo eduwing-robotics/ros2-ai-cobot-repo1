@@ -53,6 +53,15 @@ namespace MainUnity.UI
         int planTotal;
         bool warnedStepCount;
         VisualElement gripperChip, gripperFill, watchdogDot, visionEmpty, realStatus, poseBlock, safetyBlock;
+
+        // 추세 (Docs/ui-design.md 3.1절). 값 하나만으로는 방향을 알 수 없어서,
+        // 운전자가 이상을 알람이 뜬 뒤에야 알아채게 된다.
+        // 4Hz × 120 표본 = 30초 창이다. 매 프레임 표본을 넣으면 30초가 1800 표본이 되어
+        // 가로 340px 에 그릴 수 없고, 다시 그리는 비용만 늘어난다.
+        const float SampleHz = 4f;
+        const int SampleCapacity = 120;
+        Sparkline gripperSpark, watchdogSpark, tcpSpark;
+        double nextSampleTime;
         readonly System.Collections.Generic.List<(Label Value, System.Func<RobotStatusFrame, string> Read)> realRows = new();
         bool cached;
 
@@ -70,6 +79,7 @@ namespace MainUnity.UI
             RefreshPose();
             RefreshGripper();
             RefreshLink();
+            SampleTrends();
             RefreshRealStatus();
             RefreshAssembly();
         }
@@ -119,8 +129,71 @@ namespace MainUnity.UI
             poseBlock = root.Q<VisualElement>("pose-block");
             safetyBlock = root.Q<VisualElement>("safety-block");
             mockNote = root.Q<Label>("mock-note");
+            BuildSparklines(root);
             BuildRealStatus();
             cached = true;
+        }
+
+        void BuildSparklines(VisualElement root)
+        {
+            gripperSpark = Attach(root, "gripper-spark");
+            // 그리퍼는 0~100% 로 범위가 정해져 있다. 자동 범위로 두면 26.0~26.4 같은
+            // 미세한 흔들림이 화면 전체 높이로 확대돼 큰 사건처럼 보인다.
+            gripperSpark?.SetRange(0f, 100f);
+
+            watchdogSpark = Attach(root, "watchdog-spark");
+            // 지연은 자동 범위다. 한계(50ms)를 넘는 순간이 아니라 한계로 다가가는
+            // 기울기를 읽는 것이 목적이라, 실제 변동 폭에 맞춰야 기울기가 보인다.
+            if (watchdogSpark != null) watchdogSpark.Limit = watchdogLimitMilliseconds;
+
+            // TCP Z 는 Real 전용이다. Mock 에서는 pose-block 째 접히므로 보이지 않는다.
+            tcpSpark = Attach(root, "tcp-spark");
+        }
+
+        static Sparkline Attach(VisualElement root, string hostName)
+        {
+            VisualElement host = root.Q<VisualElement>(hostName);
+            if (host == null) return null;
+            var spark = new Sparkline(SampleCapacity);
+            spark.style.flexGrow = 1;
+            host.Add(spark);
+            return spark;
+        }
+
+        /// <summary>
+        /// 고정 주기로만 표본을 넣는다. 프레임률이 바뀌어도 창 길이(30초)가 같아야
+        /// 두 번 본 기울기를 비교할 수 있다.
+        /// </summary>
+        void SampleTrends()
+        {
+            double now = Time.realtimeSinceStartupAsDouble;
+            if (now < nextSampleTime) return;
+            nextSampleTime = now + 1d / SampleHz;
+
+            RobotStatusFrame frame = statusManager != null ? statusManager.Latest : null;
+
+            if (watchdogSpark != null)
+            {
+                if (frame == null) watchdogSpark.ClearHistory();
+                else watchdogSpark.Push((float)((now - frame.ReceiveTimeSeconds) * 1000d));
+            }
+
+            if (gripperSpark != null)
+            {
+                if (gripper != null && gripper.TryGetOpeningPercent(out float percent))
+                    gripperSpark.Push(percent);
+                else gripperSpark.ClearHistory();
+            }
+
+            if (tcpSpark != null)
+            {
+                // Mock 은 TCP 를 채우지 않는다. 0 을 실측으로 오인하지 않게 비운다.
+                bool blank = frame == null ||
+                    (uiMaster != null && uiMaster.IsSimulated &&
+                     Mathf.Approximately(frame.TcpPositionMillimeters.z, 0f));
+                if (blank) tcpSpark.ClearHistory();
+                else tcpSpark.Push(frame.TcpPositionMillimeters.z);
+            }
         }
         void ConfigureJobControls()
         {
@@ -588,10 +661,24 @@ namespace MainUnity.UI
         void RefreshLink()
         {
             bool live = statusManager != null && statusManager.Latest != null;
-            watchdogDot?.EnableInClassList("dot--good", live);
+            // 워치독이 살아 있는 것은 정상이다. 초록을 주면 화면에서 가장 눈에 띄는 것이
+            // "정상"이 된다. 늦어지는 것은 아래 스파크라인이 알람 전에 보여 준다.
+            watchdogDot?.EnableInClassList("dot--ok", live);
+            watchdogDot?.EnableInClassList("dot--good", false);
             watchdogDot?.EnableInClassList("dot--bad", !live);
+            // "OK" 는 값이 아니다. 한계까지 얼마나 남았는지 알 수 없으므로 실측 지연을 적는다.
+            // 위 스파크라인이 그 값의 30초 기울기를 함께 보여 준다.
             if (watchdogValue != null)
-                watchdogValue.text = live ? $"OK · 한계 {watchdogLimitMilliseconds:0} ms" : "STALE";
+            {
+                double ageMs = live
+                    ? (Time.realtimeSinceStartupAsDouble - statusManager.Latest.ReceiveTimeSeconds) * 1000d
+                    : -1d;
+                watchdogValue.text = live
+                    ? $"{ageMs:0} / {watchdogLimitMilliseconds:0} ms"
+                    : "STALE";
+                // 한계를 넘은 것만 색을 얻는다.
+                SetTone(watchdogValue, !live || ageMs > watchdogLimitMilliseconds ? "bad" : "none");
+            }
             // TODO(API): tool offset 은 레시피/툴 정의에서 온다. 지금은 표시만.
             // TODO(API·Real): 속도 오버라이드는 Mock·Real 모두 지령 경로가 없다.
             //                 fairino_msgs 의 속도 설정 명령이 붙으면 셸의 SPEED 를 슬라이더로 바꾼다.

@@ -54,6 +54,12 @@
                 </ui:VisualElement>
                 <ui:VisualElement name="tcp-row" class="row vlist" style="margin-bottom:14px;" />
                 <ui:VisualElement name="rpy-row" class="row vlist" />
+                <ui:VisualElement class="row" style="margin-top:14px;">
+                    <ui:Label text="Z 높이" class="run-sect__unit" />
+                    <ui:VisualElement class="spacer" />
+                    <ui:Label text="최근 30초" class="run-sect__unit" />
+                </ui:VisualElement>
+                <ui:VisualElement name="tcp-spark" class="spark" style="margin-top:4px;" />
                 <ui:VisualElement class="run-hr" style="margin-top:20px;" />
             </ui:VisualElement>
 
@@ -69,7 +75,7 @@
             <ui:VisualElement class="run-sect">
                 <ui:Label text="GRIPPER" class="run-sect__title" />
                 <ui:VisualElement class="spacer" />
-                <ui:Label text="mm" class="run-sect__unit" />
+                <ui:Label text="mm · 최근 30초" class="run-sect__unit" />
             </ui:VisualElement>
             <ui:VisualElement class="row">
                 <ui:VisualElement name="gripper-state-chip" class="chip"><ui:Label name="gripper-state-text" text="—" class="chip__text" /></ui:VisualElement>
@@ -79,6 +85,7 @@
             <ui:VisualElement class="gauge" style="margin-top:12px;">
                 <ui:VisualElement name="gripper-fill" class="gauge__fill" />
             </ui:VisualElement>
+            <ui:VisualElement name="gripper-spark" class="spark" style="margin-top:10px;" />
 
             <!-- /nonrt_state_data 로만 오는 값들. Mock 은 채우지 않으므로 접는다. -->
             <ui:VisualElement name="safety-block" class="vlist">
@@ -100,8 +107,10 @@
                 <ui:VisualElement name="watchdog-dot" class="dot" />
                 <ui:Label text="WATCHDOG" class="run-sect__title" style="margin-left:10px;" />
                 <ui:VisualElement class="spacer" />
+                <ui:Label text="최근 30초" class="run-sect__unit" style="margin-right:10px;" />
                 <ui:Label name="watchdog-value" text="—" class="run-sub" />
             </ui:VisualElement>
+            <ui:VisualElement name="watchdog-spark" class="spark" style="margin-top:6px;" />
             <ui:Label name="tool-value" text="tool Z —" class="run-sub" style="margin-top:8px;" />
         </ui:VisualElement>
 
