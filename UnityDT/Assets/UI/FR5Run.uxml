@@ -101,8 +101,12 @@
             <!-- 접은 자리에 빈칸을 남기지 않고, 왜 없는지를 한 줄로 답한다. -->
             <ui:Label name="mock-note" text="TCP · RPY · SAFETY — Real 연결에서만 들어온다" class="run-sub" style="margin-top:18px;" />
 
-            <ui:VisualElement class="spacer" />
-            <ui:VisualElement class="run-hr" style="margin-bottom:14px;" />
+            <!--
+              spacer 를 두지 않는다. 아래로 밀면 Mock 에서 접힌 블록만큼
+              열 한가운데가 비어 구멍이 된다. 위로 붙이면 남는 자리가 열 밖으로
+              나가고, 거기서는 트윈이 그대로 이어진다.
+            -->
+            <ui:VisualElement class="run-hr" style="margin-top:20px; margin-bottom:14px;" />
             <ui:VisualElement class="row">
                 <ui:VisualElement name="watchdog-dot" class="dot" />
                 <ui:Label text="WATCHDOG" class="run-sect__title" style="margin-left:10px;" />

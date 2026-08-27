@@ -394,14 +394,21 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
 
 .run-edge {
     position: absolute;
-    background-color: rgba(6, 10, 14, 0.88);
+    background-color: rgba(6, 10, 14, 0.82);
 }
 
-/* 레일에 딱 붙인다. 24px 여백을 두면 계기가 다시 "떠 있는 상자"가 된다. */
+/*
+  레일에 딱 붙인다. 24px 여백을 두면 계기가 다시 "떠 있는 상자"가 된다.
+
+  bottom 을 잡지 않는다. 화면 아래까지 늘리면 Mock 에서 TCP·RPY·SAFETY 가 접힌
+  만큼(약 420px) 열 한가운데가 텅 비고, 상자가 없어진 지금은 그 구멍이 더 도드라진다.
+  내용 높이에 맞춰 끝내면 남는 자리는 구멍이 아니라 트윈이 이어지는 자리가 된다.
+  Mock/Real 사이에 높이가 달라지지만 모드는 에디터에서만 바뀌므로 실행 중에는 고정이다.
+*/
 .run-edge--left {
-    left: 88px; top: 68px; bottom: 0; width: 412px;
+    left: 88px; top: 68px; width: 412px;
     padding-left: 28px; padding-right: 28px;
-    padding-top: 24px; padding-bottom: 20px;
+    padding-top: 24px; padding-bottom: 26px;
 }
 
 .run-edge--right {
@@ -412,7 +419,7 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
 .run-deck {
     position: absolute;
     left: 500px; right: 360px; bottom: 0; height: 120px;
-    background-color: rgba(6, 10, 14, 0.88);
+    background-color: rgba(6, 10, 14, 0.82);
     padding-left: 26px; padding-right: 26px;
     padding-top: 14px; padding-bottom: 14px;
 }
@@ -446,11 +453,26 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
 
 /* 카메라. 영상은 자기 표면이 있으므로 테두리도 헤더도 주지 않는다.
    360 폭에 4:3 이라 270 이다. 이름은 영상 위에 얹는다. */
-.run-cam { height: 270px; background-color: rgb(14, 19, 25); flex-shrink: 0; }
+/*
+  이전 배경 rgb(14,19,25) 는 열 스크림과 거의 같은 밝기라 타일 경계가 보이지 않았다.
+  영상이 없을 때 "여기가 화면"이라는 것 자체가 읽히지 않는다. 열보다 확실히 어둡게
+  내리고 아래에 규칙선을 하나 그어 오목한 면으로 만든다.
+*/
+.run-cam {
+    height: 270px;
+    background-color: rgb(3, 6, 9);
+    flex-shrink: 0;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(255, 255, 255, 0.10);
+}
+/* 태그는 영상 위에도 얹힌다. 밝은 프레임이 오면 글자가 씻기므로 자기 바탕을 갖는다. */
 .run-cam__tag {
-    position: absolute; left: 12px; top: 10px;
-    color: var(--c-ink-2); font-size: 10px;
+    position: absolute; left: 10px; top: 10px;
+    color: rgb(205, 218, 226); font-size: 10px;
     letter-spacing: 1.8px; -unity-font-style: bold;
+    background-color: rgba(3, 6, 9, 0.72);
+    padding-left: 6px; padding-right: 6px;
+    padding-top: 2px; padding-bottom: 2px;
 }
 
 /* 추세 — 값 하나의 최근 이력 (Sparkline.cs, Docs/ui-design.md 3.1절).
