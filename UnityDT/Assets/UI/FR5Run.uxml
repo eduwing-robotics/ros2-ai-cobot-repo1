@@ -2,183 +2,204 @@
     <ui:Style src="project://database/Assets/UI/FR5Theme.uss" />
     <ui:Template src="project://database/Assets/UI/FR5Shell.uxml" name="FR5Shell" />
     <!--
-      RUN · 작업 실행 중 — Docs/ui/mock-01-run.svg 확정안
-      가운데 508..1500 × 88..896 은 어떤 요소도 침범하지 않는다. 로봇이 움직이는 영역이다.
-      실데이터: 관절 · TCP · RPY · 그리퍼 · 워치독 · 모드 · 링크 (FR5RunBinder)
-      TCP · RPY · SAFETY 는 Real 전용이라 Mock 에서는 접는다 — 그래야 좌측 열이 예산에 맞는다
-      샘플데이터: 작업 진행 · 유닛 · 스텝 · 이벤트  [TODO(API)]
+      RUN · 작업 실행 중
+
+      구성 원칙 (Docs/ui-design.md 2절)
+        1. 트윈은 구멍이 아니라 지면이다. 계기는 트윈 위에 뜬 상자가 아니라
+           화면 양 가장자리에 얹힌 층이다. 그래서 상자 테두리 · 헤더 · 척추를
+           쓰지 않는다. 경계는 스크림의 밝기 차이 하나로만 만든다.
+        2. 크게 움직이는 것은 하나뿐이다. 상단을 가로지르는 진행 레일이다.
+           나머지는 값이 바뀌어도 자리가 움직이지 않는다.
+        3. 좌우가 대칭이 아니다. 왼쪽 412 는 항상 보는 것(로봇), 오른쪽 360 은
+           필요할 때 보는 것(영상 · 작업 · 이벤트)이라 TWIN 으로 접힌다.
+
+      좌표
+        진행 레일   x   88 .. 1920   y   64 ..   68
+        좌 계기 열  x   88 ..  500   y   68 .. 1080
+        트윈        x  500 .. 1560   y   68 .. 1080   (아래 120 은 진행 데크가 덮음)
+        우 열       x 1560 .. 1920   y   68 .. 1080
+        진행 데크   x  500 .. 1560   y  960 .. 1080
+
+      실데이터: 관절 · TCP · RPY · 그리퍼 · 워치독 · 모드 · 링크 · 조립 진행
+      TCP · RPY · SAFETY 는 Real 전용이라 Mock 에서는 접는다.
+      샘플데이터: 작업 · 유닛 · 이벤트  [TODO(API)]
     -->
-    <ui:VisualElement name="fr5-run" class="page fr5--mock">
-
-        
+    <ui:VisualElement name="fr5-run" class="page page--run fr5--mock">
 
         <!--
-          ========================= 가운데 =========================
-          508..1500 × 88..896 은 비워 둔다. page 배경이 투명이라 3D 트윈이 그대로 보인다.
-          여기에 요소를 놓지 말 것. 로봇이 움직이는 영역이다.
+          진행 레일. 화면에서 단조 증가하는 유일한 값이라 유일하게 크게 움직인다.
+          조립 진행(놓인 슬롯 / 전체 슬롯)이다. 아직 연결되지 않은 jobs 진행이
+          아니므로 상단 바의 JOB 게이지와 같은 값이 아니다.
         -->
+        <ui:VisualElement name="run-rail" class="run-rail">
+            <ui:VisualElement name="run-progress-fill" class="run-rail__fill" />
+        </ui:VisualElement>
 
-        <!-- ========================= 좌 · 로봇 계기 ========================= -->
-        <ui:VisualElement name="robot-panel" class="panel" style="position:absolute; left:112px; top:88px; width:372px; height:808px;">
-            <ui:VisualElement class="panel__spine" />
-            <ui:VisualElement class="panel__head">
-                <ui:Label text="ROBOT · FR5-01" class="panel__title" />
-                <ui:VisualElement class="spacer" />
-                <ui:Label text="휘발 · 표시 전용" class="panel__badge" />
-            </ui:VisualElement>
+        <!-- ==================== 좌 · 로봇 계기 ==================== -->
+        <!--
+          항상 보는 것이다. TWIN 으로 접지 않는다 — 로봇 상태가 사라지면
+          트윈을 보는 이유 자체가 사라진다.
+        -->
+        <ui:VisualElement name="robot-panel" class="run-edge run-edge--left">
+
             <!--
-              세로 예산 — 실측 기준이다. 모두 편 Real 상태에서 내용 하단이 y=876,
-              패널 바닥이 y=896 이라 여유가 20px 뿐이다. 항목을 더 넣으려면 반드시
-              무언가를 빼야 한다. 예산을 넘겨도 이제는 구분선·게이지가 조용히 눌리지
-              않고(테마의 flex-shrink:0) 패널 밖으로 삐져나오므로 눈에 보인다.
+              POSE. TCP 와 RPY 는 같은 포즈의 두 축이라 제목 하나를 나눠 쓴다.
+              Mock Backend 는 두 값을 채우지 않으므로 Mock 에서는 블록째 접는다.
             -->
-            <ui:VisualElement class="panel__body">
-
-                <!--
-                  POSE — TCP 와 RPY 는 같은 포즈의 두 축이라 제목 하나를 나눠 쓴다.
-                  Mock Backend 는 두 값을 채우지 않으므로 Mock 에서는 블록째 접는다.
-                -->
-                <ui:VisualElement name="pose-block" class="vlist">
-                    <ui:VisualElement class="sect"><ui:VisualElement class="sect__tick" /><ui:Label text="TCP · RPY" class="sect__title" /><ui:VisualElement class="spacer" /><ui:Label text="mm · deg · base" class="sect__unit" /></ui:VisualElement>
-                    <ui:VisualElement name="tcp-row" class="row vlist" style="margin-bottom:10px;" />
-                    <ui:VisualElement name="rpy-row" class="row vlist" />
-                    <ui:VisualElement class="rule" style="margin-top:14px;" />
-                </ui:VisualElement>
-
-                <ui:VisualElement class="sect" style="margin-top:14px;"><ui:VisualElement class="sect__tick" /><ui:Label text="JOINTS" class="sect__title" /><ui:VisualElement class="spacer" /><ui:Label text="deg · 리미트 대비" class="sect__unit" /></ui:VisualElement>
-                <ui:VisualElement name="joint-list" class="vlist" style="margin-bottom:14px;" />
-
-                <ui:VisualElement class="rule" style="margin-bottom:14px;" />
-                <ui:VisualElement class="sect"><ui:VisualElement class="sect__tick" /><ui:Label text="GRIPPER" class="sect__title" /><ui:VisualElement class="spacer" /><ui:Label text="mm" class="sect__unit" /></ui:VisualElement>
-                <ui:VisualElement class="row">
-                    <ui:VisualElement name="gripper-state-chip" class="chip"><ui:Label name="gripper-state-text" text="—" class="chip__text" /></ui:VisualElement>
+            <ui:VisualElement name="pose-block" class="vlist">
+                <ui:VisualElement class="run-sect">
+                    <ui:Label text="TCP · RPY" class="run-sect__title" />
                     <ui:VisualElement class="spacer" />
-                    <ui:Label name="gripper-value" text="—" class="value value--lg" />
+                    <ui:Label text="mm · deg · base" class="run-sect__unit" />
                 </ui:VisualElement>
-                <ui:VisualElement class="gauge" style="margin-top:10px;">
-                    <ui:VisualElement name="gripper-fill" class="gauge__fill" />
-                </ui:VisualElement>
-
-                <!-- /nonrt_state_data 로만 오는 값들. Mock 은 채우지 않으므로 접는다. -->
-                <ui:VisualElement name="safety-block" class="vlist">
-                    <ui:VisualElement class="rule" style="margin-top:14px; margin-bottom:14px;" />
-                    <ui:VisualElement class="sect"><ui:VisualElement class="sect__tick" /><ui:Label text="SAFETY · REAL" class="sect__title" /><ui:VisualElement class="spacer" /><ui:Label name="real-source" text="—" class="sect__unit" /></ui:VisualElement>
-                    <ui:VisualElement name="real-status" class="vlist" />
-                </ui:VisualElement>
-                <!-- 접은 자리에 빈칸을 남기지 않고, 왜 없는지를 한 줄로 답한다. -->
-                <ui:Label name="mock-note" text="TCP · RPY · SAFETY — Real 연결에서만 들어온다" class="muted" style="font-size:11px; margin-top:14px;" />
-
-                <ui:VisualElement class="spacer" />
-                <ui:VisualElement class="rule" style="margin-bottom:12px;" />
-                <ui:VisualElement class="row">
-                    <ui:VisualElement name="watchdog-dot" class="dot" />
-                    <ui:Label text="WATCHDOG" class="micro" style="margin-left:10px;" />
-                    <ui:VisualElement class="spacer" />
-                    <ui:Label name="watchdog-value" text="—" class="muted" />
-                </ui:VisualElement>
-                <ui:Label name="tool-value" text="tool Z —" class="muted" style="font-size:12px; margin-top:8px;" />
+                <ui:VisualElement name="tcp-row" class="row vlist" style="margin-bottom:14px;" />
+                <ui:VisualElement name="rpy-row" class="row vlist" />
+                <ui:VisualElement class="run-hr" style="margin-top:20px;" />
             </ui:VisualElement>
+
+            <ui:VisualElement class="run-sect" style="margin-top:20px;">
+                <ui:Label text="JOINTS" class="run-sect__title" />
+                <ui:VisualElement class="spacer" />
+                <ui:Label text="deg · 리미트 대비" class="run-sect__unit" />
+            </ui:VisualElement>
+            <ui:VisualElement name="joint-list" class="vlist" />
+
+            <ui:VisualElement class="run-hr" style="margin-top:20px; margin-bottom:20px;" />
+
+            <ui:VisualElement class="run-sect">
+                <ui:Label text="GRIPPER" class="run-sect__title" />
+                <ui:VisualElement class="spacer" />
+                <ui:Label text="mm" class="run-sect__unit" />
+            </ui:VisualElement>
+            <ui:VisualElement class="row">
+                <ui:VisualElement name="gripper-state-chip" class="chip"><ui:Label name="gripper-state-text" text="—" class="chip__text" /></ui:VisualElement>
+                <ui:VisualElement class="spacer" />
+                <ui:Label name="gripper-value" text="—" class="run-val" style="font-size:28px;" />
+            </ui:VisualElement>
+            <ui:VisualElement class="gauge" style="margin-top:12px;">
+                <ui:VisualElement name="gripper-fill" class="gauge__fill" />
+            </ui:VisualElement>
+
+            <!-- /nonrt_state_data 로만 오는 값들. Mock 은 채우지 않으므로 접는다. -->
+            <ui:VisualElement name="safety-block" class="vlist">
+                <ui:VisualElement class="run-hr" style="margin-top:20px; margin-bottom:20px;" />
+                <ui:VisualElement class="run-sect">
+                    <ui:Label text="SAFETY · REAL" class="run-sect__title" />
+                    <ui:VisualElement class="spacer" />
+                    <ui:Label name="real-source" text="—" class="run-sect__unit" />
+                </ui:VisualElement>
+                <ui:VisualElement name="real-status" class="vlist" />
+            </ui:VisualElement>
+
+            <!-- 접은 자리에 빈칸을 남기지 않고, 왜 없는지를 한 줄로 답한다. -->
+            <ui:Label name="mock-note" text="TCP · RPY · SAFETY — Real 연결에서만 들어온다" class="run-sub" style="margin-top:18px;" />
+
+            <ui:VisualElement class="spacer" />
+            <ui:VisualElement class="run-hr" style="margin-bottom:14px;" />
+            <ui:VisualElement class="row">
+                <ui:VisualElement name="watchdog-dot" class="dot" />
+                <ui:Label text="WATCHDOG" class="run-sect__title" style="margin-left:10px;" />
+                <ui:VisualElement class="spacer" />
+                <ui:Label name="watchdog-value" text="—" class="run-sub" />
+            </ui:VisualElement>
+            <ui:Label name="tool-value" text="tool Z —" class="run-sub" style="margin-top:8px;" />
         </ui:VisualElement>
 
-        <!-- ========================= 우 · 작업 진행 ========================= -->
-        <ui:VisualElement name="job-panel" class="panel" style="position:absolute; left:1524px; top:88px; width:372px; height:368px;">
-            <ui:VisualElement class="panel__spine" />
-            <ui:VisualElement class="panel__head">
-                <ui:Label text="ASSEMBLY JOB" class="panel__title" />
-                <ui:VisualElement class="spacer" />
-                <ui:Label text="영속 · DB 기록" class="panel__badge" style="color:rgb(62,207,142);" />
-            </ui:VisualElement>
-            <ui:VisualElement class="panel__body">
-                <!-- TODO(API): jobs · units 조회로 교체 -->
-                <ui:Label name="job-product" text="—" class="value value--lg" style="font-size:26px;" />
-                <ui:Label name="job-recipe" text="—" class="muted" style="margin-top:2px;" />
-                <ui:VisualElement class="rule" style="margin-top:12px; margin-bottom:12px;" />
-
-                <!--
-                  완료 수량 · 유닛 틱 10칸 · 잔여 · OK/NG 를 뺐다. MVP 는 수량 1대라
-                  "10대 중 6대" 축이 실재하지 않는다 — 채울 데이터가 없는 그림이었다.
-                  수량 2개 이상과 작업 큐가 생기면(todo.md) 되돌린다. 비운 자리는
-                  채우지 않고 VISION 에 넘겼다. 카메라가 4:3 을 꽉 채우지 못하고 있었다.
-                -->
-                <ui:VisualElement class="sect"><ui:VisualElement class="sect__tick" /><ui:Label text="CURRENT UNIT" class="sect__title" /><ui:VisualElement class="spacer" /><ui:Label text="unit_phase" class="sect__unit" /></ui:VisualElement>
-                <ui:VisualElement class="row">
-                    <ui:Label name="unit-phase" text="—" class="value" style="font-size:22px;" />
-                </ui:VisualElement>
-                <ui:Label name="unit-step" text="—" class="muted vlist" style="margin-top:6px; font-size:13px;" />
-
-                <ui:VisualElement class="spacer" />
-                <ui:VisualElement class="row">
-                    <ui:Button name="job-pause-button" text="PAUSE" class="btn" style="width:104px;" />
-                    <ui:Button name="job-step-button" text="STEP" class="btn" style="width:104px; margin-left:10px;" />
-                    <ui:Button name="job-abort-button" text="ABORT" class="btn btn--danger" style="width:104px; margin-left:10px;" />
-                </ui:VisualElement>
-                <ui:Label name="abort-note" text="ABORT — 취소 계약 미구현 (API.md 4.3)" class="muted" style="font-size:11px; margin-top:2px; -unity-text-align:middle-right;" />
-            </ui:VisualElement>
-        </ui:VisualElement>
-
-        <!-- ========================= 우 · 비전 ========================= -->
+        <!-- ==================== 우 · 영상 · 작업 · 이벤트 ==================== -->
         <!--
-          프레임 338 x 254 = 4:3 정확히. 카메라 텍스처가 640x480 이고 Image 는
-          ScaleToFit 이라, 이전 338 x 150 에서는 200 x 150 으로만 그려지고 좌우
-          138px 이 레터박스로 죽었다. 폭은 우측 열 372 로 고정이므로 높이로 맞춘다.
+          필요할 때 보는 것이라 TWIN 으로 통째로 접힌다. 접으면 트윈이
+          x500 부터 화면 오른쪽 끝까지 이어진다.
+          JOB 번호와 진행률은 상단 바에 정본이 있으므로 접혀도 잃는 것이 없다.
         -->
-        <ui:VisualElement name="vision-panel" class="panel panel--aux" style="position:absolute; left:1524px; top:528px; width:372px; height:368px;">
-            <ui:VisualElement class="panel__spine" />
-            <ui:VisualElement class="panel__head">
-                <ui:Label text="VISION" class="panel__title" />
-                <ui:VisualElement class="spacer" />
-                <ui:Label text="board/image" class="panel__badge" />
-            </ui:VisualElement>
-            <ui:VisualElement style="flex-grow:1; padding:16px;">
-                <ui:VisualElement name="vision-frame" style="flex-grow:1; background-color:rgb(20,28,36);">
+        <ui:VisualElement name="job-panel" class="run-edge run-edge--right panel--aux">
+
+            <!--
+              카메라. 360 폭에 4:3 이라 270 이다. 텍스처가 640x480 이고 Image 는
+              ScaleToFit 이라 이 비율에서만 레터박스가 0 이 된다.
+              테두리도 헤더도 주지 않는다 — 영상은 이미 자기 표면이다.
+            -->
+            <ui:VisualElement name="vision-panel" class="run-cam">
+                <ui:VisualElement name="vision-frame" style="position:absolute; left:0; top:0; right:0; bottom:0;">
                     <ui:Image name="camera-image" style="position:absolute; left:0; top:0; right:0; bottom:0;" />
                     <ui:VisualElement name="vision-empty" class="empty">
                         <ui:Label text="영상 없음" class="empty__title" style="font-size:14px;" />
                     </ui:VisualElement>
                 </ui:VisualElement>
-                <ui:VisualElement class="row" style="margin-top:10px;">
-                    <ui:Label name="vision-stats" text="—" class="muted" style="font-size:11px;" />
+                <ui:Label text="ROBOT CAM" class="run-cam__tag" />
+            </ui:VisualElement>
+
+            <ui:VisualElement class="row" style="padding-left:24px; padding-right:24px; height:34px;">
+                <ui:Label name="vision-stats" text="—" class="run-sub" />
+                <ui:VisualElement class="spacer" />
+                <ui:Label text="INSPECT →" class="accent" style="font-size:11px;" />
+            </ui:VisualElement>
+
+            <ui:VisualElement style="flex-grow:1; padding-left:24px; padding-right:24px; padding-bottom:20px;">
+
+                <ui:VisualElement class="run-hr" style="margin-bottom:18px;" />
+                <ui:VisualElement class="run-sect">
+                    <ui:Label text="ASSEMBLY JOB" class="run-sect__title" />
                     <ui:VisualElement class="spacer" />
-                    <ui:Label text="INSPECT →" class="accent" style="font-size:11px;" />
+                    <ui:Label text="영속 · DB" class="run-sect__unit" />
                 </ui:VisualElement>
+                <!-- TODO(API): jobs · units 조회로 교체 -->
+                <ui:Label name="job-product" text="—" class="run-val" />
+                <ui:Label name="job-recipe" text="—" class="run-sub" style="margin-top:4px;" />
+
+                <ui:VisualElement class="run-hr" style="margin-top:18px; margin-bottom:18px;" />
+                <ui:VisualElement class="run-sect">
+                    <ui:Label text="CURRENT UNIT" class="run-sect__title" />
+                    <ui:VisualElement class="spacer" />
+                    <ui:Label text="unit_phase" class="run-sect__unit" />
+                </ui:VisualElement>
+                <!-- 이 화면에서 가장 큰 글자다. "지금 무슨 단계인가"가 RUN 의 질문이다. -->
+                <ui:Label name="unit-phase" text="—" class="run-lead" />
+                <ui:Label name="unit-step" text="—" class="run-sub vlist" style="margin-top:6px;" />
+
+                <ui:VisualElement class="run-hr" style="margin-top:18px; margin-bottom:18px;" />
+                <ui:VisualElement class="run-sect">
+                    <ui:Label text="EVENTS" class="run-sect__title" />
+                    <ui:VisualElement class="spacer" />
+                    <ui:Label name="events-summary" text="—" class="run-sect__unit" />
+                </ui:VisualElement>
+                <ui:VisualElement name="event-list" class="vlist" />
+
+                <ui:VisualElement class="spacer" />
+
+                <!--
+                  제어는 열 맨 아래에 둔다. 터치 패널에서 손이 가장 먼저 닿는 자리다.
+                  셋 다 계약이 없어 비활성이고, 그 사실은 아래 한 줄이 적는다.
+                -->
+                <ui:VisualElement class="row">
+                    <ui:Button name="job-pause-button" text="PAUSE" class="btn" style="width:96px;" />
+                    <ui:Button name="job-step-button" text="STEP" class="btn" style="width:96px; margin-left:12px;" />
+                    <ui:Button name="job-abort-button" text="ABORT" class="btn btn--danger" style="width:96px; margin-left:12px;" />
+                </ui:VisualElement>
+                <ui:Label name="abort-note" text="—" class="run-sub" style="font-size:11px; margin-top:6px; -unity-text-align:middle-right;" />
             </ui:VisualElement>
         </ui:VisualElement>
 
-        <!-- =================== 하단 · 조립 진행 ===================
-          부품 타입별 슬롯 진행이다. 스텝 레일이 아니다 — 레시피의 한 스텝은
-          "부품 하나를 슬롯 하나에 올리는 것"이고 approach/insert/retract 는 그
-          스텝 안의 모션이다 (Docs/Recipe.md). 이전의 8단계 레일은 한 스텝의
-          속을 작업 전체의 진행으로 그린 것이라 구조와 맞지 않았다.
+        <!-- ==================== 하단 · 조립 진행 ====================
+          부품 타입 하나가 묶음 하나, 칸 하나가 슬롯 하나다. 스텝 레일이 아니다.
+          레시피의 한 스텝은 "부품 하나를 슬롯 하나에 올리는 것"이고
+          approach/insert/retract 는 그 스텝 안의 모션이다 (Docs/Recipe.md).
 
-          칸 수와 순서는 씬의 기판(ItemManager)이, 어디까지 놓였는지는 조립
-          피드백(AssemblyProgressManager)이 답한다. 샘플 상수가 없다.
+          트윈 위에 얹는다. 슬롯은 실제로 저 3D 안에 있는 것이라, 화면 아래
+          가장자리에 붙여 두면 기판과 같은 방향에서 읽힌다.
         -->
-        <ui:VisualElement name="progress-panel" class="panel panel--aux" style="position:absolute; left:112px; top:920px; width:1388px; height:136px;">
-            <ui:VisualElement class="panel__spine" />
-            <ui:VisualElement class="panel__head">
-                <ui:Label text="ASSEMBLY PROGRESS" class="panel__title" />
-                <ui:Label text="휘발 · 표시 전용" class="panel__badge" style="margin-left:20px;" />
+        <ui:VisualElement name="progress-panel" class="run-deck panel--aux">
+            <ui:VisualElement class="run-sect" style="margin-bottom:10px;">
+                <ui:Label text="ASSEMBLY PROGRESS" class="run-sect__title" />
                 <ui:VisualElement class="spacer" />
-                <ui:Label name="progress-now" text="—" class="muted" style="font-size:13px;" />
-                <ui:Label name="progress-count" text="—" class="value" style="font-size:20px; margin-left:20px;" />
+                <ui:Label name="progress-now" text="—" class="run-sub" />
+                <ui:Label name="progress-count" text="—" class="run-val" style="margin-left:22px;" />
             </ui:VisualElement>
-            <ui:VisualElement name="progress-groups" class="row vlist" style="flex-grow:1; padding-left:24px; padding-right:24px; justify-content:center;" />
-        </ui:VisualElement>
-
-        <!-- ========================= 하단 · 이벤트 ========================= -->
-        <ui:VisualElement name="events-panel" class="panel panel--aux" style="position:absolute; left:1524px; top:920px; width:372px; height:136px;">
-            <ui:VisualElement class="panel__spine" />
-            <ui:VisualElement class="panel__head">
-                <ui:Label text="EVENTS" class="panel__title" />
-                <ui:VisualElement class="spacer" />
-                <ui:Label name="events-summary" text="—" class="panel__badge" />
-            </ui:VisualElement>
-            <ui:VisualElement name="event-list" class="vlist" style="padding-left:18px; padding-right:18px; padding-top:10px;" />
+            <ui:VisualElement name="progress-groups" class="row vlist" style="flex-grow:1;" />
         </ui:VisualElement>
 
         <!--
           공통 셸: 상단 바 + 페이지 레일 + 알람 띠.
-          맨 마지막에 둔다 — 알람 띠가 페이지 패널 위로 그려져야 하기 때문이다.
+          맨 마지막에 둔다 — 알람 띠가 페이지 요소 위로 그려져야 하기 때문이다.
         -->
         <ui:Instance template="FR5Shell" name="shell" class="shell-host" picking-mode="Ignore" />
     </ui:VisualElement>

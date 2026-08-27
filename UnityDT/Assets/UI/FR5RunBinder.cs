@@ -6,8 +6,8 @@
 //   미연결 : 작업(jobs) · 수량 · 사이클 · 이벤트 로그 — 값을 지어내지 않고
 //            FR5EmptyState 로 "연결 없음 + 필요한 조회"를 적는다  [TODO(API)]
 //
-// 이 화면의 가운데(508..1500 × 88..896)는 비워 둔다. 로봇이 움직이는 영역이고,
-// 계기는 네 모서리에만 붙는다 (Docs/UI.md 5.1).
+// 이 화면의 가운데(500..1560 × 68..1080)는 비워 둔다. 로봇이 움직이는 영역이고,
+// 계기는 화면 양 가장자리에 얹힌다 (Docs/ui-design.md 2절).
 
 using System.Collections.Generic;
 using MainUnity.Runtime.Camera;
@@ -48,7 +48,7 @@ namespace MainUnity.UI
         Label gripperText, gripperValue, watchdogValue, toolValue, visionStats, realSource, mockNote, abortNote;
         Label progressNow, progressCount, unitPhase, unitStep;
         Button pauseButton, stepButton, abortButton;
-        VisualElement progressHost;
+        VisualElement progressHost, progressRailFill;
         readonly List<SlotGroup> slotGroups = new();
         int planTotal;
         bool warnedStepCount;
@@ -93,6 +93,7 @@ namespace MainUnity.UI
             BuildJoints(root.Q<VisualElement>("joint-list"));
             BuildJob(root);
             progressHost = root.Q<VisualElement>("progress-groups");
+            progressRailFill = root.Q<VisualElement>("run-progress-fill");
             progressNow = root.Q<Label>("progress-now");
             progressCount = root.Q<Label>("progress-count");
             unitPhase = root.Q<Label>("unit-phase");
@@ -152,6 +153,11 @@ namespace MainUnity.UI
                 v.style.fontSize = fontSize;
                 v.style.unityFontStyleAndWeight = FontStyle.Bold;
                 v.style.marginTop = 4;
+                // 오른쪽 정렬이다. 왼쪽 정렬이면 412.8 에서 48.1 로 바뀔 때 소수점이
+                // 가로로 뛰어, 값이 아니라 자리가 움직이는 것처럼 보인다.
+                // (폰트에 tabular figures 가 없어 자릿수마다 폭이 다르다.)
+                v.style.width = 104;
+                v.style.unityTextAlign = TextAnchor.MiddleRight;
                 sink[i] = v;
                 box.Add(v);
                 host.Add(box);
@@ -166,7 +172,8 @@ namespace MainUnity.UI
             {
                 var row = new VisualElement();
                 row.AddToClassList("row");
-                // 26px × 6 행. 좌측 열 예산(766px)에서 관절이 가져갈 수 있는 몫이다.
+                // 26px × 6 행. 좌측 열(88..500 × 68..1080, 안여백 제하고 968px)에서
+                // 관절이 가져갈 수 있는 몫이다.
                 row.style.height = 26;
 
                 var k = new Label($"J{i + 1}");
@@ -351,6 +358,13 @@ namespace MainUnity.UI
             if (progressCount != null)
                 progressCount.text = frame != null ? $"{placed} / {planTotal}" : $"{planTotal} 슬롯";
 
+            // 상단 진행 레일. 화면에서 크게 움직이는 유일한 것이라 여기 하나에서만 값을 준다.
+            // 슬롯이 0 이면 나눌 수 없고, 그 경우 레일은 비어 있는 것이 맞다 — 0% 는
+            // "아직 아무것도 안 놓았다"가 아니라 "셀 수 있는 것이 없다"이기 때문이다.
+            if (progressRailFill != null)
+                progressRailFill.style.width = Length.Percent(
+                    planTotal > 0 ? Mathf.Clamp01((float)placed / planTotal) * 100f : 0f);
+
             if (progressNow == null) return;
             progressNow.text = frame == null ? "작업 없음" : Describe(frame);
             SetTone(progressNow, frame == null || frame.State == AssemblyState.Completed
@@ -365,7 +379,7 @@ namespace MainUnity.UI
             {
                 unitPhase.text = frame != null ? frame.State.ToString().ToUpperInvariant() : "IDLE";
                 // FAILED 가 RUNNING·IDLE 과 같은 무게로 보이면 실패를 못 알아본다.
-                // 진행 중은 색을 얻지 않는다 — 이상만 색을 얻는다(Docs/UI.md 6절).
+                // 진행 중은 색을 얻지 않는다 — 이상만 색을 얻는다(Docs/ui-design.md 1절).
                 SetTone(unitPhase, frame != null && frame.State == AssemblyState.Failed ? "bad" : "none");
             }
 
@@ -400,7 +414,7 @@ namespace MainUnity.UI
             }
         }
 
-        /// <summary>색 클래스는 하나만 걸린다. 정상에는 색을 주지 않는다(Docs/UI.md 6절).</summary>
+        /// <summary>색 클래스는 하나만 걸린다. 정상에는 색을 주지 않는다(Docs/ui-design.md 1절).</summary>
         static void SetTone(Label label, string tone)
         {
             if (label == null) return;

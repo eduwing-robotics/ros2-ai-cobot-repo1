@@ -371,3 +371,83 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
 
 /* 값 한 칸이 비어 있을 때. 위와 같은 이유로 무채색이다 (FR5EmptyState.Missing) */
 .miss { color: var(--c-ink-2); }
+
+/* ========================= RUN 전용 =========================
+   여기 규칙은 전부 run- 으로 시작하고 .page--run 안에서만 쓴다.
+   요청 · 검사 · 품질은 공용 .panel 을 그대로 쓰므로 영향을 받지 않는다.
+
+   왜 RUN 만 다른가.
+   표를 읽는 화면(요청 · 검사 · 품질)에서 트윈은 소음이고, 그래서 그 화면들은
+   패널로 덮고 page--dim 으로 눌러 둔다. 그러나 RUN 에서 "로봇이 지금 무엇을
+   하고 있는가"의 답은 절반이 트윈에 있다. 계기를 상자에 담아 트윈 위에 띄우면
+   답의 절반을 가리게 된다. 그래서 상자를 없애고 화면 양 가장자리에 얹는다.
+
+   왜 알파를 다시 쓰는가.
+   패널을 불투명하게 만든 이유는 밝은 셀 렌더가 비쳐 대비가 배경에 종속되기
+   때문이었다. 그 조건 자체를 없애는 대신 최악의 경우를 재고 그 안에서 쓴다.
+   스크림 rgba(6,10,14,0.88) 이 순백(255,255,255) 위에 놓인 최악의 합성은
+   rgb(36,39,43) 이고, 그 위에서 ink 12.5:1 · ink-3 4.8:1 이다. 본문 기준
+   4.5:1 을 배경이 무엇이든 넘긴다. 씬의 Global Volume 에 걸린 Vignette 가
+   가장자리를 더 눌러 주므로 실제 값은 이보다 높다.
+   0.88 을 낮추지 말 것 — 0.78 에서 ink-3 가 3.3:1 로 떨어진다. */
+
+.run-edge {
+    position: absolute;
+    background-color: rgba(6, 10, 14, 0.88);
+}
+
+/* 레일에 딱 붙인다. 24px 여백을 두면 계기가 다시 "떠 있는 상자"가 된다. */
+.run-edge--left {
+    left: 88px; top: 68px; bottom: 0; width: 412px;
+    padding-left: 28px; padding-right: 28px;
+    padding-top: 24px; padding-bottom: 20px;
+}
+
+.run-edge--right {
+    right: 0; top: 68px; bottom: 0; width: 360px;
+}
+
+/* 조립 진행. 트윈 위에 얹혀 화면 아래 가장자리를 덮는다. */
+.run-deck {
+    position: absolute;
+    left: 500px; right: 360px; bottom: 0; height: 120px;
+    background-color: rgba(6, 10, 14, 0.88);
+    padding-left: 26px; padding-right: 26px;
+    padding-top: 14px; padding-bottom: 14px;
+}
+
+/* 진행 레일 — 화면에서 크게 움직이는 유일한 것.
+   조립 진행(놓인 슬롯 / 전체)이다. 아직 연결되지 않은 jobs 진행이 아니다. */
+.run-rail {
+    position: absolute;
+    left: 88px; top: 64px; right: 0; height: 4px;
+    background-color: rgba(255, 255, 255, 0.07);
+}
+.run-rail__fill {
+    height: 4px; width: 0;
+    background-color: var(--c-accent);
+    transition-property: width;
+    transition-duration: 400ms;
+}
+
+/* 섹션 제목. 액센트 조각을 붙이지 않는다 — 액센트는 "지금 여기" 하나에만 쓴다.
+   구분은 색이 아니라 자간과 규칙선이 한다. */
+.run-sect { flex-direction: row; align-items: center; flex-shrink: 0; margin-bottom: 12px; }
+.run-sect__title { color: var(--c-ink-2); font-size: 11px; letter-spacing: 2.2px; -unity-font-style: bold; }
+.run-sect__unit { color: var(--c-ink-4); font-size: 11px; letter-spacing: 1.2px; }
+.run-hr { height: 1px; background-color: rgba(255, 255, 255, 0.10); flex-shrink: 0; }
+
+/* 타입 스케일을 벌린다. 이전에는 11 · 12 · 15 · 20 네 단계가 9px 안에 몰려 있어
+   무엇이 중요한지 크기로 구별되지 않았다. */
+.run-lead { color: var(--c-ink); font-size: 40px; -unity-font-style: bold; letter-spacing: -1.5px; }
+.run-val { color: var(--c-ink); font-size: 22px; -unity-font-style: bold; }
+.run-sub { color: var(--c-ink-3); font-size: 12px; }
+
+/* 카메라. 영상은 자기 표면이 있으므로 테두리도 헤더도 주지 않는다.
+   360 폭에 4:3 이라 270 이다. 이름은 영상 위에 얹는다. */
+.run-cam { height: 270px; background-color: rgb(14, 19, 25); flex-shrink: 0; }
+.run-cam__tag {
+    position: absolute; left: 12px; top: 10px;
+    color: var(--c-ink-2); font-size: 10px;
+    letter-spacing: 1.8px; -unity-font-style: bold;
+}
