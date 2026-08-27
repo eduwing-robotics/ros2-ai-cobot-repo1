@@ -78,19 +78,42 @@ namespace MainUnity.UI
         Sparkline gripperSpark, watchdogSpark;
         double nextSampleTime;
 
-        // 카메라 소스. 이름이 아니라 실재하는 ROS 토픽으로 정의한다.
-        //   RAW    /camera/camera/color/image_raw/compressed   15 Hz · 원본 컬러
-        //   DETECT /vision/parts_obb/image/compressed          약 2 Hz · 부품 검출 오버레이
-        // 예전 기본값 /vision/board/image/compressed 는 어느 노드도 발행하지 않는다.
-        const string RawTopic = "/camera/camera/color/image_raw/compressed";
-        const string DetectTopic = "/vision/parts_obb/image/compressed";
-        enum CamSource { Raw, Detect }
-        CamSource camSource = CamSource.Raw;
+        // 관측 칸. 이름은 카메라가 실제로 무엇을 비추는지에서 왔다.
+        //   TRAY      RealSense 가 부품 트레이를 수직 하향으로 본다
+        //   CONVEYOR  컨베이어를 측면에서 본다
+        //   CELL      셀 전경을 광각으로 본다 (BEST_EFFORT 발행)
+        //   DETECT    부품 검출 오버레이
+        // 엔드포인트가 이미지 토픽에 qos_profile_sensor_data 를 쓰므로 BEST_EFFORT
+        // 발행자도 받는다.
+        sealed class CamTile
+        {
+            public string Title;
+            public string Topic;
+            public int Index;
+            public bool On;
+            public CamVisionReceiver Receiver;
+            public VisualElement Root;
+            public Label Age;
+            public Button Chip;
+        }
+
+        readonly CamTile[] camTiles =
+        {
+            new CamTile { Index = 1, Title = "TRAY",     Topic = "/camera/camera/color/image_raw/compressed", On = true },
+            new CamTile { Index = 2, Title = "CONVEYOR", Topic = "/camera2/image_raw/compressed" },
+            new CamTile { Index = 3, Title = "CELL",     Topic = "/camera3/image_raw/compressed" },
+            new CamTile { Index = 4, Title = "DETECT",   Topic = "/vision/parts_obb/image/compressed" },
+        };
+
+        // 이 시간을 넘겨 프레임이 없으면 그 칸만 늦은 것으로 표시한다.
+        const double CamStaleSeconds = 2d;
         bool camExpanded;
-        Image camImage;
-        Label camBadge, camEmptyDesc, nowSlot, nowPart, recipeVersion, requestId, twinSource;
-        VisualElement camEmpty, camPanel;
-        Button camRobotButton, camBoardButton, camExpandButton;
+        Label camBadge;
+        VisualElement camPanel, camGrid;
+        Button camExpandButton;
+
+        Label nowSlot, nowPart, recipeVersion, requestId, twinSource;
+
         readonly System.Collections.Generic.List<(Label Value, System.Func<RobotStatusFrame, string> Read)> realRows = new();
         bool cached;
 
@@ -172,98 +195,108 @@ namespace MainUnity.UI
         void BuildCamera(VisualElement root)
         {
             camPanel = root.Q<VisualElement>("cam-panel");
-            camImage = root.Q<Image>("cam-image");
-            camEmpty = root.Q<VisualElement>("cam-empty");
-            camEmptyDesc = root.Q<Label>("cam-empty-desc");
+            camGrid = root.Q<VisualElement>("cam-grid");
             camBadge = root.Q<Label>("cam-badge");
-            camRobotButton = root.Q<Button>("cam-source-robot");
-            camBoardButton = root.Q<Button>("cam-source-board");
             camExpandButton = root.Q<Button>("cam-expand");
 
-            // 텍스처가 640x480 이고 타일이 4:3 이라 ScaleToFit 에서 레터박스가 0 이다.
-            if (camImage != null) camImage.scaleMode = ScaleMode.ScaleToFit;
-
             UnbindCamera();
-            SetCamSource(camSource);
-            if (camRobotButton != null) camRobotButton.clicked += SelectRawCam;
-            if (camBoardButton != null) camBoardButton.clicked += SelectDetectCam;
+            foreach (CamTile tile in camTiles)
+            {
+                tile.Root = root.Q<VisualElement>("cam-tile-" + tile.Index);
+                tile.Age = root.Q<Label>("cam-age-" + tile.Index);
+                tile.Chip = root.Q<Button>("cam-chip-" + tile.Index);
+
+                Label title = root.Q<Label>("cam-title-" + tile.Index);
+                if (title != null) title.text = tile.Title;
+
+                var image = root.Q<Image>("cam-image-" + tile.Index);
+                if (image != null) image.scaleMode = ScaleMode.ScaleToFit;
+
+                // 칸마다 수신기를 하나씩 붙인다. 하나로 돌려 쓰면 칸을 바꿀 때마다
+                // 구독을 갈아타야 하고, 그러면 여러 칸을 동시에 볼 수 없다.
+                //
+                // CamVisionReceiver 는 DisallowMultipleComponent 라 한 오브젝트에
+                // 둘을 못 붙인다. 칸마다 자식 오브젝트를 만들어 하나씩 얹는다.
+                if (tile.Receiver == null)
+                {
+                    var host = new GameObject("CamReceiver " + tile.Title);
+                    host.transform.SetParent(transform, false);
+                    tile.Receiver = host.AddComponent<CamVisionReceiver>();
+                    tile.Receiver.Configure(GetComponent<UIDocument>(), tile.Topic, "cam-image-" + tile.Index);
+                }
+
+                CamTile captured = tile;
+                if (tile.Chip != null) tile.Chip.clicked += () => ToggleCamTile(captured);
+            }
             if (camExpandButton != null) camExpandButton.clicked += ToggleCamExpand;
         }
 
         void UnbindCamera()
         {
-            // 이 페이지가 꺼지면 RenderTexture 카메라도 쉰다. 보이지 않는 것을
-            // 계속 그릴 이유가 없다.
-            if (robotCamCamera != null) robotCamCamera.enabled = false;
-            if (boardCamCamera != null) boardCamCamera.enabled = false;
-
-            if (camRobotButton != null) camRobotButton.clicked -= SelectRawCam;
-            if (camBoardButton != null) camBoardButton.clicked -= SelectDetectCam;
             if (camExpandButton != null) camExpandButton.clicked -= ToggleCamExpand;
         }
 
         void OnDisable() => UnbindCamera();
 
-        void SelectRawCam() => SetCamSource(CamSource.Raw);
-        void SelectDetectCam() => SetCamSource(CamSource.Detect);
-
-        /// <summary>
-        /// 소스를 바꿀 때만 구독을 갈아타고 카메라를 켠다.
-        /// 매 프레임 부르면 같은 값이어도 호출 비용이 그대로 든다.
-        /// </summary>
-        void SetCamSource(CamSource value)
-        {
-            camSource = value;
-            bool raw = value == CamSource.Raw;
-            vision?.TrySetTopic(raw ? RawTopic : DetectTopic);
-            if (robotCamCamera != null) robotCamCamera.enabled = raw;
-            if (boardCamCamera != null) boardCamCamera.enabled = !raw;
-        }
         void ToggleCamExpand() => camExpanded = !camExpanded;
 
         /// <summary>
-        /// 화면의 거의 모든 값은 로봇이 스스로 보고한 상태에서 파생된 것이다.
-        /// 카메라만이 그 보고와 무관한 증거라, REAL 에서는 ROS 스트림이 먼저다.
-        /// MOCK 에는 실제 카메라가 없으므로 트윈의 RenderTexture 가 그 자리를 대신한다.
+        /// 칸을 켜고 끈다. 전부 끄면 화면 절반이 빈 상자가 되므로 마지막 하나는 남긴다.
+        /// </summary>
+        void ToggleCamTile(CamTile tile)
+        {
+            if (tile.On)
+            {
+                int on = 0;
+                foreach (CamTile t in camTiles) if (t.On) on++;
+                if (on <= 1) return;
+            }
+            tile.On = !tile.On;
+        }
+
+        /// <summary>
+        /// 켠 칸 수에 따라 1 · 2 · 4 로 나눈다. 셋이면 넷과 같은 격자를 쓰고 한 자리를
+        /// 비운다 — 셋을 3등분하면 칸마다 종횡비가 달라져 같은 장면도 다르게 보인다.
         /// </summary>
         void RefreshCamera()
         {
-            if (camImage == null) return;
+            if (camGrid == null) return;
 
-            bool raw = camSource == CamSource.Raw;
-            camRobotButton?.EnableInClassList("chip--accent", raw);
-            camBoardButton?.EnableInClassList("chip--accent", !raw);
             camExpandButton?.EnableInClassList("chip--accent", camExpanded);
             camPanel?.EnableInClassList("run-cam-panel--expanded", camExpanded);
 
-            string topic = raw ? RawTopic : DetectTopic;
-            bool streaming = vision != null && vision.IsStreaming;
-            if (camEmpty != null)
-                camEmpty.style.display = streaming ? DisplayStyle.None : DisplayStyle.Flex;
+            int visible = 0;
+            foreach (CamTile t in camTiles) if (t.On) visible++;
+            float w = visible <= 1 ? 100f : 50f;
+            float h = visible <= 2 ? 100f : 50f;
 
-            if (streaming)
+            double now = Time.realtimeSinceStartupAsDouble;
+            int live = 0;
+            foreach (CamTile tile in camTiles)
             {
-                double age = Time.realtimeSinceStartupAsDouble - vision.LastReceiveTimeSeconds;
-                if (camBadge != null) camBadge.text = topic + "  ·  " + (age * 1000d).ToString("0") + " ms 전";
-                return;
+                tile.Chip?.EnableInClassList("chip--accent", tile.On);
+                if (tile.Root == null) continue;
+
+                tile.Root.style.display = tile.On ? DisplayStyle.Flex : DisplayStyle.None;
+                if (!tile.On) continue;
+
+                tile.Root.style.width = Length.Percent(w);
+                tile.Root.style.height = Length.Percent(h);
+
+                bool received = tile.Receiver != null && tile.Receiver.HasReceivedImage;
+                double age = received ? now - tile.Receiver.LastReceiveTimeSeconds : -1d;
+                bool late = !received || age > CamStaleSeconds;
+                if (!late) live++;
+
+                if (tile.Age != null)
+                {
+                    tile.Age.text = received ? (age * 1000d).ToString("0") + " ms" : "수신 없음";
+                    tile.Age.EnableInClassList("run-cam-tile__age--late", late);
+                }
             }
 
-            // 스트림이 없으면 트윈의 RenderTexture 로 대체한다. MOCK 이든 REAL 이든
-            // 마찬가지다 — 빈 화면보다 트윈이라도 보이는 편이 낫고, 그것이 실측이
-            // 아니라는 사실은 배지가 SIM 이라고 밝힌다. 지어내는 것이 아니라
-            // 무엇을 보고 있는지 이름을 대는 것이다.
-            RenderTexture fallback = raw ? robotCamTexture : boardCamTexture;
-            if (fallback != null)
-            {
-                if (camImage.image != fallback) camImage.image = fallback;
-                if (camEmpty != null) camEmpty.style.display = DisplayStyle.None;
-                if (camBadge != null) camBadge.text = "SIM · " + fallback.name + "  ·  " + topic + " 대기";
-                return;
-            }
-
-            camImage.image = null;
-            if (camBadge != null) camBadge.text = topic;
-            if (camEmptyDesc != null) camEmptyDesc.text = topic + " 수신 대기";
+            if (camBadge != null)
+                camBadge.text = live + " / " + visible + " 수신 중";
         }
 
         void BuildSparklines(VisualElement root)

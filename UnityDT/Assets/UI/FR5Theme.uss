@@ -599,3 +599,47 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
     padding-left: 22px; padding-right: 22px;
 }
 .run-col--rule { border-left-width: 1px; border-left-color: rgba(255, 255, 255, 0.09); }
+
+
+/* ===== 관측 · CCTV 분할 =====
+   켠 카메라 수에 따라 칸이 1 · 2 · 4 로 나뉜다. 칸 크기는 바인더가 퍼센트로 준다.
+   칸마다 자기 이름과 마지막 프레임 나이를 적는다 — 어느 칸이 늦는지 한 눈에
+   보여야 하고, 하나로 합치면 어느 카메라가 죽었는지 알 수 없다. */
+.run-cam-grid {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-content: flex-start;
+}
+.run-cam-tile {
+    background-color: rgb(3, 6, 9);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+.run-cam-tile__img { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+/* 이름표는 영상 위에 얹히므로 자기 바탕을 갖는다. 밝은 프레임에서 글자가 씻긴다. */
+.run-cam-tile__title {
+    position: absolute; left: 8px; top: 8px;
+    color: rgb(205, 218, 226); font-size: 11px;
+    letter-spacing: 1.8px; -unity-font-style: bold;
+    background-color: rgba(3, 6, 9, 0.72);
+    padding-left: 6px; padding-right: 6px; padding-top: 2px; padding-bottom: 2px;
+}
+.run-cam-tile__age {
+    position: absolute; right: 8px; top: 8px;
+    color: var(--c-ink-3); font-size: 11px;
+    background-color: rgba(3, 6, 9, 0.72);
+    padding-left: 6px; padding-right: 6px; padding-top: 2px; padding-bottom: 2px;
+}
+/* 늦은 칸만 색을 얻는다. 정상에는 색을 주지 않는다 (1절). */
+.run-cam-tile__age--late { color: var(--c-bad); }
+
+/* 아래 띠에 놓인 패널 이름과 수신 요약. 칸 이름표와 자리를 다투지 않는다. */
+.run-cam__bar-title {
+    color: var(--c-accent); font-size: 12px;
+    letter-spacing: 2.2px; -unity-font-style: bold;
+}
+.run-cam__bar-badge {
+    color: var(--c-ink-3); font-size: 12px; margin-right: 12px;
+}

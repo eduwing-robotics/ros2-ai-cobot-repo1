@@ -5307,7 +5307,6 @@ GameObject:
   - component: {fileID: 813333162}
   - component: {fileID: 813333163}
   - component: {fileID: 813333165}
-  - component: {fileID: 813333166}
   m_Layer: 0
   m_Name: Page - RUN
   m_TagString: Untagged
@@ -5353,7 +5352,7 @@ MonoBehaviour:
   uiMaster: {fileID: 0}
   statusManager: {fileID: 0}
   gripper: {fileID: 0}
-  vision: {fileID: 813333166}
+  vision: {fileID: 0}
   gripperStrokeMillimeters: 40
   watchdogLimitMilliseconds: 50
   robotCamTexture: {fileID: 8400000, guid: a26f561b26137c9c5b3c8519dcab2141, type: 2}
@@ -5391,22 +5390,6 @@ MonoBehaviour:
   statusManager: {fileID: 0}
   vision: {fileID: 0}
   visionStaleSeconds: 2
---- !u!114 &813333166
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 813333161}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f97119e4c9ecd00e5bb0420e199c2a6f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Camera.CamVisionReceiver
-  targetDocument: {fileID: 813333162}
-  topicName: /camera/camera/color/image_raw/compressed
-  imageElementName: cam-image
-  staleAfterSeconds: 1
 --- !u!1001 &826049131
 PrefabInstance:
   m_ObjectHideFlags: 0

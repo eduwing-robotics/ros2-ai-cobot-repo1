@@ -39,22 +39,48 @@
             <ui:Label name="twin-source" text="—" class="run-pane__source" />
         </ui:VisualElement>
 
-        <!-- ==================== 우 · 관측 (카메라) ==================== -->
+        <!-- ==================== 우 · 관측 (카메라) ====================
+          CCTV 분할. 켠 카메라 수에 따라 1 · 2 · 4 칸으로 나뉜다.
+          칸마다 자기 수신기가 붙고, 자기 이름과 마지막 프레임 나이를 스스로 적는다.
+          어느 칸이 늦는지 한 눈에 보여야 하므로 나이는 칸마다 따로 둔다.
+        -->
         <ui:VisualElement name="cam-panel" class="run-pane run-pane--cam panel--aux">
-            <ui:VisualElement name="cam-frame" class="run-cam">
-                <ui:Image name="cam-image" style="position:absolute; left:0; top:0; right:0; bottom:0;" />
-                <ui:VisualElement name="cam-empty" class="empty">
-                    <ui:Label text="영상 없음" class="empty__title" style="font-size:15px;" />
-                    <ui:Label name="cam-empty-desc" text="—" class="empty__desc" />
+            <ui:VisualElement name="cam-grid" class="run-cam-grid">
+                <ui:VisualElement name="cam-tile-1" class="run-cam-tile">
+                    <ui:Image name="cam-image-1" class="run-cam-tile__img" />
+                    <ui:Label name="cam-title-1" text="TRAY" class="run-cam-tile__title" />
+                    <ui:Label name="cam-age-1" text="—" class="run-cam-tile__age" />
                 </ui:VisualElement>
-                <ui:Label text="관측 — 카메라가 본 실제" class="run-pane__title run-pane__title--on" />
-                <ui:Label name="cam-badge" text="—" class="run-pane__source" />
-                <ui:VisualElement class="run-cam__bar">
-                    <ui:Button name="cam-source-robot" class="chip chip--accent"><ui:Label text="원본" class="chip__text" /></ui:Button>
-                    <ui:Button name="cam-source-board" class="chip" style="margin-left:6px;"><ui:Label text="검출" class="chip__text" /></ui:Button>
-                    <ui:VisualElement class="spacer" />
-                    <ui:Button name="cam-expand" class="chip"><ui:Label text="확대" class="chip__text" /></ui:Button>
+                <ui:VisualElement name="cam-tile-2" class="run-cam-tile">
+                    <ui:Image name="cam-image-2" class="run-cam-tile__img" />
+                    <ui:Label name="cam-title-2" text="CONVEYOR" class="run-cam-tile__title" />
+                    <ui:Label name="cam-age-2" text="—" class="run-cam-tile__age" />
                 </ui:VisualElement>
+                <ui:VisualElement name="cam-tile-3" class="run-cam-tile">
+                    <ui:Image name="cam-image-3" class="run-cam-tile__img" />
+                    <ui:Label name="cam-title-3" text="CELL" class="run-cam-tile__title" />
+                    <ui:Label name="cam-age-3" text="—" class="run-cam-tile__age" />
+                </ui:VisualElement>
+                <ui:VisualElement name="cam-tile-4" class="run-cam-tile">
+                    <ui:Image name="cam-image-4" class="run-cam-tile__img" />
+                    <ui:Label name="cam-title-4" text="DETECT" class="run-cam-tile__title" />
+                    <ui:Label name="cam-age-4" text="—" class="run-cam-tile__age" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!--
+              패널 제목과 수신 배지를 아래 띠로 내린다. 칸마다 자기 이름과 나이를
+              왼쪽 위·오른쪽 위에 적으므로, 패널 제목을 같은 자리에 두면 겹친다.
+            -->
+            <ui:VisualElement class="run-cam__bar">
+                <ui:Label text="관측" class="run-cam__bar-title" />
+                <ui:Button name="cam-chip-1" class="chip chip--accent" style="margin-left:12px;"><ui:Label text="TRAY" class="chip__text" /></ui:Button>
+                <ui:Button name="cam-chip-2" class="chip" style="margin-left:6px;"><ui:Label text="CONVEYOR" class="chip__text" /></ui:Button>
+                <ui:Button name="cam-chip-3" class="chip" style="margin-left:6px;"><ui:Label text="CELL" class="chip__text" /></ui:Button>
+                <ui:Button name="cam-chip-4" class="chip" style="margin-left:6px;"><ui:Label text="DETECT" class="chip__text" /></ui:Button>
+                <ui:VisualElement class="spacer" />
+                <ui:Label name="cam-badge" text="—" class="run-cam__bar-badge" />
+                <ui:Button name="cam-expand" class="chip"><ui:Label text="확대" class="chip__text" /></ui:Button>
             </ui:VisualElement>
         </ui:VisualElement>
 

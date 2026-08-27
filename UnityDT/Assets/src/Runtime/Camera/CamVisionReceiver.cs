@@ -29,6 +29,18 @@ namespace MainUnity.Runtime.Camera
         /// <summary>지금 구독 중인 토픽이다.</summary>
         public string TopicName => topicName;
 
+        /// <summary>
+        /// 코드로 만들어 붙일 때 쓴다. Start 가 돌기 전에만 유효하다 —
+        /// Start 가 구독과 Image 조회를 한 번에 하기 때문이다.
+        /// 실행 중 토픽만 바꾸려면 TrySetTopic 을 쓴다.
+        /// </summary>
+        public void Configure(UIDocument document, string topic, string element)
+        {
+            targetDocument = document;
+            topicName = topic;
+            imageElementName = element;
+        }
+
         /// <summary>영상 프레임을 한 번이라도 받았는지다.</summary>
         public bool HasReceivedImage { get; private set; }
 
