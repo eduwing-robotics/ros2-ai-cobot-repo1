@@ -13,7 +13,11 @@ namespace MainUnity.Runtime.RobotGhost
         [SerializeField] GhostJointPreview jointPreview;
         [SerializeField] GhostMovePreview movePreview;
 
-        void Awake() => RefreshReferences();
+        void Awake()
+        {
+            RefreshReferences();
+            SetVisible(false);
+        }
         void OnValidate() => RefreshReferences();
 
         public bool PreviewJoints(IReadOnlyList<float> jointDegrees) =>
@@ -22,8 +26,17 @@ namespace MainUnity.Runtime.RobotGhost
         public bool Play(JointTrajectoryMsg trajectory) =>
             movePreview != null && movePreview.Play(trajectory);
 
-        public bool ShowDestination(JointTrajectoryMsg trajectory) =>
-            movePreview != null && movePreview.ShowDestination(trajectory);
+        public bool ShowDestination(JointTrajectoryMsg trajectory)
+        {
+            if (movePreview == null || !SetVisible(true))
+                return false;
+
+            if (movePreview.ShowDestination(trajectory))
+                return true;
+
+            SetVisible(false);
+            return false;
+        }
 
         public void Stop() => movePreview?.Stop();
 
