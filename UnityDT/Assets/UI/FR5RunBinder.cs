@@ -79,10 +79,10 @@ namespace MainUnity.UI
         double nextSampleTime;
 
         // 관측 칸. 이름은 카메라가 실제로 무엇을 비추는지에서 왔다.
-        //   TRAY      RealSense 가 부품 트레이를 수직 하향으로 본다
-        //   CONVEYOR  컨베이어를 측면에서 본다
-        //   CELL      셀 전경을 광각으로 본다 (BEST_EFFORT 발행)
-        //   DETECT    부품 검출 오버레이
+        //   TRAY      트레이 구획·수량 검출 (LIVE VIEW · DETECTION ENABLED)
+        //   PARTS     부품 OBB 검출 (TRAY PART OBB · ROI FILTERED)
+        //   CONVEYOR  정지선 모니터 (DUAL STOP-LINE MONITOR)
+        //   CELL      셀 전경 광각 원본. 대응하는 검출 스트림이 없다 (BEST_EFFORT 발행)
         // 엔드포인트가 이미지 토픽에 qos_profile_sensor_data 를 쓰므로 BEST_EFFORT
         // 발행자도 받는다.
         sealed class CamTile
@@ -99,10 +99,11 @@ namespace MainUnity.UI
 
         readonly CamTile[] camTiles =
         {
-            new CamTile { Index = 1, Title = "TRAY",     Topic = "/camera/camera/color/image_raw/compressed", On = true },
-            new CamTile { Index = 2, Title = "CONVEYOR", Topic = "/camera2/image_raw/compressed" },
-            new CamTile { Index = 3, Title = "CELL",     Topic = "/camera3/image_raw/compressed" },
-            new CamTile { Index = 4, Title = "DETECT",   Topic = "/vision/parts_obb/image/compressed" },
+            new CamTile { Index = 1, Title = "TRAY",     Topic = "/vision/tray/detections_image/compressed", On = true },
+            new CamTile { Index = 2, Title = "PARTS",    Topic = "/vision/parts_obb/image/compressed" },
+            new CamTile { Index = 3, Title = "CONVEYOR", Topic = "/vision/conveyor/stop_image/compressed" },
+            // 전경 카메라에는 대응하는 검출 스트림이 없다. 유일한 광각이라 원본으로 남긴다.
+            new CamTile { Index = 4, Title = "CELL · RAW", Topic = "/camera3/image_raw/compressed" },
         };
 
         // 이 시간을 넘겨 프레임이 없으면 그 칸만 늦은 것으로 표시한다.
@@ -210,7 +211,6 @@ namespace MainUnity.UI
                 if (title != null) title.text = tile.Title;
 
                 var image = root.Q<Image>("cam-image-" + tile.Index);
-                if (image != null) image.scaleMode = ScaleMode.ScaleToFit;
 
                 // 칸마다 수신기를 하나씩 붙인다. 하나로 돌려 쓰면 칸을 바꿀 때마다
                 // 구독을 갈아타야 하고, 그러면 여러 칸을 동시에 볼 수 없다.
@@ -224,6 +224,11 @@ namespace MainUnity.UI
                     tile.Receiver = host.AddComponent<CamVisionReceiver>();
                     tile.Receiver.Configure(GetComponent<UIDocument>(), tile.Topic, "cam-image-" + tile.Index);
                 }
+
+                // 페이지를 껐다 켜면 UIDocument 가 비주얼 트리를 새로 만든다.
+                // 수신기가 Start 에서 잡아 둔 Image 는 버려진 트리에 남으므로,
+                // 화면을 다시 세우는 이쪽에서 새 Image 를 넘긴다.
+                tile.Receiver.SetTargetImage(image);
 
                 CamTile captured = tile;
                 if (tile.Chip != null) tile.Chip.clicked += () => ToggleCamTile(captured);

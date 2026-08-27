@@ -4,7 +4,7 @@
 목표 구조가 아니라 현재 상태이며, 계층 경계를 위반하는 지점도 그대로 적는다.
 
 기준 문서: [ISA-95 레벨 정리](https://ros2-ai-cobot-project-01-team-01.atlassian.net/wiki/spaces/KSMC/pages/9568269/ISA-95) ·
-[현재 시스템 구조](Architecture.md) · [ROS2 API](API.md) · [MainServer API](../../MAIN_SERVER/Main_serverAPI.md)
+[현재 시스템 구조](Architecture.md) · [ROS2 API](../../docs/API.md) · [MainServer API](../../MAIN_SERVER/Main_serverAPI.md)
 
 ---
 

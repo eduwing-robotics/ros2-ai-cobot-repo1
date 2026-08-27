@@ -145,7 +145,7 @@ sequenceDiagram
 |---|---|
 | 작업 계획 | `TODO.md` |
 | 현재 시스템 구조 | `UnityDT/Docs/Architecture.md` |
-| Unity ↔ ROS2 계약 | `UnityDT/Docs/API.md` |
+| Unity ↔ ROS2 계약 | `docs/API.md` |
 | MainServer HTTP 계약 | `MAIN_SERVER/Main_serverAPI.md` |
 | production DB | `UnityDT/Docs/DB.md` |
 | 3개 스키마 | `UnityDT/Docs/DB3.md` |

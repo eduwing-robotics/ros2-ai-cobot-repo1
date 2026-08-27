@@ -306,6 +306,18 @@ class SysCommands:
 
         self.tcp_server.loginfo("RegisterUnityService({}, {}) OK".format(topic, message_class))
 
+    def remove_subscriber(self, topic):
+        self.tcp_server.unregister_node(self.tcp_server.subscribers_table.pop(topic, None))
+
+    def remove_publisher(self, topic):
+        self.tcp_server.unregister_node(self.tcp_server.publishers_table.pop(topic, None))
+
+    def remove_ros_service(self, topic):
+        self.tcp_server.unregister_node(self.tcp_server.ros_services_table.pop(topic, None))
+
+    def remove_unity_service(self, topic):
+        self.tcp_server.unregister_node(self.tcp_server.unity_services_table.pop(topic, None))
+
     def response(self, srv_id):  # the next message is a service response
         self.tcp_server.pending_srv_id = srv_id
         self.tcp_server.pending_srv_is_request = False

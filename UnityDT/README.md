@@ -17,7 +17,7 @@ Real 자동 조립과 MainServer 조회 데이터의 UI 연결은 아직 완료�
 - [프로젝트 기능 목표](../overview.md)
 - [작업 계획](../TODO.md)
 - [현재 시스템 구조](Docs/Architecture.md)
-- [Unity ↔ ROS2 API](Docs/API.md)
+- [Unity ↔ ROS2 API](../docs/API.md)
 - [현재 UI](Docs/UI.md)
 - [DB 핵심 설계](Docs/DB.md)
 - [조립 레시피 규격](Docs/Recipe.md)

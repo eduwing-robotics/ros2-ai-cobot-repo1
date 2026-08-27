@@ -41,6 +41,26 @@ namespace MainUnity.Runtime.Camera
             imageElementName = element;
         }
 
+        /// <summary>
+        /// 그릴 Image 를 새로 받는다.
+        ///
+        /// UIDocument 는 GameObject 가 꺼졌다 켜질 때 비주얼 트리를 통째로 다시 만든다.
+        /// Start 에서 한 번 잡아 둔 Image 는 그때 버려진 트리에 남고, 수신은 계속되지만
+        /// 화면에는 아무것도 안 나온다. 지연 시간만 갱신되고 영상이 비는 증상이 이것이었다.
+        /// 그래서 화면을 다시 세우는 쪽이 새 Image 를 밀어 넣는다.
+        ///
+        /// 이미 받아 둔 프레임이 있으면 즉시 다시 그린다. 다음 프레임까지 기다리면
+        /// 느린 토픽에서는 몇 초 동안 빈 칸이 된다.
+        /// </summary>
+        public void SetTargetImage(Image image)
+        {
+            if (image == null || ReferenceEquals(image, targetImage)) return;
+            targetImage = image;
+            targetImage.scaleMode = ScaleMode.ScaleToFit;
+            if (HasReceivedImage && receivedTexture != null)
+                targetImage.image = receivedTexture;
+        }
+
         /// <summary>영상 프레임을 한 번이라도 받았는지다.</summary>
         public bool HasReceivedImage { get; private set; }
 

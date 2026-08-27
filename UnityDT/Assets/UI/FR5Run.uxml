@@ -53,17 +53,17 @@
                 </ui:VisualElement>
                 <ui:VisualElement name="cam-tile-2" class="run-cam-tile">
                     <ui:Image name="cam-image-2" class="run-cam-tile__img" />
-                    <ui:Label name="cam-title-2" text="CONVEYOR" class="run-cam-tile__title" />
+                    <ui:Label name="cam-title-2" text="PARTS" class="run-cam-tile__title" />
                     <ui:Label name="cam-age-2" text="—" class="run-cam-tile__age" />
                 </ui:VisualElement>
                 <ui:VisualElement name="cam-tile-3" class="run-cam-tile">
                     <ui:Image name="cam-image-3" class="run-cam-tile__img" />
-                    <ui:Label name="cam-title-3" text="CELL" class="run-cam-tile__title" />
+                    <ui:Label name="cam-title-3" text="CONVEYOR" class="run-cam-tile__title" />
                     <ui:Label name="cam-age-3" text="—" class="run-cam-tile__age" />
                 </ui:VisualElement>
                 <ui:VisualElement name="cam-tile-4" class="run-cam-tile">
                     <ui:Image name="cam-image-4" class="run-cam-tile__img" />
-                    <ui:Label name="cam-title-4" text="DETECT" class="run-cam-tile__title" />
+                    <ui:Label name="cam-title-4" text="CELL · RAW" class="run-cam-tile__title" />
                     <ui:Label name="cam-age-4" text="—" class="run-cam-tile__age" />
                 </ui:VisualElement>
             </ui:VisualElement>
@@ -75,9 +75,9 @@
             <ui:VisualElement class="run-cam__bar">
                 <ui:Label text="관측" class="run-cam__bar-title" />
                 <ui:Button name="cam-chip-1" class="chip chip--accent" style="margin-left:12px;"><ui:Label text="TRAY" class="chip__text" /></ui:Button>
-                <ui:Button name="cam-chip-2" class="chip" style="margin-left:6px;"><ui:Label text="CONVEYOR" class="chip__text" /></ui:Button>
-                <ui:Button name="cam-chip-3" class="chip" style="margin-left:6px;"><ui:Label text="CELL" class="chip__text" /></ui:Button>
-                <ui:Button name="cam-chip-4" class="chip" style="margin-left:6px;"><ui:Label text="DETECT" class="chip__text" /></ui:Button>
+                <ui:Button name="cam-chip-2" class="chip" style="margin-left:6px;"><ui:Label text="PARTS" class="chip__text" /></ui:Button>
+                <ui:Button name="cam-chip-3" class="chip" style="margin-left:6px;"><ui:Label text="CONVEYOR" class="chip__text" /></ui:Button>
+                <ui:Button name="cam-chip-4" class="chip" style="margin-left:6px;"><ui:Label text="CELL" class="chip__text" /></ui:Button>
                 <ui:VisualElement class="spacer" />
                 <ui:Label name="cam-badge" text="—" class="run-cam__bar-badge" />
                 <ui:Button name="cam-expand" class="chip"><ui:Label text="확대" class="chip__text" /></ui:Button>

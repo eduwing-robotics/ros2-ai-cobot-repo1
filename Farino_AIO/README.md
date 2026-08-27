@@ -14,6 +14,6 @@ FR5 MoveIt 구성, Mock 조립 노드와 선택적 PostgreSQL bridge를 포함�
 
 - [프로젝트 기능 목표](../overview.md)
 - [작업 계획](../TODO.md)
-- [Unity ↔ ROS2 API](../UnityDT/Docs/API.md)
+- [Unity ↔ ROS2 API](../docs/API.md)
 - [현재 시스템 구조](../UnityDT/Docs/Architecture.md)
 - [DB 핵심 설계](../UnityDT/Docs/DB.md)
