@@ -388,13 +388,16 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
    때문이었다. 그 조건 자체를 없애는 대신 최악의 경우를 재고 그 안에서 쓴다.
    스크림 rgba(6,10,14,0.88) 이 순백(255,255,255) 위에 놓인 최악의 합성은
    rgb(36,39,43) 이고, 그 위에서 ink 12.5:1 · ink-3 4.8:1 이다. 본문 기준
-   4.5:1 을 배경이 무엇이든 넘긴다. 씬의 Global Volume 에 걸린 Vignette 가
-   가장자리를 더 눌러 주므로 실제 값은 이보다 높다.
-   0.88 을 낮추지 말 것 — 0.78 에서 ink-3 가 3.3:1 로 떨어진다. */
+   4.5:1 을 배경이 무엇이든 넘긴다 — 비네트에도, 카메라 각도에도 기대지 않는다.
+
+   0.88 을 낮추지 말 것. 0.86 에서 이미 4.49:1 로 기준에 걸치고 0.78 이면
+   3.3:1 이다. 한때 비네트를 0.62 로 올리고 0.82 로 낮춘 적이 있는데(실측
+   5.8:1), 그때는 가독성이 후처리 설정 하나에 매달려 있었다. 비네트를 되돌리면서
+   이 값도 함께 되돌렸다. */
 
 .run-edge {
     position: absolute;
-    background-color: rgba(6, 10, 14, 0.82);
+    background-color: rgba(6, 10, 14, 0.88);
 }
 
 /*
@@ -419,7 +422,7 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
 .run-deck {
     position: absolute;
     left: 500px; right: 360px; bottom: 0; height: 120px;
-    background-color: rgba(6, 10, 14, 0.82);
+    background-color: rgba(6, 10, 14, 0.88);
     padding-left: 26px; padding-right: 26px;
     padding-top: 14px; padding-bottom: 14px;
 }
