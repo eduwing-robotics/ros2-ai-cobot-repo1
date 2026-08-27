@@ -41,6 +41,8 @@ namespace MainUnity.Runtime.Robot.Status
             byte robotMotionDone,
             byte gripperMotionDone,
             ushort gripperFaultId,
+            byte gripperPosition,
+            bool gripperFeedbackValid,
             uint mainErrorCode,
             uint subErrorCode,
             ulong sourceTimestamp,
@@ -57,6 +59,8 @@ namespace MainUnity.Runtime.Robot.Status
             RobotMotionDone = robotMotionDone;
             GripperMotionDone = gripperMotionDone;
             GripperFaultId = gripperFaultId;
+            GripperPosition = gripperPosition;
+            GripperFeedbackValid = gripperFeedbackValid;
             MainErrorCode = mainErrorCode;
             SubErrorCode = subErrorCode;
             SourceTimestamp = sourceTimestamp;
@@ -74,6 +78,8 @@ namespace MainUnity.Runtime.Robot.Status
         public byte RobotMotionDone { get; }
         public byte GripperMotionDone { get; }
         public ushort GripperFaultId { get; }
+        public byte GripperPosition { get; }
+        public bool GripperFeedbackValid { get; }
         public uint MainErrorCode { get; }
         public uint SubErrorCode { get; }
         public ulong SourceTimestamp { get; }

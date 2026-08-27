@@ -47,6 +47,8 @@ namespace MainUnity.Runtime.Robot.Real
                 return;
             Array.Copy(frame.JointDegrees, targetDegrees, JointCount);
             hasTarget = true;
+            if (frame.GripperFeedbackValid)
+                ApplyGripperOpeningPercent(frame.GripperPosition);
         }
 
         void OnEnable()

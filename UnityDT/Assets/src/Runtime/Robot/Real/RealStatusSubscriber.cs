@@ -103,6 +103,7 @@ namespace MainUnity.Runtime.Robot.Real
                 $"{frame.TcpPositionMillimeters.y:0.###}, " +
                 $"{frame.TcpPositionMillimeters.z:0.###}) mm " +
                 $"motionDone={frame.RobotMotionDone} emg={frame.EmergencyStop} " +
+                $"gripper={frame.GripperPosition}% valid={frame.GripperFeedbackValid} " +
                 $"alarm={frame.Alarm} error={frame.MainErrorCode}:{frame.SubErrorCode}", this);
         }
 
@@ -126,12 +127,15 @@ namespace MainUnity.Runtime.Robot.Real
                 ToFiniteFloat(message.cart_a_cur_pos, "cart_a_cur_pos"),
                 ToFiniteFloat(message.cart_b_cur_pos, "cart_b_cur_pos"),
                 ToFiniteFloat(message.cart_c_cur_pos, "cart_c_cur_pos"));
+            if (message.gripper_feedback_valid && message.gripper_position > 100)
+                throw new ArgumentException("gripper_position must be between 0 and 100 when valid.");
 
             return new RobotStatusFrame(
                 joints, tcpPosition, tcpRotation,
                 message.robot_mode, message.prg_state, message.abnormal_stop,
                 message.emg, message.alarm, message.robot_motion_done,
                 message.grip_motion_done, message.gripperfaultnum,
+                message.gripper_position, message.gripper_feedback_valid,
                 message.main_error_code, message.sub_error_code,
                 message.timestamp, receiveTimeSeconds);
         }
@@ -152,12 +156,29 @@ namespace MainUnity.Runtime.Robot.Real
                 j1_cur_pos = 1d,
                 cart_x_cur_pos = 100d,
                 robot_motion_done = 1,
+                gripper_position = 5,
+                gripper_feedback_valid = true,
                 timestamp = 2
             };
             RobotStatusFrame frame = ToStatusFrame(message, 3d);
+            bool invalidFeedbackRejected = false;
+            try
+            {
+                ToStatusFrame(new RobotNonrtStateMsg
+                {
+                    gripper_position = 101,
+                    gripper_feedback_valid = true
+                }, 0d);
+            }
+            catch (ArgumentException)
+            {
+                invalidFeedbackRejected = true;
+            }
             Debug.Assert(frame.JointDegrees[0] == 1f &&
                          frame.TcpPositionMillimeters.x == 100f &&
-                         frame.RobotMotionDone == 1 && frame.SourceTimestamp == 2,
+                         frame.RobotMotionDone == 1 && frame.GripperPosition == 5 &&
+                         frame.GripperFeedbackValid && frame.SourceTimestamp == 2 &&
+                         invalidFeedbackRejected,
                 "FAIRINO state conversion failed.", this);
         }
 #endif

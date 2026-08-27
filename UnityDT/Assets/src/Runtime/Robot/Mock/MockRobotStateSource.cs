@@ -94,7 +94,7 @@ namespace MainUnity.Runtime.Robot.Mock
                 // ponytail: Mock에는 FAIRINO 안전 진단이 없으므로 수신 중이면 Idle로 취급한다.
                 StateReceived?.Invoke(new RobotStatusFrame(
                     joints, Vector3.zero, Vector3.zero,
-                    0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 1, 1, 0, 0, false, 0, 0, 0,
                     Time.realtimeSinceStartupAsDouble));
             }
             catch (ArgumentException exception)
