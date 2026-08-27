@@ -40,6 +40,14 @@ namespace MainUnity.UI
         [SerializeField] float gripperStrokeMillimeters = 40f;
         [SerializeField] float watchdogLimitMilliseconds = 50f;
 
+        [Header("카메라")]
+        // MOCK 에는 실제 카메라가 없다. 트윈의 RenderTexture 가 그 자리를 대신한다.
+        // REAL 에서는 CamVisionReceiver 가 ROS 스트림으로 덮어쓴다.
+        [Tooltip("ROBOT 소스로 쓸 트윈 카메라의 RenderTexture 입니다.")]
+        [SerializeField] RenderTexture robotCamTexture;
+        [Tooltip("BOARD 소스로 쓸 기판 카메라의 RenderTexture 입니다.")]
+        [SerializeField] RenderTexture boardCamTexture;
+
         readonly VisualElement[] jointFills = new VisualElement[JointCount];
         readonly Label[] jointValues = new Label[JointCount];
         readonly Label[] tcpValues = new Label[3];
@@ -62,6 +70,15 @@ namespace MainUnity.UI
         const int SampleCapacity = 120;
         Sparkline gripperSpark, watchdogSpark, tcpSpark;
         double nextSampleTime;
+
+        // 카메라 소스. 트윈이 이미 글로벌 시점이라 GLOBAL 은 이 타일에 오지 않는다.
+        enum CamSource { Robot, Board }
+        CamSource camSource = CamSource.Robot;
+        bool camExpanded;
+        Image camImage;
+        Label camBadge, camEmptyDesc, nowSlot, nowPart, recipeVersion, requestId;
+        VisualElement camEmpty, camPanel;
+        Button camRobotButton, camBoardButton, camExpandButton;
         readonly System.Collections.Generic.List<(Label Value, System.Func<RobotStatusFrame, string> Read)> realRows = new();
         bool cached;
 
@@ -79,6 +96,7 @@ namespace MainUnity.UI
             RefreshPose();
             RefreshGripper();
             RefreshLink();
+            RefreshCamera();
             SampleTrends();
             RefreshRealStatus();
             RefreshAssembly();
@@ -129,9 +147,93 @@ namespace MainUnity.UI
             poseBlock = root.Q<VisualElement>("pose-block");
             safetyBlock = root.Q<VisualElement>("safety-block");
             mockNote = root.Q<Label>("mock-note");
+            nowSlot = root.Q<Label>("now-slot");
+            nowPart = root.Q<Label>("now-part");
+            recipeVersion = root.Q<Label>("recipe-version");
+            requestId = root.Q<Label>("request-id");
+            BuildCamera(root);
             BuildSparklines(root);
             BuildRealStatus();
             cached = true;
+        }
+
+        void BuildCamera(VisualElement root)
+        {
+            camPanel = root.Q<VisualElement>("cam-panel");
+            camImage = root.Q<Image>("cam-image");
+            camEmpty = root.Q<VisualElement>("cam-empty");
+            camEmptyDesc = root.Q<Label>("cam-empty-desc");
+            camBadge = root.Q<Label>("cam-badge");
+            camRobotButton = root.Q<Button>("cam-source-robot");
+            camBoardButton = root.Q<Button>("cam-source-board");
+            camExpandButton = root.Q<Button>("cam-expand");
+
+            // 텍스처가 640x480 이고 타일이 4:3 이라 ScaleToFit 에서 레터박스가 0 이다.
+            if (camImage != null) camImage.scaleMode = ScaleMode.ScaleToFit;
+
+            UnbindCamera();
+            if (camRobotButton != null) camRobotButton.clicked += SelectRobotCam;
+            if (camBoardButton != null) camBoardButton.clicked += SelectBoardCam;
+            if (camExpandButton != null) camExpandButton.clicked += ToggleCamExpand;
+        }
+
+        void UnbindCamera()
+        {
+            if (camRobotButton != null) camRobotButton.clicked -= SelectRobotCam;
+            if (camBoardButton != null) camBoardButton.clicked -= SelectBoardCam;
+            if (camExpandButton != null) camExpandButton.clicked -= ToggleCamExpand;
+        }
+
+        void OnDisable() => UnbindCamera();
+
+        void SelectRobotCam() => camSource = CamSource.Robot;
+        void SelectBoardCam() => camSource = CamSource.Board;
+        void ToggleCamExpand() => camExpanded = !camExpanded;
+
+        /// <summary>
+        /// 화면의 거의 모든 값은 로봇이 스스로 보고한 상태에서 파생된 것이다.
+        /// 카메라만이 그 보고와 무관한 증거라, REAL 에서는 ROS 스트림이 먼저다.
+        /// MOCK 에는 실제 카메라가 없으므로 트윈의 RenderTexture 가 그 자리를 대신한다.
+        /// </summary>
+        void RefreshCamera()
+        {
+            if (camImage == null) return;
+
+            camRobotButton?.EnableInClassList("chip--accent", camSource == CamSource.Robot);
+            camBoardButton?.EnableInClassList("chip--accent", camSource == CamSource.Board);
+            camExpandButton?.EnableInClassList("chip--accent", camExpanded);
+            camPanel?.EnableInClassList("run-cam-panel--expanded", camExpanded);
+
+            bool mock = uiMaster == null || uiMaster.IsSimulated;
+            bool streaming = !mock && vision != null && vision.IsStreaming;
+
+            if (streaming)
+            {
+                // CamVisionReceiver 가 같은 Image 에 프레임을 직접 넣는다. 덮어쓰지 않는다.
+                if (camBadge != null) camBadge.text = "ROS · /vision/board/image";
+                if (camEmpty != null) camEmpty.style.display = DisplayStyle.None;
+                return;
+            }
+
+            RenderTexture texture = camSource == CamSource.Robot ? robotCamTexture : boardCamTexture;
+            string label = camSource == CamSource.Robot ? "ROBOT" : "BOARD";
+
+            if (mock && texture != null)
+            {
+                camImage.image = texture;
+                if (camBadge != null) camBadge.text = label + " · SIM · RenderTexture";
+                if (camEmpty != null) camEmpty.style.display = DisplayStyle.None;
+                return;
+            }
+
+            // 값을 지어내지 않는다. 무엇이 없는지 글자로 답한다.
+            camImage.image = null;
+            if (camBadge != null) camBadge.text = label;
+            if (camEmpty != null) camEmpty.style.display = DisplayStyle.Flex;
+            if (camEmptyDesc != null)
+                camEmptyDesc.text = mock
+                    ? "RenderTexture 미할당 · " + label
+                    : "/vision/board/image 수신 대기";
         }
 
         void BuildSparklines(VisualElement root)
@@ -245,9 +347,9 @@ namespace MainUnity.UI
             {
                 var row = new VisualElement();
                 row.AddToClassList("row");
-                // 26px × 6 행. 좌측 열(88..500 × 68..1080, 안여백 제하고 968px)에서
-                // 관절이 가져갈 수 있는 몫이다.
-                row.style.height = 26;
+                // 24px × 6 행 = 144px. 좌측 열은 카메라 타일 위(y772)에서 끝나야 하므로
+                // Real 에서 쓸 수 있는 세로가 704px 뿐이고, 관절이 그중 가장 큰 몫이다.
+                row.style.height = 24;
 
                 var k = new Label($"J{i + 1}");
                 k.AddToClassList("muted");
@@ -456,17 +558,41 @@ namespace MainUnity.UI
                 SetTone(unitPhase, frame != null && frame.State == AssemblyState.Failed ? "bad" : "none");
             }
 
+            RefreshNow(frame);
+
             if (unitStep == null) return;
             if (frame == null)
             {
-                unitStep.text = $"슬롯 {planTotal}개   ·   대기";
+                unitStep.text = $"슬롯 {planTotal}개 · 대기";
                 return;
             }
 
-            string step = $"step {Mathf.Clamp(frame.StepOrder, 0, planTotal)} / {planTotal}";
-            unitStep.text = string.IsNullOrEmpty(frame.SlotCode)
-                ? step
-                : step + "   ·   slot " + frame.SlotCode;
+            unitStep.text = $"step {Mathf.Clamp(frame.StepOrder, 0, planTotal)} / {planTotal}";
+        }
+
+        /// <summary>
+        /// "지금 무엇을, 어디에". 슬롯 코드가 화면에서 가장 큰 글자다 —
+        /// 실패했을 때 사람이 갈 좌표이고 DB · 레시피 · 검사가 같은 값을 쓴다.
+        /// 레시피 버전과 요청 ID 는 스텝 수가 어긋났을 때 되짚을 유일한 값이다.
+        /// </summary>
+        void RefreshNow(AssemblyProgressFrame frame)
+        {
+            if (nowSlot != null)
+            {
+                bool has = frame != null && !string.IsNullOrEmpty(frame.SlotCode);
+                nowSlot.text = has ? frame.SlotCode : "—";
+                // 실패한 슬롯만 색을 얻는다. 진행 중은 색을 얻지 않는다.
+                SetTone(nowSlot, frame != null && frame.State == AssemblyState.Failed ? "bad" : "none");
+            }
+            if (nowPart != null)
+                nowPart.text = frame != null && !string.IsNullOrEmpty(frame.PartId) ? frame.PartId : "";
+
+            if (recipeVersion != null)
+                FR5EmptyState.Present(recipeVersion,
+                    frame != null && !string.IsNullOrEmpty(frame.RecipeVersion) ? frame.RecipeVersion : "—");
+            if (requestId != null)
+                FR5EmptyState.Present(requestId,
+                    frame != null && !string.IsNullOrEmpty(frame.RequestId) ? frame.RequestId : "—");
         }
 
         static string Describe(AssemblyProgressFrame frame)
@@ -679,17 +805,8 @@ namespace MainUnity.UI
                 // 한계를 넘은 것만 색을 얻는다.
                 SetTone(watchdogValue, !live || ageMs > watchdogLimitMilliseconds ? "bad" : "none");
             }
-            // TODO(API): tool offset 은 레시피/툴 정의에서 온다. 지금은 표시만.
-            // TODO(API·Real): 속도 오버라이드는 Mock·Real 모두 지령 경로가 없다.
-            //                 fairino_msgs 의 속도 설정 명령이 붙으면 셸의 SPEED 를 슬라이더로 바꾼다.
-            if (toolValue != null) toolValue.text = "tool Z +142.0 mm · payload 1.85 kg";
-
-            bool received = vision != null && vision.HasReceivedImage;
-            double age = vision != null ? Time.realtimeSinceStartupAsDouble - vision.LastReceiveTimeSeconds : -1;
-            bool fresh = received && age >= 0 && age < 2;
-
-            if (visionEmpty != null) visionEmpty.style.display = fresh ? DisplayStyle.None : DisplayStyle.Flex;
-            if (visionStats != null) visionStats.text = fresh ? $"수신 중 · {age * 1000:0} ms 전" : "수신 없음";
+            // 툴 오프셋 · 페이로드는 하드코딩된 상수였다. 레시피/툴 정의에서 오는 값이
+            // 생기기 전까지 지어낸 숫자를 띄우지 않는다. 카메라는 RefreshCamera 가 맡는다.
         }
     }
 }

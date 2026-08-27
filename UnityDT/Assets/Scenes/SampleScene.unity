@@ -5466,6 +5466,8 @@ MonoBehaviour:
   vision: {fileID: 0}
   gripperStrokeMillimeters: 40
   watchdogLimitMilliseconds: 50
+  robotCamTexture: {fileID: 8400000, guid: a26f561b26137c9c5b3c8519dcab2141, type: 2}
+  boardCamTexture: {fileID: 8400000, guid: 1ce422e539c2cd341aaba5e8f875f4e1, type: 2}
 --- !u!4 &813333164
 Transform:
   m_ObjectHideFlags: 0

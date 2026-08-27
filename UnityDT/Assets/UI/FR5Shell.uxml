@@ -29,12 +29,13 @@
 
               앞무리(MODE · ROBOT · JOB)는 조작자가 0.5초 안에 봐야 하는 것이다 —
               지금 어느 모드인가 · 로봇이 살아 있는가 · 작업이 어디까지 갔는가.
-              뒷무리(LINK · CYCLE · SPEED)는 궁금할 때 찾아보는 것이다.
-
-              이전에는 여섯 항목이 같은 11px 라벨 · 같은 흰색 값으로 나란히 있어서
-              DISCONNECTED 와 45 % 가 같은 무게로 보였다. 무리 사이에 선을 하나 긋고
+              뒷무리(LINK)는 궁금할 때 찾아보는 것이다. 무리 사이에 선을 하나 긋고
               뒷무리 값을 한 단계 내려(ink-2) 앞무리만 흰색(ink)으로 남긴다.
-              선은 나누기만 한다 — 색을 더 쓰지 않는다.
+              선은 나누기만 한다. 색을 더 쓰지 않는다.
+
+              CYCLE 과 SPEED 는 뺐다. 둘 다 어느 페이지에도 집계 · 지령 경로가 없고,
+              특히 SPEED 는 45 % 라는 지어낸 값을 띄우고 있었다. 없는 값이 아니라
+              거짓 값이라 가장 나빴다. 경로가 생기면 되돌린다.
             -->
             <ui:VisualElement class="row" style="margin-left:36px;">
                 <ui:Label text="ROBOT" class="micro" style="margin-right:12px;" />
@@ -59,19 +60,6 @@
                 <ui:Label name="link-joint-age" text="—" class="muted" style="margin-left:8px; margin-right:16px; font-size:12px;" />
                 <ui:VisualElement name="link-image-dot" class="dot" />
                 <ui:Label name="link-image-age" text="—" class="muted" style="margin-left:8px; font-size:12px;" />
-            </ui:VisualElement>
-
-            <ui:VisualElement class="row" style="margin-left:32px;">
-                <ui:Label text="CYCLE" class="micro" style="margin-right:12px;" />
-                <ui:Label name="cycle-value" text="—" style="color:rgb(147,165,178); -unity-font-style:bold;" />
-            </ui:VisualElement>
-
-            <ui:VisualElement class="row" style="margin-left:32px;">
-                <ui:Label text="SPEED" class="micro" style="margin-right:12px;" />
-                <ui:VisualElement class="gauge" style="width:76px;">
-                    <ui:VisualElement name="speed-fill" class="gauge__fill gauge__fill--neutral" style="width:45%;" />
-                </ui:VisualElement>
-                <ui:Label name="speed-value" text="45 %" style="color:rgb(147,165,178); -unity-font-style:bold; margin-left:10px;" />
             </ui:VisualElement>
 
             <ui:VisualElement class="spacer" />
