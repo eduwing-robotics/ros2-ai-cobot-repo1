@@ -206,6 +206,21 @@ namespace MainUnity.UI
         /// 알람 띠. 평상시에는 높이 0 이고 Error / Disconnected 일 때만 나타난다.
         /// Real 백엔드는 비상정지·알람·에러코드를 프레임에 실어 보내므로 그 값을 우선한다.
         /// </summary>
+        /// <summary>
+        /// 알람은 채터링하면 안 된다 (EEMUA 191 · IEC 62682).
+        /// 링크 지터나 메인 스레드 정체로 상태가 한두 프레임 뒤집히는 것까지 띠로 알리면
+        /// 화면이 깜빡이고, 그러면 진짜 알람도 같은 깜빡임으로 보여 무시하게 된다.
+        ///
+        /// 그래서 두 방향에 각각 시간을 건다.
+        ///   켤 때  조건이 ShowDelay 만큼 이어져야 켠다.
+        ///   끌 때  한 번 켜지면 HoldSeconds 동안은 조건이 사라져도 유지한다.
+        /// 비상정지 · 알람 · 이상정지는 지연 없이 즉시 켠다. 늦으면 안 되는 것들이다.
+        /// </summary>
+        const float AlarmShowDelaySeconds = 0.6f;
+        const float AlarmHoldSeconds = 3f;
+        double alarmSinceTime = -1d;
+        double alarmShownUntil = -1d;
+
         void RefreshAlarm()
         {
             if (alarmBanner == null) return;
@@ -216,9 +231,18 @@ namespace MainUnity.UI
             bool emergency = frame != null && frame.EmergencyStop != 0;
             bool alarm = frame != null && frame.Alarm != 0;
             bool abnormal = frame != null && frame.AbnormalStop != 0;
-            bool show = state == RobotRunState.Error || state == RobotRunState.Disconnected
-                        || emergency || alarm || abnormal;
+            bool hard = emergency || alarm || abnormal;
+            bool condition = hard || state == RobotRunState.Error || state == RobotRunState.Disconnected;
 
+            double now = Time.realtimeSinceStartupAsDouble;
+            if (!condition) alarmSinceTime = -1d;
+            else if (alarmSinceTime < 0d) alarmSinceTime = now;
+
+            // 하드 알람은 즉시, 링크 계열은 조건이 이어진 뒤에 켠다.
+            bool arm = condition && (hard || now - alarmSinceTime >= AlarmShowDelaySeconds);
+            if (arm) alarmShownUntil = now + AlarmHoldSeconds;
+
+            bool show = arm || now < alarmShownUntil;
             alarmBanner.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
             if (!show) return;
 
