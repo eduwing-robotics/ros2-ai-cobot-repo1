@@ -42,6 +42,7 @@ from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 JOINTS = ("j1", "j2", "j3", "j4", "j5", "j6")
 INITIAL_JOINTS_DEG = (0.0, -90.0, 90.0, -90.0, -90.0, 0.0)
 GRIPPER_CLOSED_METERS = 0.021
+DEFAULT_TOOL_OFFSET = (0.0, 0.0, 274.073, 0.0, 0.0, 0.0)
 FUTURE_TIMEOUT_SECONDS = 60.0
 FAULT_RESTART_MESSAGE = "execution state is unknown after a timeout; restart the mock node"
 ASSEMBLY_STATES = {"STARTED", "PICKED", "PLACED", "COMPLETED", "FAILED"}
@@ -456,11 +457,11 @@ def self_check():
     tcp_target = Pose()
     tcp_target.orientation.w = 1.0
     wrist_target = MockMoveJ.tool_target_to_wrist_target(
-        tcp_target, (3.3, 0.0, 165.5, 0.0, 0.0, 0.0)
+        tcp_target, DEFAULT_TOOL_OFFSET
     )
-    assert wrist_target.position.x == -0.0033
+    assert wrist_target.position.x == 0.0
     assert wrist_target.position.y == 0.0
-    assert wrist_target.position.z == -0.1655
+    assert math.isclose(wrist_target.position.z, -0.274073)
     assert wrist_target.orientation.w == 1.0
     try:
         parse_start_command("{}")
@@ -1203,7 +1204,7 @@ def parse_args(argv=None):
         "--tool-offset",
         nargs=6,
         type=float,
-        default=(3.3, 0.0, 165.5, 0.0, 0.0, 0.0),
+        default=DEFAULT_TOOL_OFFSET,
         metavar=("X", "Y", "Z", "RX", "RY", "RZ"),
         help="wrist3_link to Tool TCP offset in mm/degrees",
     )
