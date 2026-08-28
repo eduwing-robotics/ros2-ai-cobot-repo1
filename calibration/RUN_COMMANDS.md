@@ -37,6 +37,19 @@ RealSense 노드는 동시에 두 개 실행하지 않는다.
 ~/KSMC/calibration/run_d435_rgbd_stable.sh
 ```
 
+D435가 연결된 팀원 컴퓨터에서 카메라와 노트북용 고품질 저지연 중계를 한 번에
+실행할 때는 다음 명령을 사용한다. 실행 전 다른 RealSense 노드는 종료한다.
+
+```bash
+~/KSMC/vision_assembly/run_d435_optimized_camera_host.sh
+```
+
+노트북에서는 원본 raw 토픽 대신 아래 토픽만 선택한다.
+
+```text
+/camera/camera/color/image_ai/compressed
+```
+
 확인 토픽:
 
 ```bash
@@ -46,6 +59,25 @@ ros2 topic echo /camera/camera/color/camera_info --once
 
 RGB 캘리브레이션/마커만 볼 때는 `run_d435_rgb_stable.sh`, 부품 접근과
 AI/Vision 3D 결과가 필요할 때는 `run_d435_rgbd_stable.sh`를 사용한다.
+
+`run_d435_rgbd_stable.sh`는 실제 필요한 센서 스트림만 기준으로 실행된다.
+컬러는 `1920×1080@15`의 compressed 입력, 깊이는 color에 정렬된 raw depth,
+CameraInfo만 외부 알고리즘에서 사용한다. IR, IMU, RGBD 합성, pointcloud,
+colorizer와 사용하지 않는 depth 필터는 끈다.
+
+RealSense Jazzy 드라이버 버전에서는 `compressedDepth`, `theora`, `zstd`와
+raw color의 transport 이름이 `ros2 topic list`에 계속 보일 수 있다. 이것은
+publisher 객체가 선언되어 있다는 뜻이지, 구독자가 없을 때 모든 인코더가 실제로
+프레임을 처리한다는 뜻은 아니다. 또한 compressed color를 만들기 위한 내부
+raw color source는 구조상 제거하면 안 된다. 따라서 프로젝트 노드는
+`/camera/camera/color/image_raw/compressed`와
+`/camera/camera/aligned_depth_to_color/image_raw`만 구독하도록 유지한다.
+
+설정 파일:
+
+```text
+~/KSMC/calibration/config/d435_rgbd_minimal.yaml
+```
 
 ## 4. ChArUco 마커·코너 화면
 
