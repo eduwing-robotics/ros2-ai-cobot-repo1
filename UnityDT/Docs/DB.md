@@ -411,7 +411,7 @@ unit_id → units.job_id → jobs.product_id
 
 ## 샘플 데이터
 
-참조 파일: `semiconductor_assembly_quality_datasheet_2026-08-13.xlsx`
+참조 파일: `semiconductor_assembly_quality_datasheet_2026-08-18.xlsx`
 
 - `parts`는 `Components` 시트에서 각 그룹의 대표 부품(`대체 # = 1`) 6종을 사용한다.
 - `part_category`는 `Checklist` 시트의 검사 대상 명칭에 맞춰 정규화한 예시 코드다.

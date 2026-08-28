@@ -37,16 +37,17 @@
       <stop offset="0" stop-color="#2c3b47"/><stop offset="1" stop-color="#10171e"/>
     </linearGradient>
     <style>
-      text { font-family: Inter, Pretendard, "Noto Sans KR", system-ui, sans-serif; }
-      .mi { fill:#7f93a4; font-size:12px; letter-spacing:2.2px; font-weight:700 }
-      .lb { fill:#93a8b8; font-size:14px; letter-spacing:2.4px; font-weight:700 }
-      .bd { fill:#cbd8e2; font-size:16px }
-      .sm { fill:#9fb1bf; font-size:15px }
-      .mu { fill:#6b7e8f; font-size:14px }
-      .vl { fill:#eef6fb; font-size:26px; font-weight:700 }
-      .v2 { fill:#f4fbff; font-size:34px; font-weight:700; letter-spacing:-.4px }
-      .v3 { fill:#f6fcff; font-size:52px; font-weight:800; letter-spacing:-1.4px }
-      .dp { fill:#f8fdff; font-size:88px; font-weight:800; letter-spacing:-4px }
+      text { font-family: Inter, Pretendard, "Noto Sans CJK KR", "Noto Sans KR", system-ui, sans-serif; font-kerning:normal; font-variant-numeric:tabular-nums; text-rendering:geometricPrecision; }
+      svg { shape-rendering:geometricPrecision; }
+      .mi { fill:#8494a0; font-size:12px; letter-spacing:1.2px; font-weight:700 }
+      .lb { fill:#93a5b2; font-size:14px; letter-spacing:1.4px; font-weight:700 }
+      .bd { fill:#e2ecf1; font-size:16px }
+      .sm { fill:#93a5b2; font-size:15px }
+      .mu { fill:#8494a0; font-size:14px }
+      .vl { fill:#e2ecf1; font-size:26px; font-weight:700 }
+      .v2 { fill:#e2ecf1; font-size:34px; font-weight:700; letter-spacing:-.4px }
+      .v3 { fill:#e2ecf1; font-size:52px; font-weight:800; letter-spacing:-1.4px }
+      .dp { fill:#e2ecf1; font-size:88px; font-weight:800; letter-spacing:-4px }
       .ac { fill:#facc33 } .ok { fill:#3ecf8e } .warn { fill:#f6ad37 } .bad { fill:#f0475a }
     </style>
   </defs>
@@ -55,11 +56,11 @@
 <rect x="0" y="0" width="1920" height="64" fill="#04070a" fill-opacity=".7"/>
 <line x1="0" y1="64" x2="1920" y2="64" stroke="#ffffff" stroke-opacity=".10"/>
 <rect x="0" y="63" width="300" height="2" fill="#facc33" fill-opacity=".55"/>
-<text x="48" y="42" fill="#f8fdff" font-size="27" font-weight="800" letter-spacing="1.5">FR5</text>
+<text x="48" y="42" fill="#e2ecf1" font-size="27" font-weight="800" letter-spacing="1.5">FR5</text>
 <text x="112" y="42" class="mu" font-size="14">FAIRINO · CELL A</text>
 <text x="288" y="30" class="mi">MODE</text>
-<text x="288" y="52" fill="#facc33" font-size="19" font-weight="800" letter-spacing="3">MOCK</text>
-<text x="370" y="52" fill="#3d4a56" font-size="19" font-weight="800" letter-spacing="3">REAL</text>
+<text x="288" y="52" fill="#facc33" font-size="19" font-weight="800" letter-spacing="1.6">MOCK</text>
+<text x="370" y="52" fill="#64707a" font-size="19" font-weight="800" letter-spacing="1.6">REAL</text>
 <text x="520" y="30" class="mi">LINK</text>
 <circle cx="524" cy="46" r="4" fill="#3ecf8e"/>
 <text x="536" y="52" class="sm" font-size="14">joint_states</text>
@@ -67,50 +68,50 @@
 <circle cx="684" cy="46" r="4" fill="#3ecf8e"/>
 <text x="696" y="52" class="sm" font-size="14">board/image</text>
 <text x="830" y="52" text-anchor="end" class="mu" font-size="13">68 ms</text>
-<circle cx="844" cy="46" r="4" fill="#46545f"/>
+<circle cx="844" cy="46" r="4" fill="#64707a"/>
 <text x="856" y="52" class="sm" font-size="14">assembly/fb</text>
 <text x="990" y="52" text-anchor="end" class="mu" font-size="13">idle</text>
 <text x="1020" y="30" class="mi">JOB</text>
-<text x="1020" y="52" fill="#eaf3f8" font-size="17" font-weight="700">JOB-20260807-0142</text>
+<text x="1020" y="52" fill="#e2ecf1" font-size="17" font-weight="700">JOB-20260807-0142</text>
 <rect x="1246" y="38" width="170" height="6" rx="3.0" fill="#ffffff" fill-opacity=".07"/>
 <rect x="1246" y="38" width="102" height="6" rx="3.0" fill="#facc33" fill-opacity=".9"/>
-<text x="1432" y="52" fill="#eaf3f8" font-size="17" font-weight="700">6 / 10</text>
+<text x="1432" y="52" fill="#e2ecf1" font-size="17" font-weight="700">6 / 10</text>
 <text x="1518" y="30" class="mi">CYCLE</text>
-<text x="1518" y="52" fill="#eaf3f8" font-size="17" font-weight="700">00:01:24</text>
+<text x="1518" y="52" fill="#e2ecf1" font-size="17" font-weight="700">00:01:24</text>
 <text x="1704" y="30" text-anchor="end" fill="#3ecf8e" font-size="13" font-weight="700" letter-spacing="1.6">LINKED</text>
 <circle cx="1716" cy="26" r="4" fill="#3ecf8e"/>
 <text x="1716" y="52" text-anchor="end" class="mu" font-size="12" letter-spacing="1.4">SERVO · RESET</text>
 <rect x="1744" y="14" width="128" height="40" rx="4" fill="#f0475a" fill-opacity=".18" stroke="#f0475a" stroke-opacity=".75"/>
 <circle cx="1770" cy="34" r="7" fill="#ff8f9b"/>
-<text x="1788" y="41" fill="#ff8f9b" font-size="19" font-weight="800" letter-spacing="2.6">STOP</text>
-<rect x="30.0" y="160" width="28" height="28" rx="6" fill="none" stroke="#5a6b79" stroke-opacity=".55" stroke-width="1.8"/>
-<text x="44.0" y="204" text-anchor="middle" fill="#5a6b79" font-size="11.5" font-weight="800" letter-spacing="1">RUN</text>
-<text x="44.0" y="220" text-anchor="middle" fill="#4a5764" font-size="11">운전</text>
-<rect x="30.0" y="278" width="28" height="28" rx="6" fill="none" stroke="#5a6b79" stroke-opacity=".55" stroke-width="1.8"/>
-<text x="44.0" y="322" text-anchor="middle" fill="#5a6b79" font-size="11.5" font-weight="800" letter-spacing="1">INSPECT</text>
-<text x="44.0" y="338" text-anchor="middle" fill="#4a5764" font-size="11">검사</text>
-<rect x="30.0" y="396" width="28" height="28" rx="6" fill="none" stroke="#5a6b79" stroke-opacity=".55" stroke-width="1.8"/>
-<text x="44.0" y="440" text-anchor="middle" fill="#5a6b79" font-size="11.5" font-weight="800" letter-spacing="1">MANUAL</text>
-<text x="44.0" y="456" text-anchor="middle" fill="#4a5764" font-size="11">수동</text>
+<text x="1788" y="41" fill="#ff8f9b" font-size="19" font-weight="800" letter-spacing="1.8">STOP</text>
+<rect x="30.0" y="160" width="28" height="28" rx="6" fill="none" stroke="#64707a" stroke-opacity=".55" stroke-width="1.8"/>
+<text x="44.0" y="204" text-anchor="middle" fill="#64707a" font-size="11.5" font-weight="800" letter-spacing="1">RUN</text>
+<text x="44.0" y="220" text-anchor="middle" fill="#64707a" font-size="11">운전</text>
+<rect x="30.0" y="278" width="28" height="28" rx="6" fill="none" stroke="#64707a" stroke-opacity=".55" stroke-width="1.8"/>
+<text x="44.0" y="322" text-anchor="middle" fill="#64707a" font-size="11.5" font-weight="800" letter-spacing="1">INSPECT</text>
+<text x="44.0" y="338" text-anchor="middle" fill="#64707a" font-size="11">검사</text>
+<rect x="30.0" y="396" width="28" height="28" rx="6" fill="none" stroke="#64707a" stroke-opacity=".55" stroke-width="1.8"/>
+<text x="44.0" y="440" text-anchor="middle" fill="#64707a" font-size="11.5" font-weight="800" letter-spacing="1">MANUAL</text>
+<text x="44.0" y="456" text-anchor="middle" fill="#64707a" font-size="11">수동</text>
 <rect x="0" y="510" width="3" height="76" fill="#facc33"/>
 <rect x="30.0" y="514" width="28" height="28" rx="6" fill="none" stroke="#facc33" stroke-opacity=".9" stroke-width="1.8"/>
 <text x="44.0" y="558" text-anchor="middle" fill="#facc33" font-size="11.5" font-weight="800" letter-spacing="1">QUALITY</text>
-<text x="44.0" y="574" text-anchor="middle" fill="#4a5764" font-size="11">품질</text>
-<rect x="30.0" y="632" width="28" height="28" rx="6" fill="none" stroke="#5a6b79" stroke-opacity=".55" stroke-width="1.8"/>
-<text x="44.0" y="676" text-anchor="middle" fill="#5a6b79" font-size="11.5" font-weight="800" letter-spacing="1">SETUP</text>
-<text x="44.0" y="692" text-anchor="middle" fill="#4a5764" font-size="11">설정</text>
+<text x="44.0" y="574" text-anchor="middle" fill="#64707a" font-size="11">품질</text>
+<rect x="30.0" y="632" width="28" height="28" rx="6" fill="none" stroke="#64707a" stroke-opacity=".55" stroke-width="1.8"/>
+<text x="44.0" y="676" text-anchor="middle" fill="#64707a" font-size="11.5" font-weight="800" letter-spacing="1">SETUP</text>
+<text x="44.0" y="692" text-anchor="middle" fill="#64707a" font-size="11">설정</text>
 <line x1="0" y1="1036" x2="1920" y2="1036" stroke="#ffffff" stroke-opacity=".08"/>
-<circle cx="48" cy="1059" r="4" fill="#5a6b79"/>
+<circle cx="48" cy="1059" r="4" fill="#64707a"/>
 <text x="64" y="1064" class="sm" font-size="14">10:30:00   QUALITY   집계 갱신 · 기준 2026-05-20 ~ 2026-08-20</text>
 <text x="1872" y="1064" text-anchor="end" class="mu" font-size="13" letter-spacing="1.4">EVENTS  ·  ALARM 0</text>
 <text x="136" y="130" class="mi">기간</text>
-<text x="136" y="160" class="vl" font-size="22">최근 90일 <tspan fill="#5a6b79" font-size="16">▾</tspan></text>
+<text x="136" y="160" class="vl" font-size="22">최근 90일 <tspan fill="#64707a" font-size="16">▾</tspan></text>
 <text x="436" y="130" class="mi">제품</text>
-<text x="436" y="160" class="vl" font-size="22">HBM3 CARRIER v3 <tspan fill="#5a6b79" font-size="16">▾</tspan></text>
+<text x="436" y="160" class="vl" font-size="22">HBM3 CARRIER v3 <tspan fill="#64707a" font-size="16">▾</tspan></text>
 <text x="736" y="130" class="mi">레시피</text>
-<text x="736" y="160" class="vl" font-size="22">전체 <tspan fill="#5a6b79" font-size="16">▾</tspan></text>
+<text x="736" y="160" class="vl" font-size="22">전체 <tspan fill="#64707a" font-size="16">▾</tspan></text>
 <text x="1036" y="130" class="mi">불량 유형</text>
-<text x="1036" y="160" class="vl" font-size="22">전체 <tspan fill="#5a6b79" font-size="16">▾</tspan></text>
+<text x="1036" y="160" class="vl" font-size="22">전체 <tspan fill="#64707a" font-size="16">▾</tspan></text>
 <text x="1872" y="130" text-anchor="end" class="mu" font-size="13">검사 완료 1,240대 · 슬롯 검사 9,920건</text>
 <text x="1872" y="160" text-anchor="end" class="warn" font-size="14" font-weight="700" letter-spacing="1.4">조회 전용 · production 읽기</text>
 <line x1="136" y1="190" x2="1872" y2="190" stroke="#ffffff" stroke-opacity=".10"/>
@@ -197,25 +198,25 @@
 <text x="1210" y="488" class="mu" font-size="13">OFFSET</text>
 <text x="1400" y="488" text-anchor="end" class="mu" font-size="13">11 / 9,920</text>
 <rect x="1430" y="476" width="210" height="6" rx="3.0" fill="#ffffff" fill-opacity=".06"/>
-<rect x="1430" y="476" width="29" height="6" rx="3.0" fill="#cbd8e2" fill-opacity=".85"/>
+<rect x="1430" y="476" width="29" height="6" rx="3.0" fill="#e2ecf1" fill-opacity=".85"/>
 <line x1="1509" y1="472" x2="1509" y2="487" stroke="#f0475a" stroke-opacity=".8"/>
-<text x="1872" y="488" text-anchor="end" fill="#cbd8e2" font-size="22" font-weight="700">0.11%</text>
+<text x="1872" y="488" text-anchor="end" fill="#e2ecf1" font-size="22" font-weight="700">0.11%</text>
 <line x1="1080" y1="512" x2="1872" y2="512" stroke="#ffffff" stroke-opacity=".07"/>
 <text x="1080" y="544" class="bd">HBM3</text>
 <text x="1210" y="544" class="mu" font-size="13">SOLDER</text>
 <text x="1400" y="544" text-anchor="end" class="mu" font-size="13">8 / 9,920</text>
 <rect x="1430" y="532" width="210" height="6" rx="3.0" fill="#ffffff" fill-opacity=".06"/>
-<rect x="1430" y="532" width="21" height="6" rx="3.0" fill="#cbd8e2" fill-opacity=".85"/>
+<rect x="1430" y="532" width="21" height="6" rx="3.0" fill="#e2ecf1" fill-opacity=".85"/>
 <line x1="1509" y1="528" x2="1509" y2="543" stroke="#f0475a" stroke-opacity=".8"/>
-<text x="1872" y="544" text-anchor="end" fill="#cbd8e2" font-size="22" font-weight="700">0.08%</text>
+<text x="1872" y="544" text-anchor="end" fill="#e2ecf1" font-size="22" font-weight="700">0.08%</text>
 <line x1="1080" y1="568" x2="1872" y2="568" stroke="#ffffff" stroke-opacity=".07"/>
 <text x="1080" y="600" class="bd">GPU-DIE</text>
 <text x="1210" y="600" class="mu" font-size="13">SOLDER</text>
 <text x="1400" y="600" text-anchor="end" class="mu" font-size="13">4 / 9,920</text>
 <rect x="1430" y="588" width="210" height="6" rx="3.0" fill="#ffffff" fill-opacity=".06"/>
-<rect x="1430" y="588" width="10" height="6" rx="3.0" fill="#cbd8e2" fill-opacity=".85"/>
+<rect x="1430" y="588" width="10" height="6" rx="3.0" fill="#e2ecf1" fill-opacity=".85"/>
 <line x1="1509" y1="584" x2="1509" y2="599" stroke="#f0475a" stroke-opacity=".8"/>
-<text x="1872" y="600" text-anchor="end" fill="#cbd8e2" font-size="22" font-weight="700">0.04%</text>
+<text x="1872" y="600" text-anchor="end" fill="#e2ecf1" font-size="22" font-weight="700">0.04%</text>
 <line x1="1080" y1="680" x2="1872" y2="680" stroke="#ffffff" stroke-opacity=".10"/>
 <rect x="1080" y="715" width="3" height="14" fill="#facc33"/>
 <text x="1094" y="726" class="lb">RECIPE A / B</text>
@@ -240,15 +241,15 @@
 <text x="536" y="780" class="mu" font-size="13">C-001 · MISALIGN · 기한 08-26</text>
 <text x="1036" y="780" text-anchor="end" fill="#f6ad37" font-size="13" font-weight="700" letter-spacing="1.4">IN_PROGRESS</text>
 <line x1="136" y1="804" x2="1036" y2="804" stroke="#ffffff" stroke-opacity=".06"/>
-<rect x="120" y="818" width="3" height="24" fill="#5a6b79" fill-opacity=".8"/>
+<rect x="120" y="818" width="3" height="24" fill="#64707a" fill-opacity=".8"/>
 <text x="136" y="836" class="bd" font-size="15">QA-ALERT-BOOST-20260712-001</text>
 <text x="536" y="836" class="mu" font-size="13">BOOST-IC · SOLDER · 종결 07-30</text>
-<text x="1036" y="836" text-anchor="end" fill="#5a6b79" font-size="13" font-weight="700" letter-spacing="1.4">CLOSED</text>
+<text x="1036" y="836" text-anchor="end" fill="#64707a" font-size="13" font-weight="700" letter-spacing="1.4">CLOSED</text>
 <line x1="136" y1="860" x2="1036" y2="860" stroke="#ffffff" stroke-opacity=".06"/>
-<rect x="120" y="874" width="3" height="24" fill="#5a6b79" fill-opacity=".8"/>
+<rect x="120" y="874" width="3" height="24" fill="#64707a" fill-opacity=".8"/>
 <text x="136" y="892" class="bd" font-size="15">QA-ALERT-C-001-20260430-002</text>
 <text x="536" y="892" class="mu" font-size="13">C-001 · PIN · 종결 05-14</text>
-<text x="1036" y="892" text-anchor="end" fill="#5a6b79" font-size="13" font-weight="700" letter-spacing="1.4">CLOSED</text>
+<text x="1036" y="892" text-anchor="end" fill="#64707a" font-size="13" font-weight="700" letter-spacing="1.4">CLOSED</text>
 <line x1="136" y1="960" x2="1872" y2="960" stroke="#ffffff" stroke-opacity=".10"/>
 <text x="136" y="1000" class="warn" font-size="15" font-weight="700">Unity는 DB에 직접 접속하지 않는다.</text>
 <text x="416" y="1000" class="mu" font-size="14">이 페이지는 ROS2로 채울 수 없다. Architecture.md 의 HTTP 어댑터가 생겨야 데이터가 들어온다. 그 전까지 "연결 없음" 빈 상태로 존재한다.</text>

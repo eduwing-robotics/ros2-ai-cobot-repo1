@@ -18,7 +18,7 @@ Real 실행에서는 미리 배치된 부품을 실제 현황으로 오인하지
 
 ### Scene 부품 소유자
 
-[`ItemManager.cs`](UnityDT/Assets/src/Static/ItemManager.cs)가 현재 다음 두 데이터를 함께 소유한다.
+[`ItemManager.cs`](../../UnityDT/Assets/src/Static/ItemManager.cs)가 현재 다음 두 데이터를 함께 소유한다.
 
 - `assemblySlots`: PCB의 조립 위치와 필요한 부품 타입
 - `itemGroups`: 타입별 공급 부품 Transform, 그리퍼 설정, 픽업 오프셋
@@ -34,30 +34,30 @@ Real 실행에서는 미리 배치된 부품을 실제 현황으로 오인하지
 | IND | 2 |
 | VRM | 5 |
 
-Mock 조립은 [`MockAssemblyScenarioControl.cs`](UnityDT/Assets/src/Runtime/Robot/Mock/MockAssemblyScenarioControl.cs)에서
+Mock 조립은 [`MockAssemblyScenarioControl.cs`](../../UnityDT/Assets/src/Runtime/Robot/Mock/MockAssemblyScenarioControl.cs)에서
 `ItemManager.ItemGroups`와 `AssemblySlots`를 읽어 관측값을 만들고, PICKED/PLACED 피드백에 따라
 해당 Transform을 이동한다. 따라서 Mock의 직렬화 배열은 유지해야 한다.
 
-HUD의 [`FR5RunBinder.cs`](UnityDT/Assets/UI/FR5RunBinder.cs)는 `AssemblySlots`를 읽어 부품별
+HUD의 [`FR5RunBinder.cs`](../../UnityDT/Assets/UI/FR5RunBinder.cs)는 `AssemblySlots`를 읽어 부품별
 조립 칸 수를 표시한다. Real 초기 부품 생성 때문에 `AssemblySlots`를 비우거나 카메라 검출 결과로
 교체하면 HUD와 레시피 의미까지 달라지므로 공급 부품과 조립 슬롯을 분리해서 다뤄야 한다.
 
 ### Real 경로
 
-[`RealAssemblyScenarioControl.cs`](UnityDT/Assets/src/Runtime/Robot/Real/RealAssemblyScenarioControl.cs)는
+[`RealAssemblyScenarioControl.cs`](../../UnityDT/Assets/src/Runtime/Robot/Real/RealAssemblyScenarioControl.cs)는
 현재 `NotSupportedException`을 반환한다. 즉, Real 자동 조립과 실제 조립 피드백 반영은 아직
 구현된 것으로 전제할 수 없다.
 
-[`RobotMaster.cs`](UnityDT/Assets/src/Runtime/Robot/RobotMaster.cs)는 Mock/Real backend 선택과 계약 주입만
+[`RobotMaster.cs`](../../UnityDT/Assets/src/Runtime/Robot/RobotMaster.cs)는 Mock/Real backend 선택과 계약 주입만
 담당하고 있다. 좌표 변환, ROS 메시지 해석, 오브젝트 생성은 여기에 넣지 않는다.
 
 ### 카메라·비전 경로
 
-- Scene에 실제 연결된 카메라 코드는 [`CamVisionReceiver.cs`](UnityDT/Assets/src/Runtime/Camera/CamVisionReceiver.cs)뿐이며,
+- Scene에 실제 연결된 카메라 코드는 [`CamVisionReceiver.cs`](../../UnityDT/Assets/src/Runtime/Camera/CamVisionReceiver.cs)뿐이며,
   압축 영상을 HUD에 표시한다.
-- [`VisionDetector.cs`](UnityDT/Assets/src/Runtime/Camera/VisionDetector.cs),
-  [`Calibration.cs`](UnityDT/Assets/src/Runtime/Camera/Calibration.cs),
-  [`CamMaster.cs`](UnityDT/Assets/src/Runtime/Camera/CamMaster.cs)는 현재 Scene/Prefab에서 참조되지 않는다.
+- [`VisionDetector.cs`](../../UnityDT/Assets/src/Runtime/Camera/VisionDetector.cs),
+  [`Calibration.cs`](../../UnityDT/Assets/src/Runtime/Camera/Calibration.cs),
+  [`CamMaster.cs`](../../UnityDT/Assets/src/Runtime/Camera/CamMaster.cs)는 현재 Scene/Prefab에서 참조되지 않는다.
 - 현재 외부 `/part_detector`의 `vision_interfaces/msg/Detections`에는 부품명, class ID, 점수,
   2D 박스, 평면 각도, depth, 카메라 기준 XYZ가 있다.
 - 이 메시지에는 로봇 `base` 기준 Pose와 완전한 quaternion이 없으며, Unity 저장소에는
@@ -214,9 +214,9 @@ Real 모드에서는 오류가 났을 때 Scene의 가짜 사전 배치 부품�
 
 예상 최소 수정 범위는 다음과 같다.
 
-- [`VisionDetector.cs`](UnityDT/Assets/src/Runtime/Camera/VisionDetector.cs): batch snapshot 수신·검증·1회 적용
-- [`ItemManager.cs`](UnityDT/Assets/src/Static/ItemManager.cs): Real runtime item 생성·교체
-- [`SampleScene.unity`](UnityDT/Assets/Scenes/SampleScene.unity): Real 계층에 `VisionDetector`와 참조 연결
+- [`VisionDetector.cs`](../../UnityDT/Assets/src/Runtime/Camera/VisionDetector.cs): batch snapshot 수신·검증·1회 적용
+- [`ItemManager.cs`](../../UnityDT/Assets/src/Static/ItemManager.cs): Real runtime item 생성·교체
+- [`SampleScene.unity`](../../UnityDT/Assets/Scenes/SampleScene.unity): Real 계층에 `VisionDetector`와 참조 연결
 - 승인된 `vision_interfaces` 소스에 대응하는 Unity ROS C# 메시지 생성물
 
 `RobotMaster`, Scenario, GUI에는 좌표 변환이나 생성 로직을 넣지 않는다.

@@ -107,7 +107,7 @@
 | UR-11 / SR-16 | 구현, 재검토 | 제품 생산 가능 수량, 필요·보유·부족 수량 API가 있다. |
 | SR-12 | 부분 구현 | `POST /assemblies`와 현재 snapshot 조회만 있고 중지·일시정지·재개가 없다. |
 | DB 권한 | 부분 구현 | writer·reader 역할 SQL은 있으나 실제 계정 적용과 허용·거부 검증이 없다. |
-| `part_catalog`·`defect_report` | 스키마만 구현 | 적재·스캔·알림·대책서 실행 코드는 없다. |
+| `part_catalog`·`defect_report` | 스키마·양식·명세 구현 | 표준양식·필드매핑·조회문·`part_group_links`까지 있다. 적재·스캔·발송 실행 코드(`scan_quality.py`, 데이터시트 로더)는 없다. |
 
 ### P0 — Mock 데이터 연결
 
@@ -127,7 +127,11 @@
 
 ### P2 — 생산·품질 확장
 
-- [ ] 데이터시트 적재 경로와 `part_catalog` 갱신 책임을 확정하고 구현한다.
+- [ ] 데이터시트 적재 경로와 `part_catalog` 갱신 책임을 확정하고 구현한다. 재적재 시 `uq_part_candidates_group_mpn` 충돌을 upsert로 덮을지 새 `load_id`로 쌓을지 정한다.
+- [ ] 데이터시트 Components 시트의 `불량 소견` 열을 채운다. 현재 23행 전부 `미평가`라 「대체품」 시트가 판단 근거를 못 싣는다.
+- [ ] 데이터시트 Sources 링크 3건을 조사한다 — GPU 모듈(기존 링크가 HBM 기사), Flex PMU8218D(공식 사양 없음), YAGEO(기존 링크가 Murata 페이지).
+- [ ] `VRM` 대체 후보를 조사해 등록한다. 유일하게 후보가 없는 범주다 (`GPU` 는 OEM 단일 소스라 대체 경로 자체가 없다).
+- [ ] 조립 불량용 별지를 설계한다. `MISSING` `POSITION_ERROR` `ORIENTATION_ERROR` 는 「대체품」이 안 붙고 「판단자료 D」도 얕다 — 4종 중 3종이 여기 걸린다.
 - [ ] 품질 임계 스캔과 중복 방지된 `defect_report` 알림 생성을 구현한다.
 - [ ] 고정 evidence로 불량대책서를 생성하고 레시피 변경 전후 효과를 검증한다.
 - [ ] `part_catalog`와 `defect_report`의 쓰기·읽기 역할을 실제 필요가 확정될 때 추가한다.
@@ -159,7 +163,7 @@
 - [ ] Unity TCP, ROS `wrist3_link`, 실제 FAIRINO Tool 좌표와 배치 회전 기준을 일치시킨다.
 - [ ] 슬롯 Target·Slot ID 누락을 실행 전에 거부한다.
 
-근거와 측정값은 [좌표 도달 실패 조사 보고서](else/Report.md)에 유지한다.
+근거와 측정값은 [좌표 도달 실패 조사 보고서](docs/reports/assembly-coordinate-failure.md)에 유지한다.
 
 ### P1 — Real·비전·검사
 

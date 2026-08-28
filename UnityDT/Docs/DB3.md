@@ -39,7 +39,7 @@ PostgreSQL 인스턴스
 
 | 조인 | 키 |
 |---|---|
-| `production.parts` ↔ `part_catalog.part_groups` | `part_id` = `group_id` |
+| `production.parts` ↔ `part_catalog.part_groups` | `part_catalog.part_group_links` 경유. `part_id`와 `group_id`는 값 공간이 다르다 |
 | `defect_report.alerts` → `production.parts` | `part_id` |
 | `defect_report.alert_evidence` → `production.units` | `unit_id`, `product_slot_id` |
 | `defect_report.alert_countermeasures` → `production.jobs` | `recipe_version` |
@@ -82,6 +82,29 @@ production  ──읽기──▶  defect_report  ──읽기──▶  part_ca
 `production.parts.part_category`는 `MLCC` 같은 코드고, 여기의 `category_label`은 `캐패시터`다.
 대책서는 둘을 합쳐 `캐패시터 (MLCC)`로 출력한다.
 
+### part_group_links
+
+`production.parts.part_id`와 `part_catalog.part_groups.group_id`를 잇는다.
+두 값은 값 공간이 다르다(`CAP` vs `C-001`). 이 표가 없으면 대책서의 「대체품」과
+「판단자료 D」가 성립하지 않는다.
+
+| 칼럼 | 역할 |
+|---|---|
+| `part_id` (PK) | `production.parts.part_id`. 외래키는 걸지 않는다 |
+| `group_id` (FK) | 소속 부품 그룹 |
+| `image_path` | 부품 렌더 이미지. Unity `Assets/` 기준 상대 경로 (`UI/Icons/item-cap.png`) |
+| `load_id` (FK) | 어느 적재본에서 왔는지 |
+
+연결원은 데이터시트의 「HBM Package Board BOM」 시트 `Group ID` 열이다. 그 시트가 이미
+`part_id` 한 행 단위라 grain이 같다. Components 시트는 후보 한 행 단위라 여기에 `part_id`를
+넣으면 값이 중복된다.
+
+**소유자는 `part_catalog`다.** `production`에 컬럼을 추가하면 셀의 ROS2 계층이 소유자가 되어
+경계가 어긋난다. 데이터시트 로더가 쓰기를 소유하므로 여기에 둔다.
+
+연결이 없는 부품은 대책서 「대체품」 시트를 `해당 데이터시트 없음`으로 비우고 발행한다.
+**문서 발행이 이 연결에 막혀서는 안 된다.**
+
 ### part_candidates
 
 한 행이 하나의 구매·검증 후보다. 주품목과 대체 후보를 같은 테이블에 둔다.
@@ -98,6 +121,7 @@ production  ──읽기──▶  defect_report  ──읽기──▶  part_ca
 | `lifecycle_status` | `Active`, `사양 후보` 등 수명주기 |
 | `compatibility_status` | `승인 주품목`, `동급 후보`, `비핀호환 후보` |
 | `revalidation_items` | 필수 재검증 항목 |
+| `defect_relevance` | 특정 불량유형에 유리/불리한 소견. 사람이 채운다. 비면 대책서에 `미평가`로 인쇄된다 |
 | `source_id` (FK) | 근거 출처 |
 | `note` | 비고 |
 
@@ -173,14 +197,14 @@ production  ──읽기──▶  defect_report  ──읽기──▶  part_ca
 
 부품·유형별 기준이 없으면 NULL 행의 기본값으로 내려간다. 가장 구체적인 행이 이긴다.
 
-### defect_alerts
+### alerts
 
 발행된 대책서 한 건. **집계값을 스냅샷으로 저장한다.**
 
 | 칼럼 | 역할 |
 |---|---|
 | `alert_id` (PK) | 내부 식별자 |
-| `alert_code` | `QA-ALERT-C-001-20260819-001`. 중복 불가 |
+| `alert_code` | `QA-CAP-CRACK-20260819-001`. `QA-{part_id}-{defect_type}-{YYYYMMDD}-{NNN}`. 중복 불가 |
 | `trigger_type` | `THRESHOLD` 또는 `QUARTERLY` |
 | `part_id`, `defect_type` | 대상 부품과 불량 유형 |
 | `threshold_id` (FK) | 적용된 기준 |
@@ -200,8 +224,10 @@ production  ──읽기──▶  defect_report  ──읽기──▶  part_ca
 이 제약이 중복 발송을 막는다. 임계를 넘긴 상태는 담당자가 조치를 끝낼 때까지 계속 넘어간
 상태로 남기 때문에, 이 제약이 없으면 스캐너를 돌릴 때마다 같은 문서가 재발행된다.
 
-담당자가 작성하는 원인·대책 본문은 저장하지 않는다. 결재가 xlsx로 돌므로 `document_path`만
-남긴다. `production.units.inspection_image_path`와 같은 방식이다.
+회신본 원본은 xlsx로 돌므로 `document_path`를 남긴다
+(`production.units.inspection_image_path`와 같은 방식이다). 다만 ①②③⑥ **요약은 컬럼으로
+받는다.** 재발 시 「판단자료 C」가 과거 대책서를 그대로 읽어야 하는데, 본문이 파일에만 있으면
+그 표가 문서번호와 상태만 남고 비어 버린다. 루프를 닫는 것이 이 스키마의 목적이다.
 
 ### alert_evidence
 
@@ -228,12 +254,16 @@ production  ──읽기──▶  defect_report  ──읽기──▶  part_ca
 |---|---|
 | `countermeasure_id` (PK) | 식별자 |
 | `alert_id` (FK) | 소속 대책서 |
-| `root_cause_summary` | 확정된 근본 원인 요약 |
+| `containment_summary` | ① 초동 조치 — 격리·선별·출하보류 범위와 완료 시각 |
+| `root_cause_summary` | ② 발생 원인. 확정된 근본 원인 요약 |
+| `escape_cause_summary` | ③ 유출 원인 — 왜 검사에서 걸리지 않았는가 |
 | `applied_recipe_version` | 대책 적용 후 실행한 레시피 버전 |
 | `applied_at` | 적용 시각 |
 | `verification_status` | `PENDING`, `EFFECTIVE`, `INEFFECTIVE` |
 | `verified_inspected_quantity`, `verified_defective_quantity`, `verified_defect_rate` | 검증 집계 |
 | `verified_at` | 검증 확정 시각 |
+| `closure_note` | ⑥ 종결 의견. 잔여 위험과 승인 의견 |
+| `closed_by` | 종결 처리자 |
 
 `applied_recipe_version`은 `production.jobs.recipe_version`을 가리킨다. 이 값이 있어야
 대책 적용 전후 불량률을 같은 제품 안에서 비교할 수 있다.
@@ -453,7 +483,7 @@ DEFAULT now()`를 추가하고 워터마크를 사건 시각이 아니라 쓰기
 ```text
 part_catalog.datasheet_loads
   load_id (PK)
-  source_file        semiconductor_assembly_quality_datasheet_2026-08-13.xlsx
+  source_file        semiconductor_assembly_quality_datasheet_2026-08-18.xlsx
   source_dated_on    데이터시트 기준일
   loaded_at
   row_counts         시트별 적재 행 수

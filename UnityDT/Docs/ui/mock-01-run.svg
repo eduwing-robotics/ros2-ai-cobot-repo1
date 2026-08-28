@@ -16,11 +16,12 @@
       <feDropShadow dx="0" dy="6" stdDeviation="14" flood-color="#04070a" flood-opacity=".45"/>
     </filter>
     <style>
-      text { font-family: Inter, Pretendard, "Noto Sans KR", system-ui, sans-serif; }
-      .mi { fill:#60707c; font-size:11px; letter-spacing:1.2px; font-weight:700 }
+      text { font-family: Inter, Pretendard, "Noto Sans CJK KR", "Noto Sans KR", system-ui, sans-serif; font-kerning:normal; font-variant-numeric:tabular-nums; text-rendering:geometricPrecision; }
+      svg { shape-rendering:geometricPrecision; }
+      .mi { fill:#8494a0; font-size:11px; letter-spacing:1.2px; font-weight:700 }
       .lb { fill:#93a5b2; font-size:12px; letter-spacing:1.4px; font-weight:700 }
-      .bd { fill:#93a5b2; font-size:15px }
-      .mu { fill:#60707c; font-size:13px }
+      .bd { fill:#e2ecf1; font-size:15px }
+      .mu { fill:#8494a0; font-size:13px }
       .vl { fill:#e2ecf1;  font-size:20px; font-weight:700 }
       .v2 { fill:#e2ecf1;  font-size:28px; font-weight:700; letter-spacing:-.3px }
       .dp { fill:#e2ecf1;  font-size:52px; font-weight:800; letter-spacing:-2px }
@@ -112,7 +113,7 @@
 <circle cx="554" cy="42" r="3.5" fill="#8fa6b4"/>
 <text x="564" y="46" class="bd" font-size="13">board/image</text>
 <text x="712" y="46" text-anchor="end" class="mu" font-size="12">68 ms</text>
-<circle cx="724" cy="42" r="3.5" fill="#60707c"/>
+<circle cx="724" cy="42" r="3.5" fill="#8494a0"/>
 <text x="734" y="46" class="bd" font-size="13">assembly/fb</text>
 <text x="882" y="46" text-anchor="end" class="mu" font-size="12">idle</text>
 <text x="900" y="24" class="mi">JOB</text>
@@ -136,19 +137,19 @@
 <text x="44.0" y="90" text-anchor="middle" class="mi" font-size="10">PAGE</text>
 <rect x="0" y="108" width="88" height="80" fill="#facc33" fill-opacity=".14"/>
 <rect x="0" y="108" width="3" height="80" fill="#facc33"/>
-<rect x="31.0" y="124" width="26" height="26" fill="none" stroke="#facc33" stroke-opacity=".95" stroke-width="1.6"/>
+<rect x="31.0" y="124" width="26" height="26" rx="6" fill="none" stroke="#facc33" stroke-opacity=".95" stroke-width="1.6"/>
 <text x="44.0" y="166" text-anchor="middle" fill="#facc33" font-size="10.5" font-weight="800" letter-spacing="0.8">RUN</text>
 <text x="44.0" y="180" text-anchor="middle" class="mi" font-size="10">운전</text>
-<rect x="31.0" y="216" width="26" height="26" fill="none" stroke="#60707c" stroke-opacity=".55" stroke-width="1.6"/>
+<rect x="31.0" y="216" width="26" height="26" rx="6" fill="none" stroke="#8494a0" stroke-opacity=".55" stroke-width="1.6"/>
 <text x="44.0" y="258" text-anchor="middle" fill="#93a5b2" font-size="10.5" font-weight="800" letter-spacing="0.8">INSPECT</text>
 <text x="44.0" y="272" text-anchor="middle" class="mi" font-size="10">검사</text>
-<rect x="31.0" y="308" width="26" height="26" fill="none" stroke="#60707c" stroke-opacity=".55" stroke-width="1.6"/>
+<rect x="31.0" y="308" width="26" height="26" rx="6" fill="none" stroke="#8494a0" stroke-opacity=".55" stroke-width="1.6"/>
 <text x="44.0" y="350" text-anchor="middle" fill="#93a5b2" font-size="10.5" font-weight="800" letter-spacing="0.8">MANUAL</text>
 <text x="44.0" y="364" text-anchor="middle" class="mi" font-size="10">수동</text>
-<rect x="31.0" y="400" width="26" height="26" fill="none" stroke="#60707c" stroke-opacity=".55" stroke-width="1.6"/>
+<rect x="31.0" y="400" width="26" height="26" rx="6" fill="none" stroke="#8494a0" stroke-opacity=".55" stroke-width="1.6"/>
 <text x="44.0" y="442" text-anchor="middle" fill="#93a5b2" font-size="10.5" font-weight="800" letter-spacing="0.8">QUALITY</text>
 <text x="44.0" y="456" text-anchor="middle" class="mi" font-size="10">품질</text>
-<rect x="31.0" y="492" width="26" height="26" fill="none" stroke="#60707c" stroke-opacity=".55" stroke-width="1.6"/>
+<rect x="31.0" y="492" width="26" height="26" rx="6" fill="none" stroke="#8494a0" stroke-opacity=".55" stroke-width="1.6"/>
 <text x="44.0" y="534" text-anchor="middle" fill="#93a5b2" font-size="10.5" font-weight="800" letter-spacing="0.8">SETUP</text>
 <text x="44.0" y="548" text-anchor="middle" class="mi" font-size="10">설정</text>
 <line x1="0" y1="984" x2="88" y2="984" stroke="#ffffff" stroke-opacity=".09"/>
@@ -161,7 +162,7 @@
 <text x="470" y="113" text-anchor="end" class="mi">휘발 · 표시 전용</text>
 <rect x="130" y="155" width="2" height="11" fill="#facc33" fill-opacity=".8"/>
 <text x="140" y="164" class="mi">TCP</text>
-<text x="466" y="164" text-anchor="end" class="mi" fill="#60707c">mm · base</text>
+<text x="466" y="164" text-anchor="end" class="mi" fill="#8494a0">mm · base</text>
 <text x="130" y="192" class="mu" font-size="12">X</text>
 <text x="146" y="192" class="vl">412.6</text>
 <text x="242" y="192" class="mu" font-size="12">Y</text>
@@ -171,7 +172,7 @@
 <line x1="130" y1="218" x2="466" y2="218" stroke="#ffffff" stroke-opacity=".09"/>
 <rect x="130" y="251" width="2" height="11" fill="#facc33" fill-opacity=".8"/>
 <text x="140" y="260" class="mi">RPY</text>
-<text x="466" y="260" text-anchor="end" class="mi" fill="#60707c">deg</text>
+<text x="466" y="260" text-anchor="end" class="mi" fill="#8494a0">deg</text>
 <text x="130" y="286" class="mu" font-size="12">R</text>
 <text x="146" y="286" fill="#e2ecf1" font-size="17" font-weight="700">179.4</text>
 <text x="242" y="286" class="mu" font-size="12">P</text>
@@ -181,7 +182,7 @@
 <line x1="130" y1="310" x2="466" y2="310" stroke="#ffffff" stroke-opacity=".09"/>
 <rect x="130" y="343" width="2" height="11" fill="#facc33" fill-opacity=".8"/>
 <text x="140" y="352" class="mi">JOINTS</text>
-<text x="466" y="352" text-anchor="end" class="mi" fill="#60707c">deg · 리미트 대비</text>
+<text x="466" y="352" text-anchor="end" class="mi" fill="#8494a0">deg · 리미트 대비</text>
 <text x="130" y="384" class="mu" font-size="12">J1</text>
 <rect x="156" y="378" width="208" height="7" fill="rgba(255,255,255,0.07)"/>
 <rect x="156" y="378" width="104.0" height="7" fill="#8fa6b4"/>
@@ -227,7 +228,7 @@
 <line x1="130" y1="594" x2="466" y2="594" stroke="#ffffff" stroke-opacity=".09"/>
 <rect x="130" y="627" width="2" height="11" fill="#facc33" fill-opacity=".8"/>
 <text x="140" y="636" class="mi">GRIPPER</text>
-<text x="466" y="636" text-anchor="end" class="mi" fill="#60707c">mm</text>
+<text x="466" y="636" text-anchor="end" class="mi" fill="#8494a0">mm</text>
 <rect x="130" y="650" width="74" height="22" fill="#facc33" fill-opacity=".14" stroke="#facc33" stroke-opacity=".5"/>
 <text x="167.0" y="665.0" text-anchor="middle" fill="#facc33" font-size="11" font-weight="700" letter-spacing="1.1">HOLDING</text>
 <text x="466" y="668" text-anchor="end" class="v2">18.4 <tspan class="mu" font-size="14">/ 40</tspan></text>
@@ -244,7 +245,7 @@
 <line x1="130" y1="730" x2="466" y2="730" stroke="#ffffff" stroke-opacity=".09"/>
 <rect x="130" y="761" width="2" height="11" fill="#facc33" fill-opacity=".8"/>
 <text x="140" y="770" class="mi">WATCHDOG</text>
-<text x="466" y="770" text-anchor="end" class="mi" fill="#60707c">ms</text>
+<text x="466" y="770" text-anchor="end" class="mi" fill="#8494a0">ms</text>
 <circle cx="136" cy="794" r="3.5" fill="#8fa6b4"/>
 <text x="150" y="798" fill="#e2ecf1" font-size="15" font-weight="700">OK</text>
 <text x="466" y="798" text-anchor="end" class="mu" font-size="13">31 / 50</text>
@@ -264,7 +265,7 @@
 <text x="1542" y="180" class="mu" font-size="12">PRD-A · v3   ·   recipe mock-r1</text>
 <line x1="1542" y1="196" x2="1878" y2="196" stroke="#ffffff" stroke-opacity=".09"/>
 <text x="1542" y="258" class="dp">6</text>
-<text x="1604" y="258" fill="#60707c" font-size="26" font-weight="700">/ 10</text>
+<text x="1604" y="258" fill="#8494a0" font-size="26" font-weight="700">/ 10</text>
 <rect x="1782" y="216" width="96" height="24" fill="#ffffff" fill-opacity=".04" stroke="#ffffff" stroke-opacity=".16"/>
 <text x="1830.0" y="232.0" text-anchor="middle" fill="#93a5b2" font-size="11" font-weight="700" letter-spacing="1.1">RUNNING</text>
 <text x="1878" y="254" text-anchor="end" class="mu" font-size="12">잔여 4대</text>
@@ -285,7 +286,7 @@
 <line x1="1542" y1="352" x2="1878" y2="352" stroke="#ffffff" stroke-opacity=".09"/>
 <rect x="1542" y="373" width="2" height="11" fill="#facc33" fill-opacity=".8"/>
 <text x="1552" y="382" class="mi">CURRENT UNIT</text>
-<text x="1878" y="382" text-anchor="end" class="mi" fill="#60707c">unit_phase</text>
+<text x="1878" y="382" text-anchor="end" class="mi" fill="#8494a0">unit_phase</text>
 <text x="1542" y="414" class="v2" font-size="24">ASSEMBLED</text>
 <text x="1878" y="414" text-anchor="end" class="mu" font-size="12">seq 7 / 10</text>
 <text x="1542" y="438" class="bd" font-size="13">step 5 / 8   ·   slot <tspan class="ac" font-weight="700">SK_HYNIX-01</tspan></text>
@@ -328,14 +329,14 @@
 <circle cx="899.4285714285714" cy="986" r="6" fill="#facc33"/>
 <text x="899" y="1012" text-anchor="middle" fill="#facc33" font-size="12" font-weight="700" letter-spacing="1.1">TRANSFER</text>
 <text x="899" y="1030" text-anchor="middle" class="mu" font-size="11">18.2s</text>
-<circle cx="1086.2857142857142" cy="986" r="3.5" fill="#60707c"/>
-<text x="1086" y="1012" text-anchor="middle" fill="#60707c" font-size="12" font-weight="700" letter-spacing="1.1">PLACE</text>
+<circle cx="1086.2857142857142" cy="986" r="3.5" fill="#8494a0"/>
+<text x="1086" y="1012" text-anchor="middle" fill="#8494a0" font-size="12" font-weight="700" letter-spacing="1.1">PLACE</text>
 <text x="1086" y="1030" text-anchor="middle" class="mu" font-size="11">—</text>
-<circle cx="1273.142857142857" cy="986" r="3.5" fill="#60707c"/>
-<text x="1273" y="1012" text-anchor="middle" fill="#60707c" font-size="12" font-weight="700" letter-spacing="1.1">INSPECT</text>
+<circle cx="1273.142857142857" cy="986" r="3.5" fill="#8494a0"/>
+<text x="1273" y="1012" text-anchor="middle" fill="#8494a0" font-size="12" font-weight="700" letter-spacing="1.1">INSPECT</text>
 <text x="1273" y="1030" text-anchor="middle" class="mu" font-size="11">—</text>
-<circle cx="1460.0" cy="986" r="3.5" fill="#60707c"/>
-<text x="1460" y="1012" text-anchor="end" fill="#60707c" font-size="12" font-weight="700" letter-spacing="1.1">RETURN</text>
+<circle cx="1460.0" cy="986" r="3.5" fill="#8494a0"/>
+<text x="1460" y="1012" text-anchor="end" fill="#8494a0" font-size="12" font-weight="700" letter-spacing="1.1">RETURN</text>
 <text x="1460" y="1030" text-anchor="end" class="mu" font-size="11">—</text>
 <rect x="1524" y="920" width="372" height="136" fill="#0a0f14" fill-opacity=".93" stroke="#ffffff" stroke-opacity=".09" filter="url(#drop)"/>
 <rect x="1524" y="920" width="3" height="136" fill="#facc33" fill-opacity=".45"/>
@@ -346,13 +347,13 @@
 <text x="1648" y="974" fill="#93a5b2" font-size="11">보정 적용 X +0.18 / Y −0.24</text>
 <text x="1542" y="994" class="mu" font-size="11">10:42:01</text>
 <text x="1600" y="994" class="mi" font-size="10">ROS</text>
-<text x="1648" y="994" fill="#60707c" font-size="11">PICK approach complete</text>
+<text x="1648" y="994" fill="#8494a0" font-size="11">PICK approach complete</text>
 <text x="1542" y="1014" class="mu" font-size="11">10:41:25</text>
 <text x="1600" y="1014" class="mi" font-size="10">ROS</text>
-<text x="1648" y="1014" fill="#60707c" font-size="11">goal accepted · mock-r1</text>
+<text x="1648" y="1014" fill="#8494a0" font-size="11">goal accepted · mock-r1</text>
 <text x="1542" y="1034" class="mu" font-size="11">10:41:02</text>
 <text x="1600" y="1034" class="mi" font-size="10">UI</text>
-<text x="1648" y="1034" fill="#60707c" font-size="11">shadow follow enabled</text>
+<text x="1648" y="1034" fill="#8494a0" font-size="11">shadow follow enabled</text>
 <rect x="826" y="88" width="356" height="34" fill="#0a0f14" fill-opacity=".93" stroke="#ffffff" stroke-opacity=".12"/>
 <rect x="832.0" y="93" width="82" height="24" fill="#facc33" fill-opacity=".16" stroke="#facc33" stroke-opacity=".55"/>
 <text x="873.0" y="109" text-anchor="middle" fill="#facc33" font-size="11" font-weight="700" letter-spacing="1.4">OVERVIEW</text>
