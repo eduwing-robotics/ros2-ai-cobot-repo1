@@ -95,6 +95,7 @@ namespace MainUnity.UI
             public VisualElement Root;
             public Label Age;
             public Button Chip;
+            public Image Image;
         }
 
         readonly CamTile[] camTiles =
@@ -201,51 +202,71 @@ namespace MainUnity.UI
             camExpandButton = root.Q<Button>("cam-expand");
 
             UnbindCamera();
+            bool mock = uiMaster == null || uiMaster.IsSimulated;
+            SetMockCameras(false, false);
             foreach (CamTile tile in camTiles)
             {
                 tile.Root = root.Q<VisualElement>("cam-tile-" + tile.Index);
                 tile.Age = root.Q<Label>("cam-age-" + tile.Index);
                 tile.Chip = root.Q<Button>("cam-chip-" + tile.Index);
+                tile.Image = root.Q<Image>("cam-image-" + tile.Index);
+                bool supported = !mock || tile.Index <= 2;
+                if (mock && !supported) tile.On = false;
 
                 Label title = root.Q<Label>("cam-title-" + tile.Index);
-                if (title != null) title.text = tile.Title;
-
-                var image = root.Q<Image>("cam-image-" + tile.Index);
-
-                // 칸마다 수신기를 하나씩 붙인다. 하나로 돌려 쓰면 칸을 바꿀 때마다
-                // 구독을 갈아타야 하고, 그러면 여러 칸을 동시에 볼 수 없다.
-                //
-                // CamVisionReceiver 는 DisallowMultipleComponent 라 한 오브젝트에
-                // 둘을 못 붙인다. 칸마다 자식 오브젝트를 만들어 하나씩 얹는다.
-                //
-                // 이름으로 먼저 찾는다. 도메인 리로드로 바인더 인스턴스가 새로 생기면
-                // 필드는 비지만 앞서 만든 자식 오브젝트는 씬에 남아 있다. 확인 없이
-                // 만들면 실행할수록 수신기가 늘어 같은 토픽을 여러 번 구독하게 된다.
-                if (tile.Receiver == null)
+                if (title != null)
+                    title.text = mock && supported ? (tile.Index == 1 ? "ROBOT" : "BOARD") : tile.Title;
+                if (tile.Chip != null)
                 {
-                    string hostName = "CamReceiver " + tile.Index;
-                    Transform found = transform.Find(hostName);
-                    if (found != null)
+                    tile.Chip.style.display = supported ? DisplayStyle.Flex : DisplayStyle.None;
+                    if (mock && supported)
                     {
-                        tile.Receiver = found.GetComponent<CamVisionReceiver>();
-                    }
-                    if (tile.Receiver == null)
-                    {
-                        var host = found != null ? found.gameObject : new GameObject(hostName);
-                        host.transform.SetParent(transform, false);
-                        tile.Receiver = host.AddComponent<CamVisionReceiver>();
-                        tile.Receiver.Configure(GetComponent<UIDocument>(), tile.Topic, "cam-image-" + tile.Index);
+                        Label chipText = tile.Chip.Q<Label>();
+                        if (chipText != null)
+                            chipText.text = tile.Index == 1 ? "ROBOT" : "BOARD";
                     }
                 }
+                if (!supported) continue;
 
-                // 토픽이 바뀌었으면 갈아탄다. 이름으로 되찾은 수신기는 이전 토픽을
-                // 물고 있을 수 있다.
-                tile.Receiver.TrySetTopic(tile.Topic);
+                if (mock)
+                {
+                    if (tile.Image != null) tile.Image.image = GetMockTexture(tile);
+                }
+                else
+                {
+                    // 칸마다 수신기를 하나씩 붙인다. 하나로 돌려 쓰면 칸을 바꿀 때마다
+                    // 구독을 갈아타야 하고, 그러면 여러 칸을 동시에 볼 수 없다.
+                    //
+                    // CamVisionReceiver 는 DisallowMultipleComponent 라 한 오브젝트에
+                    // 둘을 못 붙인다. 칸마다 자식 오브젝트를 만들어 하나씩 얹는다.
+                    //
+                    // 이름으로 먼저 찾는다. 도메인 리로드로 바인더 인스턴스가 새로 생기면
+                    // 필드는 비지만 앞서 만든 자식 오브젝트는 씬에 남아 있다. 확인 없이
+                    // 만들면 실행할수록 수신기가 늘어 같은 토픽을 여러 번 구독하게 된다.
+                    if (tile.Receiver == null)
+                    {
+                        string hostName = "CamReceiver " + tile.Index;
+                        Transform found = transform.Find(hostName);
+                        if (found != null)
+                            tile.Receiver = found.GetComponent<CamVisionReceiver>();
+                        if (tile.Receiver == null)
+                        {
+                            var host = found != null ? found.gameObject : new GameObject(hostName);
+                            host.transform.SetParent(transform, false);
+                            tile.Receiver = host.AddComponent<CamVisionReceiver>();
+                            tile.Receiver.Configure(GetComponent<UIDocument>(), tile.Topic, "cam-image-" + tile.Index);
+                        }
+                    }
 
-                // 페이지를 껐다 켜면 UIDocument 가 비주얼 트리를 새로 만든다.
-                // 수신기가 Start 에서 잡아 둔 Image 는 버려진 트리에 남으므로,
-                // 화면을 다시 세우는 이쪽에서 새 Image 를 넘긴다.
-                tile.Receiver.SetTargetImage(image);
+                    // 토픽이 바뀌었으면 갈아탄다. 이름으로 되찾은 수신기는 이전 토픽을
+                    // 물고 있을 수 있다.
+                    tile.Receiver.TrySetTopic(tile.Topic);
+
+                    // 페이지를 껐다 켜면 UIDocument 가 비주얼 트리를 새로 만든다.
+                    // 수신기가 Start 에서 잡아 둔 Image 는 버려진 트리에 남으므로,
+                    // 화면을 다시 세우는 이쪽에서 새 Image 를 넘긴다.
+                    tile.Receiver.SetTargetImage(tile.Image);
+                }
 
                 CamTile captured = tile;
                 if (tile.Chip != null) tile.Chip.clicked += () => ToggleCamTile(captured);
@@ -258,7 +279,11 @@ namespace MainUnity.UI
             if (camExpandButton != null) camExpandButton.clicked -= ToggleCamExpand;
         }
 
-        void OnDisable() => UnbindCamera();
+        void OnDisable()
+        {
+            UnbindCamera();
+            SetMockCameras(false, false);
+        }
 
         void ToggleCamExpand() => camExpanded = !camExpanded;
 
@@ -267,6 +292,8 @@ namespace MainUnity.UI
         /// </summary>
         void ToggleCamTile(CamTile tile)
         {
+            if ((uiMaster == null || uiMaster.IsSimulated) && tile.Index > 2)
+                return;
             if (tile.On)
             {
                 int on = 0;
@@ -284,6 +311,10 @@ namespace MainUnity.UI
         {
             if (camGrid == null) return;
 
+            bool mock = uiMaster == null || uiMaster.IsSimulated;
+            SetMockCameras(
+                mock && camTiles[0].On && GetMockTexture(camTiles[0]) != null,
+                mock && camTiles[1].On && GetMockTexture(camTiles[1]) != null);
             camExpandButton?.EnableInClassList("chip--accent", camExpanded);
             camPanel?.EnableInClassList("run-cam-panel--expanded", camExpanded);
 
@@ -305,6 +336,20 @@ namespace MainUnity.UI
                 tile.Root.style.width = Length.Percent(w);
                 tile.Root.style.height = Length.Percent(h);
 
+                if (mock)
+                {
+                    RenderTexture texture = GetMockTexture(tile);
+                    if (tile.Image != null) tile.Image.image = texture;
+                    bool assigned = texture != null;
+                    if (assigned) live++;
+                    if (tile.Age != null)
+                    {
+                        tile.Age.text = assigned ? "SIM" : "카메라 미할당";
+                        tile.Age.EnableInClassList("run-cam-tile__age--late", !assigned);
+                    }
+                    continue;
+                }
+
                 bool received = tile.Receiver != null && tile.Receiver.HasReceivedImage;
                 double age = received ? now - tile.Receiver.LastReceiveTimeSeconds : -1d;
                 bool late = !received || age > CamStaleSeconds;
@@ -318,8 +363,26 @@ namespace MainUnity.UI
             }
 
             if (camBadge != null)
-                camBadge.text = live + " / " + visible + " 수신 중";
+                camBadge.text = mock ? live + " / " + visible + " SIM" :
+                    live + " / " + visible + " 수신 중";
         }
+
+        RenderTexture GetMockTexture(CamTile tile)
+        {
+            UnityEngine.Camera camera = tile.Index == 1 ? robotCamCamera : boardCamCamera;
+            if (camera == null) return null;
+
+            RenderTexture assigned = tile.Index == 1 ? robotCamTexture : boardCamTexture;
+            if (assigned != null) camera.targetTexture = assigned;
+            return assigned != null ? assigned : camera.targetTexture;
+        }
+
+        void SetMockCameras(bool robotOn, bool boardOn)
+        {
+            if (robotCamCamera != null) robotCamCamera.enabled = robotOn;
+            if (boardCamCamera != null) boardCamCamera.enabled = boardOn;
+        }
+
 
         void BuildSparklines(VisualElement root)
         {

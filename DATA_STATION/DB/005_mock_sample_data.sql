@@ -24,6 +24,37 @@ INSERT INTO mock_sample_jobs VALUES
     ('mock-sample-assembly-failed-202608-r1', 1, 'FAILED',
      TIMESTAMPTZ '2026-08-16 15:00:00+09', TIMESTAMPTZ '2026-08-16 15:01:00+09', TIMESTAMPTZ '2026-08-16 15:05:00+09');
 
+-- What changed in each recipe version. The countermeasure report's auto-analysis
+-- line ② quotes change_note verbatim; with no row it drops the '변경 내용' clause
+-- rather than inventing one. Nothing computes these -- a person writes them.
+INSERT INTO production.recipe_versions (recipe_version, change_note, applied_at)
+VALUES
+    ('mock-sample-pass-202608-r1',
+     '기준 레시피 — 배치 하강속도 18 mm/s · 그리퍼 파지력 3.0 N',
+     TIMESTAMPTZ '2026-08-08 09:00:00+09'),
+    ('mock-sample-fail-202608-r1',
+     '배치 하강속도 18 → 32 mm/s · 그리퍼 파지력 3.0 → 4.0 N 동시 상향',
+     TIMESTAMPTZ '2026-08-12 13:00:00+09'),
+    ('mock-sample-assembly-failed-202608-r1',
+     '피더 교체 후 시험 실행 — 파라미터 변경 없음',
+     TIMESTAMPTZ '2026-08-16 15:00:00+09')
+ON CONFLICT (recipe_version) DO NOTHING;
+
+-- The versions the sample countermeasure report tells its story with. They have
+-- no production.jobs rows -- that is why recipe_versions carries no foreign key.
+-- Seeding them lets the sample document be regenerated from this database.
+INSERT INTO production.recipe_versions (recipe_version, change_note, applied_at)
+VALUES
+    ('mock-v2', '기준 레시피 — 배치 하강속도 18 mm/s · 그리퍼 파지력 3.0 N',
+     TIMESTAMPTZ '2026-08-01 09:00:00+09'),
+    ('mock-v3', '그리퍼 파지력 상향 · 배치 하강속도 상향',
+     TIMESTAMPTZ '2026-08-16 09:00:00+09'),
+    ('mock-v3h', '배치 하강속도만 mock-v2 값으로 되돌린 임시 레시피',
+     TIMESTAMPTZ '2026-08-19 10:50:00+09'),
+    ('mock-v4', '하강속도 20 mm/s · 파지력 3.2 N 확정 (ECN-2608-114)',
+     TIMESTAMPTZ '2026-08-29 09:00:00+09')
+ON CONFLICT (recipe_version) DO NOTHING;
+
 CREATE TEMP TABLE mock_sample_units (
     recipe_version text NOT NULL REFERENCES mock_sample_jobs(recipe_version),
     unit_sequence_in_job integer NOT NULL,

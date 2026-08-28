@@ -17,13 +17,17 @@ namespace MainUnity.Runtime.RobotGhost
         public GameObject GetOrCreateGhost()
         {
             if (ghostInstance != null)
+            {
+                ConfigurePreviewOnly(ghostInstance);
                 return ghostInstance;
+            }
 
             Transform parent = ghostParent != null ? ghostParent : transform;
             Transform existing = parent.Find("Ghost");
             if (existing != null)
             {
                 ghostInstance = existing.gameObject;
+                ConfigurePreviewOnly(ghostInstance);
                 return ghostInstance;
             }
 
@@ -56,6 +60,8 @@ namespace MainUnity.Runtime.RobotGhost
 
         void ConfigurePreviewOnly(GameObject ghost)
         {
+            if (ghostMaterial == null)
+                return;
             foreach (MonoBehaviour behaviour in ghost.GetComponentsInChildren<MonoBehaviour>(true))
                 behaviour.enabled = false;
             foreach (Collider collider in ghost.GetComponentsInChildren<Collider>(true))
@@ -66,8 +72,10 @@ namespace MainUnity.Runtime.RobotGhost
                 if (body.isRoot)
                     body.immovable = true;
             }
+            int previewLayer = LayerMask.NameToLayer("TransparentFX");
             foreach (Renderer renderer in ghost.GetComponentsInChildren<Renderer>(true))
             {
+                renderer.gameObject.layer = previewLayer;
                 Material[] materials = renderer.sharedMaterials;
                 Array.Fill(materials, ghostMaterial);
                 renderer.sharedMaterials = materials;

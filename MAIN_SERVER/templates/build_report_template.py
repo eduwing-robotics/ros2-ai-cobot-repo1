@@ -1,7 +1,17 @@
 # -*- coding: utf-8 -*-
+# /// script
+# requires-python = ">=3.10"
+# dependencies = [
+#     "openpyxl>=3.1",   # CellRichText 는 3.1 부터다
+#     "pillow>=10",      # 표지 부품 이미지. 없으면 그림 없이 발행된다
+# ]
+# ///
 """불량대책서 표준양식과 샘플을 한 정의에서 생성한다.
 
-    python3 MAIN_SERVER/templates/build_report_template.py
+    uv run MAIN_SERVER/templates/build_report_template.py
+
+의존성은 위 PEP 723 블록에 적혀 있어 uv 가 알아서 받는다. 이 저장소의 .venv 에는
+openpyxl 이 없고, 문서 양식을 뽑자고 서버 환경에 넣을 이유도 없다.
 
 두 파일이 따로 편집되면서 어긋나 있었다. 여기서 같이 만든다.
 표준양식은 `{{token}}`을 그대로 두고, 샘플은 같은 자리에 값을 넣는다.
@@ -227,7 +237,7 @@ def lock_sheet(ws, allow_filter=True):
 # (정의된 이름, 셀, 안내 제목, 안내 본문) — DB 컬럼과 1:1
 REPLY_CELLS = [
     (
-        "reply_containment_scope", "B25", "① 협조가 필요한 조치",
+        "reply_containment_scope", "대책서", "B21", "① 협조가 필요한 조치",
         "담당자 혼자 결정할 수 없는 항목이다. 해당하는 것의 ☐ 를 ☑ 로 바꾸고,\n"
         "아래 칸에 누구에게 언제 요청했는지 적는다.\n\n"
         "생산 중단 → 생산팀장 · 출하 보류 → 영업/물류 · 재고 선별 → 인력 투입 승인\n"
@@ -235,7 +245,7 @@ REPLY_CELLS = [
         "→ containment_summary 첫 줄로 함께 저장된다",
     ),
     (
-        "reply_containment", "B26", "① 초동 조치 — 오늘 안에",
+        "reply_containment", "대책서", "B22", "① 초동 조치 — 오늘 안에",
         "격리·선별·출하보류 범위와 완료 시각을 적는다.\n"
         "영향 받는 job_id / unit_id 범위를 함께 적는다.\n\n"
         "원인이 안 나와도 오늘 회신한다. 여기는 '막았는지'만 쓰는 칸이다.\n"
@@ -243,20 +253,27 @@ REPLY_CELLS = [
         "→ alert_countermeasures.containment_summary",
     ),
     (
-        "reply_root_cause", "B29", "② 발생 원인 — 왜 만들어졌는가",
+        "reply_root_cause_label", "대책서", "B25", "② 발생 원인 — 한 줄 요약 (40자)",
+        "아래 본문을 한 줄로 줄인 것. 예: '배치 하강속도 상향 + 지지 핀 최원거리 슬롯'\n\n"
+        "이 부품·유형이 다시 나면, 다음 대책서의 자동 분석 ③ 줄이 이 칸을 그대로 읽어\n"
+        "'과거 원인'으로 싣는다. 본문은 길어서 그 자리에 들어가지 않는다.\n"
+        "→ alert_countermeasures.root_cause_label",
+    ),
+    (
+        "reply_root_cause", "대책서", "B26", "② 발생 원인 — 왜 만들어졌는가",
         "「판단자료」 A·B로 급증 시점과 레시피 변경 시점을 대조한다.\n"
         "재현 또는 실물 확인으로 검증한 근거를 적는다.\n"
         "가설이면 '가설'이라고 표시한다.\n"
         "→ alert_countermeasures.root_cause_summary",
     ),
     (
-        "reply_escape_cause", "B32", "③ 유출 원인 — 왜 검사에서 걸리지 않았는가",
+        "reply_escape_cause", "대책서", "B28", "③ 유출 원인 — 왜 검사에서 걸리지 않았는가",
         "「판단자료」 D의 검사 항목과 대조해 판정 기준의 한계를 적는다.\n"
         "검사를 안 한 것인지, 했는데 못 걸른 것인지 구분한다.\n"
         "→ alert_countermeasures.escape_cause_summary",
     ),
     (
-        "reply_prevention", "B35", "④ 재발방지 대책 — 원인을 제거하는 영구대책",
+        "reply_prevention", "대책서", "B31", "④ 재발방지 대책 — 원인을 제거하는 영구대책",
         "레시피·공정조건을 바꾸면 변경 후 recipe_version을 적는다.\n"
         "부품을 바꾸면 「대체품」 시트의 대체코드를 적는다.\n"
         "동일 부품을 쓰는 다른 슬롯으로의 수평전개 여부를 포함한다.\n\n"
@@ -265,42 +282,42 @@ REPLY_CELLS = [
         "→ alert_countermeasures.applied_recipe_version / applied_at",
     ),
     (
-        "reply_verify_period", "B39", "⑤ 검증 기간",
+        "reply_verify_period", "검증", "B5", "⑤ 검증 기간",
         "대책을 적용하고 다시 집계한 구간. [시작, 끝) 으로 적는다.\n"
         "검증 물량이 기준 최소 건수를 넘어야 판정할 수 있다.",
     ),
     (
-        "reply_verify_recipe", "D39", "⑤ 적용 레시피",
+        "reply_verify_recipe", "검증", "D5", "⑤ 적용 레시피",
         "대책을 적용한 뒤 실행한 recipe_version.\n"
         "이 값이 있어야 적용 전후를 같은 제품 안에서 비교할 수 있다.\n"
         "→ alert_countermeasures.applied_recipe_version",
     ),
     (
-        "reply_verify_inspected", "E39", "⑤ 검증 검사 수량",
+        "reply_verify_inspected", "검증", "E5", "⑤ 검증 검사 수량",
         "부품 기준 검사 건수 (유닛 수 × 해당 부품 슬롯 수).\n"
         "→ alert_countermeasures.verified_inspected_quantity",
     ),
     (
-        "reply_verify_defective", "F39", "⑤ 검증 불량 수량",
+        "reply_verify_defective", "검증", "F5", "⑤ 검증 불량 수량",
         "→ alert_countermeasures.verified_defective_quantity",
     ),
     (
-        "reply_verify_status", "H39", "⑤ 판정",
+        "reply_verify_status", "검증", "H5", "⑤ 판정",
         "기준 불량률 이하로 내려왔으면 EFFECTIVE.\n"
         "아니면 INEFFECTIVE로 두고 ②로 되돌아간다.\n"
         "→ alert_countermeasures.verification_status",
     ),
     (
-        "reply_verify_note", "B40", "⑤ 판정 근거",
+        "reply_verify_note", "검증", "B6", "⑤ 판정 근거",
         "재집계 결과를 그렇게 읽은 이유.\n"
         "검증 수량이 기준 최소 건수에 못 미치면 그것도 적는다.",
     ),
     (
-        "reply_closed_at", "F41", "⑥ 종결일",
+        "reply_closed_at", "검증", "F8", "⑥ 종결일",
         "→ alerts.closed_at · alert_status='CLOSED'",
     ),
     (
-        "reply_closure_note", "B42", "⑥ 종결 의견",
+        "reply_closure_note", "검증", "B9", "⑥ 종결 의견",
         "잔여 위험과 종결 승인 의견.\n"
         "→ alert_countermeasures.closure_note / closed_by",
     ),
@@ -336,15 +353,13 @@ def build_cover(wb, d):
         1: 15, 2: 17, 3: 17, 4: 6,
         5: 19, 6: 26, 7: 19, 8: 6,
         9: 23, 10: 17, 11: 19, 12: 15, 13: 21, 14: 19,
-        15: 19, 16: 19, 17: 19,
-        18: 17, 19: 19, 20: 19, 21: 19, 22: 19, 23: 12,
-        24: 17,
-        25: 16, 26: 18, 27: 18, 28: 18,
-        29: 18, 30: 18, 31: 18,
-        32: 18, 33: 18, 34: 18,
-        35: 18, 36: 18, 37: 18,
-        38: 15, 39: 19, 40: 30,
-        41: 19, 42: 28, 43: 12,
+        15: 17, 16: 19, 17: 19, 18: 19, 19: 19,
+        20: 17,
+        21: 16, 22: 18, 23: 18, 24: 18,
+        25: 16, 26: 19, 27: 19,
+        28: 18, 29: 18, 30: 18,
+        31: 18, 32: 18, 33: 18,
+        34: 12,
     }
     for row, h in heights.items():
         ws.row_dimensions[row].height = h
@@ -388,9 +403,8 @@ def build_cover(wb, d):
         put(ws, f"F{row}", d[r_key], al=align("left", "center", indent=1))
 
     list_rule(ws, "F6", DEFECT_TYPES, "불량 유형",
-              "CRACK 만 「대체품」 시트가 첨부된다.\n"
-              "MISSING · POSITION_ERROR · ORIENTATION_ERROR 는 조립 불량이라 "
-              "대체품이 대책이 되지 않는다.")
+              "별지 3장은 유형과 무관하게 항상 첨부한다.\n"
+              "어느 자료가 이번 건에 쓸모 있는지는 담당자가 판단한다.")
 
     # ── 할 일 띠 — 이 문서에서 담당자가 제일 먼저 읽어야 할 한 줄 ──────
     ws.merge_cells("A9:H9")
@@ -399,26 +413,29 @@ def build_cover(wb, d):
         # 종결된 문서는 남은 할 일이 없다. 결과를 대신 싣는다.
         todo.value = _rich(
             (f"  {d['alert_status']}  ", _inline(7.5, True, "001F3864")),
-            ("   ①~⑥ 작성 완료   ", _inline(8, False, "00E8ECF2")),
-            ("효과 검증 ", _inline(8, True, "00E8ECF2")),
-            (str(d.get("verify_status", "")), _inline(9, True, "00A8E063")),
-            (f"   종결 {d.get('closed_at', '')}", _inline(8, True, "00E8ECF2")),
+            ("   ①~④ 작성 완료   ", _inline(8, False, "00E8ECF2")),
+            ("⑤ 효과 검증 · ⑥ 종결은 「검증」 시트", _inline(8, True, "00E8ECF2")),
         )
     else:
+        # 기한을 여기 한 줄로 모은다. 블록마다 흩어 두면 A열 라벨이 세 줄이 되고
+        # 담당자는 일정을 여섯 군데서 주워 읽어야 한다.
         todo.value = _rich(
             (f"  {d['alert_status']}  ", _inline(7.5, True, "001F3864")),
-            ("   채울 칸 6개   ", _inline(8, False, "00E8ECF2")),
+            ("   회신 기한   ", _inline(7.5, False, "00A9B6C6")),
             ("①  ", _inline(9, True, "00FFD166")),
             (str(d["due_initial"]), _inline(9, True, "00FFD166")),
-            ("   ②~⑥ 각 칸 기한", _inline(8, True, "00E8ECF2")),
-            ("   현황·분석은 채워져 있습니다", _inline(7.5, False, "00A9B6C6")),
+            ("     ②③  ", _inline(8, True, "00E8ECF2")),
+            (str(d["due_cause"]), _inline(8, True, "00E8ECF2")),
+            ("     ④  ", _inline(8, True, "00E8ECF2")),
+            (str(d["due_action"]), _inline(8, True, "00E8ECF2")),
+            ("     ⑤⑥ 「검증」 시트", _inline(7.5, False, "00A9B6C6")),
         )
     todo.fill = fill(BANNER)
     todo.alignment = align("center", "center")
     todo.border = BOX
 
     # ── 1. 불량 현황 ────────────────────────────────────────────────
-    band(ws, "A10:H10", "1.  불량 현황", "시스템 자동 집계 · 수정 금지")
+    band(ws, "A10:H10", "1.  불량 현황")
 
     label(ws, "A11", "집계 기간")
     ws.merge_cells("B11:D11")
@@ -427,11 +444,13 @@ def build_cover(wb, d):
     ws.merge_cells("F11:H11")
     put(ws, "F11", d["source_recipe_version"], al=align("left", "center", indent=1))
 
-    # 여섯 값을 세로로 쌓지 않고 가로 한 줄에 편다.
-    ws.merge_cells("G12:H12")
-    for ref, text in (("A12", "검사 수량"), ("B12", "불량 수량"), ("C12", "기준 불량률"),
-                      ("D12", "실제 불량률"), ("E12", "기준 대비"), ("F12", "실제 PPM"),
-                      ("G12", "완제품 영향")):
+    # 다섯 값을 가로 한 줄에 편다. 기준·실제 불량률(%)은 뺐다 — PPM 과 배수가
+    # 같은 값을 이미 두 번 말하고 있고, 이 문서는 PPM 으로 읽기로 했다.
+    ws.merge_cells("C12:D12")
+    ws.merge_cells("F12:H12")
+    for ref, text in (("A12", "검사 수량"), ("B12", "불량 수량"),
+                      ("C12", d["ppm_header"]), ("E12", "기준 대비"),
+                      ("F12", "완제품 영향")):
         put(ws, ref, text, f=font(T_MICRO, True, MUTED), bg=LABEL,
             al=align("center", "center", wrap=True))
 
@@ -439,17 +458,13 @@ def build_cover(wb, d):
         al=align("center", "center"), fmt=QTY_FMT)
     put(ws, "B13", d["defective_quantity"], f=font(T_FIGURE - 1.5),
         al=align("center", "center"), fmt=QTY_FMT)
-    put(ws, "C13", d["threshold_rate"], f=font(T_FIGURE - 2, False, MUTED),
-        al=align("center", "center"), fmt=RATE_FMT)
-    put(ws, "D13", d["defect_rate"], f=font(T_FIGURE, True, ALERT_INK), bg=ALERT,
-        al=align("center", "center"), fmt=RATE_FMT)
-    put(ws, "E13", '=IFERROR(D13/C13,"")', f=font(T_FIGURE, True, ALERT_INK), bg=ALERT,
-        al=align("center", "center"), fmt=MULT_FMT)
-    put(ws, "F13", '=IFERROR(D13*1000000,"")', f=font(T_FIGURE - 2),
-        al=align("center", "center"),
-        fmt=PPM_FMT)
-    ws.merge_cells("G13:H13")
-    put(ws, "G13", d["unit_impact"], f=font(T_BODY, True), al=align("center", "center"))
+    ws.merge_cells("C13:D13")
+    put(ws, "C13", d["defect_ppm"], f=font(T_FIGURE, True, ALERT_INK), bg=ALERT,
+        al=align("center", "center"), fmt=QTY_FMT)
+    put(ws, "E13", d["vs_threshold_ratio"], f=font(T_FIGURE, True, ALERT_INK),
+        bg=ALERT, al=align("center", "center"), fmt=MULT_FMT)
+    ws.merge_cells("F13:H13")
+    put(ws, "F13", d["unit_impact"], f=font(T_BODY, True), al=align("center", "center"))
 
     label(ws, "A14", "발생 집중")
     ws.merge_cells("B14:D14")
@@ -459,74 +474,109 @@ def build_cover(wb, d):
     put(ws, "F14", d["trend_vs_prev"], f=font(T_BODY),
         al=align("left", "center", indent=1))
 
-    ws.merge_cells("A15:A17")
-    put(ws, "A15", "불량 현상", f=font(9, True), bg=LABEL,
-        al=align("left", "center", wrap=True, indent=1))
-    ws.merge_cells("B15:H17")
-    put(ws, "B15", d["phenomenon"], f=font(T_BODY),
-        al=align("left", "top", wrap=True, indent=1))
-
     # ── 2. 시스템이 먼저 본 것 ──────────────────────────────────────
-    band(ws, "A18:H18", "2.  시스템이 먼저 본 것",
-         "담당자가 확인할 순서대로 · 근거 시트를 함께 표시")
+    band(ws, "A15:H15", "2.  시스템이 먼저 본 것")
 
-    ws.merge_cells("A19:A22")
-    put(ws, "A19", "자동 분석", f=font(9, True, NAVY), bg=ANALYSIS_LABEL,
+    ws.merge_cells("A16:A19")
+    put(ws, "A16", "자동 분석", f=font(9, True, NAVY), bg=ANALYSIS_LABEL,
         al=align("center", "center", wrap=True))
-    ws.merge_cells("B19:H22")
-    put(ws, "B19", d["auto_analysis"], f=font(T_SMALL, False, NAVY), bg=ANALYSIS,
+    ws.merge_cells("B16:H19")
+    put(ws, "B16", d["auto_analysis"], f=font(T_SMALL, False, NAVY), bg=ANALYSIS,
         al=align("left", "top", wrap=True, indent=1))
-
-    ws.merge_cells("A23:H23")
-    put(ws, "A23", d["annex_line"], f=font(T_MICRO, False, MUTED),
-        al=align("center", "center"), bg=LABEL)
 
     # ── 3. 담당자 작성 ──────────────────────────────────────────────
-    band(ws, "A24:H24", "3.  담당자 작성", "아래 크림색 칸만 채우시면 됩니다")
+    band(ws, "A20:H20", "3.  담당자 작성")
 
     # ① 은 네 줄이다. 첫 줄은 혼자 결정할 수 없는 조치의 체크 라인.
-    ws.merge_cells("A25:A28")
-    cell = ws["A25"]
+    ws.merge_cells("A21:A24")
+    cell = ws["A21"]
     cell.value = _rich(
         ("①\n", _inline(11, True, INK)),
-        ("초동 조치\n", _inline(8.5, True, INK)),
-        (str(d["due_initial"]), _inline(8, True, ALERT_INK)),
+        ("초동 조치", _inline(8.5, True, INK)),
     )
     cell.font = font(9, True)
     cell.fill = fill(LABEL)
     cell.alignment = align("center", "center", wrap=True)
     cell.border = BOX
 
-    ws.merge_cells("B25:H25")
-    put(ws, "B25", d.get("containment_scope", CONTAINMENT_SCOPE), bg=REPLY,
+    ws.merge_cells("B21:H21")
+    put(ws, "B21", d.get("containment_scope", CONTAINMENT_SCOPE), bg=REPLY,
         f=font(8, True, MUTED), al=align("left", "center", indent=1), unlock=True)
-    ws.merge_cells("B26:H28")
-    put(ws, "B26", d.get("reply_26"), bg=REPLY, f=font(T_SMALL),
+    ws.merge_cells("B22:H24")
+    put(ws, "B22", d.get("reply_22"), bg=REPLY, f=font(T_SMALL),
         al=align("left", "top", wrap=True, indent=1), unlock=True)
 
-    for row, num, name, due in (
-        (29, "②", "발생 원인", d["due_cause"]),
-        (32, "③", "유출 원인", d["due_cause"]),
-        (35, "④", "재발방지\n대책", d["due_action"]),
+    # ② 만 회신 칸이 둘이다. 첫 줄은 다음 대책서의 자동 분석 ③ 줄이 읽어 갈 한 줄 요약.
+    # 본문을 그 자리에 넣으면 문장이 문단째로 들어가므로, 짧게 따로 받는다.
+    for row, num, name, split in (
+        (25, "②", "발생 원인", True),
+        (28, "③", "유출 원인", False),
+        (31, "④", "재발방지\n대책", False),
     ):
         ws.merge_cells(f"A{row}:A{row + 2}")
         cell = ws[f"A{row}"]
         cell.value = _rich(
             (f"{num}\n", _inline(11, True, INK)),
-            (f"{name}\n", _inline(8.5, True, INK)),
-            (str(due), _inline(8, True, MUTED)),
+            (f"{name}", _inline(8.5, True, INK)),
         )
         cell.font = font(9, True)
         cell.fill = fill(LABEL)
         cell.alignment = align("center", "center", wrap=True)
         cell.border = BOX
-        ws.merge_cells(f"B{row}:H{row + 2}")
-        put(ws, f"B{row}", d.get(f"reply_{row}"), bg=REPLY, f=font(T_SMALL),
-            al=align("left", "top", wrap=True, indent=1), unlock=True)
+        if split:
+            ws.merge_cells(f"B{row}:H{row}")
+            put(ws, f"B{row}", d.get(f"reply_{row}"), bg=REPLY,
+                f=font(T_SMALL, True), al=align("left", "center", indent=1),
+                unlock=True)
+            ws.merge_cells(f"B{row + 1}:H{row + 2}")
+            put(ws, f"B{row + 1}", d.get(f"reply_{row + 1}"), bg=REPLY,
+                f=font(T_SMALL), al=align("left", "top", wrap=True, indent=1),
+                unlock=True)
+        else:
+            ws.merge_cells(f"B{row}:H{row + 2}")
+            put(ws, f"B{row}", d.get(f"reply_{row}"), bg=REPLY, f=font(T_SMALL),
+                al=align("left", "top", wrap=True, indent=1), unlock=True)
 
-    # ⑤ 효과 검증 — 대책을 적용하고 다시 생산이 돌아야 채울 수 있다
-    ws.merge_cells("A38:A40")
-    cell = ws["A38"]
+    ws.merge_cells("A34:H34")
+    put(ws, "A34", d["footer"], f=font(T_MICRO, False, MUTED),
+        al=align("center", "center"), border=None)
+
+    for name, sheet, ref, title_text, prompt in REPLY_CELLS:
+        if sheet == "대책서":
+            input_hint(ws, ref, title_text, prompt)
+
+    ws.print_area = "A1:H34"
+    page(ws, "portrait", fit_height=1)
+    ws.oddFooter.left.text = "&9&K808080" + str(d["alert_code"])
+    ws.oddFooter.right.text = "&9&K808080&P / &N"
+    lock_sheet(ws, allow_filter=False)
+    return ws
+
+
+# ---------------------------------------------------------------- 시트: 검증
+def build_verify(wb, d):
+    """⑤ 효과 검증과 ⑥ 종결.
+
+    표지에서 뗐다. ①~④ 는 발행 후 1~2주 안에 쓰지만, ⑤ 는 대책을 적용하고
+    **다시 생산이 돌아야** 채울 수 있어 2~4주 뒤고 ⑥ 은 그 다음이다.
+    작성 시점이 다른 칸을 한 장에 두면 담당자는 늘 절반이 빈 문서를 본다.
+
+    회신 칸은 좌표가 아니라 정의된 이름으로 읽으므로, 시트가 갈려도 파서는 그대로다.
+    """
+    ws = wb.create_sheet("검증")
+    for col, w in {"A": 14, "B": 12, "C": 12, "D": 11,
+                   "E": 14, "F": 12, "G": 11, "H": 11}.items():
+        ws.column_dimensions[col].width = w
+    for row, h in {1: 20, 2: 15, 3: 8, 4: 15, 5: 21, 6: 34,
+                   7: 8, 8: 19, 9: 34, 10: 12}.items():
+        ws.row_dimensions[row].height = h
+
+    band(ws, "A1:H1", "5 · 6.  효과 검증과 종결", "[담당자 작성]")
+    note_line(ws, "A2:H2", d["verify_header"], color="00595959")
+
+    # ⑤ 효과 검증
+    ws.merge_cells("A4:A6")
+    cell = ws["A4"]
     cell.value = _rich(
         ("⑤\n", _inline(11, True, INK)),
         ("효과 검증\n", _inline(8.5, True, INK)),
@@ -537,57 +587,52 @@ def build_cover(wb, d):
     cell.alignment = align("center", "center", wrap=True)
     cell.border = BOX
 
-    ws.merge_cells("B38:C38")
-    for ref, text in (("B38", "검증 기간"), ("D38", "적용 레시피"), ("E38", "검증 수량"),
-                      ("F38", "불량 수량"), ("G38", "검증 불량률"), ("H38", "판정")):
+    ws.merge_cells("B4:C4")
+    for ref, text in (("B4", "검증 기간"), ("D4", "적용 레시피"), ("E4", "검증 수량"),
+                      ("F4", "불량 수량"), ("G4", "검증 불량률"), ("H4", "판정")):
         put(ws, ref, text, f=font(T_MICRO, True, MUTED), bg=LABEL,
             al=align("center", "center", wrap=True))
 
-    ws.merge_cells("B39:C39")
-    put(ws, "B39", d.get("verify_period"), bg=REPLY, al=align("center", "center"),
+    ws.merge_cells("B5:C5")
+    put(ws, "B5", d.get("verify_period"), bg=REPLY, al=align("center", "center"),
         unlock=True)
-    put(ws, "D39", d.get("verify_recipe"), bg=REPLY, al=align("center", "center"),
+    put(ws, "D5", d.get("verify_recipe"), bg=REPLY, al=align("center", "center"),
         unlock=True)
-    put(ws, "E39", d.get("verify_inspected"), bg=REPLY, al=align("center", "center"),
+    put(ws, "E5", d.get("verify_inspected"), bg=REPLY, al=align("center", "center"),
         fmt=QTY_FMT, unlock=True)
-    put(ws, "F39", d.get("verify_defective"), bg=REPLY, al=align("center", "center"),
+    put(ws, "F5", d.get("verify_defective"), bg=REPLY, al=align("center", "center"),
         fmt=QTY_FMT, unlock=True)
-    put(ws, "G39", '=IFERROR(F39/E39,"")', al=align("center", "center"), fmt=RATE_FMT)
-    put(ws, "H39", d.get("verify_status", "PENDING"), bg=REPLY,
+    put(ws, "G5", '=IFERROR(F5/E5,"")', al=align("center", "center"), fmt=RATE_FMT)
+    put(ws, "H5", d.get("verify_status", "PENDING"), bg=REPLY,
         al=align("center", "center"), unlock=True)
-    list_rule(ws, "H39", VERIFY_STATUSES, "⑤ 판정",
+    list_rule(ws, "H5", VERIFY_STATUSES, "⑤ 판정",
               "기준 불량률 이하면 EFFECTIVE · 아니면 INEFFECTIVE로 두고 ②로 되돌아간다.")
 
-    ws.merge_cells("B40:H40")
-    put(ws, "B40", d.get("verify_note"), bg=REPLY, f=font(T_SMALL),
+    ws.merge_cells("B6:H6")
+    put(ws, "B6", d.get("verify_note"), bg=REPLY, f=font(T_SMALL),
         al=align("left", "top", wrap=True, indent=1), unlock=True)
 
     # ⑥ 종결
-    ws.merge_cells("A41:D41")
-    put(ws, "A41", "⑥  종결 판정        잔여 위험을 확인하고 닫습니다",
-        f=font(9, True), bg=LABEL, al=align("left", "center", indent=1))
-    label(ws, "E41", "종결일")
-    ws.merge_cells("F41:H41")
-    put(ws, "F41", d.get("closed_at"), bg=REPLY, al=align("center", "center"),
+    ws.merge_cells("A8:D8")
+    put(ws, "A8", "⑥  종결 판정", f=font(9, True), bg=LABEL,
+        al=align("left", "center", indent=1))
+    label(ws, "E8", "종결일")
+    ws.merge_cells("F8:H8")
+    put(ws, "F8", d.get("closed_at"), bg=REPLY, al=align("center", "center"),
         unlock=True)
 
-    put(ws, "A42", "종결 의견", f=font(9, True), bg=LABEL,
+    put(ws, "A9", "종결 의견", f=font(9, True), bg=LABEL,
         al=align("left", "center", indent=1))
-    ws.merge_cells("B42:H42")
-    put(ws, "B42", d.get("closure_note"), bg=REPLY, f=font(T_SMALL),
+    ws.merge_cells("B9:H9")
+    put(ws, "B9", d.get("closure_note"), bg=REPLY, f=font(T_SMALL),
         al=align("left", "top", wrap=True, indent=1), unlock=True)
 
-    ws.merge_cells("A43:H43")
-    put(ws, "A43", d["footer"], f=font(T_MICRO, False, MUTED),
-        al=align("center", "center"), border=None)
+    for name, sheet, ref, title_text, prompt in REPLY_CELLS:
+        if sheet == "검증":
+            input_hint(ws, ref, title_text, prompt)
 
-    for name, ref, title_text, prompt in REPLY_CELLS:
-        input_hint(ws, ref, title_text, prompt)
-
-    ws.print_area = "A1:H43"
-    page(ws, "portrait", fit_height=1)
-    ws.oddFooter.left.text = "&9&K808080" + str(d["alert_code"])
-    ws.oddFooter.right.text = "&9&K808080&P / &N"
+    ws.print_area = "A1:H9"
+    page(ws)
     lock_sheet(ws, allow_filter=False)
     return ws
 
@@ -773,8 +818,8 @@ def build_alternates(wb, d):
 
     band(ws, "A1:H1", "대체품 후보", "[조회 시점 참조]")
     note_line(ws, "A2:H2",
-              "불량유형이 CRACK일 때만 첨부된다 · MISSING · POSITION_ERROR · "
-              "ORIENTATION_ERROR는 조립 불량이므로 대체품이 대책이 되지 않는다")
+              "불량 유형과 무관하게 항상 첨부한다 · 부품 교체가 이번 건의 대책인지는 "
+              "② 발생 원인을 확정한 담당자가 판단한다")
     ws.merge_cells("A3:H3")
     put(ws, "A3",
         "동일 정격만으로 drop-in 판단 금지 · 「필수 재검증」을 모두 통과하고 "
@@ -845,15 +890,16 @@ TOKEN_DATA = {
     "defective_quantity": "{{defective_quantity}}",
     "threshold_rate": "{{threshold_rate}}",
     "defect_rate": "{{defect_rate}}",
+    "ppm_header": "실제 PPM (기준 {{threshold_ppm}})",
+    "defect_ppm": "{{defect_ppm}}",
+    "vs_threshold_ratio": "{{vs_threshold_ratio}}",
     "unit_impact": "{{unit_impact}}",
     "hotspot": "{{hotspot}}",
     "trend_vs_prev": "{{trend_vs_prev}}",
-    "phenomenon": "{{phenomenon}}",
     "auto_analysis": "{{auto_analysis}}",
-    "annex_line": "근거는 별지에 있습니다   ·   「근거」 유닛·슬롯·이미지   |   "
-                  "「판단자료」 추세·레시피·과거 이력·체크리스트   |   「대체품」 후보 비교",
-    "footer": "자동 발행: MAIN_SERVER/scan_quality.py   ·   회신 칸은 클릭하면 작성 요령이 뜬다   "
-              "·   결재 대상은 이 시트 1장",
+    "verify_header": "{{alert_code}}   ·   {{part_id}} / {{defect_type}}   ·   "
+                     "발행 {{issued_at}}   ·   ④ 적용 후 다시 집계해서 채운다",
+    "footer": "자동 발행   ·   회신 칸은 클릭하면 작성 요령이 뜬다",
     "slot_rows": [{"slot_code": "{{slot_code}}", "count": "{{count}}",
                    "rate": "{{slot_rate}}", "note": "{{slot_note}}"}],
     "evidence_rows": [{"unit_id": "{{unit_id}}", "slot_code": "{{slot_code}}",
@@ -914,7 +960,7 @@ SAMPLE_DATA = {
     "due_action": "09-05 (2주)",
     "due_verify": "적용 후 2~4주",
     "part_image": "UI/Icons/item-cap.png",
-    "part_line": "CAP · Murata GRM188R72A104KA35D MLCC Decoupling Capacitor  (C-001 / MLCC)",
+    "part_line": "CAP  (C-001 · MLCC)",
     "defect_type": "CRACK",
     "period_line": "2026-08-12 ~ 08-19  (7일 / ROLLING)",
     "source_recipe_version": "mock-v3",
@@ -922,15 +968,12 @@ SAMPLE_DATA = {
     "defective_quantity": DEFECTIVE,
     "threshold_rate": THRESHOLD,
     "defect_rate": DEFECTIVE / INSPECTED,
+    "ppm_header": f"실제 PPM (기준 {THRESHOLD * 1e6:,.0f})",
+    "defect_ppm": DEFECTIVE / INSPECTED * 1e6,
+    "vs_threshold_ratio": DEFECTIVE / INSPECTED / THRESHOLD,
     "unit_impact": "2,500대 중 15대 (0.60%)",
     "hotspot": "CAP-02 8건 · CAP-04 5건",
     "trend_vs_prev": "200 → 1,280 PPM  (6.4배 · 08-18 초과)",
-    "phenomenon": (
-        "CAP 슬롯의 CRACK 불량이 집계기간 누적 16건 / 12,500건(완성품 2,500대 × CAP 5슬롯)으로 "
-        "기준 400 PPM의 3.2배인 1,280 PPM이다. 완성품 2,500대 중 15대(0.60%)가 영향을 받았고 "
-        "CAP-02·CAP-04 두 슬롯에 81.3%가 집중되어 있다. 08-16 mock-v3 적용 시점부터 급증했다. "
-        "근거 유닛과 검사 이미지 경로는 「근거」 시트에 발행 시점 그대로 고정되어 있다."
-    ),
     "auto_analysis": (
         "① 발생이 CAP-02·CAP-04에 81.3% 집중(판정 기준 60%) → 부품 Lot보다 공정·설비 원인을 "
         "먼저 의심한다.「근거」\n"
@@ -938,13 +981,11 @@ SAMPLE_DATA = {
         "'그리퍼 파지력 상향 · 배치 하강속도 상향'이 1순위 확인 대상.「판단자료」B\n"
         "③ 동일 부품·유형 CLOSED 대책서 1건(2026-04-12 · 배치 하강속도 과다) → 재발. "
         "당시 대책이 왜 듣지 않았는지 먼저 확인한다.「판단자료」C\n"
-        "④ C-001 대체 후보 2종 모두 표준 단자 — 굽힘 크랙 완충 없음 → 부품 교체는 대책이 "
-        "되지 않는다. 공정 조건을 본다.「대체품」"
+        "④ C-001 대체 후보 2종 · CRACK 관련 소견 2종.「대체품」"
     ),
-    "annex_line": "근거는 별지에 있습니다   ·   「근거」 유닛·슬롯·이미지   |   "
-                  "「판단자료」 추세·레시피·과거 이력·체크리스트   |   「대체품」 후보 비교",
-    "footer": "자동 발행: MAIN_SERVER/scan_quality.py   ·   샘플 (담당자 작성 영역 미작성)   "
-              "·   결재 대상은 이 시트 1장",
+    "verify_header": "QA-CAP-CRACK-20260819-001   ·   CAP / CRACK   ·   "
+                     "발행 2026-08-19   ·   ④ 적용 후 다시 집계해서 채운다",
+    "footer": "자동 발행   ·   샘플 (담당자 작성 영역 미작성)   ·   결재 대상은 이 시트 1장",
     "slot_rows": [
         {"slot_code": "CAP-02", "count": 8, "rate": 8 / BASE_UNITS,
          "note": "상위 2슬롯 81.3% · 공정/설비 우선 의심"},
@@ -1050,32 +1091,32 @@ SAMPLE_CLOSED = dict(
     alert_status="CLOSED",
     assignee="품질보증팀 김OO",
     support_teams="설비팀 · 생산팀 · 구매",
-    footer="자동 발행: MAIN_SERVER/scan_quality.py   ·   샘플 (종결본 — ①~⑥ 회신 완료)   "
-           "·   결재 대상은 이 시트 1장",
+    footer="자동 발행   ·   샘플 (종결본 — ①~⑥ 회신 완료)   ·   결재 대상은 이 시트 1장",
 
     containment_scope="협조 필요    ☑ 생산 중단    ☑ 출하 보류    ☑ 재고 선별    "
                       "☐ 고객 통보    ☐ 설비 정지",
-    reply_26=(
+    reply_22=(
         "08-19 10:20  CAP-02·CAP-04 슬롯 정지, 생산팀장 승인(구두 10:15 · 결재 10:40).\n"
         "08-16 이후 생산분 전량 출하 보류 — job 7112~7139 / unit 10388~10604 (2,500대).\n"
         "전수 AOI 재검에서 9건 추가 검출, 누적 25건 / 24대 격리. 고객 통보 대상 아님(출하 전).\n"
         "배치 하강속도만 mock-v2 값으로 되돌린 임시 레시피 mock-v3h 적용 후 10:50 생산 재개. "
         "08-19 18:00 기준 재발 없음."
     ),
-    reply_29=(
+    reply_25="배치 하강속도 상향 + 지지 핀 최원거리 슬롯",
+    reply_26=(
         "mock-v3 에서 배치 하강속도(18 → 32 mm/s)와 그리퍼 파지력(3.0 → 4.0 N)을 함께 올렸다.\n"
         "CAP-02·CAP-04 는 보드 지지 핀에서 가장 먼 위치라 착지 충격 시 국부 굽힘이 가장 크다. "
         "설비팀 로그에서 두 슬롯 피크력이 다른 CAP 슬롯의 1.7배(6.8N vs 4.0N).\n"
         "mock-v3h 로 되돌린 뒤 재발이 멈춘 것으로 검증했다(가설 아님). "
         "불량 25건이 입고 Lot 4개에 고르게 분포해 부품 Lot 요인은 배제한다."
     ),
-    reply_32=(
+    reply_28=(
         "인라인 AOI 판정 기준이 단자 들뜸과 외관 결손만 보고 있어 미세 굽힘 크랙을 걸러내지 못했다.\n"
         "「판단자료」 D 의 MLCC 항목은 '크랙 의심 Lot 단면 또는 비파괴 검사'를 요구하지만, "
         "현재 인라인에는 해당 항목이 없고 단면 검사는 주 1회 샘플로만 돌고 있었다.\n"
         "그 결과 08-16 생산분에 이미 크랙이 있었으나 08-18 16:30 임계 초과 시점까지 검출되지 않았다."
     ),
-    reply_35=(
+    reply_31=(
         "영구대책 ① 레시피 — 하강속도 20 mm/s, 파지력 3.2 N 으로 확정한 mock-v4 적용. "
         "변경관리 ECN-2608-114 승인 08-21, 적용 08-29.\n"
         "영구대책 ② 설비 — CAP-02·CAP-04 에 보드 지지 핀 2개 추가(설비팀, 08-28 완료). "
@@ -1105,12 +1146,14 @@ def build(data, path):
     if default is not None:
         wb.remove(default)
     build_cover(wb, data)
+    build_verify(wb, data)
     build_evidence(wb, data)
     build_analysis(wb, data)
     build_alternates(wb, data)
 
-    for name, ref, _title, _prompt in REPLY_CELLS:
-        wb.defined_names.add(DefinedName(name, attr_text=f"'대책서'!${ref[0]}${ref[1:]}"))
+    for name, sheet, ref, _title, _prompt in REPLY_CELLS:
+        wb.defined_names.add(
+            DefinedName(name, attr_text=f"'{sheet}'!${ref[0]}${ref[1:]}"))
 
     wb.properties.title = "불량대책서"
     wb.properties.creator = "MAIN_SERVER/scan_quality.py"

@@ -610,7 +610,7 @@ namespace MainUnity.Runtime.Robot.Mock
                     $"Slot code mismatch at step {feedback.step_order}: recipe '{feedback.slot_code}' " +
                     $"vs scene '{slot.name}'. Inspection records will name the wrong slot.", this);
 
-            Transform board = slot.parent == null ? null : slot.parent.parent;
+            Transform board = slot.parent;
             if (board == null)
                 throw new InvalidOperationException(
                     "Assembly slots must be children of a PCB slot container.");
