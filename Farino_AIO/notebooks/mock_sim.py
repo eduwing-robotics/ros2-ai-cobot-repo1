@@ -163,11 +163,13 @@ def validate_observations(observations):
     validated = []
     for expected_order, observation in enumerate(observations, 1):
         if not isinstance(observation, dict) or set(observation) != {
-            "order", "part_id", "source", "target"
+            "order", "part_id", "gripper_grasp_opening_percent",
+            "gripper_release_opening_percent", "source", "target"
         }:
             raise ValueError(
                 f"observation {expected_order} must contain "
-                "order, part_id, source and target"
+                "order, part_id, gripper_grasp_opening_percent, "
+                "gripper_release_opening_percent, source and target"
             )
         if isinstance(observation["order"], bool) \
                 or not isinstance(observation["order"], int) \
@@ -176,9 +178,27 @@ def validate_observations(observations):
         part_id = observation["part_id"]
         if not isinstance(part_id, str) or not part_id.strip():
             raise ValueError(f"observation {expected_order} part_id must be non-empty")
+        grasp_opening_percent = _finite_number(
+            observation["gripper_grasp_opening_percent"],
+            f"observation {expected_order}.gripper_grasp_opening_percent",
+        )
+        release_opening_percent = _finite_number(
+            observation["gripper_release_opening_percent"],
+            f"observation {expected_order}.gripper_release_opening_percent",
+        )
+        if not 0.0 <= grasp_opening_percent <= 100.0:
+            raise ValueError(
+                "gripper_grasp_opening_percent must be between 0 and 100"
+            )
+        if not 0.0 <= release_opening_percent <= 100.0:
+            raise ValueError(
+                "gripper_release_opening_percent must be between 0 and 100"
+            )
         validated.append({
             "order": expected_order,
             "part_id": part_id,
+            "gripper_grasp_opening_percent": grasp_opening_percent,
+            "gripper_release_opening_percent": release_opening_percent,
             "source": validate_ros_pose(
                 observation["source"], f"observation {expected_order}.source"
             ),
@@ -203,12 +223,6 @@ def validate_recipe(recipe, expected_version):
         raise ValueError("recipe_version does not match the start request")
     if recipe.get("frame") != "base_link":
         raise ValueError("recipe frame must be base_link")
-    grip_percent = _finite_number(
-        recipe.get("gripper_opening_percent"), "gripper_opening_percent"
-    )
-    if not 0.0 <= grip_percent <= 100.0:
-        raise ValueError("gripper_opening_percent must be between 0 and 100")
-
     joint_points = recipe.get("joint_points")
     if not isinstance(joint_points, dict) or set(joint_points) != {
         "home", "item_ready", "assembly_ready"
@@ -282,6 +296,12 @@ def resolve_observations(recipe, observations):
             )
         resolved.append({
             "step": recipe_step,
+            "gripper_grasp_opening_percent": observation[
+                "gripper_grasp_opening_percent"
+            ],
+            "gripper_release_opening_percent": observation[
+                "gripper_release_opening_percent"
+            ],
             "source": observation["source"],
             "target": observation["target"],
         })
@@ -389,6 +409,8 @@ def self_check():
     observations = [{
         "order": 1,
         "part_id": "part",
+        "gripper_grasp_opening_percent": 18,
+        "gripper_release_opening_percent": 25,
         "source": {"xyz_mm": [350, -150, 250], "xyzw": [0, 0, 0, 1]},
         "target": {"xyz_mm": [350, 150, 250], "xyzw": [0, 0, 0, 1]},
     }]
@@ -399,10 +421,13 @@ def self_check():
         "observations": observations,
     }))
     assert parsed[:2] == (request_id, "mock-r1")
+    assert (
+        parsed[2][0]["gripper_grasp_opening_percent"],
+        parsed[2][0]["gripper_release_opening_percent"],
+    ) == (18.0, 25.0)
     recipe = validate_recipe({
         "recipe_version": "mock-r1",
         "frame": "base_link",
-        "gripper_opening_percent": 0,
         "joint_points": {
             "home": [-4.689, -86.951, 84.467, -87.516, -90.000, -4.688],
             "item_ready": [-4.689, -86.951, 84.467, -87.516, -90.000, -4.688],
@@ -427,6 +452,10 @@ def self_check():
     }, "mock-r1")
     resolved = resolve_observations(recipe, parsed[2])
     assert "source" not in recipe["steps"][0]
+    assert (
+        resolved[0]["gripper_grasp_opening_percent"],
+        resolved[0]["gripper_release_opening_percent"],
+    ) == (18.0, 25.0)
     assert resolved[0]["source"]["xyz_mm"] == [350.0, -150.0, 250.0]
     approach = vertical_offset(
         resolved[0]["source"], recipe["motion"]["approach_dz_mm"]
@@ -1066,6 +1095,12 @@ class MockMoveJ(Node):
             motion = recipe["motion"]
             for resolved in job["resolved_steps"]:
                 step = resolved["step"]
+                grasp_opening_percent = resolved[
+                    "gripper_grasp_opening_percent"
+                ]
+                release_opening_percent = resolved[
+                    "gripper_release_opening_percent"
+                ]
                 source = self.request_pose(recipe, resolved["source"])
                 target = self.request_pose(recipe, resolved["target"])
                 source_approach = self.request_pose(
@@ -1099,10 +1134,10 @@ class MockMoveJ(Node):
                     elif command == "item_ready":
                         self.run_joint_target(joint_points["item_ready"])
                     elif command == "pick":
-                        self.run_gripper(100.0)
+                        self.run_gripper(release_opening_percent)
                         self.run_ptp_pose(source_approach)
                         self.run_linear(source, True)
-                        self.run_gripper(recipe["gripper_opening_percent"])
+                        self.run_gripper(grasp_opening_percent)
                         self.publish_assembly_feedback(request_id, "PICKED", step)
                         self.run_linear(source_retract, True)
                     elif command == "assembly_ready":
@@ -1110,7 +1145,7 @@ class MockMoveJ(Node):
                     elif command == "place":
                         self.run_ptp_pose(target_approach)
                         self.run_linear(target, True)
-                        self.run_gripper(100.0)
+                        self.run_gripper(release_opening_percent)
                         self.publish_assembly_feedback(request_id, "PLACED", step)
                         self.run_linear(target_retract, True)
                     else:

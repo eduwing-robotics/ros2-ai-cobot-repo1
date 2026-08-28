@@ -68,6 +68,8 @@ namespace MainUnity.Runtime.Robot.Mock
         {
             public int order;
             public string part_id;
+            public float gripper_grasp_opening_percent;
+            public float gripper_release_opening_percent;
             public RosPoseRequest source;
             public RosPoseRequest target;
         }
@@ -647,6 +649,15 @@ namespace MainUnity.Runtime.Robot.Mock
                     throw new InvalidOperationException(
                         "No Mock item group for: " + slotGroup.RequiredItemType);
 
+                float graspOpeningPercent = itemGroup.GripperOpeningPercent;
+                float releaseOpeningPercent = itemGroup.GripperReleaseOpeningPercent;
+                if (!float.IsFinite(graspOpeningPercent) || graspOpeningPercent < 0f ||
+                    graspOpeningPercent > 100f || !float.IsFinite(releaseOpeningPercent) ||
+                    releaseOpeningPercent < 0f || releaseOpeningPercent > 100f)
+                    throw new InvalidOperationException(
+                        "Mock gripper opening percents must be finite and between 0 and 100 for: " +
+                        slotGroup.RequiredItemType);
+
                 Transform[] slots = slotGroup.Slots;
                 if (slots == null || slots.Length == 0)
                     throw new InvalidOperationException(
@@ -689,6 +700,8 @@ namespace MainUnity.Runtime.Robot.Mock
                         // Correlation only; the loaded recipe owns execution order validation.
                         order = observations.Count + 1,
                         part_id = slotGroup.RequiredItemType,
+                        gripper_grasp_opening_percent = graspOpeningPercent,
+                        gripper_release_opening_percent = releaseOpeningPercent,
                         source = ToRosPoseRequest(pickup, "source"),
                         target = ToRosPoseRequest(placement, "target")
                     });

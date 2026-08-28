@@ -1,7 +1,6 @@
 # Common assembly order and motion settings used by Mock and Real executors.
 recipe_version: mock-r1
 frame: base_link
-gripper_opening_percent: 0
 
 # Calibration ceiling: ItemReady and AssemblyReady temporarily reuse Home because
 # safe taught joint values do not exist yet. Replace these before real execution.
