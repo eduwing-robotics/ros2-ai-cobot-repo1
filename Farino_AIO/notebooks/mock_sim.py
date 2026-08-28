@@ -40,7 +40,7 @@ from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
 
 JOINTS = ("j1", "j2", "j3", "j4", "j5", "j6")
-INITIAL_JOINTS_DEG = (0.0, -90.0, 90.0, -90.0, -90.0, 0.0)
+INITIAL_JOINTS_DEG = (-4.689, -86.951, 84.467, -87.516, -90.0, -4.688)
 GRIPPER_CLOSED_METERS = 0.021
 DEFAULT_TOOL_OFFSET = (0.0, 0.0, 274.073, 0.0, 0.0, 0.0)
 FUTURE_TIMEOUT_SECONDS = 60.0
@@ -404,9 +404,9 @@ def self_check():
         "frame": "base_link",
         "gripper_opening_percent": 0,
         "joint_points": {
-            "home": [0, -90, 90, -90, -90, 0],
-            "item_ready": [0, -90, 90, -90, -90, 0],
-            "assembly_ready": [0, -90, 90, -90, -90, 0],
+            "home": [-4.689, -86.951, 84.467, -87.516, -90.000, -4.688],
+            "item_ready": [-4.689, -86.951, 84.467, -87.516, -90.000, -4.688],
+            "assembly_ready": [-4.689, -86.951, 84.467, -87.516, -90.000, -4.688],
         },
         "motion": {
             "approach_dz_mm": 100,
