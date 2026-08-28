@@ -88,6 +88,17 @@
     font-size: var(--fs-body);
 }
 
+/* 공통 알람 띠(64..108) 아래의 페이지 제목. 콘텐츠는 164부터 시작한다. */
+.page-heading {
+    position: absolute;
+    left: 112px; top: 116px; right: 24px; height: 36px;
+    flex-direction: row;
+    align-items: center;
+}
+.page-heading__title { color: var(--c-ink); font-size: 22px; letter-spacing: 0.8px; -unity-font-style: bold; }
+.page-heading__divider { color: var(--c-ink-4); font-size: 18px; margin-left: 10px; margin-right: 10px; }
+.page-heading__meta { color: var(--c-ink-3); font-size: 12px; letter-spacing: 1.2px; }
+
 /*
   조회 화면(INSPECT · QUALITY)의 배경 스크림.
 

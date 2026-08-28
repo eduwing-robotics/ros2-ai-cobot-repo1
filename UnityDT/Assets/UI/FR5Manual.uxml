@@ -2,29 +2,27 @@
     <ui:Style src="project://database/Assets/UI/FR5Theme.uss" />
     <ui:Template src="project://database/Assets/UI/FR5Shell.uxml" name="FR5Shell" />
     <!--
-      MANUAL · 수동 조그 — Docs/ui/mock-04-manual.svg
+      MANUAL · 수동 조그 — docs/ui_recommendation/mockups-monitor-aligned/03_manual-v2.png
       작업 흐름 밖이다. jobs·units 를 만들지 않고 DB 에 아무것도 기록하지 않는다.
       실데이터: 관절 ACTUAL · TCP · RPY · 그리퍼 · APPLY/OPEN/CLOSE (FR5ManualBinder)
       샘플데이터: 없음. 이 페이지는 거의 전부 실제로 붙는다.
     -->
     <ui:VisualElement name="fr5-manual" class="page fr5--mock">
 
-
-        
-
-        
+        <ui:VisualElement class="page-heading">
+            <ui:Label text="MANUAL" class="page-heading__title" />
+            <ui:Label text="/" class="page-heading__divider" />
+            <ui:Label text="수동" class="page-heading__title" />
+            <ui:VisualElement class="spacer" />
+            <ui:Label text="GHOST PREVIEW · DB 비기록 · 실동작 차단" class="page-heading__meta" />
+        </ui:VisualElement>
 
         <!--
-          경고 띠 : 이 경로는 실적이 아니다.
-
-          top 은 64 가 아니라 108 이다. 64 는 셸의 alarm-banner(top:64 · height:44) 자리이고,
-          그 띠는 로봇 미연결이면 켜진다 — 두 띠가 같은 좌표에 있어 글자가 서로를 뭉갰다.
-          알람 띠 자리는 켜지든 안 켜지든 항상 비워 둔다. 알람은 어느 화면에서도 무엇에도
-          가리지 않아야 하고, 알람 유무에 따라 아래 배치가 흔들리면 그것대로 못 읽는다.
+          경고 띠는 공통 알람(64..108)과 페이지 제목 아래에 고정한다.
         -->
-        <ui:VisualElement name="manual-banner" style="position:absolute; left:88px; top:108px; right:0; height:66px; background-color:rgb(34,31,24); border-top-width:2px; border-top-color:rgba(246,173,55,0.7); padding-left:24px; justify-content:center;">
-            <ui:Label text="수동 조작 — 작업 흐름 밖입니다" class="warn" style="font-size:18px;" />
-            <ui:Label text="jobs · units 를 만들지 않고 DB에 아무것도 기록하지 않습니다.  지금은 화면만 만든 단계라 APPLY · 그리퍼 · 모드 전환이 로봇으로 나가지 않습니다." style="color:rgb(194,164,99); font-size:13px; margin-top:4px;" />
+        <ui:VisualElement name="manual-banner" style="position:absolute; left:112px; top:164px; right:24px; height:46px; background-color:rgb(34,31,24); border-left-width:3px; border-left-color:rgba(246,173,55,0.9); padding-left:18px; flex-direction:row; align-items:center;">
+            <ui:Label text="수동 조작 주의" class="warn" style="font-size:16px;" />
+            <ui:Label text="작업 영역을 확인하십시오.  APPLY · 그리퍼 명령은 현재 로봇으로 전송되지 않으며 jobs · units 를 기록하지 않습니다." style="color:rgb(194,164,99); font-size:13px; margin-left:18px;" />
         </ui:VisualElement>
 
         <!-- 좌 : TCP 조그 -->
@@ -37,7 +35,7 @@
           760 으로 줄여도 344px 이라 6축 조그에 모자라지 않고, 그 차이가 그대로
           가운데 572x742 짜리 트윈 창이 된다.
         -->
-        <ui:VisualElement name="tcp-panel" class="panel panel--aux" style="position:absolute; left:112px; top:198px; width:452px; height:742px;">
+        <ui:VisualElement name="tcp-panel" class="panel panel--aux" style="position:absolute; left:112px; top:226px; width:452px; height:806px;">
             <ui:VisualElement class="panel__spine" />
             <ui:VisualElement class="panel__head">
                 <ui:Label text="TCP JOG" class="panel__title" />
@@ -59,14 +57,20 @@
                     <ui:VisualElement name="gripper-fill" class="gauge__fill" />
                 </ui:VisualElement>
                 <ui:VisualElement class="row" style="margin-top:16px;">
-                    <ui:Button name="gripper-open-button" text="OPEN" class="btn" style="width:150px;" />
-                    <ui:Button name="gripper-close-button" text="CLOSE" class="btn" style="width:150px; margin-left:12px;" />
+                    <ui:Button name="gripper-open-button" text="OPEN" class="btn" style="width:150px; height:48px;" />
+                    <ui:Button name="gripper-close-button" text="CLOSE" class="btn" style="width:150px; height:48px; margin-left:12px;" />
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
 
+        <!-- 중앙은 투명하게 남겨 실제 Twin과 Ghost target을 가리지 않는다. -->
+        <ui:VisualElement picking-mode="Ignore" style="position:absolute; left:588px; top:226px; width:524px; height:806px; border-width:1px; border-color:rgba(255,255,255,0.16);">
+            <ui:Label text="ROBOT VIEW · TWIN" class="panel__title" style="position:absolute; left:18px; top:14px;" />
+            <ui:Label text="ACTUAL / GHOST TARGET" class="page-heading__meta" style="position:absolute; right:18px; bottom:14px;" />
+        </ui:VisualElement>
+
         <!-- 우 : 관절 조그 -->
-        <ui:VisualElement name="jog-panel" class="panel" style="position:absolute; left:1136px; top:198px; width:760px; height:742px;">
+        <ui:VisualElement name="jog-panel" class="panel" style="position:absolute; left:1136px; top:226px; width:760px; height:806px;">
             <ui:VisualElement class="panel__spine" />
             <ui:VisualElement class="panel__head">
                 <ui:Label text="JOINT JOG   J1 – J6" class="panel__title" />
@@ -79,7 +83,7 @@
                     <ui:Label text="GHOST PREVIEW" class="micro" style="margin-right:16px;" />
                     <ui:Label name="ghost-hint" text="슬라이더를 움직이면 목표 자세가 반투명으로 미리 보입니다" class="muted" style="font-size:12px;" />
                     <ui:VisualElement class="spacer" />
-                    <ui:Label text="APPLY 를 눌러야 로봇이 움직입니다" class="warn" style="font-size:12px;" />
+                    <ui:Label text="실동작 명령 차단 중" class="warn" style="font-size:12px;" />
                 </ui:VisualElement>
                 <ui:VisualElement name="jog-1-row" class="row" style="height:92px; border-bottom-width:1px; border-bottom-color:rgba(255,255,255,0.055);">
                     <ui:Label text="J1" class="value" style="width:66px;" />
@@ -155,10 +159,10 @@
                 </ui:VisualElement>
                 <ui:VisualElement class="spacer" />
                 <ui:VisualElement class="row" style="margin-top:16px;">
-                    <ui:Button name="jog-home-button" text="HOME" class="btn" style="width:200px;" />
-                    <ui:Button name="jog-cancel-button" text="CANCEL" class="btn" style="width:200px; margin-left:12px;" />
+                    <ui:Button name="jog-home-button" text="HOME" class="btn" style="width:200px; height:48px;" />
+                    <ui:Button name="jog-cancel-button" text="CANCEL" class="btn" style="width:200px; height:48px; margin-left:12px;" />
                     <ui:VisualElement class="spacer" />
-                    <ui:Button name="jog-apply-button" text="APPLY" class="btn btn--accent" style="width:260px; font-size:16px;" />
+                    <ui:Button name="jog-apply-button" text="APPLY" class="btn" style="width:260px; height:48px; font-size:16px;" />
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>

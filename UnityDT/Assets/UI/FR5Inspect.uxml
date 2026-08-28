@@ -2,20 +2,21 @@
     <ui:Style src="project://database/Assets/UI/FR5Theme.uss" />
     <ui:Template src="project://database/Assets/UI/FR5Shell.uxml" name="FR5Shell" />
     <!--
-      INSPECT · 검사 판정 — Docs/ui/mock-03-inspect.svg
-      결정 단위는 완성품 1대다. PASS/FAIL 이 이 화면의 유일한 초점이다.
-      실데이터: 카메라 영상 · 스트리밍 상태 (FR5InspectBinder)
-      샘플데이터: 판정 · 불량 슬롯 · 유닛 목록  → 검사 연동이 생기면 교체
+      INSPECT · 검사 판정 — docs/ui_recommendation/mockups-monitor-aligned/02_inspect-v2.png
+      카메라 증거와 MainServer의 유닛 판정·불량·이력을 읽기 전용으로 보여 준다.
     -->
     <ui:VisualElement name="fr5-inspect" class="page page--dim fr5--mock">
 
-
-        
-
-        
+        <ui:VisualElement class="page-heading">
+            <ui:Label text="INSPECT" class="page-heading__title" />
+            <ui:Label text="/" class="page-heading__divider" />
+            <ui:Label text="검사" class="page-heading__title" />
+            <ui:VisualElement class="spacer" />
+            <ui:Label text="카메라 증거 · 판정 기록 · 읽기 전용" class="page-heading__meta" />
+        </ui:VisualElement>
 
         <!-- 카메라 : 테두리 없이 영상 그 자체 -->
-        <ui:VisualElement name="camera-panel" class="panel" style="position:absolute; left:112px; top:88px; width:1000px; height:808px;">
+        <ui:VisualElement name="camera-panel" class="panel" style="position:absolute; left:112px; top:164px; width:1050px; height:744px;">
             <ui:VisualElement class="panel__spine" />
             <ui:VisualElement class="panel__head">
                 <ui:Label text="INSPECTION CAMERA" class="panel__title" />
@@ -44,7 +45,7 @@
         </ui:VisualElement>
 
         <!-- 판정 -->
-        <ui:VisualElement name="verdict-panel" class="panel" style="position:absolute; left:1136px; top:88px; width:760px; height:392px;">
+        <ui:VisualElement name="verdict-panel" class="panel" style="position:absolute; left:1186px; top:164px; width:710px; height:368px;">
             <ui:VisualElement class="panel__spine" />
             <ui:VisualElement class="panel__head">
                 <ui:Label name="verdict-title" text="INSPECTION RESULT" class="panel__title" />
@@ -53,12 +54,11 @@
             </ui:VisualElement>
             <ui:VisualElement class="panel__body">
                 <ui:VisualElement class="row">
-                    <!-- TODO(API): units.inspection_result 로 교체 -->
-                    <ui:Label name="verdict-value" text="FAIL" class="bad" style="font-size:70px; letter-spacing:-3px;" />
+                    <ui:Label name="verdict-value" text="—" style="font-size:70px; letter-spacing:-3px;" />
                     <ui:VisualElement class="spacer" />
                     <ui:VisualElement style="align-items:flex-end;">
-                        <ui:Label name="verdict-score" text="72.1%" class="value value--lg" />
-                        <ui:Label text="confidence" class="muted" style="font-size:12px;" />
+                        <ui:Label name="verdict-score" text="—" class="value value--lg" />
+                        <ui:Label text="검사 시각" class="muted" style="font-size:12px;" />
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement class="rule" style="margin-top:8px; margin-bottom:8px;" />
@@ -67,7 +67,7 @@
         </ui:VisualElement>
 
         <!-- 불량 슬롯 -->
-        <ui:VisualElement name="defect-panel" class="panel" style="position:absolute; left:1136px; top:504px; width:760px; height:392px;">
+        <ui:VisualElement name="defect-panel" class="panel" style="position:absolute; left:1186px; top:556px; width:710px; height:352px;">
             <ui:VisualElement class="panel__spine" />
             <ui:VisualElement class="panel__head">
                 <ui:Label text="DEFECT MAP · unit_defects" class="panel__title" />
@@ -84,14 +84,14 @@
         </ui:VisualElement>
 
         <!-- 유닛 스트립 -->
-        <ui:VisualElement name="units-panel" class="panel" style="position:absolute; left:112px; top:920px; width:1784px; height:136px;">
+        <ui:VisualElement name="units-panel" class="panel" style="position:absolute; left:112px; top:932px; width:1784px; height:124px;">
             <ui:VisualElement class="panel__spine" />
             <ui:VisualElement class="panel__head">
                 <ui:Label text="JOB UNITS" class="panel__title" />
                 <ui:VisualElement class="spacer" />
                 <ui:Label name="units-summary" text="—" class="panel__badge" />
             </ui:VisualElement>
-            <!-- TODO(API): jobs·units 조회로 채운다. 클릭하면 그 대의 판정으로 이동 -->
+            <!-- jobs/{job_id}/units 조회 결과를 현재 계약대로 읽기 전용 표시한다. -->
             <ui:VisualElement name="unit-strip" class="row vlist" style="flex-grow:1; padding-left:18px; padding-right:18px;" />
         </ui:VisualElement>
 
