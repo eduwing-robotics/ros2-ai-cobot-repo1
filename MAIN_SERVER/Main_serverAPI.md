@@ -97,12 +97,10 @@ account.
 
 Execution routes additionally require a shell where ROS2 and the Farino_AIO
 overlay have been sourced, plus a running bridge that exposes
-`/unity/assembly/start`. For Mock, start the existing
-`mock_db_mvp.launch.py` first, then run:
-
-```bash
-MAIN_SERVER_MODE=mock MAIN_SERVER_DB_DSN='dbname=main_unity_mock_test' python3 MAIN_SERVER/server.py
-```
+`/unity/assembly/start`. For Mock, use the single
+[`launch_mock.launch.py` command](../Farino_AIO/README.md#mock-올인원-실행).
+It starts MoveIt, the Mock DB bridge, Unity endpoint and MainServer against the
+same Mock database; do not start MainServer separately.
 
 For Real, start the real bridge that implements the same service and run
 MainServer with `MAIN_SERVER_MODE=real` and its real read-only DB DSN.

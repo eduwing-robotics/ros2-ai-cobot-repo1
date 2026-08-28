@@ -11,13 +11,11 @@
 - 조립 시작 요청과 현재/최근 조립 스냅샷 조회
 - `MAIN_SERVER_MODE=mock|real` 실행 설정 검증
 
-조립 route는 ROS2 `/unity/assembly/start` 서비스를 호출하므로 ROS2와 Farino workspace가 source된 환경이 필요합니다. DB 조회는 읽기 전용 DSN을 사용합니다.
-
-```bash
-MAIN_SERVER_MODE=mock \
-MAIN_SERVER_DB_DSN='dbname=main_unity_mock_test' \
-python3 MAIN_SERVER/server.py
-```
+조립 route는 ROS2 `/unity/assembly/start` 서비스를 호출하므로 ROS2와 Farino
+workspace가 source된 환경이 필요합니다. DB 조회는 읽기 전용 DSN을
+사용합니다. Mock에서는 MainServer를 따로 실행하지 않고
+[Farino_AIO Mock 올인원 실행](../Farino_AIO/README.md#mock-올인원-실행)을
+사용합니다.
 
 ## 문서
 

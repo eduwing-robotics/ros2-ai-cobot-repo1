@@ -10,6 +10,43 @@ FR5 MoveIt 구성, Mock 조립 노드와 선택적 PostgreSQL bridge를 포함�
 - `mock_db_mvp` bridge를 통한 Job·Unit·재고·검사 기록
 - Mock 검사 PASS/FAIL 확률과 seed 설정
 
+## Mock 올인원 실행
+
+`launch_mock.launch.py` 하나가 MoveIt, RViz, FakeSystem controller, Mock 조립
+노드, DB bridge, Unity ROS TCP endpoint와 MainServer를 같은 Mock DB로 실행합니다.
+처음 한 번 또는 launch 파일 변경 후에는 `mock_db_mvp`를 빌드합니다.
+
+```bash
+cd /home/codlab/Main_Unity/Farino_AIO
+source /opt/ros/jazzy/setup.bash
+colcon build --symlink-install --packages-select mock_db_mvp
+
+cd ..
+source Farino_AIO/install/setup.bash
+source Ros2UnityEndopoint_PKG/install/local_setup.bash
+export PRODUCTION_DB_DSN='dbname=main_unity_mock_test'
+export MAIN_SERVER_DB_DSN='dbname=main_unity_mock_test'
+export MAIN_SERVER_SCRIPT="$PWD/MAIN_SERVER/server.py"
+ros2 launch mock_db_mvp launch_mock.launch.py \
+  endpoint_ip:=0.0.0.0 endpoint_port:=10000
+```
+
+Unity의 **Robotics > ROS Settings**에서 ROS2를 선택하고 ROS IP에는 이 PC의
+실제 IP, ROS Port에는 `10000`을 입력합니다. `endpoint_ip:=0.0.0.0`은 수신
+주소이며 Unity 접속 주소가 아닙니다. 실제 IP는 `ip -br -4 address`로
+확인합니다.
+
+```bash
+curl http://127.0.0.1:8000/api/v1/health
+ros2 service call /unity/assembly/start fairino_msgs/srv/RemoteCmdInterface \
+  "{cmd_str: '{\"command\":\"status\"}'}"
+ros2 topic echo --once /joint_states
+```
+
+정상 초기 상태는 MainServer health의 `runtime_mode: mock`, 조립 서비스의
+`state: IDLE`, `/joint_states` 수신입니다. 전체 종료는 launch를 실행한
+터미널에서 `Ctrl+C` 한 번으로 처리합니다.
+
 ## 문서
 
 - [프로젝트 기능 목표](../overview.md)
