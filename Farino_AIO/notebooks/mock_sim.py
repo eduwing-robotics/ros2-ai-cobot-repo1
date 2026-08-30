@@ -82,6 +82,8 @@ def rotate_vector(quaternion, vector):
 
 def gripper_position(opening_percent):
     return (100.0 - opening_percent) * GRIPPER_CLOSED_METERS / 100.0
+
+
 def joint_target_reached(current_radians, target_degrees, tolerance_degrees=0.1):
     return len(current_radians) == len(target_degrees) == len(JOINTS) and all(
         abs(math.remainder(math.degrees(current) - target, 360.0))
@@ -90,6 +92,17 @@ def joint_target_reached(current_radians, target_degrees, tolerance_degrees=0.1)
     )
 
 
+def arm_joint_positions(message):
+    names = getattr(message, "name", None)
+    positions = getattr(message, "position", None)
+    if names is None or positions is None or len(names) != len(positions):
+        return None
+    values = dict(zip(names, positions))
+    try:
+        joints = tuple(values[name] for name in JOINTS)
+    except KeyError:
+        return None
+    return joints if all(math.isfinite(value) for value in joints) else None
 
 
 def parse_start_command(raw):
@@ -405,6 +418,12 @@ def self_check():
     assert joint_target_reached(home_radians, INITIAL_JOINTS_DEG)
     home_radians[0] += math.radians(0.2)
     assert not joint_target_reached(home_radians, INITIAL_JOINTS_DEG)
+    assert arm_joint_positions(JointState(
+        name=list(JOINTS), position=[0.0] * len(JOINTS)
+    )) == (0.0,) * len(JOINTS)
+    assert arm_joint_positions(JointState(
+        name=list(JOINTS[1:]), position=[0.0] * (len(JOINTS) - 1)
+    )) is None
     request_id = "12345678-1234-5678-1234-567812345678"
     observations = [{
         "order": 1,
@@ -515,8 +534,12 @@ class MockMoveJ(Node):
                 FloatingPointRange(from_value=0.01, to_value=1.0, step=0.0)
             ]
         )
-        self.declare_parameter("mock_topSpeed", 1.0, scaling_descriptor)
-        self.declare_parameter("mock_accelerSpeed", 1.0, scaling_descriptor)
+        self.declare_parameter(
+            "mock_topSpeed", args.velocity / 100.0, scaling_descriptor
+        )
+        self.declare_parameter(
+            "mock_accelerSpeed", args.acceleration / 100.0, scaling_descriptor
+        )
         self.joint_state = None
         self.create_subscription(JointState, "/joint_states", self.on_joint_state, 10)
         self.pending_joint_target = None
@@ -573,7 +596,8 @@ class MockMoveJ(Node):
         self.status_publisher = self.create_publisher(String, "/twin_visual/status", 10)
 
     def on_joint_state(self, message):
-        self.joint_state = message
+        if arm_joint_positions(message) is not None:
+            self.joint_state = message
 
     def motion_scaling(self):
         return (
@@ -998,7 +1022,8 @@ class MockMoveJ(Node):
         result = self.wait_for_future(future, "trajectory execution").result
         if result.error_code.val != MoveItErrorCodes.SUCCESS:
             raise RuntimeError(f"mock execution failed: MoveIt code {result.error_code.val}")
-        rclpy.spin_once(self, timeout_sec=0.2)
+        self.joint_state = None
+        self.wait_for_joint_state()
         self.publish_status("execution: complete")
 
     def run(self):

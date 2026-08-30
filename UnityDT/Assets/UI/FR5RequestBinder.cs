@@ -412,12 +412,7 @@ namespace MainUnity.UI
             return "";
         }
 
-        void OnStart()
-        {
-            ScenarioRunnerSafeRun();
-        }
-
-        void ScenarioRunnerSafeRun()
+        async void OnStart()
         {
             var scenario = uiMaster != null ? uiMaster.Scenario : null;
             if (scenario == null)
@@ -425,7 +420,16 @@ namespace MainUnity.UI
                 if (startReason != null) startReason.text = "Scenario 미연결";
                 return;
             }
-            scenario.Run();
+
+            try
+            {
+                await scenario.Run();
+            }
+            catch (Exception exception)
+            {
+                if (startReason != null) startReason.text = exception.Message;
+                Debug.LogException(exception, this);
+            }
         }
     }
 }

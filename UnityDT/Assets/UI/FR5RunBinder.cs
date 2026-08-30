@@ -119,7 +119,11 @@ namespace MainUnity.UI
         readonly System.Collections.Generic.List<(Label Value, System.Func<RobotStatusFrame, string> Read)> realRows = new();
         bool cached;
 
-        void OnEnable() => cached = false;
+        void OnEnable()
+        {
+            cached = false;
+            slotGroups.Clear();
+        }
 
         void Update()
         {
