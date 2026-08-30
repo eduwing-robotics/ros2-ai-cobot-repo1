@@ -73,7 +73,7 @@
         <mxCell id="c6_t" value="이 스키마의 경계를 지킨다" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=14;fontStyle=1;fontColor=#1F3864;" vertex="1" parent="1">
           <mxGeometry x="624" y="486" width="400" height="28" as="geometry"/>
         </mxCell>
-        <mxCell id="c6_b" value="production 은 조립·검사 실행 기록과, 그 기록이 참조 무결성으로&lt;br&gt;의존하는 기준정보만 담는다. 레시피 본문·부품 데이터시트·&lt;br&gt;불량 임계 정책은 들어오지 않는다.&lt;br&gt;&lt;br&gt;&lt;font color=&quot;#B85450&quot;&gt;다른 스키마로 나가는 외래키를 만들지 않는다 → DB3.md&lt;/font&gt;" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=top;fontSize=11;fontColor=#555555;spacingTop=2;" vertex="1" parent="1">
+        <mxCell id="c6_b" value="production 은 조립·검사 실행 기록과, 그 기록이 참조 무결성으로&lt;br&gt;의존하는 기준정보만 담는다. 레시피 본문·부품 데이터시트·&lt;br&gt;불량 임계 정책은 들어오지 않는다.&lt;br&gt;&lt;br&gt;&lt;font color=&quot;#B85450&quot;&gt;품질 데이터시트와 대책서는 파일로 분리한다 → DB.md&lt;/font&gt;" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=top;fontSize=11;fontColor=#555555;spacingTop=2;" vertex="1" parent="1">
           <mxGeometry x="624" y="520" width="396" height="88" as="geometry"/>
         </mxCell>
         <mxCell id="title" value="production 스키마 설계 원칙" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#1F3864;" vertex="1" parent="1">

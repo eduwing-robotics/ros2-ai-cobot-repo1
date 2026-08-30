@@ -645,7 +645,7 @@ def build_evidence(wb, d):
 
     band(ws, "A1:E1", "발행 시점 고정 근거", "[발행 시점 고정]")
     note_line(ws, "A2:E2",
-              f"defect_report.alert_evidence 스냅샷 · 문서번호 {d['alert_code']} · 수정 금지")
+              f"production.unit_defects 확정 기록 · 문서번호 {d['alert_code']} · 수정 금지")
     ws.row_dimensions[1].height = 20
     ws.row_dimensions[2].height = 15
 
@@ -783,7 +783,7 @@ def build_analysis(wb, d):
 
     row += 1
     block("D.  품질 체크리스트        [조회 시점 참조 · 데이터시트 갱신 시 바뀜]",
-          "datastation_part_checklist · part_catalog.quality_checklists.category = "
+          "데이터시트 Checklist 시트 · 범주 = "
           "part_groups.category_label · 이 범주에서 무엇을 확인해야 하는지")
     table_head(ws, row, 1, 5, ["구분", "확인 항목", "", "", "이상 시 조치"])
     ws.merge_cells(f"B{row}:D{row}")
@@ -1156,7 +1156,7 @@ def build(data, path):
             DefinedName(name, attr_text=f"'{sheet}'!${ref[0]}${ref[1:]}"))
 
     wb.properties.title = "불량대책서"
-    wb.properties.creator = "MAIN_SERVER/scan_quality.py"
+    wb.properties.creator = "MAIN_SERVER/generate_defect_reports.py"
     wb.properties.created = dt.datetime(2026, 8, 19, 9, 0, 0)
     wb.save(path)
     print(f"wrote {path}")

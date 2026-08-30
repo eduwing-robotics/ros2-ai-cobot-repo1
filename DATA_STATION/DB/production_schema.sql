@@ -1,5 +1,4 @@
 -- Production-only database schema.
--- Run this file instead of 001_schema.sql when PostgreSQL stores production data only.
 
 BEGIN;
 

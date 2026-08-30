@@ -118,16 +118,16 @@ sequenceDiagram
 
 ## 데이터 원칙
 
-| 스키마 | 책임 |
+| 저장소 | 책임 |
 |---|---|
 | `production` | 제품·슬롯·부품 현재고, Job, Unit, 검사와 불량 슬롯 |
-| `part_catalog` | 제조사, 공급·대체 후보, 데이터시트와 검사 체크리스트 |
-| `defect_report` | 품질 임계값, 알림, 고정 근거와 개선 결과 |
+| 데이터시트 XLSX | 제조사, 공급·대체 후보와 검사 체크리스트 |
+| 불량대책서 XLSX | Production 불량과 데이터시트를 결합한 파일 |
 
 - `production`에는 제품 한 대 단위의 확정 생산·검사 사실만 기록한다.
 - 관절·TCP 스트림과 조립 스텝 진행은 영속 DB에 저장하지 않는다.
 - 레시피 본문과 좌표는 파일과 Git이 소유하며 DB에는 `recipe_version`만 기록한다.
-- 스키마 간 물리 외래키는 두지 않고 각 스키마가 자기 무결성을 책임진다.
+- 데이터시트와 대책서는 파일로 분리하고 DB 외래키를 만들지 않는다.
 - 검사 불량과 실행 실패를 구분한다. 정상 종료된 Unit도 검사 결과는 `FAIL`일 수 있다.
 
 ## 완료 기준
@@ -148,6 +148,5 @@ sequenceDiagram
 | Unity ↔ ROS2 계약 | `docs/API.md` |
 | MainServer HTTP 계약 | `MAIN_SERVER/Main_serverAPI.md` |
 | production DB | `UnityDT/Docs/DB.md` |
-| 3개 스키마 | `UnityDT/Docs/DB3.md` |
-| DDL | `DATA_STATION/DB/001_schema.sql` |
+| DDL | `DATA_STATION/DB/production_schema.sql` |
 | 레시피 | `UnityDT/Docs/Recipe.md` |

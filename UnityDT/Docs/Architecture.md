@@ -83,7 +83,7 @@ MainServer는 현재 다음 두 책임을 가진다.
 - 레시피 본문과 좌표는 YAML·Git이 소유하며 DB에는 실행한 `recipe_version`만 기록한다.
 - 관절·TCP 스트림과 조립 스텝 callback은 영속 DB에 저장하지 않는다.
 
-DB 기준은 [production 설계](DB.md), [3개 스키마 설계](DB3.md), [레시피 규격](Recipe.md)이다.
+DB 기준은 [production 설계](DB.md), 품질 파일 기준은 [불량대책서 필드 매핑](../../MAIN_SERVER/templates/불량대책서_필드매핑.md), 레시피 기준은 [레시피 규격](Recipe.md)이다.
 
 ## 현재 제한
 

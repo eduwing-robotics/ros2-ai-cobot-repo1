@@ -1,8 +1,8 @@
 // production 스키마 — dbdiagram.io 붙여넣기용
 // https://dbdiagram.io/d
 // 상세 계약과 칼럼 평가는 Docs/DB.md를 참고한다.
-// part_catalog · defect_report 스키마와의 연동은 Docs/DB3.md를 참고한다.
-// 이 파일은 production 스키마만 정의한다. 다른 스키마로 나가는 외래키는 만들지 않는다.
+// 부품 데이터시트와 불량대책서는 Docs/DB.md를 참고한다.
+// 이 파일은 production 스키마만 정의한다.
 
 Table parts {
   part_id varchar [pk]

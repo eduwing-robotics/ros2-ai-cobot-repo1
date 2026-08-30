@@ -59,7 +59,7 @@ flowchart TB
     end
 
     VNODE["비전 노드<br/>저장소에 없음"]
-    DB[("PostgreSQL<br/>production · part_catalog · defect_report")]
+    DB[("PostgreSQL<br/>production 6 tables")]
 
     UI --> SCEN
     SCEN --> CONV

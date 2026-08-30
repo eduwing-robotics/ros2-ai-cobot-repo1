@@ -253,5 +253,5 @@
 <line x1="136" y1="960" x2="1872" y2="960" stroke="#ffffff" stroke-opacity=".10"/>
 <text x="136" y="1000" class="warn" font-size="15" font-weight="700">Unity는 DB에 직접 접속하지 않는다.</text>
 <text x="416" y="1000" class="mu" font-size="14">이 페이지는 ROS2로 채울 수 없다. Architecture.md 의 HTTP 어댑터가 생겨야 데이터가 들어온다. 그 전까지 "연결 없음" 빈 상태로 존재한다.</text>
-<text x="136" y="1022" class="mu" font-size="13">production  units · unit_defects      ·      defect_report  thresholds · alerts      ·      part_catalog  part_candidates</text>
+<text x="136" y="1022" class="mu" font-size="13">production units · unit_defects      ·      XLSX data sheet      ·      XLSX defect reports</text>
 </svg>

@@ -1,4 +1,4 @@
--- Run after 001_schema.sql and 002_query_samples.sql in the same psql session.
+-- Run after production_schema.sql and 002_query_samples.sql in the same psql session.
 -- All test rows are rolled back.
 
 BEGIN;

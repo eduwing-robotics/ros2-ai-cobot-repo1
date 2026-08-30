@@ -134,5 +134,4 @@ python3 MAIN_SERVER/server.py
 - [Unity ↔ ROS2 API](docs/API.md)
 - [MainServer HTTP API](MAIN_SERVER/Main_serverAPI.md)
 - [production 핵심 DB 설계](UnityDT/Docs/DB.md)
-- [3개 스키마 통합 설계](UnityDT/Docs/DB3.md)
 - [조립 레시피 규격](UnityDT/Docs/Recipe.md)
