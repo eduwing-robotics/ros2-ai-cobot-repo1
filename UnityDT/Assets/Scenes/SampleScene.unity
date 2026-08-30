@@ -7496,8 +7496,6 @@ GameObject:
   - component: {fileID: 1060664734}
   - component: {fileID: 1060664733}
   - component: {fileID: 1060664732}
-  - component: {fileID: 1060664731}
-  - component: {fileID: 1060664730}
   - component: {fileID: 1060664736}
   m_Layer: 0
   m_Name: RobotGhost
@@ -7506,30 +7504,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1060664730
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1060664729}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 03cf2a3183733da5da025ecb286999a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Twin.TwinTrajectoryPreview
---- !u!114 &1060664731
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1060664729}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d90aede4984377d828b840816032fae9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Twin.TwinVisualBridge
 --- !u!114 &1060664732
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8423,7 +8397,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1161464564}
   - component: {fileID: 1161464565}
-  - component: {fileID: 1161464566}
   m_Layer: 0
   m_Name: ScenarioPlayer
   m_TagString: Untagged
@@ -8459,18 +8432,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Scenario.Scenario
   conveyor: {fileID: 1523363827}
---- !u!114 &1161464566
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1161464562}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 85e4d5c69f7d7922dae00fb17ac88db6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Scenario.ScenarioTmp
 --- !u!1001 &1165396282
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -14862,10 +14823,6 @@ PrefabInstance:
     - target: {fileID: 6407090874288368824, guid: a0b855b9be022a33fa77e4c342a91d56, type: 3}
       propertyPath: m_Name
       value: ROSConnectionPrefab
-      objectReference: {fileID: 0}
-    - target: {fileID: 7937580268837813603, guid: a0b855b9be022a33fa77e4c342a91d56, type: 3}
-      propertyPath: m_RosIPAddress
-      value: 192.168.11.5
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
