@@ -412,6 +412,15 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
     text-overflow: ellipsis;
 }
 .tcell--head { color: var(--c-ink-3); font-size: 10px; letter-spacing: 1.2px; -unity-font-style: bold; }
+
+/*
+  줄바꿈 허용 — UI Toolkit 의 white-space 기본값은 CSS 와 달리 nowrap 이다.
+  그래서 칸보다 긴 글은 줄을 바꾸지 않고 칸 밖으로 밀려 나간다. 표 칸(.tcell)처럼
+  잘라도 되는 곳은 ellipsis 로 처리하지만, 제품명이나 주석처럼 끝까지 읽혀야 하는
+  글은 잘리면 안 되므로 여기서 줄을 바꾼다.
+*/
+.wrap { white-space: normal; }
+
 .tcell--num { -unity-text-align: middle-right; color: var(--c-ink); -unity-font-style: bold; }
 
 /* 빈 상태 — 0 을 그리지 않는다 */

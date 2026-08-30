@@ -62,7 +62,7 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement class="rule" style="margin-top:8px; margin-bottom:8px;" />
-                <ui:VisualElement name="check-list" class="vlist" />
+                <ui:VisualElement name="check-list" class="vlist" style="flex-grow:1;" />
             </ui:VisualElement>
         </ui:VisualElement>
 

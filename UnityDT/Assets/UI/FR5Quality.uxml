@@ -94,7 +94,7 @@
         </ui:VisualElement>
 
         <!-- 출처 고지 -->
-        <ui:VisualElement class="panel" style="position:absolute; left:112px; top:996px; right:24px; height:60px; padding:10px 18px 10px 18px;">
+        <ui:VisualElement class="panel" style="position:absolute; left:112px; top:972px; right:24px; height:84px; padding:10px 18px 10px 18px;">
             <ui:Label text="출처: MainServer HTTP · production units / unit_defects" class="muted" style="font-size:12px;" />
             <ui:Label text="레시피 비교 · thresholds · alerts 는 조회 계약이 없어 빈 상태로 표시합니다." class="muted" style="font-size:12px; margin-top:4px; color:rgb(100,112,122);" />
         </ui:VisualElement>

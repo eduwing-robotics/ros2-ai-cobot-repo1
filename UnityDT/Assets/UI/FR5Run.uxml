@@ -131,7 +131,7 @@
                     </ui:VisualElement>
                     <ui:VisualElement name="real-status" class="vlist" />
                 </ui:VisualElement>
-                <ui:Label name="mock-note" text="TCP · RPY · SAFETY — Real 연결에서만 들어온다" class="run-sub" />
+                <ui:Label name="mock-note" text="TCP · RPY · SAFETY — Real 연결에서만 들어온다" class="run-sub wrap" />
             </ui:VisualElement>
 
             <!-- 4. 그리퍼 · 워치독 -->

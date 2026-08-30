@@ -25,7 +25,7 @@
                 <ui:Label name="product-slot-count" text="—" class="panel__badge" />
             </ui:VisualElement>
             <ui:VisualElement class="panel__body">
-                <ui:Label name="product-name" text="—" class="value value--lg" />
+                <ui:Label name="product-name" text="—" class="value value--lg wrap" />
                 <ui:Label name="product-meta" text="—" class="muted" style="margin-top:6px;" />
                 <ui:VisualElement class="rule" style="margin-top:16px; margin-bottom:16px;" />
 

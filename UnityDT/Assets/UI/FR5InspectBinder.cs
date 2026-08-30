@@ -102,7 +102,7 @@ namespace MainUnity.UI
             if (verdictTitle != null) verdictTitle.text = "INSPECTION RESULT";
             FR5EmptyState.Missing(verdictValue);
             FR5EmptyState.Dash(verdictScore);
-            FR5EmptyState.Fill(checkList, "units.inspection_result 조회 필요 — 항목별 판정", 200f);
+            FR5EmptyState.Fill(checkList, "units.inspection_result 조회 필요 — 항목별 판정");
         }
 
         /// <summary>정상 슬롯은 행을 만들지 않는다는 DB 규칙을 화면도 따른다 — 불량만 색을 얻는다.</summary>
@@ -114,7 +114,7 @@ namespace MainUnity.UI
 
         void BuildUnits()
         {
-            FR5EmptyState.Fill(unitStrip, "units 조회 필요 — 대별 판정", 66f);
+            FR5EmptyState.Fill(unitStrip, "units 조회 필요 — 대별 판정");
             FR5EmptyState.Dash(unitsSummary);
             FR5EmptyState.Missing(jobSummary);
         }
@@ -213,9 +213,9 @@ namespace MainUnity.UI
         {
             FR5EmptyState.Missing(verdictValue);
             FR5EmptyState.Detail(verdictScore, message);
-            FR5EmptyState.Fill(checkList, message, 200f);
+            FR5EmptyState.Fill(checkList, message);
             FR5EmptyState.Fill(defectGrid, message, 200f);
-            FR5EmptyState.Fill(unitStrip, message, 66f);
+            FR5EmptyState.Fill(unitStrip, message);
             FR5EmptyState.Detail(defectSql, message);
             FR5EmptyState.Dash(unitsSummary);
             FR5EmptyState.Detail(jobSummary, message);
