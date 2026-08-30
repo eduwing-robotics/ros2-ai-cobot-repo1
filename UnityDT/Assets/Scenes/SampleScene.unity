@@ -388,7 +388,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eab7e9e525f60de0d8b75c27d7e5a467, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Robot.RobotMaster
-  operatingMode: 1
+  operatingMode: 0
   mock: {fileID: 365101877}
   real: {fileID: 1511203717}
   status: {fileID: 70281096}
@@ -2437,7 +2437,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &365101869
 Transform:
   m_ObjectHideFlags: 0
@@ -10570,7 +10570,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1511203713
 Transform:
   m_ObjectHideFlags: 0
