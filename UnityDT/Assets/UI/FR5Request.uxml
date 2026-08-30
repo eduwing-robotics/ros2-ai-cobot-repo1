@@ -27,13 +27,36 @@
             <ui:VisualElement class="panel__body">
                 <ui:Label name="product-name" text="—" class="value value--lg" />
                 <ui:Label name="product-meta" text="—" class="muted" style="margin-top:6px;" />
-                <ui:VisualElement class="rule" style="margin-top:18px; margin-bottom:18px;" />
+                <ui:VisualElement class="rule" style="margin-top:16px; margin-bottom:16px;" />
 
-                <ui:VisualElement class="sect"><ui:VisualElement class="sect__tick" /><ui:Label text="SLOT PREVIEW" class="sect__title" /></ui:VisualElement>
-                <!-- product_slots 조회 결과를 바인더가 채운다. -->
+                <!--
+                  완성체 — 제품마다 그림 파일을 두지 않는다. production.products 에
+                  이미지 경로 컬럼이 없어서 파일을 쓰면 product_code → PNG 매핑을
+                  화면이 떠안고, 제품이 늘 때마다 조용히 빈 그림이 된다.
+                  대신 씬의 기판을 비추는 카메라의 RenderTexture 를 그대로 받는다 —
+                  제품 정의가 바뀌면 그림도 따라가고, 조립 중에는 부품이 놓이는
+                  것까지 보인다. 미지정이면 아래 빈 상태가 그 사실을 적는다.
+                -->
+                <ui:VisualElement class="sect"><ui:VisualElement class="sect__tick" /><ui:Label text="완성체" class="sect__title" /><ui:VisualElement class="spacer" /><ui:Label name="preview-source" text="—" class="sect__unit" /></ui:VisualElement>
+                <ui:VisualElement name="product-preview-frame" style="height:186px; background-color:rgb(20,28,36); margin-bottom:16px;">
+                    <ui:Image name="product-preview" style="position:absolute; left:0; top:0; right:0; bottom:0;" />
+                    <ui:VisualElement name="product-preview-empty" class="empty">
+                        <ui:Label text="연결 없음" class="empty__title empty__title--miss" />
+                        <ui:Label name="product-preview-desc" text="기판 미리보기 카메라 미지정" class="empty__desc" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <ui:VisualElement class="rule" style="margin-bottom:16px;" />
+
+                <!--
+                  필요 부품 — 슬롯이 아니라 부품 타입 단위다. 우측 재고표가 부품
+                  단위로 세므로 같은 단위여야 좌우를 겹쳐 읽을 수 있다.
+                  타일은 바인더가 product_slots 를 part_id 로 접어 만든다.
+                -->
+                <ui:VisualElement class="sect"><ui:VisualElement class="sect__tick" /><ui:Label text="필요 부품" class="sect__title" /><ui:VisualElement class="spacer" /><ui:Label text="타입 · 수량" class="sect__unit" /></ui:VisualElement>
                 <ui:VisualElement name="slot-list" class="row vlist" style="flex-wrap:wrap;" />
 
-                <ui:VisualElement class="rule" style="margin-top:18px; margin-bottom:18px;" />
+                <ui:VisualElement class="rule" style="margin-top:16px; margin-bottom:16px;" />
                 <ui:VisualElement class="sect"><ui:VisualElement class="sect__tick" /><ui:Label text="RECIPE" class="sect__title" /></ui:VisualElement>
                 <ui:VisualElement class="row">
                     <ui:Label name="recipe-version" text="mock-r1" style="color:rgb(226,236,241);" />

@@ -71,8 +71,14 @@ namespace MainUnity.UI
         [Tooltip("API.md 4.3 Mock MVP 는 수량 1 고정입니다. 계약이 생기면 상한이 재고로 바뀝니다.")]
         [SerializeField] int quantity = 1;
 
-        VisualElement productList, stockList, interlockList, slotList;
-        Label qtyValue, qtyMax, qtyEta, startReason, jobSummary, productName, productMeta, productSlotCount;
+        [Header("완성체 미리보기")]
+        [Tooltip("기판을 비추는 카메라의 RenderTexture 입니다. 비우면 미리보기 자리에 연결 없음을 적습니다.")]
+        [SerializeField] RenderTexture productPreview;
+
+        VisualElement productList, stockList, interlockList, slotList, previewEmpty;
+        Image previewImage;
+        Label qtyValue, qtyMax, qtyEta, startReason, jobSummary, productName, productMeta, productSlotCount,
+              previewSource, previewDesc;
         Button start, qtyMinus, qtyPlus;
         bool cached;
         string interlockSignature;
@@ -120,6 +126,10 @@ namespace MainUnity.UI
             stockList = root.Q<VisualElement>("stock-list");
             interlockList = root.Q<VisualElement>("interlock-list");
             slotList = root.Q<VisualElement>("slot-list");
+            previewImage = root.Q<Image>("product-preview");
+            previewEmpty = root.Q<VisualElement>("product-preview-empty");
+            previewSource = root.Q<Label>("preview-source");
+            previewDesc = root.Q<Label>("product-preview-desc");
             qtyValue = root.Q<Label>("qty-value");
             qtyMax = root.Q<Label>("qty-max");
             qtyEta = root.Q<Label>("qty-eta");
@@ -138,6 +148,7 @@ namespace MainUnity.UI
             BuildProducts();
             BuildSlots();
             BuildStock();
+            RefreshPreview();
             SetQuantity(quantity);
             cached = true;
             StartCoroutine(LoadProducts());
@@ -194,7 +205,24 @@ namespace MainUnity.UI
 
             FR5EmptyState.Present(productName, selectedProduct.product_name);
             productMeta.text = $"{selectedProduct.product_code} · {selectedProduct.product_version}";
-            productSlotCount.text = $"product_slots {selectedProduct.slots?.Length ?? 0}";
+            int slots = selectedProduct.slots?.Length ?? 0;
+            int types = selectedProduct.slots == null ? 0 : GroupByPart(selectedProduct.slots).Count;
+            productSlotCount.text = $"product_slots {slots} · {types} 부품";
+        }
+
+        // ─────────────────────── 필요 부품 ───────────────────────
+        //
+        // 타일 하나 = 부품 타입 하나다. 슬롯 하나가 아니다.
+        // 목 완성체만 해도 product_slots 가 25행이라 슬롯마다 칸을 만들면 620px 패널이
+        // 글자벽이 된다. 게다가 우측 재고표는 requirements 를 부품 단위로 세는데 좌측만
+        // 슬롯 단위면 같은 화면에서 같은 것을 두 단위로 세게 된다. 여기서 접어 맞춘다.
+
+        /// <summary>부품 타입 하나와 그 개수다. 순서는 product_slots 가 준 순서를 지킨다.</summary>
+        sealed class PartGroup
+        {
+            public string PartId;
+            public string PartName;
+            public int Count;
         }
 
         void BuildSlots()
@@ -206,14 +234,101 @@ namespace MainUnity.UI
             }
 
             slotList.Clear();
-            foreach (Slot slot in selectedProduct.slots)
+            foreach (PartGroup group in GroupByPart(selectedProduct.slots))
+                slotList.Add(PartTile(group));
+        }
+
+        /// <summary>
+        /// 슬롯을 부품 타입으로 접는다. Dictionary 만 쓰면 열거 순서가 흐트러져 화면에서
+        /// 부품 차례가 조회할 때마다 달라지므로, 등장 순서는 리스트가 따로 지킨다.
+        /// </summary>
+        static List<PartGroup> GroupByPart(Slot[] slots)
+        {
+            var order = new List<PartGroup>();
+            var index = new Dictionary<string, PartGroup>(StringComparer.OrdinalIgnoreCase);
+            foreach (Slot slot in slots)
             {
-                var label = new Label($"{slot.slot_code} · {slot.part_name} ({slot.part_id})");
-                label.AddToClassList("chip");
-                label.style.marginRight = 8;
-                label.style.marginBottom = 8;
-                slotList.Add(label);
+                string partId = string.IsNullOrEmpty(slot.part_id) ? "—" : slot.part_id;
+                if (!index.TryGetValue(partId, out PartGroup group))
+                {
+                    group = new PartGroup { PartId = partId, PartName = slot.part_name };
+                    index[partId] = group;
+                    order.Add(group);
+                }
+                group.Count++;
             }
+            return order;
+        }
+
+        /// <summary>
+        /// 타일 하나다. 그림은 USS 가 part_id 로 고른다 (FR5Theme.uss 의 .parttile__icon--*).
+        /// 여기서 Sprite 를 직접 잡지 않는 이유는, 잡는 순간 부품 목록이 코드로 들어와
+        /// 부품이 늘 때마다 이 파일을 고쳐야 하기 때문이다. part_id 는 DB 의 자유 텍스트라
+        /// 언제든 새 값이 온다. 규칙이 없는 값은 그림 없이 이니셜만 남는다.
+        /// </summary>
+        static VisualElement PartTile(PartGroup group)
+        {
+            var tile = new VisualElement();
+            tile.AddToClassList("parttile");
+            // 정식 부품명은 "SK hynix HBM3E 12-Hi 36GB" 처럼 길어 176px 타일에 들어가지
+            // 않는다. 타일에는 part_id 만 적고 전체 이름은 tooltip 으로 넘긴다.
+            tile.tooltip = string.IsNullOrEmpty(group.PartName) ? group.PartId : group.PartName;
+
+            var icon = new VisualElement();
+            icon.AddToClassList("parttile__icon");
+            icon.AddToClassList("parttile__icon--" + group.PartId.ToLowerInvariant());
+
+            var fallback = new Label(Initials(group.PartId));
+            fallback.AddToClassList("parttile__fallback");
+            icon.Add(fallback);
+            tile.Add(icon);
+
+            var line = new VisualElement();
+            line.AddToClassList("parttile__line");
+
+            var name = new Label(group.PartId.ToUpperInvariant());
+            name.AddToClassList("parttile__name");
+            line.Add(name);
+
+            var count = new Label("×" + group.Count);
+            count.AddToClassList("parttile__count");
+            line.Add(count);
+
+            tile.Add(line);
+            return tile;
+        }
+
+        /// <summary>그림이 없을 때 남는 글자다. 세 자를 넘기면 64px 칸을 벗어난다.</summary>
+        static string Initials(string partId)
+        {
+            if (string.IsNullOrEmpty(partId)) return "—";
+            return partId.Length <= 3
+                ? partId.ToUpperInvariant()
+                : partId.Substring(0, 3).ToUpperInvariant();
+        }
+
+        /// <summary>
+        /// 완성체 그림이다. 제품마다 PNG 를 두지 않는 이유는 UXML 주석에 적었다 —
+        /// production.products 에 이미지 경로 컬럼이 없어서 파일을 쓰면 매핑을 화면이
+        /// 떠안는다. 카메라가 없으면 그림을 지어내지 않고 없다고 적는다.
+        /// </summary>
+        void RefreshPreview()
+        {
+            bool ready = productPreview != null;
+
+            if (previewImage != null)
+            {
+                previewImage.image = ready ? productPreview : null;
+                previewImage.style.display = ready ? DisplayStyle.Flex : DisplayStyle.None;
+            }
+            if (previewEmpty != null)
+                previewEmpty.style.display = ready ? DisplayStyle.None : DisplayStyle.Flex;
+
+            FR5EmptyState.Detail(previewSource, ready
+                ? $"{productPreview.width}×{productPreview.height}"
+                : "카메라 미지정");
+            if (!ready)
+                FR5EmptyState.Detail(previewDesc, "기판을 비추는 카메라의 RenderTexture 를 바인더에 넣으세요");
         }
 
         void BuildStock()

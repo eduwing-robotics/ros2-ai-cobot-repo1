@@ -318,6 +318,63 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
 .tab--on .tab__bar { width: 100%; }
 
 /*
+  부품 타일 — 완성체가 요구하는 부품 타입 하나.
+
+  칸 하나가 슬롯 하나인 .slotchip 과 달리 타일 하나는 부품 타입 하나이고, 개수는
+  ×N 으로 접는다. product_slots 25행을 25칸으로 펼치면 좌측 패널이 글자벽이 되고,
+  부품 단위로 세는 우측 재고표와 세는 단위도 어긋난다.
+
+  그림은 tint 하지 않는다. 레일 아이콘(.tab__icon)은 흰 실루엣이라 tint 로 모드색을
+  따라가지만, 이 그림들은 부품 실물 렌더라 tint 를 걸면 형태만 남고 무엇인지 알아볼
+  수 없게 된다. 대신 타일에 상태색(--c-ok / --c-accent / --c-bad)을 쓰지 않는다.
+  여기는 "무엇이 몇 개 필요한가"만 말하는 자리이고, 놓였는가는 RUN 의 칸이 말한다.
+
+  part_id 와 그림의 매핑은 여기 있고 바인더에 없다. 바인더는 part_id 를 소문자로
+  바꿔 클래스를 붙일 뿐이라, 부품이 늘 때 손대는 곳은 아래 규칙 목록 하나다.
+  규칙이 없는 part_id 는 어느 규칙에도 걸리지 않아 이니셜 글자가 그대로 남는다 —
+  빈 칸이 되지 않는다 (FR5EmptyState 2번 규칙).
+*/
+.parttile {
+    width: 176px;
+    height: 132px;
+    margin-right: 8px;
+    margin-bottom: 8px;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.035);
+    border-left-width: 3px;
+    border-left-color: rgba(143, 166, 180, 0.45);
+}
+.parttile__icon {
+    width: 64px;
+    height: 64px;
+    align-items: center;
+    justify-content: center;
+    -unity-background-scale-mode: scale-to-fit;
+}
+.parttile__fallback { color: var(--c-ink-3); font-size: 20px; -unity-font-style: bold; letter-spacing: 1px; }
+.parttile__line { flex-direction: row; align-items: center; margin-top: 10px; }
+.parttile__name { color: var(--c-ink); font-size: 14px; -unity-font-style: bold; letter-spacing: 1.1px; }
+.parttile__count { color: var(--c-ink-2); font-size: 14px; -unity-font-style: bold; margin-left: 8px; }
+
+/*
+  part_id 하나 = 규칙 두 줄. 그림을 얹고, 그림이 가린 이니셜을 걷는다.
+  그림 출처는 Assets/UI/Icons/README.md 참고.
+*/
+.parttile__icon--hbm { background-image: url("project://database/Assets/UI/Icons/item-hbm.png"); }
+.parttile__icon--hbm .parttile__fallback { display: none; }
+.parttile__icon--pm { background-image: url("project://database/Assets/UI/Icons/item-pm.png"); }
+.parttile__icon--pm .parttile__fallback { display: none; }
+.parttile__icon--gpu { background-image: url("project://database/Assets/UI/Icons/item-gpu.png"); }
+.parttile__icon--gpu .parttile__fallback { display: none; }
+.parttile__icon--cap { background-image: url("project://database/Assets/UI/Icons/item-cap.png"); }
+.parttile__icon--cap .parttile__fallback { display: none; }
+.parttile__icon--ind { background-image: url("project://database/Assets/UI/Icons/item-ind.png"); }
+.parttile__icon--ind .parttile__fallback { display: none; }
+.parttile__icon--vrm { background-image: url("project://database/Assets/UI/Icons/item-vrm.png"); }
+.parttile__icon--vrm .parttile__fallback { display: none; }
+
+/*
   조립 진행 — 부품 타입 하나가 묶음 하나, 칸 하나가 슬롯 하나다.
   레시피의 한 스텝이 곧 슬롯 하나이므로 칸을 세는 것이 곧 스텝을 세는 것이다
   (Docs/Recipe.md). 같은 칸 어휘를 INSPECT · QUALITY 의 슬롯 맵이 재사용한다.
