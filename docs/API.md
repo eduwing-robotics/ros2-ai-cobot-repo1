@@ -6,6 +6,8 @@
 
 `제안·협의 필요`는 송신자·수신자와 기능만 선언한 상태이며 인터페이스명과 메시지 Schema는 미확정이다.
 
+Real 자동 조립의 상세 메시지 Schema와 구현자 준수사항은 [Assembly Sequencer API](../ASSEMBLY_SEQUENCER/API.md), 프로세스와 DB 정책은 [Assembly Sequencer README](../ASSEMBLY_SEQUENCER/README.md)를 따른다.
+
 ## 1. 기능별 구현 현황
 
 | 프로젝트 필요 기능 | Mock API | Real API | 상태 | 비고 |
@@ -29,6 +31,7 @@
 | 진행도·기판 번호 | Feedback·Snapshot | Progress 예정 | 부분 구현 | 진행도만 표시, `job_id`·`unit_id` UI 미전달 |
 | PASS/FAIL 검사 | MainServer Job·Unit 조회 | 동일 예정 | 부분 구현 | Mock DB 기록만 존재, INSPECT 미연결 |
 | 작업·검사 이력 | MainServer Job·Unit API | 동일 | 부분 구현 | 단건 조회만 존재 |
+| 생산 DB 갱신 | `mock_db_bridge` 동기 transaction | `real_assembly` 내부 Async DB Worker 예정 | Mock 구현·Real 미구현 | Real은 bounded queue·재시도 설계, 영속 Outbox 제외 |
 | 재고·조립 가능 여부 | MainServer Product API | 동일 | Backend 구현 | UI 공개 범위 재검토 중 |
 | 사람 감지 안전정지 | 없음 | 없음 | 미구현 | 로봇·컨베이어 동시 정지 필요 |
 | E-STOP 연동 | 상태 표시 일부 | `/nonrt_state_data` | 부분 구현 | 표시만 존재, 작업 정지 연동 없음 |
@@ -99,12 +102,18 @@ Mock 카메라와 컨베이어는 Unity 내부 기능이므로 외부 API Catalo
 
 ### 4.3 자동 조립
 
+`real_assembly`는 MainServer와 분리된 ROS 2 프로세스로 배치한다. MainServer는 조회와 요청 전달만 담당하고, 조립 순서·실제 완료 판정·생산 DB 갱신 이벤트는 `real_assembly`가 소유한다.
+
+`accepted=true`는 요청 검증과 DB Job·Unit 예약 성공을 뜻한다. `COMPLETED`는 실제 조립·검사 완료를 뜻하며 DB 최종 반영 여부는 `db_sync_state`로 분리한다.
+
 | API ID | 기능명 | 호출자·송신자 → 제공자·수신자 | 구분 | 인터페이스 | 메시지 타입 | 상태 | 관련 요구사항 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| ROS-ASM-003 | Real 자동 조립 시작 | Unity `RealAssemblyScenarioControl` → `real_assembly` node | Service | `/real/assembly/start` | `real_assembly_interfaces/srv/StartAssembly` | 설계됨·미구현 | UR-01~02, UR-08 / SR-01~02, SR-12 |
-| ROS-ASM-004 | Real 조립 상태 조회 | Unity `RealAssemblyScenarioControl` → `real_assembly` node | Service | `/real/assembly/status` | `real_assembly_interfaces/srv/GetAssemblyStatus` | 설계됨·미구현 | UR-06, SR-10 |
-| ROS-ASM-005 | Real 조립 진행·완료·실패 전달 | `real_assembly` node → Unity `RealAssemblyScenarioControl` | Topic | `/real/assembly/progress` | `real_assembly_interfaces/msg/AssemblyProgress` | 설계됨·미구현 | UR-01~02, UR-06 / SR-01~02, SR-10 |
+| ROS-ASM-003 | Real 자동 조립 시작 | Unity `RealAssemblyScenarioControl` 또는 향후 MainServer `AssemblyGateway` → `real_assembly` node | Service | `/real/assembly/start` | `real_assembly_interfaces/srv/StartAssembly` | 계약 확정·미구현 | UR-01~02, UR-08 / SR-01~02, SR-12 |
+| ROS-ASM-004 | Real 조립 상태 조회 | Unity `RealAssemblyScenarioControl` → `real_assembly` node | Service | `/real/assembly/status` | `real_assembly_interfaces/srv/GetAssemblyStatus` | 계약 확정·미구현 | UR-06, SR-10 |
+| ROS-ASM-005 | Real 조립 진행·완료·실패 전달 | `real_assembly` node → Unity `RealAssemblyScenarioControl` | Topic | `/real/assembly/progress` | `real_assembly_interfaces/msg/AssemblyProgress` | 계약 확정·미구현 | UR-01~02, UR-06 / SR-01~02, SR-10 |
 | ROS-CTL-001 | 조립 중지·일시정지·재개 | Unity `RealAssemblyScenarioControl`, MainServer `AssemblyGateway` → `real_assembly` | Service | `TBD` | `TBD` | 제안·협의 필요 | UR-08, SR-12 |
+
+Real Start 요청은 `request_id`, `product_code`, `product_version`, `recipe_version`, `requested_quantity`를 사용한다. 응답은 `accepted`, `request_id`, `job_id`, `unit_id`, `error_code`, `message`를 반환한다. Status와 Progress는 작업 식별자, 상태, 현재 단계, 진행도, `db_sync_state`, 오류와 갱신 시각을 제공한다.
 
 ### 4.4 Conveyor
 
@@ -130,3 +139,22 @@ Mock 카메라와 컨베이어는 Unity 내부 기능이므로 외부 API Catalo
 | ROS-SAF-001 | 사람 감지·E-STOP 상태 전달 | Safety PLC·센서 bridge → `real_assembly`, Robot·Conveyor 명령 경계, Unity | Topic | `TBD` | `TBD` | 제안·협의 필요 | UR-13, SR-14~15 |
 
 물리 E-STOP은 하드와이어드 안전회로가 정지시키며 ROS는 상태 전달과 새 명령 차단만 담당한다.
+
+### 4.7 내부 DB 갱신 계약
+
+이 계약은 외부 ROS API가 아니라 `real_assembly` 프로세스 내부 경계다. 로봇·검사 callback은 SQL을 실행하지 않고 DB Update Event를 bounded queue에 추가한다.
+
+신규 작업은 `start_job()`과 `start_next_unit()`이 성공한 뒤에만 수락한다. DB 예약 실패나 재고 부족 시 실제 로봇은 움직이지 않는다. 조립·검사 완료 이후 갱신은 queue에서 비동기로 처리한다.
+
+| ID | 기능명 | 송신자 → 수신자 | 구분 | 인터페이스 | 데이터 | 상태 |
+| --- | --- | --- | --- | --- | --- | --- |
+| INT-DB-001 | 생산 DB 갱신 예약 | `real_assembly` 업무 흐름 → Async DB Worker | In-process Queue | bounded DB Update Queue | `DbUpdateEvent` | 설계됨·미구현 |
+| INT-DB-002 | 생산 DB transaction 적용 | Async DB Worker → PostgreSQL | DB Transaction | `PRODUCTION_DB_DSN` | `production_writer` 권한 | 설계됨·미구현 |
+
+`DbUpdateEvent`는 `event_id`, `event_type`, `job_id`, `unit_id`, `payload`, `created_at`, `attempt_count`, `next_retry_at`, `last_error`를 가진다.
+
+- 검사 Result callback은 `INSPECTION_RECORDED`와 최종 작업 이벤트를 queue에 추가한다.
+- queue 항목은 PostgreSQL commit 성공 후에만 제거한다.
+- 실패 항목은 재시도하며 queue overflow와 최종 실패를 조용히 폐기하지 않는다.
+- 현재 범위는 프로세스 내부 queue이며 프로세스 재시작을 넘는 영속 Outbox는 포함하지 않는다.
+- 이 구조는 SECS/GEM Spooling 개념을 참고하지만 SECS/GEM 호환 계약은 아니다.
