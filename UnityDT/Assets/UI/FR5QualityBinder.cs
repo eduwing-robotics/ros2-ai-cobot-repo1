@@ -23,7 +23,16 @@ namespace MainUnity.UI
         [Serializable] sealed class JobResponse { public Job data; }
         [Serializable] sealed class SlotRatesResponse { public SlotRate[] data; }
         [Serializable] sealed class AssemblySnapshot { public int job_id; }
-        [Serializable] sealed class Job { public int product_id; }
+        [Serializable] sealed class Job
+        {
+            public int product_id;
+            public string product_code;
+            public string product_version;
+            public string recipe_version;
+            public string job_status;
+            public string requested_at;
+            public string job_finished_at;
+        }
         [Serializable] sealed class SlotRate
         {
             public string slot_code;
@@ -124,6 +133,7 @@ namespace MainUnity.UI
                 loadRoutine = null;
                 yield break;
             }
+            ShowFilters(job);
 
             SlotRate[] rates = null;
             yield return Get($"/api/v1/products/{job.product_id}/quality/slot-rates", json =>
@@ -145,6 +155,37 @@ namespace MainUnity.UI
                 yield break;
             }
             ShowEmpty($"MainServer 조회 실패 · {request.responseCode}");
+        }
+
+        /// <summary>
+        /// 아래 수치가 "무엇을 집계한 것인지"를 머리글이 말한다. 값 없이 표만 있으면
+        /// 어느 제품 · 어느 레시피의 불량률인지 화면만 보고는 알 수 없다.
+        /// 네 칸 모두 jobs/{job_id} 한 번의 응답에서 나온다 — 이미 부르던 조회다.
+        /// </summary>
+        void ShowFilters(Job job)
+        {
+            FR5EmptyState.Present(root.Q<Label>("filter-product"),
+                string.IsNullOrEmpty(job.product_code) ? FR5EmptyState.Title : job.product_code);
+            FR5EmptyState.Present(root.Q<Label>("filter-recipe"),
+                string.IsNullOrEmpty(job.recipe_version) ? FR5EmptyState.Title : job.recipe_version);
+
+            // 끝나지 않은 작업은 끝 시각이 없다. 없는 시각을 오늘로 채우면 집계 구간을
+            // 지어내는 것이 되므로 "진행 중"이라고 적는다.
+            string from = Day(job.requested_at);
+            string to = Day(job.job_finished_at);
+            FR5EmptyState.Present(root.Q<Label>("filter-period"),
+                from == null ? FR5EmptyState.Title : (to == null ? from + " ~ 진행 중" : (to == from ? from : from + " ~ " + to)));
+
+            // 불량 유형은 고르는 칸인데 고를 경로가 없다. 줄표 대신 무엇이 없는지 적는다.
+            FR5EmptyState.Detail(root.Q<Label>("filter-defect"), "전체 · 유형 필터 계약 없음");
+        }
+
+        /// <summary>timestamptz 문자열에서 날짜만 뗀다. 시각까지는 이 칸에 들어가지 않는다.</summary>
+        static string Day(string timestamp)
+        {
+            if (string.IsNullOrEmpty(timestamp)) return null;
+            int split = timestamp.IndexOf('T');
+            return split > 0 ? timestamp.Substring(0, split) : timestamp;
         }
 
         void ShowRates(SlotRate[] rates)

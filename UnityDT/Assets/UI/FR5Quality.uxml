@@ -23,7 +23,7 @@
             <ui:VisualElement class="panel__spine" />
             <!-- TODO(API): 기간·제품·레시피·유형 필터는 조회 API 파라미터로 넘긴다 -->
             <ui:VisualElement style="width:280px;"><ui:Label text="기간" class="micro" /><ui:Label name="filter-period" text="—" class="value" style="font-size:18px; margin-top:4px;" /></ui:VisualElement>
-            <ui:VisualElement style="width:340px;"><ui:Label text="제품" class="micro" /><ui:Label name="filter-product" text="—" class="value" style="font-size:18px; margin-top:4px;" /></ui:VisualElement>
+            <ui:VisualElement style="width:392px;"><ui:Label text="제품" class="micro" /><ui:Label name="filter-product" text="—" class="value" style="font-size:18px; margin-top:4px;" /></ui:VisualElement>
             <ui:VisualElement style="width:240px;"><ui:Label text="레시피" class="micro" /><ui:Label name="filter-recipe" text="—" class="value" style="font-size:18px; margin-top:4px;" /></ui:VisualElement>
             <ui:VisualElement style="width:240px;"><ui:Label text="불량 유형" class="micro" /><ui:Label name="filter-defect" text="—" class="value" style="font-size:18px; margin-top:4px;" /></ui:VisualElement>
             <ui:VisualElement class="spacer" />
