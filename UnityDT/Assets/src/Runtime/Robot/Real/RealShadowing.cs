@@ -3,14 +3,13 @@
 using System;
 using System.Collections.Generic;
 using MainUnity.UrdfImport;
-using MainUnity.Runtime.Robot.Interface;
 using MainUnity.Runtime.Robot.Status;
 using UnityEngine;
 
 namespace MainUnity.Runtime.Robot.Real
 {
     [DisallowMultipleComponent]
-    public sealed class RealShadowing : MonoBehaviour, IRobotShadowing
+    public sealed class RealShadowing : MonoBehaviour
     {
         const int JointCount = 6;
 

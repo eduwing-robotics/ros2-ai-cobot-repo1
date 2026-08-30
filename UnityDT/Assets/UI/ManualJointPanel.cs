@@ -2,9 +2,7 @@
 //   - J1~J6 목표 자세를 Ghost에 표시
 //   - APPLY · 그리퍼는 실제 로봇 명령을 발행하지 않음
 //
-// 조회하는 UXML name 은 [UxmlName] 필드로 노출되어 있어 Inspector 에서 드롭다운으로 고릅니다.
-// 목록은 같은 GameObject 의 UIDocument 가 물고 있는 .uxml 에서 읽어오고,
-// Inspector 하단 "UXML 바인딩 검사" 버튼으로 재생 없이 이름을 대조할 수 있습니다.
+// 조회하는 UXML name 은 Inspector 직렬화 필드로 지정합니다.
 
 using System;
 using MainUnity.Runtime.RobotGhost;
@@ -24,20 +22,20 @@ namespace MainUnity.UI
         [Serializable]
         public sealed class JogRowNames
         {
-            [UxmlName("Slider")] public string slider;
-            [UxmlName("Label")] public string actual;
-            [UxmlName("Label")] public string target;
+            public string slider;
+            public string actual;
+            public string target;
         }
 
         [Serializable]
         public sealed class PanelNames
         {
-            [UxmlName("Button")] public string gripperOpenButton = "gripper-open-button";
-            [UxmlName("Button")] public string gripperCloseButton = "gripper-close-button";
-            [UxmlName("Button")] public string applyButton = "jog-apply-button";
-            [UxmlName("Button")] public string cancelButton = "jog-cancel-button";
-            [UxmlName("Button")] public string homeButton = "jog-home-button";
-            [UxmlName("Label")] public string hint = "ghost-hint";
+            public string gripperOpenButton = "gripper-open-button";
+            public string gripperCloseButton = "gripper-close-button";
+            public string applyButton = "jog-apply-button";
+            public string cancelButton = "jog-cancel-button";
+            public string homeButton = "jog-home-button";
+            public string hint = "ghost-hint";
             public JogRowNames[] jogRows = MakeJogRows();
         }
 

@@ -3,14 +3,13 @@
 using System;
 using System.Collections.Generic;
 using MainUnity.UrdfImport;
-using MainUnity.Runtime.Robot.Interface;
 using MainUnity.Runtime.Robot.Status;
 using UnityEngine;
 
 namespace MainUnity.Runtime.Robot.Mock
 {
     [DisallowMultipleComponent]
-    public sealed class MockRobotShadowing : MonoBehaviour, IRobotShadowing
+    public sealed class MockRobotShadowing : MonoBehaviour
     {
         const int JointCount = 6;
 
@@ -45,7 +44,6 @@ namespace MainUnity.Runtime.Robot.Mock
             hasShadowTarget = true;
         }
 
-        // TODO: 공통 그리퍼 상태 계약이 생기면 IRobotShadowing 경로로 통합한다.
         public void ApplyGripperJointPosition(float radians)
         {
             if (!float.IsFinite(radians) || gripperAttacher == null)
