@@ -79,7 +79,6 @@ namespace MainUnity.Runtime.Robot
             ? assemblyProgress
             : assemblyProgress = GetComponentInChildren<AssemblyProgressManager>(true);
 
-        void Awake() => Initialize();
         void OnEnable() => Initialize();
 void OnValidate()
         {
