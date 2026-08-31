@@ -22,7 +22,11 @@ class AssemblyGateway:
         self.timeout_seconds = timeout_seconds
         self._lock = threading.Lock()
 
-    def call(self, command_json):
+    def status(self):
+        """Return the current assembly snapshot."""
+        return self._call('{"command":"status"}')
+
+    def _call(self, command_json):
         """Forward one original JSON command and return its JSON object response."""
         with self._lock:
             try:

@@ -219,7 +219,7 @@ class ApiHandler(BaseHTTPRequestHandler):
 
     def assembly_current(self, values, parameters):
         self._no_query(parameters)
-        snapshot = assembly_gateway.call('{"command":"status"}')
+        snapshot = assembly_gateway.status()
         if snapshot.get("available") is False and snapshot.get("error_code") in {"UNAVAILABLE", "DB_ERROR", "INTERNAL_ERROR"}:
             self._raise_rejection(snapshot)
         return snapshot

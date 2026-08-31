@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""AssemblySequencer node for the existing Mock robot runner."""
+"""AssemblySequencer orchestration for the existing Mock robot runner."""
 
 import json
 import random
 import sys
-import uuid
 
 import rclpy
 from fairino_msgs.srv import RemoteCmdInterface
@@ -14,192 +13,27 @@ from rclpy.node import Node
 from std_msgs.msg import String
 
 from .db import DbWriter
+from .mock_backend import MockBackend
+from .mock_contract import (
+    RECIPE_VERSION,
+    RELAY_STATES,
+    apply_relay_feedback,
+    assembly_snapshot,
+    choose_inspection,
+    failed_feedback,
+    parse_command,
+    parse_feedback,
+    self_check,
+    unavailable_snapshot,
+)
 
 
 PRODUCT_CODE = "HBM-ACCELERATOR-PACKAGE-BOARD"
 PRODUCT_VERSION = "hbm-pkg-r1"
-RECIPE_VERSION = "mock-r1"
 INTERNAL_START = "/mock_db_mvp/internal/assembly/start"
 INTERNAL_FEEDBACK = "/mock_db_mvp/internal/assembly/feedback"
 EXTERNAL_START = "/unity/assembly/start"
 EXTERNAL_FEEDBACK = "/unity/assembly/feedback"
-DEFECT_TYPES = ("MISSING", "POSITION_ERROR", "ORIENTATION_ERROR", "CRACK")
-RELAY_STATES = {
-    "STARTED", "PICKED", "PLACED", "ASSEMBLY_COMPLETED",
-    "PCB_PICKED", "PCB_PLACED",
-}
-
-
-def parse_command(raw):
-    try:
-        command = json.loads(raw)
-    except (TypeError, json.JSONDecodeError) as error:
-        raise ValueError("cmd_str must be a JSON object") from error
-    if command == {"command": "status"}:
-        return "status", None
-    if not isinstance(command, dict):
-        raise ValueError("cmd_str must be a JSON object")
-
-    command_name = command.get("command")
-    if command_name == "transfer_assembled_pcb":
-        if set(command) != {"command", "request_id", "assembled_pcb"}:
-            raise ValueError(
-                "command, request_id and assembled_pcb are required"
-            )
-        if not isinstance(command["assembled_pcb"], dict):
-            raise ValueError("assembled_pcb must be an object")
-        command_type = "transfer_assembled_pcb"
-    else:
-        if set(command) != {
-            "command", "request_id", "recipe_version", "observations",
-            "assembled_pcb",
-        }:
-            raise ValueError(
-                "command, request_id, recipe_version, observations and assembled_pcb are required"
-            )
-        if command_name != "start":
-            raise ValueError(
-                "command must be start, transfer_assembled_pcb or status"
-            )
-        if command["recipe_version"] != RECIPE_VERSION:
-            raise ValueError(f"recipe_version must be {RECIPE_VERSION}")
-        if not isinstance(command["observations"], list) \
-                or not command["observations"]:
-            raise ValueError("observations must be a non-empty list")
-        if not isinstance(command["assembled_pcb"], dict):
-            raise ValueError("assembled_pcb must be an object")
-        command_type = "start"
-
-    try:
-        command["request_id"] = str(uuid.UUID(command["request_id"]))
-    except (TypeError, ValueError, AttributeError) as error:
-        raise ValueError("request_id must be a UUID string") from error
-    if len(command["request_id"]) > 64:
-        raise ValueError("request_id must be at most 64 characters")
-    return command_type, command
-
-
-def parse_internal_response(raw):
-    try:
-        response = json.loads(raw)
-    except (TypeError, json.JSONDecodeError) as error:
-        raise RuntimeError("Mock start response is not valid JSON") from error
-    if not isinstance(response, dict) or not isinstance(response.get("accepted"), bool):
-        raise RuntimeError("Mock start response is missing accepted")
-    return response
-
-
-def failed_feedback(
-    request_id, error_code, message, db_sync_state="NOT_STARTED"
-):
-    return {
-        "request_id": request_id,
-        "state": "FAILED",
-        "step_order": 0,
-        "part_id": "",
-        "slot_code": "",
-        "error_code": error_code,
-        "message": message[:512],
-        "db_sync_state": db_sync_state,
-    }
-
-
-def unavailable_snapshot(message):
-    return {
-        "available": False,
-        "active": False,
-        "request_id": "",
-        "job_id": 0,
-        "unit_id": 0,
-        "recipe_version": "",
-        "state": "IDLE",
-        "placed_count": 0,
-        "expected_step_count": 0,
-        "held_step_order": 0,
-        "held_part_id": "",
-        "held_slot_code": "",
-        "error_code": "UNAVAILABLE",
-        "message": message[:512],
-        "db_sync_state": "NOT_STARTED",
-    }
-
-
-def assembly_snapshot(
-    active, state, error_code="", message="", db_sync_state="NOT_STARTED"
-):
-    completed = state == "COMPLETED"
-    return {
-        "available": True,
-        "job_id": active["job_id"],
-        "unit_id": active["unit_id"],
-        "active": state in RELAY_STATES,
-        "request_id": active["request_id"],
-        "recipe_version": RECIPE_VERSION,
-        "state": state,
-        "placed_count": (
-            active["expected_step_count"] if completed else active["placed_count"]
-        ),
-        "expected_step_count": active["expected_step_count"],
-        "held_step_order": active["held_step_order"],
-        "held_part_id": active["held_part_id"],
-        "held_slot_code": active["held_slot_code"],
-        "error_code": error_code,
-        "message": message[:512],
-        "db_sync_state": db_sync_state,
-    }
-
-
-def choose_inspection(rng, fail_probability, slot_codes):
-    if rng.random() >= fail_probability:
-        return "PASS", []
-    if not slot_codes:
-        raise RuntimeError("Mock FAIL inspection requires a product slot")
-    return "FAIL", [{
-        "slot_code": rng.choice(slot_codes),
-        "defect_type": rng.choice(DEFECT_TYPES),
-    }]
-
-
-def self_check():
-    request_id = "12345678-1234-5678-1234-567812345678"
-    command = json.dumps({
-        "command": "start",
-        "request_id": request_id,
-        "recipe_version": RECIPE_VERSION,
-        "observations": [{}],
-        "assembled_pcb": {},
-    })
-    assert parse_command(command)[0] == "start"
-    assert parse_command(command)[1]["request_id"] == request_id
-    transfer = json.dumps({
-        "command": "transfer_assembled_pcb",
-        "request_id": request_id,
-        "assembled_pcb": {},
-    })
-    assert parse_command(transfer)[0] == "transfer_assembled_pcb"
-    assert parse_command('{"command":"status"}')[0] == "status"
-    assert unavailable_snapshot("offline")["job_id"] == 0
-    assert choose_inspection(random.Random(1), 0.0, []) == ("PASS", [])
-    result, defects = choose_inspection(random.Random(1), 1.0, ["SLOT-01"])
-    assert result == "FAIL" and defects[0]["slot_code"] == "SLOT-01"
-    assert failed_feedback(request_id, "DB_ERROR", "x")["state"] == "FAILED"
-    active = {
-        "request_id": request_id,
-        "job_id": 11,
-        "unit_id": 22,
-        "placed_count": 1,
-        "expected_step_count": 2,
-        "held_step_order": 0,
-        "held_part_id": "",
-        "held_slot_code": "",
-    }
-    assert assembly_snapshot(active, "PLACED")["active"]
-    assert assembly_snapshot(active, "ASSEMBLY_COMPLETED")["active"]
-    assert assembly_snapshot(active, "PCB_PICKED")["placed_count"] == 1
-    assert assembly_snapshot(active, "PLACED")["job_id"] == 11
-    assert assembly_snapshot(active, "PLACED")["unit_id"] == 22
-    completed = assembly_snapshot(active, "COMPLETED")
-    assert not completed["active"] and completed["placed_count"] == 2
 
 
 class MockAssemblySequencer(Node):
@@ -239,9 +73,10 @@ class MockAssemblySequencer(Node):
         service_group = MutuallyExclusiveCallbackGroup()
         feedback_group = MutuallyExclusiveCallbackGroup()
         client_group = ReentrantCallbackGroup()
-        self.internal_client = self.create_client(
+        internal_client = self.create_client(
             RemoteCmdInterface, INTERNAL_START, callback_group=client_group
         )
+        self.backend = MockBackend(self, internal_client)
         self.external_service = self.create_service(
             RemoteCmdInterface,
             EXTERNAL_START,
@@ -272,11 +107,6 @@ class MockAssemblySequencer(Node):
         }, separators=(",", ":"))
         return response
 
-    async def call_internal(self, request):
-        if not self.internal_client.wait_for_service(timeout_sec=5.0):
-            raise RuntimeError("internal Mock assembly service is unavailable")
-        return await self.internal_client.call_async(request)
-
     async def on_external_request(self, request, response):
         try:
             command_type, command = parse_command(request.cmd_str)
@@ -297,17 +127,8 @@ class MockAssemblySequencer(Node):
                 )
             else:
                 try:
-                    internal = await self.call_internal(request)
-                    snapshot = json.loads(internal.cmd_res)
-                    if not isinstance(snapshot, dict):
-                        raise RuntimeError(
-                            "internal Mock status response must be an object"
-                        )
+                    snapshot = await self.backend.status()
                     snapshot["db_sync_state"] = self.db_writer.sync_state
-                    response.cmd_res = json.dumps(
-                        snapshot, separators=(",", ":")
-                    )
-                    return response
                 except Exception as error:
                     snapshot = unavailable_snapshot(str(error))
             response.cmd_res = json.dumps(snapshot, separators=(",", ":"))
@@ -324,7 +145,7 @@ class MockAssemblySequencer(Node):
     async def poll_queue(self):
         if self.active is not None or self.db_writer.pending_count:
             return
-        if not self.internal_client.wait_for_service(timeout_sec=0.0):
+        if not self.backend.is_available():
             return
         try:
             work = self.db_writer.claim(
@@ -348,7 +169,6 @@ class MockAssemblySequencer(Node):
             command_type, command = parse_command(json.dumps(work["payload"]))
             if command_type != "start" or command["request_id"] != request_id:
                 raise ValueError("queued request identity did not match its payload")
-            slot_codes = self.db_writer.get_product_slot_codes(job_id)
             self.active = {
                 "request_id": request_id,
                 "job_id": job_id,
@@ -359,7 +179,7 @@ class MockAssemblySequencer(Node):
                 "held_step_order": 0,
                 "held_part_id": "",
                 "held_slot_code": "",
-                "slot_codes": slot_codes,
+                "slot_codes": self.db_writer.get_product_slot_codes(job_id),
                 "assembled_pcb": command["assembled_pcb"],
             }
             self.terminal_snapshot = None
@@ -367,40 +187,13 @@ class MockAssemblySequencer(Node):
             cleanup_error = self.fail_job(job_id, immediate=True)
             if cleanup_error is not None:
                 error = RuntimeError(f"{error}; cleanup failed: {cleanup_error}")
-            self.publish(
-                failed_feedback(request_id, "INVALID_REQUEST", str(error))
-            )
+            self.publish(failed_feedback(request_id, "INVALID_REQUEST", str(error)))
             return
 
         try:
-            internal_request = RemoteCmdInterface.Request()
-            internal_command = dict(command)
-            internal_command.pop("assembled_pcb")
-            internal_request.cmd_str = json.dumps(
-                internal_command, separators=(",", ":")
-            )
-            internal = await self.call_internal(internal_request)
-            result = parse_internal_response(internal.cmd_res)
-            if not result["accepted"]:
-                raise RuntimeError(
-                    result.get("message") or "internal Mock assembly rejected the request"
-                )
+            await self.backend.start(command)
         except Exception as error:
-            cleanup_error = self.fail_job(job_id, immediate=True)
-            if cleanup_error is not None:
-                error = RuntimeError(f"{error}; cleanup failed: {cleanup_error}")
-            failed = failed_feedback(
-                request_id, "INTERNAL_ERROR", str(error), self.db_writer.sync_state
-            )
-            self.terminal_snapshot = assembly_snapshot(
-                self.active,
-                "FAILED",
-                failed["error_code"],
-                failed["message"],
-                self.db_writer.sync_state,
-            )
-            self.active = None
-            self.publish(failed)
+            self.fail_active("INTERNAL_ERROR", error, immediate=True)
 
     def fail_job(self, job_id, immediate=False):
         try:
@@ -412,6 +205,31 @@ class MockAssemblySequencer(Node):
             self.get_logger().error(f"failed to finalize job {job_id}: {error}")
             return error
         return None
+
+    def fail_active(self, error_code, error, immediate=False):
+        active = self.active
+        cleanup_error = self.fail_job(active["job_id"], immediate)
+        if cleanup_error is not None:
+            error_code = "DB_ERROR"
+            error = RuntimeError(f"{error}; cleanup failed: {cleanup_error}")
+        failed = failed_feedback(
+            active["request_id"],
+            error_code,
+            str(error),
+            self.db_writer.sync_state,
+        )
+        self.terminal_snapshot = assembly_snapshot(
+            active,
+            "FAILED",
+            failed["error_code"],
+            failed["message"],
+            self.db_writer.sync_state,
+        )
+        self.active = None
+        self.publish(failed)
+        self.get_logger().error(
+            f"job {active['job_id']} failed: {failed['message']}"
+        )
 
     def sync_snapshot(self, snapshot):
         snapshot = dict(snapshot)
@@ -426,105 +244,45 @@ class MockAssemblySequencer(Node):
             String(data=json.dumps(payload, separators=(",", ":")))
         )
 
-    async def transfer_assembled_pcb(self, active):
-        request = RemoteCmdInterface.Request()
-        request.cmd_str = json.dumps({
-            "command": "transfer_assembled_pcb",
-            "request_id": active["request_id"],
-            "assembled_pcb": active["assembled_pcb"],
-        }, separators=(",", ":"))
+    async def transfer_assembled_pcb(self):
+        active = self.active
         try:
-            internal = await self.call_internal(request)
-            result = parse_internal_response(internal.cmd_res)
-            if result["accepted"]:
-                return
-            raise RuntimeError(
-                result.get("message") or "internal Mock PCB transfer was rejected"
+            await self.backend.transfer_assembled_pcb(
+                active["request_id"], active["assembled_pcb"]
             )
         except Exception as error:
-            cleanup_error = self.fail_job(active["job_id"])
-            if cleanup_error is not None:
-                error = RuntimeError(f"{error}; cleanup failed: {cleanup_error}")
-            failed = failed_feedback(
-                active["request_id"],
-                "INTERNAL_ERROR",
-                str(error),
-                self.db_writer.sync_state,
-            )
-            self.terminal_snapshot = assembly_snapshot(
-                active,
-                "FAILED",
-                failed["error_code"],
-                failed["message"],
-                self.db_writer.sync_state,
-            )
-            self.active = None
-            self.publish(failed)
+            self.fail_active("INTERNAL_ERROR", error)
 
     async def on_internal_feedback(self, message):
         try:
-            payload = json.loads(message.data)
-            state = payload["state"]
-            request_id = payload["request_id"]
-        except (TypeError, KeyError, json.JSONDecodeError) as error:
+            payload = parse_feedback(message.data)
+        except ValueError as error:
             self.get_logger().error(f"invalid internal assembly feedback: {error}")
             return
 
         active = self.active
+        request_id = payload["request_id"]
         if active is None or request_id != active["request_id"]:
             self.get_logger().warning(
                 f"ignored feedback without matching active request: {request_id}"
             )
             return
+
+        state = payload["state"]
         if state in RELAY_STATES:
             previous_state = active["state"]
-            active["state"] = state
-            if state == "STARTED":
-                active.update({
-                    "placed_count": 0,
-                    "held_step_order": 0,
-                    "held_part_id": "",
-                    "held_slot_code": "",
-                })
-            elif state == "PICKED":
-                active.update({
-                    "held_step_order": payload["step_order"],
-                    "held_part_id": payload["part_id"],
-                    "held_slot_code": payload["slot_code"],
-                })
-            elif state == "PLACED":
-                active.update({
-                    "placed_count": payload["step_order"],
-                    "held_step_order": 0,
-                    "held_part_id": "",
-                    "held_slot_code": "",
-                })
+            apply_relay_feedback(active, payload)
             payload["db_sync_state"] = self.db_writer.sync_state
             self.publish(payload)
             if state == "ASSEMBLY_COMPLETED" and previous_state != state:
-                await self.transfer_assembled_pcb(active)
+                await self.transfer_assembled_pcb()
             return
+
         if state == "FAILED":
-            cleanup_error = self.fail_job(active["job_id"])
-            if cleanup_error is not None:
-                payload = failed_feedback(
-                    request_id,
-                    "DB_ERROR",
-                    str(cleanup_error),
-                    self.db_writer.sync_state,
-                )
-            else:
-                payload["db_sync_state"] = self.db_writer.sync_state
-            self.terminal_snapshot = assembly_snapshot(
-                active, "FAILED", payload.get("error_code", ""),
-                payload.get("message", ""),
-                self.db_writer.sync_state,
+            self.fail_active(
+                payload["error_code"] or "INTERNAL_ERROR",
+                payload["message"] or "internal Mock assembly failed",
             )
-            self.active = None
-            self.publish(payload)
-            return
-        if state != "COMPLETED":
-            self.get_logger().error(f"unknown internal assembly state: {state}")
             return
 
         try:
@@ -537,26 +295,7 @@ class MockAssemblySequencer(Node):
             self.db_writer.inspection_recorded(active["unit_id"], result, defects)
             self.db_writer.finish(active["job_id"], "COMPLETED")
         except Exception as error:
-            cleanup_error = self.fail_job(active["job_id"])
-            if cleanup_error is not None:
-                error = RuntimeError(
-                    f"{error}; cleanup failed: {cleanup_error}"
-                )
-            failed = failed_feedback(
-                request_id,
-                "DB_ERROR",
-                str(error),
-                self.db_writer.sync_state,
-            )
-            self.terminal_snapshot = assembly_snapshot(
-                active,
-                "FAILED",
-                failed["error_code"],
-                failed["message"],
-                self.db_writer.sync_state,
-            )
-            self.active = None
-            self.publish(failed)
+            self.fail_active("DB_ERROR", error)
             return
 
         payload["db_sync_state"] = self.db_writer.sync_state

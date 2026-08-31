@@ -19,19 +19,16 @@ from assembly_gateway import GatewayUnavailable
 
 
 class FakeGateway:
-    def __init__(self, start_response=None, snapshot=None, error=None):
-        self.start_response = start_response
+    def __init__(self, snapshot=None, error=None):
         self.snapshot = snapshot
         self.error = error
         self.calls = []
 
-    def call(self, command_json):
-        self.calls.append(command_json)
+    def status(self):
+        self.calls.append('{"command":"status"}')
         if self.error is not None:
             raise self.error
-        if command_json == '{"command":"status"}':
-            return self.snapshot
-        return self.start_response
+        return self.snapshot
 
 
 class MainServerApiTest(unittest.TestCase):

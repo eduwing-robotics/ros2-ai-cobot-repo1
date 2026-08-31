@@ -8,7 +8,9 @@ Writer를 소유한다. Mock 실행 노드와 DB Writer는 구현됐고 Real 실
 
 | 구분 | 현재 구현 | Sequencer 역할 |
 | --- | --- | --- |
-| Mock | `assembly_sequencer.mock_node`, 기존 `mock_sim.py` | 요청·상태와 DB Writer는 Sequencer, 로봇 실행은 Mock backend가 담당한다. |
+| Mock orchestration | `assembly_sequencer.mock_node` | claim 이후 시작·이송·검사·완료 순서와 단계별 실패 마감만 담당한다. |
+| Mock contract | `assembly_sequencer.mock_contract` | 명령·feedback 검증, 상태 전이와 snapshot 생성을 완결한다. |
+| Mock backend | `assembly_sequencer.mock_backend`, 기존 `mock_sim.py` | 내부 ROS Service 요청·응답 검증과 실제 Mock 로봇 실행을 담당한다. |
 | DB | `db.production_store`, `db.writer` | PostgreSQL command claim과 Job·Unit 생성은 원자적 transaction, 완료 갱신은 bounded FIFO Worker가 담당한다. |
 | Real | 저수준 FR5 명령·상태만 부분 구현 | 향후 Real 노드가 같은 Writer를 호출한다. |
 
