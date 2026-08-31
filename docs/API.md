@@ -4,7 +4,7 @@
 | --- | --- | --- |
 | ROS2·HTTP API Catalog | `Assets/Scenes/SampleScene.unity`와 현재 Runtime source | 프로젝트 필요 기능과 현재 Mock·Real API 비교 |
 
-`제안·협의 필요`는 송신자·수신자와 기능만 선언한 상태이며 인터페이스명과 메시지 Schema는 미확정이다.
+`제안·협의 필요`는 송신자·수신자와 기능만 선언한 상태이며 인터페이스명과 메시지 Schema는 미확정이다. 송신자·수신자는 시스템 컴포넌트 기준으로 표기하며 구체 클래스·노드명은 상세 명세에서 확인한다.
 
 Real 자동 조립의 상세 메시지 Schema와 구현자 준수사항은 [Assembly Sequencer API](../ASSEMBLY_SEQUENCER/API.md), 프로세스와 DB 정책은 [Assembly Sequencer README](../ASSEMBLY_SEQUENCER/README.md)를 따른다.
 
@@ -48,13 +48,13 @@ Real 자동 조립의 상세 메시지 Schema와 구현자 준수사항은 [Asse
 | HTTP-PRD-001 | 제품 목록·조립 가능 수량 조회 | Unity → MainServer | `GET` | `/api/v1/products` | 구현 | UR-11, SR-16 |
 | HTTP-PRD-002 | 제품 슬롯·부품 구성 조회 | Unity → MainServer | `GET` | `/api/v1/products/{product_id}` | 구현 | UR-11, SR-16 |
 | HTTP-PRD-003 | 필요·보유·부족 수량 조회 | Unity → MainServer | `GET` | `/api/v1/products/{product_id}/requirements?quantity={quantity}` | 구현 | UR-11, SR-16 |
-| HTTP-PRD-004 | 부품 정보·재고 조회 | HTTP Client → MainServer | `GET` | `/api/v1/parts/{part_id}` | 구현·Unity 미연결 | UR-11, SR-16 |
+| HTTP-PRD-004 | 부품 정보·재고 조회 | Unity → MainServer | `GET` | `/api/v1/parts/{part_id}` | 구현·Unity 미연결 | UR-11, SR-16 |
 | HTTP-JOB-001 | 조립 작업 진행률 조회 | Unity → MainServer | `GET` | `/api/v1/jobs/{job_id}` | 구현·UI 부분 연결 | UR-06, SR-10 |
 | HTTP-JOB-002 | Unit·검사·불량 조회 | Unity → MainServer | `GET` | `/api/v1/jobs/{job_id}/units` | 구현·UI 부분 연결 | UR-09~10, SR-09·11·13 |
-| HTTP-JOB-003 | 작업 목록 조회 | Unity 작업 화면 → MainServer | `GET` | `TBD` | 제안·협의 필요 | UR-10, SR-13 |
-| HTTP-JOB-004 | 작업 오류·취소 이벤트 조회 | Unity 작업·검사 화면 → MainServer | `GET` | `TBD` | 제안·협의 필요 | UR-10, SR-13 |
+| HTTP-JOB-003 | 작업 목록 조회 | Unity → MainServer | `GET` | `TBD` | 제안·협의 필요 | UR-10, SR-13 |
+| HTTP-JOB-004 | 작업 오류·취소 이벤트 조회 | Unity → MainServer | `GET` | `TBD` | 제안·협의 필요 | UR-10, SR-13 |
 | HTTP-QLT-001 | 슬롯별 불량률 조회 | Unity → MainServer | `GET` | `/api/v1/products/{product_id}/quality/slot-rates` | 구현·UI 부분 연결 | UR-09, SR-09·11 |
-| HTTP-ASM-001 | 조립 시작 요청 전달 | HTTP Client → MainServer | `POST` | `/api/v1/assemblies` | 구현·Unity 미연결 | UR-01~02, UR-08 / SR-01~02, SR-12 |
+| HTTP-ASM-001 | 조립 시작 요청 전달 | Unity → MainServer | `POST` | `/api/v1/assemblies` | 구현·Unity 미연결 | UR-01~02, UR-08 / SR-01~02, SR-12 |
 | HTTP-ASM-002 | 현재·최근 조립 상태 조회 | Unity → MainServer | `GET` | `/api/v1/assemblies/current` | 구현 | UR-06, SR-10 |
 
 ## 3. Mock API
@@ -65,19 +65,19 @@ Mock 카메라와 컨베이어는 Unity 내부 기능이므로 외부 API Catalo
 
 | API ID | 기능명 | 호출자·송신자 → 제공자·수신자 | 구분 | 인터페이스 | 메시지 타입 | 상태 | 관련 요구사항 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| ROS-ASM-001 | 자동 조립 시작·상태 조회 | Unity `MockAssemblyScenarioControl` 또는 MainServer `AssemblyGateway` → `mock_movej` 또는 `mock_db_bridge` | Service | `/unity/assembly/start` | `fairino_msgs/srv/RemoteCmdInterface` | 구현 | UR-01~02, UR-08 / SR-01~02, SR-12 |
-| ROS-ASM-002 | 조립 진행·완료·실패 전달 | `mock_movej` 또는 `mock_db_bridge` → Unity `MockAssemblyScenarioControl` | Topic | `/unity/assembly/feedback` | `std_msgs/String` | 구현 | UR-01~02, UR-06 / SR-01~02, SR-10 |
+| ROS-ASM-001 | 자동 조립 시작·상태 조회 | Unity 또는 MainServer → Assembly Sequencer (Mock) | Service | `/unity/assembly/start` | `fairino_msgs/srv/RemoteCmdInterface` | 구현 | UR-01~02, UR-08 / SR-01~02, SR-12 |
+| ROS-ASM-002 | 조립 진행·완료·실패 전달 | Assembly Sequencer (Mock) → Unity | Topic | `/unity/assembly/feedback` | `std_msgs/String` | 구현 | UR-01~02, UR-06 / SR-01~02, SR-10 |
 
 ### 3.2 Robot·MoveIt
 
 | API ID | 기능명 | 송신자 → 수신자 | 구분 | 인터페이스 | 메시지 타입 | 상태 | 관련 요구사항 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| ROS-RBT-001 | 관절 목표 전달 | Unity `MockRobotControl` → `mock_movej` | Topic | `/unity/joint_target` | `sensor_msgs/JointState` | 구현·MANUAL UI 미연결 | — |
-| ROS-RBT-002 | MoveJ 목표 전달 | Unity `MockRobotControl` → `mock_movej` | Topic | `/unity/movej_target` | `geometry_msgs/PoseStamped` | 구현·MANUAL UI 미연결 | — |
-| ROS-RBT-003 | TCP 직선 이동 목표 전달 | Unity `MockRobotControl` → `mock_movej` | Topic | `/unity/tcp_target` | `geometry_msgs/PoseStamped` | 구현·MANUAL UI 미연결 | — |
-| ROS-RBT-004 | 그리퍼 개도 전달 | Unity `MockRobotControl` → `mock_movej` | Topic | `/unity/gripper_target` | `std_msgs/Float32` | 구현·MANUAL UI 미연결 | — |
-| ROS-RBT-005 | Mock 로봇 상태 전달 | `joint_state_broadcaster` → Unity `MockRobotStateSource` | Topic | `/joint_states` | `sensor_msgs/JointState` | 구현 | UR-07, SR-08 |
-| ROS-RBT-006 | Mock 명령 결과 전달 | `mock_movej` → Unity `MockRobotControl` | Topic | `/twin_visual/status` | `std_msgs/String` | 구현 | UR-07, SR-08 |
+| ROS-RBT-001 | 관절 목표 전달 | Unity → Robot (Mock) | Topic | `/unity/joint_target` | `sensor_msgs/JointState` | 구현·MANUAL UI 미연결 | — |
+| ROS-RBT-002 | MoveJ 목표 전달 | Unity → Robot (Mock) | Topic | `/unity/movej_target` | `geometry_msgs/PoseStamped` | 구현·MANUAL UI 미연결 | — |
+| ROS-RBT-003 | TCP 직선 이동 목표 전달 | Unity → Robot (Mock) | Topic | `/unity/tcp_target` | `geometry_msgs/PoseStamped` | 구현·MANUAL UI 미연결 | — |
+| ROS-RBT-004 | 그리퍼 개도 전달 | Unity → Robot (Mock) | Topic | `/unity/gripper_target` | `std_msgs/Float32` | 구현·MANUAL UI 미연결 | — |
+| ROS-RBT-005 | Mock 로봇 상태 전달 | Robot (Mock) → Unity | Topic | `/joint_states` | `sensor_msgs/JointState` | 구현 | UR-07, SR-08 |
+| ROS-RBT-006 | Mock 명령 결과 전달 | Robot (Mock) → Unity | Topic | `/twin_visual/status` | `std_msgs/String` | 구현 | UR-07, SR-08 |
 
 ## 4. Real API
 
@@ -85,20 +85,20 @@ Mock 카메라와 컨베이어는 Unity 내부 기능이므로 외부 API Catalo
 
 | API ID | 기능명 | 호출자·송신자 → 제공자·수신자 | 구분 | 인터페이스 | 메시지 타입 | 상태 | 관련 요구사항 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| ROS-RBT-007 | FR5 이동·그리퍼 명령 | Unity `RealRobotControl`·`RealGripperRequest` → `fr_command_server` | Service | `/fairino_remote_command_service` | `fairino_msgs/srv/RemoteCmdInterface` | 저수준 부분 구현 | — |
-| ROS-RBT-008 | FR5 상태 전달 | `fr_command_server` → Unity `RealStatusSubscriber` | Topic | `/nonrt_state_data` | `fairino_msgs/msg/RobotNonrtState` | 구현 | UR-07, SR-08 |
+| ROS-RBT-007 | FR5 이동·그리퍼 명령 | Unity (Manual) 또는 Assembly Sequencer (Real) → Robot (FR5) | Service | `/fairino_remote_command_service` | `fairino_msgs/srv/RemoteCmdInterface` | 저수준 부분 구현 | — |
+| ROS-RBT-008 | FR5 상태 전달 | Robot (FR5) → Assembly Sequencer (Real), Unity | Topic | `/nonrt_state_data` | `fairino_msgs/msg/RobotNonrtState` | 구현 | UR-07, SR-08 |
 
 ### 4.2 Vision
 
 | API ID | 기능명 | 송신자 → 수신자 | 구분 | 인터페이스 | 메시지 타입 | 상태 | 관련 요구사항 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| ROS-VIS-001 | PARTS 영상 전달 | Vision node → Unity `CamVisionReceiver` | Topic | `/vision/parts_obb/image/compressed` | `sensor_msgs/CompressedImage` | Unity 구독 구현·ROS 발행 노드 없음 | SR-06 |
-| ROS-VIS-002 | TRAY 영상 전달 | Vision node → Unity `CamVisionReceiver` | Topic | `/vision/tray/detections_image/compressed` | `sensor_msgs/CompressedImage` | Unity 구독 구현·ROS 발행 노드 없음 | SR-06 |
-| ROS-VIS-003 | CONVEYOR 영상 전달 | Vision node → Unity `CamVisionReceiver` | Topic | `/vision/conveyor/stop_image/compressed` | `sensor_msgs/CompressedImage` | Unity 구독 구현·ROS 발행 노드 없음 | SR-06 |
-| ROS-VIS-004 | CELL 영상 전달 | Camera node → Unity `CamVisionReceiver` | Topic | `/camera3/image_raw/compressed` | `sensor_msgs/CompressedImage` | Unity 구독 구현·ROS 발행 노드 없음 | SR-06 |
-| ROS-VIS-005 | 기판 검출 Pose 전달 | Vision node → Unity `VisionDetector` | Topic | `/vision/board/capture/target_pose` | `geometry_msgs/PoseStamped` | Unity 수신 코드만 존재·ROS 발행 노드 없음 | SR-06~07 |
-| ROS-VIS-006 | 선택 대상 ID 전달 | Vision node → Unity `VisionDetector` | Topic | `/vision/board/selected_target` | `std_msgs/String` | Unity 수신 코드만 존재·ROS 발행 노드 없음 | SR-06 |
-| ROS-STA-003 | Vision 연결·검출 준비·오류 상태 전달 | `vision_node` → `real_assembly`, Unity | Topic | `TBD` | `TBD` | 제안·협의 필요 | UR-07, SR-08 |
+| ROS-VIS-001 | PARTS 영상 전달 | Vision → Unity | Topic | `/vision/parts_obb/image/compressed` | `sensor_msgs/CompressedImage` | Unity 구독 구현·ROS 발행 노드 없음 | SR-06 |
+| ROS-VIS-002 | TRAY 영상 전달 | Vision → Unity | Topic | `/vision/tray/detections_image/compressed` | `sensor_msgs/CompressedImage` | Unity 구독 구현·ROS 발행 노드 없음 | SR-06 |
+| ROS-VIS-003 | CONVEYOR 영상 전달 | Vision → Unity | Topic | `/vision/conveyor/stop_image/compressed` | `sensor_msgs/CompressedImage` | Unity 구독 구현·ROS 발행 노드 없음 | SR-06 |
+| ROS-VIS-004 | CELL 영상 전달 | Vision → Unity | Topic | `/camera3/image_raw/compressed` | `sensor_msgs/CompressedImage` | Unity 구독 구현·ROS 발행 노드 없음 | SR-06 |
+| ROS-VIS-005 | 기판 검출 Pose 전달 | Vision → Unity | Topic | `/vision/board/capture/target_pose` | `geometry_msgs/PoseStamped` | Unity 수신 코드만 존재·ROS 발행 노드 없음 | SR-06~07 |
+| ROS-VIS-006 | 선택 대상 ID 전달 | Vision → Unity | Topic | `/vision/board/selected_target` | `std_msgs/String` | Unity 수신 코드만 존재·ROS 발행 노드 없음 | SR-06 |
+| ROS-STA-003 | Vision 연결·검출 준비·오류 상태 전달 | Vision → Assembly Sequencer (Real), Unity | Topic | `TBD` | `TBD` | 제안·협의 필요 | UR-07, SR-08 |
 
 ### 4.3 자동 조립
 
@@ -108,10 +108,10 @@ Mock 카메라와 컨베이어는 Unity 내부 기능이므로 외부 API Catalo
 
 | API ID | 기능명 | 호출자·송신자 → 제공자·수신자 | 구분 | 인터페이스 | 메시지 타입 | 상태 | 관련 요구사항 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| ROS-ASM-003 | Real 자동 조립 시작 | Unity `RealAssemblyScenarioControl` 또는 향후 MainServer `AssemblyGateway` → `real_assembly` node | Service | `/real/assembly/start` | `real_assembly_interfaces/srv/StartAssembly` | 계약 확정·미구현 | UR-01~02, UR-08 / SR-01~02, SR-12 |
-| ROS-ASM-004 | Real 조립 상태 조회 | Unity `RealAssemblyScenarioControl` → `real_assembly` node | Service | `/real/assembly/status` | `real_assembly_interfaces/srv/GetAssemblyStatus` | 계약 확정·미구현 | UR-06, SR-10 |
-| ROS-ASM-005 | Real 조립 진행·완료·실패 전달 | `real_assembly` node → Unity `RealAssemblyScenarioControl` | Topic | `/real/assembly/progress` | `real_assembly_interfaces/msg/AssemblyProgress` | 계약 확정·미구현 | UR-01~02, UR-06 / SR-01~02, SR-10 |
-| ROS-CTL-001 | 조립 중지·일시정지·재개 | Unity `RealAssemblyScenarioControl`, MainServer `AssemblyGateway` → `real_assembly` | Service | `TBD` | `TBD` | 제안·협의 필요 | UR-08, SR-12 |
+| ROS-ASM-003 | Real 자동 조립 시작 | Unity 또는 MainServer → Assembly Sequencer (Real) | Service | `/real/assembly/start` | `real_assembly_interfaces/srv/StartAssembly` | 계약 확정·미구현 | UR-01~02, UR-08 / SR-01~02, SR-12 |
+| ROS-ASM-004 | Real 조립 상태 조회 | Unity → Assembly Sequencer (Real) | Service | `/real/assembly/status` | `real_assembly_interfaces/srv/GetAssemblyStatus` | 계약 확정·미구현 | UR-06, SR-10 |
+| ROS-ASM-005 | Real 조립 진행·완료·실패 전달 | Assembly Sequencer (Real) → Unity | Topic | `/real/assembly/progress` | `real_assembly_interfaces/msg/AssemblyProgress` | 계약 확정·미구현 | UR-01~02, UR-06 / SR-01~02, SR-10 |
+| ROS-CTL-001 | 조립 중지·일시정지·재개 | Unity 또는 MainServer → Assembly Sequencer (Real) | Service | `TBD` | `TBD` | 제안·협의 필요 | UR-08, SR-12 |
 
 Real Start 요청은 `request_id`, `product_code`, `product_version`, `recipe_version`, `requested_quantity`를 사용한다. 응답은 `accepted`, `request_id`, `job_id`, `unit_id`, `error_code`, `message`를 반환한다. Status와 Progress는 작업 식별자, 상태, 현재 단계, 진행도, `db_sync_state`, 오류와 갱신 시각을 제공한다.
 
@@ -119,14 +119,14 @@ Real Start 요청은 `request_id`, `product_code`, `product_version`, `recipe_ve
 
 | API ID | 기능명 | 호출자·송신자 → 제공자·수신자 | 구분 | 인터페이스 | 메시지 타입 | 상태 | 관련 요구사항 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| ROS-CNV-001 | 조립·검사 위치 이동 | `real_assembly` → `conveyor_controller` | Action | `TBD` | `TBD` | 제안·협의 필요 | UR-03~05, SR-03~05 |
-| ROS-STA-002 | 컨베이어 위치·운전·오류 상태 전달 | `conveyor_controller` → `real_assembly`, Unity | Topic | `TBD` | `TBD` | 제안·협의 필요 | UR-03~05·07, SR-03~05·08 |
+| ROS-CNV-001 | 조립·검사 위치 이동 | Assembly Sequencer (Real) → Conveyor | Action | `TBD` | `TBD` | 제안·협의 필요 | UR-03~05, SR-03~05 |
+| ROS-STA-002 | 컨베이어 위치·운전·오류 상태 전달 | Conveyor → Assembly Sequencer (Real), Unity | Topic | `TBD` | `TBD` | 제안·협의 필요 | UR-03~05·07, SR-03~05·08 |
 
 ### 4.5 Inspection
 
 | API ID | 기능명 | 호출자 → 제공자 | 구분 | 인터페이스 | 메시지 타입 | 상태 | 관련 요구사항 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| ROS-INS-001 | 검사 실행·진행·PASS/FAIL 결과 반환 | `real_assembly` → `inspection_node` | Action | `TBD` | `TBD` | 제안·협의 필요 | UR-09, SR-09·11 |
+| ROS-INS-001 | 검사 실행·진행·PASS/FAIL 결과 반환 | Assembly Sequencer (Real) → Inspection | Action | `TBD` | `TBD` | 제안·협의 필요 | UR-09, SR-09·11 |
 
 - Goal: `job_id`, `unit_id`, `product_id`
 - Feedback: 검사 단계와 진행 상태
@@ -136,7 +136,7 @@ Real Start 요청은 `request_id`, `product_code`, `product_version`, `recipe_ve
 
 | API ID | 기능명 | 송신자 → 수신자 | 구분 | 인터페이스 | 메시지 타입 | 상태 | 관련 요구사항 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| ROS-SAF-001 | 사람 감지·E-STOP 상태 전달 | Safety PLC·센서 bridge → `real_assembly`, Robot·Conveyor 명령 경계, Unity | Topic | `TBD` | `TBD` | 제안·협의 필요 | UR-13, SR-14~15 |
+| ROS-SAF-001 | 사람 감지·E-STOP 상태 전달 | Safety → Assembly Sequencer (Real), Robot (FR5), Conveyor, Unity | Topic | `TBD` | `TBD` | 제안·협의 필요 | UR-13, SR-14~15 |
 
 물리 E-STOP은 하드와이어드 안전회로가 정지시키며 ROS는 상태 전달과 새 명령 차단만 담당한다.
 
@@ -148,8 +148,8 @@ Real Start 요청은 `request_id`, `product_code`, `product_version`, `recipe_ve
 
 | ID | 기능명 | 송신자 → 수신자 | 구분 | 인터페이스 | 데이터 | 상태 |
 | --- | --- | --- | --- | --- | --- | --- |
-| INT-DB-001 | 생산 DB 갱신 예약 | `real_assembly` 업무 흐름 → Async DB Worker | In-process Queue | bounded DB Update Queue | `DbUpdateEvent` | 설계됨·미구현 |
-| INT-DB-002 | 생산 DB transaction 적용 | Async DB Worker → PostgreSQL | DB Transaction | `PRODUCTION_DB_DSN` | `production_writer` 권한 | 설계됨·미구현 |
+| INT-DB-001 | 생산 DB 갱신 예약 | Assembly Sequencer (Real) → Assembly Sequencer DB Worker | In-process Queue | bounded DB Update Queue | `DbUpdateEvent` | 설계됨·미구현 |
+| INT-DB-002 | 생산 DB transaction 적용 | Assembly Sequencer DB Worker → PostgreSQL | DB Transaction | `PRODUCTION_DB_DSN` | `production_writer` 권한 | 설계됨·미구현 |
 
 `DbUpdateEvent`는 `event_id`, `event_type`, `job_id`, `unit_id`, `payload`, `created_at`, `attempt_count`, `next_retry_at`, `last_error`를 가진다.
 
