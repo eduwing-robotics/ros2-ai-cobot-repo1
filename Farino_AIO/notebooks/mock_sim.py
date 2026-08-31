@@ -1324,7 +1324,6 @@ class MockMoveJ(Node):
         message = "assembled PCB transfer interrupted"
         try:
             self.require_mock_hardware()
-            joint_points = recipe["joint_points"]
             motion = recipe["motion"]
             for command in recipe["sequence"]["after_all"]:
                 if command != "transfer_assembled_pcb":
@@ -1367,7 +1366,6 @@ class MockMoveJ(Node):
                 )
                 self.publish_assembly_feedback(request_id, "PCB_PICKED")
                 self.run_linear(source_retract, True)
-                self.run_joint_target(joint_points["assembly_ready"])
                 self.run_ptp_pose(target_approach)
                 self.run_linear(target, True)
                 self.run_gripper(
