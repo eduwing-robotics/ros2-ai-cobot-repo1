@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "timestamp_unix": 1788087777.2760305,
+  "mode": "validated_recipe_pick_target",
+  "part_type": "long_orange",
+  "instance_index": 2,
+  "part_center_base_mm": [-748.608, -35.961, -44.926],
+  "long_axis_angle_base_deg": 1.976,
+  "grasp_correction_tool_mm": [0.469, -2.357],
+  "grasp_z_offset_from_detected_surface_mm": -4.738,
+  "robot_motion_authorized": false
+}

@@ -29,11 +29,15 @@ class ReturnMover(Node):
                 return
         raise RuntimeError('No /nonrt_state_data received')
 
-    def command(self, text):
+    def command(self, text, timeout=90.0):
         request = RemoteCmdInterface.Request()
         request.cmd_str = text
         future = self.client.call_async(request)
-        rclpy.spin_until_future_complete(self, future)
+        deadline = time.monotonic() + timeout
+        while rclpy.ok() and not future.done() and time.monotonic() < deadline:
+            rclpy.spin_once(self, timeout_sec=0.1)
+        if not future.done():
+            raise RuntimeError(f"Command timeout; no later waypoint sent: {text}")
         if future.result() is None:
             raise RuntimeError(f'No response: {text}')
         result = str(future.result().cmd_res)
@@ -48,6 +52,7 @@ def main():
     parser.add_argument('--speed-percent', type=int, default=50)
     parser.add_argument('--vertical-speed-percent', type=int, default=50)
     parser.add_argument('--safe-clearance-mm', type=float, default=100.0)
+    parser.add_argument('--horizontal-z-mm', type=float, help='explicit safe horizontal travel Z; must be at least current Z and 100 mm')
     parser.add_argument('--max-distance-mm', type=float, default=500.0)
     parser.add_argument('--dry-run', action='store_true')
     parser.add_argument('--execute', action='store_true')
@@ -96,13 +101,16 @@ def main():
         if int(state.emg) != 0 or int(state.main_error_code) != 0:
             raise RuntimeError('robot emergency/error state is not clear')
 
-        safe_z = max(current[2], target[2] + args.safe_clearance_mm)
+        safe_z = float(args.horizontal_z_mm) if args.horizontal_z_mm is not None else max(current[2], target[2] + args.safe_clearance_mm)
+        if not math.isfinite(safe_z) or safe_z < current[2] - 1.0 or safe_z < 100.0:
+            raise RuntimeError(f"unsafe horizontal Z {safe_z:.1f}; current Z={current[2]:.1f}, minimum=100.0")
         waypoints = []
         if safe_z - current[2] > 1.0:
             waypoints.append((current[:2] + [safe_z] + current[3:], args.vertical_speed_percent, 'vertical raise'))
         waypoints.append(([target[0], target[1], safe_z] + target[3:], args.speed_percent, 'horizontal return'))
-        if safe_z - target[2] > 1.0:
-            waypoints.append((target, args.vertical_speed_percent, 'final descent'))
+        if abs(safe_z - target[2]) > 1.0:
+            final_label = 'final ascent' if target[2] > safe_z else 'final descent'
+            waypoints.append((target, args.vertical_speed_percent, final_label))
 
         print(f"RETURN TO TEACHING POINT: {args.point_name}")
         print(f"Target TCP/Base: {[round(value, 3) for value in target]}, tool={tool_id}, user={user_id}")

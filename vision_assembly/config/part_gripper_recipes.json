@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "status": "physical_gripper_test_values_user_provided_2026-08-26",
+  "command": "MoveGripper",
+  "argument_order": ["index", "position", "velocity", "force", "max_time_ms", "block", "type", "rotation_count", "rotation_velocity", "rotation_torque"],
+  "warnings": [
+    "These values are saved recipes only and must not trigger robot motion without an explicitly authorized pick/place workflow.",
+    "Grip and release values were supplied from physical tests; verify payload retention and collision clearance before autonomous use."
+  ],
+  "parts": {
+    "gpu": {
+      "status": "physical_pick_to_trayhome_validated_2026-08-30",
+      "grip":    {"args": [1, 65, 50, 30, 3000, 0, 0, 0, 0, 0]},
+      "release": {"args": [1, 100, 50, 30, 3000, 0, 0, 0, 0, 0]}
+    },
+    "hbm": {
+      "status": "visual_center_and_operator_grasp_height_taught_2026-08-30_needs_lift_validation",
+      "grasp_center_correction_base_mm": {
+        "x": -0.717,
+        "y": 1.253,
+        "reference_tcp_rz_deg": 90.0,
+        "source_detection_base_xy_mm": [-597.539, -49.443],
+        "visually_centered_base_xy_mm": [-598.256, -48.190],
+        "application_rule": "Apply in Base XY only when the commanded TCP orientation is approximately Rz=90 deg; transform or recalibrate for other orientations."
+      },
+      "grip":    {"args": [1, 18, 50, 30, 3000, 0, 0, 0, 0, 0]},
+      "release": {"args": [1, 25, 50, 30, 3000, 0, 0, 0, 0, 0]},
+      "grasp_z_offset_from_detected_surface_mm": -3.010,
+      "taught_grasp_tcp_z_mm": -46.550,
+      "source_detected_surface_z_mm": -43.540,
+      "notes": [
+        "Operator visually confirmed HBM center alignment with gripper opened to position 25.",
+        "Operator manually taught the HBM grasp height on HBM instance 4.",
+        "Close position 18 and payload retention after a vertical lift remain to be physically validated."
+      ]
+    },
+    "long_orange": {
+      "display_name": "Power Module",
+      "status": "physical_pick_and_5mm_lift_visually_passed_2026-08-30_needs_repeat_confirmation",
+      "grasp_center_correction_base_mm": {
+        "x": -2.309,
+        "y": 0.665,
+        "reference_tcp_rz_deg": 85.185,
+        "source_detection_base_xy_mm": [-747.753, -72.317],
+        "visually_centered_base_xy_mm": [-750.062, -71.652],
+        "application_rule": "Align tool_y to the detected unoriented long axis first, then rotate this correction consistently with the commanded TCP orientation."
+      },
+      "grasp_center_correction_tool_mm": {
+        "x": 0.469,
+        "y": -2.357,
+        "z": 0.0,
+        "source": "inverse-rotated from the visually centered Base correction using scipy Rotation.from_euler xyz at Rz=85.185 deg"
+      },
+      "operator_additional_correction_base_mm": {
+        "x": 0.0,
+        "y": 1.3,
+        "z": 0.0,
+        "source": "operator visual correction toward Base +Y on 2026-08-31; apply in Base after rotating the tool-fixed grasp-center correction"
+      },
+      "grasp_z_offset_from_detected_surface_mm": -4.738,
+      "taught_grasp_tcp_z_mm": -50.550,
+      "source_detected_surface_z_mm": -45.812,
+      "grip":    {"args": [1, 26, 50, 30, 3000, 0, 0, 0, 0, 0]},
+      "release": {"args": [1, 30, 50, 30, 3000, 0, 0, 0, 0, 0]},
+      "notes": [
+        "Operator confirmed the current TCP height as the Power Module grasp height.",
+        "Gripper close 26 and reopen 30 commands were physically exercised at the taught area.",
+        "Power Module 2 was grasped and lifted but appeared slightly off-center.",
+        "Power Module 3 was grasped and lifted 5 mm; operator judged that it appeared successful.",
+        "The direct gripper-position query briefly returned 0 after the Power Module 3 close, while the subsequent ROS state reported 26 with no fault; repeat once before marking fully validated."
+      ]
+    },
+    "black_block": {
+      "display_name": "VRM",
+      "orientation_selection": "Use horizontal or vertical recipe from the detected grasp-axis orientation.",
+      "grasp_center_correction_base_mm": {
+        "x": 0.0,
+        "y": 1.0,
+        "reference_tcp_rz_deg": 91.277,
+        "application_rule": "Apply as fixed Base +Y after aligning tool_y to the detected VRM long axis."
+      },
+      "grasp_center_correction_tool_at_reference_mm": {
+        "x": 1.000,
+        "y": 0.022,
+        "z": 0.0,
+        "source": "inverse-rotated from Base [0,+1,0] at VRM 1 reference pose on 2026-08-31"
+      },
+      "horizontal": {
+        "grip":    {"args": [1, 24, 50, 30, 3000, 0, 0, 0, 0, 0]},
+        "release": {"args": [1, 26, 50, 30, 3000, 0, 0, 0, 0, 0]}
+      },
+      "vertical": {
+        "grip":    {"args": [1, 32, 50, 30, 3000, 0, 0, 0, 0, 0]},
+        "release": {"args": [1, 34, 50, 30, 3000, 0, 0, 0, 0, 0]}
+      }
+    },
+    "marked_white": {
+      "display_name": "Inductor",
+      "grip":    {"args": [1, 16, 50, 30, 3000, 0, 0, 0, 0, 0]},
+      "release": {"args": [1, 20, 50, 30, 3000, 0, 0, 0, 0, 0]}
+    },
+    "right_white_brown": {
+      "display_name": "SMD Capacitor",
+      "grip":    {"args": [1, 5, 50, 1, 3000, 0, 0, 0, 0, 0]},
+      "release": {"args": [1, 8, 50, 1, 3000, 0, 0, 0, 0, 0]}
+    }
+  }
+}

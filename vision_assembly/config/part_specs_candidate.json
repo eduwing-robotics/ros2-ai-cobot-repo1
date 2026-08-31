@@ -2,22 +2,235 @@
   "schema_version": 1,
   "status": "cad_candidates_not_robot_ready",
   "units": "mm",
-  "source": {"repository": "https://github.com/eduwing-robotics/ros2-ai-cobot-repo1", "branch": "vision-robot-conveyor-control", "layout_file": "vision_assembly/config/board_layout_from_unity.json", "runtime_message_file": "ros2_ws/src/vision_interfaces/msg/Part.msg", "small_part_test_file": "calibration/data/small_part_last.json", "pick_test_file": "calibration/scripts/full_pick_place_same_spot.py", "retrieved_date": "2026-08-20"},
+  "source": {
+    "repository": "https://github.com/eduwing-robotics/ros2-ai-cobot-repo1",
+    "branch": "vision-robot-conveyor-control",
+    "layout_file": "vision_assembly/config/board_layout_from_unity.json",
+    "runtime_message_file": "ros2_ws/src/vision_interfaces/msg/Part.msg",
+    "small_part_test_file": "calibration/data/small_part_last.json",
+    "pick_test_file": "calibration/scripts/full_pick_place_same_spot.py",
+    "retrieved_date": "2026-08-20"
+  },
   "warnings": [
     "Dimensions are Unity/OBJ bounds and must be verified on the physical parts with calipers before robot execution.",
     "The current display-name mapping follows the validated tray layout and differs from some semantic names in the source branch.",
     "Part centers in the tray are dynamic detections; an ROI or CAD placement center must never be used directly as a grasp target.",
-    "The generic grasp defaults came from a single small-part same-spot test and are not validated per part type."
+    "The generic grasp defaults came from a single small-part same-spot test and are not validated per part type.",
+    "Per-part grip/release commands are stored in the gripper recipes file; do not substitute generic gripper defaults for autonomous operation."
   ],
   "parts": {
-    "gpu": {"display_name": "GPU", "source_asset": "nvidia", "expected_tray_count": 1, "nominal_size_mm": {"x": 29.7166, "y": 57.1065, "height": 6.63831}, "dimension_status": "cad_candidate_needs_caliper_validation"},
-    "hbm": {"display_name": "HBM", "source_asset": "Sk_hynix", "expected_tray_count": 8, "nominal_size_mm": {"x": 10.24665, "y": 14.30996, "height": 9.81511}, "dimension_status": "cad_candidate_needs_caliper_validation"},
-    "black_block": {"display_name": "VRM (전압 조정 모듈)", "source_asset": "BlackBox1", "expected_tray_count": 5, "nominal_size_mm": {"x": 11.0, "y": 14.0, "height": 5.20254}, "dimension_status": "cad_candidate_needs_caliper_validation"},
-    "long_orange": {"display_name": "Power Module (전원 모듈)", "source_asset": "YellowBar", "expected_tray_count": 4, "nominal_size_mm": {"x": 12.13001, "y": 59.9891, "height": 4.78478}, "dimension_status": "cad_candidate_needs_caliper_validation"},
-    "marked_white": {"display_name": "Inductor (인덕터)", "source_asset": "cap_Big", "expected_tray_count": 2, "nominal_size_mm": {"x": 9.36862, "y": 9.36862, "height": 8.52217}, "dimension_status": "cad_candidate_needs_caliper_validation"},
-    "right_white_brown": {"display_name": "SMD Capacitor (SMD 커패시터)", "source_asset": "cap_small", "expected_tray_count": 5, "nominal_size_mm": {"x": 3.83615, "y": 6.8013, "height": 3.02376}, "dimension_status": "cad_candidate_needs_caliper_validation"}
+    "gpu": {
+      "display_name": "GPU",
+      "source_asset": "nvidia",
+      "expected_tray_count": 2,
+      "nominal_size_mm": {
+        "x": 27.0,
+        "y": 57.0,
+        "height": 6.0
+      },
+      "dimension_status": "physical_measurement_user_2026-08-21",
+      "validated_pick": {
+        "status": "physical_pick_to_trayhome_validated_2026-08-30",
+        "grasp_z_offset_from_detected_surface_mm": -7.0,
+        "initial_lift_mm": 5.0,
+        "initial_lift_speed_percent": 10,
+        "travel_speed_percent": 30,
+        "tool_id": 1,
+        "user_id": 0
+      },
+      "per_set_tray_count": 1,
+      "tray_pick_order": {
+        "sort_by": "center_pixel_x",
+        "direction": "ascending",
+        "instance_labels": ["left_1", "right_2"],
+        "description": "트레이 영상 기준 왼쪽 GPU가 1번, 오른쪽 GPU가 2번"
+      }
+    },
+    "hbm": {
+      "display_name": "HBM",
+      "source_asset": "Sk_hynix",
+      "expected_tray_count": 16,
+      "nominal_size_mm": {
+        "x": 10.24665,
+        "y": 14.30996,
+        "height": 9.81511
+      },
+      "dimension_status": "cad_candidate_needs_caliper_validation",
+      "validated_pick": {
+        "status": "operator_grasp_height_taught_2026-08-30_needs_lift_validation",
+        "grasp_z_offset_from_detected_surface_mm": -3.010,
+        "taught_grasp_tcp_z_mm": -46.550,
+        "source_detected_surface_z_mm": -43.540,
+        "initial_lift_mm": 5.0,
+        "initial_lift_speed_percent": 10,
+        "travel_speed_percent": 30,
+        "tool_id": 1,
+        "user_id": 0
+      },
+      "per_set_tray_count": 8,
+      "tray_pick_order": {
+        "set_order": "left_to_right",
+        "instances_per_set": 8,
+        "layout_per_set": {"rows": 4, "columns": 2},
+        "within_set_order": "row_major_top_to_bottom_left_to_right",
+        "instance_ranges": {
+          "left_set": [1, 8],
+          "right_set": [9, 16]
+        },
+        "description": "왼쪽 세트 1~8 완료 후 오른쪽 세트 9~16; 각 세트는 위쪽 행부터 같은 행의 왼쪽, 오른쪽 순서"
+      }
+    },
+    "black_block": {
+      "display_name": "VRM (전압 조정 모듈)",
+      "source_asset": "BlackBox1",
+      "expected_tray_count": 10,
+      "nominal_size_mm": {
+        "x": 11.0,
+        "y": 14.0,
+        "height": 5.20254
+      },
+      "dimension_status": "cad_candidate_needs_caliper_validation",
+      "per_set_tray_count": 5,
+      "tray_pick_order": {
+        "set_order": "top_to_bottom",
+        "instances_per_set": 5,
+        "layout": {"rows": 2, "columns": 5},
+        "within_set_order": "left_to_right",
+        "instance_ranges": {
+          "top_set": [1, 5],
+          "bottom_set": [6, 10]
+        },
+        "description": "위쪽 세트는 왼쪽부터 1~5, 그다음 아래쪽 세트는 왼쪽부터 6~10 순서"
+      }
+    },
+    "long_orange": {
+      "display_name": "Power Module (전원 모듈)",
+      "source_asset": "YellowBar",
+      "expected_tray_count": 8,
+      "nominal_size_mm": {
+        "x": 12.13001,
+        "y": 59.9891,
+        "height": 4.78478
+      },
+      "dimension_status": "cad_candidate_needs_caliper_validation",
+      "validated_pick": {
+        "status": "physical_pick_and_5mm_lift_visually_passed_2026-08-30_needs_repeat_confirmation",
+        "grasp_z_offset_from_detected_surface_mm": -4.738,
+        "taught_grasp_tcp_z_mm": -50.550,
+        "source_detected_surface_z_mm": -45.812,
+        "initial_lift_mm": 5.0,
+        "initial_lift_speed_percent": 10,
+        "travel_speed_percent": 30,
+        "tool_id": 1,
+        "user_id": 0
+      },
+      "per_set_tray_count": 4,
+      "tray_pick_order": {
+        "set_order": "left_to_right",
+        "instances_per_set": 4,
+        "layout_per_set": {"rows": 2, "columns": 2},
+        "within_set_order": "row_major_top_to_bottom_left_to_right",
+        "instance_ranges": {
+          "left_set": [1, 4],
+          "right_set": [5, 8]
+        },
+        "description": "왼쪽 세트 1~4 완료 후 오른쪽 세트 5~8; 각 세트는 위쪽 행부터 같은 행의 왼쪽, 오른쪽 순서"
+      }
+    },
+    "marked_white": {
+      "display_name": "Inductor (인덕터)",
+      "source_asset": "cap_Big",
+      "expected_tray_count": 4,
+      "nominal_size_mm": {
+        "x": 9.36862,
+        "y": 9.36862,
+        "height": 8.52217
+      },
+      "dimension_status": "cad_candidate_needs_caliper_validation",
+      "per_set_tray_count": 2,
+      "tray_pick_order": {
+        "set_order": "top_to_bottom",
+        "instances_per_set": 2,
+        "layout": {"rows": 2, "columns": 2},
+        "within_set_order": "left_to_right",
+        "instance_ranges": {
+          "top_set": [1, 2],
+          "bottom_set": [3, 4]
+        },
+        "description": "위쪽 줄은 왼쪽부터 1~2, 그다음 아래쪽 줄은 왼쪽부터 3~4 순서"
+      }
+    },
+    "right_white_brown": {
+      "display_name": "SMD Capacitor (SMD 커패시터)",
+      "source_asset": "cap_small",
+      "expected_tray_count": 10,
+      "nominal_size_mm": {
+        "x": 3.83615,
+        "y": 6.8013,
+        "height": 3.02376
+      },
+      "dimension_status": "cad_candidate_needs_caliper_validation",
+      "per_set_tray_count": 5,
+      "tray_pick_order": {
+        "set_order": "top_to_bottom",
+        "instances_per_set": 5,
+        "layout": {"rows": 2, "columns": 5},
+        "within_set_order": "left_to_right",
+        "instance_ranges": {
+          "top_set": [1, 5],
+          "bottom_set": [6, 10]
+        },
+        "description": "위쪽 줄은 왼쪽부터 1~5, 그다음 아래쪽 줄은 왼쪽부터 6~10 순서"
+      }
+    }
   },
-  "runtime_detection_contract": {"per_instance_fields": ["name", "class_id", "score", "center_pixel_x", "center_pixel_y", "bbox_width_px", "bbox_height_px", "angle_deg", "depth_m", "camera_x_m", "camera_y_m", "camera_z_m"], "status": "message_schema_exists_but_tray_instance_detector_not_yet_implemented"},
-  "historical_small_part_test": {"part_size_input_mm": [6.0, 3.5, 2.5], "measured_contour_long_short_mm": [7.59142, 4.321317], "note": "Historical single-part dry-run only; its center and pose are not reusable for the current tray."},
-  "generic_pick_test_defaults": {"approach_offset_mm": 100.0, "extra_descent_mm": 5.0, "lift_mm": 50.0, "retreat_mm": 50.0, "gripper_open_position": 100, "gripper_close_position": 5, "grasp_descent_speed_percent": 15, "status": "small_part_test_defaults_not_validated_per_part"}
+  "assembly_sequence": [
+    "gpu",
+    "hbm",
+    "long_orange",
+    "black_block",
+    "marked_white",
+    "right_white_brown"
+  ],
+  "runtime_detection_contract": {
+    "per_instance_fields": [
+      "name",
+      "class_id",
+      "score",
+      "center_pixel_x",
+      "center_pixel_y",
+      "bbox_width_px",
+      "bbox_height_px",
+      "angle_deg",
+      "depth_m",
+      "camera_x_m",
+      "camera_y_m",
+      "camera_z_m"
+    ],
+    "status": "message_schema_exists_but_tray_instance_detector_not_yet_implemented"
+  },
+  "historical_small_part_test": {
+    "part_size_input_mm": [
+      6.0,
+      3.5,
+      2.5
+    ],
+    "measured_contour_long_short_mm": [
+      7.59142,
+      4.321317
+    ],
+    "note": "Historical single-part dry-run only; its center and pose are not reusable for the current tray."
+  },
+  "generic_pick_test_defaults": {
+    "approach_offset_mm": 100.0,
+    "extra_descent_mm": 5.0,
+    "lift_mm": 50.0,
+    "retreat_mm": 50.0,
+    "gripper_open_position": 100,
+    "gripper_close_position": 5,
+    "grasp_descent_speed_percent": 15,
+    "status": "small_part_test_defaults_not_validated_per_part"
+  },
+  "assembly_set_count": 2,
+  "gripper_recipes_file": "vision_assembly/config/part_gripper_recipes.json"
 }

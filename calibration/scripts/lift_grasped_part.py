@@ -4,6 +4,8 @@
 import argparse
 import time
 
+import numpy as np
+
 import rclpy
 from fairino_msgs.msg import RobotNonrtState
 from fairino_msgs.srv import RemoteCmdInterface
@@ -51,12 +53,25 @@ class LiftNode(Node):
             raise RuntimeError(f'Unexpected gripper-position response: {result}')
         return int(float(values[-1]))
 
+    def wait_motion_done(self, target_xyz, timeout=30.0, tolerance_mm=1.0):
+        deadline=time.monotonic()+timeout
+        target=np.asarray(target_xyz,dtype=float)
+        while rclpy.ok() and time.monotonic()<deadline:
+            rclpy.spin_once(self,timeout_sec=0.1)
+            if self.state is None:continue
+            if int(self.state.emg)!=0 or int(self.state.main_error_code)!=0 or float(self.state.collision_err)!=0.0:
+                raise RuntimeError('robot emergency/error/collision state is not clear')
+            current=np.asarray([self.state.cart_x_cur_pos,self.state.cart_y_cur_pos,self.state.cart_z_cur_pos],dtype=float)
+            if int(self.state.robot_motion_done)==1 and float(np.linalg.norm(current-target))<=tolerance_mm:return
+        raise RuntimeError('lift completion/target verification timeout')
+
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--lift-mm', type=float, default=5.0)
     parser.add_argument('--speed-percent', type=int, default=15)
     parser.add_argument('--close-position', type=int, default=5)
+    parser.add_argument('--skip-close', action='store_true', help='lift only after verifying the gripper is already closed')
     parser.add_argument('--execute', action='store_true')
     parser.add_argument('--confirm-grasp', action='store_true')
     args = parser.parse_args()
@@ -77,13 +92,18 @@ def main():
         if not node.client.wait_for_service(timeout_sec=3): raise RuntimeError('command service unavailable')
         before = node.get_gripper_position()
         print(f'Gripper position before close: {before}')
-        node.command(f'MoveGripper(1,{args.close_position})')
-        grip_state = node.wait_gripper_complete()
-        after = node.get_gripper_position()
-        print(
-            f'Gripper close completed: command={args.close_position}, '
-            f'actual={after}, state={grip_state}'
-        )
+        if args.skip_close:
+            after=before;grip_state=int(state.grip_motion_done)
+            print(f'Gripper close skipped; verified current position={after}')
+        else:
+            node.command(f'MoveGripper(1,{args.close_position})')
+            grip_state = node.wait_gripper_complete()
+            time.sleep(0.5)
+            after = node.get_gripper_position()
+            print(
+                f'Gripper close completed: command={args.close_position}, '
+                f'actual={after}, state={grip_state}'
+            )
         # A fully open reading after a close command means the part was not
         # grasped.  Never lift in that state.  When a part is held, the actual
         # position may legitimately stop above the commanded value.
@@ -97,6 +117,7 @@ def main():
             f'{target[3]:.3f},{target[4]:.3f},{target[5]:.3f},1,0,'
             f'{args.speed_percent},{args.speed_percent},{args.speed_percent},-1,-1)'
         )
+        node.wait_motion_done(target[:3])
         print(f'Initial slow lift completed: {args.lift_mm:.1f} mm')
     finally:
         node.destroy_node()

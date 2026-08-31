@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "mode": "single_vrm_hover_target",
+  "timestamp_unix": 1787742324.2152224,
+  "part_type": "black_block",
+  "part_center_base_mm": [
+    -726.997,
+    -168.109,
+    -46.11
+  ],
+  "long_axis_angle_base_deg": 57.835,
+  "sample_count": 6,
+  "position_span_mm": [
+    0.025,
+    0.014,
+    0.003
+  ],
+  "angle_span_deg": 1.682,
+  "hover_offset_mm": 100.0,
+  "robot_motion_authorized": false,
+  "source_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/tray_detections_last.json"
+}

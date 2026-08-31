@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
-# RGB-D mode for part localization. Color remains 1920x1080x15 so the same
-# color CameraInfo/Hand-Eye contract is used; depth is aligned to color.
+# Low-latency RGB-D mode for live tray tracking. Intrinsics come from the live
+# CameraInfo message and depth remains aligned to color.
 set -eo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${script_dir}/../scripts/ksmc_env.sh"
 
 exec ros2 launch realsense2_camera rs_launch.py \
-  rgb_camera.color_profile:=1920x1080x15 \
+  rgb_camera.color_profile:=1280x720x15 \
   enable_depth:=true \
   depth_module.depth_profile:=1280x720x15 \
   enable_sync:=true \

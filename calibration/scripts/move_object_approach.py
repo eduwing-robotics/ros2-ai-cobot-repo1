@@ -36,11 +36,73 @@ class Mover(Node):
             if self.state is not None:return
         raise RuntimeError("No /nonrt_state_data received")
 
-    def command(self, text):
+    def refresh_state(self, timeout=3.0):
+        self.state = None
+        self.wait_state(timeout)
+        return self.state
+
+    def wait_motion_done(self, target_xyz, tool_id, timeout=30.0, tolerance_mm=1.0):
+        deadline=time.monotonic()+timeout
+        target=np.asarray(target_xyz,dtype=float)
+        while rclpy.ok() and time.monotonic()<deadline:
+            state=self.refresh_state(timeout=min(3.0,max(0.1,deadline-time.monotonic())))
+            assert_safe_state(state,tool_id,require_auto=True,require_stationary=False)
+            current=np.asarray([state.cart_x_cur_pos,state.cart_y_cur_pos,state.cart_z_cur_pos],dtype=float)
+            if int(state.robot_motion_done)==1 and float(np.linalg.norm(current-target))<=tolerance_mm:
+                return state
+        raise RuntimeError("robot motion completion/target verification timeout")
+
+    def request(self, text):
+        if not self.client.wait_for_service(timeout_sec=3):
+            raise RuntimeError("remote command service unavailable")
         req=RemoteCmdInterface.Request(); req.cmd_str=text
         future=self.client.call_async(req); rclpy.spin_until_future_complete(self,future)
-        result=str(future.result().cmd_res)
+        if future.result() is None:
+            raise RuntimeError(f"no response for FAIRINO command: {text}")
+        return str(future.result().cmd_res)
+
+    def command(self, text):
+        result=self.request(text)
         if result!="0":raise RuntimeError(f"FR5 rejected command: {text}, result={result}")
+
+
+def assert_safe_state(state, tool_id, require_auto=False, require_stationary=True):
+    if int(state.tool_num) != tool_id:
+        raise RuntimeError(f"active tool={state.tool_num}, expected {tool_id}")
+    if require_auto and int(state.robot_mode) != 0:
+        raise RuntimeError(f"robot_mode={state.robot_mode}; AUTO mode 0 required")
+    checks = {
+        "emergency stop": state.emg,
+        "abnormal stop": state.abnormal_stop,
+        "main error": state.main_error_code,
+        "sub error": state.sub_error_code,
+        "collision": state.collision_err,
+        "general alarm": state.alarm,
+        "safety door": state.safetydoor_alarm,
+        "safety plane": state.safetyplanealarm,
+        "motion alarm": state.motionalarm,
+        "interference zone": state.interferealarm,
+        "soft-limit error": state.out_sflimit_err,
+        "strange-pose flag": state.strangeposflag,
+        "control-box error": state.ctrlboxerror,
+        "command-point error": state.cmdpointerror,
+        "parameter error": state.paraerror,
+    }
+    active = [f"{name}={value}" for name, value in checks.items() if float(value) != 0.0]
+    if active:
+        raise RuntimeError("robot safety state is not clear: " + ", ".join(active))
+    if require_stationary and int(state.robot_motion_done) != 1:
+        raise RuntimeError("robot is not stationary")
+
+
+def parse_response(text, expected_values, label):
+    try:
+        values=[float(item) for item in text.split(",")]
+    except ValueError as exc:
+        raise RuntimeError(f"invalid {label} response: {text}") from exc
+    if len(values) != expected_values + 1 or int(values[0]) != 0:
+        raise RuntimeError(f"{label} query failed: {text}")
+    return np.asarray(values[1:], dtype=float)
 
 
 def main():
@@ -59,6 +121,14 @@ def main():
     p.add_argument("--descent-speed-percent",type=int,default=50)
     p.add_argument("--rotation-speed-percent",type=int,default=50)
     p.add_argument("--safe-clearance-mm",type=float,default=100); p.add_argument("--max-distance-mm",type=float,default=450)
+    p.add_argument("--safe-z-mm",type=float,help="explicit Base-Z travel height; must be at or above current and target Z")
+    p.add_argument("--joint-limit-margin-deg",type=float,default=10.0)
+    p.add_argument("--max-joint-step-deg",type=float,default=90.0)
+    p.add_argument("--min-horizontal-move-mm",type=float,default=1.0,
+                   help="minimum XY delta that creates a horizontal waypoint")
+    p.add_argument("--workspace-x-min",type=float); p.add_argument("--workspace-x-max",type=float)
+    p.add_argument("--workspace-y-min",type=float); p.add_argument("--workspace-y-max",type=float)
+    p.add_argument("--workspace-z-min",type=float); p.add_argument("--workspace-z-max",type=float)
     p.add_argument("--tool-id",type=int,default=1); p.add_argument("--user-id",type=int,default=0)
     p.add_argument("--dry-run",action="store_true"); p.add_argument("--execute",action="store_true"); p.add_argument("--confirm-move",action="store_true")
     a=p.parse_args()
@@ -84,14 +154,22 @@ def main():
     if not 1<=a.descent_speed_percent<=50:p.error("--descent-speed-percent must be between 1 and 50")
     if not 1<=a.rotation_speed_percent<=50:p.error("--rotation-speed-percent must be between 1 and 50")
     if not 0<a.max_rotation_deg<=90:p.error("--max-rotation-deg must be in (0, 90]")
-    if a.safe_clearance_mm<50:p.error("--safe-clearance-mm must be >= 50")
+    if a.safe_z_mm is None and a.safe_clearance_mm<50:p.error("--safe-clearance-mm must be >= 50")
+    if not 0<a.joint_limit_margin_deg<45:p.error("--joint-limit-margin-deg must be in (0, 45)")
+    if not 0<a.max_joint_step_deg<=180:p.error("--max-joint-step-deg must be in (0, 180]")
+    if not 0<a.min_horizontal_move_mm<=1.0:p.error("--min-horizontal-move-mm must be in (0, 1]")
+    workspace_limits = (
+        (a.workspace_x_min, a.workspace_x_max, "X"),
+        (a.workspace_y_min, a.workspace_y_max, "Y"),
+        (a.workspace_z_min, a.workspace_z_max, "Z"),
+    )
+    for low, high, axis in workspace_limits:
+        if (low is None) != (high is None):p.error(f"workspace {axis} requires both min and max")
+        if low is not None and low >= high:p.error(f"workspace {axis} min must be less than max")
     rclpy.init(); n=Mover()
     try:
         n.wait_state(); s=n.state
-        if int(s.tool_num)!=a.tool_id:raise RuntimeError(f"active tool={s.tool_num}, expected {a.tool_id}")
-        if a.execute and int(s.robot_mode)!=0:raise RuntimeError(f"robot_mode={s.robot_mode}; AUTO mode 0 required")
-        if a.execute and int(s.emg)!=0:raise RuntimeError("emergency stop is active")
-        if a.execute and int(s.robot_motion_done)!=1:raise RuntimeError("robot is not stationary")
+        assert_safe_state(s,a.tool_id,require_auto=a.execute)
         current=np.array([s.cart_x_cur_pos,s.cart_y_cur_pos,s.cart_z_cur_pos],float)
         abc=[float(s.cart_a_cur_pos),float(s.cart_b_cur_pos),float(s.cart_c_cur_pos)]
         target_abc=list(abc)
@@ -125,12 +203,45 @@ def main():
         if not np.all(np.isfinite(values)):raise RuntimeError("target contains NaN/Inf")
         distance=float(np.linalg.norm(values-current))
         if distance>a.max_distance_mm:raise RuntimeError(f"target distance {distance:.1f} mm exceeds limit {a.max_distance_mm:.1f}")
-        safe_z=max(float(current[2]),a.z+a.safe_clearance_mm)
+        if a.safe_z_mm is None:
+            safe_z=max(float(current[2]),a.z+a.safe_clearance_mm)
+        else:
+            safe_z=float(a.safe_z_mm)
+            if not math.isfinite(safe_z) or safe_z+1e-6<max(float(current[2]),a.z):
+                raise RuntimeError("--safe-z-mm must be finite and at or above current and target Z")
         waypoints=[]
         if safe_z-current[2]>1:waypoints.append((current[0],current[1],safe_z,abc,a.descent_speed_percent,"vertical raise"))
         if abs(rotation_delta)>0.5:waypoints.append((current[0],current[1],safe_z,target_abc,a.rotation_speed_percent,"part orientation alignment"))
-        waypoints.append((a.x,a.y,safe_z,target_abc,a.speed_percent,"horizontal positioning"))
+        horizontal_delta=math.hypot(a.x-current[0],a.y-current[1])
+        if horizontal_delta>a.min_horizontal_move_mm:
+            waypoints.append((a.x,a.y,safe_z,target_abc,a.speed_percent,"horizontal positioning"))
         if safe_z-a.z>1:waypoints.append((a.x,a.y,a.z,target_abc,a.descent_speed_percent,"vertical approach"))
+        current_joints=np.asarray([s.j1_cur_pos,s.j2_cur_pos,s.j3_cur_pos,s.j4_cur_pos,s.j5_cur_pos,s.j6_cur_pos],float)
+        soft=parse_response(n.request("GetJointSoftLimitDeg(1)"),12,"joint soft-limit")
+        negative=soft[:6]; positive=soft[6:]
+        if np.any(current_joints < negative) or np.any(current_joints > positive):
+            raise RuntimeError("current joints are outside controller soft limits")
+        safety_stop=parse_response(n.request("GetSafetyStopState()"),2,"safety-stop")
+        if np.any(safety_stop != 0):raise RuntimeError(f"safety stop is active: SI0/SI1={safety_stop.astype(int).tolist()}")
+        planned=[]; reference=current_joints.copy()
+        for x,y,z,orientation,speed,name in waypoints:
+            point=np.asarray([x,y,z],float)
+            for value,(low,high,axis) in zip(point,workspace_limits):
+                if low is not None and not low <= value <= high:
+                    raise RuntimeError(f"{name}: Base {axis}={value:.1f} mm outside [{low:.1f}, {high:.1f}]")
+            pose=[x,y,z,*orientation]
+            request="GetInverseKinRef("+",".join(f"{v:.6f}" for v in [0,*pose,*reference])+ ")"
+            joints=parse_response(n.request(request),6,f"IK for {name}")
+            margins=np.minimum(joints-negative,positive-joints)
+            if np.any(margins < a.joint_limit_margin_deg):
+                joint=int(np.argmin(margins))+1
+                raise RuntimeError(f"{name}: J{joint} soft-limit margin {margins[joint-1]:.1f} deg is below {a.joint_limit_margin_deg:.1f} deg")
+            delta=np.abs(joints-reference)
+            if np.any(delta > a.max_joint_step_deg):
+                joint=int(np.argmax(delta))+1
+                raise RuntimeError(f"{name}: J{joint} step {delta[joint-1]:.1f} deg exceeds {a.max_joint_step_deg:.1f} deg")
+            planned.append((*pose,speed,name,joints,margins))
+            reference=joints
         print("OBJECT APPROACH ONLY - no surface descent, no gripper command")
         print(f"Target TCP/Base [mm]: [{a.x:.3f}, {a.y:.3f}, {a.z:.3f}]")
         print(f"Center correction Tool [mm]: {np.round(correction_tool,3).tolist()}; Base [mm]: {np.round(correction_base,3).tolist()}")
@@ -139,14 +250,19 @@ def main():
             print(f"Gripper alignment: {a.gripper_axis}, delta={rotation_delta:.3f} deg, target ABC={np.round(target_abc,3).tolist()}")
         else:
             print(f"Current orientation preserved: {np.round(abc,3).tolist()}; distance={distance:.1f} mm")
-        for i,w in enumerate(waypoints,1):print(f"Stage {i}/{len(waypoints)} {w[5]}: [{w[0]:.3f}, {w[1]:.3f}, {w[2]:.3f}], ABC={np.round(w[3],3).tolist()}, speed={w[4]}%")
+        print(f"Controller soft limits [deg]: negative={negative.tolist()}, positive={positive.tolist()}")
+        for i,w in enumerate(planned,1):
+            print(f"Stage {i}/{len(planned)} {w[7]}: [{w[0]:.3f}, {w[1]:.3f}, {w[2]:.3f}], ABC={np.round(w[3:6],3).tolist()}, speed={w[6]}%, joints={np.round(w[8],3).tolist()}, min_limit_margin={float(np.min(w[9])):.1f} deg")
         if not a.execute:
             print("DRY RUN - ROBOT DID NOT MOVE"); return
-        if not n.client.wait_for_service(timeout_sec=3):raise RuntimeError("remote command service unavailable")
         n.command(f"SetSpeed({a.speed_percent})")
-        for i,(x,y,z,orientation,speed,name) in enumerate(waypoints,1):
-            cmd=f"MoveCart({x:.3f},{y:.3f},{z:.3f},{orientation[0]:.3f},{orientation[1]:.3f},{orientation[2]:.3f},{a.tool_id},{a.user_id},{speed},{speed},{speed},-1,-1)"
-            print(f"Sending stage {i}/{len(waypoints)} ({name}): {cmd}"); n.command(cmd)
+        for i,(x,y,z,rx,ry,rz,speed,name,joints,margins) in enumerate(planned,1):
+            assert_safe_state(n.refresh_state(),a.tool_id,require_auto=True)
+            safety_stop=parse_response(n.request("GetSafetyStopState()"),2,"safety-stop")
+            if np.any(safety_stop != 0):raise RuntimeError(f"safety stop is active: SI0/SI1={safety_stop.astype(int).tolist()}")
+            cmd=f"MoveCart({x:.3f},{y:.3f},{z:.3f},{rx:.3f},{ry:.3f},{rz:.3f},{a.tool_id},{a.user_id},{speed},{speed},{speed},-1,-1)"
+            print(f"Sending stage {i}/{len(planned)} ({name}): {cmd}"); n.command(cmd)
+            n.wait_motion_done([x,y,z],a.tool_id)
         print("Object safe approach completed; no descent to surface and no gripper actuation")
     finally:
         n.destroy_node()

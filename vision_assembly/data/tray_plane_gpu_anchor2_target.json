@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "mode": "single_part_hover_target",
+  "timestamp_unix": 1788083842.4336975,
+  "part_type": "gpu",
+  "display_name": "GPU",
+  "instance_index": 1,
+  "selection_mode": "instance_index",
+  "part_center_base_mm": [
+    -516.888,
+    -118.571,
+    -40.974
+  ],
+  "long_axis_angle_base_deg": 1.886,
+  "center_pixel": [
+    591.47,
+    583.935
+  ],
+  "center_pixel_span": [
+    0.28,
+    0.13
+  ],
+  "camera_xyz_m": [
+    -0.027614,
+    0.106799,
+    0.473
+  ],
+  "sample_count": 10,
+  "position_span_mm": [
+    0.032,
+    0.021,
+    0.005
+  ],
+  "angle_span_deg": 0.02,
+  "hover_offset_mm": 100.0,
+  "robot_motion_authorized": false,
+  "source_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/tray_detections_last.json"
+}

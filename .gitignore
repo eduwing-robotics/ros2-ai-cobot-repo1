@@ -13,3 +13,14 @@ config/ksmc.env
 calibration/data/*_last.json
 vision_assembly/data/*_last.json
 
+
+# Local vision environments, training outputs, and recovery snapshots
+.venv-vision/
+runs/
+robot_ws/backups/
+vision_assembly/backups/
+vision_assembly/datasets/
+vision_assembly/models/
+weights/
+*.orig
+*.pt

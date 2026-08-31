@@ -11864,6 +11864,8 @@ void robot_command_thread::_state_recv_callback(){
         msg.udpcmdstate = ctrl_state.udpCmdState;
         msg.aliveslavenumerror = ctrl_state.aliveSlaveNumError;
         msg.gripperfaultnum = ctrl_state.gripper_fault_id;
+        msg.gripper_position = ctrl_state.gripper_position;
+        msg.gripper_feedback_valid = ctrl_state.gripper_position <= 100;
         msg.slavecomerror[0] = ctrl_state.slaveComError[0];
         msg.slavecomerror[1] = ctrl_state.slaveComError[1];
         msg.slavecomerror[2] = ctrl_state.slaveComError[2];
