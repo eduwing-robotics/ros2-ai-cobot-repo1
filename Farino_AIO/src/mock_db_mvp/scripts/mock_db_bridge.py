@@ -24,7 +24,10 @@ INTERNAL_FEEDBACK = "/mock_db_mvp/internal/assembly/feedback"
 EXTERNAL_START = "/unity/assembly/start"
 EXTERNAL_FEEDBACK = "/unity/assembly/feedback"
 DEFECT_TYPES = ("MISSING", "POSITION_ERROR", "ORIENTATION_ERROR", "CRACK")
-RELAY_STATES = {"STARTED", "PICKED", "PLACED", "PCB_PICKED", "PCB_PLACED"}
+RELAY_STATES = {
+    "STARTED", "PICKED", "PLACED", "ASSEMBLY_COMPLETED",
+    "PCB_PICKED", "PCB_PLACED",
+}
 
 
 def parse_command(raw):
@@ -34,29 +37,43 @@ def parse_command(raw):
         raise ValueError("cmd_str must be a JSON object") from error
     if command == {"command": "status"}:
         return "status", None
-    if not isinstance(command, dict) or set(command) != {
-        "command", "request_id", "recipe_version", "observations",
-        "assembled_pcb",
-    }:
-        raise ValueError(
-            "command, request_id, recipe_version, observations and assembled_pcb "
-            "are required"
-        )
-    if command["command"] != "start":
-        raise ValueError("command must be start or status")
+    if not isinstance(command, dict):
+        raise ValueError("cmd_str must be a JSON object")
+
+    command_name = command.get("command")
+    if command_name == "transfer_assembled_pcb":
+        if set(command) != {"command", "request_id", "assembled_pcb"}:
+            raise ValueError(
+                "command, request_id and assembled_pcb are required"
+            )
+        if not isinstance(command["assembled_pcb"], dict):
+            raise ValueError("assembled_pcb must be an object")
+        command_type = "transfer_assembled_pcb"
+    else:
+        if set(command) != {
+            "command", "request_id", "recipe_version", "observations",
+        }:
+            raise ValueError(
+                "command, request_id, recipe_version and observations are required"
+            )
+        if command_name != "start":
+            raise ValueError(
+                "command must be start, transfer_assembled_pcb or status"
+            )
+        if command["recipe_version"] != RECIPE_VERSION:
+            raise ValueError(f"recipe_version must be {RECIPE_VERSION}")
+        if not isinstance(command["observations"], list) \
+                or not command["observations"]:
+            raise ValueError("observations must be a non-empty list")
+        command_type = "start"
+
     try:
         uuid.UUID(command["request_id"])
     except (TypeError, ValueError, AttributeError) as error:
         raise ValueError("request_id must be a UUID string") from error
     if len(command["request_id"]) > 64:
         raise ValueError("request_id must be at most 64 characters")
-    if command["recipe_version"] != RECIPE_VERSION:
-        raise ValueError(f"recipe_version must be {RECIPE_VERSION}")
-    if not isinstance(command["observations"], list) or not command["observations"]:
-        raise ValueError("observations must be a non-empty list")
-    if not isinstance(command["assembled_pcb"], dict):
-        raise ValueError("assembled_pcb must be an object")
-    return "start", command
+    return command_type, command
 
 
 def parse_internal_response(raw):
@@ -140,9 +157,14 @@ def self_check():
         "request_id": request_id,
         "recipe_version": RECIPE_VERSION,
         "observations": [{}],
-        "assembled_pcb": {},
     })
     assert parse_command(command)[0] == "start"
+    transfer = json.dumps({
+        "command": "transfer_assembled_pcb",
+        "request_id": request_id,
+        "assembled_pcb": {},
+    })
+    assert parse_command(transfer)[0] == "transfer_assembled_pcb"
     assert parse_command('{"command":"status"}')[0] == "status"
     assert unavailable_snapshot("offline")["job_id"] == 0
     assert choose_inspection(random.Random(1), 0.0, []) == ("PASS", [])
@@ -160,6 +182,7 @@ def self_check():
         "held_slot_code": "",
     }
     assert assembly_snapshot(active, "PLACED")["active"]
+    assert assembly_snapshot(active, "ASSEMBLY_COMPLETED")["active"]
     assert assembly_snapshot(active, "PCB_PICKED")["placed_count"] == 1
     assert assembly_snapshot(active, "PLACED")["job_id"] == 11
     assert assembly_snapshot(active, "PLACED")["unit_id"] == 22
@@ -255,6 +278,30 @@ class MockDbBridge(Node):
             return response
 
         request_id = command["request_id"]
+        if command_type == "transfer_assembled_pcb":
+            active = self.active
+            if active is None or active["request_id"] != request_id:
+                return self.set_response(
+                    response, False, request_id, "NOT_ACTIVE",
+                    "matching assembly is not active",
+                )
+            if active["state"] != "ASSEMBLY_COMPLETED":
+                return self.set_response(
+                    response, False, request_id, "BUSY",
+                    "assembly is not ready for PCB transfer",
+                )
+            try:
+                internal = await self.call_internal(request)
+                result = parse_internal_response(internal.cmd_res)
+                if result["accepted"]:
+                    return self.set_response(response, True, request_id)
+                response.cmd_res = internal.cmd_res
+                return response
+            except Exception as error:
+                return self.set_response(
+                    response, False, request_id, "INTERNAL_ERROR", str(error)
+                )
+
         if self.active is not None:
             return self.set_response(
                 response, False, request_id, "BUSY", "assembly is already active"

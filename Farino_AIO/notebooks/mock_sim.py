@@ -46,8 +46,8 @@ DEFAULT_TOOL_OFFSET = (0.0, 0.0, 274.073, 0.0, 0.0, 0.0)
 FUTURE_TIMEOUT_SECONDS = 60.0
 FAULT_RESTART_MESSAGE = "execution state is unknown after a timeout; restart the mock node"
 ASSEMBLY_STATES = {
-    "STARTED", "PICKED", "PLACED", "PCB_PICKED", "PCB_PLACED",
-    "COMPLETED", "FAILED",
+    "STARTED", "PICKED", "PLACED", "ASSEMBLY_COMPLETED",
+    "PCB_PICKED", "PCB_PLACED", "COMPLETED", "FAILED",
 }
 STEP_STATES = {"PICKED", "PLACED"}
 
@@ -113,15 +113,11 @@ def parse_start_command(raw):
         command = json.loads(raw)
     except (TypeError, json.JSONDecodeError) as error:
         raise ValueError("cmd_str must be a JSON object") from error
-    if not isinstance(command, dict):
-        raise ValueError("cmd_str must be a JSON object")
-    if set(command) != {
+    if not isinstance(command, dict) or set(command) != {
         "command", "request_id", "recipe_version", "observations",
-        "assembled_pcb",
     }:
         raise ValueError(
-            "command, request_id, recipe_version, observations and assembled_pcb "
-            "are required"
+            "command, request_id, recipe_version and observations are required"
         )
     if command["command"] != "start":
         raise ValueError("command must be start")
@@ -138,8 +134,30 @@ def parse_start_command(raw):
     return (
         request_id, recipe_version,
         validate_observations(command["observations"]),
-        validate_assembled_pcb(command["assembled_pcb"]),
     )
+
+
+def parse_transfer_command(raw):
+    try:
+        command = json.loads(raw)
+    except (TypeError, json.JSONDecodeError) as error:
+        raise ValueError("cmd_str must be a JSON object") from error
+    if not isinstance(command, dict) or set(command) != {
+        "command", "request_id", "assembled_pcb",
+    }:
+        raise ValueError(
+            "command, request_id and assembled_pcb are required"
+        )
+    if command["command"] != "transfer_assembled_pcb":
+        raise ValueError("command must be transfer_assembled_pcb")
+    request_id = command["request_id"]
+    if not isinstance(request_id, str) or len(request_id) > 64:
+        raise ValueError("request_id must be a UUID string")
+    try:
+        uuid.UUID(request_id)
+    except (ValueError, AttributeError) as error:
+        raise ValueError("request_id must be a UUID string") from error
+    return request_id, validate_assembled_pcb(command["assembled_pcb"])
 
 
 def _finite_number(value, label):
@@ -302,12 +320,12 @@ def validate_recipe(recipe, expected_version):
     expected_per_step = [
         "home", "item_ready", "pick", "home", "assembly_ready", "place"
     ]
-    expected_after_all = ["home", "transfer_assembled_pcb", "home"]
+    expected_after_all = ["transfer_assembled_pcb"]
     if not isinstance(sequence, dict) or sequence.get("per_step") != expected_per_step \
             or sequence.get("after_all") != expected_after_all:
         raise ValueError(
             "sequence must preserve the component cycle and finish with "
-            "Home, transfer_assembled_pcb, Home"
+            "transfer_assembled_pcb without Home"
         )
 
     steps = recipe.get("steps")
@@ -489,9 +507,14 @@ def self_check():
         "request_id": request_id,
         "recipe_version": "mock-r1",
         "observations": observations,
-        "assembled_pcb": assembled_pcb,
     }))
     assert parsed[:2] == (request_id, "mock-r1")
+    transfer = parse_transfer_command(json.dumps({
+        "command": "transfer_assembled_pcb",
+        "request_id": request_id,
+        "assembled_pcb": assembled_pcb,
+    }))
+    assert transfer[0] == request_id
     assert (
         parsed[2][0]["gripper_grasp_opening_percent"],
         parsed[2][0]["gripper_release_opening_percent"],
@@ -514,7 +537,7 @@ def self_check():
                 "home", "item_ready", "pick",
                 "home", "assembly_ready", "place",
             ],
-            "after_all": ["home", "transfer_assembled_pcb", "home"],
+            "after_all": ["transfer_assembled_pcb"],
         },
         "steps": [{
             "order": 1,
@@ -523,7 +546,7 @@ def self_check():
         }],
     }, "mock-r1")
     resolved = resolve_observations(recipe, parsed[2])
-    assert parsed[3]["target"]["xyz_mm"] == [350.0, 350.0, 200.0]
+    assert transfer[1]["target"]["xyz_mm"] == [350.0, 350.0, 200.0]
     assert "source" not in recipe["steps"][0]
     assert (
         resolved[0]["gripper_grasp_opening_percent"],
@@ -536,7 +559,7 @@ def self_check():
     assert approach["xyz_mm"] == [350.0, -150.0, 350.0]
     assert resolved[0]["source"]["xyz_mm"] == [350.0, -150.0, 250.0]
     pcb_drop_approach = vertical_offset(
-        parsed[3]["target"],
+        transfer[1]["target"],
         recipe["motion"]["assembled_pcb_drop_approach_dz_mm"],
     )
     assert pcb_drop_approach["xyz_mm"] == [350.0, 350.0, 350.0]
@@ -559,6 +582,10 @@ def self_check():
         1,
     )
     assert snapshot["placed_count"] == 1 and snapshot["held_step_order"] == 0
+    snapshot = advance_assembly_snapshot(
+        snapshot, assembly_feedback(request_id, "ASSEMBLY_COMPLETED"), "mock-r1", 1
+    )
+    assert snapshot["active"] and snapshot["placed_count"] == 1
     snapshot = advance_assembly_snapshot(
         snapshot, assembly_feedback(request_id, "PCB_PICKED"), "mock-r1", 1
     )
@@ -733,15 +760,49 @@ class MockMoveJ(Node):
 
     def on_start_assembly(self, request, response):
         try:
-            if json.loads(request.cmd_str) == {"command": "status"}:
-                response.cmd_res = json.dumps(
-                    self.latest_assembly_snapshot, separators=(",", ":")
-                )
-                return response
+            command = json.loads(request.cmd_str)
         except (TypeError, json.JSONDecodeError):
-            pass
+            command = None
+        if command == {"command": "status"}:
+            response.cmd_res = json.dumps(
+                self.latest_assembly_snapshot, separators=(",", ":")
+            )
+            return response
+
+        if isinstance(command, dict) \
+                and command.get("command") == "transfer_assembled_pcb":
+            try:
+                request_id, assembled_pcb = parse_transfer_command(request.cmd_str)
+            except ValueError as error:
+                return self.start_response(
+                    response, False, error_code="INVALID_REQUEST", message=str(error)
+                )
+            if self.execution_faulted:
+                return self.start_response(
+                    response, False, request_id, "FAULTED", FAULT_RESTART_MESSAGE
+                )
+            job = self.active_assembly
+            if job is None or job["request_id"] != request_id:
+                return self.start_response(
+                    response, False, request_id, "NOT_ACTIVE",
+                    "matching assembly is not active",
+                )
+            if job["phase"] != "awaiting_transfer":
+                return self.start_response(
+                    response, False, request_id, "BUSY",
+                    "assembly is not ready for PCB transfer",
+                )
+            if self.args.plan_only:
+                return self.start_response(
+                    response, False, request_id, "PLAN_ONLY",
+                    "PCB transfer requires execution mode",
+                )
+            job["assembled_pcb"] = assembled_pcb
+            job["phase"] = "transferring"
+            return self.start_response(response, True, request_id)
+
         try:
-            request_id, recipe_version, observations, assembled_pcb = parse_start_command(
+            request_id, recipe_version, observations = parse_start_command(
                 request.cmd_str
             )
         except ValueError as error:
@@ -773,7 +834,7 @@ class MockMoveJ(Node):
             "request_id": request_id,
             "recipe": recipe,
             "resolved_steps": resolved_steps,
-            "assembled_pcb": assembled_pcb,
+            "phase": "assembling",
         }
         self.latest_assembly_snapshot = advance_assembly_snapshot(
             self.latest_assembly_snapshot,
@@ -1178,9 +1239,6 @@ class MockMoveJ(Node):
     def run_assembly(self, job):
         request_id = job["request_id"]
         recipe = job["recipe"]
-        terminal_state = "FAILED"
-        error_code = "INTERRUPTED"
-        message = "assembly interrupted"
         try:
             self.require_mock_hardware()
             self.publish_assembly_feedback(request_id, "STARTED")
@@ -1244,67 +1302,87 @@ class MockMoveJ(Node):
                     else:
                         raise RuntimeError(f"unknown assembly command: {command}")
 
+            self.publish_assembly_feedback(request_id, "ASSEMBLY_COMPLETED")
+            job["phase"] = "awaiting_transfer"
+        except Exception as error:
+            self.preview_publisher.publish(JointTrajectory())
+            message = str(error)[:512]
+            self.publish_status(f"error: assembly failed: {message}")
+            try:
+                self.publish_assembly_feedback(
+                    request_id, "FAILED", error_code="EXECUTION_FAILED",
+                    message=message,
+                )
+            finally:
+                self.active_assembly = None
+
+    def run_assembled_pcb_transfer(self, job):
+        request_id = job["request_id"]
+        recipe = job["recipe"]
+        terminal_state = "FAILED"
+        error_code = "INTERRUPTED"
+        message = "assembled PCB transfer interrupted"
+        try:
+            self.require_mock_hardware()
+            joint_points = recipe["joint_points"]
+            motion = recipe["motion"]
             for command in recipe["sequence"]["after_all"]:
-                if command == "home":
-                    self.run_joint_target(joint_points["home"])
-                elif command == "transfer_assembled_pcb":
-                    transfer = job["assembled_pcb"]
-                    source = self.request_pose(recipe, transfer["source"])
-                    target = self.request_pose(recipe, transfer["target"])
-                    source_approach = self.request_pose(
-                        recipe,
-                        vertical_offset(
-                            transfer["source"], motion["approach_dz_mm"]
-                        ),
-                    )
-                    source_retract = self.request_pose(
-                        recipe,
-                        vertical_offset(
-                            transfer["source"], motion["retract_dz_mm"]
-                        ),
-                    )
-                    target_approach = self.request_pose(
-                        recipe,
-                        vertical_offset(
-                            transfer["target"],
-                            motion["assembled_pcb_drop_approach_dz_mm"],
-                        ),
-                    )
-                    target_retract = self.request_pose(
-                        recipe,
-                        vertical_offset(
-                            transfer["target"], motion["retract_dz_mm"]
-                        ),
-                    )
-                    self.run_gripper(
-                        transfer["gripper_release_opening_percent"]
-                    )
-                    self.run_ptp_pose(source_approach)
-                    self.run_linear(source, True)
-                    self.run_gripper(
-                        transfer["gripper_grasp_opening_percent"]
-                    )
-                    self.publish_assembly_feedback(request_id, "PCB_PICKED")
-                    self.run_linear(source_retract, True)
-                    self.run_joint_target(joint_points["assembly_ready"])
-                    self.run_ptp_pose(target_approach)
-                    self.run_linear(target, True)
-                    self.run_gripper(
-                        transfer["gripper_release_opening_percent"]
-                    )
-                    self.publish_assembly_feedback(request_id, "PCB_PLACED")
-                    self.run_linear(target_retract, True)
-                else:
+                if command != "transfer_assembled_pcb":
                     raise RuntimeError(f"unknown final assembly command: {command}")
+                transfer = job["assembled_pcb"]
+                source = self.request_pose(recipe, transfer["source"])
+                target = self.request_pose(recipe, transfer["target"])
+                source_approach = self.request_pose(
+                    recipe,
+                    vertical_offset(
+                        transfer["source"], motion["approach_dz_mm"]
+                    ),
+                )
+                source_retract = self.request_pose(
+                    recipe,
+                    vertical_offset(
+                        transfer["source"], motion["retract_dz_mm"]
+                    ),
+                )
+                target_approach = self.request_pose(
+                    recipe,
+                    vertical_offset(
+                        transfer["target"],
+                        motion["assembled_pcb_drop_approach_dz_mm"],
+                    ),
+                )
+                target_retract = self.request_pose(
+                    recipe,
+                    vertical_offset(
+                        transfer["target"], motion["retract_dz_mm"]
+                    ),
+                )
+                self.run_gripper(
+                    transfer["gripper_release_opening_percent"]
+                )
+                self.run_ptp_pose(source_approach)
+                self.run_linear(source, True)
+                self.run_gripper(
+                    transfer["gripper_grasp_opening_percent"]
+                )
+                self.publish_assembly_feedback(request_id, "PCB_PICKED")
+                self.run_linear(source_retract, True)
+                self.run_joint_target(joint_points["assembly_ready"])
+                self.run_ptp_pose(target_approach)
+                self.run_linear(target, True)
+                self.run_gripper(
+                    transfer["gripper_release_opening_percent"]
+                )
+                self.publish_assembly_feedback(request_id, "PCB_PLACED")
+                self.run_linear(target_retract, True)
             terminal_state = "COMPLETED"
             error_code = ""
             message = ""
         except Exception as error:
             self.preview_publisher.publish(JointTrajectory())
-            terminal_state = "FAILED"
             error_code = "EXECUTION_FAILED"
             message = str(error)[:512]
-            self.publish_status(f"error: assembly failed: {message}")
+            self.publish_status(f"error: assembled PCB transfer failed: {message}")
         finally:
             try:
                 self.publish_assembly_feedback(
@@ -1321,10 +1399,13 @@ class MockMoveJ(Node):
         self.publish_status("ready: waiting for Unity MoveJ or MoveL target")
         while rclpy.ok():
             rclpy.spin_once(self, timeout_sec=0.1)
-            is_assembly = self.active_assembly is not None
-            if is_assembly:
-                job = self.active_assembly
+            job = self.active_assembly
+            phase = job["phase"] if job is not None else None
+            is_assembly = phase in {"assembling", "transferring"}
+            if phase == "assembling":
                 operation = lambda: self.run_assembly(job)
+            elif phase == "transferring":
+                operation = lambda: self.run_assembled_pcb_transfer(job)
             elif self.pending_joint_target is not None:
                 self.args.joints = self.pending_joint_target
                 self.pending_joint_target = None

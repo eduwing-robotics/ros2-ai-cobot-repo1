@@ -16,7 +16,7 @@ motion:
 
 sequence:
   per_step: [home, item_ready, pick, home, assembly_ready, place]
-  after_all: [home, transfer_assembled_pcb, home]
+  after_all: [transfer_assembled_pcb]
 
 # Order mirrors SampleScene ItemManger. A type's source and slot indices advance
 # in the listed order: 8, 4, 1, 5, 2, 5.

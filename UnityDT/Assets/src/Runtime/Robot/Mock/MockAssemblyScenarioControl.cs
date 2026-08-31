@@ -17,6 +17,7 @@ namespace MainUnity.Runtime.Robot.Mock
         const string Started = "STARTED";
         const string Picked = "PICKED";
         const string Placed = "PLACED";
+        const string AssemblyCompleted = "ASSEMBLY_COMPLETED";
         const string PcbPicked = "PCB_PICKED";
         const string PcbPlaced = "PCB_PLACED";
         const string Completed = "COMPLETED";
@@ -74,6 +75,13 @@ namespace MainUnity.Runtime.Robot.Mock
             public string request_id;
             public string recipe_version;
             public MockObservation[] observations;
+        }
+
+        [Serializable]
+        sealed class TransferRequest
+        {
+            public string command;
+            public string request_id;
             public AssembledPcbTransfer assembled_pcb;
         }
 
@@ -183,7 +191,6 @@ namespace MainUnity.Runtime.Robot.Mock
             ValidateExecution();
             EnsureRosConnection();
             MockObservation[] observations = BuildObservations();
-            AssembledPcbTransfer pcbTransfer = BuildAssembledPcbTransfer();
 
             var current = new TaskCompletionSource<string>();
             terminal = current;
@@ -197,6 +204,7 @@ namespace MainUnity.Runtime.Robot.Mock
             assembledPcbTransferred = false;
 
             Task timeout = Task.Delay(TimeSpan.FromSeconds(completionTimeoutSeconds));
+            bool assemblyCompleted = false;
             try
             {
                 string json = JsonUtility.ToJson(new StartRequest
@@ -204,8 +212,7 @@ namespace MainUnity.Runtime.Robot.Mock
                     command = "start",
                     request_id = activeRequestId,
                     recipe_version = recipeVersion,
-                    observations = observations,
-                    assembled_pcb = pcbTransfer
+                    observations = observations
                 });
                 Task<RemoteCmdInterfaceResponse> request = connection
                     .SendServiceMessage<RemoteCmdInterfaceResponse>(startService,
@@ -214,7 +221,7 @@ namespace MainUnity.Runtime.Robot.Mock
                 if (await Task.WhenAny(request, timeout) != request)
                     throw new TimeoutException("Mock assembly start service timed out.");
 
-                ValidateStartResponse(await request);
+                ValidateResponse(await request, "assembly start", true);
                 Report(AssemblyState.Started, null);
 
                 if (await Task.WhenAny(current.Task, timeout) != current.Task)
@@ -224,15 +231,62 @@ namespace MainUnity.Runtime.Robot.Mock
                 string failure = await current.Task;
                 if (!string.IsNullOrEmpty(failure))
                     throw new InvalidOperationException(failure);
+                assemblyCompleted = true;
             }
             finally
             {
                 if (ReferenceEquals(terminal, current))
-                {
                     terminal = null;
+                if (!assemblyCompleted)
+                {
                     activeRequestId = string.Empty;
                     processedCallbacks.Clear();
                 }
+            }
+        }
+
+        public async Task TransferAssembledPcbAsync()
+        {
+            await recoveryTask;
+            ValidateTransfer();
+            EnsureRosConnection();
+            AssembledPcbTransfer pcbTransfer = BuildAssembledPcbTransfer();
+
+            var current = new TaskCompletionSource<string>();
+            terminal = current;
+            Task timeout = Task.Delay(TimeSpan.FromSeconds(completionTimeoutSeconds));
+            try
+            {
+                string json = JsonUtility.ToJson(new TransferRequest
+                {
+                    command = "transfer_assembled_pcb",
+                    request_id = activeRequestId,
+                    assembled_pcb = pcbTransfer
+                });
+                Task<RemoteCmdInterfaceResponse> request = connection
+                    .SendServiceMessage<RemoteCmdInterfaceResponse>(startService,
+                        new RemoteCmdInterfaceRequest(json));
+
+                if (await Task.WhenAny(request, timeout) != request)
+                    throw new TimeoutException("Mock assembled PCB transfer service timed out.");
+
+                ValidateResponse(await request, "assembled PCB transfer", false);
+
+                if (await Task.WhenAny(current.Task, timeout) != current.Task)
+                    throw new TimeoutException(
+                        $"Mock assembled PCB transfer timed out after " +
+                        $"{completionTimeoutSeconds:0.###} seconds.");
+
+                string failure = await current.Task;
+                if (!string.IsNullOrEmpty(failure))
+                    throw new InvalidOperationException(failure);
+            }
+            finally
+            {
+                if (ReferenceEquals(terminal, current))
+                    terminal = null;
+                activeRequestId = string.Empty;
+                processedCallbacks.Clear();
             }
         }
 
@@ -286,6 +340,7 @@ namespace MainUnity.Runtime.Robot.Mock
                     Started => AssemblyState.Started,
                     Picked => AssemblyState.Picked,
                     Placed => AssemblyState.Placed,
+                    AssemblyCompleted => AssemblyState.Placed,
                     PcbPicked => AssemblyState.Placed,
                     PcbPlaced => AssemblyState.Placed,
                     Completed => AssemblyState.Completed,
@@ -389,7 +444,8 @@ namespace MainUnity.Runtime.Robot.Mock
             }
 
             assemblyRequested = snapshot.active;
-            terminal = snapshot.active ? new TaskCompletionSource<string>() : null;
+            terminal = snapshot.active && snapshot.state != AssemblyCompleted
+                ? new TaskCompletionSource<string>() : null;
             string summary = $"Mock assembly restored: {snapshot.state}, " +
                 $"{snapshot.placed_count}/{snapshot.expected_step_count} placed.";
             if (snapshot.state == Failed)
@@ -401,7 +457,8 @@ namespace MainUnity.Runtime.Robot.Mock
         void ValidateSnapshot(AssemblySnapshot snapshot, MockObservation[] observations)
         {
             bool activeState = snapshot.state == Started || snapshot.state == Picked ||
-                snapshot.state == Placed || snapshot.state == PcbPicked ||
+                snapshot.state == Placed || snapshot.state == AssemblyCompleted ||
+                snapshot.state == PcbPicked ||
                 snapshot.state == PcbPlaced;
             bool terminalState = snapshot.state == Completed || snapshot.state == Failed;
             if (!activeState && !terminalState)
@@ -447,6 +504,8 @@ namespace MainUnity.Runtime.Robot.Mock
                     "Mock assembly status held item did not match its state.");
             if (snapshot.state == Started && snapshot.placed_count != 0 ||
                 snapshot.state == Placed && snapshot.placed_count == 0 ||
+                snapshot.state == AssemblyCompleted &&
+                snapshot.placed_count != snapshot.expected_step_count ||
                 (snapshot.state == PcbPicked || snapshot.state == PcbPlaced) &&
                 snapshot.placed_count != snapshot.expected_step_count ||
                 snapshot.state == Completed &&
@@ -474,10 +533,32 @@ namespace MainUnity.Runtime.Robot.Mock
                 throw new InvalidOperationException("Reload the Mock scene before starting another assembly.");
         }
 
-        void ValidateStartResponse(RemoteCmdInterfaceResponse message)
+        void ValidateTransfer()
+        {
+            RefreshReferences();
+            if (!Application.isPlaying || !isActiveAndEnabled)
+                throw new InvalidOperationException(
+                    "Mock assembled PCB transfer requires an active component in Play Mode.");
+            if (terminal != null)
+                throw new InvalidOperationException("A Mock robot request is already running.");
+            if (!assemblyRequested || string.IsNullOrWhiteSpace(activeRequestId))
+                throw new InvalidOperationException(
+                    "Complete the Mock component assembly before transferring the PCB.");
+            if (heldItem != null || heldStepOrder > 0 ||
+                lastPlacedStepOrder != expectedStepCount)
+                throw new InvalidOperationException(
+                    "All Mock components must be placed before transferring the PCB.");
+            if (assembledPcbHeld || assembledPcbTransferred)
+                throw new InvalidOperationException(
+                    "The assembled PCB transfer has already started.");
+        }
+
+        void ValidateResponse(RemoteCmdInterfaceResponse message, string operation,
+            bool resetAssemblyOnReject)
         {
             if (message == null || string.IsNullOrWhiteSpace(message.cmd_res))
-                throw new InvalidOperationException("Mock assembly start returned an empty response.");
+                throw new InvalidOperationException(
+                    $"Mock {operation} returned an empty response.");
 
             StartResponse response;
             try
@@ -486,18 +567,21 @@ namespace MainUnity.Runtime.Robot.Mock
             }
             catch (Exception exception)
             {
-                throw new InvalidOperationException("Mock assembly start returned invalid JSON.", exception);
+                throw new InvalidOperationException(
+                    $"Mock {operation} returned invalid JSON.", exception);
             }
 
             if (response == null || response.request_id != activeRequestId)
-                throw new InvalidOperationException("Mock assembly start response request_id did not match.");
+                throw new InvalidOperationException(
+                    $"Mock {operation} response request_id did not match.");
             if (response.accepted)
                 return;
 
             string reason = string.IsNullOrWhiteSpace(response.message)
-                ? "Mock assembly request was rejected."
+                ? $"Mock {operation} request was rejected."
                 : response.message;
-            assemblyRequested = false;
+            if (resetAssemblyOnReject)
+                assemblyRequested = false;
             throw new InvalidOperationException(string.IsNullOrWhiteSpace(response.error_code)
                 ? reason
                 : $"{response.error_code}: {reason}");
@@ -564,6 +648,15 @@ namespace MainUnity.Runtime.Robot.Mock
                         ApplyPlaced(feedback);
                         Report(AssemblyState.Placed, feedback);
                         break;
+                    case AssemblyCompleted:
+                        if (heldItem != null || heldStepOrder > 0)
+                            throw new InvalidOperationException(
+                                "ASSEMBLY_COMPLETED arrived while a component was held.");
+                        if (lastPlacedStepOrder != expectedStepCount)
+                            throw new InvalidOperationException(
+                                "ASSEMBLY_COMPLETED arrived before all Mock observations were placed.");
+                        terminal.TrySetResult(string.Empty);
+                        break;
                     case PcbPicked:
                         ApplyAssembledPcbPicked();
                         break;
@@ -611,11 +704,12 @@ namespace MainUnity.Runtime.Robot.Mock
                  string.IsNullOrWhiteSpace(feedback.slot_code)))
                 throw new InvalidOperationException(
                     "PICKED and PLACED feedback require part_id and slot_code.");
-            if ((feedback.state == PcbPicked || feedback.state == PcbPlaced) &&
+            if ((feedback.state == AssemblyCompleted || feedback.state == PcbPicked ||
+                    feedback.state == PcbPlaced) &&
                 (feedback.step_order != 0 || !string.IsNullOrWhiteSpace(feedback.part_id) ||
                  !string.IsNullOrWhiteSpace(feedback.slot_code)))
                 throw new InvalidOperationException(
-                    "PCB_PICKED and PCB_PLACED must not contain component step data.");
+                    "Assembly phase feedback must not contain component step data.");
         }
 
         void ApplyPicked(AssemblyFeedback feedback, bool restoreRotation = false)
