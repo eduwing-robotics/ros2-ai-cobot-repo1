@@ -67,3 +67,6 @@ Thumbs.db
 *.dmp
 *.crash
 UnityDT/mono_crash.*.blob
+
+# Local quarantine
+Trash/
