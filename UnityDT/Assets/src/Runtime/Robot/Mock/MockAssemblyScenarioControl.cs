@@ -36,6 +36,7 @@ namespace MainUnity.Runtime.Robot.Mock
 
         [Header("Assembled PCB Transfer")]
         [SerializeField] Transform assembledPcb;
+        [SerializeField] Transform assembledPcbAssemblyStopPoint;
         [SerializeField] Transform assembledPcbPicker;
         [SerializeField] Transform assembledPcbDropPoint;
         [SerializeField, Range(0f, 100f)] float assembledPcbGraspOpeningPercent;
@@ -331,6 +332,7 @@ namespace MainUnity.Runtime.Robot.Mock
                 if (snapshot == null || !snapshot.available)
                     return;
 
+                RestoreAssembledPcbAtAssembly();
                 MockObservation[] observations = BuildObservations();
                 _ = BuildAssembledPcbTransfer();
                 RestoreSnapshot(snapshot, observations);
@@ -441,6 +443,11 @@ namespace MainUnity.Runtime.Robot.Mock
             else
             {
                 lastPlacedStepOrder = snapshot.placed_count;
+                if (snapshot.state == Completed)
+                {
+                    ApplyAssembledPcbPicked();
+                    ApplyAssembledPcbPlaced();
+                }
             }
 
             assemblyRequested = snapshot.active;
@@ -780,6 +787,17 @@ namespace MainUnity.Runtime.Robot.Mock
             heldPartId = string.Empty;
             heldSlotCode = string.Empty;
             heldStepOrder = -1;
+        }
+
+        void RestoreAssembledPcbAtAssembly()
+        {
+            if (assembledPcb == null || assembledPcbAssemblyStopPoint == null)
+                throw new InvalidOperationException(
+                    "Assign assembled PCB and its assembly stop point.");
+
+            Vector3 position = assembledPcb.position;
+            position.z = assembledPcbAssemblyStopPoint.position.z;
+            assembledPcb.position = position;
         }
 
         AssembledPcbTransfer BuildAssembledPcbTransfer()

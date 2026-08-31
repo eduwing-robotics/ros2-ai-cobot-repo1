@@ -15355,6 +15355,7 @@ MonoBehaviour:
   gripperCatcher: {fileID: 319422218}
   resumeRotationOffsetDegrees: 90
   assembledPcb: {fileID: 617625032}
+  assembledPcbAssemblyStopPoint: {fileID: 893280632}
   assembledPcbPicker: {fileID: 622558910}
   assembledPcbDropPoint: {fileID: 272931175}
   assembledPcbGraspOpeningPercent: 0
