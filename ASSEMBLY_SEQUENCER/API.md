@@ -5,7 +5,7 @@
 | 항목 | 내용 |
 | --- | --- |
 | 대상 | 실제 로봇 구현자, Unity·MainServer 연동 담당자 |
-| 구현 상태 | `real_assembly` 노드와 `real_assembly_interfaces` 패키지 미구현 |
+| 구현 상태 | 공통 DB Writer·Mock 노드 구현, `real_assembly`와 전용 인터페이스 미구현 |
 | 확정 범위 | Unity 연동 API, 상태·오류 의미, DB 갱신 정책 |
 | 현장 확정 | FR5 동작 순서·속도·좌표, 장비별 timeout, Conveyor·Inspection·Safety 상세 계약 |
 
@@ -82,10 +82,9 @@
 | :---: | --- | --- |
 | 1 | 필수값·형식·수량과 중복 요청 확인 | 요청 거절 |
 | 2 | 안전·FR5 준비 상태와 활성 작업 확인 | 요청 거절 |
-| 3 | `start_job(product_code, product_version, quantity, recipe_version)` | 로봇 미동작·요청 거절 |
-| 4 | `start_next_unit(job_id)` 및 재고 검증 | 로봇 미동작·요청 거절 |
-| 5 | `job_id`, `unit_id`를 활성 상태에 저장 | 요청 거절 |
-| 6 | `accepted=true` 반환 후 Runner 예약 | 이후 실패는 Progress `FAILED` |
+| 3 | `writer.reserve(request_id, product_code, product_version, recipe_version, quantity)`로 Job·Unit과 재고를 한 transaction에서 예약 | 로봇 미동작·요청 거절 |
+| 4 | `job_id`, `unit_id`를 활성 상태에 저장 | 요청 거절 |
+| 5 | `accepted=true` 반환 후 Runner 예약 | 이후 실패는 Progress `FAILED` |
 
 Service callback에서는 실제 Pick·Place를 실행하지 않는다.
 
@@ -248,14 +247,14 @@ Service callback에서는 실제 Pick·Place를 실행하지 않는다.
 | 구분 | 소유자 | 연결 | 권한 |
 | --- | --- | --- | --- |
 | 조회 | MainServer | `MAIN_SERVER_DB_DSN` | read-only |
-| 쓰기 | `real_assembly` Async DB Worker | `PRODUCTION_DB_DSN` | `production_writer` |
+| 쓰기 | AssemblySequencer DB Worker | `PRODUCTION_DB_DSN` | `production_writer` |
 
 ### 7.2 내부 인터페이스
 
 | ID | 기능명 | 송신자 → 수신자 | 구분 | 상태 |
 | --- | --- | --- | --- | --- |
-| INT-DB-001 | 생산 DB 갱신 예약 | Sequencer 업무 흐름 → Async DB Worker | bounded in-process queue | 설계됨·미구현 |
-| INT-DB-002 | 생산 DB transaction 적용 | Async DB Worker → PostgreSQL | DB transaction | 설계됨·미구현 |
+| INT-DB-001 | 생산 DB 갱신 예약 | Sequencer 업무 흐름 → DB Worker | bounded in-process queue | Mock·공통 구현 |
+| INT-DB-002 | 생산 DB transaction 적용 | DB Worker → PostgreSQL | DB transaction | Mock·공통 구현 |
 
 ### 7.3 이벤트 처리
 
@@ -284,7 +283,7 @@ Service callback에서는 실제 Pick·Place를 실행하지 않는다.
 | 순서 | 한 작업의 순서를 보장하는 bounded FIFO·단일 Worker를 우선 사용한다. |
 | 제거 | PostgreSQL commit 성공 후에만 제거한다. 검사 callback이 제거하지 않는다. |
 | 실패 | backoff 재시도하며 overflow와 최종 실패를 조용히 폐기하지 않는다. |
-| 멱등성 | 재시도 중복에 대비해 `event_id` 또는 DB 상태로 보장한다. |
+| 멱등성 | 현재는 DB 상태로 보장하며 `event_id` 영속 중복 제거는 Outbox 단계에서 추가한다. |
 | 저장 제외 | 관절·TCP 스트림과 고빈도 상태는 생산 DB에 저장하지 않는다. |
 | 영속성 | 현재 queue는 프로세스 재시작을 넘는 보존을 보장하지 않는다. |
 

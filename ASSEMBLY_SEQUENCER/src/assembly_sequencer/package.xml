@@ -1,24 +1,24 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>mock_db_mvp</name>
+  <name>assembly_sequencer</name>
   <version>0.1.0</version>
-  <description>Disposable PostgreSQL bridge for the existing Unity Mock assembly.</description>
+  <description>Independent Mock/Real assembly orchestration and DB writer.</description>
   <maintainer email="codlab@example.com">codlab</maintainer>
   <license>Proprietary</license>
 
-  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_python</buildtool_depend>
 
-  <exec_depend>assembly_sequencer</exec_depend>
   <exec_depend>ament_index_python</exec_depend>
   <exec_depend>fairino5_v6_moveit2_config</exec_depend>
   <exec_depend>fairino_msgs</exec_depend>
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
+  <exec_depend>python3-psycopg</exec_depend>
   <exec_depend>rclpy</exec_depend>
   <exec_depend>ros_tcp_endpoint</exec_depend>
   <exec_depend>std_msgs</exec_depend>
 
   <export>
-    <build_type>ament_cmake</build_type>
+    <build_type>ament_python</build_type>
   </export>
 </package>

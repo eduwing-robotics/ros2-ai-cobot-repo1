@@ -31,7 +31,7 @@ Real 자동 조립의 상세 메시지 Schema와 구현자 준수사항은 [Asse
 | 진행도·기판 번호 | Feedback·Snapshot | Progress 예정 | 부분 구현 | 진행도만 표시, `job_id`·`unit_id` UI 미전달 |
 | PASS/FAIL 검사 | MainServer Job·Unit 조회 | 동일 예정 | 부분 구현 | Mock DB 기록만 존재, INSPECT 미연결 |
 | 작업·검사 이력 | MainServer Job·Unit API | 동일 | 부분 구현 | 단건 조회만 존재 |
-| 생산 DB 갱신 | `mock_db_bridge` 동기 transaction | `real_assembly` 내부 Async DB Worker 예정 | Mock 구현·Real 미구현 | Real은 bounded queue·재시도 설계, 영속 Outbox 제외 |
+| 생산 DB 갱신 | AssemblySequencer 동기 예약 + Async DB Worker | 향후 Real도 같은 Writer 사용 | Mock·공통 구현, Real 연결 미구현 | bounded queue·재시도 구현, 영속 Outbox 제외 |
 | 재고·조립 가능 여부 | MainServer Product API | 동일 | Backend 구현 | UI 공개 범위 재검토 중 |
 | 사람 감지 안전정지 | 없음 | 없음 | 미구현 | 로봇·컨베이어 동시 정지 필요 |
 | E-STOP 연동 | 상태 표시 일부 | `/nonrt_state_data` | 부분 구현 | 표시만 존재, 작업 정지 연동 없음 |
@@ -144,12 +144,14 @@ Real Start 요청은 `request_id`, `product_code`, `product_version`, `recipe_ve
 
 이 계약은 외부 ROS API가 아니라 `real_assembly` 프로세스 내부 경계다. 로봇·검사 callback은 SQL을 실행하지 않고 DB Update Event를 bounded queue에 추가한다.
 
-신규 작업은 `start_job()`과 `start_next_unit()`이 성공한 뒤에만 수락한다. DB 예약 실패나 재고 부족 시 실제 로봇은 움직이지 않는다. 조립·검사 완료 이후 갱신은 queue에서 비동기로 처리한다.
+신규 작업은 `writer.reserve()`가 Job·첫 Unit을 한 transaction으로 예약한
+뒤에만 수락한다. DB 예약 실패나 재고 부족 시 실제 로봇은 움직이지 않는다.
+조립·검사 완료 이후 갱신은 queue에서 비동기로 처리한다.
 
 | ID | 기능명 | 송신자 → 수신자 | 구분 | 인터페이스 | 데이터 | 상태 |
 | --- | --- | --- | --- | --- | --- | --- |
-| INT-DB-001 | 생산 DB 갱신 예약 | Assembly Sequencer (Real) → Assembly Sequencer DB Worker | In-process Queue | bounded DB Update Queue | `DbUpdateEvent` | 설계됨·미구현 |
-| INT-DB-002 | 생산 DB transaction 적용 | Assembly Sequencer DB Worker → PostgreSQL | DB Transaction | `PRODUCTION_DB_DSN` | `production_writer` 권한 | 설계됨·미구현 |
+| INT-DB-001 | 생산 DB 갱신 예약 | Assembly Sequencer → Assembly Sequencer DB Worker | In-process Queue | bounded DB Update Queue | `DbUpdateEvent` | Mock·공통 구현 |
+| INT-DB-002 | 생산 DB transaction 적용 | Assembly Sequencer DB Worker → PostgreSQL | DB Transaction | `PRODUCTION_DB_DSN` | `production_writer` 권한 | Mock·공통 구현 |
 
 `DbUpdateEvent`는 `event_id`, `event_type`, `job_id`, `unit_id`, `payload`, `created_at`, `attempt_count`, `next_retry_at`, `last_error`를 가진다.
 

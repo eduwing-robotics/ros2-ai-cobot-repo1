@@ -5,6 +5,7 @@ import sys
 import unittest
 import uuid
 from pathlib import Path
+from unittest.mock import patch
 
 import psycopg
 
@@ -17,9 +18,10 @@ with psycopg.connect(TEST_DSN) as test_connection:
 if not test_database.endswith("_test"):
     raise RuntimeError("PRODUCTION_DB_TEST_DSN must target a database ending in _test")
 os.environ["PRODUCTION_DB_DSN"] = TEST_DSN
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-import production_store as store
+from assembly_sequencer.db import DbWriter
+from assembly_sequencer.db import production_store as store
 
 
 class ProductionStoreIntegrationTest(unittest.TestCase):
@@ -116,11 +118,33 @@ class ProductionStoreIntegrationTest(unittest.TestCase):
                 cursor.execute(query, parameters)
                 return cursor.fetchone()[0]
 
+    def test_reservation_rolls_back_when_unit_creation_fails(self):
+        with patch.object(
+            store,
+            "_insert_next_unit",
+            side_effect=RuntimeError("forced unit failure"),
+        ):
+            with self.assertRaises(RuntimeError):
+                store.reserve_work(
+                    self.product_code,
+                    self.product_version,
+                    1,
+                    "mock-r1",
+                )
+
+        self.assertEqual(
+            self.scalar(
+                "SELECT COUNT(*) FROM production.jobs WHERE product_id = %s",
+                (self.product_id,),
+            ),
+            0,
+        )
+
     def test_normal_completion_and_duplicate_completion(self):
-        job_id = store.start_job(
+        reservation = store.reserve_work(
             self.product_code, self.product_version, 1, "mock-r1"
         )
-        unit_id = store.start_next_unit(job_id)
+        job_id, unit_id = reservation
 
         store.complete_assembly_and_consume_stock(unit_id)
         self.assertEqual(
@@ -177,10 +201,10 @@ class ProductionStoreIntegrationTest(unittest.TestCase):
         )
 
     def test_inspection_rules_and_cross_product_slot(self):
-        job_id = store.start_job(
+        reservation = store.reserve_work(
             self.product_code, self.product_version, 1, "mock-r1"
         )
-        unit_id = store.start_next_unit(job_id)
+        job_id, unit_id = reservation
         store.complete_assembly_and_consume_stock(unit_id)
 
         with self.assertRaises(ValueError):
@@ -213,10 +237,10 @@ class ProductionStoreIntegrationTest(unittest.TestCase):
         store.finish_job(job_id, "COMPLETED")
 
     def test_insufficient_stock_rolls_back(self):
-        job_id = store.start_job(
+        reservation = store.reserve_work(
             self.product_code, self.product_version, 1, "mock-r1"
         )
-        unit_id = store.start_next_unit(job_id)
+        job_id, unit_id = reservation
         with psycopg.connect(TEST_DSN) as connection:
             connection.execute(
                 "UPDATE production.parts SET stock_quantity = %s WHERE part_id = %s",
@@ -240,6 +264,30 @@ class ProductionStoreIntegrationTest(unittest.TestCase):
         )
         store.fail_unit(unit_id)
         store.finish_job(job_id, "FAILED")
+
+    def test_db_writer_end_to_end(self):
+        writer = DbWriter(
+            retry_initial_seconds=0.001,
+            retry_max_seconds=0.002,
+        )
+        self.addCleanup(writer.close, 0.5)
+
+        reservation = writer.reserve(
+            str(uuid.uuid4()),
+            self.product_code,
+            self.product_version,
+            "mock-r1",
+        )
+        writer.assembly_completed(reservation.unit_id)
+        writer.inspection_recorded(reservation.unit_id, "PASS", [])
+        writer.finish(reservation.job_id, "COMPLETED")
+
+        self.assertTrue(writer.flush(1.0))
+        self.assertEqual(
+            store.get_job_state(reservation.job_id)["job_status"],
+            "COMPLETED",
+        )
+        self.assertEqual(writer.sync_state, "SYNCED")
 
 
 if __name__ == "__main__":

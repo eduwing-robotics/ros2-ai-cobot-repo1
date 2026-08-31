@@ -1,28 +1,37 @@
 # Farino_AIO
 
-FR5 MoveIt 구성, Mock 조립 노드와 선택적 PostgreSQL bridge를 포함하는 ROS2 workspace입니다.
+FR5 MoveIt 구성과 Mock 로봇 backend를 포함하는 ROS2 workspace입니다.
+조립 요청과 PostgreSQL 쓰기는 최상단 `ASSEMBLY_SEQUENCER`가 소유합니다.
 
 ## 현재 기능
 
 - MoveIt 기반 Mock 수동 이동과 고정 레시피 Pick·Place
 - `/unity/assembly/start` 서비스와 `/unity/assembly/feedback` 토픽
 - 실행 중 중복 조립·수동 명령 차단
-- `mock_db_mvp` bridge를 통한 Job·Unit·재고·검사 기록
+- AssemblySequencer DB Writer를 통한 Job·Unit·재고·검사 기록
 - Mock 검사 PASS/FAIL 확률과 seed 설정
 
 ## Mock 올인원 실행
 
 `launch_mock.launch.py` 하나가 MoveIt, RViz, FakeSystem controller, Mock 조립
-노드, DB bridge, Unity ROS TCP endpoint와 MainServer를 같은 Mock DB로 실행합니다.
-처음 한 번 또는 launch 파일 변경 후에는 `mock_db_mvp`를 빌드합니다.
+노드, AssemblySequencer, Unity ROS TCP endpoint와 MainServer를 같은 Mock DB로
+실행합니다. 먼저 AssemblySequencer를 빌드하고 그 install을 source해 호환
+`mock_db_mvp` 패키지를 빌드합니다.
 
 ```bash
-cd /home/codlab/Main_Unity/Farino_AIO
+cd /home/codlab/Main_Unity
 source /opt/ros/jazzy/setup.bash
+source Farino_AIO/install/setup.bash
+cd ASSEMBLY_SEQUENCER
+colcon build --symlink-install
+source install/setup.bash
+
+cd ../Farino_AIO
 colcon build --symlink-install --packages-select mock_db_mvp
+source install/setup.bash
 
 cd ..
-source Farino_AIO/install/setup.bash
+source ASSEMBLY_SEQUENCER/install/setup.bash
 source Ros2UnityEndopoint_PKG/install/local_setup.bash
 export PRODUCTION_DB_DSN='dbname=main_unity_mock_test'
 export MAIN_SERVER_DB_DSN='dbname=main_unity_mock_test'

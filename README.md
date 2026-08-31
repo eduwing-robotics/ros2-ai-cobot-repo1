@@ -11,7 +11,7 @@ FR5, Unity 디지털 트윈, ROS2/MoveIt, MainServer와 PostgreSQL을 연결해 
 | OS | Ubuntu 24.04 | ROS2 실행 PC |
 | Unity | 6000.3.21f1 | `UnityDT/` 프로젝트 |
 | ROS2 / MoveIt | ROS2 Jazzy / MoveIt2 | `rosdep`으로 패키지 설치 |
-| Python | 3.12 / `python3-psycopg` | MainServer와 DB bridge |
+| Python | 3.12 / `python3-psycopg` | MainServer와 AssemblySequencer DB Writer |
 | 빌드 | `python3-colcon-common-extensions` | ROS2 workspace 빌드 |
 | PostgreSQL | 버전 고정 없음 | Mock DB와 Real production DB |
 | FAIRINO SDK | `libfairino` 2.3.7 | Real 전용, FR5 기본 IP `192.168.58.2` |
@@ -28,8 +28,16 @@ rosdep update
 
 cd /home/codlab/Main_Unity/Farino_AIO
 source /opt/ros/jazzy/setup.bash
-rosdep install --from-paths src --ignore-src -r -y
+rosdep install --from-paths src ../ASSEMBLY_SEQUENCER/src --ignore-src -r -y
+colcon build --symlink-install --packages-skip mock_db_mvp
+
+source install/setup.bash
+cd ../ASSEMBLY_SEQUENCER
 colcon build --symlink-install
+
+source install/setup.bash
+cd ../Farino_AIO
+colcon build --symlink-install --packages-select mock_db_mvp
 ```
 
 ### Unity ROS Endpoint
@@ -61,6 +69,7 @@ Unity에서 `SampleScene`을 열고 Play 전에 `RobotMaster`의 Mock 또는 Rea
 cd /home/codlab/Main_Unity
 source /opt/ros/jazzy/setup.bash
 source Farino_AIO/install/setup.bash
+source ASSEMBLY_SEQUENCER/install/setup.bash
 source Ros2UnityEndopoint_PKG/install/local_setup.bash
 
 export ROS_DOMAIN_ID=5
@@ -72,7 +81,7 @@ ros2 launch mock_db_mvp launch_mock.launch.py \
   endpoint_ip:=0.0.0.0 endpoint_port:=10000
 ```
 
-MoveIt, RViz, Mock 조립, DB bridge, Unity Endpoint와 MainServer가 함께 실행됩니다.
+MoveIt, RViz, Mock 조립, AssemblySequencer, Unity Endpoint와 MainServer가 함께 실행됩니다.
 
 ### Real
 
@@ -121,7 +130,8 @@ python3 MAIN_SERVER/server.py
 
 - `UnityDT/` — Unity 작업 화면, 조립 Scenario와 Mock/Real backend 선택
 - `MAIN_SERVER/` — 제품·재고·작업 조회와 조립 실행 HTTP API
-- `Farino_AIO/` — FR5 MoveIt, Mock 조립 노드와 DB bridge
+- `Farino_AIO/` — FR5 MoveIt과 Mock 로봇 backend
+- `ASSEMBLY_SEQUENCER/` — Mock/Real 조립 중간 계층과 공통 DB Writer
 - `Ros2UnityEndopoint_PKG/` — Unity와 ROS2 연결 패키지
 - `DATA_STATION/DB/` — PostgreSQL 스키마, 기준정보와 권한 SQL
 

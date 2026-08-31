@@ -11,10 +11,10 @@ Unity Scenario ─┬─ RobotMaster ── MockAssemblyScenarioControl ── /
 
 MainServer HTTP ── AssemblyGateway ──────────────── /unity/assembly/start
 
-                                         ┌─ mock_sim
-/unity/assembly/start ────────────────────┤
-                                         └─ mock_db_bridge ── production DB
-                                                └─ 내부 mock_sim
+                                         ┌─ AssemblySequencer Mock Node
+/unity/assembly/start ────────────────────┤        ├─ 내부 mock_sim
+                                         │        └─ DB Writer Queue
+                                         └──────────────── production DB
 ```
 
 Unity와 MainServer는 현재 같은 ROS2 조립 서비스를 호출할 수 있지만 서로를 경유하지 않는다.
@@ -65,7 +65,11 @@ Real 상태 수신과 저수준 Move/그리퍼 서비스 경로는 일부 구현
 
 `mock_sim.py`는 고정 레시피와 Unity observation의 `order`·`part_id`를 검증하고 MoveIt으로 Pick·Place를 실행한다. 실행 중 수동 명령과 새 조립 요청은 거부한다.
 
-직접 `mock_sim.py`를 실행하면 DB 기록이 없다. `mock_db_bridge` launch를 사용하면 외부 서비스와 feedback 이름은 유지하고 내부 Mock 노드를 remap한다. bridge는 Job·Unit 생성, 재고 차감과 검사 기록을 수행하며 DB commit이 끝난 뒤 외부 `COMPLETED`를 전달한다.
+직접 `mock_sim.py`를 실행하면 DB 기록이 없다. AssemblySequencer Mock launch는
+외부 service와 feedback 이름을 유지하고 내부 Mock 노드를 remap한다. 시작 전에
+Job·Unit을 한 transaction으로 예약하고, 실제 완료 이후 재고·검사·Job 갱신은
+내부 FIFO Worker가 순서대로 반영한다. 실제 작업 상태와 `db_sync_state`는
+분리된다.
 
 ## MainServer
 
@@ -78,7 +82,7 @@ MainServer는 현재 다음 두 책임을 가진다.
 
 ## DB와 레시피
 
-- `production` 쓰기는 `mock_db_bridge`의 `ProductionStore` 경로가 담당한다.
+- `production` 쓰기는 AssemblySequencer의 `DbWriter`와 `ProductionStore`만 담당한다.
 - MainServer는 `production`을 읽고 직접 수정하지 않는다.
 - 레시피 본문과 좌표는 YAML·Git이 소유하며 DB에는 실행한 `recipe_version`만 기록한다.
 - 관절·TCP 스트림과 조립 스텝 callback은 영속 DB에 저장하지 않는다.
