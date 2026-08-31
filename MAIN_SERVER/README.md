@@ -36,9 +36,14 @@ MAIN_SERVER_DB_DSN='dbname=main_unity_mock_test' \
 * * * * * cd /home/codlab/Main_Unity && /usr/bin/flock -n /tmp/main-unity-defect-reports.lock /usr/bin/env MAIN_SERVER_DB_DSN='dbname=main_unity_mock_test' /usr/bin/python3 MAIN_SERVER/generate_defect_reports.py >> MAIN_SERVER/reports/defects/generator.log 2>&1
 ```
 
-부품·대체품·검사항목은
+부품·단가·검사항목은
 `data/semiconductor_assembly_quality_datasheet_2026-08-18.xlsx`를 직접 읽습니다.
 DB에는 `production` 6개 테이블 외의 업무 스키마를 두지 않습니다.
+
+XLSX 접근은 [datasheet.py](datasheet.py) 한 곳에 모여 있고, HTTP API와 대책서
+생성기가 같이 씁니다. 파일 mtime이 바뀌면 다시 읽으므로 시트를 고쳐도 서버를
+재시작하지 않아도 됩니다. 조회 키는 `production.parts.part_category`이고,
+데이터시트의 `부품 타입`과 같은 값이어야 합니다.
 
 ## 문서
 

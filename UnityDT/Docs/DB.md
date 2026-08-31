@@ -8,7 +8,7 @@
 | 저장 위치 | 대상 | 소유·용도 |
 |---|---|---|
 | PostgreSQL `production` | `products`, `parts`, `product_slots`, `jobs`, `units`, `unit_defects` | 제품 정의와 생산 실행·검사 결과 |
-| [부품 데이터시트](../../MAIN_SERVER/data/semiconductor_assembly_quality_datasheet_2026-08-18.xlsx) | 부품 후보, BOM, 검사항목, 출처 | `part_catalog`을 대신하는 읽기 전용 XLSX |
+| [부품 데이터시트](../../MAIN_SERVER/data/semiconductor_assembly_quality_datasheet_2026-08-18.xlsx) | 부품 후보, 단가, 검사항목 | `part_catalog`을 대신하는 읽기 전용 XLSX |
 | `MAIN_SERVER/reports/defects/*.xlsx` | 불량대책서 | `defect_report`를 대신하는 자동 생성 파일 |
 
 `part_catalog`과 `defect_report` 스키마는 두 DB에서 제거했다. 기준 DDL은
@@ -51,28 +51,40 @@ products ──< jobs ──< units ──< unit_defects >── product_slots
 
 ## 부품 데이터시트
 
-![부품 데이터시트 BOM 미리보기](./images/part-datasheet-bom.png)
-
-이미지는 실제 XLSX의 `HBM Package Board BOM` 시트 값을 사용한 문서용
-미리보기다. 생성기는 별도의 카탈로그 DB를 만들지 않고 다음 시트를 직접 읽는다.
+부품 하나가 한 행이고, 같은 `부품 타입`이면 서로 대체 후보다. 보드당 수량과 슬롯
+배치는 시트에 없다 — `production.product_slots`가 갖고 있다. 별도의 카탈로그 DB는
+만들지 않고 [datasheet.py](../../MAIN_SERVER/datasheet.py)가 다음 시트를 직접 읽는다.
 
 | 시트 | 헤더 행 | 사용 내용 |
 |---|---:|---|
-| `HBM Package Board BOM` | 4 | Production `part_id`와 Group ID, Slot, 선택 부품 연결 |
-| `Components` | 4 | 제조사, 모델, 대체 후보, 핵심 사양과 불량 연관성 |
-| `Checklist` | 3 | 입고·조립·신뢰성 검사와 이상 시 조치 |
-| `Sources` | 3 | 근거 출처와 확인일 |
+| `Components` | 4 | 부품 타입, MPN, 핵심 정격, 공급사, 단가, 기준 수량, 확인일 |
+| `Checklist` | 3 | 부품 타입별 입고·조립·신뢰성 검사와 이상 시 조치 |
 
-현재 Production 부품 연결은 다음과 같다.
+두 축은 `part_category`로 만난다. DB가 보드당 수량을, 데이터시트가 단가를 갖고
+있어 보드 원가는 둘을 곱해야 나온다.
 
-| Part ID | Group ID | Slot | 수량 | 선택 부품 |
-|---|---|---|---:|---|
-| `HBM` | `M-001` | `HBM-01~08` | 8 | SK hynix HBM3E 12-Hi 36GB |
-| `PM` | `PM-001` | `PM-01~04` | 4 | TI TPSM84424MOLR Power Module |
-| `GPU` | `G-001` | `GPU-01` | 1 | NVIDIA GB200 GPU Module |
-| `CAP` | `C-001` | `CAP-01~05` | 5 | Murata GRM188R72A104KA35D MLCC |
-| `IND` | `L-001` | `IND-01~02` | 2 | Coilcraft XAL7030-152MEC |
-| `VRM` | `V-001` | `VRM-01~05` | 5 | TI TPS546D24ARVFR |
+```text
+production.parts.part_category  ==  데이터시트 '부품 타입'
+production.parts.part_name      ==  후보 3종 중 하나의 'MPN'   → unit_price_selected
+```
+
+현재 Production 부품 연결은 다음과 같다. 단가는 후보 3종의 폭이다.
+
+| Part ID | 부품 타입 | Slot | 수량 | 선택 부품 | 단가 |
+|---|---|---|---:|---|---|
+| `HBM` | `HBM_MEMORY` | `HBM-01~08` | 8 | SK hynix HBM3E 12-Hi 36GB | $352.00 ($338~$361) |
+| `PM` | `POWER_MODULE` | `PM-01~04` | 4 | Fabrikam FB-PM4424-15Q | $10.21 ($5.75~$11.90) |
+| `GPU` | `GPU_MODULE` | `GPU-01` | 1 | NVIDIA GB200 GPU Module | $32,000 ($16,800~$32,000) |
+| `CAP` | `MLCC` | `CAP-01~05` | 5 | Contoso CX-0603X7R104K100 | $0.15 ($0.09~$0.15) |
+| `IND` | `POWER_INDUCTOR` | `IND-01~02` | 2 | Contoso CX-XL7030-152M | $4.07 ($3.62~$4.48) |
+| `VRM` | `VOLTAGE_REGULATOR` | `VRM-01~05` | 5 | Fabrikam FB-VR546D24 | $12.26 ($9.45~$12.26) |
+
+`GET /api/v1/products/{id}/requirements`가 이 둘을 합쳐 보드당 원가를 낸다. 주품목
+기준 $34,927.03이고, 후보를 바꾸면 $19,581.94 ~ $35,006.61 사이에서 움직인다.
+
+제조사명과 P/N은 MLCC·인덕터·파워모듈·VRM 4종이 문서용 가상 사명이다. HBM·GPU는
+UI 스프라이트에 제조사 로고가 포함되어 있어 실존 제품명을 쓴다. 단가는 시뮬레이션용
+근사값이지 발주 근거가 아니다.
 
 ## 불량대책서
 
@@ -98,7 +110,7 @@ QA-J{job_id}-{part_id}-{defect_type}.xlsx
 - 파일명에 사용할 수 없는 문자는 `_`로 바꾼다.
 - 기존 파일은 덮어쓰지 않아 담당자가 입력한 회신을 보호한다.
 - 임시 파일을 완성한 뒤 원자적으로 이동한다.
-- 데이터시트에 Part가 없으면 `데이터시트 연결 없음`으로 표시하되 보고서 생성은 계속한다.
+- 데이터시트에 해당 부품 타입이 없으면 `데이터시트 연결 없음`으로 표시하되 보고서 생성은 계속한다.
 - DB에는 보고서 상태나 회신을 다시 저장하지 않는다.
 
 수동 생성 명령:

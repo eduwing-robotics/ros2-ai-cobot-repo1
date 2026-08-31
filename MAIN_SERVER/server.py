@@ -9,6 +9,7 @@ from decimal import Decimal
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlsplit
 
+import datasheet
 import queries
 from assembly_gateway import AssemblyGateway, GatewayResponseError, GatewayUnavailable
 
@@ -152,15 +153,48 @@ class ApiHandler(BaseHTTPRequestHandler):
         return queries.product(positive(values["product_id"], "product_id"))
 
     def requirements(self, values, parameters):
-        return queries.requirements(
+        rows = queries.requirements(
             positive(values["product_id"], "product_id"), self._quantity(parameters)
         )
+        return [self._priced(row) for row in rows]
 
     def part(self, values, parameters):
         self._no_query(parameters)
         if not values["part_id"].strip():
             raise ValidationError("part_id is required")
-        return queries.part(values["part_id"])
+        row = queries.part(values["part_id"])
+        row["candidates"] = self._candidates(row["part_category"])
+        return row
+
+    @staticmethod
+    def _candidates(part_category):
+        """부품 타입의 후보 목록. 데이터시트를 못 읽어도 DB 응답은 살린다."""
+        try:
+            return datasheet.candidates(part_category)
+        except datasheet.DatasheetUnavailable as error:
+            logging.warning("datasheet unavailable: %s", error)
+            return []
+
+    @classmethod
+    def _priced(cls, row):
+        """보드당 원가를 붙인다. 단가는 데이터시트, 수량은 DB 가 갖고 있다.
+
+        후보가 여러 종이라 단가가 하나로 정해지지 않는다. selected 는 DB 가 실제로
+        쓰는 부품의 단가이고, min/max 는 다른 후보로 바꿨을 때의 폭이다.
+        """
+        try:
+            summary = datasheet.prices(row["part_category"], row["part_name"])
+        except datasheet.DatasheetUnavailable as error:
+            logging.warning("datasheet unavailable: %s", error)
+            summary = {"unit_price_min": None, "unit_price_max": None,
+                       "unit_price_selected": None, "candidate_count": 0}
+        quantity = row["quantity_per_product"]
+        row.update(summary)
+        for bound in ("min", "max", "selected"):
+            price = summary[f"unit_price_{bound}"]
+            row[f"line_cost_{bound}"] = (
+                None if price is None else round(price * quantity, 2))
+        return row
 
     def job(self, values, parameters):
         self._no_query(parameters)

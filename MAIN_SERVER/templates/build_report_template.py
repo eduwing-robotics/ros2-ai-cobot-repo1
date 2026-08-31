@@ -812,59 +812,55 @@ def build_analysis(wb, d):
 # ---------------------------------------------------------------- 시트: 대체품
 def build_alternates(wb, d):
     ws = wb.create_sheet("대체품")
-    for col, w in {"A": 9, "B": 9, "C": 22, "D": 26, "E": 14, "F": 22,
-                   "G": 29, "H": 13}.items():
+    for col, w in {"A": 30, "B": 30, "C": 20, "D": 12, "E": 16, "F": 13}.items():
         ws.column_dimensions[col].width = w
 
-    band(ws, "A1:H1", "대체품 후보", "[조회 시점 참조]")
-    note_line(ws, "A2:H2",
+    band(ws, "A1:F1", "대체품 후보", "[조회 시점 참조]")
+    note_line(ws, "A2:F2",
               "불량 유형과 무관하게 항상 첨부한다 · 부품 교체가 이번 건의 대책인지는 "
               "② 발생 원인을 확정한 담당자가 판단한다")
-    ws.merge_cells("A3:H3")
+    ws.merge_cells("A3:F3")
     put(ws, "A3",
-        "동일 정격만으로 drop-in 판단 금지 · 「필수 재검증」을 모두 통과하고 "
-        "변경 승인이 완료된 뒤에만 적용한다.",
+        "같은 부품 타입이라는 것 외에 검증된 것은 없다 · 동일 정격만으로 drop-in 판단 "
+        "금지 · 핀/패키지/정격/열/수명 재검증과 변경 승인을 거친 뒤에만 적용한다.",
         f=font(8, True, ALERT_INK), bg=ALERT, al=align("left", "center", wrap=True, indent=1))
     ws.row_dimensions[1].height = 20
     ws.row_dimensions[3].height = 22
 
-    note_line(ws, "A4:H4", d["alternates_header"], color="00595959")
+    note_line(ws, "A4:F4", d["alternates_header"], color="00595959")
     ws.row_dimensions[4].height = 15
 
-    table_head(ws, 6, 1, 8, [
-        "역할", "대체코드", "제조사 / P/N", "핵심 사양·용도", "상호호환 상태",
-        "필수 재검증", d["relevance_header"], "Source · 확인일",
+    table_head(ws, 6, 1, 6, [
+        "제조사 / P/N", "핵심 정격", "공급사", "단가", "가격 기준 수량", "가격 확인일",
     ])
     ws.row_dimensions[6].height = 26
 
     row = 7
     for cand in d["candidate_rows"]:
-        is_primary = cand["role"] == "주품목"
+        is_primary = bool(cand.get("selected"))
         bg = PRIMARY_ROW if is_primary else None
-        vals = [
-            cand["role"], cand["alternate_code"], cand["maker_pn"], cand["key_spec"],
-            cand["compatibility"], cand["revalidation"], cand["relevance"], cand["source"],
-        ]
+        vals = [cand["maker_pn"], cand["key_spec"], cand["supplier"],
+                cand["unit_price"], cand["price_basis"], cand["price_checked_at"]]
         for offset, value in enumerate(vals):
             cell = ws.cell(row=row, column=1 + offset)
             cell.value = value
-            unrated = str(value).startswith("미평가")
-            cell.font = font(8, is_primary, MUTED if unrated else INK, italic=unrated)
-            cell.alignment = align("left", "top", wrap=True, indent=1)
+            cell.font = font(8, is_primary, INK)
+            cell.alignment = align(
+                "right" if offset == 3 else "left", "top", wrap=True, indent=1)
             cell.border = BOX
             if bg:
                 cell.fill = fill(bg)
-        ws.row_dimensions[row].height = 40
+        ws.row_dimensions[row].height = 54
         row += 1
 
     row += 1
-    ws.merge_cells(f"A{row}:H{row}")
+    ws.merge_cells(f"A{row}:F{row}")
     put(ws, f"A{row}",
-        "단가·MOQ·재고·리드타임·공급사는 이 문서에 싣지 않는다. 조회 시점에 이미 상하는 "
-        "값이고 품질 담당자의 결정 변수가 아니다 → GET /parts/{part_id} 또는 구매 담당",
+        "단가는 데이터시트 기준일의 값이고 발주 근거가 아니다. MOQ·재고·리드타임과 "
+        "상호호환 판정은 이 문서에 없다 → GET /parts/{part_id} 또는 구매·품질 담당",
         f=font(7.5, False, MUTED), al=align("left", "center", wrap=True, indent=1), border=None)
 
-    ws.freeze_panes = "C7"
+    ws.freeze_panes = "A7"
     page(ws, "landscape", fit_height=1)
     lock_sheet(ws)
     return ws
@@ -882,7 +878,7 @@ TOKEN_DATA = {
     "due_action": "{{due_action}}",
     "due_verify": "{{due_verify}}",
     "part_image": None,   # 표준양식에는 넣지 않는다 — 발행 시점에 부품이 정해진다
-    "part_line": "{{part_id}} · {{part_name}} ({{group_id}} / {{category_label}})",
+    "part_line": "{{part_id}} · {{part_name}} ({{category_label}})",
     "defect_type": "{{defect_type}}",
     "period_line": "{{period_start}} ~ {{period_end}} ({{window_days}}일 / {{evaluation_mode}})",
     "source_recipe_version": "{{source_recipe_version}}",
@@ -924,16 +920,13 @@ TOKEN_DATA = {
         "action_on_anomaly": "{{action_on_anomaly}}",
     },
     "alternates_header": "조회 시각 {{queried_at}}   ·   데이터시트 {{source_file}} "
-                         "(기준일 {{source_dated_on}})   ·   Group ID {{group_id}} "
-                         "({{category_label}})   ·   후보 {{candidate_count}}종   "
-                         "·   행은 후보 수만큼 반복",
-    "relevance_header": "{{defect_type}} 관련 소견",
+                         "(기준일 {{source_dated_on}})   ·   부품 타입 {{category_label}}   "
+                         "·   후보 {{candidate_count}}종   ·   단가 {{price_range}}   "
+                         "·   현재 선정 {{price_selected}}",
     "candidate_rows": [{
-        "role": "{{candidate_role}}", "alternate_code": "{{alternate_code}}",
-        "maker_pn": "{{manufacturer}} / {{manufacturer_part_number}}",
-        "key_spec": "{{key_spec}}", "compatibility": "{{compatibility_status}}",
-        "revalidation": "{{revalidation_items}}", "relevance": "{{defect_relevance}}",
-        "source": "{{source_id}} · {{checked_at}}",
+        "maker_pn": "{{manufacturer_part_number}}", "key_spec": "{{key_spec}}",
+        "supplier": "{{supplier}}", "unit_price": "{{unit_price}}",
+        "price_basis": "{{price_basis}}", "price_checked_at": "{{price_checked_at}}",
     }],
 }
 
@@ -960,7 +953,7 @@ SAMPLE_DATA = {
     "due_action": "09-05 (2주)",
     "due_verify": "적용 후 2~4주",
     "part_image": "UI/Icons/item-cap.png",
-    "part_line": "CAP  (C-001 · MLCC)",
+    "part_line": "CAP  (MLCC)",
     "defect_type": "CRACK",
     "period_line": "2026-08-12 ~ 08-19  (7일 / ROLLING)",
     "source_recipe_version": "mock-v3",
@@ -1056,29 +1049,21 @@ SAMPLE_DATA = {
     },
     "alternates_header": "조회 시각 2026-08-19 09:00:00   ·   데이터시트 "
                          "semiconductor_assembly_quality_datasheet_2026-08-18.xlsx "
-                         "(기준일 2026-08-18)   ·   Group ID C-001 (MLCC)   ·   후보 2종",
-    "relevance_header": "CRACK 관련 소견",
+                         "(기준일 2026-08-18)   ·   부품 타입 MLCC   ·   후보 3종   "
+                         "·   단가 $0.09 ~ $0.15   ·   현재 선정 $0.15",
     "candidate_rows": [
-        {"role": "주품목", "alternate_code": "—",
-         "maker_pn": "Murata Manufacturing / GRM188R72A104KA35D",
-         "key_spec": "MLCC / 0.10µF ±10%, 100V, X7R, 0603",
-         "compatibility": "승인 주품목", "revalidation": "해당 없음",
-         "relevance": "표준 단자 · 현재 CRACK 발생 중. 연성 단자(soft termination) 사양 아님",
-         "source": "S-01 · 2026-08-18"},
-        {"role": "대체 후보", "alternate_code": "ALT-01",
-         "maker_pn": "KEMET / C0603C104K1RACTU",
-         "key_spec": "MLCC / 0.10µF ±10%, 100V, X7R, 0603",
-         "compatibility": "동급 후보 · 승인 전 사용 금지",
-         "revalidation": "두께·단자·DC-bias·IR·land/reflow",
-         "relevance": "표준 단자 — 굽힘 크랙 완충 없음. 대체해도 개선 근거 없음",
-         "source": "S-02 · 2026-08-18"},
-        {"role": "대체 후보", "alternate_code": "ALT-02",
-         "maker_pn": "YAGEO / CC0603KRX7R0BB104",
-         "key_spec": "MLCC / 0.10µF, 100V, X7R, 0603 후보",
-         "compatibility": "동급 후보 · 승인 전 사용 금지",
-         "revalidation": "두께·단자·DC-bias·IR·land/reflow",
-         "relevance": "표준 단자 — 굽힘 크랙 완충 없음. 대체해도 개선 근거 없음",
-         "source": "S-03 · 2026-08-18"},
+        {"maker_pn": "Contoso CX-0603X7R104K100",
+         "key_spec": "0.10µF ±10% 100V X7R 0603", "supplier": "Northwind Traders",
+         "unit_price": "$0.15", "price_basis": "1개 (Cut Tape)",
+         "price_checked_at": "2026-08-14", "selected": True},
+        {"maker_pn": "Litware LW-C0603-104K-100",
+         "key_spec": "0.10µF ±10% 100V X7R 0603", "supplier": "Northwind Traders",
+         "unit_price": "$0.12", "price_basis": "1개 (Cut Tape)",
+         "price_checked_at": "2026-08-14"},
+        {"maker_pn": "Tailspin TS-0603-104M-100",
+         "key_spec": "0.10µF ±20% 100V X7R 0603", "supplier": "Wide World Importers",
+         "unit_price": "$0.09", "price_basis": "1개 (Cut Tape)",
+         "price_checked_at": "2026-08-15"},
     ],
 }
 

@@ -1,0 +1,247 @@
+"""Read-only access to the part datasheet XLSX.
+
+DB 에는 `production` 6개 테이블 외의 업무 스키마를 두지 않는다. 부품 카탈로그는 이
+XLSX 가 원본이고, MainServer 와 불량대책서 생성기가 함께 읽는다. 파서를 양쪽에 두면
+시트 구조가 바뀔 때 두 군데를 고쳐야 하므로 여기 한 곳에 둔다.
+
+서버 런타임에 openpyxl 을 넣지 않는다. zipfile + ElementTree 로만 읽는다.
+
+시트는 부품 하나가 한 행이고, 같은 `부품 타입` 이면 서로 대체 후보다. 보드당 수량과
+슬롯 배치는 여기 없다 - `production.product_slots` 가 갖고 있다.
+"""
+
+from __future__ import annotations
+
+import re
+import threading
+import zipfile
+from pathlib import Path
+from xml.etree import ElementTree as ET
+
+ROOT = Path(__file__).resolve().parent
+DATASHEET = ROOT / "data" / "semiconductor_assembly_quality_datasheet_2026-08-18.xlsx"
+
+MAIN_NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+REL_NS = "http://schemas.openxmlformats.org/package/2006/relationships"
+DOC_REL_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+
+PARTS_SHEET, PARTS_HEADER_ROW = "Components", 4
+CHECKLIST_SHEET, CHECKLIST_HEADER_ROW = "Checklist", 3
+COMMON = "공통"
+
+# 시트 열은 한글이고 API 키는 영문이다. 옮기는 자리를 여기 하나로 둔다.
+PART_COLUMNS = {
+    "부품 타입": "part_category",
+    "제조사 P/N (MPN)": "mpn",
+    "핵심 정격": "spec",
+    "공급사": "supplier",
+    "단가 (USD)": "unit_price",
+    "가격 기준 수량": "price_basis",
+    "가격 확인일": "price_checked_at",
+}
+CHECKLIST_COLUMNS = {
+    "부품 타입": "part_category",
+    "입고 검사": "incoming_inspection",
+    "조립/보관 관리": "assembly_control",
+    "기능·신뢰성 검사": "reliability_test",
+    "이상 시 조치": "action_on_anomaly",
+}
+GATE_KEYS = ("incoming_inspection", "assembly_control",
+             "reliability_test", "action_on_anomaly")
+
+
+class DatasheetUnavailable(RuntimeError):
+    pass
+
+
+def _column_index(reference: str) -> int:
+    result = 0
+    for char in re.match(r"[A-Z]+", reference).group(0):
+        result = result * 26 + ord(char) - 64
+    return result - 1
+
+
+def _sheet_rows(path: Path, sheet_name: str) -> list[list[object]]:
+    """Read displayed cell values from one XLSX sheet using stdlib OOXML."""
+    with zipfile.ZipFile(path) as book:
+        workbook = ET.fromstring(book.read("xl/workbook.xml"))
+        relationships = ET.fromstring(book.read("xl/_rels/workbook.xml.rels"))
+        targets = {
+            rel.attrib["Id"]: rel.attrib["Target"]
+            for rel in relationships.findall(f"{{{REL_NS}}}Relationship")
+        }
+        relationship_id = None
+        for sheet in workbook.findall(f".//{{{MAIN_NS}}}sheet"):
+            if sheet.attrib["name"] == sheet_name:
+                relationship_id = sheet.attrib[f"{{{DOC_REL_NS}}}id"]
+                break
+        if relationship_id is None:
+            raise DatasheetUnavailable(f"sheet not found: {sheet_name}")
+
+        target = targets[relationship_id].lstrip("/")
+        if not target.startswith("xl/"):
+            target = "xl/" + target
+        sheet = ET.fromstring(book.read(target))
+
+        shared = []
+        if "xl/sharedStrings.xml" in book.namelist():
+            strings = ET.fromstring(book.read("xl/sharedStrings.xml"))
+            shared = ["".join(item.itertext()) for item in strings]
+
+        result = []
+        for row in sheet.findall(f".//{{{MAIN_NS}}}row"):
+            values: dict[int, object] = {}
+            for cell in row.findall(f"{{{MAIN_NS}}}c"):
+                index = _column_index(cell.attrib["r"])
+                cell_type = cell.attrib.get("t")
+                value = cell.find(f"{{{MAIN_NS}}}v")
+                if cell_type == "inlineStr":
+                    inline = cell.find(f"{{{MAIN_NS}}}is")
+                    values[index] = "" if inline is None else "".join(inline.itertext())
+                elif value is None:
+                    values[index] = None
+                elif cell_type == "s":
+                    values[index] = shared[int(value.text)]
+                elif cell_type == "b":
+                    values[index] = value.text == "1"
+                else:
+                    raw = value.text
+                    try:
+                        values[index] = float(raw) if "." in raw else int(raw)
+                    except (TypeError, ValueError):
+                        values[index] = raw
+            width = max(values, default=-1) + 1
+            result.append([values.get(index) for index in range(width)])
+        return result
+
+
+def _table(path: Path, sheet: str, header_row: int,
+           columns: dict[str, str]) -> list[dict[str, object]]:
+    """헤더 행의 한글 열 이름을 영문 키로 옮겨 행 목록을 만든다."""
+    rows = _sheet_rows(path, sheet)
+    if len(rows) < header_row:
+        raise DatasheetUnavailable(f"{sheet}: header row {header_row} is missing")
+    headers = [str(value).strip() if value is not None else ""
+               for value in rows[header_row - 1]]
+    missing = [name for name in columns if name not in headers]
+    if missing:
+        raise DatasheetUnavailable(f"{sheet}: 열을 찾지 못했다 {missing}")
+
+    records = []
+    for row in rows[header_row:]:
+        if not any(value not in (None, "") for value in row):
+            continue
+        record = {}
+        for index, header in enumerate(headers):
+            key = columns.get(header)
+            if key is None:
+                continue
+            record[key] = row[index] if index < len(row) else None
+        records.append(record)
+    return records
+
+
+def _clean(value: object) -> str:
+    return "" if value is None else str(value).strip()
+
+
+def load_parts(path: Path) -> dict[str, list[dict[str, object]]]:
+    """부품 타입 → 부품 목록. 같은 타입이면 서로 대체 후보다."""
+    by_category: dict[str, list[dict[str, object]]] = {}
+    for row in _table(path, PARTS_SHEET, PARTS_HEADER_ROW, PART_COLUMNS):
+        category = _clean(row["part_category"])
+        if not category:
+            continue
+        price = row["unit_price"]
+        by_category.setdefault(category, []).append({
+            "mpn": _clean(row["mpn"]),
+            "spec": _clean(row["spec"]),
+            "supplier": _clean(row["supplier"]),
+            "unit_price": round(float(price), 2) if price is not None else None,
+            "price_basis": _clean(row["price_basis"]),
+            "price_checked_at": _clean(row["price_checked_at"]),
+        })
+    return by_category
+
+
+def load_checklist(path: Path) -> dict[str, dict[str, str]]:
+    """부품 타입 → 품질 게이트. '공통' 행을 각 타입 앞에 붙여 둔다."""
+    rows = _table(path, CHECKLIST_SHEET, CHECKLIST_HEADER_ROW, CHECKLIST_COLUMNS)
+    common = {}
+    gates: dict[str, dict[str, str]] = {}
+    for row in rows:
+        category = _clean(row["part_category"])
+        values = {key: _clean(row[key]) for key in GATE_KEYS}
+        if category == COMMON:
+            common = values
+        elif category:
+            gates[category] = values
+
+    merged = {COMMON: common}
+    for category, values in gates.items():
+        merged[category] = {
+            key: "\n".join(part for part in (common.get(key, ""), values[key]) if part)
+            for key in GATE_KEYS
+        }
+    return merged
+
+
+_lock = threading.Lock()
+_cache: tuple[Path, tuple[int, int], dict] | None = None
+
+
+def catalog(path: Path | None = None) -> dict:
+    """적재된 데이터시트. 파일이 바뀌었을 때만 다시 읽는다.
+
+    담당자가 시트를 고치면 서버 재시작 없이 다음 요청에서 반영된다.
+    """
+    global _cache
+    path = Path(path) if path else DATASHEET
+    try:
+        status = path.stat()
+    except OSError as error:
+        raise DatasheetUnavailable(f"datasheet not found: {path}") from error
+    stamp = (status.st_mtime_ns, status.st_size)
+
+    with _lock:
+        if _cache is not None and _cache[0] == path and _cache[1] == stamp:
+            return _cache[2]
+        dated = re.search(r"\d{4}-\d{2}-\d{2}", path.name)
+        loaded = {
+            "parts": load_parts(path),
+            "checklist": load_checklist(path),
+            "path": path,
+            "source_file": path.name,
+            "dated_on": dated.group(0) if dated else "",
+        }
+        _cache = (path, stamp, loaded)
+        return loaded
+
+
+def candidates(part_category: str, path: Path | None = None) -> list[dict[str, object]]:
+    """해당 타입의 부품 후보. 없으면 빈 목록."""
+    return catalog(path)["parts"].get(part_category, [])
+
+
+def gates(part_category: str, path: Path | None = None) -> dict[str, str]:
+    """해당 타입의 품질 게이트. 없으면 '공통'만."""
+    loaded = catalog(path)
+    return loaded["checklist"].get(part_category, loaded["checklist"].get(COMMON, {}))
+
+
+def prices(part_category: str, part_name: str = "",
+           path: Path | None = None) -> dict[str, object]:
+    """타입의 단가 요약. `selected` 는 DB part_name 과 MPN 이 같은 후보다."""
+    rows = [row for row in candidates(part_category, path)
+            if row["unit_price"] is not None]
+    if not rows:
+        return {"unit_price_min": None, "unit_price_max": None,
+                "unit_price_selected": None, "candidate_count": 0}
+    values = [row["unit_price"] for row in rows]
+    chosen = next((row["unit_price"] for row in rows if row["mpn"] == part_name), None)
+    return {
+        "unit_price_min": min(values),
+        "unit_price_max": max(values),
+        "unit_price_selected": chosen if chosen is not None else min(values),
+        "candidate_count": len(rows),
+    }

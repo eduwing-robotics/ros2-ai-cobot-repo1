@@ -11,115 +11,18 @@ import tempfile
 import zipfile
 from collections import Counter, defaultdict
 from pathlib import Path
-from xml.etree import ElementTree as ET
 
 import psycopg
 from psycopg.rows import dict_row
 
+import datasheet
+from datasheet import DATASHEET
+
 
 ROOT = Path(__file__).resolve().parent
-DATASHEET = ROOT / "data" / "semiconductor_assembly_quality_datasheet_2026-08-18.xlsx"
 TEMPLATE = ROOT / "templates" / "불량대책서_표준양식.xlsx"
 OUTPUT_DIR = ROOT / "reports" / "defects"
-MAIN_NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
-REL_NS = "http://schemas.openxmlformats.org/package/2006/relationships"
-DOC_REL_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 TOKEN_RE = re.compile(r"\{\{[A-Za-z0-9_]+\}\}")
-
-
-def _column_index(reference: str) -> int:
-    result = 0
-    for char in re.match(r"[A-Z]+", reference).group(0):
-        result = result * 26 + ord(char) - 64
-    return result - 1
-
-
-def _sheet_rows(path: Path, sheet_name: str) -> list[list[object]]:
-    """Read displayed cell values from one XLSX sheet using stdlib OOXML."""
-    with zipfile.ZipFile(path) as book:
-        workbook = ET.fromstring(book.read("xl/workbook.xml"))
-        relationships = ET.fromstring(book.read("xl/_rels/workbook.xml.rels"))
-        targets = {
-            rel.attrib["Id"]: rel.attrib["Target"]
-            for rel in relationships.findall(f"{{{REL_NS}}}Relationship")
-        }
-        relationship_id = None
-        for sheet in workbook.findall(f".//{{{MAIN_NS}}}sheet"):
-            if sheet.attrib["name"] == sheet_name:
-                relationship_id = sheet.attrib[f"{{{DOC_REL_NS}}}id"]
-                break
-        if relationship_id is None:
-            raise ValueError(f"sheet not found: {sheet_name}")
-
-        target = targets[relationship_id].lstrip("/")
-        if not target.startswith("xl/"):
-            target = "xl/" + target
-        sheet = ET.fromstring(book.read(target))
-
-        shared = []
-        if "xl/sharedStrings.xml" in book.namelist():
-            strings = ET.fromstring(book.read("xl/sharedStrings.xml"))
-            shared = ["".join(item.itertext()) for item in strings]
-
-        result = []
-        for row in sheet.findall(f".//{{{MAIN_NS}}}row"):
-            values: dict[int, object] = {}
-            for cell in row.findall(f"{{{MAIN_NS}}}c"):
-                index = _column_index(cell.attrib["r"])
-                cell_type = cell.attrib.get("t")
-                value = cell.find(f"{{{MAIN_NS}}}v")
-                if cell_type == "inlineStr":
-                    inline = cell.find(f"{{{MAIN_NS}}}is")
-                    values[index] = "" if inline is None else "".join(inline.itertext())
-                elif value is None:
-                    values[index] = None
-                elif cell_type == "s":
-                    values[index] = shared[int(value.text)]
-                elif cell_type == "b":
-                    values[index] = value.text == "1"
-                else:
-                    raw = value.text
-                    try:
-                        values[index] = float(raw) if "." in raw else int(raw)
-                    except (TypeError, ValueError):
-                        values[index] = raw
-            width = max(values, default=-1) + 1
-            result.append([values.get(index) for index in range(width)])
-        return result
-
-
-def _table(path: Path, sheet: str, header_row: int) -> list[dict[str, object]]:
-    rows = _sheet_rows(path, sheet)
-    headers = [str(value).strip() if value is not None else ""
-               for value in rows[header_row - 1]]
-    records = []
-    for row in rows[header_row:]:
-        if not any(value not in (None, "") for value in row):
-            continue
-        records.append({
-            header: row[index] if index < len(row) else None
-            for index, header in enumerate(headers) if header
-        })
-    return records
-
-
-def load_catalog(path: Path) -> dict[str, object]:
-    if not path.is_file():
-        raise FileNotFoundError(f"datasheet not found: {path}")
-    bom = _table(path, "HBM Package Board BOM", 4)
-    components = _table(path, "Components", 4)
-    checklists = _table(path, "Checklist", 3)
-    sources = _table(path, "Sources", 3)
-    by_part = {str(row["Mock Part ID"]).strip(): row for row in bom}
-    by_group = defaultdict(list)
-    for row in components:
-        by_group[str(row["Group ID"]).strip()].append(row)
-    return {
-        "by_part": by_part,
-        "by_group": dict(by_group),
-        "checklists": checklists,
-        "sources": {str(row["Source ID"]).strip(): row for row in sources},
-    }
 
 
 def load_defects(dsn: str, job_id: int | None = None) -> list[dict[str, object]]:
@@ -161,78 +64,70 @@ def _date(value: object) -> str:
     return value.strftime("%Y-%m-%d %H:%M:%S") if hasattr(value, "strftime") else _text(value)
 
 
-def _catalog_tokens(catalog: dict[str, object], part_id: str,
-                    datasheet: Path) -> dict[str, str]:
-    part = catalog["by_part"].get(part_id)
-    if not part:
-        return {
-            "group_id": "데이터시트 연결 없음",
-            "category_label": "—",
+def _catalog_tokens(part_category: str, part_name: str,
+                    path: Path) -> dict[str, str]:
+    """데이터시트에서 오는 토큰. 조회 키는 부품 타입이다.
+
+    같은 타입의 부품이 곧 서로의 대체 후보라 그룹을 따로 관리하지 않는다.
+    `part_name` 은 DB 가 실제로 쓰는 부품이고, 후보 중 MPN 이 같은 행의 단가가
+    `unit_price_selected` 가 된다.
+    """
+    loaded = datasheet.catalog(path)
+    rows = loaded["parts"].get(part_category, [])
+    gates = (loaded["checklist"].get(part_category)
+             or loaded["checklist"].get(datasheet.COMMON, {}))
+
+    if rows:
+        def lines(key: str) -> str:
+            return "\n".join(_text(row[key]) for row in rows)
+
+        summary = datasheet.prices(part_category, part_name, path)
+        tokens = {
+            "category_label": part_category,
+            "candidate_count": str(len(rows)),
+            "manufacturer_part_number": lines("mpn"),
+            "key_spec": lines("spec"),
+            "supplier": lines("supplier"),
+            "unit_price": "\n".join(
+                "—" if row["unit_price"] is None else f"${row['unit_price']:,.2f}"
+                for row in rows
+            ),
+            "price_basis": lines("price_basis"),
+            "price_checked_at": lines("price_checked_at"),
+            "price_range": (
+                "—" if summary["unit_price_min"] is None else
+                f"${summary['unit_price_min']:,.2f} ~ ${summary['unit_price_max']:,.2f}"
+            ),
+            "price_selected": (
+                "—" if summary["unit_price_selected"] is None else
+                f"${summary['unit_price_selected']:,.2f}"
+            ),
+        }
+    else:
+        tokens = {
+            "category_label": part_category or "—",
             "candidate_count": "0",
-            "candidate_role": "—",
-            "alternate_code": "—",
-            "manufacturer": "—",
-            "manufacturer_part_number": "—",
+            "manufacturer_part_number": "데이터시트 연결 없음",
             "key_spec": "해당 데이터시트 없음",
-            "compatibility_status": "—",
-            "revalidation_items": "—",
-            "defect_relevance": "미평가",
-            "source_id": "—",
-            "checked_at": "—",
-            "incoming_inspection": "—",
-            "assembly_control": "—",
-            "reliability_test": "—",
-            "action_on_anomaly": "—",
-            "source_file": datasheet.name,
-            "source_dated_on": "—",
-            "queried_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "supplier": "—",
+            "unit_price": "—",
+            "price_basis": "—",
+            "price_checked_at": "—",
+            "price_range": "—",
+            "price_selected": "—",
         }
 
-    group_id = str(part["Group ID"]).strip()
-    category = _text(part.get("Category"))
-    candidates = catalog["by_group"].get(group_id, [])
-    sources = catalog["sources"]
-
-    def lines(column: str) -> str:
-        return "\n".join(_text(row.get(column)) for row in candidates) or "—"
-
-    source_ids = [str(row.get("Source ID") or "").strip() for row in candidates]
-    checked = [sources.get(source_id, {}).get("확인일") for source_id in source_ids]
-    checklist_rows = [
-        row for row in catalog["checklists"]
-        if row.get("범주") in ("공통", category)
-    ]
-
-    def checklist(column: str) -> str:
-        return "\n".join(_text(row.get(column)) for row in checklist_rows) or "—"
-
-    dated = re.search(r"\d{4}-\d{2}-\d{2}", datasheet.name)
-    return {
-        "group_id": group_id,
-        "category_label": category,
-        "candidate_count": str(len(candidates)),
-        "candidate_role": lines("역할"),
-        "alternate_code": lines("대체 #"),
-        "manufacturer": lines("제조사"),
-        "manufacturer_part_number": lines("제조사 P/N / 모델"),
-        "key_spec": lines("핵심 사양·용도"),
-        "compatibility_status": lines("상호호환 상태"),
-        "revalidation_items": lines("필수 재검증"),
-        "defect_relevance": lines("불량 소견 (defect_relevance)"),
-        "source_id": "\n".join(_text(value) for value in source_ids) or "—",
-        "checked_at": "\n".join(_text(value) for value in checked) or "—",
-        "incoming_inspection": checklist("입고 검사"),
-        "assembly_control": checklist("조립/보관 관리"),
-        "reliability_test": checklist("기능·신뢰성 검사"),
-        "action_on_anomaly": checklist("이상 시 조치"),
-        "source_file": datasheet.name,
-        "source_dated_on": dated.group(0) if dated else "—",
+    for gate in datasheet.GATE_KEYS:
+        tokens[gate] = _text(gates.get(gate)) or "—"
+    tokens.update({
+        "source_file": loaded["source_file"],
+        "source_dated_on": loaded["dated_on"] or "—",
         "queried_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-    }
+    })
+    return tokens
 
 
-def build_tokens(rows: list[dict[str, object]], catalog: dict[str, object],
-                 datasheet: Path) -> dict[str, str]:
+def build_tokens(rows: list[dict[str, object]], path: Path) -> dict[str, str]:
     first = rows[0]
     job_id = int(first["job_id"])
     part_id = str(first["part_id"])
@@ -312,7 +207,8 @@ def build_tokens(rows: list[dict[str, object]], catalog: dict[str, object],
         "root_cause_summary": "담당자 입력",
         "defect_rate": f"{defect_rate:.4%}",
     }
-    tokens.update(_catalog_tokens(catalog, part_id, datasheet))
+    tokens.update(_catalog_tokens(
+        _text(first["part_category"]), _text(first["part_name"]), path))
     return tokens
 
 
@@ -365,15 +261,15 @@ def write_report(template: Path, output: Path, tokens: dict[str, str]) -> None:
         temp_path.unlink(missing_ok=True)
 
 
-def generate(dsn: str, datasheet: Path, template: Path, output_dir: Path,
+def generate(dsn: str, path: Path, template: Path, output_dir: Path,
              job_id: int | None = None) -> tuple[int, int]:
-    catalog = load_catalog(datasheet)
+    datasheet.catalog(path)          # 시트가 없거나 열이 바뀌었으면 여기서 멈춘다
     groups = defaultdict(list)
     for row in load_defects(dsn, job_id):
         groups[(row["job_id"], row["part_id"], row["defect_type"])].append(row)
     created = skipped = 0
     for key, rows in groups.items():
-        tokens = build_tokens(rows, catalog, datasheet)
+        tokens = build_tokens(rows, path)
         filename = "QA-J{}-{}-{}.xlsx".format(
             int(key[0]), _safe_filename(key[1]), _safe_filename(key[2])
         )
@@ -388,8 +284,10 @@ def generate(dsn: str, datasheet: Path, template: Path, output_dir: Path,
 
 
 def self_check() -> None:
-    catalog = load_catalog(DATASHEET)
-    assert catalog["by_part"]["CAP"]["Group ID"] == "C-001"
+    loaded = datasheet.catalog(DATASHEET)
+    assert len(loaded["parts"]["MLCC"]) == 3
+    assert loaded["checklist"]["MLCC"]["incoming_inspection"]
+    assert datasheet.prices("MLCC")["unit_price_min"] == 0.09
     assert _safe_filename("../CAP") == "CAP"
     with tempfile.TemporaryDirectory() as directory:
         output = Path(directory) / "check.xlsx"

@@ -9,13 +9,16 @@ CREATE TEMP TABLE mock_seed_parts (
     initial_stock integer NOT NULL
 ) ON COMMIT DROP;
 
+-- part_name 은 데이터시트 Components 의 'MPN' 과 글자까지 같아야 한다. 그 일치로
+-- 후보 3종 중 실제로 쓰는 부품을 골라 unit_price_selected 를 정한다.
+-- part_category 는 데이터시트의 '부품 타입' 이자 Checklist 의 조회 키다.
 INSERT INTO mock_seed_parts VALUES
     ('HBM', 'SK hynix HBM3E 12-Hi 36GB', 'HBM_MEMORY', 80),
-    ('PM', 'Texas Instruments TPSM84424MOLR Power Module', 'POWER_MODULE', 40),
-    ('GPU', 'NVIDIA GB200 GPU Module (OEM/RFQ Reference)', 'GPU_MODULE', 10),
-    ('CAP', 'Murata GRM188R72A104KA35D MLCC Decoupling Capacitor', 'MLCC', 50),
-    ('IND', 'Coilcraft XAL7030-152MEC Power Inductor', 'POWER_INDUCTOR', 20),
-    ('VRM', 'Texas Instruments TPS546D24ARVFR Buck Regulator', 'VOLTAGE_REGULATOR', 50);
+    ('PM', 'Fabrikam FB-PM4424-15Q', 'POWER_MODULE', 40),
+    ('GPU', 'NVIDIA GB200 GPU Module', 'GPU_MODULE', 10),
+    ('CAP', 'Contoso CX-0603X7R104K100', 'MLCC', 50),
+    ('IND', 'Contoso CX-XL7030-152M', 'POWER_INDUCTOR', 20),
+    ('VRM', 'Fabrikam FB-VR546D24', 'VOLTAGE_REGULATOR', 50);
 
 INSERT INTO production.parts (
     part_id, part_name, part_category, stock_quantity
