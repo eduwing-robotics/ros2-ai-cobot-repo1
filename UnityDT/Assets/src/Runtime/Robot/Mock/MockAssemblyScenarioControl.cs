@@ -17,6 +17,8 @@ namespace MainUnity.Runtime.Robot.Mock
         const string Started = "STARTED";
         const string Picked = "PICKED";
         const string Placed = "PLACED";
+        const string PcbPicked = "PCB_PICKED";
+        const string PcbPlaced = "PCB_PLACED";
         const string Completed = "COMPLETED";
         const string Failed = "FAILED";
 
@@ -30,6 +32,13 @@ namespace MainUnity.Runtime.Robot.Mock
         [SerializeField] ItemManager itemManager;
         [SerializeField] SimGripperCatcher gripperCatcher;
         [SerializeField] float resumeRotationOffsetDegrees = 90f;
+
+        [Header("Assembled PCB Transfer")]
+        [SerializeField] Transform assembledPcb;
+        [SerializeField] Transform assembledPcbPicker;
+        [SerializeField] Transform assembledPcbDropPoint;
+        [SerializeField, Range(0f, 100f)] float assembledPcbGraspOpeningPercent;
+        [SerializeField, Range(0f, 100f)] float assembledPcbReleaseOpeningPercent = 100f;
 
         readonly Dictionary<string, int> nextItemIndices = new(StringComparer.Ordinal);
         readonly Dictionary<string, int> nextSlotIndices = new(StringComparer.Ordinal);
@@ -49,6 +58,10 @@ namespace MainUnity.Runtime.Robot.Mock
         int heldStepOrder = -1;
         int lastPlacedStepOrder = -1;
         bool serviceRegistered;
+        Vector3 assembledPcbPositionFromTcp;
+        Quaternion assembledPcbRotationFromTcp = Quaternion.identity;
+        bool assembledPcbHeld;
+        bool assembledPcbTransferred;
         bool feedbackSubscribed;
         bool assemblyRequested;
         bool recovering;
@@ -61,6 +74,7 @@ namespace MainUnity.Runtime.Robot.Mock
             public string request_id;
             public string recipe_version;
             public MockObservation[] observations;
+            public AssembledPcbTransfer assembled_pcb;
         }
 
         [Serializable]
@@ -68,6 +82,15 @@ namespace MainUnity.Runtime.Robot.Mock
         {
             public int order;
             public string part_id;
+            public float gripper_grasp_opening_percent;
+            public float gripper_release_opening_percent;
+            public RosPoseRequest source;
+            public RosPoseRequest target;
+        }
+
+        [Serializable]
+        sealed class AssembledPcbTransfer
+        {
             public float gripper_grasp_opening_percent;
             public float gripper_release_opening_percent;
             public RosPoseRequest source;
@@ -160,6 +183,7 @@ namespace MainUnity.Runtime.Robot.Mock
             ValidateExecution();
             EnsureRosConnection();
             MockObservation[] observations = BuildObservations();
+            AssembledPcbTransfer pcbTransfer = BuildAssembledPcbTransfer();
 
             var current = new TaskCompletionSource<string>();
             terminal = current;
@@ -169,6 +193,8 @@ namespace MainUnity.Runtime.Robot.Mock
             expectedStepCount = observations.Length;
             heldStepOrder = -1;
             lastPlacedStepOrder = 0;
+            assembledPcbHeld = false;
+            assembledPcbTransferred = false;
 
             Task timeout = Task.Delay(TimeSpan.FromSeconds(completionTimeoutSeconds));
             try
@@ -178,7 +204,8 @@ namespace MainUnity.Runtime.Robot.Mock
                     command = "start",
                     request_id = activeRequestId,
                     recipe_version = recipeVersion,
-                    observations = observations
+                    observations = observations,
+                    assembled_pcb = pcbTransfer
                 });
                 Task<RemoteCmdInterfaceResponse> request = connection
                     .SendServiceMessage<RemoteCmdInterfaceResponse>(startService,
@@ -251,6 +278,7 @@ namespace MainUnity.Runtime.Robot.Mock
                     return;
 
                 MockObservation[] observations = BuildObservations();
+                _ = BuildAssembledPcbTransfer();
                 RestoreSnapshot(snapshot, observations);
                 recovering = false;
                 Report(snapshot.state switch
@@ -258,6 +286,8 @@ namespace MainUnity.Runtime.Robot.Mock
                     Started => AssemblyState.Started,
                     Picked => AssemblyState.Picked,
                     Placed => AssemblyState.Placed,
+                    PcbPicked => AssemblyState.Placed,
+                    PcbPlaced => AssemblyState.Placed,
                     Completed => AssemblyState.Completed,
                     Failed => AssemblyState.Failed,
                     _ => throw new InvalidOperationException("Unknown Mock assembly state.")
@@ -295,6 +325,8 @@ namespace MainUnity.Runtime.Robot.Mock
             heldStepOrder = -1;
             lastPlacedStepOrder = 0;
             activeRequestId = snapshot.request_id;
+            assembledPcbHeld = false;
+            assembledPcbTransferred = false;
             expectedStepCount = snapshot.expected_step_count;
 
             if (snapshot.active)
@@ -343,6 +375,13 @@ namespace MainUnity.Runtime.Robot.Mock
                         slot_code = snapshot.held_slot_code
                     }, true);
                 }
+                if (snapshot.state == PcbPicked)
+                    ApplyAssembledPcbPicked();
+                else if (snapshot.state == PcbPlaced)
+                {
+                    ApplyAssembledPcbPicked();
+                    ApplyAssembledPcbPlaced();
+                }
             }
             else
             {
@@ -362,7 +401,8 @@ namespace MainUnity.Runtime.Robot.Mock
         void ValidateSnapshot(AssemblySnapshot snapshot, MockObservation[] observations)
         {
             bool activeState = snapshot.state == Started || snapshot.state == Picked ||
-                snapshot.state == Placed;
+                snapshot.state == Placed || snapshot.state == PcbPicked ||
+                snapshot.state == PcbPlaced;
             bool terminalState = snapshot.state == Completed || snapshot.state == Failed;
             if (!activeState && !terminalState)
                 throw new InvalidOperationException(
@@ -407,6 +447,8 @@ namespace MainUnity.Runtime.Robot.Mock
                     "Mock assembly status held item did not match its state.");
             if (snapshot.state == Started && snapshot.placed_count != 0 ||
                 snapshot.state == Placed && snapshot.placed_count == 0 ||
+                (snapshot.state == PcbPicked || snapshot.state == PcbPlaced) &&
+                snapshot.placed_count != snapshot.expected_step_count ||
                 snapshot.state == Completed &&
                 snapshot.placed_count != snapshot.expected_step_count)
                 throw new InvalidOperationException(
@@ -522,12 +564,21 @@ namespace MainUnity.Runtime.Robot.Mock
                         ApplyPlaced(feedback);
                         Report(AssemblyState.Placed, feedback);
                         break;
+                    case PcbPicked:
+                        ApplyAssembledPcbPicked();
+                        break;
+                    case PcbPlaced:
+                        ApplyAssembledPcbPlaced();
+                        break;
                     case Completed:
-                        if (heldItem != null)
-                            throw new InvalidOperationException("COMPLETED arrived while an item was held.");
+                        if (heldItem != null || assembledPcbHeld)
+                            throw new InvalidOperationException("COMPLETED arrived while an object was held.");
                         if (lastPlacedStepOrder != expectedStepCount)
                             throw new InvalidOperationException(
                                 "COMPLETED arrived before all Mock observations were placed.");
+                        if (!assembledPcbTransferred)
+                            throw new InvalidOperationException(
+                                "COMPLETED arrived before the assembled PCB was transferred.");
                         Report(AssemblyState.Completed, feedback);
                         terminal.TrySetResult(string.Empty);
                         break;
@@ -560,6 +611,11 @@ namespace MainUnity.Runtime.Robot.Mock
                  string.IsNullOrWhiteSpace(feedback.slot_code)))
                 throw new InvalidOperationException(
                     "PICKED and PLACED feedback require part_id and slot_code.");
+            if ((feedback.state == PcbPicked || feedback.state == PcbPlaced) &&
+                (feedback.step_order != 0 || !string.IsNullOrWhiteSpace(feedback.part_id) ||
+                 !string.IsNullOrWhiteSpace(feedback.slot_code)))
+                throw new InvalidOperationException(
+                    "PCB_PICKED and PCB_PLACED must not contain component step data.");
         }
 
         void ApplyPicked(AssemblyFeedback feedback, bool restoreRotation = false)
@@ -630,6 +686,88 @@ namespace MainUnity.Runtime.Robot.Mock
             heldPartId = string.Empty;
             heldSlotCode = string.Empty;
             heldStepOrder = -1;
+        }
+
+        AssembledPcbTransfer BuildAssembledPcbTransfer()
+        {
+            if (assembledPcb == null || assembledPcbPicker == null ||
+                assembledPcbDropPoint == null)
+                throw new InvalidOperationException(
+                    "Assign assembled PCB, Picker and DropPoint Transforms.");
+            if (assembledPcbPicker == assembledPcb ||
+                !assembledPcbPicker.IsChildOf(assembledPcb))
+                throw new InvalidOperationException(
+                    "The assembled PCB Picker must be a child of the assembled PCB.");
+            if (assembledPcbDropPoint == assembledPcb ||
+                assembledPcbDropPoint.IsChildOf(assembledPcb))
+                throw new InvalidOperationException(
+                    "The assembled PCB DropPoint must not be a child of the assembled PCB.");
+
+            ValidateFiniteTransform(assembledPcb, "assembled PCB", assembledPcb.name);
+            ValidateFiniteTransform(assembledPcbPicker, "assembled PCB Picker", assembledPcb.name);
+            ValidateFiniteTransform(assembledPcbDropPoint, "assembled PCB DropPoint",
+                assembledPcb.name);
+            if (!float.IsFinite(assembledPcbGraspOpeningPercent) ||
+                assembledPcbGraspOpeningPercent < 0f ||
+                assembledPcbGraspOpeningPercent > 100f ||
+                !float.IsFinite(assembledPcbReleaseOpeningPercent) ||
+                assembledPcbReleaseOpeningPercent < 0f ||
+                assembledPcbReleaseOpeningPercent > 100f)
+                throw new InvalidOperationException(
+                    "Assembled PCB gripper opening percents must be finite and between 0 and 100.");
+
+            Quaternion sourceTcpRotation =
+                DownwardTcpRotation(assembledPcbPicker.rotation);
+            assembledPcbPositionFromTcp = Quaternion.Inverse(sourceTcpRotation) *
+                (assembledPcb.position - assembledPcbPicker.position);
+            assembledPcbRotationFromTcp = Quaternion.Inverse(sourceTcpRotation) *
+                assembledPcb.rotation;
+
+            return new AssembledPcbTransfer
+            {
+                gripper_grasp_opening_percent = assembledPcbGraspOpeningPercent,
+                gripper_release_opening_percent = assembledPcbReleaseOpeningPercent,
+                source = ToRosPoseRequest(
+                    new Pose(assembledPcbPicker.position, assembledPcbPicker.rotation),
+                    "assembled PCB source"),
+                target = ToRosPoseRequest(
+                    new Pose(assembledPcbDropPoint.position, assembledPcbDropPoint.rotation),
+                    "assembled PCB target")
+            };
+        }
+
+        void ApplyAssembledPcbPicked()
+        {
+            if (assembledPcbHeld || assembledPcbTransferred || heldItem != null ||
+                lastPlacedStepOrder != expectedStepCount)
+                throw new InvalidOperationException("PCB_PICKED feedback arrived out of order.");
+
+            MoveAssembledPcbToTcp(
+                gripperCatcher.transform.position,
+                gripperCatcher.transform.rotation);
+            if (!gripperCatcher.TryCatch(assembledPcb))
+                throw new InvalidOperationException(
+                    "Mock gripper could not catch the assembled PCB.");
+            assembledPcbHeld = true;
+        }
+
+        void ApplyAssembledPcbPlaced()
+        {
+            if (!assembledPcbHeld || assembledPcbTransferred)
+                throw new InvalidOperationException("PCB_PLACED feedback arrived out of order.");
+
+            gripperCatcher.Release();
+            MoveAssembledPcbToTcp(assembledPcbDropPoint.position,
+                DownwardTcpRotation(assembledPcbDropPoint.rotation));
+            assembledPcbHeld = false;
+            assembledPcbTransferred = true;
+        }
+
+        void MoveAssembledPcbToTcp(Vector3 tcpPosition, Quaternion tcpRotation)
+        {
+            assembledPcb.position =
+                tcpPosition + tcpRotation * assembledPcbPositionFromTcp;
+            assembledPcb.rotation = tcpRotation * assembledPcbRotationFromTcp;
         }
 
         MockObservation[] BuildObservations()
@@ -755,6 +893,11 @@ namespace MainUnity.Runtime.Robot.Mock
 
         void FailActive(string error)
         {
+            if (assembledPcbHeld)
+            {
+                gripperCatcher.Release();
+                assembledPcbHeld = false;
+            }
             if (terminal == null || !terminal.TrySetResult(error))
                 return;
             Debug.LogError("Mock assembly failed: " + error, this);

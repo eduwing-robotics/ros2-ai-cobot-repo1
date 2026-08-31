@@ -45,7 +45,10 @@ GRIPPER_CLOSED_METERS = 0.021
 DEFAULT_TOOL_OFFSET = (0.0, 0.0, 274.073, 0.0, 0.0, 0.0)
 FUTURE_TIMEOUT_SECONDS = 60.0
 FAULT_RESTART_MESSAGE = "execution state is unknown after a timeout; restart the mock node"
-ASSEMBLY_STATES = {"STARTED", "PICKED", "PLACED", "COMPLETED", "FAILED"}
+ASSEMBLY_STATES = {
+    "STARTED", "PICKED", "PLACED", "PCB_PICKED", "PCB_PLACED",
+    "COMPLETED", "FAILED",
+}
 STEP_STATES = {"PICKED", "PLACED"}
 
 
@@ -113,10 +116,12 @@ def parse_start_command(raw):
     if not isinstance(command, dict):
         raise ValueError("cmd_str must be a JSON object")
     if set(command) != {
-        "command", "request_id", "recipe_version", "observations"
+        "command", "request_id", "recipe_version", "observations",
+        "assembled_pcb",
     }:
         raise ValueError(
-            "command, request_id, recipe_version and observations are required"
+            "command, request_id, recipe_version, observations and assembled_pcb "
+            "are required"
         )
     if command["command"] != "start":
         raise ValueError("command must be start")
@@ -130,8 +135,10 @@ def parse_start_command(raw):
     recipe_version = command["recipe_version"]
     if not isinstance(recipe_version, str) or not recipe_version.strip():
         raise ValueError("recipe_version must be a non-empty string")
-    return request_id, recipe_version, validate_observations(
-        command["observations"]
+    return (
+        request_id, recipe_version,
+        validate_observations(command["observations"]),
+        validate_assembled_pcb(command["assembled_pcb"]),
     )
 
 
@@ -222,6 +229,35 @@ def validate_observations(observations):
     return validated
 
 
+def validate_assembled_pcb(value):
+    if not isinstance(value, dict) or set(value) != {
+        "gripper_grasp_opening_percent",
+        "gripper_release_opening_percent",
+        "source",
+        "target",
+    }:
+        raise ValueError(
+            "assembled_pcb must contain gripper_grasp_opening_percent, "
+            "gripper_release_opening_percent, source and target"
+        )
+    grasp = _finite_number(
+        value["gripper_grasp_opening_percent"],
+        "assembled_pcb.gripper_grasp_opening_percent",
+    )
+    release = _finite_number(
+        value["gripper_release_opening_percent"],
+        "assembled_pcb.gripper_release_opening_percent",
+    )
+    if not 0.0 <= grasp <= 100.0 or not 0.0 <= release <= 100.0:
+        raise ValueError("assembled PCB gripper percents must be between 0 and 100")
+    return {
+        "gripper_grasp_opening_percent": grasp,
+        "gripper_release_opening_percent": release,
+        "source": validate_ros_pose(value["source"], "assembled_pcb.source"),
+        "target": validate_ros_pose(value["target"], "assembled_pcb.target"),
+    }
+
+
 def validate_joint_point(value, label):
     if not isinstance(value, list) or len(value) != len(JOINTS):
         raise ValueError(f"{label} must contain six numbers")
@@ -248,10 +284,17 @@ def validate_recipe(recipe, expected_version):
 
     motion = recipe.get("motion")
     if not isinstance(motion, dict) or set(motion) != {
-        "approach_dz_mm", "retract_dz_mm"
+        "approach_dz_mm", "retract_dz_mm",
+        "assembled_pcb_drop_approach_dz_mm",
     }:
-        raise ValueError("motion must contain approach_dz_mm and retract_dz_mm")
-    for name in ("approach_dz_mm", "retract_dz_mm"):
+        raise ValueError(
+            "motion must contain approach_dz_mm, retract_dz_mm and "
+            "assembled_pcb_drop_approach_dz_mm"
+        )
+    for name in (
+        "approach_dz_mm", "retract_dz_mm",
+        "assembled_pcb_drop_approach_dz_mm",
+    ):
         if _finite_number(motion[name], f"motion.{name}") <= 0.0:
             raise ValueError(f"motion.{name} must be greater than zero")
 
@@ -259,10 +302,12 @@ def validate_recipe(recipe, expected_version):
     expected_per_step = [
         "home", "item_ready", "pick", "home", "assembly_ready", "place"
     ]
+    expected_after_all = ["home", "transfer_assembled_pcb", "home"]
     if not isinstance(sequence, dict) or sequence.get("per_step") != expected_per_step \
-            or sequence.get("after_all") != ["home"]:
+            or sequence.get("after_all") != expected_after_all:
         raise ValueError(
-            "sequence must preserve Home, ItemReady, Pick, Home, AssemblyReady, Place, Home"
+            "sequence must preserve the component cycle and finish with "
+            "Home, transfer_assembled_pcb, Home"
         )
 
     steps = recipe.get("steps")
@@ -433,11 +478,18 @@ def self_check():
         "source": {"xyz_mm": [350, -150, 250], "xyzw": [0, 0, 0, 1]},
         "target": {"xyz_mm": [350, 150, 250], "xyzw": [0, 0, 0, 1]},
     }]
+    assembled_pcb = {
+        "gripper_grasp_opening_percent": 0,
+        "gripper_release_opening_percent": 100,
+        "source": {"xyz_mm": [450, 0, 200], "xyzw": [0, 0, 0, 1]},
+        "target": {"xyz_mm": [350, 350, 200], "xyzw": [0, 0, 0, 1]},
+    }
     parsed = parse_start_command(json.dumps({
         "command": "start",
         "request_id": request_id,
         "recipe_version": "mock-r1",
         "observations": observations,
+        "assembled_pcb": assembled_pcb,
     }))
     assert parsed[:2] == (request_id, "mock-r1")
     assert (
@@ -455,13 +507,14 @@ def self_check():
         "motion": {
             "approach_dz_mm": 100,
             "retract_dz_mm": 120,
+            "assembled_pcb_drop_approach_dz_mm": 150,
         },
         "sequence": {
             "per_step": [
                 "home", "item_ready", "pick",
                 "home", "assembly_ready", "place",
             ],
-            "after_all": ["home"],
+            "after_all": ["home", "transfer_assembled_pcb", "home"],
         },
         "steps": [{
             "order": 1,
@@ -470,6 +523,7 @@ def self_check():
         }],
     }, "mock-r1")
     resolved = resolve_observations(recipe, parsed[2])
+    assert parsed[3]["target"]["xyz_mm"] == [350.0, 350.0, 200.0]
     assert "source" not in recipe["steps"][0]
     assert (
         resolved[0]["gripper_grasp_opening_percent"],
@@ -481,6 +535,11 @@ def self_check():
     )
     assert approach["xyz_mm"] == [350.0, -150.0, 350.0]
     assert resolved[0]["source"]["xyz_mm"] == [350.0, -150.0, 250.0]
+    pcb_drop_approach = vertical_offset(
+        parsed[3]["target"],
+        recipe["motion"]["assembled_pcb_drop_approach_dz_mm"],
+    )
+    assert pcb_drop_approach["xyz_mm"] == [350.0, 350.0, 350.0]
     feedback = assembly_feedback(request_id, "PICKED", recipe["steps"][0])
     assert feedback["step_order"] == 1 and feedback["part_id"] == "part"
     terminal = assembly_feedback(request_id, "COMPLETED")
@@ -500,6 +559,14 @@ def self_check():
         1,
     )
     assert snapshot["placed_count"] == 1 and snapshot["held_step_order"] == 0
+    snapshot = advance_assembly_snapshot(
+        snapshot, assembly_feedback(request_id, "PCB_PICKED"), "mock-r1", 1
+    )
+    assert snapshot["active"] and snapshot["placed_count"] == 1
+    snapshot = advance_assembly_snapshot(
+        snapshot, assembly_feedback(request_id, "PCB_PLACED"), "mock-r1", 1
+    )
+    assert snapshot["active"] and snapshot["placed_count"] == 1
     snapshot = advance_assembly_snapshot(snapshot, terminal, "mock-r1", 1)
     assert not snapshot["active"] and snapshot["state"] == "COMPLETED"
     tcp_target = Pose()
@@ -674,7 +741,7 @@ class MockMoveJ(Node):
         except (TypeError, json.JSONDecodeError):
             pass
         try:
-            request_id, recipe_version, observations = parse_start_command(
+            request_id, recipe_version, observations, assembled_pcb = parse_start_command(
                 request.cmd_str
             )
         except ValueError as error:
@@ -706,6 +773,7 @@ class MockMoveJ(Node):
             "request_id": request_id,
             "recipe": recipe,
             "resolved_steps": resolved_steps,
+            "assembled_pcb": assembled_pcb,
         }
         self.latest_assembly_snapshot = advance_assembly_snapshot(
             self.latest_assembly_snapshot,
@@ -1177,9 +1245,57 @@ class MockMoveJ(Node):
                         raise RuntimeError(f"unknown assembly command: {command}")
 
             for command in recipe["sequence"]["after_all"]:
-                if command != "home":
+                if command == "home":
+                    self.run_joint_target(joint_points["home"])
+                elif command == "transfer_assembled_pcb":
+                    transfer = job["assembled_pcb"]
+                    source = self.request_pose(recipe, transfer["source"])
+                    target = self.request_pose(recipe, transfer["target"])
+                    source_approach = self.request_pose(
+                        recipe,
+                        vertical_offset(
+                            transfer["source"], motion["approach_dz_mm"]
+                        ),
+                    )
+                    source_retract = self.request_pose(
+                        recipe,
+                        vertical_offset(
+                            transfer["source"], motion["retract_dz_mm"]
+                        ),
+                    )
+                    target_approach = self.request_pose(
+                        recipe,
+                        vertical_offset(
+                            transfer["target"],
+                            motion["assembled_pcb_drop_approach_dz_mm"],
+                        ),
+                    )
+                    target_retract = self.request_pose(
+                        recipe,
+                        vertical_offset(
+                            transfer["target"], motion["retract_dz_mm"]
+                        ),
+                    )
+                    self.run_gripper(
+                        transfer["gripper_release_opening_percent"]
+                    )
+                    self.run_ptp_pose(source_approach)
+                    self.run_linear(source, True)
+                    self.run_gripper(
+                        transfer["gripper_grasp_opening_percent"]
+                    )
+                    self.publish_assembly_feedback(request_id, "PCB_PICKED")
+                    self.run_linear(source_retract, True)
+                    self.run_joint_target(joint_points["assembly_ready"])
+                    self.run_ptp_pose(target_approach)
+                    self.run_linear(target, True)
+                    self.run_gripper(
+                        transfer["gripper_release_opening_percent"]
+                    )
+                    self.publish_assembly_feedback(request_id, "PCB_PLACED")
+                    self.run_linear(target_retract, True)
+                else:
                     raise RuntimeError(f"unknown final assembly command: {command}")
-                self.run_joint_target(joint_points["home"])
             terminal_state = "COMPLETED"
             error_code = ""
             message = ""

@@ -24,7 +24,7 @@ INTERNAL_FEEDBACK = "/mock_db_mvp/internal/assembly/feedback"
 EXTERNAL_START = "/unity/assembly/start"
 EXTERNAL_FEEDBACK = "/unity/assembly/feedback"
 DEFECT_TYPES = ("MISSING", "POSITION_ERROR", "ORIENTATION_ERROR", "CRACK")
-RELAY_STATES = {"STARTED", "PICKED", "PLACED"}
+RELAY_STATES = {"STARTED", "PICKED", "PLACED", "PCB_PICKED", "PCB_PLACED"}
 
 
 def parse_command(raw):
@@ -35,10 +35,12 @@ def parse_command(raw):
     if command == {"command": "status"}:
         return "status", None
     if not isinstance(command, dict) or set(command) != {
-        "command", "request_id", "recipe_version", "observations"
+        "command", "request_id", "recipe_version", "observations",
+        "assembled_pcb",
     }:
         raise ValueError(
-            "command, request_id, recipe_version and observations are required"
+            "command, request_id, recipe_version, observations and assembled_pcb "
+            "are required"
         )
     if command["command"] != "start":
         raise ValueError("command must be start or status")
@@ -52,6 +54,8 @@ def parse_command(raw):
         raise ValueError(f"recipe_version must be {RECIPE_VERSION}")
     if not isinstance(command["observations"], list) or not command["observations"]:
         raise ValueError("observations must be a non-empty list")
+    if not isinstance(command["assembled_pcb"], dict):
+        raise ValueError("assembled_pcb must be an object")
     return "start", command
 
 
@@ -136,6 +140,7 @@ def self_check():
         "request_id": request_id,
         "recipe_version": RECIPE_VERSION,
         "observations": [{}],
+        "assembled_pcb": {},
     })
     assert parse_command(command)[0] == "start"
     assert parse_command('{"command":"status"}')[0] == "status"
@@ -155,6 +160,7 @@ def self_check():
         "held_slot_code": "",
     }
     assert assembly_snapshot(active, "PLACED")["active"]
+    assert assembly_snapshot(active, "PCB_PICKED")["placed_count"] == 1
     assert assembly_snapshot(active, "PLACED")["job_id"] == 11
     assert assembly_snapshot(active, "PLACED")["unit_id"] == 22
     completed = assembly_snapshot(active, "COMPLETED")
@@ -357,7 +363,7 @@ class MockDbBridge(Node):
                     "held_part_id": payload["part_id"],
                     "held_slot_code": payload["slot_code"],
                 })
-            else:
+            elif state == "PLACED":
                 active.update({
                     "placed_count": payload["step_order"],
                     "held_step_order": 0,

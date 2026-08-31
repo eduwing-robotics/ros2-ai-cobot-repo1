@@ -12,10 +12,11 @@ joint_points:
 motion:
   approach_dz_mm: 100.0
   retract_dz_mm: 100.0
+  assembled_pcb_drop_approach_dz_mm: 150.0
 
 sequence:
   per_step: [home, item_ready, pick, home, assembly_ready, place]
-  after_all: [home]
+  after_all: [home, transfer_assembled_pcb, home]
 
 # Order mirrors SampleScene ItemManger. A type's source and slot indices advance
 # in the listed order: 8, 4, 1, 5, 2, 5.

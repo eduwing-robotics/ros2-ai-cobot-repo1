@@ -15354,6 +15354,11 @@ MonoBehaviour:
   itemManager: {fileID: 1917364535}
   gripperCatcher: {fileID: 319422218}
   resumeRotationOffsetDegrees: 90
+  assembledPcb: {fileID: 617625032}
+  assembledPcbPicker: {fileID: 622558910}
+  assembledPcbDropPoint: {fileID: 272931175}
+  assembledPcbGraspOpeningPercent: 0
+  assembledPcbReleaseOpeningPercent: 100
 --- !u!114 &3495106124279137604
 MonoBehaviour:
   m_ObjectHideFlags: 0

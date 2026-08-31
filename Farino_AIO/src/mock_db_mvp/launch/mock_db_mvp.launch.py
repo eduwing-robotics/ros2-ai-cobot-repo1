@@ -17,7 +17,10 @@ def generate_launch_description():
         executable="mock_sim.py",
         name="mock_movej",
         output="screen",
-        arguments=["--listen-unity", "--preview-seconds", "2"],
+        arguments=[
+            "--listen-unity", "--velocity", "100", "--acceleration", "100",
+            "--preview-seconds", "0.5",
+        ],
         remappings=[
             (
                 "/unity/assembly/start",

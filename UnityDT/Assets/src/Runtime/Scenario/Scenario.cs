@@ -31,7 +31,6 @@ namespace MainUnity.Runtime.Scenario
             {
                 await conveyor.MoveBoardToAssemblyAsync();
                 await robot.ExecuteAsync();
-                await conveyor.MoveBoardToInspectionAsync();
                 //await resultCheck
                 //DB.Update
             }
