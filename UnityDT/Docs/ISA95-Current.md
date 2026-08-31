@@ -1,7 +1,11 @@
-# ISA-95 기준 현재 구조
+# 3계층 전환 전 ISA-95 구조 기록
 
-이 문서는 **2026-08-26 기준으로 실제 실행되는 코드**를 ISA-95 참조 모델에 대입해 정리한다.
-목표 구조가 아니라 현재 상태이며, 계층 경계를 위반하는 지점도 그대로 적는다.
+이 문서는 **2026-08-26 당시 실행 코드**를 ISA-95 참조 모델에 대입한 전환 전 기록이다.
+현재 구현 설명으로 사용하지 않는다. 이후 `Unity → MainServer → PostgreSQL 명령 queue →
+AssemblySequencer` 구조가 구현되면서 아래의 `mock_db_bridge`, MainServer read-only, Unity의
+ROS 직접 시작과 비영속 명령 설명은 더 이상 현재 상태가 아니다.
+
+현재 기준은 [현재 시스템 구조](Architecture.md), [AssemblySequencer](../../ASSEMBLY_SEQUENCER/README.md), [MainServer API](../../MAIN_SERVER/Main_serverAPI.md)를 따른다.
 
 기준 문서: [ISA-95 레벨 정리](https://ros2-ai-cobot-project-01-team-01.atlassian.net/wiki/spaces/KSMC/pages/9568269/ISA-95) ·
 [현재 시스템 구조](Architecture.md) · [ROS2 API](../../docs/API.md) · [MainServer API](../../MAIN_SERVER/Main_serverAPI.md)

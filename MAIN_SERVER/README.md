@@ -1,6 +1,7 @@
 # MAIN_SERVER
 
-제품·부품·재고·작업·검사 결과를 조회하고 조립 요청을 ROS2 bridge로 전달하는 HTTP 서버입니다.
+제품·부품·재고·작업·검사 결과를 조회하고 조립 요청을 PostgreSQL의 영속
+제어 큐에 저장하는 HTTP 서버입니다.
 
 ## 현재 기능
 
@@ -8,15 +9,19 @@
 - 요청 수량 기준 재고·부족분 조회
 - Job, Unit, 검사와 불량 슬롯 조회
 - 제품별 슬롯 불량률 조회
-- 조립 시작 요청과 현재/최근 조립 스냅샷 조회
+- 조립 시작 요청의 `control.assembly_requests` 저장과 현재/최근 조립 스냅샷 조회
 - production 불량과 XLSX 데이터시트를 결합한 불량대책서 파일 생성
 - `MAIN_SERVER_MODE=mock|real` 실행 설정 검증
 
-조립 route는 ROS2 `/unity/assembly/start` 서비스를 호출하므로 ROS2와 Farino
-workspace가 source된 환경이 필요합니다. DB 조회는 읽기 전용 DSN을
-사용합니다. Mock에서는 MainServer를 따로 실행하지 않고
+`POST /api/v1/assemblies`는 ROS2를 호출하지 않고 요청을 PostgreSQL에 저장한다.
+따라서 제품 조회와 조립 요청에는 DB 연결만 필요하다. 같은 DSN으로
+`production`은 조회하고 `control.assembly_requests`는 읽고 쓸 수 있어야 한다.
+
+`GET /api/v1/assemblies/current`만 AssemblySequencer의 ROS2 status service를
+호출하므로 이 route를 사용할 프로세스에는 ROS2와 Farino workspace가 source돼야
+한다. Mock 전체 실행은
 [Farino_AIO Mock 올인원 실행](../Farino_AIO/README.md#mock-올인원-실행)을
-사용합니다.
+사용하거나 MainServer와 AssemblySequencer를 각각 실행한다.
 
 ## 불량대책서 생성
 

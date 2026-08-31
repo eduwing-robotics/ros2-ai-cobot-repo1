@@ -12,9 +12,5 @@ namespace MainUnity.Runtime.Robot.Real
         public Task ExecuteAsync() =>
             Task.FromException(new NotSupportedException(
                 "REAL assembly requires a configured ROS assembly node."));
-
-        public Task TransferAssembledPcbAsync() =>
-            Task.FromException(new NotSupportedException(
-                "REAL assembled PCB transfer requires a configured ROS assembly node."));
     }
 }

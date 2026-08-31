@@ -5,19 +5,25 @@
 ## 전체 구조
 
 ```text
-Unity Scenario ─┬─ RobotMaster ── MockAssemblyScenarioControl ── /unity/assembly/start
-                │                                  /unity/assembly/feedback
-                └─ 수동 UI ────── 상태 표시 (실동작 명령 미연결)
+Unity Scenario ── RobotMaster ── MockAssemblyScenarioControl
+                                      │ HTTP POST /api/v1/assemblies
+                                      ▼
+                                  MainServer
+                                      │ INSERT
+                                      ▼
+                         PostgreSQL control.assembly_requests
+                                      │ poll + atomic claim
+                                      ▼
+                         AssemblySequencer Mock Node
+                              ├─ 내부 mock_sim ── MoveIt
+                              └─ DB Writer ── production DB
 
-MainServer HTTP ── AssemblyGateway ──────────────── /unity/assembly/start
-
-                                         ┌─ AssemblySequencer Mock Node
-/unity/assembly/start ────────────────────┤        ├─ 내부 mock_sim
-                                         │        └─ DB Writer Queue
-                                         └──────────────── production DB
+Unity ←─ /unity/assembly/feedback ── AssemblySequencer
+Unity·MainServer ── status only ──→ /unity/assembly/start
 ```
 
-Unity와 MainServer는 현재 같은 ROS2 조립 서비스를 호출할 수 있지만 서로를 경유하지 않는다.
+자동 조립 명령은 항상 Unity → MainServer → PostgreSQL → AssemblySequencer의
+3계층 경로를 사용한다. ROS2 외부 service는 상태 조회에만 사용한다.
 
 ## Unity 조립 흐름
 
@@ -31,10 +37,9 @@ RobotMaster
 Scenario
   → MockConveyor.MoveBoardToAssemblyAsync()
   → IRobotScenarioControl.ExecuteAsync()
-  → MockConveyor.MoveBoardToInspectionAsync()
 ```
 
-Scenario는 좌표, ROS 메시지, Mock/Real 분기와 완료 callback을 해석하지 않는다. 선택된 backend의 `ExecuteAsync()`가 입력 검증, 통신, 실제 완료, 실패와 타임아웃을 책임진다.
+Scenario는 좌표, ROS 메시지, Mock/Real 분기와 완료 callback을 해석하지 않는다. 선택된 backend의 `ExecuteAsync()`가 입력 검증, 통신, 완성 PCB 이송, 실제 완료, 실패와 타임아웃을 책임진다.
 
 ## Unity 핵심 스크립트 책임
 
@@ -53,9 +58,14 @@ Scenario는 좌표, ROS 메시지, Mock/Real 분기와 완료 callback을 해석
 
 ### Mock backend
 
-`MockAssemblyScenarioControl`은 씬의 부품과 슬롯 Transform을 observation으로 만들고 `/unity/assembly/start`에 전달한다. 서비스 응답은 수락만 뜻한다. `/unity/assembly/feedback`의 terminal 상태가 `COMPLETED`일 때만 `ExecuteAsync()`가 성공한다.
+`MockAssemblyScenarioControl`은 씬의 부품·슬롯과 완성 PCB Transform을 command로
+만들어 MainServer HTTP API에 보낸다. HTTP `accepted=true`는 PostgreSQL 저장만
+뜻한다. `/unity/assembly/feedback`의 terminal 상태가 `COMPLETED`일 때만
+`ExecuteAsync()`가 성공한다.
 
-활성화될 때 같은 서비스에 `status`를 요청해 ROS 메모리의 최근 스냅샷을 복구한다. 이 스냅샷은 ROS 프로세스 재시작을 넘는 영속 복구 계약이 아니다.
+활성화될 때 ROS service에 `status`를 요청해 최근 스냅샷과 씬 상태를 복구한다.
+`QUEUED` command는 PostgreSQL에 남지만 실행 중 Sequencer가 재시작되면 해당
+`RUNNING` 요청은 `FAILED`로 마감하며 로봇 동작을 자동 재개하지 않는다.
 
 ### Real backend
 
@@ -66,24 +76,28 @@ Real 상태 수신과 저수준 Move/그리퍼 서비스 경로는 일부 구현
 `mock_sim.py`는 고정 레시피와 Unity observation의 `order`·`part_id`를 검증하고 MoveIt으로 Pick·Place를 실행한다. 실행 중 수동 명령과 새 조립 요청은 거부한다.
 
 직접 `mock_sim.py`를 실행하면 DB 기록이 없다. AssemblySequencer Mock launch는
-외부 service와 feedback 이름을 유지하고 내부 Mock 노드를 remap한다. 시작 전에
-Job·Unit을 한 transaction으로 예약하고, 실제 완료 이후 재고·검사·Job 갱신은
-내부 FIFO Worker가 순서대로 반영한다. 실제 작업 상태와 `db_sync_state`는
-분리된다.
+외부 status service와 feedback 이름을 유지하고 내부 Mock 노드를 remap한다.
+PostgreSQL에서 가장 오래된 `QUEUED` 요청을 claim하면서 Job·Unit을 한
+transaction으로 만들고, 실제 완료 이후 재고·검사·Job 갱신은 내부 FIFO Worker가
+순서대로 반영한다. 실제 작업 상태와 `db_sync_state`는 분리된다.
 
 ## MainServer
 
 MainServer는 현재 다음 두 책임을 가진다.
 
-- 읽기 전용 DB 계정으로 제품·재고·작업·Unit·불량률을 조회한다.
-- 조립 HTTP 요청을 `AssemblyGateway`에서 ROS2 `/unity/assembly/start`로 전달한다.
+- `production`에서 제품·재고·작업·Unit·불량률을 조회한다.
+- 조립 HTTP 요청을 `control.assembly_requests`에 idempotent하게 저장한다.
 
-따라서 MainServer 프로세스는 조립 실행 route를 사용할 때 `rclpy`와 `fairino_msgs`가 준비된 ROS2 환경을 요구한다. 좌표 계산이나 로봇 완료 판정은 하지 않고 전달받은 observation을 bridge에 그대로 전달한다.
+POST 조립 route는 PostgreSQL만 필요하다. `GET /api/v1/assemblies/current`만
+`AssemblyGateway`에서 ROS status service를 호출하므로 이 route를 사용할 때
+`rclpy`와 `fairino_msgs`가 필요하다. MainServer는 좌표, 레시피 실행과 로봇 완료를
+판정하지 않는다.
 
 ## DB와 레시피
 
 - `production` 쓰기는 AssemblySequencer의 `DbWriter`와 `ProductionStore`만 담당한다.
-- MainServer는 `production`을 읽고 직접 수정하지 않는다.
+- MainServer는 `production`을 읽고 직접 수정하지 않으며, command queue인
+  `control.assembly_requests`만 기록한다.
 - 레시피 본문과 좌표는 YAML·Git이 소유하며 DB에는 실행한 `recipe_version`만 기록한다.
 - 관절·TCP 스트림과 조립 스텝 callback은 영속 DB에 저장하지 않는다.
 
@@ -92,6 +106,6 @@ DB 기준은 [production 설계](DB.md), 품질 파일 기준은 [불량대책�
 ## 현재 제한
 
 - 자동 조립은 Mock, 고정 레시피, 수량 1개와 동시 작업 1건만 지원한다.
-- 취소, 작업 큐, 다중 셀과 ROS2 Action 계약은 없다.
+- PostgreSQL 단일 FIFO queue만 있으며 취소, 다중 셀 배정과 ROS2 Action 계약은 없다.
 - Unity의 제품·작업·품질 화면은 MainServer 조회 API와 완전히 연결되지 않았다.
 - Real 자동 조립과 실제 비전 검사는 구현되지 않았다.

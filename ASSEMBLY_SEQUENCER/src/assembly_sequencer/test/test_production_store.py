@@ -32,6 +32,7 @@ class ProductionStoreIntegrationTest(unittest.TestCase):
         self.product_version = "test-v1"
         self.part_id = "__MDB_TEST_PART_" + suffix
         self.other_part_id = "__MDB_TEST_OTHER_PART_" + suffix
+        self.request_ids = []
 
         with psycopg.connect(TEST_DSN) as connection:
             with connection.cursor() as cursor:
@@ -77,6 +78,10 @@ class ProductionStoreIntegrationTest(unittest.TestCase):
     def tearDown(self):
         with psycopg.connect(TEST_DSN) as connection:
             with connection.cursor() as cursor:
+                cursor.execute(
+                    "DELETE FROM control.assembly_requests WHERE request_id = ANY(%s)",
+                    (self.request_ids,),
+                )
                 cursor.execute(
                     """
                     DELETE FROM production.unit_defects ud
@@ -265,6 +270,76 @@ class ProductionStoreIntegrationTest(unittest.TestCase):
         store.fail_unit(unit_id)
         store.finish_job(job_id, "FAILED")
 
+
+    def test_queue_claim_completion_and_restart_cleanup(self):
+        first_request_id = uuid.uuid4()
+        self.request_ids.append(first_request_id)
+        payload = {
+            "command": "start",
+            "request_id": str(first_request_id),
+            "recipe_version": "mock-r1",
+            "observations": [{}],
+            "assembled_pcb": {},
+        }
+        with psycopg.connect(TEST_DSN) as connection:
+            connection.execute(
+                """
+                INSERT INTO control.assembly_requests (
+                    request_id, runtime_mode, payload
+                ) VALUES (%s, 'mock', %s)
+                """,
+                (first_request_id, psycopg.types.json.Jsonb(payload)),
+            )
+
+        work = store.claim_queued_work(
+            "mock", self.product_code, self.product_version, 1, "mock-r1"
+        )
+        self.assertEqual(work["request_id"], str(first_request_id))
+        store.complete_assembly_and_consume_stock(work["unit_id"])
+        store.record_inspection(work["unit_id"], "PASS", [])
+        store.finish_job(work["job_id"], "COMPLETED")
+        self.assertEqual(
+            self.scalar(
+                """
+                SELECT request_status
+                FROM control.assembly_requests
+                WHERE request_id = %s
+                """,
+                (first_request_id,),
+            ),
+            "COMPLETED",
+        )
+
+        interrupted_request_id = uuid.uuid4()
+        self.request_ids.append(interrupted_request_id)
+        payload["request_id"] = str(interrupted_request_id)
+        with psycopg.connect(TEST_DSN) as connection:
+            connection.execute(
+                """
+                INSERT INTO control.assembly_requests (
+                    request_id, runtime_mode, payload
+                ) VALUES (%s, 'mock', %s)
+                """,
+                (interrupted_request_id, psycopg.types.json.Jsonb(payload)),
+            )
+        interrupted = store.claim_queued_work(
+            "mock", self.product_code, self.product_version, 1, "mock-r1"
+        )
+        self.assertEqual(store.fail_interrupted_requests("mock"), 1)
+        self.assertEqual(
+            store.get_job_state(interrupted["job_id"])["job_status"], "FAILED"
+        )
+        self.assertEqual(
+            self.scalar(
+                """
+                SELECT request_status
+                FROM control.assembly_requests
+                WHERE request_id = %s
+                """,
+                (interrupted_request_id,),
+            ),
+            "FAILED",
+        )
     def test_db_writer_end_to_end(self):
         writer = DbWriter(
             retry_initial_seconds=0.001,

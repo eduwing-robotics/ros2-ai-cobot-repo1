@@ -21,7 +21,7 @@ MAIN_SERVER_MODE=mock MAIN_SERVER_DB_DSN='dbname=main_unity_mock_test' python3 M
 | `GET` | `/api/v1/jobs/{job_id}` | Get assembly job progress |
 | `GET` | `/api/v1/jobs/{job_id}/units` | Get assembled units, inspections, and defects |
 | `GET` | `/api/v1/products/{product_id}/quality/slot-rates` | Get accumulated slot inspection/defect rates |
-| `POST` | `/api/v1/assemblies` | Forward one assembly start command to the ROS bridge |
+| `POST` | `/api/v1/assemblies` | Persist one assembly command in the PostgreSQL control queue |
 | `GET` | `/api/v1/assemblies/current` | Return the ROS bridge's current/last assembly snapshot |
 
 ## Common response
@@ -43,12 +43,16 @@ resources are `404`, and unavailable DB is `503`.
 
 ## Assembly execution
 
-The execution routes are a common Mock/Real API. They always call the same
-ROS2 `fairino_msgs.srv.RemoteCmdInterface` service:
-`/unity/assembly/start`. MainServer does not import or call `mock_sim.py`,
-`production_store.py`, or SQL write functions.
+The two assembly routes have different infrastructure boundaries.
 
-`POST /api/v1/assemblies` requires exactly this existing bridge contract:
+- `POST /api/v1/assemblies` validates the top-level command and inserts it into
+  `control.assembly_requests`. It does not call ROS2.
+- `GET /api/v1/assemblies/current` sends the `status` command to the
+  AssemblySequencer ROS2 service and returns its current or terminal snapshot.
+
+MainServer never calls `mock_sim.py` or production write functions.
+
+`POST /api/v1/assemblies` requires exactly this command contract:
 
 ```json
 {
@@ -59,48 +63,71 @@ ROS2 `fairino_msgs.srv.RemoteCmdInterface` service:
     {
       "order": 1,
       "part_id": "HBM",
+      "gripper_grasp_opening_percent": 0,
+      "gripper_release_opening_percent": 100,
       "source": { "xyz_mm": [0, 0, 0], "xyzw": [0, 0, 0, 1] },
       "target": { "xyz_mm": [0, 0, 0], "xyzw": [0, 0, 0, 1] }
     }
-  ]
+  ],
+  "assembled_pcb": {
+    "gripper_grasp_opening_percent": 0,
+    "gripper_release_opening_percent": 100,
+    "source": { "xyz_mm": [0, 0, 0], "xyzw": [0, 0, 0, 1] },
+    "target": { "xyz_mm": [0, 0, 0], "xyzw": [0, 0, 0, 1] }
+  }
 }
 ```
 
-`request_id` must be a UUID, `recipe_version` must be nonblank, and
-`observations` must be non-empty. Observation poses and every other
-observation field are passed unchanged to the bridge; the bridge/runner
-remains the validation and execution owner. MainServer only validates the
-top-level request shape.
+`request_id` must be a UUID, `recipe_version` must be nonblank,
+`observations` must be non-empty, and `assembled_pcb` must be an object.
+MainServer stores the full command unchanged after top-level validation;
+AssemblySequencer and the backend own recipe, pose and robot safety validation.
 
-A bridge acceptance returns `202`; it means only **accepted**, not completed.
-Use `GET /api/v1/assemblies/current` and the existing job/unit query routes
-to observe progress and terminal results. The current route sends exactly
-`{"command":"status"}` to the bridge and returns its snapshot.
+The first valid request returns `202`:
+
+```json
+{
+  "data": {
+    "accepted": true,
+    "request_id": "UUID",
+    "status": "QUEUED"
+  }
+}
+```
+
+`accepted=true` means persisted in PostgreSQL, not accepted or completed by the
+robot. Repeating the same request ID, mode and payload is idempotent and
+returns its current queue status. Reusing the ID for different content returns
+`409 duplicate_request`.
+
+AssemblySequencer claims the oldest `QUEUED` row for its runtime mode and
+atomically creates the production Job and Unit. Use the current snapshot and
+Job/Unit routes to observe execution and DB synchronization.
 
 | HTTP | Error code | Meaning |
 | --- | --- | --- |
-| `400` | `invalid_request` | Invalid API request, recipe, or bridge request |
-| `409` | `assembly_busy` | An assembly or robot command is already active |
-| `503` | `assembly_unavailable` | ROS2/bridge/DB service unavailable, timeout, or invalid bridge response |
-| `503` | `assembly_faulted` | Runner is faulted and must be recovered before retry |
-| `503` | `assembly_execution_unavailable` | Runner is in PLAN_ONLY mode and cannot execute |
+| `400` | `invalid_request` | Invalid HTTP query or top-level assembly command |
+| `409` | `duplicate_request` | The request ID already belongs to different content |
+| `503` | `database_unavailable` | PostgreSQL is unavailable for query or enqueue |
+| `503` | `assembly_unavailable` | Status ROS2 service is unavailable or invalid |
 
-The gateway serializes ROS service spins, so concurrent HTTP calls cannot spin
-the same ROS2 client context together.
+The status gateway serializes ROS service spins, so concurrent status calls
+cannot spin the same ROS2 client context together.
 
 ## Runtime
 
 `MAIN_SERVER_MODE` must be exactly `mock` or `real`; it chooses runtime
 configuration only, never API paths or payload conversion. `MAIN_SERVER_DB_DSN`
-must point at the corresponding `production` schema through a read-only
-account.
+must allow reads from `production` and enqueue/read access to
+`control.assembly_requests`. MainServer does not write production tables.
 
-Execution routes additionally require a shell where ROS2 and the Farino_AIO
-overlay have been sourced, plus a running bridge that exposes
-`/unity/assembly/start`. For Mock, use the single
+Product, Job and POST assembly routes need PostgreSQL only. The current-status
+route additionally requires a shell where ROS2 and the Farino_AIO overlay have
+been sourced, plus a running AssemblySequencer service. For Mock, use the
 [`launch_mock.launch.py` command](../Farino_AIO/README.md#mock-올인원-실행).
-It starts MoveIt, the Mock DB bridge, Unity endpoint and MainServer against the
-same Mock database; do not start MainServer separately.
+It can start the integrated stack, or MainServer and AssemblySequencer can run
+as separate processes against the same database.
 
-For Real, start the real bridge that implements the same service and run
-MainServer with `MAIN_SERVER_MODE=real` and its real read-only DB DSN.
+`MAIN_SERVER_MODE=real` stores requests in the Real queue, but Real automatic
+assembly is not implemented yet. Do not submit Real production requests until
+the Real AssemblySequencer consumer is connected.

@@ -9,30 +9,35 @@ Writer를 소유한다. Mock 실행 노드와 DB Writer는 구현됐고 Real 실
 | 구분 | 현재 구현 | Sequencer 역할 |
 | --- | --- | --- |
 | Mock | `assembly_sequencer.mock_node`, 기존 `mock_sim.py` | 요청·상태와 DB Writer는 Sequencer, 로봇 실행은 Mock backend가 담당한다. |
-| DB | `db.production_store`, `db.writer` | 시작 예약은 동기 transaction, 완료 갱신은 bounded FIFO Worker가 담당한다. |
+| DB | `db.production_store`, `db.writer` | PostgreSQL command claim과 Job·Unit 생성은 원자적 transaction, 완료 갱신은 bounded FIFO Worker가 담당한다. |
 | Real | 저수준 FR5 명령·상태만 부분 구현 | 향후 Real 노드가 같은 Writer를 호출한다. |
 
 ## 프로세스 경계
 
 ```text
-Unity ───────────────┐
-                     ├─ ROS2 Service/Topic ─→ AssemblySequencer
-MainServer ──────────┘                            │
-                                                 ├─ Mock 또는 Real Robot
-                                                 ├─ Conveyor·Inspection
-                                                 └─ DB Writer ─→ PostgreSQL
+Unity ── HTTP POST ──→ MainServer ── INSERT ──→ PostgreSQL control queue
+                                                   │ claim + Job·Unit
+                                                   ▼
+                                            AssemblySequencer
+                                                   │
+                                                   ├─ ROS2 ─→ Mock 또는 Real Robot
+                                                   ├─ Conveyor·Inspection
+                                                   └─ DB Writer ─→ PostgreSQL production
+
+Unity·MainServer ── ROS2 status ───────────────────┘
 ```
 
 - AssemblySequencer는 MainServer와 별도 프로세스로 실행한다.
-- MainServer가 중단되어도 이미 수락된 작업은 계속 진행한다.
+- MainServer가 중단되어도 PostgreSQL에 저장된 요청과 이미 시작한 작업은 계속 처리한다.
 - MainServer HTTP를 통한 신규 요청은 MainServer 중단 중 사용할 수 없다.
-- MainServer는 생산 DB를 조회만 하며 직접 수정하지 않는다.
+- MainServer는 `production`을 조회하고 `control.assembly_requests`만 기록한다.
 
+- AssemblySequencer만 Job·Unit·재고·검사 등 `production`을 갱신한다.
 ## 책임
 
 AssemblySequencer는 다음을 소유한다.
 
-- 작업 수락·중복 실행 방지와 작업 상태
+- PostgreSQL 요청 claim·중복 실행 방지와 활성 작업 상태
 - 조립·컨베이어·검사 순서와 중단·재시도 정책
 - 하위 제어 결과를 기준으로 한 실제 완료·실패·timeout 전달
 - 생산 DB에 기록할 도메인 이벤트 생성
@@ -45,15 +50,15 @@ Sequencer의 업무 흐름에는 좌표 변환, Raw ROS 메시지 조립, SQL과
 
 | 기능 | 인터페이스 | 송신자 → 수신자 | 상태 |
 | --- | --- | --- | --- |
-| 조립 시작 | `/real/assembly/start` | Unity `RealAssemblyScenarioControl`, 향후 MainServer `AssemblyGateway` → `real_assembly` | 계약 확정·미구현 |
-| 상태 조회 | `/real/assembly/status` | Unity `RealAssemblyScenarioControl` → `real_assembly` | 계약 확정·미구현 |
-| 진행·완료·실패 | `/real/assembly/progress` | `real_assembly` → Unity `RealAssemblyScenarioControl` | 계약 확정·미구현 |
+| 조립 시작 | `/real/assembly/start` | AssemblySequencer Real adapter → `real_assembly` | 계약 확정·미구현 |
+| 상태 조회 | `/real/assembly/status` | AssemblySequencer Real adapter → `real_assembly` | 계약 확정·미구현 |
+| 진행·완료·실패 | `/real/assembly/progress` | `real_assembly` → AssemblySequencer Real adapter → Unity | 계약 확정·미구현 |
 | FR5 명령 | `/fairino_remote_command_service` | `real_assembly`의 Robot 경계 → `fr_command_server` | 저수준 부분 구현 |
 | FR5 상태 | `/nonrt_state_data` | `fr_command_server` → `real_assembly` | 구현 |
 | 검사 | `TBD` Action | `real_assembly` → `inspection_node` | 제안·협의 필요 |
 | 컨베이어 | `TBD` Action | `real_assembly` → `conveyor_controller` | 제안·협의 필요 |
 
-서비스의 `accepted=true`는 요청 검증과 DB Job·Unit 예약 성공을 뜻하며 작업 완료가 아니다. 실제 조립과 검사 결과가 확정된 뒤에만 terminal 진행 상태를 발행한다.
+HTTP의 `accepted=true`는 PostgreSQL 저장 성공만 뜻한다. Sequencer가 요청을 claim해 Job·Unit을 만든 뒤 Real backend에 실행을 요청하며, 실제 조립과 검사 결과가 확정된 뒤에만 terminal 진행 상태를 발행한다.
 
 ## Mock 실행
 
@@ -72,14 +77,22 @@ export PRODUCTION_DB_DSN='dbname=main_unity_mock_test'
 ros2 launch assembly_sequencer mock.launch.py
 ```
 
-MainServer는 별도 터미널에서 같은 ROS 환경을 source하고
-`MAIN_SERVER_MODE=mock`으로 실행한다. 기존
+MainServer는 별도 터미널에서 같은 DB를 가리키고 `MAIN_SERVER_MODE=mock`으로
+실행한다. POST와 조회 API에는 ROS가 필요 없고, 현재 상태 route를 사용할 때만
+같은 ROS 환경을 source한다. 기존
 `ros2 launch mock_db_mvp launch_mock.launch.py` 올인원 명령도 호환된다.
 
-## 비동기 DB 갱신
+## Queue 구분
 
-DB 갱신은 AssemblySequencer 프로세스 내부의 bounded queue와 단일 Worker가
-담당한다. 별도 DB Writer 서버나 메시지 브로커는 두지 않는다.
+- `control.assembly_requests`는 PostgreSQL 영속 command queue다. MainServer가
+  요청을 저장하고 AssemblySequencer가 runtime mode별 FIFO로 claim한다. 아직
+  claim하지 않은 `QUEUED` 요청은 프로세스 재시작을 넘어 보존된다.
+- `DbWriter` queue는 AssemblySequencer 프로세스 내부의 비영속 bounded queue다.
+  실제 작업 완료 뒤 production 갱신을 callback 밖에서 재시도한다.
+
+### 비동기 production 갱신
+
+별도 DB Writer 서버나 메시지 브로커는 두지 않는다.
 
 ```text
 Robot·Inspection callback
@@ -115,15 +128,18 @@ Async DB Worker
 | `created_at` | 이벤트 생성 시각 |
 | `attempt_count`, `next_retry_at`, `last_error` | 재시도 상태 |
 
-현재 목표는 프로세스가 살아 있는 동안의 bounded queue와 재시도다. 프로세스 재시작 후에도 보존되는 SQLite Outbox와 SECS/GEM Adapter는 확장 범위이며 현재 구현으로 간주하지 않는다.
+`QUEUED` command는 PostgreSQL에 영속된다. Sequencer가 재시작되면 이전
+`RUNNING` 요청은 안전하게 `FAILED`로 마감하며 중간 로봇 동작을 자동 재개하지
+않는다. production update event를 재시작 후에도 재시도하는 Outbox와 SECS/GEM
+Adapter는 확장 범위이며 현재 구현으로 간주하지 않는다.
 
-업무 코드의 공개 호출은 다음 네 줄로 제한한다.
+정상 claim 이후 production 갱신 호출은 다음처럼 제한한다.
 
 ```python
-work = writer.reserve(request_id, product_code, product_version, recipe_version)
-writer.assembly_completed(work.unit_id)
-writer.inspection_recorded(work.unit_id, result, defects, image_path)
-writer.finish(work.job_id, "COMPLETED")
+work = writer.claim(runtime_mode, product_code, product_version, recipe_version)
+writer.assembly_completed(work["unit_id"])
+writer.inspection_recorded(work["unit_id"], result, defects, image_path)
+writer.finish(work["job_id"], "COMPLETED")
 ```
 
 ## 안전·실패 정책

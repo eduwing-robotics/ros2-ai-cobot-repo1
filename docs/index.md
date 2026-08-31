@@ -27,10 +27,12 @@ flowchart LR
 
     USER --> UNITY
     USER --> SERVER
-    UNITY <-->|명령·상태| ROS
-    SERVER -->|조립 요청| ROS
-    SERVER -->|읽기| DB
-    ROS -->|mock_db_bridge 사용 시 기록| DB
+    UNITY -->|조립 HTTP 요청| SERVER
+    SERVER -->|command enqueue| DB
+    ROS -->|claim · production 기록| DB
+    UNITY <-->|feedback · status| ROS
+    SERVER -->|status only| ROS
+    SERVER -->|production 조회| DB
     ROS <-->|Mock · Real 일부| CELL
 ```
 
@@ -48,7 +50,7 @@ flowchart LR
 |---|---|---|
 | Unity 디지털 트윈 | **SUPPORTED** | FR5·작업 셀, RUN·INSPECT·MANUAL·QUALITY 화면 |
 | Mock 자동 조립 | **SUPPORTED** | 요청 수락부터 terminal feedback까지 |
-| MainServer | **PARTIAL** | HTTP 조회와 ROS2 조립 요청, Unity 화면 연동 일부 |
+| MainServer | **PARTIAL** | HTTP 조회와 PostgreSQL command enqueue, Unity 화면 연동 일부 |
 | Real 상태·수동 제어 | **PARTIAL** | 상태 수신과 일부 저수준 명령 |
 | Real 자동 조립 | **NOT IMPLEMENTED** | `ExecuteAsync()`가 미지원 오류 반환 |
 | SETUP 화면 | **NOT IMPLEMENTED** | 라우터 항목만 존재 |
@@ -67,18 +69,20 @@ flowchart LR
 
 ### Mock 자동 조립
 
-- Unity가 Scene의 부품·슬롯 Transform으로 observation을 구성한다.
-- `/unity/assembly/start`로 실행 또는 최근 상태 조회를 요청한다.
+- Unity가 Scene의 부품·슬롯·완성 PCB Transform으로 command를 구성한다.
+- 실행 command는 MainServer HTTP를 거쳐 PostgreSQL queue에 저장한다.
+- `/unity/assembly/start` service는 최근 상태 조회에만 사용한다.
 - `/unity/assembly/feedback`으로 `STARTED`, `PICKED`, `PLACED`, `COMPLETED`, `FAILED`를 수신한다.
-- 상태 복구는 ROS 메모리의 최근 스냅샷까지만 지원하며 ROS 재시작을 넘지 않는다.
-- `mock_db_bridge`를 사용하면 Job·Unit·재고·검사 결과를 `production`에 기록한다.
+- `QUEUED` command는 영속되며 Sequencer 재시작 중이던 `RUNNING` 작업은 `FAILED`로 마감한다.
+- AssemblySequencer가 Job·Unit·재고·검사 결과를 `production`에 기록한다.
 
 ### MainServer
 
 - 제품, 슬롯·부품 구성, 재고 부족분, 작업·Unit과 슬롯별 불량률을 조회한다.
-- `POST /api/v1/assemblies`는 조립 요청을 `/unity/assembly/start`로 전달한다.
-- `GET /api/v1/assemblies/current`는 같은 서비스의 상태 스냅샷을 조회한다.
+- `POST /api/v1/assemblies`는 조립 요청을 `control.assembly_requests`에 저장한다.
+- `GET /api/v1/assemblies/current`만 ROS service의 상태 스냅샷을 조회한다.
 - Mock/Real 모드는 HTTP 경로를 바꾸지 않고 실행 설정만 선택한다.
+- MainServer는 `production`을 수정하지 않는다.
 
 ## 실행 흐름
 
@@ -89,21 +93,30 @@ sequenceDiagram
     participant Scenario
     participant Conveyor
     participant Backend as MockAssemblyScenarioControl
-    participant ROS as ROS2 Mock / DB Bridge
+    participant MainServer
+    participant DB as PostgreSQL
+    participant Sequencer as AssemblySequencer
+    participant Mock as Mock backend
 
     Operator->>Unity: START
     Unity->>Scenario: Run()
     Scenario->>Conveyor: 조립 위치로 이동
     Scenario->>Backend: ExecuteAsync()
-    Backend->>ROS: start request
-    ROS-->>Backend: accepted
-    ROS-->>Backend: STARTED · PICKED · PLACED
-    ROS-->>Backend: COMPLETED 또는 FAILED
+    Backend->>MainServer: POST assembly command
+    MainServer->>DB: INSERT QUEUED
+    MainServer-->>Backend: 202 queued
+    Sequencer->>DB: claim + Job·Unit 생성
+    Sequencer->>Mock: internal start
+    Mock-->>Sequencer: STARTED · PICKED · PLACED
+    Sequencer->>Mock: 완성 PCB 내부 이송 요청
+    Mock-->>Sequencer: PCB_PICKED · PCB_PLACED · COMPLETED 또는 FAILED
+    Sequencer-->>Backend: feedback
     Backend-->>Scenario: 실제 완료 또는 실패
-    Scenario->>Conveyor: 완료 후 검사 위치로 이동
 ```
 
-`mock_db_bridge` 경로에서는 재고 차감, 검사 기록과 Job 마감이 commit된 뒤에만 외부 `COMPLETED`를 전달한다. MainServer와 Unity는 같은 ROS2 조립 서비스를 호출할 수 있지만 서로를 경유하지 않는다.
+`COMPLETED`는 실제 Mock 작업과 검사 판정 완료를 뜻한다. production 갱신은 내부
+FIFO worker가 비동기로 commit하므로 `db_sync_state`로 실제 작업 상태와 분리한다.
+MainServer가 중단돼도 DB에 저장된 요청과 이미 시작한 작업은 계속 처리된다.
 
 ## 책임 경계
 
@@ -113,14 +126,15 @@ sequenceDiagram
 | `RobotMaster` | Mock/Real 선택과 계약 주입 | 좌표 변환, ROS 통신, 실행 로직 |
 | `IRobotScenarioControl` 구현 | 입력 검증, 통신, 실제 완료·실패·timeout | 상위 업무 순서 |
 | `IRobotControl` 구현 | 수동·저수준 로봇 조작 | 자동 조립 흐름 |
-| MainServer | 읽기 전용 DB 조회, HTTP 검증, ROS2 요청 전달 | Unity 오브젝트 해석, 실제 완료 판정 |
-| ROS2 조립 계층 | 레시피 검증, MoveIt 계획, 로봇·그리퍼 실행, 결과 기록 | 화면과 사용자 조작 |
+| MainServer | production 조회, HTTP 검증, control queue enqueue, ROS status 조회 | Unity 오브젝트 해석, 실제 완료 판정, production 갱신 |
+| ROS2 조립 계층 | command claim, 레시피 검증, MoveIt 실행, 실제 완료 판정과 production 기록 | 화면과 사용자 조작 |
 
 ## 데이터 원칙
 
 | 저장소 | 책임 |
 |---|---|
 | `production` | 제품·슬롯·부품 현재고, Job, Unit, 검사와 불량 슬롯 |
+| `control.assembly_requests` | MainServer가 저장하고 AssemblySequencer가 claim하는 영속 command queue |
 | 데이터시트 XLSX | 제조사, 공급·대체 후보와 검사 체크리스트 |
 | 불량대책서 XLSX | Production 불량과 데이터시트를 결합한 파일 |
 

@@ -17,9 +17,6 @@ namespace MainUnity.Runtime.Robot.Interface
     {
         /// <summary>조립 작업이 실제로 완료되거나 실패할 때까지 기다린다.</summary>
         Task ExecuteAsync();
-
-        /// <summary>조립된 PCB 이송이 실제로 완료되거나 실패할 때까지 기다린다.</summary>
-        Task TransferAssembledPcbAsync();
     }
 
     /// <summary>Backend의 저수준 이동 및 수동 제어 명령을 정의한다.</summary>

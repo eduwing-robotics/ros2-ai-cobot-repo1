@@ -1,4 +1,4 @@
-"""Read-only production queries used by MainServer."""
+"""Production reads and durable command enqueue used by MainServer."""
 import os
 import psycopg
 from psycopg.rows import dict_row
@@ -9,6 +9,10 @@ class DatabaseUnavailable(RuntimeError):
 
 
 class ResourceNotFound(LookupError):
+    pass
+
+
+class DuplicateRequest(RuntimeError):
     pass
 
 
@@ -40,6 +44,52 @@ def _one(sql, values=()):
 
 def health():
     return _one("SELECT current_database() AS database_name, now() AS database_time")
+
+
+def enqueue_assembly(command, mode):
+    """Persist one command without interpreting robot or production state."""
+    try:
+        with _connect() as connection, connection.transaction():
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    INSERT INTO control.assembly_requests (
+                        request_id, runtime_mode, payload
+                    )
+                    VALUES (%s, %s, %s)
+                    ON CONFLICT (request_id) DO NOTHING
+                    RETURNING request_status
+                    """,
+                    (command["request_id"], mode, psycopg.types.json.Jsonb(command)),
+                )
+                inserted = cursor.fetchone()
+                if inserted is not None:
+                    status = inserted["request_status"]
+                else:
+                    cursor.execute(
+                        """
+                        SELECT runtime_mode, payload, request_status
+                        FROM control.assembly_requests
+                        WHERE request_id = %s
+                        """,
+                        (command["request_id"],),
+                    )
+                    existing = cursor.fetchone()
+                    if (existing is None or existing["runtime_mode"] != mode
+                            or existing["payload"] != command):
+                        raise DuplicateRequest(
+                            "request_id is already used by a different command"
+                        )
+                    status = existing["request_status"]
+        return {
+            "accepted": True,
+            "request_id": command["request_id"],
+            "status": status,
+        }
+    except (DatabaseUnavailable, DuplicateRequest):
+        raise
+    except psycopg.Error as error:
+        raise DatabaseUnavailable("database query failed") from error
 
 
 def products():

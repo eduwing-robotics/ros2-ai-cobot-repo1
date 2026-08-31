@@ -124,7 +124,7 @@ export MAIN_SERVER_DB_DSN='host=DB_HOST dbname=DB_NAME user=READ_ONLY_USER passw
 python3 MAIN_SERVER/server.py
 ```
 
-현재 Real MainServer는 DB 조회만 가능하며 Real 자동조립 node는 미구현입니다.
+현재 MainServer는 Mock·Real 요청을 PostgreSQL queue에 적재할 수 있습니다. Mock consumer는 구현됐고 Real 자동조립 consumer는 미구현입니다.
 
 ## 구성
 
@@ -140,7 +140,7 @@ python3 MAIN_SERVER/server.py
 - [프로젝트 기능 목표와 현재 상태](overview.md)
 - [작업 계획](TODO.md)
 - [현재 시스템 구조](UnityDT/Docs/Architecture.md)
-- [ISA-95 기준 현재 구조](UnityDT/Docs/ISA95-Current.md)
+- [3계층 전환 전 ISA-95 구조 기록](UnityDT/Docs/ISA95-Current.md)
 - [Unity ↔ ROS2 API](docs/API.md)
 - [MainServer HTTP API](MAIN_SERVER/Main_serverAPI.md)
 - [production 핵심 DB 설계](UnityDT/Docs/DB.md)

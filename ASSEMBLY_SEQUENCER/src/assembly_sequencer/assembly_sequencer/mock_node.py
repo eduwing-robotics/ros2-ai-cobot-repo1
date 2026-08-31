@@ -52,9 +52,10 @@ def parse_command(raw):
     else:
         if set(command) != {
             "command", "request_id", "recipe_version", "observations",
+            "assembled_pcb",
         }:
             raise ValueError(
-                "command, request_id, recipe_version and observations are required"
+                "command, request_id, recipe_version, observations and assembled_pcb are required"
             )
         if command_name != "start":
             raise ValueError(
@@ -65,10 +66,12 @@ def parse_command(raw):
         if not isinstance(command["observations"], list) \
                 or not command["observations"]:
             raise ValueError("observations must be a non-empty list")
+        if not isinstance(command["assembled_pcb"], dict):
+            raise ValueError("assembled_pcb must be an object")
         command_type = "start"
 
     try:
-        uuid.UUID(command["request_id"])
+        command["request_id"] = str(uuid.UUID(command["request_id"]))
     except (TypeError, ValueError, AttributeError) as error:
         raise ValueError("request_id must be a UUID string") from error
     if len(command["request_id"]) > 64:
@@ -164,8 +167,10 @@ def self_check():
         "request_id": request_id,
         "recipe_version": RECIPE_VERSION,
         "observations": [{}],
+        "assembled_pcb": {},
     })
     assert parse_command(command)[0] == "start"
+    assert parse_command(command)[1]["request_id"] == request_id
     transfer = json.dumps({
         "command": "transfer_assembled_pcb",
         "request_id": request_id,
@@ -211,7 +216,11 @@ class MockAssemblySequencer(Node):
 
         self.db_writer = DbWriter()
         try:
-            # Fail before advertising endpoints when recovery is unsafe.
+            recovered = self.db_writer.recover_interrupted("mock")
+            if recovered:
+                self.get_logger().warning(
+                    f"failed {recovered} interrupted Mock assembly request(s)"
+                )
             active_job = self.db_writer.get_active()
             if active_job is not None:
                 raise RuntimeError(
@@ -248,6 +257,9 @@ class MockAssemblySequencer(Node):
             self.on_internal_feedback,
             10,
             callback_group=feedback_group,
+        )
+        self.queue_timer = self.create_timer(
+            0.5, self.poll_queue, callback_group=service_group
         )
 
     @staticmethod
@@ -301,56 +313,46 @@ class MockAssemblySequencer(Node):
             response.cmd_res = json.dumps(snapshot, separators=(",", ":"))
             return response
 
-        request_id = command["request_id"]
-        if command_type == "transfer_assembled_pcb":
-            active = self.active
-            if active is None or active["request_id"] != request_id:
-                return self.set_response(
-                    response, False, request_id, "NOT_ACTIVE",
-                    "matching assembly is not active",
-                )
-            if active["state"] != "ASSEMBLY_COMPLETED":
-                return self.set_response(
-                    response, False, request_id, "BUSY",
-                    "assembly is not ready for PCB transfer",
-                )
-            try:
-                internal = await self.call_internal(request)
-                result = parse_internal_response(internal.cmd_res)
-                if result["accepted"]:
-                    return self.set_response(response, True, request_id)
-                response.cmd_res = internal.cmd_res
-                return response
-            except Exception as error:
-                return self.set_response(
-                    response, False, request_id, "INTERNAL_ERROR", str(error)
-                )
+        return self.set_response(
+            response,
+            False,
+            command["request_id"],
+            "INVALID_REQUEST",
+            "assembly commands must be submitted through MainServer",
+        )
 
-        if self.active is not None:
-            return self.set_response(
-                response, False, request_id, "BUSY", "assembly is already active"
-            )
-        if not self.internal_client.wait_for_service(timeout_sec=5.0):
-            return self.set_response(
-                response, False, request_id, "UNAVAILABLE",
-                "internal Mock assembly service is unavailable",
-            )
-
-        job_id = None
+    async def poll_queue(self):
+        if self.active is not None or self.db_writer.pending_count:
+            return
+        if not self.internal_client.wait_for_service(timeout_sec=0.0):
+            return
         try:
-            reservation = self.db_writer.reserve(
-                request_id,
+            work = self.db_writer.claim(
+                "mock",
                 PRODUCT_CODE,
                 PRODUCT_VERSION,
                 RECIPE_VERSION,
             )
-            job_id = reservation.job_id
-            unit_id = reservation.unit_id
+        except Exception as error:
+            self.get_logger().error(f"failed to claim assembly request: {error}")
+            return
+        if work is None:
+            return
+        request_id = work["request_id"]
+        if "error" in work:
+            self.publish(failed_feedback(request_id, "DB_ERROR", work["error"]))
+            return
+
+        job_id = work["job_id"]
+        try:
+            command_type, command = parse_command(json.dumps(work["payload"]))
+            if command_type != "start" or command["request_id"] != request_id:
+                raise ValueError("queued request identity did not match its payload")
             slot_codes = self.db_writer.get_product_slot_codes(job_id)
             self.active = {
                 "request_id": request_id,
                 "job_id": job_id,
-                "unit_id": unit_id,
+                "unit_id": work["unit_id"],
                 "state": "STARTED",
                 "placed_count": 0,
                 "expected_step_count": len(command["observations"]),
@@ -358,42 +360,47 @@ class MockAssemblySequencer(Node):
                 "held_part_id": "",
                 "held_slot_code": "",
                 "slot_codes": slot_codes,
+                "assembled_pcb": command["assembled_pcb"],
             }
             self.terminal_snapshot = None
         except Exception as error:
-            if job_id is not None:
-                cleanup_error = self.fail_job(job_id, immediate=True)
-                if cleanup_error is not None:
-                    error = RuntimeError(
-                        f"{error}; cleanup failed: {cleanup_error}"
-                    )
-            return self.set_response(
-                response, False, request_id, "DB_ERROR", str(error)
+            cleanup_error = self.fail_job(job_id, immediate=True)
+            if cleanup_error is not None:
+                error = RuntimeError(f"{error}; cleanup failed: {cleanup_error}")
+            self.publish(
+                failed_feedback(request_id, "INVALID_REQUEST", str(error))
             )
+            return
 
         try:
-            internal = await self.internal_client.call_async(request)
+            internal_request = RemoteCmdInterface.Request()
+            internal_command = dict(command)
+            internal_command.pop("assembled_pcb")
+            internal_request.cmd_str = json.dumps(
+                internal_command, separators=(",", ":")
+            )
+            internal = await self.call_internal(internal_request)
             result = parse_internal_response(internal.cmd_res)
-            if result["accepted"]:
-                return self.set_response(response, True, request_id)
-            cleanup_error = self.fail_job(job_id, immediate=True)
-            self.active = None
-            if cleanup_error is not None:
-                return self.set_response(
-                    response, False, request_id, "DB_ERROR", str(cleanup_error)
+            if not result["accepted"]:
+                raise RuntimeError(
+                    result.get("message") or "internal Mock assembly rejected the request"
                 )
-            response.cmd_res = internal.cmd_res
-            return response
         except Exception as error:
             cleanup_error = self.fail_job(job_id, immediate=True)
             if cleanup_error is not None:
-                error = RuntimeError(
-                    f"{error}; cleanup failed: {cleanup_error}"
-                )
-            self.active = None
-            return self.set_response(
-                response, False, request_id, "INTERNAL_ERROR", str(error)
+                error = RuntimeError(f"{error}; cleanup failed: {cleanup_error}")
+            failed = failed_feedback(
+                request_id, "INTERNAL_ERROR", str(error), self.db_writer.sync_state
             )
+            self.terminal_snapshot = assembly_snapshot(
+                self.active,
+                "FAILED",
+                failed["error_code"],
+                failed["message"],
+                self.db_writer.sync_state,
+            )
+            self.active = None
+            self.publish(failed)
 
     def fail_job(self, job_id, immediate=False):
         try:
@@ -419,7 +426,42 @@ class MockAssemblySequencer(Node):
             String(data=json.dumps(payload, separators=(",", ":")))
         )
 
-    def on_internal_feedback(self, message):
+    async def transfer_assembled_pcb(self, active):
+        request = RemoteCmdInterface.Request()
+        request.cmd_str = json.dumps({
+            "command": "transfer_assembled_pcb",
+            "request_id": active["request_id"],
+            "assembled_pcb": active["assembled_pcb"],
+        }, separators=(",", ":"))
+        try:
+            internal = await self.call_internal(request)
+            result = parse_internal_response(internal.cmd_res)
+            if result["accepted"]:
+                return
+            raise RuntimeError(
+                result.get("message") or "internal Mock PCB transfer was rejected"
+            )
+        except Exception as error:
+            cleanup_error = self.fail_job(active["job_id"])
+            if cleanup_error is not None:
+                error = RuntimeError(f"{error}; cleanup failed: {cleanup_error}")
+            failed = failed_feedback(
+                active["request_id"],
+                "INTERNAL_ERROR",
+                str(error),
+                self.db_writer.sync_state,
+            )
+            self.terminal_snapshot = assembly_snapshot(
+                active,
+                "FAILED",
+                failed["error_code"],
+                failed["message"],
+                self.db_writer.sync_state,
+            )
+            self.active = None
+            self.publish(failed)
+
+    async def on_internal_feedback(self, message):
         try:
             payload = json.loads(message.data)
             state = payload["state"]
@@ -435,6 +477,7 @@ class MockAssemblySequencer(Node):
             )
             return
         if state in RELAY_STATES:
+            previous_state = active["state"]
             active["state"] = state
             if state == "STARTED":
                 active.update({
@@ -458,6 +501,8 @@ class MockAssemblySequencer(Node):
                 })
             payload["db_sync_state"] = self.db_writer.sync_state
             self.publish(payload)
+            if state == "ASSEMBLY_COMPLETED" and previous_state != state:
+                await self.transfer_assembled_pcb(active)
             return
         if state == "FAILED":
             cleanup_error = self.fail_job(active["job_id"])

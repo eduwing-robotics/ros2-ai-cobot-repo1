@@ -106,6 +106,21 @@ class DbWriter:
             product_code, product_version, quantity, recipe_version
         )
 
+    def claim(
+        self,
+        runtime_mode,
+        product_code,
+        product_version,
+        recipe_version,
+        quantity=1,
+    ):
+        return self._store.claim_queued_work(
+            runtime_mode, product_code, product_version, quantity, recipe_version
+        )
+
+    def recover_interrupted(self, runtime_mode):
+        return self._store.fail_interrupted_requests(runtime_mode)
+
     def abort(self, job_id):
         """Synchronously close a reservation rejected before robot acceptance."""
         self._store.finish_job(job_id, "FAILED")

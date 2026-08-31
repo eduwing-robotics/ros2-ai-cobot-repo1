@@ -13,9 +13,9 @@
 
 | API ID | 기능명 | 호출자·송신자 → 제공자·수신자 | 구분 | 인터페이스 | 메시지 타입 | 상태 |
 | --- | --- | --- | --- | --- | --- | --- |
-| ROS-ASM-003 | Real 자동 조립 시작 | Unity `RealAssemblyScenarioControl`, 향후 MainServer `AssemblyGateway` → `real_assembly` | Service | `/real/assembly/start` | `real_assembly_interfaces/srv/StartAssembly` | 계약 확정·미구현 |
-| ROS-ASM-004 | Real 조립 상태 조회 | Unity `RealAssemblyScenarioControl` → `real_assembly` | Service | `/real/assembly/status` | `real_assembly_interfaces/srv/GetAssemblyStatus` | 계약 확정·미구현 |
-| ROS-ASM-005 | 진행·완료·실패 전달 | `real_assembly` → Unity `RealAssemblyScenarioControl` | Topic | `/real/assembly/progress` | `real_assembly_interfaces/msg/AssemblyProgress` | 계약 확정·미구현 |
+| ROS-ASM-003 | Real backend 자동 조립 시작 | AssemblySequencer Real adapter → `real_assembly` backend | Service | `/real/assembly/start` | `real_assembly_interfaces/srv/StartAssembly` | 내부 연동 계약·미구현 |
+| ROS-ASM-004 | Real 조립 상태 조회 | Unity·MainServer → AssemblySequencer Real adapter | Service | `/real/assembly/status` | `real_assembly_interfaces/srv/GetAssemblyStatus` | 계약 확정·미구현 |
+| ROS-ASM-005 | 진행·완료·실패 전달 | `real_assembly` backend → AssemblySequencer Real adapter → Unity | Topic | `/real/assembly/progress` | `real_assembly_interfaces/msg/AssemblyProgress` | 계약 확정·미구현 |
 | ROS-RBT-007 | FR5 이동·그리퍼 명령 | `real_assembly` Robot 경계 → `fr_command_server` | Service | `/fairino_remote_command_service` | `fairino_msgs/srv/RemoteCmdInterface` | 저수준 부분 구현 |
 | ROS-RBT-008 | FR5 상태 전달 | `fr_command_server` → `real_assembly` | Topic | `/nonrt_state_data` | `fairino_msgs/msg/RobotNonrtState` | 구현 |
 | ROS-CNV-001 | 컨베이어 위치 이동 | `real_assembly` → `conveyor_controller` | Action | `TBD` | `TBD` | 제안·협의 필요 |
@@ -28,30 +28,32 @@
 | 항목 | 계약 |
 | --- | --- |
 | 프로세스 경계 | `real_assembly`는 MainServer와 독립 실행한다. |
-| MainServer 중단 | 이미 수락된 작업과 DB 갱신은 계속한다. MainServer 경유 신규 요청만 불가하다. |
-| 요청 수락 | `accepted=true`는 입력 검증과 DB Job·Unit 예약 성공이다. 작업 완료가 아니다. |
+| MainServer 중단 | DB에 적재된 `QUEUED` 요청과 이미 실행 중인 작업은 유지된다. MainServer 경유 신규 요청만 불가하다. |
+| 요청 수락 | HTTP `202`는 PostgreSQL 명령 queue 적재 성공이다. backend `accepted=true`도 작업 완료가 아니다. |
 | 작업 완료 | `COMPLETED`는 실제 조립과 검사가 모두 완료된 상태다. |
 | DB 상태 | 실제 작업 상태와 `db_sync_state`를 분리한다. |
-| 동시 실행 | 활성 작업은 1개만 허용하며 추가 요청은 `BUSY`로 거절한다. |
+| 동시 실행 | 활성 작업은 1개만 허용하며 추가 HTTP 요청은 `QUEUED`로 대기한다. |
 | 요청 식별 | 호출자가 UUID 문자열 `request_id`를 생성하고 모든 비동기 결과를 대조한다. |
 | 중복 요청 | 같은 ID·같은 요청은 기존 결과를 반환하고, 같은 ID·다른 요청은 `DUPLICATE_REQUEST`로 거절한다. |
 | 완료 판정 | 명령 수락 응답이 아니라 실제 장비 상태, 검사 결과, timeout을 기준으로 판정한다. |
 | 재접속 | `/real/assembly/status`로 활성 작업 또는 최근 terminal snapshot을 조회한다. |
-| 재시작 복구 | 현재 snapshot과 DB queue는 프로세스 재시작 이후 복구를 보장하지 않는다. |
+| 재시작 복구 | PostgreSQL의 `QUEUED` 요청은 유지한다. 재시작 시 중단된 `RUNNING` 요청은 `FAILED`로 마감하며 실제 로봇 동작 자동 재개는 보장하지 않는다. |
 
-## 3. ROS-ASM-003 자동 조립 시작
+## 3. ROS-ASM-003 Real backend 자동 조립 시작
+
+외부 자동 조립의 기준 진입점은 MainServer `POST /api/v1/assemblies`다. 아래 ROS Service는 AssemblySequencer가 DB에서 Real 요청을 claim한 뒤 팀원의 Real backend와 연결할 내부 계약이며, IDL과 adapter 구현 전에는 공개 호출 경로가 아니다.
 
 ### 3.1 기본 명세
 
 | 항목 | 내용 |
 | --- | --- |
-| 목적 | 제품 1개의 Real 조립 작업을 검증·예약하고 실행 Runner를 시작한다. |
-| 호출자 | Unity `RealAssemblyScenarioControl`, 향후 MainServer `AssemblyGateway` |
-| 제공자 | `real_assembly` |
+| 목적 | AssemblySequencer가 claim·예약한 Real 조립 작업의 실행 Runner를 시작한다. |
+| 호출자 | AssemblySequencer Real adapter |
+| 제공자 | `real_assembly` backend |
 | 구분 | ROS 2 Service |
 | 인터페이스 | `/real/assembly/start` |
 | 타입 | `real_assembly_interfaces/srv/StartAssembly` |
-| 성공 조건 | DB Job·Unit 예약 후 `accepted=true` |
+| 성공 조건 | backend가 실행 요청을 검증·수락한 뒤 `accepted=true` |
 | 멱등성 | `request_id` 기준 보장 |
 | 상태 | 계약 확정·IDL/실행 노드 미구현 |
 
@@ -69,7 +71,7 @@
 
 | 필드 | 타입 | 설명 |
 | --- | --- | --- |
-| `accepted` | bool | 검증과 DB 예약 성공 여부 |
+| `accepted` | bool | backend 검증과 실행 요청 수락 여부 |
 | `request_id` | string | 요청 ID |
 | `job_id` | int64 | 생성되거나 기존에 매핑된 Job ID |
 | `unit_id` | int64 | 생성되거나 기존에 매핑된 Unit ID |
@@ -80,9 +82,9 @@
 
 | 순서 | 처리 | 실패 시 |
 | :---: | --- | --- |
-| 1 | 필수값·형식·수량과 중복 요청 확인 | 요청 거절 |
-| 2 | 안전·FR5 준비 상태와 활성 작업 확인 | 요청 거절 |
-| 3 | `writer.reserve(request_id, product_code, product_version, recipe_version, quantity)`로 Job·Unit과 재고를 한 transaction에서 예약 | 로봇 미동작·요청 거절 |
+| 1 | AssemblySequencer가 PostgreSQL 명령을 claim하고 Job·Unit·재고를 한 transaction에서 예약 | backend 미호출·요청 실패 |
+| 2 | adapter가 필수값·식별자와 중복 요청을 확인 | 요청 거절 |
+| 3 | backend가 안전·FR5 준비 상태와 활성 작업을 확인 | 요청 거절 |
 | 4 | `job_id`, `unit_id`를 활성 상태에 저장 | 요청 거절 |
 | 5 | `accepted=true` 반환 후 Runner 예약 | 이후 실패는 Progress `FAILED` |
 
@@ -108,8 +110,8 @@ Service callback에서는 실제 Pick·Place를 실행하지 않는다.
 | 항목 | 내용 |
 | --- | --- |
 | 목적 | 활성 작업 또는 최근 terminal snapshot을 조회한다. |
-| 호출자 | Unity `RealAssemblyScenarioControl` |
-| 제공자 | `real_assembly` |
+| 호출자 | Unity `RealAssemblyScenarioControl`, MainServer `AssemblyGateway` |
+| 제공자 | AssemblySequencer Real adapter |
 | 구분 | ROS 2 Service |
 | 인터페이스 | `/real/assembly/status` |
 | 타입 | `real_assembly_interfaces/srv/GetAssemblyStatus` |
@@ -246,13 +248,14 @@ Service callback에서는 실제 Pick·Place를 실행하지 않는다.
 
 | 구분 | 소유자 | 연결 | 권한 |
 | --- | --- | --- | --- |
-| 조회 | MainServer | `MAIN_SERVER_DB_DSN` | read-only |
-| 쓰기 | AssemblySequencer DB Worker | `PRODUCTION_DB_DSN` | `production_writer` |
+| 생산 조회·명령 적재/조회 | MainServer | `MAIN_SERVER_DB_DSN` | `production` SELECT, `control.assembly_requests` INSERT·SELECT |
+| 명령 claim·생산 쓰기 | AssemblySequencer | `PRODUCTION_DB_DSN` | `control.assembly_requests`, `production` transaction |
 
 ### 7.2 내부 인터페이스
 
 | ID | 기능명 | 송신자 → 수신자 | 구분 | 상태 |
 | --- | --- | --- | --- | --- |
+| INT-DB-000 | 조립 명령 queue 적재·claim | MainServer → PostgreSQL → AssemblySequencer | persistent DB queue | Mock 구현 |
 | INT-DB-001 | 생산 DB 갱신 예약 | Sequencer 업무 흐름 → DB Worker | bounded in-process queue | Mock·공통 구현 |
 | INT-DB-002 | 생산 DB transaction 적용 | DB Worker → PostgreSQL | DB transaction | Mock·공통 구현 |
 
@@ -285,7 +288,7 @@ Service callback에서는 실제 Pick·Place를 실행하지 않는다.
 | 실패 | backoff 재시도하며 overflow와 최종 실패를 조용히 폐기하지 않는다. |
 | 멱등성 | 현재는 DB 상태로 보장하며 `event_id` 영속 중복 제거는 Outbox 단계에서 추가한다. |
 | 저장 제외 | 관절·TCP 스트림과 고빈도 상태는 생산 DB에 저장하지 않는다. |
-| 영속성 | 현재 queue는 프로세스 재시작을 넘는 보존을 보장하지 않는다. |
+| 영속성 | 명령 queue(`control.assembly_requests`)는 영속이다. 완료 이벤트 queue(`DbWriter`)는 프로세스 재시작을 넘는 보존을 보장하지 않는다. |
 
 ## 8. 실 로봇 구현자 준수사항
 
@@ -307,9 +310,9 @@ Service callback에서는 실제 Pick·Place를 실행하지 않는다.
 | 확인 항목 | 기대 결과 |
 | --- | --- |
 | 같은 `request_id` 재호출 | 새 Job 미생성 |
-| 동시 요청 | `BUSY` 반환 |
+| 동시 HTTP 요청 | 한 건만 `RUNNING`, 나머지는 `QUEUED` 유지 |
 | MainServer 종료 | 이미 수락된 작업 계속 실행 |
-| DB 예약·재고 검증 실패 | 실제 로봇 미동작 |
+| DB claim·예약·재고 검증 실패 | 실제 로봇 미동작 |
 | DB 지연 | 로봇·안전 callback 정상 처리 |
 | DB 복구 | pending 이벤트 순서 적용, commit 후 제거 |
 | FR5·Conveyor·Inspection timeout | terminal `FAILED` 전달 |
@@ -322,7 +325,7 @@ Service callback에서는 실제 Pick·Place를 실행하지 않는다.
 | --- | --- |
 | Conveyor·Inspection·Safety endpoint·Schema·QoS·timeout | 담당자 합의 필요 |
 | 조립 취소·일시정지·재개 API | 계약 합의 전 미구현 |
-| 프로세스 재시작을 넘는 SQLite Outbox | 현재 범위 밖 |
+| 완료 이벤트의 프로세스 재시작을 넘는 PostgreSQL Outbox | 현재 범위 밖 |
 | SECS/GEM·GEM300 Adapter | 현재 범위 밖 |
 | 다중 작업 병렬 실행 | 현재 범위 밖 |
 | 별도 DB Writer 서버·메시지 브로커 | 현재 범위 밖 |

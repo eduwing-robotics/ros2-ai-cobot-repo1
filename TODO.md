@@ -45,9 +45,9 @@
 - [ ] UR-13은 권장, SR-14는 필수인 우선순위 차이를 로컬 계획에서는 안전 P0로 처리한다.
 - [ ] UR-11/SR-16 상세 재고 수량을 MVP에서 제외할지 확정한다. backend 재고 검증과 차감은 유지한다.
 - [ ] SR-02의 부품별 고정 수량은 기능 코드가 아니라 제품 슬롯·레시피 검증 데이터가 소유한다고 로컬 기술 문서에 명시한다.
-- [ ] `mock_db_bridge`의 `job_id`를 상태 snapshot과 MainServer 응답을 거쳐 Unity까지 전달한다.
+- [ ] AssemblySequencer snapshot의 `job_id`·`unit_id`를 Unity RUN 화면에 표시한다.
 - [ ] SR-10의 기판 번호를 기존 `unit_id`로 사용할지 별도 식별자로 둘지 사용자가 확정한다.
-- [ ] Unity → AIO → `mock_db_bridge` → PostgreSQL → MainServer → Unity 흐름을 PASS/FAIL 각각 반복 검증한다.
+- [x] Unity → MainServer → PostgreSQL 명령 queue → AssemblySequencer Mock → PostgreSQL 생산 DB → Unity 흐름을 E2E 검증했다.
 - [ ] DB commit 성공 뒤에만 외부 `COMPLETED`, DB 오류 시 `FAILED`가 전달되는지 검증한다.
 - [ ] 사람 감지와 물리 E-STOP이 로봇 명령 차단과 컨베이어 정지까지 이어지는 공통 안전 계약을 확정한다.
 
@@ -153,7 +153,7 @@
 
 ### P0 — Mock 완결과 안전 게이트
 
-- [ ] Unity 요청 → DB bridge → Mock → PostgreSQL의 PASS/FAIL 경로를 반복 실행한다.
+- [x] Unity 요청 → MainServer → PostgreSQL 명령 queue → AssemblySequencer Mock → PostgreSQL의 조립 경로를 실행했다.
 - [ ] DB 기록 완료 뒤에만 외부 terminal feedback을 보내고 실패 시 Job·Unit을 일관되게 마감하는지 검증한다.
 - [ ] STOP·PAUSE·RESUME을 로봇과 컨베이어에 함께 적용하는 최소 조립 제어 계약을 구현한다.
 - [ ] 사람 감지 입력과 물리 E-STOP이 로봇 정지·새 명령 거부·컨베이어 정지로 이어지는지 검증한다.
@@ -184,7 +184,7 @@
 
 - [ ] 취소나 장시간 실행에서 현재 서비스+토픽 계약이 부족할 때만 ROS2 Action으로 교체한다.
 - [ ] 수량 2개 이상이 필요할 때 Unit 반복, 재고 예약과 실패 Unit 정책을 추가한다.
-- [ ] 셀이 2개 이상일 때 작업 큐, claim과 셀 배정을 추가한다.
-- [ ] 프로세스 재시작 뒤 같은 요청의 중복 방지가 필요할 때 영속 `request_id`와 복구 정책을 추가한다.
+- [ ] 셀이 2개 이상일 때 현재 단일 FIFO queue에 셀 배정과 병렬 claim 정책을 추가한다.
+- [ ] 실제 실행 중 프로세스 재시작을 자동 재개해야 할 때 `RUNNING` reconciliation과 장비 상태 복구 정책을 추가한다.
 - [ ] 외부망 또는 다중 사용자가 생길 때 인증·권한·감사 기록을 추가한다.
 - [ ] 실제 조회 지연이 확인될 때만 캐시나 별도 메시지 계층을 검토한다.

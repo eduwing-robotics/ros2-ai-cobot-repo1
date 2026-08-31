@@ -210,12 +210,12 @@ class ApiHandler(BaseHTTPRequestHandler):
 
     def assembly_start(self, values, parameters):
         self._no_query(parameters)
-        command_json, command = self._request_json()
+        command = self._request_json()
         self._validate_start_command(command)
-        result = assembly_gateway.call(command_json)
-        if result.get("accepted") is True:
-            return result
-        self._raise_rejection(result)
+        try:
+            return queries.enqueue_assembly(command, runtime_mode())
+        except queries.DuplicateRequest as error:
+            raise AssemblyRejected(409, "duplicate_request", str(error)) from error
 
     def assembly_current(self, values, parameters):
         self._no_query(parameters)
@@ -235,24 +235,28 @@ class ApiHandler(BaseHTTPRequestHandler):
             raise ValidationError("request body must be valid JSON") from error
         if not isinstance(command, dict):
             raise ValidationError("request body must be a JSON object")
-        return command_json, command
+        return command
 
     @staticmethod
     def _validate_start_command(command):
-        if set(command) != {"command", "request_id", "recipe_version", "observations"}:
+        if set(command) != {
+            "command", "request_id", "recipe_version", "observations", "assembled_pcb"
+        }:
             raise ValidationError(
-                "command, request_id, recipe_version and observations are required"
+                "command, request_id, recipe_version, observations and assembled_pcb are required"
             )
         if command["command"] != "start":
             raise ValidationError("command must be start")
         try:
-            uuid.UUID(command["request_id"])
+            command["request_id"] = str(uuid.UUID(command["request_id"]))
         except (TypeError, ValueError, AttributeError) as error:
             raise ValidationError("request_id must be a UUID string") from error
         if not isinstance(command["recipe_version"], str) or not command["recipe_version"].strip():
             raise ValidationError("recipe_version must be a nonblank string")
         if not isinstance(command["observations"], list) or not command["observations"]:
             raise ValidationError("observations must be a non-empty list")
+        if not isinstance(command["assembled_pcb"], dict):
+            raise ValidationError("assembled_pcb must be an object")
 
     @staticmethod
     def _raise_rejection(result):

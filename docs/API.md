@@ -12,8 +12,8 @@ Real 자동 조립의 상세 메시지 Schema와 구현자 준수사항은 [Asse
 
 | 프로젝트 필요 기능 | Mock API | Real API | 상태 | 비고 |
 | --- | --- | --- | --- | --- |
-| 자동 조립 시작 | `/unity/assembly/start` | `/real/assembly/start` | Mock 구현·Real 미구현 | 수락은 완료가 아님 |
-| 조립 상태 조회·재접속 복구 | `/unity/assembly/start`의 `status` | `/real/assembly/status` | Mock 구현·Real 미구현 | Mock은 ROS 메모리 Snapshot 사용 |
+| 자동 조립 시작 | MainServer `POST /api/v1/assemblies` | 동일 | Mock 구현·Real consumer 미구현 | HTTP 수락은 DB 저장일 뿐 완료가 아님 |
+| 조립 상태 조회·재접속 복구 | `/unity/assembly/start`의 `status` | `/real/assembly/status` | Mock 구현·Real 미구현 | QUEUED는 영속, RUNNING 재시작은 실패 마감 |
 | 조립 진행·완료·실패 | `/unity/assembly/feedback` | `/real/assembly/progress` | Mock 구현·Real 미구현 | `COMPLETED`에서만 성공 |
 | 부품 Pick·Place | Mock 자동 조립 내부 실행 | Real 자동 조립 내부 실행 예정 | Mock 부분 구현 | Real 실행 노드 없음 |
 | 관절 수동 제어 | `/unity/joint_target` | 없음 | Mock API만 구현 | MANUAL UI 미연결 |
@@ -31,7 +31,7 @@ Real 자동 조립의 상세 메시지 Schema와 구현자 준수사항은 [Asse
 | 진행도·기판 번호 | Feedback·Snapshot | Progress 예정 | 부분 구현 | 진행도만 표시, `job_id`·`unit_id` UI 미전달 |
 | PASS/FAIL 검사 | MainServer Job·Unit 조회 | 동일 예정 | 부분 구현 | Mock DB 기록만 존재, INSPECT 미연결 |
 | 작업·검사 이력 | MainServer Job·Unit API | 동일 | 부분 구현 | 단건 조회만 존재 |
-| 생산 DB 갱신 | AssemblySequencer 동기 예약 + Async DB Worker | 향후 Real도 같은 Writer 사용 | Mock·공통 구현, Real 연결 미구현 | bounded queue·재시도 구현, 영속 Outbox 제외 |
+| 생산 DB 갱신 | PostgreSQL command claim + Async DB Worker | 향후 Real도 같은 Writer 사용 | Mock·공통 구현, Real 연결 미구현 | command는 영속, update event Outbox는 제외 |
 | 재고·조립 가능 여부 | MainServer Product API | 동일 | Backend 구현 | UI 공개 범위 재검토 중 |
 | 사람 감지 안전정지 | 없음 | 없음 | 미구현 | 로봇·컨베이어 동시 정지 필요 |
 | E-STOP 연동 | 상태 표시 일부 | `/nonrt_state_data` | 부분 구현 | 표시만 존재, 작업 정지 연동 없음 |
@@ -54,7 +54,7 @@ Real 자동 조립의 상세 메시지 Schema와 구현자 준수사항은 [Asse
 | HTTP-JOB-003 | 작업 목록 조회 | Unity → MainServer | `GET` | `TBD` | 제안·협의 필요 | UR-10, SR-13 |
 | HTTP-JOB-004 | 작업 오류·취소 이벤트 조회 | Unity → MainServer | `GET` | `TBD` | 제안·협의 필요 | UR-10, SR-13 |
 | HTTP-QLT-001 | 슬롯별 불량률 조회 | Unity → MainServer | `GET` | `/api/v1/products/{product_id}/quality/slot-rates` | 구현·UI 부분 연결 | UR-09, SR-09·11 |
-| HTTP-ASM-001 | 조립 시작 요청 전달 | Unity → MainServer | `POST` | `/api/v1/assemblies` | 구현·Unity 미연결 | UR-01~02, UR-08 / SR-01~02, SR-12 |
+| HTTP-ASM-001 | 조립 시작 요청 저장 | Unity → MainServer | `POST` | `/api/v1/assemblies` | 구현·Unity 연결 | UR-01~02, UR-08 / SR-01~02, SR-12 |
 | HTTP-ASM-002 | 현재·최근 조립 상태 조회 | Unity → MainServer | `GET` | `/api/v1/assemblies/current` | 구현 | UR-06, SR-10 |
 
 ## 3. Mock API
@@ -65,8 +65,9 @@ Mock 카메라와 컨베이어는 Unity 내부 기능이므로 외부 API Catalo
 
 | API ID | 기능명 | 호출자·송신자 → 제공자·수신자 | 구분 | 인터페이스 | 메시지 타입 | 상태 | 관련 요구사항 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| ROS-ASM-001 | 자동 조립 시작·상태 조회 | Unity 또는 MainServer → Assembly Sequencer (Mock) | Service | `/unity/assembly/start` | `fairino_msgs/srv/RemoteCmdInterface` | 구현 | UR-01~02, UR-08 / SR-01~02, SR-12 |
+| ROS-ASM-001 | 조립 상태 조회 | Unity 또는 MainServer → Assembly Sequencer (Mock) | Service | `/unity/assembly/start`의 `status` | `fairino_msgs/srv/RemoteCmdInterface` | 구현 | UR-06, SR-10 |
 | ROS-ASM-002 | 조립 진행·완료·실패 전달 | Assembly Sequencer (Mock) → Unity | Topic | `/unity/assembly/feedback` | `std_msgs/String` | 구현 | UR-01~02, UR-06 / SR-01~02, SR-10 |
+| ROS-ASM-006 | 내부 Mock 조립 실행 | Assembly Sequencer → Mock backend | Service | `/mock_db_mvp/internal/assembly/start` | `fairino_msgs/srv/RemoteCmdInterface` | 구현 | UR-01~02, UR-08 / SR-01~02, SR-12 |
 
 ### 3.2 Robot·MoveIt
 
@@ -102,16 +103,18 @@ Mock 카메라와 컨베이어는 Unity 내부 기능이므로 외부 API Catalo
 
 ### 4.3 자동 조립
 
-`real_assembly`는 MainServer와 분리된 ROS 2 프로세스로 배치한다. MainServer는 조회와 요청 전달만 담당하고, 조립 순서·실제 완료 판정·생산 DB 갱신 이벤트는 `real_assembly`가 소유한다.
+Real AssemblySequencer는 MainServer와 분리된 ROS 2 프로세스로 배치한다.
+MainServer는 조회와 command enqueue만 담당하고, Real AssemblySequencer가
+command claim, 조립 순서·실제 완료 판정과 생산 DB 갱신 이벤트를 소유한다.
 
-`accepted=true`는 요청 검증과 DB Job·Unit 예약 성공을 뜻한다. `COMPLETED`는 실제 조립·검사 완료를 뜻하며 DB 최종 반영 여부는 `db_sync_state`로 분리한다.
+HTTP `accepted=true`는 command 저장 성공을 뜻한다. `COMPLETED`는 실제 조립·검사 완료를 뜻하며 DB 최종 반영 여부는 `db_sync_state`로 분리한다.
 
 | API ID | 기능명 | 호출자·송신자 → 제공자·수신자 | 구분 | 인터페이스 | 메시지 타입 | 상태 | 관련 요구사항 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| ROS-ASM-003 | Real 자동 조립 시작 | Unity 또는 MainServer → Assembly Sequencer (Real) | Service | `/real/assembly/start` | `real_assembly_interfaces/srv/StartAssembly` | 계약 확정·미구현 | UR-01~02, UR-08 / SR-01~02, SR-12 |
-| ROS-ASM-004 | Real 조립 상태 조회 | Unity → Assembly Sequencer (Real) | Service | `/real/assembly/status` | `real_assembly_interfaces/srv/GetAssemblyStatus` | 계약 확정·미구현 | UR-06, SR-10 |
-| ROS-ASM-005 | Real 조립 진행·완료·실패 전달 | Assembly Sequencer (Real) → Unity | Topic | `/real/assembly/progress` | `real_assembly_interfaces/msg/AssemblyProgress` | 계약 확정·미구현 | UR-01~02, UR-06 / SR-01~02, SR-10 |
-| ROS-CTL-001 | 조립 중지·일시정지·재개 | Unity 또는 MainServer → Assembly Sequencer (Real) | Service | `TBD` | `TBD` | 제안·협의 필요 | UR-08, SR-12 |
+| ROS-ASM-003 | Real backend 조립 시작 | AssemblySequencer Real adapter → `real_assembly` | Service | `/real/assembly/start` | `real_assembly_interfaces/srv/StartAssembly` | 계약 확정·미구현 | UR-01~02, UR-08 / SR-01~02, SR-12 |
+| ROS-ASM-004 | Real 조립 상태 조회 | Unity 또는 MainServer → AssemblySequencer Real adapter | Service | `/real/assembly/status` | `real_assembly_interfaces/srv/GetAssemblyStatus` | 계약 확정·미구현 | UR-06, SR-10 |
+| ROS-ASM-005 | Real 조립 진행·완료·실패 전달 | `real_assembly` → AssemblySequencer Real adapter → Unity | Topic | `/real/assembly/progress` | `real_assembly_interfaces/msg/AssemblyProgress` | 계약 확정·미구현 | UR-01~02, UR-06 / SR-01~02, SR-10 |
+| ROS-CTL-001 | 조립 중지·일시정지·재개 | Unity → MainServer → AssemblySequencer (Real) | `TBD` | `TBD` | `TBD` | 제안·협의 필요 | UR-08, SR-12 |
 
 Real Start 요청은 `request_id`, `product_code`, `product_version`, `recipe_version`, `requested_quantity`를 사용한다. 응답은 `accepted`, `request_id`, `job_id`, `unit_id`, `error_code`, `message`를 반환한다. Status와 Progress는 작업 식별자, 상태, 현재 단계, 진행도, `db_sync_state`, 오류와 갱신 시각을 제공한다.
 
@@ -144,12 +147,14 @@ Real Start 요청은 `request_id`, `product_code`, `product_version`, `recipe_ve
 
 이 계약은 외부 ROS API가 아니라 `real_assembly` 프로세스 내부 경계다. 로봇·검사 callback은 SQL을 실행하지 않고 DB Update Event를 bounded queue에 추가한다.
 
-신규 작업은 `writer.reserve()`가 Job·첫 Unit을 한 transaction으로 예약한
-뒤에만 수락한다. DB 예약 실패나 재고 부족 시 실제 로봇은 움직이지 않는다.
+신규 작업은 MainServer가 PostgreSQL command queue에 저장한다. AssemblySequencer가
+`writer.claim()`으로 command와 Job·첫 Unit을 한 transaction에서 연결한 뒤에만
+로봇 실행을 요청한다. DB claim 실패나 재고 부족 시 실제 로봇은 움직이지 않는다.
 조립·검사 완료 이후 갱신은 queue에서 비동기로 처리한다.
 
 | ID | 기능명 | 송신자 → 수신자 | 구분 | 인터페이스 | 데이터 | 상태 |
 | --- | --- | --- | --- | --- | --- | --- |
+| INT-DB-000 | 조립 command 저장·claim | MainServer → PostgreSQL → AssemblySequencer | PostgreSQL Queue | `control.assembly_requests` | command JSON | Mock·공통 구현 |
 | INT-DB-001 | 생산 DB 갱신 예약 | Assembly Sequencer → Assembly Sequencer DB Worker | In-process Queue | bounded DB Update Queue | `DbUpdateEvent` | Mock·공통 구현 |
 | INT-DB-002 | 생산 DB transaction 적용 | Assembly Sequencer DB Worker → PostgreSQL | DB Transaction | `PRODUCTION_DB_DSN` | `production_writer` 권한 | Mock·공통 구현 |
 
@@ -158,5 +163,6 @@ Real Start 요청은 `request_id`, `product_code`, `product_version`, `recipe_ve
 - 검사 Result callback은 `INSPECTION_RECORDED`와 최종 작업 이벤트를 queue에 추가한다.
 - queue 항목은 PostgreSQL commit 성공 후에만 제거한다.
 - 실패 항목은 재시도하며 queue overflow와 최종 실패를 조용히 폐기하지 않는다.
-- 현재 범위는 프로세스 내부 queue이며 프로세스 재시작을 넘는 영속 Outbox는 포함하지 않는다.
+- command queue는 PostgreSQL에 영속된다. production update event queue는 프로세스
+  내부이며 재시작을 넘는 Outbox는 포함하지 않는다.
 - 이 구조는 SECS/GEM Spooling 개념을 참고하지만 SECS/GEM 호환 계약은 아니다.

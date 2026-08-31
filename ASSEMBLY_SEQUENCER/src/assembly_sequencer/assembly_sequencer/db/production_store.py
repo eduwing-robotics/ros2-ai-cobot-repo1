@@ -190,6 +190,117 @@ def reserve_work(product_code, product_version, quantity, recipe_version):
             return WorkReservation(job_id, unit_id)
 
 
+
+
+def claim_queued_work(
+    runtime_mode, product_code, product_version, quantity, recipe_version
+):
+    """Claim the oldest command and reserve its Job and Unit atomically."""
+    if runtime_mode not in ("mock", "real"):
+        raise ValueError("runtime_mode must be mock or real")
+    _validate_job_request(product_code, product_version, quantity, recipe_version)
+
+    with _connect() as connection, connection.transaction():
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT request_id, payload
+                FROM control.assembly_requests
+                WHERE runtime_mode = %s AND request_status = 'QUEUED'
+                ORDER BY requested_at
+                FOR UPDATE SKIP LOCKED
+                LIMIT 1
+                """,
+                (runtime_mode,),
+            )
+            request = cursor.fetchone()
+            if request is None:
+                return None
+
+            try:
+                job_id = _insert_job(
+                    cursor, product_code, product_version, quantity, recipe_version
+                )
+            except RuntimeError as error:
+                cursor.execute(
+                    """
+                    UPDATE control.assembly_requests
+                    SET request_status = 'FAILED',
+                        finished_at = now(),
+                        error_message = %s
+                    WHERE request_id = %s
+                    """,
+                    (str(error)[:512], request["request_id"]),
+                )
+                return {
+                    "request_id": str(request["request_id"]),
+                    "error": str(error),
+                }
+            unit_id = _insert_next_unit(cursor, job_id)
+            cursor.execute(
+                """
+                UPDATE control.assembly_requests
+                SET request_status = 'RUNNING',
+                    job_id = %s,
+                    unit_id = %s,
+                    claimed_at = now()
+                WHERE request_id = %s
+                """,
+                (job_id, unit_id, request["request_id"]),
+            )
+            return {
+                "request_id": str(request["request_id"]),
+                "payload": request["payload"],
+                "job_id": job_id,
+                "unit_id": unit_id,
+            }
+
+
+def fail_interrupted_requests(runtime_mode):
+    """Close work whose owning Sequencer process disappeared."""
+    if runtime_mode not in ("mock", "real"):
+        raise ValueError("runtime_mode must be mock or real")
+
+    with _connect() as connection, connection.transaction():
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT request_id, job_id
+                FROM control.assembly_requests
+                WHERE runtime_mode = %s AND request_status = 'RUNNING'
+                FOR UPDATE
+                """,
+                (runtime_mode,),
+            )
+            interrupted = cursor.fetchall()
+            for request in interrupted:
+                cursor.execute(
+                    """
+                    UPDATE production.units
+                    SET unit_status = 'FAILED'
+                    WHERE job_id = %s AND unit_status = 'RUNNING'
+                    """,
+                    (request["job_id"],),
+                )
+                cursor.execute(
+                    """
+                    UPDATE production.jobs
+                    SET job_status = 'FAILED', job_finished_at = now()
+                    WHERE job_id = %s AND job_status IN ('PENDING', 'RUNNING')
+                    """,
+                    (request["job_id"],),
+                )
+            cursor.execute(
+                """
+                UPDATE control.assembly_requests
+                SET request_status = 'FAILED',
+                    finished_at = now(),
+                    error_message = 'AssemblySequencer restarted during execution'
+                WHERE runtime_mode = %s AND request_status = 'RUNNING'
+                """,
+                (runtime_mode,),
+            )
+            return len(interrupted)
 def complete_assembly_and_consume_stock(unit_id):
     _positive_id(unit_id, "unit_id")
 
@@ -454,6 +565,15 @@ def finish_job(job_id, final_status):
                 UPDATE production.jobs
                 SET job_status = %s, job_finished_at = now()
                 WHERE job_id = %s
+                """,
+                (final_status, job_id),
+            )
+            cursor.execute(
+                """
+                UPDATE control.assembly_requests
+                SET request_status = %s,
+                    finished_at = now()
+                WHERE job_id = %s AND request_status = 'RUNNING'
                 """,
                 (final_status, job_id),
             )

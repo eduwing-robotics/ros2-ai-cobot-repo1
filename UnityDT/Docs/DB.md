@@ -2,16 +2,17 @@
 
 ## 현재 구성
 
-2026-08-30 기준 `main_unity_mock`과 `main_unity_mock_test`에는
-`production` 스키마의 아래 6개 테이블만 존재한다.
+2026-08-31 기준 DDL은 `production` 6개 테이블과 `control` 1개 테이블을
+정의한다.
 
 | 저장 위치 | 대상 | 소유·용도 |
 |---|---|---|
 | PostgreSQL `production` | `products`, `parts`, `product_slots`, `jobs`, `units`, `unit_defects` | 제품 정의와 생산 실행·검사 결과 |
+| PostgreSQL `control` | `assembly_requests` | MainServer와 AssemblySequencer 사이의 영속 command queue |
 | [부품 데이터시트](../../MAIN_SERVER/data/semiconductor_assembly_quality_datasheet_2026-08-18.xlsx) | 부품 후보, 단가, 검사항목 | `part_catalog`을 대신하는 읽기 전용 XLSX |
 | `MAIN_SERVER/reports/defects/*.xlsx` | 불량대책서 | `defect_report`를 대신하는 자동 생성 파일 |
 
-`part_catalog`과 `defect_report` 스키마는 두 DB에서 제거했다. 기준 DDL은
+`part_catalog`과 `defect_report` 스키마는 제거했다. 기준 DDL은
 [production_schema.sql](../../DATA_STATION/DB/production_schema.sql) 하나다.
 
 ## 스키마
@@ -31,12 +32,14 @@ ERD 원본은 [db-erd-guide.drawio](./db-erd-guide.drawio)다.
 | `jobs` | `job_id` | `product_id`, `requested_quantity`, `recipe_version`, `job_status` | 생산 요청과 실행 기간 |
 | `units` | `unit_id` | `job_id`, `unit_sequence_in_job`, `unit_status`, `inspection_result` | Job에서 생산한 개별 Unit |
 | `unit_defects` | `unit_defect_id` | `unit_id`, `product_slot_id`, `defect_type` | FAIL Unit의 슬롯 단위 불량 |
+| `control.assembly_requests` | `request_id` | `runtime_mode`, `payload`, `request_status`, `job_id`, `unit_id` | 영속 요청과 production 실행 연결 |
 
 관계는 다음 두 흐름으로 읽는다.
 
 ```text
 products ──< product_slots >── parts
 products ──< jobs ──< units ──< unit_defects >── product_slots
+control.assembly_requests ── job_id/unit_id ──> jobs/units
 ```
 
 ### DB가 보장하는 규칙
@@ -48,6 +51,8 @@ products ──< jobs ──< units ──< unit_defects >── product_slots
 - Unit 검사는 `PENDING`, `PASS`, `FAIL`만 허용하고, 완료 시각과 검사 시각의 순서를 검사한다.
 - 불량 유형은 `MISSING`, `POSITION_ERROR`, `ORIENTATION_ERROR`, `CRACK`만 허용한다.
 - 한 Unit의 같은 Product Slot에는 불량 레코드를 하나만 기록한다.
+- command 상태는 `QUEUED`, `RUNNING`, `COMPLETED`, `FAILED`, `CANCELLED`만 허용한다.
+- `RUNNING` command는 최대 1개이며 Job·Unit과 claim 시각이 반드시 연결된다.
 
 ## 부품 데이터시트
 
@@ -125,16 +130,18 @@ MAIN_SERVER_DB_DSN='dbname=main_unity_mock_test' \
 
 ## 실행 흐름과 소유권
 
-1. ROS2 생산 노드가 `production`의 Job, Unit, 검사 결과를 기록한다.
-2. MainServer는 같은 6개 테이블을 읽어 제품·재고·작업·불량 API를 제공한다.
-3. 불량대책서 생성기가 완료된 FAIL 기록과 데이터시트를 결합해 XLSX를 발행한다.
-4. Unity/Scenario는 DB나 파일을 직접 다루지 않고 주입된 로봇 인터페이스를 사용한다.
+1. Unity가 MainServer HTTP API에 조립 command를 보낸다.
+2. MainServer는 command를 `control.assembly_requests`에 저장하고 `production`은 조회만 한다.
+3. AssemblySequencer가 command를 claim하면서 Job·Unit을 만들고 재고·검사 결과를 `production`에 기록한다.
+4. 불량대책서 생성기가 완료된 FAIL 기록과 데이터시트를 결합해 XLSX를 발행한다.
+5. Unity/Scenario는 DB나 파일을 직접 다루지 않고 주입된 로봇 인터페이스를 사용한다.
 
 ## 검증
 
-두 DB에서 사용자 테이블을 조회한 결과가 아래 6개로 동일함을 확인했다.
+Mock test DB의 schema 적용과 E2E에서 아래 7개 테이블을 확인했다.
 
 ```text
+control.assembly_requests
 production.jobs
 production.parts
 production.product_slots

@@ -4,6 +4,7 @@ import os
 import re
 import sys
 import threading
+import uuid
 import unittest
 from pathlib import Path
 from urllib.error import HTTPError
@@ -121,6 +122,7 @@ class MainServerApiTest(unittest.TestCase):
             "request_id": request_id,
             "recipe_version": "mock-r1",
             "observations": [{}],
+            "assembled_pcb": {},
         }
         body = json.dumps(command, separators=(",", ":")).encode("utf-8")
         snapshot = {
@@ -132,40 +134,42 @@ class MainServerApiTest(unittest.TestCase):
             "placed_count": 0,
             "expected_step_count": 1,
         }
-        gateway = FakeGateway(
-            start_response={
-                "accepted": True,
-                "request_id": request_id,
-                "error_code": "",
-                "message": "",
-            },
-            snapshot=snapshot,
-        )
-        with patch.object(server, "assembly_gateway", gateway):
+        gateway = FakeGateway(snapshot=snapshot)
+        queued = {
+            "accepted": True,
+            "request_id": request_id,
+            "status": "QUEUED",
+        }
+        with patch.object(server, "assembly_gateway", gateway), \
+                patch.object(
+                    server.queries, "enqueue_assembly", return_value=queued
+                ) as enqueue:
             status, result = self.request("/api/v1/assemblies", "POST", body)
             self.assertEqual((status, result["data"]["accepted"]), (202, True))
-            self.assertEqual(gateway.calls, [body.decode("utf-8")])
+            enqueue.assert_called_once_with(command, "mock")
+            self.assertEqual(gateway.calls, [])
             status, result = self.request("/api/v1/assemblies/current")
             self.assertEqual((status, result["data"]["state"]), (200, "STARTED"))
             self.assertEqual(gateway.calls[-1], '{"command":"status"}')
 
-    def test_execution_busy_and_unavailable(self):
+    def test_execution_duplicate_and_unavailable(self):
         request_id = "12345678-1234-5678-1234-567812345678"
         body = json.dumps({
             "command": "start",
             "request_id": request_id,
             "recipe_version": "mock-r1",
             "observations": [{}],
+            "assembled_pcb": {},
         }).encode("utf-8")
-        busy = FakeGateway(start_response={
-            "accepted": False,
-            "request_id": request_id,
-            "error_code": "BUSY",
-            "message": "assembly is already active",
-        })
-        with patch.object(server, "assembly_gateway", busy):
+        with patch.object(
+            server.queries,
+            "enqueue_assembly",
+            side_effect=server.queries.DuplicateRequest("different command"),
+        ):
             status, result = self.request("/api/v1/assemblies", "POST", body)
-            self.assertEqual((status, result["error"]["code"]), (409, "assembly_busy"))
+            self.assertEqual(
+                (status, result["error"]["code"]), (409, "duplicate_request")
+            )
         unavailable = FakeGateway(error=GatewayUnavailable("ROS2 runtime is unavailable"))
         with patch.object(server, "assembly_gateway", unavailable):
             status, result = self.request("/api/v1/assemblies/current")
@@ -178,6 +182,32 @@ class MainServerApiTest(unittest.TestCase):
         with patch.object(server, "assembly_gateway", idle):
             status, result = self.request("/api/v1/assemblies/current")
             self.assertEqual((status, result["data"]["state"]), (200, "IDLE"))
+
+    def test_enqueue_is_idempotent_by_request_id(self):
+        request_id = str(uuid.uuid4())
+        command = {
+            "command": "start",
+            "request_id": request_id,
+            "recipe_version": "mock-r1",
+            "observations": [{}],
+            "assembled_pcb": {},
+        }
+        try:
+            first = server.queries.enqueue_assembly(command, "mock")
+            second = server.queries.enqueue_assembly(command, "mock")
+            self.assertEqual(first["status"], "QUEUED")
+            self.assertEqual(second, first)
+
+            changed = dict(command)
+            changed["recipe_version"] = "different"
+            with self.assertRaises(server.queries.DuplicateRequest):
+                server.queries.enqueue_assembly(changed, "mock")
+        finally:
+            with psycopg.connect(os.environ["MAIN_SERVER_DB_DSN"]) as connection:
+                connection.execute(
+                    "DELETE FROM control.assembly_requests WHERE request_id = %s",
+                    (request_id,),
+                )
 
     def test_validation_and_missing_resource(self):
         status, body = self.request("/api/v1/products/1/requirements?quantity=0")
