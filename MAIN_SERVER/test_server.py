@@ -117,7 +117,7 @@ class MainServerApiTest(unittest.TestCase):
         command = {
             "command": "start",
             "request_id": request_id,
-            "recipe_version": "mock-r1",
+            "recipe_version": "assembly-r1",
             "observations": [{}],
             "assembled_pcb": {},
         }
@@ -126,7 +126,7 @@ class MainServerApiTest(unittest.TestCase):
             "available": True,
             "active": True,
             "request_id": request_id,
-            "recipe_version": "mock-r1",
+            "recipe_version": "assembly-r1",
             "state": "STARTED",
             "placed_count": 0,
             "expected_step_count": 1,
@@ -154,7 +154,7 @@ class MainServerApiTest(unittest.TestCase):
         body = json.dumps({
             "command": "start",
             "request_id": request_id,
-            "recipe_version": "mock-r1",
+            "recipe_version": "assembly-r1",
             "observations": [{}],
             "assembled_pcb": {},
         }).encode("utf-8")
@@ -185,7 +185,7 @@ class MainServerApiTest(unittest.TestCase):
         command = {
             "command": "start",
             "request_id": request_id,
-            "recipe_version": "mock-r1",
+            "recipe_version": "assembly-r1",
             "observations": [{}],
             "assembled_pcb": {},
         }

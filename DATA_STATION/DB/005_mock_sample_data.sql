@@ -29,6 +29,7 @@ CREATE TEMP TABLE mock_sample_units (
     unit_sequence_in_job integer NOT NULL,
     unit_status text NOT NULL,
     inspection_result text NOT NULL,
+    inspection_image_path text,
     assembly_started_at timestamptz NOT NULL,
     assembly_completed_at timestamptz,
     inspected_at timestamptz,
@@ -36,15 +37,15 @@ CREATE TEMP TABLE mock_sample_units (
 ) ON COMMIT DROP;
 
 INSERT INTO mock_sample_units VALUES
-    ('mock-sample-pass-202608-r1', 1, 'COMPLETED', 'PASS',
+    ('mock-sample-pass-202608-r1', 1, 'COMPLETED', 'PASS', 'InspectionSamples/mock-pass.jpg',
      TIMESTAMPTZ '2026-08-08 09:02:00+09', TIMESTAMPTZ '2026-08-08 09:12:00+09', TIMESTAMPTZ '2026-08-08 09:14:00+09'),
-    ('mock-sample-pass-202608-r1', 2, 'COMPLETED', 'PASS',
+    ('mock-sample-pass-202608-r1', 2, 'COMPLETED', 'PASS', 'InspectionSamples/mock-pass.jpg',
      TIMESTAMPTZ '2026-08-08 09:14:30+09', TIMESTAMPTZ '2026-08-08 09:23:00+09', TIMESTAMPTZ '2026-08-08 09:24:00+09'),
-    ('mock-sample-fail-202608-r1', 1, 'COMPLETED', 'FAIL',
+    ('mock-sample-fail-202608-r1', 1, 'COMPLETED', 'FAIL', 'InspectionSamples/mock-fail.jpg',
      TIMESTAMPTZ '2026-08-12 13:02:00+09', TIMESTAMPTZ '2026-08-12 13:12:00+09', TIMESTAMPTZ '2026-08-12 13:14:00+09'),
-    ('mock-sample-fail-202608-r1', 2, 'COMPLETED', 'FAIL',
+    ('mock-sample-fail-202608-r1', 2, 'COMPLETED', 'FAIL', 'InspectionSamples/mock-fail.jpg',
      TIMESTAMPTZ '2026-08-12 13:15:00+09', TIMESTAMPTZ '2026-08-12 13:26:00+09', TIMESTAMPTZ '2026-08-12 13:27:00+09'),
-    ('mock-sample-assembly-failed-202608-r1', 1, 'FAILED', 'PENDING',
+    ('mock-sample-assembly-failed-202608-r1', 1, 'FAILED', 'PENDING', NULL,
      TIMESTAMPTZ '2026-08-16 15:02:00+09', NULL, NULL);
 
 CREATE TEMP TABLE mock_sample_defects (
@@ -164,10 +165,11 @@ CREATE TEMP TABLE mock_sample_inserted_units (
 WITH inserted AS (
     INSERT INTO production.units (
         job_id, unit_sequence_in_job, unit_status, inspection_result,
-        assembly_started_at, assembly_completed_at, inspected_at
+        inspection_image_path, assembly_started_at, assembly_completed_at, inspected_at
     )
     SELECT job.job_id, unit_seed.unit_sequence_in_job, unit_seed.unit_status,
-           unit_seed.inspection_result, unit_seed.assembly_started_at,
+           unit_seed.inspection_result, unit_seed.inspection_image_path,
+           unit_seed.assembly_started_at,
            unit_seed.assembly_completed_at, unit_seed.inspected_at
       FROM mock_sample_units unit_seed
       JOIN mock_sample_inserted_jobs job USING (recipe_version)
@@ -177,6 +179,17 @@ INSERT INTO mock_sample_inserted_units (recipe_version, unit_sequence_in_job, un
 SELECT job.recipe_version, inserted.unit_sequence_in_job, inserted.unit_id
   FROM inserted
   JOIN mock_sample_inserted_jobs job USING (job_id);
+
+UPDATE production.units unit
+   SET inspection_image_path = unit_seed.inspection_image_path
+  FROM production.jobs job
+  JOIN production.products product ON product.product_id = job.product_id
+  JOIN mock_sample_units unit_seed ON unit_seed.recipe_version = job.recipe_version
+ WHERE unit.job_id = job.job_id
+   AND unit.unit_sequence_in_job = unit_seed.unit_sequence_in_job
+   AND product.product_code = 'HBM-ACCELERATOR-PACKAGE-BOARD'
+   AND product.product_version = 'hbm-pkg-r1'
+   AND unit.inspection_image_path IS DISTINCT FROM unit_seed.inspection_image_path;
 
 INSERT INTO production.unit_defects (unit_id, product_slot_id, defect_type)
 SELECT unit.unit_id, slot.product_slot_id, defect.defect_type

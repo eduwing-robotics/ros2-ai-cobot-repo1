@@ -31,7 +31,7 @@ namespace MainUnity.Runtime.Robot.Mock
         [Header("ROS Feedback and Recovery")]
         [SerializeField] string startService = "/unity/assembly/start";
         [SerializeField] string feedbackTopic = "/unity/assembly/feedback";
-        [SerializeField] string recipeVersion = "mock-r1";
+        [SerializeField] string recipeVersion = "assembly-r1";
         [SerializeField, Min(1f)] float completionTimeoutSeconds = 1800f;
 
         [Header("Mock Visualization")]
@@ -695,7 +695,7 @@ namespace MainUnity.Runtime.Robot.Mock
             if (!gripperCatcher.TryCatch(item))
                 throw new InvalidOperationException("Mock gripper could not catch: " + feedback.part_id);
 
-            // ponytail: Remove this snap when mock-r1 recipe poses and frames are calibrated.
+            // ponytail: Remove this snap when assembly-r1 recipe poses and frames are calibrated.
             item.position = gripperCatcher.transform.position;
             if (restoreRotation)
                 item.rotation = gripperCatcher.transform.rotation *

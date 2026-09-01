@@ -11,6 +11,7 @@ from launch_ros.parameter_descriptions import ParameterValue
 
 def generate_launch_description():
     existing_package = get_package_share_directory("fairino5_v6_moveit2_config")
+    package_share = get_package_share_directory("assembly_sequencer")
 
     mock_node = Node(
         package="fairino5_v6_moveit2_config",
@@ -19,7 +20,7 @@ def generate_launch_description():
         output="screen",
         arguments=[
             "--listen-unity", "--velocity", "100", "--acceleration", "100",
-            "--preview-seconds", "0.5",
+            "--preview-seconds", "0.5", "--recipe", LaunchConfiguration("recipe"),
         ],
         remappings=[
             (
@@ -39,6 +40,10 @@ def generate_launch_description():
         DeclareLaunchArgument("start_delay", default_value="5"),
         DeclareLaunchArgument("inspection_fail_probability", default_value="0.2"),
         DeclareLaunchArgument("random_seed", default_value="-1"),
+        DeclareLaunchArgument(
+            "recipe",
+            default_value=f"{package_share}/config/recipes/assembly-r1.yaml",
+        ),
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 f"{existing_package}/launch/demo.launch.py"

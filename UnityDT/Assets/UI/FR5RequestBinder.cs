@@ -515,7 +515,7 @@ namespace MainUnity.UI
             start?.SetEnabled(all);
             if (startReason != null)
                 startReason.text = all
-                    ? "고정 레시피 mock-r1 · 수량 1 로 시작합니다 (제품·수량 선택 계약 없음)"
+                    ? "고정 레시피 assembly-r1 · 수량 1 로 시작합니다 (제품·수량 선택 계약 없음)"
                     : FirstReason(linked, idle, runnable);
         }
 

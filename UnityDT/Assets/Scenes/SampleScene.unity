@@ -15349,7 +15349,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Robot.Mock.MockAssemblyScenarioControl
   startService: /unity/assembly/start
   feedbackTopic: /unity/assembly/feedback
-  recipeVersion: mock-r1
+  recipeVersion: assembly-r1
   completionTimeoutSeconds: 1800
   itemManager: {fileID: 1917364535}
   gripperCatcher: {fileID: 319422218}

@@ -11,7 +11,6 @@ from pathlib import Path
 
 import rclpy
 import yaml
-from ament_index_python.packages import get_package_share_directory
 from controller_manager_msgs.srv import ListHardwareComponents
 from fairino_msgs.srv import RemoteCmdInterface
 from lifecycle_msgs.msg import State
@@ -198,16 +197,19 @@ def validate_ros_pose(value, label):
 def validate_observations(observations):
     if not isinstance(observations, list) or not observations:
         raise ValueError("observations must be a non-empty list")
+    pose_fields = {"order", "part_id", "source", "target"}
+    legacy_gripper_fields = {
+        "gripper_grasp_opening_percent",
+        "gripper_release_opening_percent",
+    }
     validated = []
     for expected_order, observation in enumerate(observations, 1):
-        if not isinstance(observation, dict) or set(observation) != {
-            "order", "part_id", "gripper_grasp_opening_percent",
-            "gripper_release_opening_percent", "source", "target"
-        }:
+        if not isinstance(observation, dict) or set(observation) not in (
+            pose_fields, pose_fields | legacy_gripper_fields
+        ):
             raise ValueError(
-                f"observation {expected_order} must contain "
-                "order, part_id, gripper_grasp_opening_percent, "
-                "gripper_release_opening_percent, source and target"
+                f"observation {expected_order} must contain order, part_id, "
+                "source and target"
             )
         if isinstance(observation["order"], bool) \
                 or not isinstance(observation["order"], int) \
@@ -216,27 +218,9 @@ def validate_observations(observations):
         part_id = observation["part_id"]
         if not isinstance(part_id, str) or not part_id.strip():
             raise ValueError(f"observation {expected_order} part_id must be non-empty")
-        grasp_opening_percent = _finite_number(
-            observation["gripper_grasp_opening_percent"],
-            f"observation {expected_order}.gripper_grasp_opening_percent",
-        )
-        release_opening_percent = _finite_number(
-            observation["gripper_release_opening_percent"],
-            f"observation {expected_order}.gripper_release_opening_percent",
-        )
-        if not 0.0 <= grasp_opening_percent <= 100.0:
-            raise ValueError(
-                "gripper_grasp_opening_percent must be between 0 and 100"
-            )
-        if not 0.0 <= release_opening_percent <= 100.0:
-            raise ValueError(
-                "gripper_release_opening_percent must be between 0 and 100"
-            )
         validated.append({
             "order": expected_order,
             "part_id": part_id,
-            "gripper_grasp_opening_percent": grasp_opening_percent,
-            "gripper_release_opening_percent": release_opening_percent,
             "source": validate_ros_pose(
                 observation["source"], f"observation {expected_order}.source"
             ),
@@ -248,29 +232,16 @@ def validate_observations(observations):
 
 
 def validate_assembled_pcb(value):
-    if not isinstance(value, dict) or set(value) != {
+    pose_fields = {"source", "target"}
+    legacy_gripper_fields = {
         "gripper_grasp_opening_percent",
         "gripper_release_opening_percent",
-        "source",
-        "target",
-    }:
-        raise ValueError(
-            "assembled_pcb must contain gripper_grasp_opening_percent, "
-            "gripper_release_opening_percent, source and target"
-        )
-    grasp = _finite_number(
-        value["gripper_grasp_opening_percent"],
-        "assembled_pcb.gripper_grasp_opening_percent",
-    )
-    release = _finite_number(
-        value["gripper_release_opening_percent"],
-        "assembled_pcb.gripper_release_opening_percent",
-    )
-    if not 0.0 <= grasp <= 100.0 or not 0.0 <= release <= 100.0:
-        raise ValueError("assembled PCB gripper percents must be between 0 and 100")
+    }
+    if not isinstance(value, dict) or set(value) not in (
+        pose_fields, pose_fields | legacy_gripper_fields
+    ):
+        raise ValueError("assembled_pcb must contain source and target")
     return {
-        "gripper_grasp_opening_percent": grasp,
-        "gripper_release_opening_percent": release,
         "source": validate_ros_pose(value["source"], "assembled_pcb.source"),
         "target": validate_ros_pose(value["target"], "assembled_pcb.target"),
     }
@@ -317,15 +288,18 @@ def validate_recipe(recipe, expected_version):
             raise ValueError(f"motion.{name} must be greater than zero")
 
     sequence = recipe.get("sequence")
+    expected_before_all = ["ensure_camera_calibrated"]
     expected_per_step = [
         "home", "item_ready", "pick", "home", "assembly_ready", "place"
     ]
     expected_after_all = ["transfer_assembled_pcb"]
-    if not isinstance(sequence, dict) or sequence.get("per_step") != expected_per_step \
+    if not isinstance(sequence, dict) \
+            or sequence.get("before_all") != expected_before_all \
+            or sequence.get("per_step") != expected_per_step \
             or sequence.get("after_all") != expected_after_all:
         raise ValueError(
-            "sequence must preserve the component cycle and finish with "
-            "transfer_assembled_pcb without Home"
+            "sequence must ensure camera calibration, preserve the component cycle "
+            "and finish with transfer_assembled_pcb without Home"
         )
 
     steps = recipe.get("steps")
@@ -345,6 +319,32 @@ def validate_recipe(recipe, expected_version):
         if step["slot_code"] in slot_codes:
             raise ValueError(f"duplicate slot_code: {step['slot_code']}")
         slot_codes.add(step["slot_code"])
+
+    gripper = recipe.get("gripper")
+    if not isinstance(gripper, dict) or set(gripper) != {
+        "parts", "assembled_pcb"
+    }:
+        raise ValueError("gripper must contain parts and assembled_pcb")
+    part_profiles = gripper["parts"]
+    part_ids = {step["part_id"] for step in steps}
+    if not isinstance(part_profiles, dict) or set(part_profiles) != part_ids:
+        raise ValueError("gripper.parts must contain exactly the recipe part IDs")
+    profiles = list(part_profiles.items())
+    profiles.append(("assembled_pcb", gripper["assembled_pcb"]))
+    for name, profile in profiles:
+        if not isinstance(profile, dict) or set(profile) != {
+            "grasp_opening_percent", "release_opening_percent"
+        }:
+            raise ValueError(
+                f"gripper.{name} must contain grasp_opening_percent and "
+                "release_opening_percent"
+            )
+        for field, value in profile.items():
+            value = _finite_number(value, f"gripper.{name}.{field}")
+            if not 0.0 <= value <= 100.0:
+                raise ValueError(
+                    f"gripper.{name}.{field} must be between 0 and 100"
+                )
     return recipe
 
 
@@ -370,14 +370,11 @@ def resolve_observations(recipe, observations):
                 f"Unity observation part_id does not match recipe step "
                 f"{recipe_step['order']}"
             )
+        gripper = recipe["gripper"]["parts"][recipe_step["part_id"]]
         resolved.append({
             "step": recipe_step,
-            "gripper_grasp_opening_percent": observation[
-                "gripper_grasp_opening_percent"
-            ],
-            "gripper_release_opening_percent": observation[
-                "gripper_release_opening_percent"
-            ],
+            "gripper_grasp_opening_percent": gripper["grasp_opening_percent"],
+            "gripper_release_opening_percent": gripper["release_opening_percent"],
             "source": observation["source"],
             "target": observation["target"],
         })
@@ -505,22 +502,18 @@ def self_check():
     parsed = parse_start_command(json.dumps({
         "command": "start",
         "request_id": request_id,
-        "recipe_version": "mock-r1",
+        "recipe_version": "assembly-r1",
         "observations": observations,
     }))
-    assert parsed[:2] == (request_id, "mock-r1")
+    assert parsed[:2] == (request_id, "assembly-r1")
     transfer = parse_transfer_command(json.dumps({
         "command": "transfer_assembled_pcb",
         "request_id": request_id,
         "assembled_pcb": assembled_pcb,
     }))
     assert transfer[0] == request_id
-    assert (
-        parsed[2][0]["gripper_grasp_opening_percent"],
-        parsed[2][0]["gripper_release_opening_percent"],
-    ) == (18.0, 25.0)
     recipe = validate_recipe({
-        "recipe_version": "mock-r1",
+        "recipe_version": "assembly-r1",
         "frame": "base_link",
         "joint_points": {
             "home": [-4.689, -86.951, 84.467, -87.516, -90.000, -4.688],
@@ -533,25 +526,38 @@ def self_check():
             "assembled_pcb_drop_approach_dz_mm": 150,
         },
         "sequence": {
+            "before_all": ["ensure_camera_calibrated"],
             "per_step": [
                 "home", "item_ready", "pick",
                 "home", "assembly_ready", "place",
             ],
             "after_all": ["transfer_assembled_pcb"],
         },
+        "gripper": {
+            "parts": {
+                "part": {
+                    "grasp_opening_percent": 20,
+                    "release_opening_percent": 30,
+                },
+            },
+            "assembled_pcb": {
+                "grasp_opening_percent": 0,
+                "release_opening_percent": 100,
+            },
+        },
         "steps": [{
             "order": 1,
             "part_id": "part",
             "slot_code": "slot-01",
         }],
-    }, "mock-r1")
+    }, "assembly-r1")
     resolved = resolve_observations(recipe, parsed[2])
     assert transfer[1]["target"]["xyz_mm"] == [350.0, 350.0, 200.0]
     assert "source" not in recipe["steps"][0]
     assert (
         resolved[0]["gripper_grasp_opening_percent"],
         resolved[0]["gripper_release_opening_percent"],
-    ) == (18.0, 25.0)
+    ) == (20, 30)
     assert resolved[0]["source"]["xyz_mm"] == [350.0, -150.0, 250.0]
     approach = vertical_offset(
         resolved[0]["source"], recipe["motion"]["approach_dz_mm"]
@@ -570,31 +576,31 @@ def self_check():
     snapshot = advance_assembly_snapshot(
         empty_assembly_snapshot(),
         assembly_feedback(request_id, "STARTED"),
-        "mock-r1",
+        "assembly-r1",
         1,
     )
-    snapshot = advance_assembly_snapshot(snapshot, feedback, "mock-r1", 1)
+    snapshot = advance_assembly_snapshot(snapshot, feedback, "assembly-r1", 1)
     assert snapshot["active"] and snapshot["held_step_order"] == 1
     snapshot = advance_assembly_snapshot(
         snapshot,
         assembly_feedback(request_id, "PLACED", recipe["steps"][0]),
-        "mock-r1",
+        "assembly-r1",
         1,
     )
     assert snapshot["placed_count"] == 1 and snapshot["held_step_order"] == 0
     snapshot = advance_assembly_snapshot(
-        snapshot, assembly_feedback(request_id, "ASSEMBLY_COMPLETED"), "mock-r1", 1
+        snapshot, assembly_feedback(request_id, "ASSEMBLY_COMPLETED"), "assembly-r1", 1
     )
     assert snapshot["active"] and snapshot["placed_count"] == 1
     snapshot = advance_assembly_snapshot(
-        snapshot, assembly_feedback(request_id, "PCB_PICKED"), "mock-r1", 1
+        snapshot, assembly_feedback(request_id, "PCB_PICKED"), "assembly-r1", 1
     )
     assert snapshot["active"] and snapshot["placed_count"] == 1
     snapshot = advance_assembly_snapshot(
-        snapshot, assembly_feedback(request_id, "PCB_PLACED"), "mock-r1", 1
+        snapshot, assembly_feedback(request_id, "PCB_PLACED"), "assembly-r1", 1
     )
     assert snapshot["active"] and snapshot["placed_count"] == 1
-    snapshot = advance_assembly_snapshot(snapshot, terminal, "mock-r1", 1)
+    snapshot = advance_assembly_snapshot(snapshot, terminal, "assembly-r1", 1)
     assert not snapshot["active"] and snapshot["state"] == "COMPLETED"
     tcp_target = Pose()
     tcp_target.orientation.w = 1.0
@@ -1244,6 +1250,10 @@ class MockMoveJ(Node):
             self.publish_assembly_feedback(request_id, "STARTED")
             joint_points = recipe["joint_points"]
             motion = recipe["motion"]
+            for command in recipe["sequence"]["before_all"]:
+                if command != "ensure_camera_calibrated":
+                    raise RuntimeError(f"unknown preflight command: {command}")
+                self.publish_status("camera calibration: simulated valid (Mock)")
             for resolved in job["resolved_steps"]:
                 step = resolved["step"]
                 grasp_opening_percent = resolved[
@@ -1325,6 +1335,7 @@ class MockMoveJ(Node):
         try:
             self.require_mock_hardware()
             motion = recipe["motion"]
+            gripper = recipe["gripper"]["assembled_pcb"]
             for command in recipe["sequence"]["after_all"]:
                 if command != "transfer_assembled_pcb":
                     raise RuntimeError(f"unknown final assembly command: {command}")
@@ -1357,19 +1368,19 @@ class MockMoveJ(Node):
                     ),
                 )
                 self.run_gripper(
-                    transfer["gripper_release_opening_percent"]
+                    gripper["release_opening_percent"]
                 )
                 self.run_ptp_pose(source_approach)
                 self.run_linear(source, True)
                 self.run_gripper(
-                    transfer["gripper_grasp_opening_percent"]
+                    gripper["grasp_opening_percent"]
                 )
                 self.publish_assembly_feedback(request_id, "PCB_PICKED")
                 self.run_linear(source_retract, True)
                 self.run_ptp_pose(target_approach)
                 self.run_linear(target, True)
                 self.run_gripper(
-                    transfer["gripper_release_opening_percent"]
+                    gripper["release_opening_percent"]
                 )
                 self.publish_assembly_feedback(request_id, "PCB_PLACED")
                 self.run_linear(target_retract, True)
@@ -1471,14 +1482,13 @@ def parse_args(argv=None):
     parser.add_argument("--listen-unity", action="store_true")
     parser.add_argument(
         "--recipe",
-        default=str(
-            Path(get_package_share_directory("fairino5_v6_moveit2_config"))
-            / "config/recipes/mock-r1.yaml"
-        ),
+        help="AssemblySequencer-owned Recipe YAML path",
     )
     args = parser.parse_args(argv)
     if not args.listen_unity and args.joints is None and args.pose is None:
         parser.error("one of --joints, --pose or --listen-unity is required")
+    if args.listen_unity and not args.recipe:
+        parser.error("--recipe is required with --listen-unity")
     if args.preview_seconds < 0.0 or args.max_step <= 0.0 or args.max_joint_step <= 0.0:
         parser.error("preview-seconds must be nonnegative and Cartesian steps positive")
     if args.min_j3_deg < 0.0:

@@ -70,7 +70,7 @@ def generate_launch_description():
             DeclareLaunchArgument("max_joint_step", default_value="0.35"),
             DeclareLaunchArgument(
                 "recipe",
-                default_value=f"{package_share}/config/recipes/mock-r1.yaml",
+                description="AssemblySequencer-owned Recipe YAML path",
             ),
             DeclareLaunchArgument("plan_only", default_value="false"),
             DeclareLaunchArgument("start_delay", default_value="5"),

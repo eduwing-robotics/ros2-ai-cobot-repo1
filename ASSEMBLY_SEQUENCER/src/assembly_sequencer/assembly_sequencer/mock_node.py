@@ -34,6 +34,8 @@ INTERNAL_START = "/mock_db_mvp/internal/assembly/start"
 INTERNAL_FEEDBACK = "/mock_db_mvp/internal/assembly/feedback"
 EXTERNAL_START = "/unity/assembly/start"
 EXTERNAL_FEEDBACK = "/unity/assembly/feedback"
+PASS_IMAGE_PATH = "InspectionSamples/mock-pass.jpg"
+FAIL_IMAGE_PATH = "InspectionSamples/mock-fail.jpg"
 
 
 class MockAssemblySequencer(Node):
@@ -292,7 +294,10 @@ class MockAssemblySequencer(Node):
                 active["slot_codes"],
             )
             self.db_writer.assembly_completed(active["unit_id"])
-            self.db_writer.inspection_recorded(active["unit_id"], result, defects)
+            image_path = PASS_IMAGE_PATH if result == "PASS" else FAIL_IMAGE_PATH
+            self.db_writer.inspection_recorded(
+                active["unit_id"], result, defects, image_path
+            )
             self.db_writer.finish(active["job_id"], "COMPLETED")
         except Exception as error:
             self.fail_active("DB_ERROR", error)

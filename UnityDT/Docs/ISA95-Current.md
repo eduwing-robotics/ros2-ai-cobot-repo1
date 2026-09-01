@@ -274,7 +274,7 @@ Unity, MainServer, ROS2 노드, PostgreSQL이 **모두 같은 PC**에서 돈다
 
 | 개념 | 뜻 | 우리 대응 |
 |---|---|---|
-| Recipe | 무엇을 만드는가 | `mock-r1.yaml` — 제품에 속함 |
+| Recipe | 무엇을 만드는가 | `assembly-r1.yaml` — 제품에 속함 |
 | Procedural Control | 레시피를 스텝으로 펼쳐 설비를 지휘 | `Assembly Sequencer` — **Unit 레벨** |
 | Equipment Control | 설비 자체의 동작 | `Motion Controller`, 그리퍼, 컨베이어 구동 |
 

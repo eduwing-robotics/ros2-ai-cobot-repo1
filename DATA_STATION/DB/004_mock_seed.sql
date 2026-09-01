@@ -99,7 +99,7 @@ BEGIN
            OR actual.part_id IS DISTINCT FROM expected.part_id
     ) THEN
         RAISE EXCEPTION
-            'Mock product slot mapping differs from mock-r1.yaml';
+            'Mock product slot mapping differs from assembly-r1.yaml';
     END IF;
 END
 $$;

@@ -58,7 +58,7 @@ MainServer never calls `mock_sim.py` or production write functions.
 {
   "command": "start",
   "request_id": "UUID",
-  "recipe_version": "mock-r1",
+  "recipe_version": "assembly-r1",
   "observations": [
     {
       "order": 1,

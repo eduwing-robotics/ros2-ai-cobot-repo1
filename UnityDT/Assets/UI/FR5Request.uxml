@@ -59,7 +59,7 @@
                 <ui:VisualElement class="rule" style="margin-top:16px; margin-bottom:16px;" />
                 <ui:VisualElement class="sect"><ui:VisualElement class="sect__tick" /><ui:Label text="RECIPE" class="sect__title" /></ui:VisualElement>
                 <ui:VisualElement class="row">
-                    <ui:Label name="recipe-version" text="mock-r1" style="color:rgb(226,236,241);" />
+                    <ui:Label name="recipe-version" text="assembly-r1" style="color:rgb(226,236,241);" />
                     <ui:VisualElement name="recipe-match-chip" class="chip chip--good" style="margin-left:16px;"><ui:Label text="VERSION MATCH" class="chip__text" /></ui:VisualElement>
                 </ui:VisualElement>
                 <ui:Label text="불일치 시 노드가 goal 을 거부한다. 요청 전에 여기서 보인다." class="muted" style="margin-top:12px;" />
@@ -79,7 +79,7 @@
                 <ui:VisualElement class="sect"><ui:VisualElement class="sect__tick" /><ui:Label text="1   실행 제품" class="sect__title" /><ui:VisualElement class="spacer" /><ui:Label text="Scenario 고정" class="sect__unit" /></ui:VisualElement>
                 <ui:VisualElement class="row" style="margin-bottom:16px;">
                     <ui:Label text="Scenario 고정 제품" class="value value--lg" />
-                    <ui:Label text="recipe mock-r1 · 조회 제품은 좌측 미리보기만 갱신" class="muted" style="margin-left:18px;" />
+                    <ui:Label text="recipe assembly-r1 · 조회 제품은 좌측 미리보기만 갱신" class="muted" style="margin-left:18px;" />
                 </ui:VisualElement>
                 <!-- 바인더가 첫 실제 제품을 로드하도록 이름 계약만 유지한다. -->
                 <ui:VisualElement name="product-list" class="vlist" style="display:none;" />

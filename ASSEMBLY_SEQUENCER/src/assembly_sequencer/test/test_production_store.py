@@ -134,7 +134,7 @@ class ProductionStoreIntegrationTest(unittest.TestCase):
                     self.product_code,
                     self.product_version,
                     1,
-                    "mock-r1",
+                    "assembly-r1",
                 )
 
         self.assertEqual(
@@ -147,7 +147,7 @@ class ProductionStoreIntegrationTest(unittest.TestCase):
 
     def test_normal_completion_and_duplicate_completion(self):
         reservation = store.reserve_work(
-            self.product_code, self.product_version, 1, "mock-r1"
+            self.product_code, self.product_version, 1, "assembly-r1"
         )
         job_id, unit_id = reservation
 
@@ -207,7 +207,7 @@ class ProductionStoreIntegrationTest(unittest.TestCase):
 
     def test_inspection_rules_and_cross_product_slot(self):
         reservation = store.reserve_work(
-            self.product_code, self.product_version, 1, "mock-r1"
+            self.product_code, self.product_version, 1, "assembly-r1"
         )
         job_id, unit_id = reservation
         store.complete_assembly_and_consume_stock(unit_id)
@@ -243,7 +243,7 @@ class ProductionStoreIntegrationTest(unittest.TestCase):
 
     def test_insufficient_stock_rolls_back(self):
         reservation = store.reserve_work(
-            self.product_code, self.product_version, 1, "mock-r1"
+            self.product_code, self.product_version, 1, "assembly-r1"
         )
         job_id, unit_id = reservation
         with psycopg.connect(TEST_DSN) as connection:
@@ -277,7 +277,7 @@ class ProductionStoreIntegrationTest(unittest.TestCase):
         payload = {
             "command": "start",
             "request_id": str(first_request_id),
-            "recipe_version": "mock-r1",
+            "recipe_version": "assembly-r1",
             "observations": [{}],
             "assembled_pcb": {},
         }
@@ -292,7 +292,7 @@ class ProductionStoreIntegrationTest(unittest.TestCase):
             )
 
         work = store.claim_queued_work(
-            "mock", self.product_code, self.product_version, 1, "mock-r1"
+            "mock", self.product_code, self.product_version, 1, "assembly-r1"
         )
         self.assertEqual(work["request_id"], str(first_request_id))
         store.complete_assembly_and_consume_stock(work["unit_id"])
@@ -323,7 +323,7 @@ class ProductionStoreIntegrationTest(unittest.TestCase):
                 (interrupted_request_id, psycopg.types.json.Jsonb(payload)),
             )
         interrupted = store.claim_queued_work(
-            "mock", self.product_code, self.product_version, 1, "mock-r1"
+            "mock", self.product_code, self.product_version, 1, "assembly-r1"
         )
         self.assertEqual(store.fail_interrupted_requests("mock"), 1)
         self.assertEqual(
@@ -351,7 +351,7 @@ class ProductionStoreIntegrationTest(unittest.TestCase):
             str(uuid.uuid4()),
             self.product_code,
             self.product_version,
-            "mock-r1",
+            "assembly-r1",
         )
         writer.assembly_completed(reservation.unit_id)
         writer.inspection_recorded(reservation.unit_id, "PASS", [])

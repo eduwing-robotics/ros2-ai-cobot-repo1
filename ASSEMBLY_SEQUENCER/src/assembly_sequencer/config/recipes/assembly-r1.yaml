@@ -1,5 +1,5 @@
 # Common assembly order and motion settings used by Mock and Real executors.
-recipe_version: mock-r1
+recipe_version: assembly-r1
 frame: base_link
 
 # Calibration ceiling: ItemReady and AssemblyReady temporarily reuse Home because
@@ -15,8 +15,28 @@ motion:
   assembled_pcb_drop_approach_dz_mm: 150.0
 
 sequence:
-  per_step: [home, item_ready, pick, home, assembly_ready, place]
-  after_all: [transfer_assembled_pcb]
+  before_all:
+    - ensure_camera_calibrated
+  # Every order uses this shared flow. item_ready is PartsReadyPoint.
+  per_step:
+    - home
+    - item_ready
+    - pick
+    - home
+    - assembly_ready
+    - place
+  after_all:
+    - transfer_assembled_pcb
+
+gripper:
+  parts:
+    HBM: {grasp_opening_percent: 18, release_opening_percent: 25}
+    PM:  {grasp_opening_percent: 26, release_opening_percent: 30}
+    GPU: {grasp_opening_percent: 65, release_opening_percent: 70}
+    CAP: {grasp_opening_percent: 5,  release_opening_percent: 8}
+    IND: {grasp_opening_percent: 16, release_opening_percent: 20}
+    VRM: {grasp_opening_percent: 32, release_opening_percent: 34}
+  assembled_pcb: {grasp_opening_percent: 0, release_opening_percent: 100}
 
 # Order mirrors SampleScene ItemManger. A type's source and slot indices advance
 # in the listed order: 8, 4, 1, 5, 2, 5.

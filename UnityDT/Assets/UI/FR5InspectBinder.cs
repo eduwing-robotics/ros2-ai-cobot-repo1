@@ -9,6 +9,7 @@
 
 using System;
 using System.Collections;
+using System.IO;
 using MainUnity.Runtime.Camera;
 using MainUnity.Runtime.Robot;
 using UnityEngine;
@@ -21,6 +22,9 @@ namespace MainUnity.UI
     [RequireComponent(typeof(UIDocument))]
     public sealed class FR5InspectBinder : MonoBehaviour
     {
+        const string MockPassImagePath = "InspectionSamples/mock-pass.jpg";
+        const string MockFailImagePath = "InspectionSamples/mock-fail.jpg";
+
         [Serializable] sealed class AssemblyResponse { public AssemblySnapshot data; }
         [Serializable] sealed class UnitsResponse { public Unit[] data; }
         [Serializable] sealed class AssemblySnapshot { public int job_id; public int unit_id; }
@@ -30,6 +34,7 @@ namespace MainUnity.UI
             public int unit_sequence_in_job;
             public string unit_status;
             public string inspection_result;
+            public string inspection_image_path;
             public string inspected_at;
             public Defect[] defects;
         }
@@ -44,9 +49,12 @@ namespace MainUnity.UI
         [SerializeField] float staleSeconds = 2f;
 
         VisualElement cameraEmpty, detectBox, checkList, defectGrid, unitStrip;
+        Image evidenceImage;
         Label cameraStats, cameraEmptyDesc, verdictTitle, verdictValue, verdictScore, defectSql, unitsSummary, jobSummary;
-        bool cached;
-        Coroutine loadRoutine;
+        bool cached, hasEvidence;
+        Coroutine loadRoutine, evidenceRoutine;
+        Texture2D evidenceTexture;
+        string evidenceStats;
 
         void OnEnable() => cached = false;
 
@@ -54,6 +62,8 @@ namespace MainUnity.UI
         {
             if (loadRoutine != null) StopCoroutine(loadRoutine);
             loadRoutine = null;
+            StopEvidenceLoad();
+            ClearEvidence();
         }
 
         void Update()
@@ -76,6 +86,7 @@ namespace MainUnity.UI
             if (root == null) return;
 
             cameraEmpty = root.Q<VisualElement>("camera-empty");
+            evidenceImage = root.Q<Image>("evidence-image");
             cameraEmptyDesc = root.Q<Label>("camera-empty-desc");
             detectBox = root.Q<VisualElement>("detect-box");
             cameraStats = root.Q<Label>("camera-stats");
@@ -207,10 +218,14 @@ namespace MainUnity.UI
                 if (unit.inspection_result == "FAIL") item.AddToClassList("chip--bad");
                 unitStrip?.Add(item);
             }
+
+            ShowEvidence(selected.inspection_image_path);
         }
 
         void ShowEmpty(string message)
         {
+            StopEvidenceLoad();
+            ClearEvidence();
             FR5EmptyState.Missing(verdictValue);
             FR5EmptyState.Detail(verdictScore, message);
             FR5EmptyState.Fill(checkList, message);
@@ -223,6 +238,58 @@ namespace MainUnity.UI
 
         string ApiUrl(string path) => mainServerBaseUrl.TrimEnd('/') + path;
 
+        void ShowEvidence(string path)
+        {
+            StopEvidenceLoad();
+            ClearEvidence();
+            if (evidenceImage == null || string.IsNullOrEmpty(path)) return;
+            if (path != MockPassImagePath && path != MockFailImagePath)
+            {
+                Debug.LogWarning("거부된 검사 이미지 경로: " + path, this);
+                return;
+            }
+            evidenceRoutine = StartCoroutine(LoadEvidence(path));
+        }
+
+        IEnumerator LoadEvidence(string path)
+        {
+            string filePath = Path.Combine(Application.streamingAssetsPath, path);
+            using var request = UnityWebRequestTexture.GetTexture(new Uri(filePath).AbsoluteUri, true);
+            request.timeout = 5;
+            yield return request.SendWebRequest();
+            if (!isActiveAndEnabled) yield break;
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                evidenceTexture = DownloadHandlerTexture.GetContent(request);
+                evidenceImage.image = evidenceTexture;
+                evidenceImage.scaleMode = ScaleMode.ScaleToFit;
+                evidenceImage.style.display = DisplayStyle.Flex;
+                evidenceStats = "저장 캡처 · " + path;
+                hasEvidence = true;
+            }
+            else Debug.LogWarning("검사 이미지 로드 실패: " + request.error, this);
+            evidenceRoutine = null;
+        }
+
+        void StopEvidenceLoad()
+        {
+            if (evidenceRoutine != null) StopCoroutine(evidenceRoutine);
+            evidenceRoutine = null;
+        }
+
+        void ClearEvidence()
+        {
+            if (evidenceImage != null)
+            {
+                evidenceImage.image = null;
+                evidenceImage.style.display = DisplayStyle.None;
+            }
+            if (evidenceTexture != null) Destroy(evidenceTexture);
+            evidenceTexture = null;
+            evidenceStats = null;
+            hasEvidence = false;
+        }
+
         void RefreshVision()
         {
             bool received = vision != null && vision.HasReceivedImage;
@@ -231,7 +298,7 @@ namespace MainUnity.UI
 
             cameraEmpty?.EnableInClassList("empty", true);
             if (cameraEmpty != null)
-                cameraEmpty.style.display = fresh ? DisplayStyle.None : DisplayStyle.Flex;
+                cameraEmpty.style.display = fresh || hasEvidence ? DisplayStyle.None : DisplayStyle.Flex;
             // 검출 박스는 좌표를 주는 계약이 없다. 영상이 있다고 해서 고정 사각형을
             // 띄우면 "무엇을 인식했다"는 거짓말이 된다. 계약이 생길 때까지 그리지 않는다.
             // TODO(API): 비전 노드의 검출 결과(bbox · score)가 생기면 여기에 싣는다.
@@ -245,7 +312,9 @@ namespace MainUnity.UI
 
             // TODO(API): 해상도·FPS 는 수신 메시지 헤더에서 읽는다. 지금은 경과만 실측이다.
             if (cameraStats != null)
-                cameraStats.text = fresh
+                cameraStats.text = hasEvidence
+                    ? evidenceStats
+                    : fresh
                     ? $"수신 중 · 마지막 프레임 {age * 1000:0} ms 전"
                     : "수신 없음";
         }

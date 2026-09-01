@@ -148,7 +148,7 @@
 <rect x="0" y="940" width="1920" height="140" fill="url(#scrimB)"/>
 <line x1="0" y1="1036" x2="1920" y2="1036" stroke="#ffffff" stroke-opacity=".08"/>
 <circle cx="48" cy="1059" r="4" fill="#64707a"/>
-<text x="64" y="1064" class="sm" font-size="14">10:41:02   ROS   assembly node ready · recipe mock-r1 loaded</text>
+<text x="64" y="1064" class="sm" font-size="14">10:41:02   ROS   assembly node ready · recipe assembly-r1 loaded</text>
 <text x="1872" y="1064" text-anchor="end" class="mu" font-size="13" letter-spacing="1.4">EVENTS  ·  ALARM 0</text>
 <text x="136" y="150" class="mi">ASSEMBLYJOB · GOAL</text>
 <text x="136" y="212" class="v3" font-size="46">작업 요청</text>
@@ -191,7 +191,7 @@
 <rect x="664" y="766" width="150" height="3" fill="#3ecf8e" fill-opacity=".45"/>
 <text x="664" y="790" fill="#b3c3cf" font-size="14" font-weight="700">CONN-01</text>
 <text x="664" y="808" class="mu" font-size="12">CONN</text>
-<text x="136" y="856" class="mu" font-size="13">recipe  <tspan fill="#e2ecf1" font-size="15">mock-r1</tspan>   ·   <tspan class="ok" font-weight="700">VERSION MATCH</tspan>   —  불일치면 goal이 거부된다</text>
+<text x="136" y="856" class="mu" font-size="13">recipe  <tspan fill="#e2ecf1" font-size="15">assembly-r1</tspan>   ·   <tspan class="ok" font-weight="700">VERSION MATCH</tspan>   —  불일치면 goal이 거부된다</text>
 <rect x="1010" y="289" width="3" height="14" fill="#facc33"/>
 <text x="1024" y="300" class="lb">2   수량</text>
 <text x="1026" y="322" class="mu" font-size="13">jobs.requested_quantity</text>

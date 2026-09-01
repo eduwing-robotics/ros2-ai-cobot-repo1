@@ -27,6 +27,7 @@
                 <ui:VisualElement name="camera-frame" style="flex-grow:1; background-color:rgb(20,28,36);">
                     <!-- CamVisionReceiver 가 이 Image 의 texture 를 채운다 (targetImage 로 지정) -->
                     <ui:Image name="camera-image" style="position:absolute; left:0; top:0; right:0; bottom:0;" />
+                    <ui:Image name="evidence-image" picking-mode="Ignore" style="position:absolute; left:0; top:0; right:0; bottom:0; display:none;" />
                     <ui:VisualElement name="camera-empty" class="empty">
                         <ui:Label text="영상 없음" class="empty__title" />
                         <ui:Label name="camera-empty-desc" text="/vision/board/image 수신 대기" class="empty__desc" />
