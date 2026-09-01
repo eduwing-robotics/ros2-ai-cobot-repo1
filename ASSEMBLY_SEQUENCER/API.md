@@ -5,9 +5,9 @@
 | 항목 | 내용 |
 | --- | --- |
 | 대상 | 실제 로봇 구현자, Unity·MainServer 연동 담당자 |
-| 구현 상태 | 공통 DB Writer·Mock 노드 구현, `real_assembly`와 전용 인터페이스 미구현 |
-| 확정 범위 | Unity 연동 API, 상태·오류 의미, DB 갱신 정책 |
-| 현장 확정 | FR5 동작 순서·속도·좌표, 장비별 timeout, Conveyor·Inspection·Safety 상세 계약 |
+| 구현 상태 | 공통 DB Writer·Mock 노드·공통 Recipe parser 구현, `real_assembly` 실행 노드와 전용 ROS 인터페이스 미구현 |
+| 확정 범위 | Recipe schema, Unity 연동 API, 하위 Action 계약, 상태·오류 의미, DB 갱신 정책 |
+| 현장 확정 | FR5 taught point·속도·허용 오차, 장비별 timeout·보정값, Safety 상세 계약 |
 
 ## 1. 전체 API 목록
 
@@ -19,9 +19,10 @@
 | ROS-RBT-007 | FR5 이동·그리퍼 명령 | `real_assembly` Robot 경계 → `fr_command_server` | Service | `/fairino_remote_command_service` | `fairino_msgs/srv/RemoteCmdInterface` | 저수준 부분 구현 |
 | ROS-RBT-008 | FR5 상태 전달 | `fr_command_server` → `real_assembly` | Topic | `/nonrt_state_data` | `fairino_msgs/msg/RobotNonrtState` | 구현 |
 | ROS-RBT-009 | Real Ghost 목표 자세 미리보기 | `real_assembly` backend → Unity Real Ghost | Topic | `/real/ghost/target` | `geometry_msgs/msg/PoseStamped` | Unity 수신 구현 |
-| ROS-CNV-001 | 컨베이어 위치 이동 | `real_assembly` → `conveyor_controller` | Action | `TBD` | `TBD` | 제안·협의 필요 |
-| ROS-STA-002 | 컨베이어 상태 전달 | `conveyor_controller` → `real_assembly`, Unity | Topic | `TBD` | `TBD` | 제안·협의 필요 |
-| ROS-INS-001 | 검사 실행·결과 반환 | `real_assembly` → `inspection_node` | Action | `TBD` | `TBD` | 제안·협의 필요 |
+| ROS-VIS-001 | Pick·Place 목표 자세 해석 | `real_assembly` → Pick/Place Vision | Action | `/vision/pick_place/resolve` | `vision_interfaces/action/ResolveAssemblyTargets` | 계약 확정·비전 브랜치 구현 필요 |
+| ROS-CNV-001 | 컨베이어 위치 이동 | `real_assembly` → `conveyor_controller` | Action | `/conveyor/move_to_station` | `vision_interfaces/action/MoveConveyorToStation` | 계약 확정·비전/컨베이어 브랜치 구현 필요 |
+| ROS-STA-002 | 컨베이어 상태 전달 | `conveyor_controller` → `real_assembly`, Unity | Topic | `/conveyor/state` | `vision_interfaces/msg/ConveyorState` | 계약 확정·비전/컨베이어 브랜치 구현 필요 |
+| ROS-INS-001 | 검사 실행·결과 반환 | `real_assembly` → `inspection_node` | Action | `/vision/inspection/run` | `vision_interfaces/action/InspectAssembly` | 계약 확정·검사 비전 브랜치 구현 필요 |
 | ROS-SAF-001 | 안전 상태 전달 | Safety bridge → `real_assembly`, 명령 경계, Unity | Topic | `TBD` | `TBD` | 제안·협의 필요 |
 
 ## 2. 공통 계약
@@ -231,24 +232,149 @@ Unity의 `SampleScene > FR5 > RealMaster > RealRobotGhostControl` Inspector에�
 FAIRINO SDK IK solver를 선택한다. 두 solver 모두 같은 Tool 1 보정값으로 flange 목표를
 계산하며 실제 이동 API를 호출하지 않는다.
 
-### 6.2 Conveyor·Inspection·Safety
+### 6.2 타 브랜치 제공 API
 
-합의 전에는 endpoint와 메시지 타입을 임의로 확정하지 않는다.
+아래 계약은 AssemblySequencer가 YAML 실행 순서만 조정하고 각 컴포넌트가
+검증·좌표 변환·통신·완료 감지·timeout·취소를 완결하기 위한 최소 경계다.
 
-| API ID | 합의할 최소 항목 |
+| 대상 브랜치 | 생성·보완할 항목 |
 | --- | --- |
-| ROS-CNV-001 | 목표 위치, 실제 완료 위치, timeout, 오류 코드 |
-| ROS-STA-002 | 현재 위치, 운전·정지·오류 상태, 갱신 주기, QoS |
-| ROS-INS-001 | Goal·Feedback·Result, timeout, 취소·실패 조건 |
-| ROS-SAF-001 | 작업 허용 여부, 정지 원인, 복구 가능 여부, QoS |
+| `origin/fr5-robot-control-full` | 신규 ROS API는 만들지 않는다. 기존 `/fairino_remote_command_service`와 `/nonrt_state_data`에서 명령 오류, `robot_motion_done`, `grip_motion_done`, fault·E-STOP 상태를 신뢰할 수 있게 유지한다. |
+| `origin/vision-robot-conveyor-control` | 기존 `vision_interfaces` 패키지에 `ResolveAssemblyTargets.action`, `MoveConveyorToStation.action`, `InspectAssembly.action`, `ConveyorState.msg`를 추가하고 아래 endpoint 서버를 구현한다. |
+| AssemblySequencer Real adapter | 위 Action client와 FR5 client만 호출한다. 카메라 좌표 변환, 모터 명령, 검사 판정 코드를 중복 구현하지 않는다. |
 
-| Inspection 구분 | 필드 |
+#### 6.2.1 ROS-VIS-001 Pick·Place 목표 자세 해석
+
+| 항목 | 계약 |
 | --- | --- |
-| Goal | `job_id`, `unit_id`, `product_id` |
-| Feedback | `stage`, `progress`, `message` |
-| Result | `result(PASS/FAIL)`, `slot_code`, `defect_type`, `image_path`, `inspected_at`, `error_code`, `message` |
+| Endpoint | `/vision/pick_place/resolve` |
+| Type | `vision_interfaces/action/ResolveAssemblyTargets` |
+| 제공자 | Pick/Place Vision |
+| 완료 | 모든 Recipe step의 source·target pose가 안정적으로 확정됨 |
+| 좌표 | `base_link`, 위치 m, 정규화 가능한 quaternion |
+| timeout·취소 | 서버가 자체 timeout을 적용하며 취소 시 진행 중 검출을 정리한다. |
 
-물리 E-STOP은 하드와이어드 안전회로가 수행한다. ROS 2는 상태 전달, 신규 명령 차단과 작업 실패 전환을 담당한다.
+`ResolveAssemblyTargets.action` 정의:
+
+```text
+# Goal: 배열 index가 YAML steps 순서다.
+string request_id
+string recipe_version
+string[] part_ids
+string[] slot_codes
+---
+bool success
+geometry_msgs/PoseStamped[] source_poses
+geometry_msgs/PoseStamped[] target_poses
+string error_code
+string message
+---
+string stage
+uint32 resolved_count
+uint32 total_count
+string message
+```
+
+- Goal의 두 배열은 길이가 같고 비어 있지 않아야 하며 `slot_codes`는 중복될 수 없다.
+- 성공 Result의 두 pose 배열 길이는 Goal 길이와 정확히 같아야 한다.
+- 카메라 → `base_link` 변환과 calibration 유효성 검사는 이 Action 서버에서 한 번만 수행한다.
+- `CALIBRATION_NOT_READY`, `DETECTION_TIMEOUT`, `PART_NOT_FOUND`,
+  `TARGET_NOT_FOUND`, `FRAME_TRANSFORM_FAILED`, `CANCELLED`를 구분한다.
+
+#### 6.2.2 ROS-CNV-001·ROS-STA-002 컨베이어 이동
+
+| 항목 | 계약 |
+| --- | --- |
+| Endpoint | `/conveyor/move_to_station` |
+| Type | `vision_interfaces/action/MoveConveyorToStation` |
+| 제공자 | Conveyor controller |
+| Goal station | `ASSEMBLY` 또는 `INSPECTION` |
+| 완료 | 선택한 정지선 도달 후 실제 정지 상태 확인 |
+| 현장 설정 | 속도, 방향, timeout과 정지 보정은 서버 설정이 소유한다. |
+| 취소 | 즉시 0속도 명령을 내리고 정지 확인 후 Canceled로 마감한다. |
+
+`MoveConveyorToStation.action` 정의:
+
+```text
+string request_id
+string station
+---
+bool success
+string reached_station
+string error_code
+string message
+---
+string state
+string message
+```
+
+지속 상태는 `/conveyor/state`에 Reliable, Transient Local, depth 1로 발행한다.
+
+`ConveyorState.msg` 정의:
+
+```text
+std_msgs/Header header
+string station
+string state
+bool ready
+string error_code
+string message
+```
+
+- `state`는 `IDLE`, `MOVING`, `STOPPED`, `FAULT`만 사용한다.
+- 비전 stop trigger 수신이나 0속도 publish만으로 Action 성공을 반환하지 않는다.
+- `NOT_READY`, `SENSOR_TIMEOUT`, `MOTION_TIMEOUT`, `MOTOR_FAULT`,
+  `CANCELLED`를 구분한다.
+- 기존 one-shot `conveyor_controller` CLI는 수동 시험용으로 유지할 수 있지만
+  AssemblySequencer는 Action만 호출한다.
+
+#### 6.2.3 ROS-INS-001 조립 검사
+
+| 항목 | 계약 |
+| --- | --- |
+| Endpoint | `/vision/inspection/run` |
+| Type | `vision_interfaces/action/InspectAssembly` |
+| 제공자 | Inspection Vision |
+| 완료 | 안정된 검사 결과와 증적 image path가 확정됨 |
+| PASS·FAIL | 둘 다 정상 검사 결과이며 `success=true`다. 통신·검사 불능만 `success=false`다. |
+| 취소 | 진행 중 캡처·추론을 정리하고 Canceled로 마감한다. |
+
+`InspectAssembly.action` 정의:
+
+```text
+string request_id
+int64 job_id
+int64 unit_id
+string product_code
+string product_version
+string recipe_version
+---
+bool success
+string result
+string[] slot_codes
+string[] defect_types
+string image_path
+builtin_interfaces/Time inspected_at
+string error_code
+string message
+---
+string stage
+float32 progress
+string message
+```
+
+- `result`는 `PASS` 또는 `FAIL`이다. PASS면 defect 배열은 비어 있어야 한다.
+- FAIL이면 `slot_codes`와 `defect_types` 길이가 같고 각 slot은 Recipe에 존재해야 한다.
+- 기존 `std_srvs/Trigger`와 `Inspection.msg`는 수동 시험·내부 판정에 재사용할
+  수 있지만, request 상관관계와 terminal Result가 없으므로 Sequencer 경계로 사용하지 않는다.
+- `NO_DETECTION`, `STALE_DETECTION`, `UNSTABLE_RESULT`,
+  `INFERENCE_TIMEOUT`, `IMAGE_SAVE_FAILED`, `CANCELLED`를 구분한다.
+
+#### 6.2.4 Safety
+
+Safety 전용 브랜치와 신뢰 가능한 필드가 아직 없으므로 `ROS-SAF-001` endpoint와
+Schema는 계속 TBD로 둔다. 물리 E-STOP은 하드와이어드 안전회로가 수행한다.
+ROS 2는 상태 전달, 신규 명령 차단과 작업 실패 전환을 담당한다.
 
 ## 7. 내부 DB 계약
 
@@ -331,7 +457,7 @@ FAIRINO SDK IK solver를 선택한다. 두 solver 모두 같은 Tool 1 보정값
 
 | 항목 | 상태 |
 | --- | --- |
-| Conveyor·Inspection·Safety endpoint·Schema·QoS·timeout | 담당자 합의 필요 |
+| Safety endpoint·Schema·QoS, 장비별 현장 timeout·보정값 | 담당자 합의 필요 |
 | 조립 취소·일시정지·재개 API | 계약 합의 전 미구현 |
 | 완료 이벤트의 프로세스 재시작을 넘는 PostgreSQL Outbox | 현재 범위 밖 |
 | SECS/GEM·GEM300 Adapter | 현재 범위 밖 |

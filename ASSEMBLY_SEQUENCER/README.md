@@ -17,8 +17,9 @@ Writer를 소유한다. Mock 실행 노드와 DB Writer는 구현됐고 Real 실
 | Mock orchestration | `assembly_sequencer.mock_node` | claim 이후 시작·이송·검사·완료 순서와 단계별 실패 마감만 담당한다. |
 | Mock contract | `assembly_sequencer.mock_contract` | 명령·feedback 검증, 상태 전이와 snapshot 생성을 완결한다. |
 | Mock backend | `assembly_sequencer.mock_backend`, 기존 `mock_sim.py` | 내부 ROS Service 요청·응답 검증과 실제 Mock 로봇 실행을 담당한다. |
+| Recipe parser | `assembly_sequencer.recipe` | Mock·Real 공통 YAML schema를 시작 전에 엄격 검증한다. |
 | DB | `db.production_store`, `db.writer` | PostgreSQL command claim과 Job·Unit 생성은 원자적 transaction, 완료 갱신은 bounded FIFO Worker가 담당한다. |
-| Real | 저수준 FR5 명령·상태만 부분 구현 | 향후 Real 노드가 같은 Writer를 호출한다. |
+| Real | 공통 Recipe parser 구현, 실행 노드 미구현 | 타 브랜치 Action과 FR5 경계가 합류하면 같은 Recipe snapshot으로 실행한다. |
 
 ## 프로세스 경계
 
@@ -44,6 +45,24 @@ Unity·MainServer ── ROS2 status ──────────────�
 
 Sequencer의 업무 흐름에는 좌표 변환, Raw ROS 메시지 조립, SQL과 하드웨어 직접 제어를 넣지 않는다. 입력 검증, 변환, 통신, 실제 완료 감지와 timeout은 각 하위 공개 진입점이 완결한다.
 
+## 공통 Recipe parser
+
+`assembly_sequencer.recipe.load_recipe()`가 AssemblySequencer 소유 YAML을 읽고
+파일명·`recipe_version`, `base_link` frame, 관절점, motion, 고정 sequence,
+gripper profile과 연속된 steps를 fail-closed로 검증한다. Real 실행 노드는 ROS
+초기화와 장비 명령 전에 한 번 로드한 snapshot만 사용해야 한다.
+
+소스 트리에서 실제 Recipe를 검사하는 명령:
+
+```bash
+PYTHONPATH=ASSEMBLY_SEQUENCER/src/assembly_sequencer \
+python3 -m assembly_sequencer.recipe \
+  ASSEMBLY_SEQUENCER/src/assembly_sequencer/config/recipes/assembly-r1.yaml
+```
+
+Parser는 로봇·비전·컨베이어 API를 호출하지 않는다. 실행 순서의 의미와 각
+컴포넌트 계약은 아래 API 문서가 소유한다.
+
 ## Real API 계약
 
 세부 상태·Schema와 구현자 준수사항은 [`API.md`](API.md)를 따른다.
@@ -55,8 +74,10 @@ Sequencer의 업무 흐름에는 좌표 변환, Raw ROS 메시지 조립, SQL과
 | 진행·완료·실패 | `/real/assembly/progress` | `real_assembly` → AssemblySequencer Real adapter → Unity | 계약 확정·미구현 |
 | FR5 명령 | `/fairino_remote_command_service` | `real_assembly`의 Robot 경계 → `fr_command_server` | 저수준 부분 구현 |
 | FR5 상태 | `/nonrt_state_data` | `fr_command_server` → `real_assembly` | 구현 |
-| 검사 | `TBD` Action | `real_assembly` → `inspection_node` | 제안·협의 필요 |
-| 컨베이어 | `TBD` Action | `real_assembly` → `conveyor_controller` | 제안·협의 필요 |
+| Pick·Place 자세 | `/vision/pick_place/resolve` Action | `real_assembly` → Pick/Place Vision | 계약 확정·비전 브랜치 구현 필요 |
+| 검사 | `/vision/inspection/run` Action | `real_assembly` → Inspection Vision | 계약 확정·검사 비전 브랜치 구현 필요 |
+| 컨베이어 이동 | `/conveyor/move_to_station` Action | `real_assembly` → Conveyor controller | 계약 확정·비전/컨베이어 브랜치 구현 필요 |
+| 컨베이어 상태 | `/conveyor/state` Topic | Conveyor controller → `real_assembly`, Unity | 계약 확정·비전/컨베이어 브랜치 구현 필요 |
 
 HTTP의 `accepted=true`는 PostgreSQL 저장 성공만 뜻한다. Sequencer가 요청을 claim해 Job·Unit을 만든 뒤 Real backend에 실행을 요청하며, 실제 조립과 검사 결과가 확정된 뒤에만 terminal 진행 상태를 발행한다.
 
