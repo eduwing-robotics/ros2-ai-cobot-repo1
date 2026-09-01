@@ -257,7 +257,18 @@ def validate_joint_point(value, label):
 def validate_recipe(recipe, expected_version):
     if not isinstance(recipe, dict):
         raise ValueError("recipe must be a YAML object")
-    if recipe.get("recipe_version") != expected_version:
+    required_fields = {
+        "recipe_version", "frame", "joint_points", "motion",
+        "sequence", "gripper", "steps",
+    }
+    if set(recipe) != required_fields:
+        raise ValueError(
+            "recipe must contain exactly recipe_version, frame, joint_points, "
+            "motion, sequence, gripper and steps"
+        )
+    if not isinstance(expected_version, str) or not expected_version.strip():
+        raise ValueError("expected recipe version must be a non-empty string")
+    if recipe["recipe_version"] != expected_version:
         raise ValueError("recipe_version does not match the start request")
     if recipe.get("frame") != "base_link":
         raise ValueError("recipe frame must be base_link")
@@ -299,6 +310,7 @@ def validate_recipe(recipe, expected_version):
         "transfer_assembled_pcb",
     ]
     if not isinstance(sequence, dict) \
+            or set(sequence) != {"before_all", "per_step", "after_all"} \
             or sequence.get("before_all") != expected_before_all \
             or sequence.get("per_step") != expected_per_step \
             or sequence.get("after_all") != expected_after_all:
@@ -312,8 +324,13 @@ def validate_recipe(recipe, expected_version):
         raise ValueError("recipe steps must be a non-empty list")
     slot_codes = set()
     for expected_order, step in enumerate(steps, 1):
-        if not isinstance(step, dict):
-            raise ValueError(f"step {expected_order} must be an object")
+        if not isinstance(step, dict) or set(step) != {
+            "order", "part_id", "slot_code"
+        }:
+            raise ValueError(
+                f"step {expected_order} must contain exactly order, part_id "
+                "and slot_code"
+            )
         if isinstance(step.get("order"), bool) \
                 or not isinstance(step.get("order"), int) \
                 or step["order"] != expected_order:
@@ -353,13 +370,20 @@ def validate_recipe(recipe, expected_version):
     return recipe
 
 
-def load_recipe(path, expected_version):
+def load_recipe(path, expected_version=None):
     recipe_path = Path(path)
-    if recipe_path.stem != expected_version:
-        raise ValueError("recipe_version does not match the recipe filename")
     with recipe_path.open(encoding="utf-8") as stream:
         recipe = yaml.safe_load(stream)
-    return validate_recipe(recipe, expected_version)
+    if not isinstance(recipe, dict):
+        raise ValueError("recipe must be a YAML object")
+    recipe_version = recipe.get("recipe_version")
+    if not isinstance(recipe_version, str) or not recipe_version.strip():
+        raise ValueError("recipe_version must be a non-empty string")
+    if expected_version is not None and recipe_version != expected_version:
+        raise ValueError("recipe_version does not match the start request")
+    if recipe_path.stem != recipe_version:
+        raise ValueError("recipe_version does not match the recipe filename")
+    return validate_recipe(recipe, recipe_version)
 
 
 def resolve_observations(recipe, observations):
@@ -476,7 +500,7 @@ def advance_assembly_snapshot(current, feedback, recipe_version, expected_step_c
     return snapshot
 
 
-def self_check():
+def self_check(runtime_recipe=None):
     assert gripper_position(100.0) == 0.0
     assert gripper_position(0.0) == GRIPPER_CLOSED_METERS
     home_radians = [math.radians(value) for value in INITIAL_JOINTS_DEG]
@@ -569,6 +593,22 @@ def self_check():
         resolved[0]["gripper_release_opening_percent"],
     ) == (20, 30)
     assert resolved[0]["source"]["xyz_mm"] == [350.0, -150.0, 250.0]
+    if runtime_recipe is not None:
+        runtime_observations = [{
+            "order": step["order"],
+            "part_id": step["part_id"],
+            "source": observations[0]["source"],
+            "target": observations[0]["target"],
+        } for step in runtime_recipe["steps"]]
+        runtime_command = parse_start_command(json.dumps({
+            "command": "start",
+            "request_id": request_id,
+            "recipe_version": runtime_recipe["recipe_version"],
+            "observations": runtime_observations,
+        }))
+        assert len(resolve_observations(
+            runtime_recipe, runtime_command[2]
+        )) == len(runtime_recipe["steps"])
     approach = vertical_offset(
         resolved[0]["source"], recipe["motion"]["approach_dz_mm"]
     )
@@ -636,9 +676,19 @@ def self_check():
 
 
 class MockMoveJ(Node):
-    def __init__(self, args):
+    def __init__(self, args, assembly_recipe=None):
         super().__init__("mock_movej")
         self.args = args
+        if args.listen_unity and assembly_recipe is None:
+            raise ValueError("validated assembly recipe is required")
+        self.assembly_recipe = assembly_recipe
+        if assembly_recipe is not None:
+            self.get_logger().info(
+                "validated recipe {} with {} step(s)".format(
+                    assembly_recipe["recipe_version"],
+                    len(assembly_recipe["steps"]),
+                )
+            )
         scaling_descriptor = ParameterDescriptor(
             floating_point_range=[
                 FloatingPointRange(from_value=0.01, to_value=1.0, step=0.0)
@@ -839,9 +889,13 @@ class MockMoveJ(Node):
                 response, False, request_id, "PLAN_ONLY", "assembly requires execution mode"
             )
         try:
-            recipe = load_recipe(self.args.recipe, recipe_version)
+            recipe = self.assembly_recipe
+            if recipe is None or recipe["recipe_version"] != recipe_version:
+                raise ValueError(
+                    "recipe_version does not match the validated runtime recipe"
+                )
             resolved_steps = resolve_observations(recipe, observations)
-        except (OSError, ValueError, yaml.YAMLError) as error:
+        except ValueError as error:
             return self.start_response(
                 response, False, request_id, "INVALID_RECIPE", str(error)
             )
@@ -1517,10 +1571,14 @@ def parse_args(argv=None):
 
 
 def main():
-    self_check()
     args = parse_args(rclpy.utilities.remove_ros_args(args=sys.argv)[1:])
+    try:
+        assembly_recipe = load_recipe(args.recipe) if args.listen_unity else None
+        self_check(assembly_recipe)
+    except (OSError, ValueError, yaml.YAMLError, AssertionError) as error:
+        raise SystemExit(f"mock recipe validation failed: {error}") from error
     rclpy.init()
-    node = MockMoveJ(args)
+    node = MockMoveJ(args, assembly_recipe)
     try:
         node.listen() if args.listen_unity else node.run()
     except Exception as error:
