@@ -48,12 +48,17 @@ REVOKE ALL ON ALL FUNCTIONS IN SCHEMA production
 -- ROS2 owns production writes. Reference definitions remain read-only.
 GRANT USAGE ON SCHEMA production TO production_writer;
 GRANT SELECT ON ALL TABLES IN SCHEMA production TO production_writer;
-GRANT INSERT ON production.jobs, production.units, production.unit_defects
+GRANT INSERT ON
+    production.jobs,
+    production.units,
+    production.unit_defects,
+    production.inventory_movements
     TO production_writer;
 GRANT USAGE ON SEQUENCE
     production.jobs_job_id_seq,
     production.units_unit_id_seq,
-    production.unit_defects_unit_defect_id_seq
+    production.unit_defects_unit_defect_id_seq,
+    production.inventory_movements_inventory_movement_id_seq
     TO production_writer;
 
 -- Only the documented lifecycle columns may change after insertion.

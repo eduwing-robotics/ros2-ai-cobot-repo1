@@ -105,6 +105,9 @@ class ApiHandler(BaseHTTPRequestHandler):
             self._error(404, "not_found", str(error))
         except queries.DatabaseUnavailable:
             self._error(503, "database_unavailable", "database is unavailable")
+        except datasheet.DatasheetIntegrityError as error:
+            logging.error("datasheet integrity error: %s", error)
+            self._error(503, "datasheet_inconsistent", str(error))
         except Exception:
             logging.exception("unexpected API error")
             self._error(500, "internal_error", "internal server error")
@@ -163,14 +166,18 @@ class ApiHandler(BaseHTTPRequestHandler):
         if not values["part_id"].strip():
             raise ValidationError("part_id is required")
         row = queries.part(values["part_id"])
-        row["candidates"] = self._candidates(row["part_category"])
+        row["candidates"] = self._candidates(
+            row["part_category"], row["part_name"])
         return row
 
     @staticmethod
-    def _candidates(part_category):
+    def _candidates(part_category, part_name=""):
         """부품 타입의 후보 목록. 데이터시트를 못 읽어도 DB 응답은 살린다."""
         try:
-            return datasheet.candidates(part_category)
+            rows = datasheet.candidates(part_category)
+            if part_name:
+                datasheet.selected_candidate(part_category, part_name)
+            return rows
         except datasheet.DatasheetUnavailable as error:
             logging.warning("datasheet unavailable: %s", error)
             return []

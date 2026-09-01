@@ -47,12 +47,19 @@ MAIN_SERVER_DB_DSN='dbname=main_unity_mock_test' \
 
 부품·단가·검사항목은
 `data/semiconductor_assembly_quality_datasheet_2026-08-18.xlsx`를 직접 읽습니다.
-DB에는 `production` 6개 테이블 외의 업무 스키마를 두지 않습니다.
+DB 업무 데이터는 `production` 7개 테이블과 `control.assembly_requests`에만 둡니다.
 
 XLSX 접근은 [datasheet.py](datasheet.py) 한 곳에 모여 있고, HTTP API와 대책서
 생성기가 같이 씁니다. 파일 mtime이 바뀌면 다시 읽으므로 시트를 고쳐도 서버를
 재시작하지 않아도 됩니다. 조회 키는 `production.parts.part_category`이고,
 데이터시트의 `부품 타입`과 같은 값이어야 합니다.
+
+운영 원본은 지정된 부품·품질 데이터 담당자만 수정하고, 다른 담당자가 필수값·단가·
+검사 기준을 검토한 커밋만 배포합니다. 운영 중인 파일을 직접 덮어쓰지 않고 승인된
+파일을 교체합니다. 로더는 필수 문자열, 양수 단가, `YYYY-MM-DD` 확인일,
+`(부품 타입, MPN)` 중복, Components/Checklist 카테고리 일치를 검사합니다.
+DB 선택 MPN이 없으면 최저가로 대체하지 않고 오류를 반환하며, 불량대책서에는 원본
+파일명과 SHA-256을 함께 기록합니다.
 
 ## 문서
 

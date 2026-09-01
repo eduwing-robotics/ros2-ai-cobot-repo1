@@ -1,6 +1,6 @@
 """Read-only access to the part datasheet XLSX.
 
-DB 에는 `production` 6개 테이블 외의 업무 스키마를 두지 않는다. 부품 카탈로그는 이
+DB 업무 데이터는 `production` 스키마에만 두고, 부품 카탈로그는 이
 XLSX 가 원본이고, MainServer 와 불량대책서 생성기가 함께 읽는다. 파서를 양쪽에 두면
 시트 구조가 바뀔 때 두 군데를 고쳐야 하므로 여기 한 곳에 둔다.
 
@@ -12,9 +12,12 @@ XLSX 가 원본이고, MainServer 와 불량대책서 생성기가 함께 읽는
 
 from __future__ import annotations
 
+import hashlib
+import math
 import re
 import threading
 import zipfile
+from datetime import date
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
@@ -51,6 +54,10 @@ GATE_KEYS = ("incoming_inspection", "assembly_control",
 
 
 class DatasheetUnavailable(RuntimeError):
+    pass
+
+
+class DatasheetIntegrityError(RuntimeError):
     pass
 
 
@@ -141,25 +148,51 @@ def _table(path: Path, sheet: str, header_row: int,
     return records
 
 
-def _clean(value: object) -> str:
-    return "" if value is None else str(value).strip()
+def _required_text(row: dict[str, object], key: str, label: str) -> str:
+    value = row[key]
+    if not isinstance(value, str) or not value.strip():
+        raise DatasheetIntegrityError(f"{label}: {key} must be nonblank text")
+    return value.strip()
 
 
 def load_parts(path: Path) -> dict[str, list[dict[str, object]]]:
     """부품 타입 → 부품 목록. 같은 타입이면 서로 대체 후보다."""
     by_category: dict[str, list[dict[str, object]]] = {}
-    for row in _table(path, PARTS_SHEET, PARTS_HEADER_ROW, PART_COLUMNS):
-        category = _clean(row["part_category"])
-        if not category:
-            continue
+    seen = set()
+    for index, row in enumerate(
+            _table(path, PARTS_SHEET, PARTS_HEADER_ROW, PART_COLUMNS), 1):
+        label = f"{PARTS_SHEET} data row {index}"
+        category = _required_text(row, "part_category", label)
+        mpn = _required_text(row, "mpn", label)
+        spec = _required_text(row, "spec", label)
+        supplier = _required_text(row, "supplier", label)
+        price_basis = _required_text(row, "price_basis", label)
+        price_checked_at = _required_text(row, "price_checked_at", label)
         price = row["unit_price"]
+        if (isinstance(price, bool) or not isinstance(price, (int, float))
+                or not math.isfinite(float(price)) or price <= 0):
+            raise DatasheetIntegrityError(
+                f"{label}: unit_price must be a positive number")
+        try:
+            checked_on = date.fromisoformat(price_checked_at)
+        except ValueError as error:
+            raise DatasheetIntegrityError(
+                f"{label}: price_checked_at must use YYYY-MM-DD") from error
+        if checked_on.isoformat() != price_checked_at:
+            raise DatasheetIntegrityError(
+                f"{label}: price_checked_at must use YYYY-MM-DD")
+        unique_key = (category, mpn)
+        if unique_key in seen:
+            raise DatasheetIntegrityError(
+                f"{label}: duplicate part_category and mpn: {category}, {mpn}")
+        seen.add(unique_key)
         by_category.setdefault(category, []).append({
-            "mpn": _clean(row["mpn"]),
-            "spec": _clean(row["spec"]),
-            "supplier": _clean(row["supplier"]),
-            "unit_price": round(float(price), 2) if price is not None else None,
-            "price_basis": _clean(row["price_basis"]),
-            "price_checked_at": _clean(row["price_checked_at"]),
+            "mpn": mpn,
+            "spec": spec,
+            "supplier": supplier,
+            "unit_price": round(float(price), 2),
+            "price_basis": price_basis,
+            "price_checked_at": price_checked_at,
         })
     return by_category
 
@@ -169,13 +202,22 @@ def load_checklist(path: Path) -> dict[str, dict[str, str]]:
     rows = _table(path, CHECKLIST_SHEET, CHECKLIST_HEADER_ROW, CHECKLIST_COLUMNS)
     common = {}
     gates: dict[str, dict[str, str]] = {}
-    for row in rows:
-        category = _clean(row["part_category"])
-        values = {key: _clean(row[key]) for key in GATE_KEYS}
+    seen = set()
+    for index, row in enumerate(rows, 1):
+        label = f"{CHECKLIST_SHEET} data row {index}"
+        category = _required_text(row, "part_category", label)
+        if category in seen:
+            raise DatasheetIntegrityError(
+                f"{label}: duplicate part_category: {category}")
+        seen.add(category)
+        values = {key: _required_text(row, key, label) for key in GATE_KEYS}
         if category == COMMON:
             common = values
-        elif category:
+        else:
             gates[category] = values
+
+    if not common:
+        raise DatasheetIntegrityError(f"{CHECKLIST_SHEET}: {COMMON} row is required")
 
     merged = {COMMON: common}
     for category, values in gates.items():
@@ -207,12 +249,23 @@ def catalog(path: Path | None = None) -> dict:
         if _cache is not None and _cache[0] == path and _cache[1] == stamp:
             return _cache[2]
         dated = re.search(r"\d{4}-\d{2}-\d{2}", path.name)
+        parts = load_parts(path)
+        checklist = load_checklist(path)
+        checklist_categories = set(checklist) - {COMMON}
+        part_categories = set(parts)
+        if checklist_categories != part_categories:
+            missing_checklist = sorted(part_categories - checklist_categories)
+            missing_parts = sorted(checklist_categories - part_categories)
+            raise DatasheetIntegrityError(
+                "part/checklist category mismatch: "
+                f"missing checklist={missing_checklist}, missing parts={missing_parts}")
         loaded = {
-            "parts": load_parts(path),
-            "checklist": load_checklist(path),
+            "parts": parts,
+            "checklist": checklist,
             "path": path,
             "source_file": path.name,
             "dated_on": dated.group(0) if dated else "",
+            "source_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
         }
         _cache = (path, stamp, loaded)
         return loaded
@@ -229,19 +282,31 @@ def gates(part_category: str, path: Path | None = None) -> dict[str, str]:
     return loaded["checklist"].get(part_category, loaded["checklist"].get(COMMON, {}))
 
 
+def selected_candidate(part_category: str, part_name: str,
+                       path: Path | None = None) -> dict[str, object]:
+    """DB가 선택한 MPN. 카테고리나 MPN 불일치는 잘못된 단가 대신 오류다."""
+    rows = candidates(part_category, path)
+    chosen = next((row for row in rows if row["mpn"] == part_name), None)
+    if chosen is None:
+        raise DatasheetIntegrityError(
+            f"selected part is missing from datasheet: {part_category}, {part_name}")
+    return chosen
+
+
 def prices(part_category: str, part_name: str = "",
            path: Path | None = None) -> dict[str, object]:
     """타입의 단가 요약. `selected` 는 DB part_name 과 MPN 이 같은 후보다."""
+    chosen = (selected_candidate(part_category, part_name, path)["unit_price"]
+              if part_name else None)
     rows = [row for row in candidates(part_category, path)
             if row["unit_price"] is not None]
     if not rows:
         return {"unit_price_min": None, "unit_price_max": None,
                 "unit_price_selected": None, "candidate_count": 0}
     values = [row["unit_price"] for row in rows]
-    chosen = next((row["unit_price"] for row in rows if row["mpn"] == part_name), None)
     return {
         "unit_price_min": min(values),
         "unit_price_max": max(values),
-        "unit_price_selected": chosen if chosen is not None else min(values),
+        "unit_price_selected": chosen if part_name else min(values),
         "candidate_count": len(rows),
     }

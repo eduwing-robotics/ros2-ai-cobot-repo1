@@ -204,18 +204,30 @@ SELECT unit.unit_id, slot.product_slot_id, defect.defect_type
     ON slot.product_id = product.product_id
    AND slot.slot_code = defect.slot_code;
 
-WITH new_completed_units AS (
-    SELECT unit.unit_id
+WITH consumption AS (
+    SELECT unit.unit_id,
+           slot.part_id,
+           count(*)::integer AS quantity,
+           unit.assembly_completed_at
       FROM production.units unit
       JOIN mock_sample_inserted_jobs job USING (job_id)
+      JOIN production.jobs production_job ON production_job.job_id = unit.job_id
+      JOIN production.product_slots slot
+        ON slot.product_id = production_job.product_id
      WHERE unit.unit_status = 'COMPLETED'
+     GROUP BY unit.unit_id, slot.part_id, unit.assembly_completed_at
+), movement AS (
+    INSERT INTO production.inventory_movements (
+        part_id, quantity_delta, movement_type, unit_id, reason, recorded_at
+    )
+    SELECT part_id, -quantity, 'CONSUMPTION', unit_id,
+           'MOCK_SAMPLE_COMPLETION', assembly_completed_at
+      FROM consumption
+    RETURNING part_id, -quantity_delta AS quantity
 ), requirement AS (
-    SELECT slot.part_id, count(*) * (SELECT count(*) FROM new_completed_units) AS quantity
-      FROM production.product_slots slot
-      JOIN production.products product USING (product_id)
-     WHERE product.product_code = 'HBM-ACCELERATOR-PACKAGE-BOARD'
-       AND product.product_version = 'hbm-pkg-r1'
-     GROUP BY slot.part_id
+    SELECT part_id, sum(quantity)::integer AS quantity
+      FROM movement
+     GROUP BY part_id
 )
 UPDATE production.parts part
    SET stock_quantity = part.stock_quantity - requirement.quantity

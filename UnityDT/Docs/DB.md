@@ -2,12 +2,12 @@
 
 ## 현재 구성
 
-2026-08-31 기준 DDL은 `production` 6개 테이블과 `control` 1개 테이블을
+2026-09-01 기준 DDL은 `production` 7개 테이블과 `control` 1개 테이블을
 정의한다.
 
 | 저장 위치 | 대상 | 소유·용도 |
 |---|---|---|
-| PostgreSQL `production` | `products`, `parts`, `product_slots`, `jobs`, `units`, `unit_defects` | 제품 정의와 생산 실행·검사 결과 |
+| PostgreSQL `production` | `products`, `parts`, `product_slots`, `jobs`, `units`, `unit_defects`, `inventory_movements` | 제품 정의와 생산 실행·검사·재고 변동 기록 |
 | PostgreSQL `control` | `assembly_requests` | MainServer와 AssemblySequencer 사이의 영속 command queue |
 | [부품 데이터시트](../../MAIN_SERVER/data/semiconductor_assembly_quality_datasheet_2026-08-18.xlsx) | 부품 후보, 단가, 검사항목 | `part_catalog`을 대신하는 읽기 전용 XLSX |
 | `MAIN_SERVER/reports/defects/*.xlsx` | 불량대책서 | `defect_report`를 대신하는 자동 생성 파일 |
@@ -17,7 +17,7 @@
 
 ## 스키마
 
-![production 6개 테이블 스키마](./images/production-schema.png)
+![production·control 8개 테이블 스키마](./images/production-schema.png)
 
 문서용 이미지는 현재 DDL의 테이블과 열을 기준으로 렌더했다. 편집 가능한 기존
 ERD 원본은 [db-erd-guide.drawio](./db-erd-guide.drawio)다.
@@ -32,6 +32,7 @@ ERD 원본은 [db-erd-guide.drawio](./db-erd-guide.drawio)다.
 | `jobs` | `job_id` | `product_id`, `requested_quantity`, `recipe_version`, `job_status` | 생산 요청과 실행 기간 |
 | `units` | `unit_id` | `job_id`, `unit_sequence_in_job`, `unit_status`, `inspection_result` | Job에서 생산한 개별 Unit |
 | `unit_defects` | `unit_defect_id` | `unit_id`, `product_slot_id`, `defect_type` | FAIL Unit의 슬롯 단위 불량 |
+| `inventory_movements` | `inventory_movement_id` | `part_id`, `quantity_delta`, `movement_type`, `unit_id` | 현재고의 증감 사유와 시각을 보존하는 원장 |
 | `control.assembly_requests` | `request_id` | `runtime_mode`, `payload`, `request_status`, `job_id`, `unit_id` | 영속 요청과 production 실행 연결 |
 
 관계는 다음 두 흐름으로 읽는다.
@@ -39,6 +40,7 @@ ERD 원본은 [db-erd-guide.drawio](./db-erd-guide.drawio)다.
 ```text
 products ──< product_slots >── parts
 products ──< jobs ──< units ──< unit_defects >── product_slots
+parts ──< inventory_movements >── units
 control.assembly_requests ── job_id/unit_id ──> jobs/units
 ```
 
@@ -51,8 +53,21 @@ control.assembly_requests ── job_id/unit_id ──> jobs/units
 - Unit 검사는 `PENDING`, `PASS`, `FAIL`만 허용하고, 완료 시각과 검사 시각의 순서를 검사한다.
 - 불량 유형은 `MISSING`, `POSITION_ERROR`, `ORIENTATION_ERROR`, `CRACK`만 허용한다.
 - 한 Unit의 같은 Product Slot에는 불량 레코드를 하나만 기록한다.
+- 재고 변동량은 0일 수 없고 `CONSUMPTION`은 음수이며 Unit과 연결된다.
+- 한 Unit의 같은 Part 소비와 Part별 `OPENING` 기준값은 한 번만 기록한다.
 - command 상태는 `QUEUED`, `RUNNING`, `COMPLETED`, `FAILED`, `CANCELLED`만 허용한다.
 - `RUNNING` command는 최대 1개이며 Job·Unit과 claim 시각이 반드시 연결된다.
+
+## 재고 원장
+
+`production.parts.stock_quantity`는 빠른 조회용 현재고이고,
+`production.inventory_movements`는 변경 사유·증감량·기록 시각을 보존하는
+append-only 원장이다. AssemblySequencer는 조립 완료 시 현재고 차감과
+`CONSUMPTION` 기록을 같은 트랜잭션에서 처리한다.
+
+기존 재고는 원장 도입 시점의 `OPENING`으로 한 번만 기록했다. 따라서 도입 이전의
+개별 입고·소비·보정 내역은 복원하지 않으며, 이후 현재고는 원장 증감량 합계와
+일치해야 한다. 부품 데이터시트는 재고를 소유하거나 동기화하지 않는다.
 
 ## 부품 데이터시트
 
@@ -72,6 +87,12 @@ control.assembly_requests ── job_id/unit_id ──> jobs/units
 production.parts.part_category  ==  데이터시트 '부품 타입'
 production.parts.part_name      ==  후보 3종 중 하나의 'MPN'   → unit_price_selected
 ```
+
+데이터시트 운영 원본은 지정된 부품·품질 데이터 담당자만 수정하고 다른 담당자가
+필수값·단가·검사 기준을 검토한 커밋만 배포한다. 로더는 필수 문자열, 양수 단가,
+`YYYY-MM-DD` 확인일, `(부품 타입, MPN)` 중복과 두 시트의 카테고리 일치를 검사한다.
+DB 선택 MPN이 없으면 최저가로 대체하지 않고 오류를 반환하며, 불량대책서는 사용한
+원본의 파일명과 SHA-256을 보존한다.
 
 현재 Production 부품 연결은 다음과 같다. 단가는 후보 3종의 폭이다.
 
@@ -132,17 +153,18 @@ MAIN_SERVER_DB_DSN='dbname=main_unity_mock_test' \
 
 1. Unity가 MainServer HTTP API에 조립 command를 보낸다.
 2. MainServer는 command를 `control.assembly_requests`에 저장하고 `production`은 조회만 한다.
-3. AssemblySequencer가 command를 claim하면서 Job·Unit을 만들고 재고·검사 결과를 `production`에 기록한다.
+3. AssemblySequencer가 command를 claim하면서 Job·Unit을 만들고 현재고·재고 변동·검사 결과를 `production`에 같은 트랜잭션으로 기록한다.
 4. 불량대책서 생성기가 완료된 FAIL 기록과 데이터시트를 결합해 XLSX를 발행한다.
 5. Unity/Scenario는 DB나 파일을 직접 다루지 않고 주입된 로봇 인터페이스를 사용한다.
 
 ## 검증
 
-Mock test DB의 schema 적용과 E2E에서 아래 7개 테이블을 확인했다.
+Mock test DB의 schema 적용과 E2E에서 아래 8개 테이블을 확인했다.
 
 ```text
 control.assembly_requests
 production.jobs
+production.inventory_movements
 production.parts
 production.product_slots
 production.products

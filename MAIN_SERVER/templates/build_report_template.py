@@ -16,11 +16,11 @@ openpyxl 이 없고, 문서 양식을 뽑자고 서버 환경에 넣을 이유�
 두 파일이 따로 편집되면서 어긋나 있었다. 여기서 같이 만든다.
 표준양식은 `{{token}}`을 그대로 두고, 샘플은 같은 자리에 값을 넣는다.
 
-담당자 회신 칸은 **정의된 이름**(reply_*)으로 가리킨다. 좌표로 읽으면 담당자가
-행을 하나만 삽입해도 파서가 엉뚱한 칸을 읽는다. 이름은 Excel이 따라 움직인다.
+담당자 회신 칸은 **정의된 이름**(reply_*)으로 가리킨다. 행을 삽입해도 Excel이
+이름의 참조를 함께 옮기므로, 셀 주소를 여러 곳에서 따로 관리하지 않는다.
 
 안내문은 셀 값이 아니라 **입력 메시지**로 붙인다. 셀에 안내문을 적어 두면
-담당자가 지우지 않았을 때 그대로 결재에 올라가고, 파서는 그 문장을 원인으로 저장한다.
+담당자가 지우지 않았을 때 그대로 결재 문서에 남는다.
 """
 
 from __future__ import annotations
@@ -234,7 +234,7 @@ def lock_sheet(ws, allow_filter=True):
 
 
 # ---------------------------------------------------------------- 회신 칸 정의
-# (정의된 이름, 셀, 안내 제목, 안내 본문) — DB 컬럼과 1:1
+# (정의된 이름, 시트, 셀, 안내 제목, 안내 본문) — 템플릿 입력 메시지 정의
 REPLY_CELLS = [
     (
         "reply_containment_scope", "대책서", "B21", "① 협조가 필요한 조치",
@@ -242,7 +242,6 @@ REPLY_CELLS = [
         "아래 칸에 누구에게 언제 요청했는지 적는다.\n\n"
         "생산 중단 → 생산팀장 · 출하 보류 → 영업/물류 · 재고 선별 → 인력 투입 승인\n"
         "고객 통보 → 품질보증 책임자 · 설비 정지 → 설비팀\n"
-        "→ containment_summary 첫 줄로 함께 저장된다",
     ),
     (
         "reply_containment", "대책서", "B22", "① 초동 조치 — 오늘 안에",
@@ -250,27 +249,21 @@ REPLY_CELLS = [
         "영향 받는 job_id / unit_id 범위를 함께 적는다.\n\n"
         "원인이 안 나와도 오늘 회신한다. 여기는 '막았는지'만 쓰는 칸이다.\n"
         "원인을 없애는 것은 ④ 이고, 이 칸은 확산을 멈추는 칸이다.\n"
-        "→ alert_countermeasures.containment_summary",
     ),
     (
         "reply_root_cause_label", "대책서", "B25", "② 발생 원인 — 한 줄 요약 (40자)",
-        "아래 본문을 한 줄로 줄인 것. 예: '배치 하강속도 상향 + 지지 핀 최원거리 슬롯'\n\n"
-        "이 부품·유형이 다시 나면, 다음 대책서의 자동 분석 ③ 줄이 이 칸을 그대로 읽어\n"
-        "'과거 원인'으로 싣는다. 본문은 길어서 그 자리에 들어가지 않는다.\n"
-        "→ alert_countermeasures.root_cause_label",
+        "아래 본문을 한 줄로 줄인 것. 예: '배치 하강속도 상향 + 지지 핀 최원거리 슬롯'\n본문은 길어서 이 칸에 들어가지 않으므로 핵심 원인만 적는다."
     ),
     (
         "reply_root_cause", "대책서", "B26", "② 발생 원인 — 왜 만들어졌는가",
         "「판단자료」 A·B로 급증 시점과 레시피 변경 시점을 대조한다.\n"
         "재현 또는 실물 확인으로 검증한 근거를 적는다.\n"
         "가설이면 '가설'이라고 표시한다.\n"
-        "→ alert_countermeasures.root_cause_summary",
     ),
     (
         "reply_escape_cause", "대책서", "B28", "③ 유출 원인 — 왜 검사에서 걸리지 않았는가",
         "「판단자료」 D의 검사 항목과 대조해 판정 기준의 한계를 적는다.\n"
         "검사를 안 한 것인지, 했는데 못 걸른 것인지 구분한다.\n"
-        "→ alert_countermeasures.escape_cause_summary",
     ),
     (
         "reply_prevention", "대책서", "B31", "④ 재발방지 대책 — 원인을 제거하는 영구대책",
@@ -279,47 +272,40 @@ REPLY_CELLS = [
         "동일 부품을 쓰는 다른 슬롯으로의 수평전개 여부를 포함한다.\n\n"
         "레시피 변경은 변경관리 승인이, 부품 교체는 고객 승인이 필요할 수 있다.\n"
         "승인 절차가 걸리면 그 일정도 함께 적는다.\n"
-        "→ alert_countermeasures.applied_recipe_version / applied_at",
     ),
     (
         "reply_verify_period", "검증", "B5", "⑤ 검증 기간",
         "대책을 적용하고 다시 집계한 구간. [시작, 끝) 으로 적는다.\n"
-        "검증 물량이 기준 최소 건수를 넘어야 판정할 수 있다.",
     ),
     (
         "reply_verify_recipe", "검증", "D5", "⑤ 적용 레시피",
         "대책을 적용한 뒤 실행한 recipe_version.\n"
         "이 값이 있어야 적용 전후를 같은 제품 안에서 비교할 수 있다.\n"
-        "→ alert_countermeasures.applied_recipe_version",
     ),
     (
         "reply_verify_inspected", "검증", "E5", "⑤ 검증 검사 수량",
         "부품 기준 검사 건수 (유닛 수 × 해당 부품 슬롯 수).\n"
-        "→ alert_countermeasures.verified_inspected_quantity",
     ),
     (
         "reply_verify_defective", "검증", "F5", "⑤ 검증 불량 수량",
-        "→ alert_countermeasures.verified_defective_quantity",
+        "",
     ),
     (
         "reply_verify_status", "검증", "H5", "⑤ 판정",
-        "기준 불량률 이하로 내려왔으면 EFFECTIVE.\n"
-        "아니면 INEFFECTIVE로 두고 ②로 되돌아간다.\n"
-        "→ alert_countermeasures.verification_status",
+        "판정 기준과 비교한 결론을 선택한다.\n"
+        "기준은 해당 품질 절차에서 확인한다."
     ),
     (
         "reply_verify_note", "검증", "B6", "⑤ 판정 근거",
         "재집계 결과를 그렇게 읽은 이유.\n"
-        "검증 수량이 기준 최소 건수에 못 미치면 그것도 적는다.",
     ),
     (
         "reply_closed_at", "검증", "F8", "⑥ 종결일",
-        "→ alerts.closed_at · alert_status='CLOSED'",
+        "",
     ),
     (
         "reply_closure_note", "검증", "B9", "⑥ 종결 의견",
         "잔여 위험과 종결 승인 의견.\n"
-        "→ alert_countermeasures.closure_note / closed_by",
     ),
 ]
 
@@ -561,7 +547,7 @@ def build_verify(wb, d):
     **다시 생산이 돌아야** 채울 수 있어 2~4주 뒤고 ⑥ 은 그 다음이다.
     작성 시점이 다른 칸을 한 장에 두면 담당자는 늘 절반이 빈 문서를 본다.
 
-    회신 칸은 좌표가 아니라 정의된 이름으로 읽으므로, 시트가 갈려도 파서는 그대로다.
+    회신 칸은 정의된 이름으로 식별하므로, 시트가 나뉘어도 입력 위치가 분명하다.
     """
     ws = wb.create_sheet("검증")
     for col, w in {"A": 14, "B": 12, "C": 12, "D": 11,
@@ -606,7 +592,7 @@ def build_verify(wb, d):
     put(ws, "H5", d.get("verify_status", "PENDING"), bg=REPLY,
         al=align("center", "center"), unlock=True)
     list_rule(ws, "H5", VERIFY_STATUSES, "⑤ 판정",
-              "기준 불량률 이하면 EFFECTIVE · 아니면 INEFFECTIVE로 두고 ②로 되돌아간다.")
+              "품질 절차에서 정한 판정 기준에 따라 선택한다.")
 
     ws.merge_cells("B6:H6")
     put(ws, "B6", d.get("verify_note"), bg=REPLY, f=font(T_SMALL),

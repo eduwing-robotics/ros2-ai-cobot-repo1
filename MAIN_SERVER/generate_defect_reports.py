@@ -120,7 +120,10 @@ def _catalog_tokens(part_category: str, part_name: str,
     for gate in datasheet.GATE_KEYS:
         tokens[gate] = _text(gates.get(gate)) or "—"
     tokens.update({
-        "source_file": loaded["source_file"],
+        "source_file": (
+            f"{loaded['source_file']}\nSHA-256: {loaded['source_sha256']}"
+        ),
+        "source_sha256": loaded["source_sha256"],
         "source_dated_on": loaded["dated_on"] or "—",
         "queried_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     })
@@ -265,7 +268,11 @@ def generate(dsn: str, path: Path, template: Path, output_dir: Path,
              job_id: int | None = None) -> tuple[int, int]:
     datasheet.catalog(path)          # 시트가 없거나 열이 바뀌었으면 여기서 멈춘다
     groups = defaultdict(list)
-    for row in load_defects(dsn, job_id):
+    rows = load_defects(dsn, job_id)
+    for row in rows:
+        datasheet.selected_candidate(
+            _text(row["part_category"]), _text(row["part_name"]), path)
+    for row in rows:
         groups[(row["job_id"], row["part_id"], row["defect_type"])].append(row)
     created = skipped = 0
     for key, rows in groups.items():
@@ -287,12 +294,34 @@ def self_check() -> None:
     loaded = datasheet.catalog(DATASHEET)
     assert len(loaded["parts"]["MLCC"]) == 3
     assert loaded["checklist"]["MLCC"]["incoming_inspection"]
+    assert re.fullmatch(r"[0-9a-f]{64}", loaded["source_sha256"])
     assert datasheet.prices("MLCC")["unit_price_min"] == 0.09
+    assert datasheet.prices(
+        "MLCC", "Contoso CX-0603X7R104K100"
+    )["unit_price_selected"] == 0.15
+    try:
+        datasheet.prices("MLCC", "missing MPN")
+    except datasheet.DatasheetIntegrityError:
+        pass
+    else:
+        raise AssertionError("missing selected MPN must fail")
+    assert loaded["source_sha256"] in _catalog_tokens(
+        "MLCC", "Contoso CX-0603X7R104K100", DATASHEET
+    )["source_file"]
     assert _safe_filename("../CAP") == "CAP"
     with tempfile.TemporaryDirectory() as directory:
         output = Path(directory) / "check.xlsx"
-        write_report(TEMPLATE, output, {"alert_code": "QA-CHECK"})
+        tokens = {"alert_code": "QA-CHECK"}
+        tokens.update(_catalog_tokens(
+            "MLCC", "Contoso CX-0603X7R104K100", DATASHEET))
+        write_report(TEMPLATE, output, tokens)
         assert output.is_file()
+        with zipfile.ZipFile(output) as report:
+            xml = b"".join(
+                report.read(name) for name in report.namelist()
+                if name.endswith(".xml")
+            )
+        assert loaded["source_sha256"].encode() in xml
     print("generate_defect_reports self-check passed")
 
 

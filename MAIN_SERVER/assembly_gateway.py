@@ -1,4 +1,4 @@
-"""Thin ROS2 service client used by MainServer execution routes."""
+"""Thin ROS2 client for MainServer AssemblySequencer status route."""
 import json
 import threading
 
@@ -16,7 +16,7 @@ class GatewayResponseError(RuntimeError):
 
 
 class AssemblyGateway:
-    """Call the existing assembly bridge without importing ROS2 at API import time."""
+    """Query the existing assembly bridge without importing ROS2 at API import time."""
 
     def __init__(self, timeout_seconds=SERVICE_TIMEOUT_SECONDS):
         self.timeout_seconds = timeout_seconds

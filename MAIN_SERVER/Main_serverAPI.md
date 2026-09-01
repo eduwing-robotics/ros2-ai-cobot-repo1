@@ -39,7 +39,8 @@ Failure:
 ```
 
 All query routes return `200`. Query invalid input is `400`, missing
-resources are `404`, and unavailable DB is `503`.
+resources are `404`, and unavailable DB or inconsistent part datasheet is
+`503`.
 
 ## Assembly execution
 
@@ -109,6 +110,7 @@ Job/Unit routes to observe execution and DB synchronization.
 | `400` | `invalid_request` | Invalid HTTP query or top-level assembly command |
 | `409` | `duplicate_request` | The request ID already belongs to different content |
 | `503` | `database_unavailable` | PostgreSQL is unavailable for query or enqueue |
+| `503` | `datasheet_inconsistent` | The DB-selected part is absent from the validated datasheet |
 | `503` | `assembly_unavailable` | Status ROS2 service is unavailable or invalid |
 
 The status gateway serializes ROS service spins, so concurrent status calls

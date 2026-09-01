@@ -29,6 +29,14 @@ ON CONFLICT (part_id) DO UPDATE
 SET part_name = EXCLUDED.part_name,
     part_category = EXCLUDED.part_category;
 
+INSERT INTO production.inventory_movements (
+    part_id, quantity_delta, movement_type, reason
+)
+SELECT part_id, stock_quantity, 'OPENING', 'MOCK_SEED'
+FROM production.parts
+WHERE stock_quantity > 0
+ON CONFLICT (part_id) WHERE movement_type = 'OPENING' DO NOTHING;
+
 INSERT INTO production.products (
     product_code, product_name, product_version, is_selectable
 ) VALUES (

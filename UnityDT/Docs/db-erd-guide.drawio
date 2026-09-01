@@ -1,189 +1,273 @@
 <mxfile host="app.diagrams.net" type="device">
   <diagram id="db-erd-guide" name="ERD">
-    <mxGraphModel dx="1400" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" math="0" shadow="0" adaptiveColors="auto">
+    <mxGraphModel dx="1600" dy="1100" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1650" pageHeight="1100" math="0" shadow="0" adaptiveColors="auto">
       <root>
-        <mxCell id="0"/>
-        <mxCell id="1" parent="0"/>
-
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="Production / Control 물리 ERD" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#1F3864;" vertex="1" parent="1">
+          <mxGeometry x="160" y="4" width="620" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" value="전체 열 · PostgreSQL 실제 타입 · PK/FK 필드 행 연결" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;fontSize=11;fontColor=#888888;" vertex="1" parent="1">
+          <mxGeometry x="880" y="6" width="710" height="28" as="geometry" />
+        </mxCell>
         <mxCell id="actor" value="사용자" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;strokeColor=#B85450;strokeWidth=2;fontSize=12;fontStyle=1;fontColor=#B85450;" vertex="1" parent="1">
-          <mxGeometry x="60" y="95" width="60" height="80" as="geometry"/>
+          <mxGeometry x="35" y="86" width="60" height="80" as="geometry" />
         </mxCell>
-        <mxCell id="entry_badge" value="사용자 요청 진입점" style="rounded=1;arcSize=40;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=11;fontStyle=1;fontColor=#B85450;" vertex="1" parent="1">
-          <mxGeometry x="290" y="4" width="260" height="24" as="geometry"/>
+        <mxCell id="tbl_products" value="products" style="swimlane;html=1;startSize=34;childLayout=stackLayout;horizontal=1;horizontalStack=0;resizeParent=0;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fontStyle=1;fontSize=15;fontColor=#1F3864;rounded=1;arcSize=6;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=2;swimlaneFillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="160" y="40" width="430" height="216" as="geometry" />
         </mxCell>
-
+        <mxCell id="tbl_products_role" value="production · 완성체 제품 버전 정의" style="shape=partialRectangle;html=1;whiteSpace=wrap;top=0;left=0;right=0;bottom=1;fillColor=#F5F7FA;strokeColor=#6C8EBF;align=center;verticalAlign=middle;fontSize=11;fontColor=#666666;fontStyle=2;movable=0;resizable=0;" vertex="1" parent="tbl_products">
+          <mxGeometry x="0" y="34" width="430" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="products_c1" value="&lt;b&gt;PK&lt;/b&gt;&amp;nbsp; product_id : bigint identity" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_products">
+          <mxGeometry x="0" y="60" width="430" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="products_c2" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; product_code : text" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_products">
+          <mxGeometry x="0" y="86" width="430" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="products_c3" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; product_name : text" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_products">
+          <mxGeometry x="0" y="112" width="430" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="products_c4" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; product_version : text" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_products">
+          <mxGeometry x="0" y="138" width="430" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="products_c5" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; is_selectable : boolean = true" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_products">
+          <mxGeometry x="0" y="164" width="430" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="products_c6" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; definition_locked_at : timestamptz NULL" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_products">
+          <mxGeometry x="0" y="190" width="430" height="26" as="geometry" />
+        </mxCell>
         <mxCell id="tbl_jobs" value="jobs" style="swimlane;html=1;startSize=34;childLayout=stackLayout;horizontal=1;horizontalStack=0;resizeParent=0;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fontStyle=1;fontSize=15;fontColor=#1B5E20;rounded=1;arcSize=6;fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=2;swimlaneFillColor=#FFFFFF;" vertex="1" parent="1">
-          <mxGeometry x="290" y="40" width="260" height="190" as="geometry"/>
+          <mxGeometry x="650" y="40" width="430" height="268" as="geometry" />
         </mxCell>
-        <mxCell id="jobs_role" value="조립 요청 (완성체 · 수량)" style="shape=partialRectangle;html=1;whiteSpace=wrap;top=0;left=0;right=0;bottom=1;fillColor=#F5FAF4;strokeColor=#82B366;align=center;verticalAlign=middle;fontSize=11;fontColor=#666666;fontStyle=2;movable=0;resizable=0;" vertex="1" parent="tbl_jobs">
-          <mxGeometry y="34" width="260" height="26" as="geometry"/>
+        <mxCell id="tbl_jobs_role" value="production · 생산 요청과 실행 기간" style="shape=partialRectangle;html=1;whiteSpace=wrap;top=0;left=0;right=0;bottom=1;fillColor=#F5FAF4;strokeColor=#82B366;align=center;verticalAlign=middle;fontSize=11;fontColor=#666666;fontStyle=2;movable=0;resizable=0;" vertex="1" parent="tbl_jobs">
+          <mxGeometry x="0" y="34" width="430" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="jobs_c1" value="&lt;b&gt;PK&lt;/b&gt;&amp;nbsp; job_id" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=12;movable=0;resizable=0;" vertex="1" parent="tbl_jobs">
-          <mxGeometry y="60" width="260" height="26" as="geometry"/>
+        <mxCell id="jobs_c1" value="&lt;b&gt;PK&lt;/b&gt;&amp;nbsp; job_id : bigint identity" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_jobs">
+          <mxGeometry x="0" y="60" width="430" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="jobs_c2" value="&lt;b&gt;FK&lt;/b&gt;&amp;nbsp; product_id" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=12;movable=0;resizable=0;" vertex="1" parent="tbl_jobs">
-          <mxGeometry y="86" width="260" height="26" as="geometry"/>
+        <mxCell id="jobs_c2" value="&lt;b&gt;FK&lt;/b&gt;&amp;nbsp; product_id : bigint" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_jobs">
+          <mxGeometry x="0" y="86" width="430" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="jobs_c3" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; requested_quantity" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=12;movable=0;resizable=0;" vertex="1" parent="tbl_jobs">
-          <mxGeometry y="112" width="260" height="26" as="geometry"/>
+        <mxCell id="jobs_c3" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; requested_quantity : integer" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_jobs">
+          <mxGeometry x="0" y="112" width="430" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="jobs_c4" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; recipe_version" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=12;movable=0;resizable=0;" vertex="1" parent="tbl_jobs">
-          <mxGeometry y="138" width="260" height="26" as="geometry"/>
+        <mxCell id="jobs_c4" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; recipe_version : text" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_jobs">
+          <mxGeometry x="0" y="138" width="430" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="jobs_c5" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; job_status" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=12;movable=0;resizable=0;" vertex="1" parent="tbl_jobs">
-          <mxGeometry y="164" width="260" height="26" as="geometry"/>
+        <mxCell id="jobs_c5" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; job_status : text [CHECK]" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_jobs">
+          <mxGeometry x="0" y="164" width="430" height="26" as="geometry" />
         </mxCell>
-
-        <mxCell id="tbl_units" value="units" style="swimlane;html=1;startSize=34;childLayout=stackLayout;horizontal=1;horizontalStack=0;resizeParent=0;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fontStyle=1;fontSize=15;fontColor=#1B5E20;rounded=1;arcSize=6;fillColor=#D5E8D4;strokeColor=#82B366;swimlaneFillColor=#FFFFFF;" vertex="1" parent="1">
-          <mxGeometry x="620" y="40" width="260" height="190" as="geometry"/>
+        <mxCell id="jobs_c6" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; requested_at : timestamptz" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_jobs">
+          <mxGeometry x="0" y="190" width="430" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="units_role" value="완성품 1대 실행 · 검사 결과" style="shape=partialRectangle;html=1;whiteSpace=wrap;top=0;left=0;right=0;bottom=1;fillColor=#F5FAF4;strokeColor=#82B366;align=center;verticalAlign=middle;fontSize=11;fontColor=#666666;fontStyle=2;movable=0;resizable=0;" vertex="1" parent="tbl_units">
-          <mxGeometry y="34" width="260" height="26" as="geometry"/>
+        <mxCell id="jobs_c7" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; job_started_at : timestamptz NULL" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_jobs">
+          <mxGeometry x="0" y="216" width="430" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="units_c1" value="&lt;b&gt;PK&lt;/b&gt;&amp;nbsp; unit_id" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=12;movable=0;resizable=0;" vertex="1" parent="tbl_units">
-          <mxGeometry y="60" width="260" height="26" as="geometry"/>
+        <mxCell id="jobs_c8" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; job_finished_at : timestamptz NULL" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_jobs">
+          <mxGeometry x="0" y="242" width="430" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="units_c2" value="&lt;b&gt;FK&lt;/b&gt;&amp;nbsp; job_id" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=12;movable=0;resizable=0;" vertex="1" parent="tbl_units">
-          <mxGeometry y="86" width="260" height="26" as="geometry"/>
+        <mxCell id="tbl_requests" value="control.assembly_requests" style="swimlane;html=1;startSize=34;childLayout=stackLayout;horizontal=1;horizontalStack=0;resizeParent=0;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fontStyle=1;fontSize=15;fontColor=#5B3B66;rounded=1;arcSize=6;fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=2;swimlaneFillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="1140" y="40" width="450" height="320" as="geometry" />
         </mxCell>
-        <mxCell id="units_c3" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; unit_sequence_in_job" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=12;movable=0;resizable=0;" vertex="1" parent="tbl_units">
-          <mxGeometry y="112" width="260" height="26" as="geometry"/>
+        <mxCell id="tbl_requests_role" value="control · 영속 조립 command queue" style="shape=partialRectangle;html=1;whiteSpace=wrap;top=0;left=0;right=0;bottom=1;fillColor=#F8F3FA;strokeColor=#9673A6;align=center;verticalAlign=middle;fontSize=11;fontColor=#666666;fontStyle=2;movable=0;resizable=0;" vertex="1" parent="tbl_requests">
+          <mxGeometry x="0" y="34" width="450" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="units_c4" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; unit_status" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=12;movable=0;resizable=0;" vertex="1" parent="tbl_units">
-          <mxGeometry y="138" width="260" height="26" as="geometry"/>
+        <mxCell id="requests_c1" value="&lt;b&gt;PK&lt;/b&gt;&amp;nbsp; request_id : uuid" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_requests">
+          <mxGeometry x="0" y="60" width="450" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="units_c5" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; inspection_result" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=12;movable=0;resizable=0;" vertex="1" parent="tbl_units">
-          <mxGeometry y="164" width="260" height="26" as="geometry"/>
+        <mxCell id="requests_c2" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; runtime_mode : text [CHECK]" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_requests">
+          <mxGeometry x="0" y="86" width="450" height="26" as="geometry" />
         </mxCell>
-
-        <mxCell id="tbl_defects" value="unit_defects" style="swimlane;html=1;startSize=34;childLayout=stackLayout;horizontal=1;horizontalStack=0;resizeParent=0;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fontStyle=1;fontSize=15;fontColor=#8A4B00;rounded=1;arcSize=6;fillColor=#FFE6CC;strokeColor=#D79B00;swimlaneFillColor=#FFFFFF;" vertex="1" parent="1">
-          <mxGeometry x="1280" y="170" width="260" height="190" as="geometry"/>
+        <mxCell id="requests_c3" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; payload : jsonb" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_requests">
+          <mxGeometry x="0" y="112" width="450" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="defects_role" value="불량 판정 슬롯 기록" style="shape=partialRectangle;html=1;whiteSpace=wrap;top=0;left=0;right=0;bottom=1;fillColor=#FFF8F0;strokeColor=#D79B00;align=center;verticalAlign=middle;fontSize=11;fontColor=#666666;fontStyle=2;movable=0;resizable=0;" vertex="1" parent="tbl_defects">
-          <mxGeometry y="34" width="260" height="26" as="geometry"/>
+        <mxCell id="requests_c4" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; request_status : text [CHECK]" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_requests">
+          <mxGeometry x="0" y="138" width="450" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="defects_c1" value="&lt;b&gt;PK&lt;/b&gt;&amp;nbsp; unit_defect_id" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=12;movable=0;resizable=0;" vertex="1" parent="tbl_defects">
-          <mxGeometry y="60" width="260" height="26" as="geometry"/>
+        <mxCell id="requests_c5" value="&lt;b&gt;FK&lt;/b&gt;&amp;nbsp; job_id : bigint NULL UNIQUE" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_requests">
+          <mxGeometry x="0" y="164" width="450" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="defects_c2" value="&lt;b&gt;FK&lt;/b&gt;&amp;nbsp; unit_id" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=12;movable=0;resizable=0;" vertex="1" parent="tbl_defects">
-          <mxGeometry y="86" width="260" height="26" as="geometry"/>
+        <mxCell id="requests_c6" value="&lt;b&gt;FK&lt;/b&gt;&amp;nbsp; unit_id : bigint NULL UNIQUE" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_requests">
+          <mxGeometry x="0" y="190" width="450" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="defects_c3" value="&lt;b&gt;FK&lt;/b&gt;&amp;nbsp; product_slot_id" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=12;movable=0;resizable=0;" vertex="1" parent="tbl_defects">
-          <mxGeometry y="112" width="260" height="26" as="geometry"/>
+        <mxCell id="requests_c7" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; requested_at : timestamptz" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_requests">
+          <mxGeometry x="0" y="216" width="450" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="defects_c4" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; defect_type" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=12;movable=0;resizable=0;" vertex="1" parent="tbl_defects">
-          <mxGeometry y="138" width="260" height="26" as="geometry"/>
+        <mxCell id="requests_c8" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; claimed_at : timestamptz NULL" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_requests">
+          <mxGeometry x="0" y="242" width="450" height="26" as="geometry" />
         </mxCell>
-
-        <mxCell id="tbl_products" value="products" style="swimlane;html=1;startSize=34;childLayout=stackLayout;horizontal=1;horizontalStack=0;resizeParent=0;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fontStyle=1;fontSize=15;fontColor=#1F3864;rounded=1;arcSize=6;fillColor=#DAE8FC;strokeColor=#6C8EBF;swimlaneFillColor=#FFFFFF;" vertex="1" parent="1">
-          <mxGeometry x="290" y="300" width="260" height="190" as="geometry"/>
+        <mxCell id="requests_c9" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; finished_at : timestamptz NULL" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_requests">
+          <mxGeometry x="0" y="268" width="450" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="products_role" value="완성체 제품 버전 정의" style="shape=partialRectangle;html=1;whiteSpace=wrap;top=0;left=0;right=0;bottom=1;fillColor=#F5F7FA;strokeColor=#6C8EBF;align=center;verticalAlign=middle;fontSize=11;fontColor=#666666;fontStyle=2;movable=0;resizable=0;" vertex="1" parent="tbl_products">
-          <mxGeometry y="34" width="260" height="26" as="geometry"/>
+        <mxCell id="requests_c10" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; error_message : text = ''" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_requests">
+          <mxGeometry x="0" y="294" width="450" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="products_c1" value="&lt;b&gt;PK&lt;/b&gt;&amp;nbsp; product_id" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=12;movable=0;resizable=0;" vertex="1" parent="tbl_products">
-          <mxGeometry y="60" width="260" height="26" as="geometry"/>
+        <mxCell id="tbl_parts" value="parts" style="swimlane;html=1;startSize=34;childLayout=stackLayout;horizontal=1;horizontalStack=0;resizeParent=0;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fontStyle=1;fontSize=15;fontColor=#1F3864;rounded=1;arcSize=6;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=2;swimlaneFillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="160" y="400" width="430" height="164" as="geometry" />
         </mxCell>
-        <mxCell id="products_c2" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; product_code" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=12;movable=0;resizable=0;" vertex="1" parent="tbl_products">
-          <mxGeometry y="86" width="260" height="26" as="geometry"/>
+        <mxCell id="tbl_parts_role" value="production · 부품 기준정보와 현재고" style="shape=partialRectangle;html=1;whiteSpace=wrap;top=0;left=0;right=0;bottom=1;fillColor=#F5F7FA;strokeColor=#6C8EBF;align=center;verticalAlign=middle;fontSize=11;fontColor=#666666;fontStyle=2;movable=0;resizable=0;" vertex="1" parent="tbl_parts">
+          <mxGeometry x="0" y="34" width="430" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="products_c3" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; product_name" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=12;movable=0;resizable=0;" vertex="1" parent="tbl_products">
-          <mxGeometry y="112" width="260" height="26" as="geometry"/>
+        <mxCell id="parts_c1" value="&lt;b&gt;PK&lt;/b&gt;&amp;nbsp; part_id : text" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_parts">
+          <mxGeometry x="0" y="60" width="430" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="products_c4" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; product_version" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=12;movable=0;resizable=0;" vertex="1" parent="tbl_products">
-          <mxGeometry y="138" width="260" height="26" as="geometry"/>
+        <mxCell id="parts_c2" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; part_name : text" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_parts">
+          <mxGeometry x="0" y="86" width="430" height="26" as="geometry" />
         </mxCell>
-
-        <mxCell id="tbl_parts" value="parts" style="swimlane;html=1;startSize=34;childLayout=stackLayout;horizontal=1;horizontalStack=0;resizeParent=0;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fontStyle=1;fontSize=15;fontColor=#1F3864;rounded=1;arcSize=6;fillColor=#DAE8FC;strokeColor=#6C8EBF;swimlaneFillColor=#FFFFFF;" vertex="1" parent="1">
-          <mxGeometry x="620" y="300" width="260" height="190" as="geometry"/>
+        <mxCell id="parts_c3" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; part_category : text" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_parts">
+          <mxGeometry x="0" y="112" width="430" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="parts_role" value="부품 기준정보 · 현재고" style="shape=partialRectangle;html=1;whiteSpace=wrap;top=0;left=0;right=0;bottom=1;fillColor=#F5F7FA;strokeColor=#6C8EBF;align=center;verticalAlign=middle;fontSize=11;fontColor=#666666;fontStyle=2;movable=0;resizable=0;" vertex="1" parent="tbl_parts">
-          <mxGeometry y="34" width="260" height="26" as="geometry"/>
+        <mxCell id="parts_c4" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; stock_quantity : integer = 0" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_parts">
+          <mxGeometry x="0" y="138" width="430" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="parts_c1" value="&lt;b&gt;PK&lt;/b&gt;&amp;nbsp; part_id" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=12;movable=0;resizable=0;" vertex="1" parent="tbl_parts">
-          <mxGeometry y="60" width="260" height="26" as="geometry"/>
+        <mxCell id="tbl_inventory" value="inventory_movements" style="swimlane;html=1;startSize=34;childLayout=stackLayout;horizontal=1;horizontalStack=0;resizeParent=0;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fontStyle=1;fontSize=15;fontColor=#665500;rounded=1;arcSize=6;fillColor=#FFF2CC;strokeColor=#D6B656;strokeWidth=2;swimlaneFillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="650" y="400" width="430" height="242" as="geometry" />
         </mxCell>
-        <mxCell id="parts_c2" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; part_name" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=12;movable=0;resizable=0;" vertex="1" parent="tbl_parts">
-          <mxGeometry y="86" width="260" height="26" as="geometry"/>
+        <mxCell id="tbl_inventory_role" value="production · append-only 재고 변동 원장" style="shape=partialRectangle;html=1;whiteSpace=wrap;top=0;left=0;right=0;bottom=1;fillColor=#FFFBEA;strokeColor=#D6B656;align=center;verticalAlign=middle;fontSize=11;fontColor=#666666;fontStyle=2;movable=0;resizable=0;" vertex="1" parent="tbl_inventory">
+          <mxGeometry x="0" y="34" width="430" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="parts_c3" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; part_category" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=12;movable=0;resizable=0;" vertex="1" parent="tbl_parts">
-          <mxGeometry y="112" width="260" height="26" as="geometry"/>
+        <mxCell id="inventory_c1" value="&lt;b&gt;PK&lt;/b&gt;&amp;nbsp; inventory_movement_id : bigint identity" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_inventory">
+          <mxGeometry x="0" y="60" width="430" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="parts_c4" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; stock_quantity" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=12;movable=0;resizable=0;" vertex="1" parent="tbl_parts">
-          <mxGeometry y="138" width="260" height="26" as="geometry"/>
+        <mxCell id="inventory_c2" value="&lt;b&gt;FK&lt;/b&gt;&amp;nbsp; part_id : text" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_inventory">
+          <mxGeometry x="0" y="86" width="430" height="26" as="geometry" />
         </mxCell>
-
-        <mxCell id="tbl_slots" value="product_slots" style="swimlane;html=1;startSize=34;childLayout=stackLayout;horizontal=1;horizontalStack=0;resizeParent=0;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fontStyle=1;fontSize=15;fontColor=#1F3864;rounded=1;arcSize=6;fillColor=#DAE8FC;strokeColor=#6C8EBF;swimlaneFillColor=#FFFFFF;" vertex="1" parent="1">
-          <mxGeometry x="950" y="300" width="260" height="190" as="geometry"/>
+        <mxCell id="inventory_c3" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; quantity_delta : integer" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_inventory">
+          <mxGeometry x="0" y="112" width="430" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="slots_role" value="완성체 슬롯 구조 정의" style="shape=partialRectangle;html=1;whiteSpace=wrap;top=0;left=0;right=0;bottom=1;fillColor=#F5F7FA;strokeColor=#6C8EBF;align=center;verticalAlign=middle;fontSize=11;fontColor=#666666;fontStyle=2;movable=0;resizable=0;" vertex="1" parent="tbl_slots">
-          <mxGeometry y="34" width="260" height="26" as="geometry"/>
+        <mxCell id="inventory_c4" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; movement_type : text [CHECK]" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_inventory">
+          <mxGeometry x="0" y="138" width="430" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="slots_c1" value="&lt;b&gt;PK&lt;/b&gt;&amp;nbsp; product_slot_id" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=12;movable=0;resizable=0;" vertex="1" parent="tbl_slots">
-          <mxGeometry y="60" width="260" height="26" as="geometry"/>
+        <mxCell id="inventory_c5" value="&lt;b&gt;FK&lt;/b&gt;&amp;nbsp; unit_id : bigint NULL" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_inventory">
+          <mxGeometry x="0" y="164" width="430" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="slots_c2" value="&lt;b&gt;FK&lt;/b&gt;&amp;nbsp; product_id" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=12;movable=0;resizable=0;" vertex="1" parent="tbl_slots">
-          <mxGeometry y="86" width="260" height="26" as="geometry"/>
+        <mxCell id="inventory_c6" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; reason : text" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_inventory">
+          <mxGeometry x="0" y="190" width="430" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="slots_c3" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; slot_code" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=12;movable=0;resizable=0;" vertex="1" parent="tbl_slots">
-          <mxGeometry y="112" width="260" height="26" as="geometry"/>
+        <mxCell id="inventory_c7" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; recorded_at : timestamptz" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_inventory">
+          <mxGeometry x="0" y="216" width="430" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="slots_c4" value="&lt;b&gt;FK&lt;/b&gt;&amp;nbsp; part_id" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=12;movable=0;resizable=0;" vertex="1" parent="tbl_slots">
-          <mxGeometry y="138" width="260" height="26" as="geometry"/>
+        <mxCell id="tbl_units" value="units" style="swimlane;html=1;startSize=34;childLayout=stackLayout;horizontal=1;horizontalStack=0;resizeParent=0;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fontStyle=1;fontSize=15;fontColor=#1B5E20;rounded=1;arcSize=6;fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=2;swimlaneFillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="1140" y="400" width="450" height="294" as="geometry" />
         </mxCell>
-
-        <mxCell id="e_actor_jobs" value="완성체 선택 + 수량 입력" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=blockThin;endFill=1;strokeColor=#B85450;strokeWidth=2;fontSize=11;fontStyle=1;fontColor=#B85450;labelBackgroundColor=#FFFFFF;verticalAlign=bottom;" edge="1" parent="1" source="actor" target="tbl_jobs">
-          <mxGeometry relative="1" as="geometry"/>
+        <mxCell id="tbl_units_role" value="production · 완성품 실행과 검사 결과" style="shape=partialRectangle;html=1;whiteSpace=wrap;top=0;left=0;right=0;bottom=1;fillColor=#F5FAF4;strokeColor=#82B366;align=center;verticalAlign=middle;fontSize=11;fontColor=#666666;fontStyle=2;movable=0;resizable=0;" vertex="1" parent="tbl_units">
+          <mxGeometry x="0" y="34" width="450" height="26" as="geometry" />
         </mxCell>
-
-        <mxCell id="e_jobs_units" value="생산" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jumpStyle=arc;jumpSize=8;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;startArrow=ERone;startFill=0;endArrow=ERmany;endFill=0;strokeColor=#6E7B8B;strokeWidth=1.5;fontSize=11;fontColor=#6E7B8B;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="tbl_jobs" target="tbl_units">
-          <mxGeometry relative="1" as="geometry"/>
+        <mxCell id="units_c1" value="&lt;b&gt;PK&lt;/b&gt;&amp;nbsp; unit_id : bigint identity" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_units">
+          <mxGeometry x="0" y="60" width="450" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="e_units_defects" value="불량 발생" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jumpStyle=arc;jumpSize=8;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;startArrow=ERone;startFill=0;endArrow=ERmany;endFill=0;strokeColor=#6E7B8B;strokeWidth=1.5;fontSize=11;fontColor=#6E7B8B;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="tbl_units" target="tbl_defects">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="1240" y="135"/>
-              <mxPoint x="1240" y="217"/>
-            </Array>
-          </mxGeometry>
+        <mxCell id="units_c2" value="&lt;b&gt;FK&lt;/b&gt;&amp;nbsp; job_id : bigint" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_units">
+          <mxGeometry x="0" y="86" width="450" height="26" as="geometry" />
         </mxCell>
-
-        <mxCell id="e_products_jobs" value="선택 대상" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jumpStyle=arc;jumpSize=8;exitX=0.25;exitY=0;exitDx=0;exitDy=0;entryX=0.25;entryY=1;entryDx=0;entryDy=0;startArrow=ERone;startFill=0;endArrow=ERmany;endFill=0;strokeColor=#6E7B8B;strokeWidth=1.5;fontSize=11;fontColor=#6E7B8B;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="tbl_products" target="tbl_jobs">
-          <mxGeometry relative="1" as="geometry"/>
+        <mxCell id="units_c3" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; unit_sequence_in_job : integer" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_units">
+          <mxGeometry x="0" y="112" width="450" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="e_products_slots" value="구성 정의" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jumpStyle=arc;jumpSize=8;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;startArrow=ERone;startFill=0;endArrow=ERmany;endFill=0;strokeColor=#6E7B8B;strokeWidth=1.5;fontSize=11;fontColor=#6E7B8B;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="tbl_products" target="tbl_slots">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="485" y="265"/>
-              <mxPoint x="1080" y="265"/>
-            </Array>
-          </mxGeometry>
+        <mxCell id="units_c4" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; unit_status : text [CHECK]" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_units">
+          <mxGeometry x="0" y="138" width="450" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="e_parts_slots" value="장착" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jumpStyle=arc;jumpSize=8;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;startArrow=ERone;startFill=0;endArrow=ERmany;endFill=0;strokeColor=#6E7B8B;strokeWidth=1.5;fontSize=11;fontColor=#6E7B8B;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="tbl_parts" target="tbl_slots">
-          <mxGeometry relative="1" as="geometry"/>
+        <mxCell id="units_c5" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; inspection_result : text [CHECK]" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_units">
+          <mxGeometry x="0" y="164" width="450" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="e_slots_defects" value="불량 위치" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jumpStyle=arc;jumpSize=8;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=0.75;entryDx=0;entryDy=0;startArrow=ERone;startFill=0;endArrow=ERmany;endFill=0;strokeColor=#6E7B8B;strokeWidth=1.5;fontSize=11;fontColor=#6E7B8B;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="tbl_slots" target="tbl_defects">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="1245" y="442"/>
-              <mxPoint x="1245" y="312"/>
-            </Array>
-          </mxGeometry>
+        <mxCell id="units_c6" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; inspection_image_path : text NULL" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_units">
+          <mxGeometry x="0" y="190" width="450" height="26" as="geometry" />
         </mxCell>
-
-        <mxCell id="lg_1" value="실행" style="rounded=1;arcSize=20;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=11;fontColor=#1B5E20;" vertex="1" parent="1">
-          <mxGeometry x="60" y="550" width="90" height="28" as="geometry"/>
+        <mxCell id="units_c7" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; assembly_started_at : timestamptz" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_units">
+          <mxGeometry x="0" y="216" width="450" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="lg_2" value="검사" style="rounded=1;arcSize=20;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontSize=11;fontColor=#8A4B00;" vertex="1" parent="1">
-          <mxGeometry x="160" y="550" width="90" height="28" as="geometry"/>
+        <mxCell id="units_c8" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; assembly_completed_at : timestamptz NULL" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_units">
+          <mxGeometry x="0" y="242" width="450" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="lg_3" value="기준정보" style="rounded=1;arcSize=20;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=11;fontColor=#1F3864;" vertex="1" parent="1">
-          <mxGeometry x="260" y="550" width="90" height="28" as="geometry"/>
+        <mxCell id="units_c9" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; inspected_at : timestamptz NULL" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_units">
+          <mxGeometry x="0" y="268" width="450" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="lg_4" value="⎯&lt;b&gt;&amp;lt;&lt;/b&gt;&amp;nbsp;&amp;nbsp; 1 : N 관계" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=11;fontColor=#6E7B8B;" vertex="1" parent="1">
-          <mxGeometry x="370" y="550" width="130" height="28" as="geometry"/>
+        <mxCell id="tbl_slots" value="product_slots" style="swimlane;html=1;startSize=34;childLayout=stackLayout;horizontal=1;horizontalStack=0;resizeParent=0;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fontStyle=1;fontSize=15;fontColor=#1F3864;rounded=1;arcSize=6;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=2;swimlaneFillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="160" y="780" width="430" height="164" as="geometry" />
         </mxCell>
-
+        <mxCell id="tbl_slots_role" value="production · 완성체 슬롯 구조 정의" style="shape=partialRectangle;html=1;whiteSpace=wrap;top=0;left=0;right=0;bottom=1;fillColor=#F5F7FA;strokeColor=#6C8EBF;align=center;verticalAlign=middle;fontSize=11;fontColor=#666666;fontStyle=2;movable=0;resizable=0;" vertex="1" parent="tbl_slots">
+          <mxGeometry x="0" y="34" width="430" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="slots_c1" value="&lt;b&gt;PK&lt;/b&gt;&amp;nbsp; product_slot_id : bigint identity" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_slots">
+          <mxGeometry x="0" y="60" width="430" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="slots_c2" value="&lt;b&gt;FK&lt;/b&gt;&amp;nbsp; product_id : bigint" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_slots">
+          <mxGeometry x="0" y="86" width="430" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="slots_c3" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; slot_code : text" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_slots">
+          <mxGeometry x="0" y="112" width="430" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="slots_c4" value="&lt;b&gt;FK&lt;/b&gt;&amp;nbsp; part_id : text" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_slots">
+          <mxGeometry x="0" y="138" width="430" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="tbl_defects" value="unit_defects" style="swimlane;html=1;startSize=34;childLayout=stackLayout;horizontal=1;horizontalStack=0;resizeParent=0;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fontStyle=1;fontSize=15;fontColor=#8A4B00;rounded=1;arcSize=6;fillColor=#FFE6CC;strokeColor=#D79B00;strokeWidth=2;swimlaneFillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="650" y="780" width="430" height="164" as="geometry" />
+        </mxCell>
+        <mxCell id="tbl_defects_role" value="production · 불량 판정 슬롯 기록" style="shape=partialRectangle;html=1;whiteSpace=wrap;top=0;left=0;right=0;bottom=1;fillColor=#FFF8F0;strokeColor=#D79B00;align=center;verticalAlign=middle;fontSize=11;fontColor=#666666;fontStyle=2;movable=0;resizable=0;" vertex="1" parent="tbl_defects">
+          <mxGeometry x="0" y="34" width="430" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="defects_c1" value="&lt;b&gt;PK&lt;/b&gt;&amp;nbsp; unit_defect_id : bigint identity" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_defects">
+          <mxGeometry x="0" y="60" width="430" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="defects_c2" value="&lt;b&gt;FK&lt;/b&gt;&amp;nbsp; unit_id : bigint" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_defects">
+          <mxGeometry x="0" y="86" width="430" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="defects_c3" value="&lt;b&gt;FK&lt;/b&gt;&amp;nbsp; product_slot_id : bigint" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_defects">
+          <mxGeometry x="0" y="112" width="430" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="defects_c4" value="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; defect_type : text [CHECK]" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=14;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_defects">
+          <mxGeometry x="0" y="138" width="430" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="e_actor_requests" value="조립 요청" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=blockThin;endFill=1;strokeColor=#B85450;strokeWidth=2;fontSize=11;fontStyle=1;fontColor=#B85450;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="actor" target="tbl_requests">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_jobs_products" value="" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERmany;startFill=0;endArrow=ERone;endFill=0;strokeColor=#6E7B8B;strokeWidth=1.5;" edge="1" parent="1" source="jobs_c2" target="products_c1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_slots_products" value="" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERmany;startFill=0;endArrow=ERone;endFill=0;strokeColor=#6E7B8B;strokeWidth=1.5;" edge="1" parent="1" source="slots_c2" target="products_c1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_slots_parts" value="" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERmany;startFill=0;endArrow=ERone;endFill=0;strokeColor=#6E7B8B;strokeWidth=1.5;" edge="1" parent="1" source="slots_c4" target="parts_c1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_units_jobs" value="" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERmany;startFill=0;endArrow=ERone;endFill=0;strokeColor=#6E7B8B;strokeWidth=1.5;" edge="1" parent="1" source="units_c2" target="jobs_c1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_defects_units" value="" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERmany;startFill=0;endArrow=ERone;endFill=0;strokeColor=#6E7B8B;strokeWidth=1.5;" edge="1" parent="1" source="defects_c2" target="units_c1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_defects_slots" value="" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERmany;startFill=0;endArrow=ERone;endFill=0;strokeColor=#6E7B8B;strokeWidth=1.5;" edge="1" parent="1" source="defects_c3" target="slots_c1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inventory_parts" value="" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERmany;startFill=0;endArrow=ERone;endFill=0;strokeColor=#6E7B8B;strokeWidth=1.5;" edge="1" parent="1" source="inventory_c2" target="parts_c1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inventory_units" value="" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERmany;startFill=0;endArrow=ERone;endFill=0;strokeColor=#6E7B8B;strokeWidth=1.5;" edge="1" parent="1" source="inventory_c5" target="units_c1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_requests_jobs" value="" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERzeroToOne;startFill=0;endArrow=ERone;endFill=0;strokeColor=#6E7B8B;strokeWidth=1.5;" edge="1" parent="1" source="requests_c5" target="jobs_c1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_requests_units" value="" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERzeroToOne;startFill=0;endArrow=ERone;endFill=0;strokeColor=#6E7B8B;strokeWidth=1.5;" edge="1" parent="1" source="requests_c6" target="units_c1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lg_reference" value="기준정보" style="rounded=1;arcSize=20;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=11;fontColor=#1F3864;" vertex="1" parent="1">
+          <mxGeometry x="160" y="1015" width="100" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="lg_execution" value="실행" style="rounded=1;arcSize=20;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=11;fontColor=#1B5E20;" vertex="1" parent="1">
+          <mxGeometry x="270" y="1015" width="90" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="lg_inventory" value="재고 원장" style="rounded=1;arcSize=20;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=11;fontColor=#665500;" vertex="1" parent="1">
+          <mxGeometry x="370" y="1015" width="100" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="lg_inspection" value="검사" style="rounded=1;arcSize=20;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontSize=11;fontColor=#8A4B00;" vertex="1" parent="1">
+          <mxGeometry x="480" y="1015" width="90" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="lg_control" value="control" style="rounded=1;arcSize=20;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=11;fontColor=#5B3B66;" vertex="1" parent="1">
+          <mxGeometry x="580" y="1015" width="90" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="lg_relation" value="FK 필드 ── PK 필드" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=11;fontColor=#6E7B8B;" vertex="1" parent="1">
+          <mxGeometry x="700" y="1015" width="180" height="28" as="geometry" />
+        </mxCell>
       </root>
     </mxGraphModel>
   </diagram>

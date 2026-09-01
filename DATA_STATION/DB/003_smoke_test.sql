@@ -9,6 +9,22 @@ INSERT INTO production.parts (
     '__DATASTATION_TEST_PART__', 'test-part', 'TEST', 2
 );
 
+INSERT INTO production.inventory_movements (
+    inventory_movement_id,
+    part_id,
+    quantity_delta,
+    movement_type,
+    reason,
+    recorded_at
+) VALUES (
+    -6001,
+    '__DATASTATION_TEST_PART__',
+    2,
+    'OPENING',
+    'DATASTATION_SMOKE_TEST',
+    '2026-01-01T00:00:00Z'
+);
+
 INSERT INTO production.products (
     product_id,
     product_code,

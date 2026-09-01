@@ -341,13 +341,22 @@ def complete_assembly_and_consume_stock(unit_id):
                     FROM production.product_slots
                     WHERE product_id = %s
                     GROUP BY part_id
+                ), changed AS (
+                    UPDATE production.parts p
+                    SET stock_quantity = p.stock_quantity - r.quantity_per_product
+                    FROM requirements r
+                    WHERE p.part_id = r.part_id
+                    RETURNING p.part_id
                 )
-                UPDATE production.parts p
-                SET stock_quantity = p.stock_quantity - r.quantity_per_product
-                FROM requirements r
-                WHERE p.part_id = r.part_id
+                INSERT INTO production.inventory_movements (
+                    part_id, quantity_delta, movement_type, unit_id, reason
+                )
+                SELECT changed.part_id, -requirements.quantity_per_product,
+                       'CONSUMPTION', %s, 'ASSEMBLY_COMPLETED'
+                FROM changed
+                JOIN requirements USING (part_id)
                 """,
-                (unit["product_id"],),
+                (unit["product_id"], unit_id),
             )
             cursor.execute(
                 """

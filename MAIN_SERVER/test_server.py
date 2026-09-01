@@ -92,9 +92,16 @@ class MainServerApiTest(unittest.TestCase):
         )
         self.assertEqual(status, 200)
         self.assertTrue(requirements["data"])
+        self.assertTrue(all(
+            row["unit_price_selected"] is not None for row in requirements["data"]
+        ))
         part_id = detail["data"]["slots"][0]["part_id"]
         status, part = self.request(f"/api/v1/parts/{part_id}")
         self.assertEqual((status, part["data"]["part_id"]), (200, part_id))
+        self.assertIn(
+            part["data"]["part_name"],
+            {candidate["mpn"] for candidate in part["data"]["candidates"]},
+        )
         status, rates = self.request(f"/api/v1/products/{product_id}/quality/slot-rates")
         self.assertEqual((status, len(rates["data"])), (200, len(detail["data"]["slots"])))
         with psycopg.connect(os.environ["MAIN_SERVER_DB_DSN"]) as connection:
@@ -215,6 +222,19 @@ class MainServerApiTest(unittest.TestCase):
             "/api/v1/assemblies", "POST", b'{"command":"start"}'
         )
         self.assertEqual((status, body["error"]["code"]), (400, "invalid_request"))
+
+    def test_datasheet_mismatch_is_service_unavailable(self):
+        missing = {
+            "part_id": "MISSING",
+            "part_name": "missing MPN",
+            "part_category": "MLCC",
+            "stock_quantity": 1,
+        }
+        with patch.object(server.queries, "part", return_value=missing):
+            status, body = self.request("/api/v1/parts/MISSING")
+        self.assertEqual(
+            (status, body["error"]["code"]), (503, "datasheet_inconsistent")
+        )
 
     def test_runtime_mode_validation(self):
         with patch.dict(os.environ, {"MAIN_SERVER_MODE": "real"}):

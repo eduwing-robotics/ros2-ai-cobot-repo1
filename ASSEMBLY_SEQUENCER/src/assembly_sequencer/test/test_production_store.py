@@ -64,6 +64,15 @@ class ProductionStoreIntegrationTest(unittest.TestCase):
                 ]
                 cursor.execute(
                     """
+                    INSERT INTO production.inventory_movements (
+                        part_id, quantity_delta, movement_type, reason
+                    ) VALUES (%s, %s, 'OPENING', 'TEST_SETUP'),
+                             (%s, %s, 'OPENING', 'TEST_SETUP')
+                    """,
+                    (self.part_id, 4, self.other_part_id, 1),
+                )
+                cursor.execute(
+                    """
                     INSERT INTO production.product_slots (
                         product_id, slot_code, part_id
                     ) VALUES (%s, %s, %s), (%s, %s, %s), (%s, %s, %s)
@@ -91,6 +100,10 @@ class ProductionStoreIntegrationTest(unittest.TestCase):
                       AND j.product_id = ANY(%s)
                     """,
                     ([self.product_id, self.other_product_id],),
+                )
+                cursor.execute(
+                    "DELETE FROM production.inventory_movements WHERE part_id = ANY(%s)",
+                    ([self.part_id, self.other_part_id],),
                 )
                 cursor.execute(
                     """
@@ -166,6 +179,19 @@ class ProductionStoreIntegrationTest(unittest.TestCase):
                 (self.part_id,),
             ),
             2,
+        )
+        self.assertEqual(
+            self.scalar(
+                """
+                SELECT COUNT(*)
+                FROM production.inventory_movements
+                WHERE unit_id = %s AND part_id = %s
+                  AND movement_type = 'CONSUMPTION'
+                  AND quantity_delta = -2
+                """,
+                (unit_id, self.part_id),
+            ),
+            1,
         )
 
         store.record_inspection(unit_id, "PASS", [], "/tmp/mock-pass.jpg")
@@ -250,6 +276,14 @@ class ProductionStoreIntegrationTest(unittest.TestCase):
             connection.execute(
                 "UPDATE production.parts SET stock_quantity = %s WHERE part_id = %s",
                 (1, self.part_id),
+            )
+            connection.execute(
+                """
+                INSERT INTO production.inventory_movements (
+                    part_id, quantity_delta, movement_type, reason
+                ) VALUES (%s, -3, 'ADJUSTMENT', 'TEST_SETUP')
+                """,
+                (self.part_id,),
             )
 
         with self.assertRaises(RuntimeError):
