@@ -1,14 +1,18 @@
-"""Small checks for FIFO retry and explicit overflow handling."""
+"""Checks for DB retry and the conveyor-inspection-transfer gate."""
 
+import json
+import random
 import sys
 import threading
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from assembly_sequencer.db import DbQueueFull, DbWriter, WorkReservation
+from assembly_sequencer.mock_node import MockAssemblySequencer
 
 
 REQUEST_ID = "12345678-1234-5678-1234-567812345678"
@@ -99,6 +103,62 @@ class DbWriterTest(unittest.TestCase):
         self.assertEqual(writer.sync_state, "FAILED")
         with self.assertRaises(RuntimeError):
             writer.finish(13, "FAILED")
+
+
+class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
+    async def test_inspection_precedes_assembled_pcb_transfer(self):
+        calls = []
+
+        class Writer:
+            sync_state = "SYNCED"
+
+            def assembly_completed(self, unit_id):
+                calls.append(("assembly", unit_id))
+
+            def inspection_recorded(self, unit_id, result, defects, image_path):
+                calls.append(("inspection", unit_id, result))
+
+        class Backend:
+            async def transfer_assembled_pcb(self, request_id, assembled_pcb):
+                calls.append(("transfer", request_id, assembled_pcb))
+
+        active = {
+            "request_id": REQUEST_ID,
+            "state": "PLACED",
+            "unit_id": 22,
+            "slot_codes": ["SLOT-01"],
+            "transfer_requested": False,
+            "inspection_result": "",
+            "assembled_pcb": {},
+        }
+        sequencer = SimpleNamespace(
+            active=active,
+            rng=random.Random(1),
+            fail_probability=0.0,
+            db_writer=Writer(),
+            backend=Backend(),
+            set_response=MockAssemblySequencer.set_response,
+        )
+        request = SimpleNamespace(cmd_str=json.dumps({
+            "command": "transfer_assembled_pcb",
+            "request_id": REQUEST_ID,
+            "assembled_pcb": {"source": {}, "target": {}},
+        }))
+
+        busy = await MockAssemblySequencer.on_external_request(
+            sequencer, request, SimpleNamespace(cmd_res="")
+        )
+        self.assertFalse(json.loads(busy.cmd_res)["accepted"])
+        self.assertEqual(calls, [])
+
+        active["state"] = "ASSEMBLY_COMPLETED"
+        accepted = await MockAssemblySequencer.on_external_request(
+            sequencer, request, SimpleNamespace(cmd_res="")
+        )
+        self.assertTrue(json.loads(accepted.cmd_res)["accepted"])
+        self.assertEqual([call[0] for call in calls], [
+            "assembly", "inspection", "transfer",
+        ])
 
 
 if __name__ == "__main__":

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using MainUnity.Runtime.ConveyBelt;
 using MainUnity.Runtime.Robot.Assembly;
 using MainUnity.Runtime.Robot.Interface;
 using MainUnity.Static;
@@ -34,6 +35,9 @@ namespace MainUnity.Runtime.Robot.Mock
         [SerializeField] string recipeVersion = "assembly-r1";
         [SerializeField, Min(1f)] float completionTimeoutSeconds = 1800f;
 
+        [Header("Mock Conveyor")]
+        [SerializeField] MockConveyor conveyor;
+
         [Header("Mock Visualization")]
         [SerializeField] ItemManager itemManager;
         [SerializeField] SimGripperCatcher gripperCatcher;
@@ -44,8 +48,6 @@ namespace MainUnity.Runtime.Robot.Mock
         [SerializeField] Transform assembledPcbAssemblyStopPoint;
         [SerializeField] Transform assembledPcbPicker;
         [SerializeField] Transform assembledPcbDropPoint;
-        [SerializeField, Range(0f, 100f)] float assembledPcbGraspOpeningPercent;
-        [SerializeField, Range(0f, 100f)] float assembledPcbReleaseOpeningPercent = 100f;
 
         readonly Dictionary<string, int> nextItemIndices = new(StringComparer.Ordinal);
         readonly Dictionary<string, int> nextSlotIndices = new(StringComparer.Ordinal);
@@ -71,6 +73,7 @@ namespace MainUnity.Runtime.Robot.Mock
         bool assembledPcbTransferred;
         bool feedbackSubscribed;
         bool assemblyRequested;
+        bool inspectionTransferStarted;
         bool recovering;
         int recoveryGeneration;
 
@@ -85,12 +88,18 @@ namespace MainUnity.Runtime.Robot.Mock
         }
 
         [Serializable]
+        sealed class TransferRequest
+        {
+            public string command;
+            public string request_id;
+            public AssembledPcbTransfer assembled_pcb;
+        }
+
+        [Serializable]
         sealed class MockObservation
         {
             public int order;
             public string part_id;
-            public float gripper_grasp_opening_percent;
-            public float gripper_release_opening_percent;
             public RosPoseRequest source;
             public RosPoseRequest target;
         }
@@ -98,8 +107,6 @@ namespace MainUnity.Runtime.Robot.Mock
         [Serializable]
         sealed class AssembledPcbTransfer
         {
-            public float gripper_grasp_opening_percent;
-            public float gripper_release_opening_percent;
             public RosPoseRequest source;
             public RosPoseRequest target;
         }
@@ -203,6 +210,7 @@ namespace MainUnity.Runtime.Robot.Mock
             await recoveryTask;
             ValidateExecution();
             EnsureRosConnection();
+            await conveyor.MoveBoardToAssemblyAsync();
             MockObservation[] observations = BuildObservations();
             AssembledPcbTransfer pcbTransfer = BuildAssembledPcbTransfer();
 
@@ -216,6 +224,7 @@ namespace MainUnity.Runtime.Robot.Mock
             lastPlacedStepOrder = 0;
             assembledPcbHeld = false;
             assembledPcbTransferred = false;
+            inspectionTransferStarted = false;
 
             Task timeout = Task.Delay(TimeSpan.FromSeconds(completionTimeoutSeconds));
             bool accepted = false;
@@ -262,9 +271,10 @@ namespace MainUnity.Runtime.Robot.Mock
             try
             {
                 RefreshReferences();
-                if (control == null || itemManager == null || gripperCatcher == null)
+                if (control == null || conveyor == null || itemManager == null ||
+                    gripperCatcher == null)
                     throw new InvalidOperationException(
-                        "Assign MockRobotControl, ItemManager and SimGripperCatcher.");
+                        "Assign MockRobotControl, MockConveyor, ItemManager and SimGripperCatcher.");
 
                 Task<RemoteCmdInterfaceResponse> request = connection
                     .SendServiceMessage<RemoteCmdInterfaceResponse>(startService,
@@ -345,6 +355,7 @@ namespace MainUnity.Runtime.Robot.Mock
             activeRequestId = snapshot.request_id;
             assembledPcbHeld = false;
             assembledPcbTransferred = false;
+            inspectionTransferStarted = false;
             expectedStepCount = snapshot.expected_step_count;
 
             if (snapshot.active)
@@ -412,8 +423,9 @@ namespace MainUnity.Runtime.Robot.Mock
             }
 
             assemblyRequested = snapshot.active;
-            terminal = snapshot.active && snapshot.state != AssemblyCompleted
-                ? new TaskCompletionSource<string>() : null;
+            terminal = snapshot.active ? new TaskCompletionSource<string>() : null;
+            if (snapshot.state == AssemblyCompleted)
+                _ = MoveToInspectionAndRequestTransferAsync();
             string summary = $"Mock assembly restored: {snapshot.state}, " +
                 $"{snapshot.placed_count}/{snapshot.expected_step_count} placed.";
             if (snapshot.state == Failed)
@@ -489,9 +501,10 @@ namespace MainUnity.Runtime.Robot.Mock
                 throw new InvalidOperationException("Mock assembly requires an active component in Play Mode.");
             if (terminal != null)
                 throw new InvalidOperationException("A Mock assembly request is already running.");
-            if (control == null || itemManager == null || gripperCatcher == null)
+            if (control == null || conveyor == null || itemManager == null ||
+                gripperCatcher == null)
                 throw new InvalidOperationException(
-                    "Assign MockRobotControl, ItemManager and SimGripperCatcher.");
+                    "Assign MockRobotControl, MockConveyor, ItemManager and SimGripperCatcher.");
             if (string.IsNullOrWhiteSpace(startService) || string.IsNullOrWhiteSpace(feedbackTopic) ||
                 string.IsNullOrWhiteSpace(recipeVersion))
                 throw new InvalidOperationException("Mock assembly ROS names and recipe version are required.");
@@ -554,6 +567,67 @@ namespace MainUnity.Runtime.Robot.Mock
             throw new InvalidOperationException(string.IsNullOrWhiteSpace(response.data.error_code)
                 ? rejected
                 : $"{response.data.error_code}: {rejected}");
+        }
+
+        async Task MoveToInspectionAndRequestTransferAsync()
+        {
+            if (inspectionTransferStarted)
+                return;
+            inspectionTransferStarted = true;
+
+            try
+            {
+                await conveyor.MoveBoardToInspectionAsync();
+                if (!isActiveAndEnabled || terminal == null || terminal.Task.IsCompleted)
+                    return;
+
+                EnsureRosConnection();
+                string json = JsonUtility.ToJson(new TransferRequest
+                {
+                    command = "transfer_assembled_pcb",
+                    request_id = activeRequestId,
+                    assembled_pcb = BuildAssembledPcbTransfer()
+                });
+                Task<RemoteCmdInterfaceResponse> request = connection
+                    .SendServiceMessage<RemoteCmdInterfaceResponse>(startService,
+                        new RemoteCmdInterfaceRequest(json));
+                if (await Task.WhenAny(request, Task.Delay(TimeSpan.FromSeconds(5))) != request)
+                    throw new TimeoutException("Mock PCB transfer request timed out.");
+
+                RemoteCmdInterfaceResponse message = await request;
+                if (message == null || string.IsNullOrWhiteSpace(message.cmd_res))
+                    throw new InvalidOperationException(
+                        "Mock PCB transfer returned an empty response.");
+
+                StartResponse response;
+                try
+                {
+                    response = JsonUtility.FromJson<StartResponse>(message.cmd_res);
+                }
+                catch (Exception exception)
+                {
+                    throw new InvalidOperationException(
+                        "Mock PCB transfer returned invalid JSON.", exception);
+                }
+
+                if (response == null || response.request_id != activeRequestId)
+                    throw new InvalidOperationException(
+                        "Mock PCB transfer response request_id did not match.");
+                if (!response.accepted)
+                {
+                    string reason = string.IsNullOrWhiteSpace(response.message)
+                        ? "Mock PCB transfer request was rejected."
+                        : response.message;
+                    throw new InvalidOperationException(
+                        string.IsNullOrWhiteSpace(response.error_code)
+                            ? reason
+                            : response.error_code + ": " + reason);
+                }
+            }
+            catch (Exception exception)
+            {
+                FailActive(exception.Message);
+            }
         }
 
         void ReceiveFeedback(StringMsg message)
@@ -624,6 +698,7 @@ namespace MainUnity.Runtime.Robot.Mock
                         if (lastPlacedStepOrder != expectedStepCount)
                             throw new InvalidOperationException(
                                 "ASSEMBLY_COMPLETED arrived before all Mock observations were placed.");
+                        _ = MoveToInspectionAndRequestTransferAsync();
                         break;
                     case PcbPicked:
                         ApplyAssembledPcbPicked();
@@ -780,15 +855,6 @@ namespace MainUnity.Runtime.Robot.Mock
             ValidateFiniteTransform(assembledPcbPicker, "assembled PCB Picker", assembledPcb.name);
             ValidateFiniteTransform(assembledPcbDropPoint, "assembled PCB DropPoint",
                 assembledPcb.name);
-            if (!float.IsFinite(assembledPcbGraspOpeningPercent) ||
-                assembledPcbGraspOpeningPercent < 0f ||
-                assembledPcbGraspOpeningPercent > 100f ||
-                !float.IsFinite(assembledPcbReleaseOpeningPercent) ||
-                assembledPcbReleaseOpeningPercent < 0f ||
-                assembledPcbReleaseOpeningPercent > 100f)
-                throw new InvalidOperationException(
-                    "Assembled PCB gripper opening percents must be finite and between 0 and 100.");
-
             Quaternion sourceTcpRotation =
                 DownwardTcpRotation(assembledPcbPicker.rotation);
             assembledPcbPositionFromTcp = Quaternion.Inverse(sourceTcpRotation) *
@@ -798,8 +864,6 @@ namespace MainUnity.Runtime.Robot.Mock
 
             return new AssembledPcbTransfer
             {
-                gripper_grasp_opening_percent = assembledPcbGraspOpeningPercent,
-                gripper_release_opening_percent = assembledPcbReleaseOpeningPercent,
                 source = ToRosPoseRequest(
                     new Pose(assembledPcbPicker.position, assembledPcbPicker.rotation),
                     "assembled PCB source"),
@@ -860,15 +924,6 @@ namespace MainUnity.Runtime.Robot.Mock
                     throw new InvalidOperationException(
                         "No Mock item group for: " + slotGroup.RequiredItemType);
 
-                float graspOpeningPercent = itemGroup.GripperOpeningPercent;
-                float releaseOpeningPercent = itemGroup.GripperReleaseOpeningPercent;
-                if (!float.IsFinite(graspOpeningPercent) || graspOpeningPercent < 0f ||
-                    graspOpeningPercent > 100f || !float.IsFinite(releaseOpeningPercent) ||
-                    releaseOpeningPercent < 0f || releaseOpeningPercent > 100f)
-                    throw new InvalidOperationException(
-                        "Mock gripper opening percents must be finite and between 0 and 100 for: " +
-                        slotGroup.RequiredItemType);
-
                 Transform[] slots = slotGroup.Slots;
                 if (slots == null || slots.Length == 0)
                     throw new InvalidOperationException(
@@ -911,8 +966,6 @@ namespace MainUnity.Runtime.Robot.Mock
                         // Correlation only; the loaded recipe owns execution order validation.
                         order = observations.Count + 1,
                         part_id = slotGroup.RequiredItemType,
-                        gripper_grasp_opening_percent = graspOpeningPercent,
-                        gripper_release_opening_percent = releaseOpeningPercent,
                         source = ToRosPoseRequest(pickup, "source"),
                         target = ToRosPoseRequest(placement, "target")
                     });

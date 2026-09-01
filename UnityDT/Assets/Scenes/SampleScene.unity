@@ -8552,7 +8552,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e27d3099a7db5e5c29cf453bf0c63d40, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Scenario.Scenario
-  conveyor: {fileID: 1523363827}
 --- !u!1001 &1165396282
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -13661,8 +13660,6 @@ MonoBehaviour:
     - {fileID: 1503787569}
     - {fileID: 714101869}
     - {fileID: 1541290357}
-    gripperGraspOpeningPercent: 18
-    gripperReleaseOpeningPercent: 25
     pickVertically: 1
     pickupOffsetXZ: {x: 0, y: 0}
   - itemType: PM
@@ -13671,15 +13668,11 @@ MonoBehaviour:
     - {fileID: 500027880}
     - {fileID: 1165396283}
     - {fileID: 1169698964}
-    gripperGraspOpeningPercent: 26
-    gripperReleaseOpeningPercent: 30
     pickVertically: 1
     pickupOffsetXZ: {x: 0, y: 0}
   - itemType: GPU
     items:
     - {fileID: 2412857432237385676}
-    gripperGraspOpeningPercent: 65
-    gripperReleaseOpeningPercent: 70
     pickVertically: 1
     pickupOffsetXZ: {x: 0, y: 0}
   - itemType: CAP
@@ -13689,16 +13682,12 @@ MonoBehaviour:
     - {fileID: 804644722}
     - {fileID: 2109327006}
     - {fileID: 760862896}
-    gripperGraspOpeningPercent: 5
-    gripperReleaseOpeningPercent: 8
     pickVertically: 1
     pickupOffsetXZ: {x: 0, y: 0}
   - itemType: IND
     items:
     - {fileID: 4849791102430262658}
     - {fileID: 1585917885}
-    gripperGraspOpeningPercent: 16
-    gripperReleaseOpeningPercent: 20
     pickVertically: 1
     pickupOffsetXZ: {x: 0, y: 0}
   - itemType: VRM
@@ -13708,8 +13697,6 @@ MonoBehaviour:
     - {fileID: 1734321619}
     - {fileID: 1794973320}
     - {fileID: 1468316326}
-    gripperGraspOpeningPercent: 32
-    gripperReleaseOpeningPercent: 34
     pickVertically: 1
     pickupOffsetXZ: {x: 0, y: 0}
 --- !u!4 &1917364536
@@ -15351,6 +15338,7 @@ MonoBehaviour:
   feedbackTopic: /unity/assembly/feedback
   recipeVersion: assembly-r1
   completionTimeoutSeconds: 1800
+  conveyor: {fileID: 1523363827}
   itemManager: {fileID: 1917364535}
   gripperCatcher: {fileID: 319422218}
   resumeRotationOffsetDegrees: 90
@@ -15358,8 +15346,6 @@ MonoBehaviour:
   assembledPcbAssemblyStopPoint: {fileID: 893280632}
   assembledPcbPicker: {fileID: 622558910}
   assembledPcbDropPoint: {fileID: 272931175}
-  assembledPcbGraspOpeningPercent: 0
-  assembledPcbReleaseOpeningPercent: 100
 --- !u!114 &3495106124279137604
 MonoBehaviour:
   m_ObjectHideFlags: 0

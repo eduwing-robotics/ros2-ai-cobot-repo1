@@ -136,12 +136,54 @@ class MockAssemblySequencer(Node):
             response.cmd_res = json.dumps(snapshot, separators=(",", ":"))
             return response
 
+        if command_type == "transfer_assembled_pcb":
+            active = self.active
+            request_id = command["request_id"]
+            if active is None or active["request_id"] != request_id:
+                return self.set_response(
+                    response, False, request_id, "NOT_ACTIVE",
+                    "matching assembly is not active",
+                )
+            if active["transfer_requested"]:
+                return self.set_response(response, True, request_id)
+            if active["state"] != "ASSEMBLY_COMPLETED":
+                return self.set_response(
+                    response, False, request_id, "BUSY",
+                    "assembly is not ready for inspection and PCB transfer",
+                )
+
+            active["transfer_requested"] = True
+            active["assembled_pcb"] = command["assembled_pcb"]
+            try:
+                result, defects = choose_inspection(
+                    self.rng, self.fail_probability, active["slot_codes"]
+                )
+                self.db_writer.assembly_completed(active["unit_id"])
+                image_path = PASS_IMAGE_PATH if result == "PASS" else FAIL_IMAGE_PATH
+                self.db_writer.inspection_recorded(
+                    active["unit_id"], result, defects, image_path
+                )
+                active["inspection_result"] = result
+            except Exception as error:
+                self.fail_active("DB_ERROR", error)
+                return self.set_response(
+                    response, False, request_id, "DB_ERROR", str(error)
+                )
+
+            try:
+                await self.backend.transfer_assembled_pcb(
+                    request_id, active["assembled_pcb"]
+                )
+            except Exception as error:
+                self.fail_active("INTERNAL_ERROR", error)
+                return self.set_response(
+                    response, False, request_id, "INTERNAL_ERROR", str(error)
+                )
+            return self.set_response(response, True, request_id)
+
         return self.set_response(
-            response,
-            False,
-            command["request_id"],
-            "INVALID_REQUEST",
-            "assembly commands must be submitted through MainServer",
+            response, False, command["request_id"], "INVALID_REQUEST",
+            "start commands must be submitted through MainServer",
         )
 
     async def poll_queue(self):
@@ -183,6 +225,8 @@ class MockAssemblySequencer(Node):
                 "held_slot_code": "",
                 "slot_codes": self.db_writer.get_product_slot_codes(job_id),
                 "assembled_pcb": command["assembled_pcb"],
+                "transfer_requested": False,
+                "inspection_result": "",
             }
             self.terminal_snapshot = None
         except Exception as error:
@@ -246,15 +290,6 @@ class MockAssemblySequencer(Node):
             String(data=json.dumps(payload, separators=(",", ":")))
         )
 
-    async def transfer_assembled_pcb(self):
-        active = self.active
-        try:
-            await self.backend.transfer_assembled_pcb(
-                active["request_id"], active["assembled_pcb"]
-            )
-        except Exception as error:
-            self.fail_active("INTERNAL_ERROR", error)
-
     async def on_internal_feedback(self, message):
         try:
             payload = parse_feedback(message.data)
@@ -272,12 +307,9 @@ class MockAssemblySequencer(Node):
 
         state = payload["state"]
         if state in RELAY_STATES:
-            previous_state = active["state"]
             apply_relay_feedback(active, payload)
             payload["db_sync_state"] = self.db_writer.sync_state
             self.publish(payload)
-            if state == "ASSEMBLY_COMPLETED" and previous_state != state:
-                await self.transfer_assembled_pcb()
             return
 
         if state == "FAILED":
@@ -287,17 +319,14 @@ class MockAssemblySequencer(Node):
             )
             return
 
+        if not active["transfer_requested"] or not active["inspection_result"]:
+            self.fail_active(
+                "INTERNAL_ERROR",
+                "backend completed before conveyor inspection and transfer request",
+            )
+            return
+
         try:
-            result, defects = choose_inspection(
-                self.rng,
-                self.fail_probability,
-                active["slot_codes"],
-            )
-            self.db_writer.assembly_completed(active["unit_id"])
-            image_path = PASS_IMAGE_PATH if result == "PASS" else FAIL_IMAGE_PATH
-            self.db_writer.inspection_recorded(
-                active["unit_id"], result, defects, image_path
-            )
             self.db_writer.finish(active["job_id"], "COMPLETED")
         except Exception as error:
             self.fail_active("DB_ERROR", error)
@@ -312,7 +341,8 @@ class MockAssemblySequencer(Node):
         self.active = None
         self.publish(payload)
         self.get_logger().info(
-            f"job {active['job_id']} completed with inspection {result}"
+            f"job {active['job_id']} completed with inspection "
+            f"{active['inspection_result']}"
         )
 
     def destroy_node(self):

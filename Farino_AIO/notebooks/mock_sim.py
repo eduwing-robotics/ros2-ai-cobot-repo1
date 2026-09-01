@@ -288,18 +288,23 @@ def validate_recipe(recipe, expected_version):
             raise ValueError(f"motion.{name} must be greater than zero")
 
     sequence = recipe.get("sequence")
-    expected_before_all = ["ensure_camera_calibrated"]
+    expected_before_all = [
+        "move_conveyor_to_assembly", "ensure_camera_calibrated",
+    ]
     expected_per_step = [
         "home", "item_ready", "pick", "home", "assembly_ready", "place"
     ]
-    expected_after_all = ["transfer_assembled_pcb"]
+    expected_after_all = [
+        "move_conveyor_to_inspection", "inspect_assembled_pcb",
+        "transfer_assembled_pcb",
+    ]
     if not isinstance(sequence, dict) \
             or sequence.get("before_all") != expected_before_all \
             or sequence.get("per_step") != expected_per_step \
             or sequence.get("after_all") != expected_after_all:
         raise ValueError(
-            "sequence must ensure camera calibration, preserve the component cycle "
-            "and finish with transfer_assembled_pcb without Home"
+            "sequence must move the conveyor to assembly, ensure camera calibration, "
+            "preserve the component cycle, then move to inspection, inspect and transfer"
         )
 
     steps = recipe.get("steps")
@@ -526,12 +531,17 @@ def self_check():
             "assembled_pcb_drop_approach_dz_mm": 150,
         },
         "sequence": {
-            "before_all": ["ensure_camera_calibrated"],
+            "before_all": [
+                "move_conveyor_to_assembly", "ensure_camera_calibrated",
+            ],
             "per_step": [
                 "home", "item_ready", "pick",
                 "home", "assembly_ready", "place",
             ],
-            "after_all": ["transfer_assembled_pcb"],
+            "after_all": [
+                "move_conveyor_to_inspection", "inspect_assembled_pcb",
+                "transfer_assembled_pcb",
+            ],
         },
         "gripper": {
             "parts": {
@@ -1251,9 +1261,12 @@ class MockMoveJ(Node):
             joint_points = recipe["joint_points"]
             motion = recipe["motion"]
             for command in recipe["sequence"]["before_all"]:
-                if command != "ensure_camera_calibrated":
+                if command == "move_conveyor_to_assembly":
+                    self.publish_status("conveyor at assembly: confirmed by Unity")
+                elif command == "ensure_camera_calibrated":
+                    self.publish_status("camera calibration: simulated valid (Mock)")
+                else:
                     raise RuntimeError(f"unknown preflight command: {command}")
-                self.publish_status("camera calibration: simulated valid (Mock)")
             for resolved in job["resolved_steps"]:
                 step = resolved["step"]
                 grasp_opening_percent = resolved[
@@ -1337,6 +1350,11 @@ class MockMoveJ(Node):
             motion = recipe["motion"]
             gripper = recipe["gripper"]["assembled_pcb"]
             for command in recipe["sequence"]["after_all"]:
+                if command in {
+                    "move_conveyor_to_inspection", "inspect_assembled_pcb",
+                }:
+                    self.publish_status(f"{command}: confirmed externally")
+                    continue
                 if command != "transfer_assembled_pcb":
                     raise RuntimeError(f"unknown final assembly command: {command}")
                 transfer = job["assembled_pcb"]

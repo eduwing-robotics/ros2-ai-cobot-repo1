@@ -16,6 +16,7 @@ motion:
 
 sequence:
   before_all:
+    - move_conveyor_to_assembly
     - ensure_camera_calibrated
   # Every order uses this shared flow. item_ready is PartsReadyPoint.
   per_step:
@@ -26,6 +27,8 @@ sequence:
     - assembly_ready
     - place
   after_all:
+    - move_conveyor_to_inspection
+    - inspect_assembled_pcb
     - transfer_assembled_pcb
 
 gripper:

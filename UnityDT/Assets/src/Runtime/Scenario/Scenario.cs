@@ -1,6 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using MainUnity.Runtime.ConveyBelt;
 using MainUnity.Runtime.Robot.Interface;
 using UnityEngine;
 
@@ -8,8 +7,6 @@ namespace MainUnity.Runtime.Scenario
 {
     public sealed class Scenario : MonoBehaviour
     {
-        [SerializeField] MockConveyor conveyor;
-
         IRobotScenarioControl robot;
         bool running;
 
@@ -21,7 +18,7 @@ namespace MainUnity.Runtime.Scenario
         [ContextMenu("Run Scenario")]
         public async Task Run()
         {
-            if (robot == null || conveyor == null)
+            if (robot == null)
                 throw new InvalidOperationException("Scenario dependencies are not initialized.");
             if (running)
                 throw new InvalidOperationException("Scenario is already running.");
@@ -29,7 +26,6 @@ namespace MainUnity.Runtime.Scenario
             running = true;
             try
             {
-                await conveyor.MoveBoardToAssemblyAsync();
                 await robot.ExecuteAsync();
             }
             finally
