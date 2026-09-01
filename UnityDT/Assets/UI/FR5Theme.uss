@@ -770,8 +770,9 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
 .ptail { position: absolute; color: var(--c-ink-4); font-size: 11px; -unity-text-align: middle-center; }
 
 /* 무릎 설명 — 이 화면이 내는 결론이라 액센트를 준다. */
-.pknee { position: absolute; color: var(--c-accent); font-size: 15px; -unity-font-style: bold; -unity-text-align: middle-center; }
-.pknee__sub { position: absolute; color: var(--c-ink-4); font-size: 11px; -unity-text-align: middle-center; }
+/* 가로 정렬은 바인더가 무릎 위치를 보고 정한다 — 여기서 고정하면 싸운다. */
+.pknee { position: absolute; color: var(--c-accent); font-size: 15px; -unity-font-style: bold; }
+.pknee__sub { position: absolute; color: var(--c-ink-4); font-size: 11px; }
 
 /* 부품 필터 칩 */
 .pchip {

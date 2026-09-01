@@ -66,6 +66,8 @@
               그림 영역. 세로는 0~최대 건수, 누적선은 별도로 0~100% 고정이다.
               막대(누를 수 있어야 함)는 VisualElement 로, 누적선은 ParetoCurve 가 그린다.
             -->
+            <ui:VisualElement name="pareto-yticks" style="position:absolute; left:0; top:126px; width:60px; height:370px;" picking-mode="Ignore" />
+            <ui:VisualElement name="pareto-y2ticks" style="position:absolute; left:996px; top:126px; width:52px; height:370px;" picking-mode="Ignore" />
             <ui:VisualElement name="pareto-plot" style="position:absolute; left:70px; top:126px; width:918px; height:370px;" />
             <ui:VisualElement name="pareto-axis" style="position:absolute; left:70px; top:504px; width:918px; height:110px;" />
 
@@ -123,7 +125,9 @@
         </ui:VisualElement>
 
         <!-- 출처 고지 -->
-        <ui:Label name="source-note" text="—" class="muted" style="position:absolute; left:112px; top:924px; font-size:12px; color:rgb(100,112,122);" />
+        <ui:VisualElement class="panel" style="position:absolute; left:112px; top:920px; width:1784px; height:44px; justify-content:center; padding-left:18px; padding-right:18px;">
+            <ui:Label name="source-note" text="—" class="muted" style="font-size:12px; color:rgb(100,112,122);" />
+        </ui:VisualElement>
 
         <!--
           공통 셸: 상단 바 + 페이지 레일 + 알람 띠.

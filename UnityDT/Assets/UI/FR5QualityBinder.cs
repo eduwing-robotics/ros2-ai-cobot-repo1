@@ -30,6 +30,13 @@ namespace MainUnity.UI
         [Serializable] sealed class AssemblyResponse { public AssemblySnapshot data; }
         [Serializable] sealed class JobResponse { public Job data; }
         [Serializable] sealed class SlotRatesResponse { public SlotRate[] data; }
+        [Serializable] sealed class ProductsResponse { public Product[] data; }
+        [Serializable] sealed class Product
+        {
+            public int product_id;
+            public string product_code;
+            public bool is_selectable;
+        }
         [Serializable] sealed class AssemblySnapshot { public int job_id; }
         [Serializable] sealed class Job
         {
@@ -171,51 +178,94 @@ namespace MainUnity.UI
             loadRoutine = StartCoroutine(Load());
         }
 
+        /// <summary>
+        /// 제품 하나를 정한 뒤 그 제품의 슬롯 집계를 받는다.
+        ///
+        /// 제품을 정하는 길이 둘인 이유. 원래는 assemblies/current 로 지금 돌고 있는
+        /// 작업을 물어 그 제품을 쓴다 — 화면이 "지금 만들고 있는 것"을 말해야 하기
+        /// 때문이다. 그런데 그 경로는 ROS 브리지를 타고, 브리지가 없으면 품질 데이터가
+        /// DB 에 멀쩡히 있는데도 화면 전체가 빈 상태가 된다. 품질은 조회 화면이지
+        /// 실행 화면이 아니라서, 로봇이 꺼져 있다고 지난 불량까지 못 보는 것은 맞지 않다.
+        /// 그래서 브리지가 없으면 제품 목록의 첫 제품으로 떨어지고, 그때는 머리글에
+        /// "작업 미연결"이라고 적어 지금 보는 것이 현재 작업이 아님을 밝힌다.
+        /// </summary>
         IEnumerator Load()
         {
             AssemblySnapshot snapshot = null;
-            yield return Get("/api/v1/assemblies/current", json =>
-                snapshot = JsonUtility.FromJson<AssemblyResponse>(json)?.data);
+            yield return Get("/api/v1/assemblies/current",
+                json => snapshot = JsonUtility.FromJson<AssemblyResponse>(json)?.data,
+                _ => { });                       // 브리지 부재는 실패가 아니라 폴백 신호다
             if (!isActiveAndEnabled) yield break;
-            if (snapshot == null || snapshot.job_id <= 0)
-            {
-                ShowEmpty("활성 또는 최근 작업 없음");
-                loadRoutine = null;
-                yield break;
-            }
 
             Job job = null;
-            yield return Get($"/api/v1/jobs/{snapshot.job_id}", json =>
-                job = JsonUtility.FromJson<JobResponse>(json)?.data);
-            if (!isActiveAndEnabled) yield break;
-            if (job == null || job.product_id <= 0)
+            if (snapshot != null && snapshot.job_id > 0)
             {
-                ShowEmpty($"JOB #{snapshot.job_id} 제품 정보 없음");
-                loadRoutine = null;
-                yield break;
+                yield return Get($"/api/v1/jobs/{snapshot.job_id}",
+                    json => job = JsonUtility.FromJson<JobResponse>(json)?.data,
+                    _ => { });
+                if (!isActiveAndEnabled) yield break;
             }
-            ShowFilters(job);
+
+            int productId = job?.product_id ?? 0;
+            if (productId > 0)
+            {
+                ShowFilters(job);
+            }
+            else
+            {
+                Product product = null;
+                yield return Get("/api/v1/products", json =>
+                {
+                    Product[] all = JsonUtility.FromJson<ProductsResponse>(json)?.data;
+                    foreach (Product candidate in all ?? Array.Empty<Product>())
+                    {
+                        if (!candidate.is_selectable || candidate.product_id <= 0) continue;
+                        product = candidate;
+                        break;
+                    }
+                });
+                if (!isActiveAndEnabled) yield break;
+                if (product == null)
+                {
+                    ShowEmpty("조회할 제품 없음");
+                    loadRoutine = null;
+                    yield break;
+                }
+                productId = product.product_id;
+                ShowFallbackFilters(product);
+            }
 
             SlotRate[] loaded = null;
-            yield return Get($"/api/v1/products/{job.product_id}/quality/slot-rates", json =>
+            yield return Get($"/api/v1/products/{productId}/quality/slot-rates", json =>
                 loaded = JsonUtility.FromJson<SlotRatesResponse>(json)?.data ?? Array.Empty<SlotRate>());
             if (isActiveAndEnabled && loaded != null) ShowRates(loaded);
             loadRoutine = null;
         }
 
-        IEnumerator Get(string path, Action<string> onSuccess)
+        /// <summary>
+        /// <paramref name="onFailure"/> 를 주면 실패를 그 쪽에 넘긴다. 주지 않으면 화면을
+        /// 통째로 비운다 — 없어서는 안 되는 조회의 기본값이다.
+        /// </summary>
+        IEnumerator Get(string path, Action<string> onSuccess, Action<string> onFailure = null)
         {
             using var request = UnityWebRequest.Get(ApiUrl(path));
             request.timeout = 5;
             yield return request.SendWebRequest();
             if (!isActiveAndEnabled) yield break;
-            if (request.result == UnityWebRequest.Result.Success)
+
+            if (request.result != UnityWebRequest.Result.Success)
             {
-                try { onSuccess(request.downloadHandler.text); }
-                catch (Exception) { ShowEmpty("MainServer 응답 형식 오류"); }
+                string reason = $"MainServer 조회 실패 · {request.responseCode}";
+                if (onFailure != null) onFailure(reason);
+                else ShowEmpty(reason);
                 yield break;
             }
-            ShowEmpty($"MainServer 조회 실패 · {request.responseCode}");
+            try { onSuccess(request.downloadHandler.text); }
+            catch (Exception)
+            {
+                if (onFailure != null) onFailure("MainServer 응답 형식 오류");
+                else ShowEmpty("MainServer 응답 형식 오류");
+            }
         }
 
         /// <summary>
@@ -225,6 +275,7 @@ namespace MainUnity.UI
         /// </summary>
         void ShowFilters(Job job)
         {
+            FR5EmptyState.Detail(root.Q<Label>("filter-note"), "조회 전용 · production 읽기");
             FR5EmptyState.Present(root.Q<Label>("filter-product"),
                 string.IsNullOrEmpty(job.product_code) ? FR5EmptyState.Title : job.product_code);
             FR5EmptyState.Present(root.Q<Label>("filter-recipe"),
@@ -236,6 +287,21 @@ namespace MainUnity.UI
             string to = Day(job.job_finished_at);
             FR5EmptyState.Present(root.Q<Label>("filter-period"),
                 from == null ? FR5EmptyState.Title : (to == null ? from + " ~ 진행 중" : (to == from ? from : from + " ~ " + to)));
+        }
+
+        /// <summary>
+        /// 현재 작업을 못 물었을 때다. 제품만 확실하고 기간·레시피는 알 수 없다 —
+        /// 그 두 칸은 비운다. 지난 작업의 값을 끌어다 채우면 이 집계가 그 작업의
+        /// 것인 줄로 읽힌다.
+        /// </summary>
+        void ShowFallbackFilters(Product product)
+        {
+            FR5EmptyState.Present(root.Q<Label>("filter-product"),
+                string.IsNullOrEmpty(product.product_code) ? FR5EmptyState.Title : product.product_code);
+            FR5EmptyState.Detail(root.Q<Label>("filter-period"), "작업 미연결 · 전체 누적");
+            FR5EmptyState.Detail(root.Q<Label>("filter-recipe"), "작업 미연결");
+            FR5EmptyState.Detail(root.Q<Label>("filter-note"),
+                "조회 전용 · 현재 작업 미연결 (assemblies/current)");
         }
 
         /// <summary>timestamptz 문자열에서 날짜만 뗀다. 시각까지는 이 칸에 들어가지 않는다.</summary>
@@ -389,20 +455,39 @@ namespace MainUnity.UI
             axisLine.style.width = PlotWidth;
             axis.Add(axisLine);
 
+            // 세로축은 건수다. 1위 건수를 그냥 4등분하면 "0.3건" 같은 눈금이 나온다 —
+            // 셀 수 있는 것의 축은 정수여야 한다. 그래서 눈금 간격을 정수로 올림하고
+            // 축 꼭대기를 그 배수로 늘린 뒤, 막대도 그 꼭대기에 맞춰 재운다.
             int maxCount = ranked[0].defective_quantity;
+            int tickStep = Mathf.Max(1, Mathf.CeilToInt(maxCount / 4f));
+            int divisions = Mathf.Max(1, Mathf.CeilToInt((float)maxCount / tickStep));
+            int axisMax = tickStep * divisions;
             var cumulative = new float[bars];
             int running = 0;
 
-            // 가로 눈금. 세로축 최대는 1위 건수라, 눈금은 그 값을 나눠 쓴다.
-            for (int step = 1; step <= 4; step++)
+            // 가로 눈금과 그 값. 세로축 최대는 1위 건수이고, 누적선은 늘 0~100% 다.
+            // 격자선만 두고 숫자를 빼면 막대 높이를 눈으로 되읽을 수 없다.
+            VisualElement yTicks = root.Q<VisualElement>("pareto-yticks");
+            VisualElement y2Ticks = root.Q<VisualElement>("pareto-y2ticks");
+            yTicks?.Clear();
+            y2Ticks?.Clear();
+            for (int step = 0; step <= divisions; step++)
             {
-                var grid = new VisualElement();
-                grid.AddToClassList("pgrid");
-                grid.style.left = 0;
-                grid.style.width = PlotWidth;
-                grid.style.top = PlotHeight - PlotHeight * step / 4f;
-                plot.Add(grid);
+                float top = PlotHeight - PlotHeight * step / divisions;
+                if (step > 0)
+                {
+                    var grid = new VisualElement();
+                    grid.AddToClassList("pgrid");
+                    grid.style.left = 0;
+                    grid.style.width = PlotWidth;
+                    grid.style.top = top;
+                    plot.Add(grid);
+                }
+                AddTick(yTicks, (tickStep * step).ToString(), top, TextAnchor.MiddleRight);
             }
+            // 누적선은 언제나 0~100% 라 눈금도 고정이다.
+            for (int step = 0; step <= 4; step++)
+                AddTick(y2Ticks, $"{25 * step}", PlotHeight - PlotHeight * step / 4f, TextAnchor.MiddleLeft);
 
             for (int i = 0; i < bars; i++)
             {
@@ -423,7 +508,7 @@ namespace MainUnity.UI
                 var bar = new VisualElement();
                 bar.AddToClassList("pbar");
                 bar.style.height = Mathf.Max(MinBarHeight,
-                    PlotHeight * rate.defective_quantity / maxCount - CountLabelHeight);
+                    PlotHeight * rate.defective_quantity / axisMax - CountLabelHeight);
                 col.Add(bar);
 
                 int index = i;
@@ -463,19 +548,50 @@ namespace MainUnity.UI
             float center = ParetoCurve.ColumnCenter(PlotWidth, columns, knee);
             float y = PlotHeight - PlotHeight * cumulative[knee] / 100f;
 
+            // 글을 어디 둘지. 누적선은 왼쪽 아래에서 오른쪽 위로만 가므로, 무릎을 기준으로
+            // 오른쪽 아래는 언제나 비어 있다 — 거기 두면 어떤 자료가 와도 선을 안 넘는다.
+            // 오른쪽이 그림 밖으로 나가면(무릎이 끝에 붙으면) 왼쪽 위로 접는다.
+            const float HeadHeight = 22f;
+            const float BoxWidth = 280f;
+
+            float left = center + 14f;
+            bool toRight = left + BoxWidth <= PlotWidth;
+            if (!toRight) left = center - 14f - BoxWidth;
+            left = Mathf.Clamp(left, 0f, Mathf.Max(0f, PlotWidth - BoxWidth));
+
+            float headTop = toRight
+                ? Mathf.Clamp(y + 8f, 0f, PlotHeight - HeadHeight * 2f)
+                : Mathf.Clamp(y - 62f, 0f, PlotHeight - HeadHeight * 2f);
+            TextAnchor align = toRight ? TextAnchor.MiddleLeft : TextAnchor.MiddleRight;
+
             var head = new Label($"상위 {knee + 1} 슬롯 = {cumulative[knee]:0.0}%");
             head.AddToClassList("pknee");
-            head.style.left = center - 140f;
-            head.style.width = 280f;
-            head.style.top = Mathf.Max(0f, y - 58f);
+            head.style.left = left;
+            head.style.width = BoxWidth;
+            head.style.top = headTop;
+            head.style.unityTextAlign = align;
             plot.Add(head);
 
             var sub = new Label($"여기까지 고치면 {totalDefective}건 중 {covered}건");
             sub.AddToClassList("pknee__sub");
-            sub.style.left = center - 140f;
-            sub.style.width = 280f;
-            sub.style.top = Mathf.Max(16f, y - 38f);
+            sub.style.left = left;
+            sub.style.width = BoxWidth;
+            sub.style.top = headTop + HeadHeight;
+            sub.style.unityTextAlign = align;
             plot.Add(sub);
+        }
+
+        /// <summary>눈금 값 하나. 격자선 위에 가운데가 오도록 반 칸 올려 놓는다.</summary>
+        static void AddTick(VisualElement host, string text, float top, TextAnchor align)
+        {
+            if (host == null) return;
+            var tick = new Label(text);
+            tick.AddToClassList("ptick");
+            tick.style.top = top - 8f;
+            tick.style.left = 0;
+            tick.style.right = 0;
+            tick.style.unityTextAlign = align;
+            host.Add(tick);
         }
 
         /// <summary>축 아래 한 칸. 막대와 같은 것을 가리키므로 여기도 눌러서 고를 수 있다.</summary>
@@ -496,7 +612,7 @@ namespace MainUnity.UI
             code.AddToClassList("pslot__code");
             cell.Add(code);
 
-            var value = new Label($"{rate.defect_rate_percent:0.##}%");
+            var value = new Label($"{rate.defect_rate_percent:0.00}%");
             value.AddToClassList("pslot__rate");
             cell.Add(value);
 
@@ -566,7 +682,7 @@ namespace MainUnity.UI
             FR5EmptyState.Present(root.Q<Label>("detail-code"), rate.slot_code);
             FR5EmptyState.Present(root.Q<Label>("detail-part"),
                 string.IsNullOrEmpty(rate.part_name) ? rate.part_id : $"{rate.part_id} · {rate.part_name}");
-            FR5EmptyState.Present(root.Q<Label>("detail-rate"), $"{rate.defect_rate_percent:0.##}%");
+            FR5EmptyState.Present(root.Q<Label>("detail-rate"), $"{rate.defect_rate_percent:0.00}%");
             FR5EmptyState.Present(root.Q<Label>("detail-den"),
                 $"{rate.defective_quantity} / {rate.inspected_quantity}");
 
@@ -594,7 +710,7 @@ namespace MainUnity.UI
                 AddRow(rows, "부품 합계",
                     part.inspected == 0
                         ? $"{part.defective} / {part.inspected}"
-                        : $"{part.defective} / {part.inspected} · {100f * part.defective / part.inspected:0.##}%");
+                        : $"{part.defective} / {part.inspected} · {100f * part.defective / part.inspected:0.00}%");
                 AddRow(rows, "부품 내 분포", $"슬롯 {part.slots}개 중 {part.defectiveSlots}곳에서 불량");
             }
             // TODO(API): 불량 유형별 집계. defect_type 은 /jobs/{id}/units 에만 있고 잡 단위라
@@ -604,8 +720,8 @@ namespace MainUnity.UI
             FR5EmptyState.Detail(root.Q<Label>("detail-note"),
                 part == null || part.slots <= 1
                     ? "왼쪽 순서는 건수가, 이 칸의 비율은 분모가 정한다."
-                    : $"{rate.part_id} 은 슬롯 {part.slots}개로 나뉘어 있어 부품 불량률({(part.inspected == 0 ? 0f : 100f * part.defective / part.inspected):0.##}%)과 "
-                      + $"슬롯 불량률({rate.defect_rate_percent:0.##}%)의 분모가 다르다. 왼쪽 순서는 건수가, 이 칸은 분모가 말한다.");
+                    : $"{rate.part_id} 은 슬롯 {part.slots}개로 나뉘어 있어 부품 불량률({(part.inspected == 0 ? 0f : 100f * part.defective / part.inspected):0.00}%)과 "
+                      + $"슬롯 불량률({rate.defect_rate_percent:0.00}%)의 분모가 다르다. 왼쪽 순서는 건수가, 이 칸은 분모가 말한다.");
 
             // TODO(API): GET /alerts — 이 슬롯에 걸린 대책서
             FR5EmptyState.Detail(root.Q<Label>("detail-alert"),
@@ -654,11 +770,15 @@ namespace MainUnity.UI
         /// <summary>
         /// 빈 상태 칸은 그림·상세 위에 절대 배치로 겹쳐 있다. 자식만 지우면 칸 자체는
         /// 크기를 유지한 채 남아 아래 막대의 클릭을 가로챈다. 그래서 display 로 끈다.
+        ///
+        /// 여기서 Clear() 를 부르면 안 된다. 이 함수는 빈 상태 칸뿐 아니라 detail-body
+        /// 처럼 UXML 이 만들어 준 칸에도 쓰이는데, Clear() 는 그 자식을 통째로 지운다.
+        /// 한 번 지우면 UXML 을 다시 읽기 전에는 돌아오지 않아 상세 패널이 영영 빈다.
+        /// (빈 상태 칸을 채우는 FR5EmptyState.Fill 은 스스로 Clear 하므로 여기선 불필요하다.)
         /// </summary>
         static void Hide(VisualElement el)
         {
             if (el == null) return;
-            el.Clear();
             el.style.display = DisplayStyle.None;
         }
 
@@ -684,6 +804,8 @@ namespace MainUnity.UI
             VisualElement plot = root.Q<VisualElement>("pareto-plot");
             if (plot != null) ClearExcept(plot, curve);
             root.Q<VisualElement>("pareto-axis")?.Clear();
+            root.Q<VisualElement>("pareto-yticks")?.Clear();
+            root.Q<VisualElement>("pareto-y2ticks")?.Clear();
             VisualElement chartEmpty = root.Q<VisualElement>("pareto-empty");
             FR5EmptyState.Fill(chartEmpty, message, PlotHeight);
             Show(chartEmpty);
