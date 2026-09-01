@@ -10,23 +10,30 @@ import yaml
 
 ROOT_FIELDS = {
     "recipe_version", "frame", "joint_points", "motion",
-    "sequence", "gripper", "steps",
+    "workflow", "gripper", "steps",
 }
 JOINT_POINT_NAMES = {"home", "item_ready", "assembly_ready"}
 MOTION_FIELDS = {
     "approach_dz_mm", "retract_dz_mm",
     "assembled_pcb_drop_approach_dz_mm",
 }
-SEQUENCES = {
+WORKFLOW = {
     "before_all": [
-        "move_conveyor_to_assembly", "ensure_camera_calibrated",
+        {"conveyor.move_to": "ASSEMBLY"},
+        {"vision.resolve_targets": "recipe_steps"},
     ],
     "per_step": [
-        "home", "item_ready", "pick", "home", "assembly_ready", "place",
+        {"robot.move_joint": "home"},
+        {"robot.move_joint": "item_ready"},
+        {"robot.pick": "current_part"},
+        {"robot.move_joint": "home"},
+        {"robot.move_joint": "assembly_ready"},
+        {"robot.place": "current_slot"},
     ],
     "after_all": [
-        "move_conveyor_to_inspection", "inspect_assembled_pcb",
-        "transfer_assembled_pcb",
+        {"conveyor.move_to": "INSPECTION"},
+        {"inspection.run": "assembled_pcb"},
+        {"robot.transfer": "assembled_pcb"},
     ],
 }
 
@@ -70,10 +77,10 @@ def validate_recipe(recipe, expected_version=None):
         if _finite_number(value, f"motion.{name}") <= 0.0:
             raise ValueError(f"motion.{name} must be greater than zero")
 
-    sequence = recipe["sequence"]
-    _exact_object(sequence, set(SEQUENCES), "sequence")
-    if sequence != SEQUENCES:
-        raise ValueError("recipe sequence does not match the supported assembly flow")
+    workflow = recipe["workflow"]
+    _exact_object(workflow, set(WORKFLOW), "workflow")
+    if workflow != WORKFLOW:
+        raise ValueError("recipe workflow does not match the supported assembly flow")
 
     steps = recipe["steps"]
     if not isinstance(steps, list) or not steps:

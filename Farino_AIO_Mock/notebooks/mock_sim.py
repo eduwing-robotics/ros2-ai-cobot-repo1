@@ -49,6 +49,25 @@ ASSEMBLY_STATES = {
     "PCB_PICKED", "PCB_PLACED", "COMPLETED", "FAILED",
 }
 STEP_STATES = {"PICKED", "PLACED"}
+WORKFLOW = {
+    "before_all": [
+        {"conveyor.move_to": "ASSEMBLY"},
+        {"vision.resolve_targets": "recipe_steps"},
+    ],
+    "per_step": [
+        {"robot.move_joint": "home"},
+        {"robot.move_joint": "item_ready"},
+        {"robot.pick": "current_part"},
+        {"robot.move_joint": "home"},
+        {"robot.move_joint": "assembly_ready"},
+        {"robot.place": "current_slot"},
+    ],
+    "after_all": [
+        {"conveyor.move_to": "INSPECTION"},
+        {"inspection.run": "assembled_pcb"},
+        {"robot.transfer": "assembled_pcb"},
+    ],
+}
 
 
 def quaternion_from_rpy(roll, pitch, yaw):
@@ -259,12 +278,12 @@ def validate_recipe(recipe, expected_version):
         raise ValueError("recipe must be a YAML object")
     required_fields = {
         "recipe_version", "frame", "joint_points", "motion",
-        "sequence", "gripper", "steps",
+        "workflow", "gripper", "steps",
     }
     if set(recipe) != required_fields:
         raise ValueError(
             "recipe must contain exactly recipe_version, frame, joint_points, "
-            "motion, sequence, gripper and steps"
+            "motion, workflow, gripper and steps"
         )
     if not isinstance(expected_version, str) or not expected_version.strip():
         raise ValueError("expected recipe version must be a non-empty string")
@@ -298,25 +317,12 @@ def validate_recipe(recipe, expected_version):
         if _finite_number(motion[name], f"motion.{name}") <= 0.0:
             raise ValueError(f"motion.{name} must be greater than zero")
 
-    sequence = recipe.get("sequence")
-    expected_before_all = [
-        "move_conveyor_to_assembly", "ensure_camera_calibrated",
-    ]
-    expected_per_step = [
-        "home", "item_ready", "pick", "home", "assembly_ready", "place"
-    ]
-    expected_after_all = [
-        "move_conveyor_to_inspection", "inspect_assembled_pcb",
-        "transfer_assembled_pcb",
-    ]
-    if not isinstance(sequence, dict) \
-            or set(sequence) != {"before_all", "per_step", "after_all"} \
-            or sequence.get("before_all") != expected_before_all \
-            or sequence.get("per_step") != expected_per_step \
-            or sequence.get("after_all") != expected_after_all:
+    workflow = recipe.get("workflow")
+    if not isinstance(workflow, dict) \
+            or set(workflow) != {"before_all", "per_step", "after_all"} \
+            or workflow != WORKFLOW:
         raise ValueError(
-            "sequence must move the conveyor to assembly, ensure camera calibration, "
-            "preserve the component cycle, then move to inspection, inspect and transfer"
+            "workflow must preserve the supported assembly action order"
         )
 
     steps = recipe.get("steps")
@@ -554,19 +560,7 @@ def self_check(runtime_recipe=None):
             "retract_dz_mm": 120,
             "assembled_pcb_drop_approach_dz_mm": 150,
         },
-        "sequence": {
-            "before_all": [
-                "move_conveyor_to_assembly", "ensure_camera_calibrated",
-            ],
-            "per_step": [
-                "home", "item_ready", "pick",
-                "home", "assembly_ready", "place",
-            ],
-            "after_all": [
-                "move_conveyor_to_inspection", "inspect_assembled_pcb",
-                "transfer_assembled_pcb",
-            ],
-        },
+        "workflow": WORKFLOW,
         "gripper": {
             "parts": {
                 "part": {
@@ -1314,13 +1308,16 @@ class MockMoveJ(Node):
             self.publish_assembly_feedback(request_id, "STARTED")
             joint_points = recipe["joint_points"]
             motion = recipe["motion"]
-            for command in recipe["sequence"]["before_all"]:
-                if command == "move_conveyor_to_assembly":
+            for command in recipe["workflow"]["before_all"]:
+                action, argument = next(iter(command.items()))
+                if (action, argument) == ("conveyor.move_to", "ASSEMBLY"):
                     self.publish_status("conveyor at assembly: confirmed by Unity")
-                elif command == "ensure_camera_calibrated":
-                    self.publish_status("camera calibration: simulated valid (Mock)")
+                elif (action, argument) == (
+                    "vision.resolve_targets", "recipe_steps"
+                ):
+                    self.publish_status("vision targets: simulated valid (Mock)")
                 else:
-                    raise RuntimeError(f"unknown preflight command: {command}")
+                    raise RuntimeError(f"unknown preflight action: {command}")
             for resolved in job["resolved_steps"]:
                 step = resolved["step"]
                 grasp_opening_percent = resolved[
@@ -1356,28 +1353,25 @@ class MockMoveJ(Node):
                     ),
                 )
 
-                for command in recipe["sequence"]["per_step"]:
-                    if command == "home":
-                        self.run_joint_target(joint_points["home"])
-                    elif command == "item_ready":
-                        self.run_joint_target(joint_points["item_ready"])
-                    elif command == "pick":
+                for command in recipe["workflow"]["per_step"]:
+                    action, argument = next(iter(command.items()))
+                    if action == "robot.move_joint":
+                        self.run_joint_target(joint_points[argument])
+                    elif (action, argument) == ("robot.pick", "current_part"):
                         self.run_gripper(release_opening_percent)
                         self.run_ptp_pose(source_approach)
                         self.run_linear(source, True)
                         self.run_gripper(grasp_opening_percent)
                         self.publish_assembly_feedback(request_id, "PICKED", step)
                         self.run_linear(source_retract, True)
-                    elif command == "assembly_ready":
-                        self.run_joint_target(joint_points["assembly_ready"])
-                    elif command == "place":
+                    elif (action, argument) == ("robot.place", "current_slot"):
                         self.run_ptp_pose(target_approach)
                         self.run_linear(target, True)
                         self.run_gripper(release_opening_percent)
                         self.publish_assembly_feedback(request_id, "PLACED", step)
                         self.run_linear(target_retract, True)
                     else:
-                        raise RuntimeError(f"unknown assembly command: {command}")
+                        raise RuntimeError(f"unknown assembly action: {command}")
 
             self.publish_assembly_feedback(request_id, "ASSEMBLY_COMPLETED")
             job["phase"] = "awaiting_transfer"
@@ -1403,14 +1397,18 @@ class MockMoveJ(Node):
             self.require_mock_hardware()
             motion = recipe["motion"]
             gripper = recipe["gripper"]["assembled_pcb"]
-            for command in recipe["sequence"]["after_all"]:
-                if command in {
-                    "move_conveyor_to_inspection", "inspect_assembled_pcb",
+            for command in recipe["workflow"]["after_all"]:
+                action, argument = next(iter(command.items()))
+                if (action, argument) in {
+                    ("conveyor.move_to", "INSPECTION"),
+                    ("inspection.run", "assembled_pcb"),
                 }:
-                    self.publish_status(f"{command}: confirmed externally")
+                    self.publish_status(f"{action}: confirmed externally")
                     continue
-                if command != "transfer_assembled_pcb":
-                    raise RuntimeError(f"unknown final assembly command: {command}")
+                if (action, argument) != ("robot.transfer", "assembled_pcb"):
+                    raise RuntimeError(
+                        f"unknown final assembly action: {command}"
+                    )
                 transfer = job["assembled_pcb"]
                 source = self.request_pose(recipe, transfer["source"])
                 target = self.request_pose(recipe, transfer["target"])

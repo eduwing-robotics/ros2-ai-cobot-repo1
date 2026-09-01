@@ -14,22 +14,22 @@ motion:
   retract_dz_mm: 100.0
   assembled_pcb_drop_approach_dz_mm: 150.0
 
-sequence:
+workflow:
   before_all:
-    - move_conveyor_to_assembly
-    - ensure_camera_calibrated
+    - conveyor.move_to: ASSEMBLY
+    - vision.resolve_targets: recipe_steps
   # Every order uses this shared flow. item_ready is PartsReadyPoint.
   per_step:
-    - home
-    - item_ready
-    - pick
-    - home
-    - assembly_ready
-    - place
+    - robot.move_joint: home
+    - robot.move_joint: item_ready
+    - robot.pick: current_part
+    - robot.move_joint: home
+    - robot.move_joint: assembly_ready
+    - robot.place: current_slot
   after_all:
-    - move_conveyor_to_inspection
-    - inspect_assembled_pcb
-    - transfer_assembled_pcb
+    - conveyor.move_to: INSPECTION
+    - inspection.run: assembled_pcb
+    - robot.transfer: assembled_pcb
 
 gripper:
   parts:

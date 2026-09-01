@@ -48,7 +48,7 @@ Sequencer의 업무 흐름에는 좌표 변환, Raw ROS 메시지 조립, SQL과
 ## 공통 Recipe parser
 
 `assembly_sequencer.recipe.load_recipe()`가 AssemblySequencer 소유 YAML을 읽고
-파일명·`recipe_version`, `base_link` frame, 관절점, motion, 고정 sequence,
+파일명·`recipe_version`, `base_link` frame, 관절점, motion, 단일-key workflow,
 gripper profile과 연속된 steps를 fail-closed로 검증한다. Real 실행 노드는 ROS
 초기화와 장비 명령 전에 한 번 로드한 snapshot만 사용해야 한다.
 
