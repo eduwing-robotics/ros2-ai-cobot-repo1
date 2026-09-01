@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """TWIN MVP multi-color detector.
 
-Copied from Farino_AIO/notebooks/hsv_depth_to_3d.py.  The original HSV,
+Copied from Farino_AIO_Mock/notebooks/hsv_depth_to_3d.py.  The original HSV,
 contour, median-depth and pinhole projection flow is retained.  This isolated
 copy adds per-part HSV profiles and publishes one geometry_msgs/PointStamped
 per detected part type.  Coordinates are metres in the camera optical frame.

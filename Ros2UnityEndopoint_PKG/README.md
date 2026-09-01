@@ -2,6 +2,12 @@
 
 UnityDT와 로봇 PC의 ROS 2 사이를 연결하는 ROS-TCP Endpoint 패키지입니다. Endpoint는 브리지이며 FAIRINO 드라이버나 `fr_command_server`를 대체하지 않습니다.
 
+## 역할과 책임
+
+- 역할: Unity TCP 메시지와 ROS 2 pub/sub/service 사이의 전송 경계
+- 책임: 연결 수립, 메시지 전달, Endpoint 실행·빌드 스크립트 제공
+- 책임 아님: 좌표 변환 규칙, 조립 흐름, FAIRINO 드라이버와 로봇 제어
+
 ## 실행
 
 필요 환경은 Ubuntu 24.04, ROS2 Jazzy와 `python3-colcon-common-extensions`입니다.
@@ -26,6 +32,3 @@ FAIRINO workspace가 없으면 `/opt/ros/jazzy/setup.bash`로 Endpoint만 빌드
 ## 문서
 
 - [상세 실행 방법](실행방법.md)
-- [프로젝트 기능 목표](../overview.md)
-- [Unity ↔ ROS2 API](../docs/API.md)
-- [작업 계획](../TODO.md)

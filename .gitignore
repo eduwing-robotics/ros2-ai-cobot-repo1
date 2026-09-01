@@ -1,3 +1,13 @@
+# Published repository scope
+/*
+!/.gitignore
+!/ASSEMBLY_SEQUENCER/
+!/DATA_STATION/
+!/Farino_AIO_Mock/
+!/MAIN_SERVER/
+!/Ros2UnityEndopoint_PKG/
+!/UnityDT/
+
 # Nested repository metadata
 **/.git/
 
@@ -14,6 +24,8 @@ UnityDT/.vscode/
 UnityDT/.idea/
 UnityDT/MemoryCaptures/
 UnityDT/Recordings/
+UnityDT/.claude/
+UnityDT/.codex/
 UnityDT/*.csproj
 UnityDT/*.sln
 UnityDT/*.slnx
@@ -31,6 +43,7 @@ UnityDT/sysinfo.txt
 
 # Python local files
 **/__pycache__/
+**/.pytest_cache/
 *.py[cod]
 *.pyo
 *.egg-info/

@@ -1,6 +1,6 @@
 # Assembly Sequencer API Catalog & Interface Specification
 
-이 문서는 `real_assembly` ROS 2 프로세스 구현 계약이다. 전체 목록은 [`docs/API.md`](../docs/API.md), 프로세스·DB 정책은 [`README.md`](README.md)를 따른다.
+이 문서는 `real_assembly` ROS 2 프로세스 구현 계약이다. 프로세스·DB 정책은 [`README.md`](README.md)를 따른다.
 
 | 항목 | 내용 |
 | --- | --- |
@@ -18,6 +18,7 @@
 | ROS-ASM-005 | 진행·완료·실패 전달 | `real_assembly` backend → AssemblySequencer Real adapter → Unity | Topic | `/real/assembly/progress` | `real_assembly_interfaces/msg/AssemblyProgress` | 계약 확정·미구현 |
 | ROS-RBT-007 | FR5 이동·그리퍼 명령 | `real_assembly` Robot 경계 → `fr_command_server` | Service | `/fairino_remote_command_service` | `fairino_msgs/srv/RemoteCmdInterface` | 저수준 부분 구현 |
 | ROS-RBT-008 | FR5 상태 전달 | `fr_command_server` → `real_assembly` | Topic | `/nonrt_state_data` | `fairino_msgs/msg/RobotNonrtState` | 구현 |
+| ROS-RBT-009 | Real Ghost 목표 자세 미리보기 | `real_assembly` backend → Unity Real Ghost | Topic | `/real/ghost/target` | `geometry_msgs/msg/PoseStamped` | Unity 수신 구현 |
 | ROS-CNV-001 | 컨베이어 위치 이동 | `real_assembly` → `conveyor_controller` | Action | `TBD` | `TBD` | 제안·협의 필요 |
 | ROS-STA-002 | 컨베이어 상태 전달 | `conveyor_controller` → `real_assembly`, Unity | Topic | `TBD` | `TBD` | 제안·협의 필요 |
 | ROS-INS-001 | 검사 실행·결과 반환 | `real_assembly` → `inspection_node` | Action | `TBD` | `TBD` | 제안·협의 필요 |
@@ -214,6 +215,7 @@ Service callback에서는 실제 Pick·Place를 실행하지 않는다.
 | --- | --- | --- |
 | ROS-RBT-007 | 이동·그리퍼 명령 | 입력·좌표계·단위 검증, 명령 실패 전달, 수락과 완료 구분 |
 | ROS-RBT-008 | 관절·TCP·그리퍼·fault·안전 상태 | 실제 완료·실패·timeout 판정 |
+| ROS-RBT-009 | `base_link` 기준 Tool 1 TCP 목표 pose | 위치 m, 정규화 가능한 quaternion. 시각화 전용이며 로봇 명령·완료 판정에 사용하지 않음 |
 
 | 공통 규칙 | 내용 |
 | --- | --- |
@@ -222,6 +224,12 @@ Service callback에서는 실제 Pick·Place를 실행하지 않는다.
 | callback | 로봇 상태 callback에서 DB·MainServer를 호출하지 않는다. |
 | 명령 충돌 | 자동 작업 중 수동 명령과 신규 자동 요청을 거절한다. |
 | 현장 값 | 좌표계·단위·속도·허용 오차·timeout은 실기 검증 후 기록한다. |
+
+`ROS-RBT-009`는 Real 모드에서만 사용한다. AssemblySequencer 공통 흐름은 Ghost 응답을
+기다리지 않으며, `real_assembly` backend가 목표 자세를 확정했을 때 선택적으로 발행한다.
+Unity의 `SampleScene > FR5 > RealMaster > RealRobotGhostControl` Inspector에서 MoveIt 또는
+FAIRINO SDK IK solver를 선택한다. 두 solver 모두 같은 Tool 1 보정값으로 flange 목표를
+계산하며 실제 이동 API를 호출하지 않는다.
 
 ### 6.2 Conveyor·Inspection·Safety
 

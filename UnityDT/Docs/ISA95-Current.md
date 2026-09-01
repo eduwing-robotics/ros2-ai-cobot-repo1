@@ -8,7 +8,7 @@ ROS 직접 시작과 비영속 명령 설명은 더 이상 현재 상태가 아�
 현재 기준은 [현재 시스템 구조](Architecture.md), [AssemblySequencer](../../ASSEMBLY_SEQUENCER/README.md), [MainServer API](../../MAIN_SERVER/Main_serverAPI.md)를 따른다.
 
 기준 문서: [ISA-95 레벨 정리](https://ros2-ai-cobot-project-01-team-01.atlassian.net/wiki/spaces/KSMC/pages/9568269/ISA-95) ·
-[현재 시스템 구조](Architecture.md) · [ROS2 API](../../docs/API.md) · [MainServer API](../../MAIN_SERVER/Main_serverAPI.md)
+[현재 시스템 구조](Architecture.md) · [MainServer API](../../MAIN_SERVER/Main_serverAPI.md) · [AssemblySequencer API](../../ASSEMBLY_SEQUENCER/API.md)
 
 ---
 
@@ -25,7 +25,7 @@ ROS 직접 시작과 비영속 명령 설명은 더 이상 현재 상태가 아�
 
 Level 3이 **두 곳으로 나뉘어 있다.** MainServer가 읽기를, `mock_db_bridge`가 쓰기를 담당한다.
 
-Level 2 본체인 `mock_sim.py`(1185줄)는 ROS 패키지가 아니라 `Farino_AIO/notebooks/`에 있고,
+Level 2 본체인 `mock_sim.py`(1185줄)는 ROS 패키지가 아니라 `Farino_AIO_Mock/notebooks/`에 있고,
 `fairino5_v6_moveit2_config/CMakeLists.txt:12`가 `install(PROGRAMS ../../notebooks/mock_sim.py ...)`로
 패키지 밖을 참조해 설치한다. 시스템에서 가장 핵심적인 제어 코드가 실험용 디렉터리에 있다.
 
@@ -250,8 +250,6 @@ Unity, MainServer, ROS2 노드, PostgreSQL이 **모두 같은 PC**에서 돈다
 | 비전 노드 (ROS 발행자) | 저장소에 없음. Unity 구독 코드와 토픽 계약만 존재 |
 | AI 불량 검사 | 미구현 |
 | 작업 큐 · 다중 셀 · ROS2 Action | 없음. 고정 레시피 1개 · 수량 1 · 동시 1건 |
-
-구현 순서는 [TODO](../../TODO.md)에서 관리한다.
 
 ---
 

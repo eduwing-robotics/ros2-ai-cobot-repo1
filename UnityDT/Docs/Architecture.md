@@ -1,6 +1,6 @@
 # 현재 시스템 구조
 
-이 문서는 현재 코드로 실행되는 Unity·MainServer·ROS2·DB 경계를 설명한다. 기능 목표는 [프로젝트 개요](../../overview.md), 미구현 계획은 [TODO](../../TODO.md), 구체 통신은 [ROS2 API](../../docs/API.md)와 [MainServer API](../../MAIN_SERVER/Main_serverAPI.md)를 따른다.
+이 문서는 현재 코드로 실행되는 Unity·MainServer·ROS2·DB 경계를 설명한다. HTTP 계약은 [MainServer API](../../MAIN_SERVER/Main_serverAPI.md), 조립 실행 계약은 [AssemblySequencer API](../../ASSEMBLY_SEQUENCER/API.md)를 따른다.
 
 ## 전체 구조
 

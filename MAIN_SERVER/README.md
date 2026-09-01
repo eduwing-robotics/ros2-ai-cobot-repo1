@@ -3,6 +3,12 @@
 제품·부품·재고·작업·검사 결과를 조회하고 조립 요청을 PostgreSQL의 영속
 제어 큐에 저장하는 HTTP 서버입니다.
 
+## 역할과 책임
+
+- 역할: UnityDT와 생산 데이터·조립 요청 사이의 HTTP 경계
+- 책임: 요청 검증, 생산 데이터 조회, `control.assembly_requests` 기록, 불량대책서 생성
+- 책임 아님: 생산 테이블 갱신, 조립 순서 제어, 로봇 직접 제어
+
 ## 현재 기능
 
 - 제품, 슬롯·부품 구성과 생산 가능 수량 조회
@@ -18,10 +24,8 @@
 `production`은 조회하고 `control.assembly_requests`는 읽고 쓸 수 있어야 한다.
 
 `GET /api/v1/assemblies/current`만 AssemblySequencer의 ROS2 status service를
-호출하므로 이 route를 사용할 프로세스에는 ROS2와 Farino workspace가 source돼야
-한다. Mock 전체 실행은
-[Farino_AIO Mock 올인원 실행](../Farino_AIO/README.md#mock-올인원-실행)을
-사용하거나 MainServer와 AssemblySequencer를 각각 실행한다.
+호출하므로 이 route를 사용할 프로세스에는 ROS2와 `Farino_AIO_Mock` workspace가
+source돼야 한다. Mock 전체 실행은 [Farino_AIO_Mock](../Farino_AIO_Mock/README.md#mock-올인원-실행)을 따른다.
 
 ## 불량대책서 생성
 
@@ -53,7 +57,5 @@ XLSX 접근은 [datasheet.py](datasheet.py) 한 곳에 모여 있고, HTTP API�
 ## 문서
 
 - [HTTP API 계약](Main_serverAPI.md)
-- [프로젝트 기능 목표](../overview.md)
-- [작업 계획](../TODO.md)
 - [현재 시스템 구조](../UnityDT/Docs/Architecture.md)
 - [DB 핵심 설계](../UnityDT/Docs/DB.md)

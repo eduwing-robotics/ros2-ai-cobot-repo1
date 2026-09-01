@@ -1,8 +1,0 @@
-[mcp_servers.UnityMCP]
-command = "/home/codlab/.local/bin/uvx"
-args = [
-    "--offline",
-    "--from",
-    "mcpforunityserver==10.0.0",
-    "mcp-for-unity",
-]

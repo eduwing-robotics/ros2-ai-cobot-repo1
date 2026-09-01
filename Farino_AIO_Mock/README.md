@@ -1,7 +1,13 @@
-# Farino_AIO
+# Farino_AIO_Mock
 
 FR5 MoveIt 구성과 Mock 로봇 backend를 포함하는 ROS2 workspace입니다.
 조립 요청과 PostgreSQL 쓰기는 최상단 `ASSEMBLY_SEQUENCER`가 소유합니다.
+
+## 역할과 책임
+
+- 역할: FR5 MoveIt FakeSystem과 Unity 연동용 Mock 로봇 실행 workspace
+- 책임: FAIRINO 메시지·MoveIt 구성, Mock 동작·검사 backend, Mock 올인원 launch 제공
+- 책임 아님: HTTP 요청 수신, 조립 요청 claim·업무 순서, 생산 DB 갱신
 
 ## 현재 기능
 
@@ -21,12 +27,12 @@ FR5 MoveIt 구성과 Mock 로봇 backend를 포함하는 ROS2 workspace입니다
 ```bash
 cd /home/codlab/Main_Unity
 source /opt/ros/jazzy/setup.bash
-source Farino_AIO/install/setup.bash
+source Farino_AIO_Mock/install/setup.bash
 cd ASSEMBLY_SEQUENCER
 colcon build --symlink-install
 source install/setup.bash
 
-cd ../Farino_AIO
+cd ../Farino_AIO_Mock
 colcon build --symlink-install --packages-select mock_db_mvp
 source install/setup.bash
 
@@ -58,8 +64,5 @@ ros2 topic echo --once /joint_states
 
 ## 문서
 
-- [프로젝트 기능 목표](../overview.md)
-- [작업 계획](../TODO.md)
-- [Unity ↔ ROS2 API](../docs/API.md)
 - [현재 시스템 구조](../UnityDT/Docs/Architecture.md)
 - [DB 핵심 설계](../UnityDT/Docs/DB.md)

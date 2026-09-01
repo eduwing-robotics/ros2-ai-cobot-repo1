@@ -17,6 +17,7 @@ namespace MainUnity.Runtime.Robot.Real
         [SerializeField] RealGripperRequest gripperRequest;
         [SerializeField] RealRobotControl control;
         [SerializeField] RealAssemblyScenarioControl assemblyControl;
+        [SerializeField] RealRobotGhostControl ghostControl;
 
         public IRobotStateSource StateSource => stateSource;
         public IRobotControl Control => control;
@@ -33,6 +34,7 @@ namespace MainUnity.Runtime.Robot.Real
         {
             RefreshReferences();
             control?.Initialize(articulationRoot, statusManager);
+            ghostControl?.InitializeReal(statusManager, control);
             gripperRequest?.Initialize(statusManager);
 
             shadowing?.Initialize(articulationRoot);
@@ -70,6 +72,8 @@ namespace MainUnity.Runtime.Robot.Real
                 control = GetComponentInChildren<RealRobotControl>(true);
             if (assemblyControl == null)
                 assemblyControl = GetComponentInChildren<RealAssemblyScenarioControl>(true);
+            if (ghostControl == null)
+                ghostControl = GetComponentInChildren<RealRobotGhostControl>(true);
         }
 
         void Bind()

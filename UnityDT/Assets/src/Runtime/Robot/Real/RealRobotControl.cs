@@ -257,17 +257,41 @@ namespace MainUnity.Runtime.Robot.Real
 
         async Task SendCommandAsync(string command)
         {
+            string value = await SendRawCommandAsync(command);
+            if (value == "0")
+                return;
+
+            string detail = "[FAIRINO] Move command returned: " + value;
+            throw new CommandRejectedException(detail);
+        }
+
+        internal async Task<string> QueryInverseKinRefAsync(string command)
+        {
+            if (!Application.isPlaying)
+                throw new InvalidOperationException("FAIRINO Ghost requests require Play Mode.");
+            if (requestInFlight)
+                throw new InvalidOperationException(
+                    "FAIRINO Ghost query is unavailable during a local move request.");
+            if (string.IsNullOrWhiteSpace(serviceName))
+                throw new InvalidOperationException("FAIRINO service name must not be empty.");
+            if (string.IsNullOrWhiteSpace(command) ||
+                !command.StartsWith("GetInverseKinRef(", StringComparison.Ordinal) ||
+                !command.EndsWith(")", StringComparison.Ordinal))
+                throw new InvalidOperationException(
+                    "Only GetInverseKinRef is allowed through the FAIRINO Ghost query.");
+
+            return await SendRawCommandAsync(command);
+        }
+
+        async Task<string> SendRawCommandAsync(string command)
+        {
             Debug.Log("[FAIRINO] TX " + serviceName + ": " + command, this);
             RemoteCmdInterfaceResponse response = await ROSConnection.GetOrCreateInstance()
                 .SendServiceMessage<RemoteCmdInterfaceResponse>(serviceName,
                     new RemoteCmdInterfaceRequest(command));
             string value = response?.cmd_res ?? string.Empty;
             Debug.Log("[FAIRINO] RX " + serviceName + ": " + value, this);
-            if (value == "0")
-                return;
-
-            string detail = "[FAIRINO] Move command returned: " + value;
-            throw new CommandRejectedException(detail);
+            return value;
         }
 
         bool TryPrepare(out RobotErrorLabel label, out string error, out bool reportError)

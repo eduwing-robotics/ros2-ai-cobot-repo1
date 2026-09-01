@@ -122,11 +122,9 @@ must allow reads from `production` and enqueue/read access to
 `control.assembly_requests`. MainServer does not write production tables.
 
 Product, Job and POST assembly routes need PostgreSQL only. The current-status
-route additionally requires a shell where ROS2 and the Farino_AIO overlay have
-been sourced, plus a running AssemblySequencer service. For Mock, use the
-[`launch_mock.launch.py` command](../Farino_AIO/README.md#mock-올인원-실행).
-It can start the integrated stack, or MainServer and AssemblySequencer can run
-as separate processes against the same database.
+route additionally requires a shell where ROS2 and the included
+`Farino_AIO_Mock` overlay have been sourced, plus a running AssemblySequencer
+service. For Mock, follow the [AIO launch instructions](../Farino_AIO_Mock/README.md#mock-올인원-실행).
 
 `MAIN_SERVER_MODE=real` stores requests in the Real queue, but Real automatic
 assembly is not implemented yet. Do not submit Real production requests until

@@ -4,6 +4,12 @@
 Writer를 소유한다. Mock 실행 노드와 DB Writer는 구현됐고 Real 실행 노드는
 팀 구현과 합류할 때 같은 DB 경계를 사용한다.
 
+## 역할과 책임
+
+- 역할: PostgreSQL 조립 요청을 실제 Mock/Real 작업 흐름으로 실행하는 Orchestrator
+- 책임: 요청 claim·중복 방지, 조립·이송·검사 순서, 완료·실패·timeout 전달, 생산 DB 갱신
+- 책임 아님: Unity UI, HTTP 요청 수신, 좌표 변환, Raw ROS 메시지와 하드웨어 직접 제어
+
 ## 구현 상태
 
 | 구분 | 현재 구현 | Sequencer 역할 |
@@ -35,20 +41,12 @@ Unity·MainServer ── ROS2 status ──────────────�
 - MainServer는 `production`을 조회하고 `control.assembly_requests`만 기록한다.
 
 - AssemblySequencer만 Job·Unit·재고·검사 등 `production`을 갱신한다.
-## 책임
-
-AssemblySequencer는 다음을 소유한다.
-
-- PostgreSQL 요청 claim·중복 실행 방지와 활성 작업 상태
-- 조립·컨베이어·검사 순서와 중단·재시도 정책
-- 하위 제어 결과를 기준으로 한 실제 완료·실패·timeout 전달
-- 생산 DB에 기록할 도메인 이벤트 생성
 
 Sequencer의 업무 흐름에는 좌표 변환, Raw ROS 메시지 조립, SQL과 하드웨어 직접 제어를 넣지 않는다. 입력 검증, 변환, 통신, 실제 완료 감지와 timeout은 각 하위 공개 진입점이 완결한다.
 
 ## Real API 계약
 
-세부 상태·Schema와 구현자 준수사항은 [`API.md`](API.md), 전체 프로젝트 목록은 [`docs/API.md`](../docs/API.md)를 따른다.
+세부 상태·Schema와 구현자 준수사항은 [`API.md`](API.md)를 따른다.
 
 | 기능 | 인터페이스 | 송신자 → 수신자 | 상태 |
 | --- | --- | --- | --- |
@@ -69,7 +67,7 @@ AssemblySequencer와 기존 Mock backend만 독립 실행할 수 있다.
 ```bash
 cd /home/codlab/Main_Unity
 source /opt/ros/jazzy/setup.bash
-source Farino_AIO/install/setup.bash
+source Farino_AIO_Mock/install/setup.bash
 
 cd ASSEMBLY_SEQUENCER
 colcon build --symlink-install
