@@ -388,7 +388,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eab7e9e525f60de0d8b75c27d7e5a467, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Robot.RobotMaster
-  operatingMode: 0
+  operatingMode: 1
   mock: {fileID: 365101877}
   real: {fileID: 1511203717}
   status: {fileID: 70281096}
@@ -1951,7 +1951,7 @@ Transform:
   m_GameObject: {fileID: 319422213}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.165073, z: 0}
+  m_LocalPosition: {x: 0.00232, y: 0.14673, z: -0.00201}
   m_LocalScale: {x: 0.005, y: 0.005, z: 0.005}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2527,7 +2527,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &365101869
 Transform:
   m_ObjectHideFlags: 0
@@ -4734,7 +4734,7 @@ Transform:
   m_GameObject: {fileID: 671928939}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0, y: 0.1655, z: 0}
+  m_LocalPosition: {x: 0.00232, y: 0.14673, z: -0.00201}
   m_LocalScale: {x: 0.005, y: 0.005, z: 0.005}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -10652,7 +10652,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1511203713
 Transform:
   m_ObjectHideFlags: 0
@@ -11172,8 +11172,8 @@ Transform:
   m_GameObject: {fileID: 1545851024}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.00750041, z: 0}
-  m_LocalScale: {x: 0.23, y: 0.015, z: 0.23}
+  m_LocalPosition: {x: 0, y: -0.0275004, z: 0}
+  m_LocalScale: {x: 0.23, y: 0.055, z: 0.23}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -15334,6 +15334,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 16f5286ecbdc0963ca4a1e0453b9940a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Robot.Mock.MockAssemblyScenarioControl
+  mainServerBaseUrl: http://127.0.0.1:8000
   startService: /unity/assembly/start
   feedbackTopic: /unity/assembly/feedback
   recipeVersion: assembly-r1
@@ -16321,7 +16322,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5386464108290723327, guid: f533853bf7cbc7884bb9ab6253502f28, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.5000004
+      value: -0.5400004
       objectReference: {fileID: 0}
     - target: {fileID: 5386464108290723327, guid: f533853bf7cbc7884bb9ab6253502f28, type: 3}
       propertyPath: m_LocalPosition.z
