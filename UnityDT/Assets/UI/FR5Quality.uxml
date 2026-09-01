@@ -2,11 +2,20 @@
     <ui:Style src="project://database/Assets/UI/FR5Theme.uss" />
     <ui:Template src="project://database/Assets/UI/FR5Shell.uxml" name="FR5Shell" />
     <!--
-      QUALITY · 누적 불량률과 대책서 — docs/ui_recommendation/mockups-monitor-aligned/04_quality-v2.png
+      QUALITY · 슬롯 파레토 + 선택 슬롯 초점 — Docs/ui/mock-05-quality-pareto.svg (11안)
       조회 성격이라 실시간 갱신이 없다. 진입 시 1회 + 수동 새로고침.
 
-      실데이터: MainServer의 현재 작업 → 제품 → 슬롯/부품별 품질 집계.
-      레시피 비교와 대책서는 조회 계약이 생길 때까지 명시적 빈 상태로 남긴다.
+      한 화면이 두 질문에 순서대로 답한다.
+        좌 · 어디부터 손대야 하나  → 슬롯별 불량 건수 파레토, 누적 80% 무릎이 작업 범위다
+        우 · 그게 정확히 뭔가      → 고른 슬롯 하나의 비율 · 분모 · 부품 내 위치
+
+      좌우가 분업하는 이유. 파레토는 누적 %가 성립해야 하므로 반드시 건수로 그린다.
+      그런데 슬롯마다 검사 수가 같아도 부품마다 슬롯 수가 달라서, 건수 순위와 불량률
+      순위는 어긋난다. 그래서 순서는 왼쪽이 정하고 분모는 오른쪽이 말한다.
+
+      비어 있는 자리. 임계(defect_report.thresholds) · 불량 유형별 집계 · 대책서는
+      조회 계약이 없다. 막대에 상태색을 주지 않는 것도 그래서다 — 넘었는지 아닌지를
+      판정할 근거가 없는데 색을 칠하면 화면이 실측을 지어내는 것이 된다.
     -->
     <ui:VisualElement name="fr5-quality" class="page page--dim fr5--mock">
 
@@ -21,11 +30,10 @@
         <!-- 조회 조건 -->
         <ui:VisualElement name="filter-panel" class="panel row" style="position:absolute; left:112px; top:164px; width:1784px; height:76px; padding-left:24px; padding-right:24px;">
             <ui:VisualElement class="panel__spine" />
-            <!-- TODO(API): 기간·제품·레시피·유형 필터는 조회 API 파라미터로 넘긴다 -->
-            <ui:VisualElement style="width:280px;"><ui:Label text="기간" class="micro" /><ui:Label name="filter-period" text="—" class="value" style="font-size:18px; margin-top:4px;" /></ui:VisualElement>
-            <ui:VisualElement style="width:392px;"><ui:Label text="제품" class="micro" /><ui:Label name="filter-product" text="—" class="value" style="font-size:18px; margin-top:4px;" /></ui:VisualElement>
-            <ui:VisualElement style="width:240px;"><ui:Label text="레시피" class="micro" /><ui:Label name="filter-recipe" text="—" class="value" style="font-size:18px; margin-top:4px;" /></ui:VisualElement>
-            <ui:VisualElement style="width:240px;"><ui:Label text="불량 유형" class="micro" /><ui:Label name="filter-defect" text="—" class="value" style="font-size:18px; margin-top:4px;" /></ui:VisualElement>
+            <!-- TODO(API): 기간·제품·레시피 필터는 조회 API 파라미터로 넘긴다 -->
+            <ui:VisualElement style="width:300px;"><ui:Label text="기간" class="micro" /><ui:Label name="filter-period" text="—" class="value" style="font-size:18px; margin-top:4px;" /></ui:VisualElement>
+            <ui:VisualElement style="width:460px;"><ui:Label text="제품" class="micro" /><ui:Label name="filter-product" text="—" class="value" style="font-size:18px; margin-top:4px;" /></ui:VisualElement>
+            <ui:VisualElement style="width:320px;"><ui:Label text="레시피" class="micro" /><ui:Label name="filter-recipe" text="—" class="value" style="font-size:18px; margin-top:4px;" /></ui:VisualElement>
             <ui:VisualElement class="spacer" />
             <ui:VisualElement name="source-chip" class="chip" style="margin-right:16px;">
                 <ui:Label name="source-text" text="—" class="chip__text" />
@@ -37,67 +45,85 @@
             </ui:VisualElement>
         </ui:VisualElement>
 
-        <!-- 슬롯별 불량률 -->
-        <ui:VisualElement name="slot-panel" class="panel" style="position:absolute; left:112px; top:264px; width:940px; height:436px;">
+        <!-- ===================== 좌 · 슬롯 파레토 ===================== -->
+        <ui:VisualElement name="pareto-panel" class="panel" style="position:absolute; left:112px; top:264px; width:1048px; height:640px;">
             <ui:VisualElement class="panel__spine" />
             <ui:VisualElement class="panel__head">
-                <ui:Label text="SLOT DEFECT RATE" class="panel__title" />
+                <ui:Label text="SLOT PARETO" class="panel__title" />
                 <ui:VisualElement class="spacer" />
-                <ui:Label name="slot-threshold" text="—" class="panel__badge" />
+                <ui:Label name="pareto-total" text="—" class="panel__badge" />
             </ui:VisualElement>
-            <!-- TODO(API): production 집계. 슬롯별 누적 불량률 -->
-            <ui:VisualElement name="slot-grid" class="row vlist" style="flex-wrap:wrap; padding:18px;" />
+
+            <!-- 부품 필터. 누르면 그 부품의 슬롯만 남는다 — 축을 바꾸지 않고 좁힌다. -->
+            <ui:Label text="부품 필터" class="micro" style="position:absolute; left:18px; top:58px;" />
+            <ui:VisualElement name="part-chips" class="row" style="position:absolute; left:96px; top:52px; height:26px;" />
+            <ui:Label name="filter-state" text="—" class="muted" style="position:absolute; right:18px; top:58px; font-size:12px;" />
+
+            <ui:Label text="건수" class="micro" style="position:absolute; left:18px; top:96px;" />
+            <ui:Label text="누적 %" class="micro" style="position:absolute; right:18px; top:96px;" />
+
+            <!--
+              그림 영역. 세로는 0~최대 건수, 누적선은 별도로 0~100% 고정이다.
+              막대(누를 수 있어야 함)는 VisualElement 로, 누적선은 ParetoCurve 가 그린다.
+            -->
+            <ui:VisualElement name="pareto-plot" style="position:absolute; left:70px; top:126px; width:918px; height:370px;" />
+            <ui:VisualElement name="pareto-axis" style="position:absolute; left:70px; top:504px; width:918px; height:110px;" />
+
+            <ui:VisualElement name="pareto-empty" style="position:absolute; left:70px; top:126px; width:918px; height:370px;" />
         </ui:VisualElement>
 
-        <!-- 부품·유형별 -->
-        <ui:VisualElement name="part-panel" class="panel" style="position:absolute; left:1076px; top:264px; width:820px; height:436px;">
+        <!-- ===================== 우 · 고른 슬롯 하나 ===================== -->
+        <ui:VisualElement name="detail-panel" class="panel" style="position:absolute; left:1184px; top:264px; width:712px; height:640px;">
             <ui:VisualElement class="panel__spine" />
             <ui:VisualElement class="panel__head">
-                <ui:Label text="PART DEFECT RATE" class="panel__title" />
+                <ui:Label text="SELECTED SLOT" class="panel__title" />
                 <ui:VisualElement class="spacer" />
-                <ui:Label text="부품 · 유형별" class="panel__badge" />
+                <ui:Label name="detail-hint" text="1위 자동 선택 · 막대를 눌러 바꾼다" class="panel__badge" />
             </ui:VisualElement>
-            <ui:VisualElement class="panel__body">
-                <ui:VisualElement class="trow trow--head">
-                    <ui:Label text="PART" class="tcell tcell--head" style="width:300px;" />
-                    <ui:Label text="TYPE" class="tcell tcell--head" style="width:200px;" />
-                    <ui:Label text="불량 / 검사" class="tcell tcell--head tcell--num" style="width:140px;" />
-                    <ui:Label text="RATE" class="tcell tcell--head tcell--num" style="width:100px;" />
+
+            <ui:VisualElement name="detail-body" style="position:absolute; left:24px; top:64px; right:24px; bottom:20px;">
+                <ui:VisualElement class="row">
+                    <ui:VisualElement name="detail-icon" class="pick__icon" style="margin-right:16px;" />
+                    <ui:VisualElement>
+                        <ui:Label name="detail-code" text="—" class="pick__code" />
+                        <ui:Label name="detail-part" text="—" class="pick__part" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="spacer" />
+                    <ui:VisualElement style="align-items:flex-end;">
+                        <!-- TODO(API): defect_report.thresholds 가 생기면 여기서 초과를 판정한다 -->
+                        <ui:Label name="detail-threshold" text="—" class="muted" style="font-size:12px;" />
+                    </ui:VisualElement>
                 </ui:VisualElement>
-                <!-- TODO(API): defect_report.thresholds 와 대조해 임계 초과를 판정한다 -->
-                <ui:VisualElement name="part-list" class="vlist" />
-            </ui:VisualElement>
-        </ui:VisualElement>
 
-        <!-- 레시피 전후 -->
-        <ui:VisualElement name="recipe-panel" class="panel" style="position:absolute; left:112px; top:724px; width:940px; height:256px;">
-            <ui:VisualElement class="panel__spine" />
-            <ui:VisualElement class="panel__head">
-                <ui:Label text="RECIPE A / B" class="panel__title" />
-                <ui:VisualElement class="spacer" />
-                <ui:Label name="recipe-note" text="개선 전후 비교" class="panel__badge" />
-            </ui:VisualElement>
-            <!-- TODO(API): alert_countermeasures.applied_recipe_version 기준 전후 집계 -->
-            <ui:VisualElement name="recipe-compare" class="row vlist" style="padding:18px;" />
-        </ui:VisualElement>
+                <ui:VisualElement class="row" style="margin-top:34px; align-items:flex-end;">
+                    <ui:Label name="detail-rate" text="—" class="pick__rate" />
+                    <ui:VisualElement class="spacer" />
+                    <ui:Label name="detail-den" text="—" class="pick__den" style="margin-bottom:18px;" />
+                </ui:VisualElement>
 
-        <!-- 대책서 -->
-        <ui:VisualElement name="alert-panel" class="panel" style="position:absolute; left:1076px; top:724px; width:820px; height:256px;">
-            <ui:VisualElement class="panel__spine" />
-            <ui:VisualElement class="panel__head">
-                <ui:Label text="DEFECT REPORT · alerts" class="panel__title" />
+                <ui:VisualElement class="gauge" style="margin-top:10px;">
+                    <ui:VisualElement name="detail-gauge" class="gauge__fill gauge__fill--neutral" />
+                </ui:VisualElement>
+
+                <ui:VisualElement name="detail-rows" style="margin-top:26px;" />
+
+                <ui:Label name="detail-note" text="—" class="muted" style="font-size:12px; margin-top:16px; white-space:normal;" />
+
                 <ui:VisualElement class="spacer" />
-                <ui:Label name="alert-summary" text="—" class="panel__badge" />
+
+                <!-- TODO(API): GET /alerts — 대책서 발행 목록 -->
+                <ui:VisualElement class="sect" style="margin-top:12px;">
+                    <ui:VisualElement class="sect__tick" />
+                    <ui:Label text="COUNTERMEASURE" class="sect__title" />
+                </ui:VisualElement>
+                <ui:Label name="detail-alert" text="—" class="muted" style="font-size:13px;" />
             </ui:VisualElement>
-            <!-- TODO(API): defect_report.alerts 조회 -->
-            <ui:VisualElement name="alert-list" class="vlist" style="padding-left:18px; padding-right:18px;" />
+
+            <ui:VisualElement name="detail-empty" style="position:absolute; left:24px; top:64px; right:24px; bottom:20px;" />
         </ui:VisualElement>
 
         <!-- 출처 고지 -->
-        <ui:VisualElement class="panel" style="position:absolute; left:112px; top:972px; right:24px; height:84px; padding:10px 18px 10px 18px;">
-            <ui:Label text="출처: MainServer HTTP · production units / unit_defects" class="muted" style="font-size:12px;" />
-            <ui:Label text="레시피 비교 · thresholds · alerts 는 조회 계약이 없어 빈 상태로 표시합니다." class="muted" style="font-size:12px; margin-top:4px; color:rgb(100,112,122);" />
-        </ui:VisualElement>
+        <ui:Label name="source-note" text="—" class="muted" style="position:absolute; left:112px; top:924px; font-size:12px; color:rgb(100,112,122);" />
 
         <!--
           공통 셸: 상단 바 + 페이지 레일 + 알람 띠.

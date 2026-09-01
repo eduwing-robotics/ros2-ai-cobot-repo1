@@ -720,3 +720,91 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
 .run-cam__bar-badge {
     color: var(--c-ink-3); font-size: 12px; margin-right: 12px;
 }
+
+/* ============================ QUALITY · 슬롯 파레토 ============================
+  Docs/ui/mock-05-quality-pareto.svg 11안.
+
+  좌: 슬롯별 불량 건수 파레토. 우: 선택한 슬롯 하나의 상세.
+  두 질문이 경쟁이 아니라 순서라서 한 화면에 붙는다 —
+  파레토가 "어디부터"를 고르고, 우측이 "그게 뭔지"를 끝까지 말한다.
+
+  색 규칙은 화면 전체와 같다. 임계 조회 계약이 없으므로 막대에 상태색(--c-bad /
+  --c-warn)을 주지 않는다. 대신 누적 80% 안에 드는 막대만 밝게 둔다 — 이건 임계
+  판정이 아니라 데이터에서 바로 나오는 구분이라 지어내는 것이 아니다.
+*/
+.pbar-col {
+    position: absolute;
+    bottom: 0;
+    align-items: center;
+    justify-content: flex-end;
+}
+.pbar-col:hover .pbar { background-color: var(--c-ink-2); }
+
+/* 막대 자체. 높이는 바인더가 건수 비율로 준다. */
+.pbar { width: 100%; background-color: var(--c-ink-4); }
+.pbar--major { background-color: var(--c-ink); }          /* 누적 80% 안 */
+.pbar--sel   { background-color: var(--c-accent); }        /* 지금 여기 */
+
+.pbar-count { color: var(--c-ink); font-size: 15px; -unity-font-style: bold; margin-bottom: 6px; }
+.pbar-count--dim { color: var(--c-ink-3); }
+
+/* 축 아래 한 칸 — 그림 · 슬롯 코드 · 불량률. 눌러서 고르는 자리다. */
+.pslot {
+    position: absolute;
+    top: 0;
+    align-items: center;
+}
+.pslot__icon { width: 22px; height: 22px; -unity-background-scale-mode: scale-to-fit; }
+.pslot__code { color: var(--c-ink-2); font-size: 13px; margin-top: 14px; }
+.pslot__rate { color: var(--c-ink-4); font-size: 11px; margin-top: 4px; }
+.pslot__mark { height: 3px; width: 100%; background-color: var(--c-accent); opacity: 0; }
+
+.pslot--sel .pslot__code { color: var(--c-ink); -unity-font-style: bold; }
+.pslot--sel .pslot__mark { opacity: 1; }
+.pslot:hover .pslot__code { color: var(--c-ink); }
+
+/* 축 · 눈금 */
+.paxis { position: absolute; height: 1px; background-color: var(--c-edge); }
+.pgrid { position: absolute; height: 1px; background-color: var(--c-sunk); }
+.ptick { position: absolute; color: var(--c-ink-4); font-size: 11px; }
+.ptail { position: absolute; color: var(--c-ink-4); font-size: 11px; -unity-text-align: middle-center; }
+
+/* 무릎 설명 — 이 화면이 내는 결론이라 액센트를 준다. */
+.pknee { position: absolute; color: var(--c-accent); font-size: 15px; -unity-font-style: bold; -unity-text-align: middle-center; }
+.pknee__sub { position: absolute; color: var(--c-ink-4); font-size: 11px; -unity-text-align: middle-center; }
+
+/* 부품 필터 칩 */
+.pchip {
+    flex-direction: row;
+    align-items: center;
+    height: 26px;
+    padding-left: 6px;
+    padding-right: 8px;
+    margin-right: 8px;
+    background-color: var(--c-sunk);
+}
+.pchip:hover { background-color: var(--c-sunk-2); }
+.pchip--on { background-color: var(--c-accent-wash); }
+.pchip__icon { width: 18px; height: 18px; -unity-background-scale-mode: scale-to-fit; margin-right: 6px; }
+.pchip__name { color: var(--c-ink-2); font-size: 13px; }
+.pchip--on .pchip__name { color: var(--c-accent); -unity-font-style: bold; }
+.pchip__n { color: var(--c-ink-4); font-size: 11px; margin-left: 8px; }
+
+/* ---- 우측: 선택한 슬롯 하나 ---- */
+.pick__icon { width: 56px; height: 56px; -unity-background-scale-mode: scale-to-fit; }
+.pick__code { color: var(--c-ink); font-size: 30px; -unity-font-style: bold; letter-spacing: -0.4px; }
+.pick__part { color: var(--c-ink-3); font-size: 13px; margin-top: 4px; }
+.pick__rate { color: var(--c-ink); font-size: 88px; -unity-font-style: bold; letter-spacing: -4px; }
+.pick__den  { color: var(--c-ink-3); font-size: 17px; }
+
+/* 상세 한 줄 — 왼쪽 라벨, 오른쪽 값. 표가 아니라 정의 목록이다. */
+.prow {
+    flex-direction: row;
+    align-items: center;
+    height: 44px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(255, 255, 255, 0.055);
+}
+.prow__key { color: var(--c-ink-3); font-size: 11px; letter-spacing: 1.2px; -unity-font-style: bold; }
+.prow__val { color: var(--c-ink); font-size: 16px; -unity-text-align: middle-right; flex-grow: 1; }
+.prow__val--miss { color: var(--c-ink-4); font-size: 13px; }
