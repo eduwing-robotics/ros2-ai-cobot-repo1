@@ -127,6 +127,21 @@ class MockAssemblySequencer(Node):
             response.cmd_res = json.dumps(snapshot, separators=(",", ":"))
             return response
 
+        if command_type in {"pause", "resume"}:
+            job_id = command["job_id"]
+            if self.active is None or self.active["job_id"] != job_id:
+                return self.set_response(
+                    response, False, job_id, "NOT_ACTIVE",
+                    "matching assembly is not active",
+                )
+            try:
+                await self.backend.set_paused(job_id, command_type == "pause")
+            except Exception as error:
+                return self.set_response(
+                    response, False, job_id, "INTERNAL_ERROR", str(error)
+                )
+            return self.set_response(response, True, job_id)
+
         if command_type == "transfer_assembled_pcb":
             active = self.active
             job_id = command["job_id"]

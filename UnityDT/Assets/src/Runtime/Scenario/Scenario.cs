@@ -10,6 +10,8 @@ namespace MainUnity.Runtime.Scenario
         IRobotScenarioControl robot;
         bool running;
 
+        public bool IsRunning => running;
+
         /// <summary>RobotMaster가 현재 Mock/Real Scenario 구현을 주입한다.</summary>
         public void Initialize(IRobotScenarioControl robot) =>
             this.robot = robot;
@@ -32,6 +34,20 @@ namespace MainUnity.Runtime.Scenario
             {
                 running = false;
             }
+        }
+
+        public Task PauseAsync()
+        {
+            if (!running || robot == null)
+                throw new InvalidOperationException("Scenario is not running.");
+            return robot.PauseAsync();
+        }
+
+        public Task ResumeAsync()
+        {
+            if (!running || robot == null)
+                throw new InvalidOperationException("Scenario is not running.");
+            return robot.ResumeAsync();
         }
     }
 }

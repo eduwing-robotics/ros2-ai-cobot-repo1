@@ -20,6 +20,7 @@ namespace MainUnity.Runtime.Robot.Assembly
         Started,
         Picked,
         Placed,
+        Paused,
         Completed,
         Failed,
     }
@@ -72,7 +73,8 @@ namespace MainUnity.Runtime.Robot.Assembly
         public double ReceiveTimeSeconds { get; }
 
         /// <summary>지금 부품을 쥐고 이동 중인지다. PICKED 와 PLACED 사이가 그 구간이다.</summary>
-        public bool IsHolding => State == AssemblyState.Picked;
+        public bool IsHolding => State == AssemblyState.Picked ||
+            State == AssemblyState.Paused && StepOrder > 0;
 
         /// <summary>작업이 끝났는지다. 완료와 실패를 모두 포함한다.</summary>
         public bool IsTerminal => State == AssemblyState.Completed || State == AssemblyState.Failed;

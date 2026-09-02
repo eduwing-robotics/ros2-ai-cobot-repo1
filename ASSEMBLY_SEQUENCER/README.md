@@ -93,6 +93,10 @@ export PRODUCTION_DB_DSN='dbname=main_unity_mock_test'
 ros2 launch assembly_sequencer mock.launch.py
 ```
 
+Pause·resume은 기존 `/unity/assembly/start` 서비스에 `job_id`와 함께 보내며,
+Mock은 YAML 고수준 동작 경계에서 정지하고 `PAUSED` 피드백으로 확인한다. DB Job·Unit은
+`RUNNING`을 유지한다.
+
 MainServer는 별도 터미널에서 같은 DB를 가리키고 `MAIN_SERVER_MODE=mock`으로
 실행한다. POST와 조회 API에는 ROS가 필요 없고, 현재 상태 route를 사용할 때만
 같은 ROS 환경을 source한다. 기존

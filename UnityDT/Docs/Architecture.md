@@ -64,6 +64,9 @@ Scenario는 좌표, ROS 메시지, Mock/Real 분기와 완료 callback을 해석
 Job을 생성한다. 그 뒤 같은 `job_id`와 씬에서 계산한 source·target 좌표만
 `/unity/assembly/start`로 보낸다. HTTP와 ROS의 `accepted=true`는 완료가 아니며,
 terminal `COMPLETED`를 받아야 `ExecuteAsync()`가 성공한다.
+같은 서비스에 `{command: pause|resume, job_id}`를 보내며, `PAUSED` 피드백으로
+전이를 확인한다. Job·Unit은 `RUNNING`을 유지하고 Mock 실행기는 현재 YAML 고수준
+동작을 마친 경계에서 멈춘 뒤 직전 진행 상태를 재발행하며 이어서 실행한다.
 
 AssemblySequencer는 Job을 claim해 `RUNNING`으로 전이하고 Unit을 만든 뒤 좌표를
 내부 `mock_sim`에 전달한다. Unit 실행, 검사, 재고와 최종 Job 상태는 Sequencer가
@@ -110,7 +113,7 @@ DB 기준은 [production 설계](DB.md), 품질 파일 기준은 [불량대책�
 ## 현재 제한
 
 - 자동 조립 실행은 Mock만 지원하고 동시에 RUNNING Job과 Unit은 각각 하나다.
-- 취소·일시정지 API와 프로세스 재시작 후 좌표 자동 복구는 없다.
+- 취소 API와 프로세스 재시작 후 좌표 자동 복구는 없다.
 - Unity 씬은 한 번의 물리 조립 사이클을 기준으로 구성되어 있다.
 - Unity의 제품·작업·품질 화면은 MainServer 조회 API와 완전히 연결되지 않았다.
 - Real 자동 조립과 실제 비전 검사는 구현되지 않았다.

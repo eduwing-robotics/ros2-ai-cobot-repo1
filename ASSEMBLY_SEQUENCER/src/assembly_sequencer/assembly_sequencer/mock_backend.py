@@ -35,6 +35,16 @@ class MockBackend:
                 result.get("message") or "internal Mock assembly rejected the request"
             )
 
+    async def set_paused(self, job_id, paused):
+        result = parse_internal_response((await self._call({
+            "command": "pause" if paused else "resume",
+            "job_id": job_id,
+        })).cmd_res)
+        if not result["accepted"]:
+            raise RuntimeError(
+                result.get("message") or "internal Mock pause request was rejected"
+            )
+
     async def transfer_assembled_pcb(self, job_id, assembled_pcb):
         result = parse_internal_response((await self._call({
             "command": "transfer_assembled_pcb",

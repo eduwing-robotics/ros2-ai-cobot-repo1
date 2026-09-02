@@ -141,6 +141,30 @@ class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
             [call[0] for call in calls], ["assembly", "inspection", "transfer"]
         )
 
+    async def test_pause_is_forwarded_without_changing_job_state(self):
+        calls = []
+
+        class Backend:
+            async def set_paused(self, job_id, paused):
+                calls.append((job_id, paused))
+
+        sequencer = SimpleNamespace(
+            active={"job_id": JOB_ID, "state": "STARTED"},
+            backend=Backend(),
+            set_response=MockAssemblySequencer.set_response,
+        )
+        for command, paused in (("pause", True), ("resume", False)):
+            response = await MockAssemblySequencer.on_external_request(
+                sequencer,
+                SimpleNamespace(cmd_str=json.dumps({
+                    "command": command, "job_id": JOB_ID,
+                })),
+                SimpleNamespace(cmd_res=""),
+            )
+            self.assertTrue(json.loads(response.cmd_res)["accepted"])
+            self.assertEqual(sequencer.active["state"], "STARTED")
+            self.assertEqual(calls[-1], (JOB_ID, paused))
+
     async def test_incomplete_pass_target_reuses_job_for_next_unit(self):
         calls = []
         command = {

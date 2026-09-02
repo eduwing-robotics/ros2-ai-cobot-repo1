@@ -11175,8 +11175,8 @@ Transform:
   m_GameObject: {fileID: 1545851024}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.0275004, z: 0}
-  m_LocalScale: {x: 0.23, y: 0.055, z: 0.23}
+  m_LocalPosition: {x: 0, y: -0.0075000003, z: 0}
+  m_LocalScale: {x: 0.23, y: 0.015, z: 0.23}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -15311,7 +15311,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b14f0a2c7e3d4b9ea1c6f8052d9473ab, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Robot.Real.RealMoveItGhostSolver
   targetTopic: /real/ghost/target
   moveItTargetTopic: /twin_visual/movel_target
@@ -15329,7 +15329,7 @@ MonoBehaviour:
   m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c28e1b3d9f7046a5b82c1d673e4fa950, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Robot.Real.RealFairinoSdkGhostSolver
   targetTopic: /real/ghost/target
   expectedFrame: base_link
@@ -15374,6 +15374,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Robot.Mock.MockAssemblyScenarioControl
   mainServerBaseUrl: http://127.0.0.1:8000
+  productCode: HBM-ACCELERATOR-PACKAGE-BOARD
+  productVersion: hbm-pkg-r1
+  requestedQuantity: 1
   startService: /unity/assembly/start
   feedbackTopic: /unity/assembly/feedback
   recipeVersion: assembly-r1
@@ -16361,11 +16364,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5386464108290723327, guid: f533853bf7cbc7884bb9ab6253502f28, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.5400004
+      value: -0.5
       objectReference: {fileID: 0}
     - target: {fileID: 5386464108290723327, guid: f533853bf7cbc7884bb9ab6253502f28, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.014999956
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5386464108290723327, guid: f533853bf7cbc7884bb9ab6253502f28, type: 3}
       propertyPath: m_LocalRotation.w

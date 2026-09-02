@@ -23,6 +23,7 @@ namespace MainUnity.Runtime.Robot.Mock
         const string AssemblyCompleted = "ASSEMBLY_COMPLETED";
         const string PcbPicked = "PCB_PICKED";
         const string PcbPlaced = "PCB_PLACED";
+        const string Paused = "PAUSED";
         const string Completed = "COMPLETED";
         const string Failed = "FAILED";
 
@@ -106,6 +107,13 @@ namespace MainUnity.Runtime.Robot.Mock
             public string command;
             public string job_id;
             public AssembledPcbTransfer assembled_pcb;
+        }
+
+        [Serializable]
+        sealed class ControlRequest
+        {
+            public string command;
+            public string job_id;
         }
 
         [Serializable]
@@ -260,7 +268,7 @@ namespace MainUnity.Runtime.Robot.Mock
                     observations = observations
                 });
                 await PostJobAsync(jobJson);
-                await StartMockAsync(startJson);
+                await SendMockAsync(startJson, "start");
                 accepted = true;
                 Report(AssemblyState.Started, null);
 
@@ -282,6 +290,20 @@ namespace MainUnity.Runtime.Robot.Mock
                     activeJobId = string.Empty;
                 processedCallbacks.Clear();
             }
+        }
+
+        public async Task PauseAsync()
+        {
+            ValidateControl(false);
+            await SendControlAsync("pause");
+            await WaitForPausedStateAsync(true);
+        }
+
+        public async Task ResumeAsync()
+        {
+            ValidateControl(true);
+            await SendControlAsync("resume");
+            await WaitForPausedStateAsync(false);
         }
 
         async Task RecoverAsync(int generation)
@@ -339,6 +361,7 @@ namespace MainUnity.Runtime.Robot.Mock
                     AssemblyCompleted => AssemblyState.Placed,
                     PcbPicked => AssemblyState.Placed,
                     PcbPlaced => AssemblyState.Placed,
+                    Paused => AssemblyState.Paused,
                     Completed => AssemblyState.Completed,
                     Failed => AssemblyState.Failed,
                     _ => throw new InvalidOperationException("Unknown Mock assembly state.")
@@ -461,7 +484,7 @@ namespace MainUnity.Runtime.Robot.Mock
         {
             bool activeState = snapshot.state == Started || snapshot.state == Picked ||
                 snapshot.state == Placed || snapshot.state == AssemblyCompleted ||
-                snapshot.state == PcbPicked ||
+                snapshot.state == PcbPicked || snapshot.state == Paused ||
                 snapshot.state == PcbPlaced;
             bool terminalState = snapshot.state == Completed || snapshot.state == Failed;
             if (!activeState && !terminalState)
@@ -501,7 +524,8 @@ namespace MainUnity.Runtime.Robot.Mock
                         "Mock assembly status held item did not match the scene.");
             }
             if (snapshot.state == Picked && snapshot.held_step_order == 0 ||
-                snapshot.state != Picked && snapshot.state != Failed &&
+                snapshot.state != Picked && snapshot.state != Paused &&
+                snapshot.state != Failed &&
                 snapshot.held_step_order != 0)
                 throw new InvalidOperationException(
                     "Mock assembly status held item did not match its state.");
@@ -547,18 +571,18 @@ namespace MainUnity.Runtime.Robot.Mock
                 throw new InvalidOperationException("Reload the Mock scene before starting another assembly.");
         }
 
-        async Task StartMockAsync(string json)
+        async Task SendMockAsync(string json, string operation)
         {
             Task<RemoteCmdInterfaceResponse> request = connection
                 .SendServiceMessage<RemoteCmdInterfaceResponse>(startService,
                     new RemoteCmdInterfaceRequest(json));
             if (await Task.WhenAny(request, Task.Delay(TimeSpan.FromSeconds(5))) != request)
-                throw new TimeoutException("Mock assembly start service timed out.");
+                throw new TimeoutException($"Mock assembly {operation} service timed out.");
 
             RemoteCmdInterfaceResponse message = await request;
             if (message == null || string.IsNullOrWhiteSpace(message.cmd_res))
                 throw new InvalidOperationException(
-                    "Mock assembly start returned an empty response.");
+                    $"Mock assembly {operation} returned an empty response.");
             StartResponse response;
             try
             {
@@ -567,21 +591,51 @@ namespace MainUnity.Runtime.Robot.Mock
             catch (Exception exception)
             {
                 throw new InvalidOperationException(
-                    "Mock assembly start returned invalid JSON.", exception);
+                    $"Mock assembly {operation} returned invalid JSON.", exception);
             }
             if (response == null || response.job_id != activeJobId)
                 throw new InvalidOperationException(
-                    "Mock assembly start response job_id did not match.");
+                    $"Mock assembly {operation} response job_id did not match.");
             if (!response.accepted)
             {
                 string reason = string.IsNullOrWhiteSpace(response.message)
-                    ? "Mock assembly start was rejected."
+                    ? $"Mock assembly {operation} was rejected."
                     : response.message;
                 throw new InvalidOperationException(
                     string.IsNullOrWhiteSpace(response.error_code)
                         ? reason
                         : response.error_code + ": " + reason);
             }
+        }
+
+        void ValidateControl(bool resume)
+        {
+            AssemblyProgressFrame latest = progress != null ? progress.Latest : null;
+            if (!Application.isPlaying || !isActiveAndEnabled || terminal == null ||
+                terminal.Task.IsCompleted || string.IsNullOrEmpty(activeJobId))
+                throw new InvalidOperationException("No Mock assembly is running.");
+            if (resume != (latest != null && latest.State == AssemblyState.Paused))
+                throw new InvalidOperationException(resume
+                    ? "Mock assembly is not paused."
+                    : "Mock assembly is already paused.");
+        }
+
+        Task SendControlAsync(string command) => SendMockAsync(JsonUtility.ToJson(
+            new ControlRequest { command = command, job_id = activeJobId }), command);
+
+        async Task WaitForPausedStateAsync(bool paused)
+        {
+            double deadline = Time.realtimeSinceStartupAsDouble + 60d;
+            while (isActiveAndEnabled && terminal != null && !terminal.Task.IsCompleted &&
+                   Time.realtimeSinceStartupAsDouble < deadline)
+            {
+                if ((progress?.Latest?.State == AssemblyState.Paused) == paused)
+                    return;
+                await Task.Yield();
+            }
+            throw new TimeoutException(paused
+                ? "Mock assembly pause was not confirmed."
+                : "Mock assembly resume was not confirmed.");
         }
 
         async Task PostJobAsync(string json)
@@ -731,6 +785,29 @@ namespace MainUnity.Runtime.Robot.Mock
             try
             {
                 ValidateFeedback(feedback);
+                bool wasPaused = progress?.Latest?.State == AssemblyState.Paused;
+                if (feedback.state == Paused)
+                {
+                    Report(AssemblyState.Paused, null);
+                    return;
+                }
+                if (wasPaused)
+                {
+                    Report(feedback.state switch
+                    {
+                        Started => AssemblyState.Started,
+                        Picked => AssemblyState.Picked,
+                        Placed => AssemblyState.Placed,
+                        AssemblyCompleted => AssemblyState.Placed,
+                        PcbPicked => AssemblyState.Placed,
+                        PcbPlaced => AssemblyState.Placed,
+                        _ => throw new InvalidOperationException(
+                            "Unknown resumed assembly state: " + feedback.state)
+                    }, feedback.state == Picked || feedback.state == Placed
+                        ? feedback
+                        : null);
+                    return;
+                }
                 if ((feedback.state == Picked || feedback.state == Placed) &&
                     feedback.step_order <= lastPlacedStepOrder)
                     return;
@@ -838,7 +915,7 @@ namespace MainUnity.Runtime.Robot.Mock
                 throw new InvalidOperationException(
                     "PICKED and PLACED feedback require part_id and slot_code.");
             if ((feedback.state == AssemblyCompleted || feedback.state == PcbPicked ||
-                    feedback.state == PcbPlaced) &&
+                    feedback.state == PcbPlaced || feedback.state == Paused) &&
                 (feedback.step_order != 0 || !string.IsNullOrWhiteSpace(feedback.part_id) ||
                  !string.IsNullOrWhiteSpace(feedback.slot_code)))
                 throw new InvalidOperationException(

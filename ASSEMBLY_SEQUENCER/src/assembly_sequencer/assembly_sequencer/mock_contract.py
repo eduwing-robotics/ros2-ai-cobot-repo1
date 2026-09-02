@@ -9,7 +9,7 @@ RECIPE_VERSION = "assembly-r1"
 DEFECT_TYPES = ("MISSING", "POSITION_ERROR", "ORIENTATION_ERROR", "CRACK")
 RELAY_STATES = {
     "STARTED", "PICKED", "PLACED", "ASSEMBLY_COMPLETED",
-    "PCB_PICKED", "PCB_PLACED",
+    "PCB_PICKED", "PCB_PLACED", "PAUSED",
 }
 FEEDBACK_STATES = RELAY_STATES | {"COMPLETED", "FAILED"}
 
@@ -25,7 +25,11 @@ def parse_command(raw):
         raise ValueError("cmd_str must be a JSON object")
 
     command_name = command.get("command")
-    if command_name == "transfer_assembled_pcb":
+    if command_name in {"pause", "resume"}:
+        if set(command) != {"command", "job_id"}:
+            raise ValueError("command and job_id are required")
+        command_type = command_name
+    elif command_name == "transfer_assembled_pcb":
         if set(command) != {"command", "job_id", "assembled_pcb"}:
             raise ValueError("command, job_id and assembled_pcb are required")
         if not isinstance(command["assembled_pcb"], dict):
@@ -40,7 +44,8 @@ def parse_command(raw):
             )
         if command_name != "start":
             raise ValueError(
-                "command must be start, transfer_assembled_pcb or status"
+                "command must be start, pause, resume, "
+                "transfer_assembled_pcb or status"
             )
         if command["recipe_version"] != RECIPE_VERSION:
             raise ValueError(f"recipe_version must be {RECIPE_VERSION}")
@@ -211,6 +216,12 @@ def self_check():
         "assembled_pcb": {},
     }))[0] == "transfer_assembled_pcb"
     assert parse_command('{"command":"status"}')[0] == "status"
+    assert parse_command(json.dumps({
+        "command": "pause", "job_id": job_id,
+    }))[0] == "pause"
+    assert parse_command(json.dumps({
+        "command": "resume", "job_id": job_id,
+    }))[0] == "resume"
     assert unavailable_snapshot("offline")["job_id"] == ""
     assert choose_inspection(random.Random(1), 0.0, []) == ("PASS", [])
     result, defects = choose_inspection(random.Random(1), 1.0, ["SLOT-01"])
@@ -239,6 +250,7 @@ def self_check():
     assert assembly_snapshot(active, "PLACED")["active"]
     assert assembly_snapshot(active, "ASSEMBLY_COMPLETED")["active"]
     assert assembly_snapshot(active, "PCB_PICKED")["placed_count"] == 0
+    assert assembly_snapshot(active, "PAUSED")["active"]
     assert assembly_snapshot(active, "PLACED")["job_id"] == job_id
     assert assembly_snapshot(active, "PLACED")["unit_id"] == 22
     completed = assembly_snapshot(active, "COMPLETED")

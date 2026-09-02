@@ -9,6 +9,7 @@
 // 작업(JOB)·사이클은 페이지가 아는 값이라 각 페이지 바인더가 채운다.
 
 using MainUnity.Runtime.Camera;
+using MainUnity.Runtime.Robot.Assembly;
 using MainUnity.Runtime.Robot;
 using MainUnity.Runtime.Robot.Status;
 using UnityEngine;
@@ -33,6 +34,7 @@ namespace MainUnity.UI
         Button modeMockButton, modeRealButton, stopAllButton, viewFocusButton;
         Label robotText, linkJointAge, linkImageAge, alarmLabel, alarmDetail;
         bool cached;
+        bool stopRequestInFlight;
         bool hasAuxPanels;
 
         // 페이지마다 셸 인스턴스가 하나씩이라 인스턴스 필드로 두면 화면을 옮길 때마다
@@ -94,6 +96,7 @@ namespace MainUnity.UI
         {
             if (modeMockButton != null) modeMockButton.clicked += SelectMockMode;
             if (modeRealButton != null) modeRealButton.clicked += SelectRealMode;
+            if (stopAllButton != null) stopAllButton.clicked += ToggleStop;
             if (viewFocusButton != null) viewFocusButton.clicked += ToggleFocus;
         }
 
@@ -101,6 +104,7 @@ namespace MainUnity.UI
         {
             if (modeMockButton != null) modeMockButton.clicked -= SelectMockMode;
             if (modeRealButton != null) modeRealButton.clicked -= SelectRealMode;
+            if (stopAllButton != null) stopAllButton.clicked -= ToggleStop;
             if (viewFocusButton != null) viewFocusButton.clicked -= ToggleFocus;
         }
 
@@ -141,14 +145,43 @@ namespace MainUnity.UI
             if (modeRealButton != null)
                 modeRealButton.tooltip = canChangeMode ? "Real Backend 선택" : "운전 중에는 모드를 바꿀 수 없습니다.";
 
-            // IRobotControl에는 정지 계약이 없다. Ghost 정지만 호출하면 실제 로봇은 계속
-            // 움직일 수 있으므로 STOP으로 연결하지 않는다.
-            stopAllButton?.SetEnabled(false);
+            AssemblyProgressFrame frame = uiMaster?.AssemblyProgress?.Latest;
+            bool paused = frame?.State == AssemblyState.Paused;
+            bool pauseSupported = uiMaster?.IsSimulated == true;
             if (stopAllButton != null)
-                stopAllButton.tooltip = "STOP 제어 계약이 아직 없습니다.";
+            {
+                stopAllButton.text = paused ? "▶  RESUME" : "■  STOP";
+                stopAllButton.SetEnabled(pauseSupported && !stopRequestInFlight && frame != null &&
+                    !frame.IsTerminal && uiMaster?.Scenario?.IsRunning == true);
+                stopAllButton.EnableInClassList("btn--danger", !paused);
+                stopAllButton.tooltip = !pauseSupported
+                    ? "Real 일시정지는 아직 지원하지 않습니다."
+                    : paused
+                        ? "일시정지된 조립을 재개합니다."
+                        : "현재 동작 경계에서 조립을 일시정지합니다.";
+            }
         }
 
-
+        async void ToggleStop()
+        {
+            if (stopRequestInFlight || uiMaster?.Scenario == null) return;
+            stopRequestInFlight = true;
+            try
+            {
+                if (uiMaster.AssemblyProgress?.Latest?.State == AssemblyState.Paused)
+                    await uiMaster.Scenario.ResumeAsync();
+                else
+                    await uiMaster.Scenario.PauseAsync();
+            }
+            catch (System.Exception exception)
+            {
+                Debug.LogException(exception, this);
+            }
+            finally
+            {
+                stopRequestInFlight = false;
+            }
+        }
 
         /// <summary>액센트 색을 쓰는 유일한 곳이다. 여기가 흐려지면 실기/모의 구분이 사라진다.</summary>
         void RefreshMode()

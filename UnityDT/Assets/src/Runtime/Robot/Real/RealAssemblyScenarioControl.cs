@@ -12,5 +12,13 @@ namespace MainUnity.Runtime.Robot.Real
         public Task ExecuteAsync() =>
             Task.FromException(new NotSupportedException(
                 "REAL assembly requires a configured ROS assembly node."));
+
+        public Task PauseAsync() =>
+            Task.FromException(new NotSupportedException(
+                "REAL pause requires the approved FAIRINO state feedback contract."));
+
+        public Task ResumeAsync() =>
+            Task.FromException(new NotSupportedException(
+                "REAL resume requires the approved FAIRINO state feedback contract."));
     }
 }

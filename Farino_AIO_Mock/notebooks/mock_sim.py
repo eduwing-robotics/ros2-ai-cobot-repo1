@@ -46,7 +46,7 @@ FUTURE_TIMEOUT_SECONDS = 60.0
 FAULT_RESTART_MESSAGE = "execution state is unknown after a timeout; restart the mock node"
 ASSEMBLY_STATES = {
     "STARTED", "PICKED", "PLACED", "ASSEMBLY_COMPLETED",
-    "PCB_PICKED", "PCB_PLACED", "COMPLETED", "FAILED",
+    "PCB_PICKED", "PCB_PLACED", "PAUSED", "COMPLETED", "FAILED",
 }
 STEP_STATES = {"PICKED", "PLACED"}
 WORKFLOW = {
@@ -176,6 +176,25 @@ def parse_transfer_command(raw):
     except (ValueError, AttributeError) as error:
         raise ValueError("job_id must be a UUID string") from error
     return job_id, validate_assembled_pcb(command["assembled_pcb"])
+
+
+def parse_pause_command(raw):
+    try:
+        command = json.loads(raw)
+    except (TypeError, json.JSONDecodeError) as error:
+        raise ValueError("cmd_str must be a JSON object") from error
+    if not isinstance(command, dict) or set(command) != {"command", "job_id"}:
+        raise ValueError("command and job_id are required")
+    if command["command"] not in {"pause", "resume"}:
+        raise ValueError("command must be pause or resume")
+    job_id = command["job_id"]
+    if not isinstance(job_id, str) or len(job_id) > 64:
+        raise ValueError("job_id must be a UUID string")
+    try:
+        uuid.UUID(job_id)
+    except (ValueError, AttributeError) as error:
+        raise ValueError("job_id must be a UUID string") from error
+    return command["command"], job_id
 
 
 def _finite_number(value, label):
@@ -547,6 +566,10 @@ def self_check(runtime_recipe=None):
         "assembled_pcb": assembled_pcb,
     }))
     assert transfer[0] == job_id
+    assert parse_pause_command(json.dumps({
+        "command": "pause", "job_id": job_id,
+    })) == ("pause", job_id)
+    assert assembly_feedback(job_id, "PAUSED")["state"] == "PAUSED"
     recipe = validate_recipe({
         "recipe_version": "assembly-r1",
         "frame": "base_link",
@@ -829,6 +852,28 @@ class MockMoveJ(Node):
             )
             return response
 
+        if isinstance(command, dict) and command.get("command") in {
+            "pause", "resume",
+        }:
+            try:
+                control, job_id = parse_pause_command(request.cmd_str)
+            except ValueError as error:
+                return self.start_response(
+                    response, False, error_code="INVALID_REQUEST", message=str(error)
+                )
+            job = self.active_assembly
+            if job is None or job["job_id"] != job_id:
+                return self.start_response(
+                    response, False, job_id, "NOT_ACTIVE",
+                    "matching assembly is not active",
+                )
+            if self.execution_faulted:
+                return self.start_response(
+                    response, False, job_id, "FAULTED", FAULT_RESTART_MESSAGE
+                )
+            job["pause_requested"] = control == "pause"
+            return self.start_response(response, True, job_id)
+
         if isinstance(command, dict) \
                 and command.get("command") == "transfer_assembled_pcb":
             try:
@@ -846,6 +891,11 @@ class MockMoveJ(Node):
                 return self.start_response(
                     response, False, job_id, "NOT_ACTIVE",
                     "matching assembly is not active",
+                )
+            if job["pause_requested"] or job["paused"]:
+                return self.start_response(
+                    response, False, job_id, "BUSY",
+                    "assembly is paused",
                 )
             if job["phase"] != "awaiting_transfer":
                 return self.start_response(
@@ -899,6 +949,9 @@ class MockMoveJ(Node):
             "recipe": recipe,
             "resolved_steps": resolved_steps,
             "phase": "assembling",
+            "pause_requested": False,
+            "paused": False,
+            "resume_feedback": assembly_feedback(job_id, "STARTED"),
         }
         self.latest_assembly_snapshot = advance_assembly_snapshot(
             self.latest_assembly_snapshot,
@@ -913,6 +966,8 @@ class MockMoveJ(Node):
     ):
         payload = assembly_feedback(job_id, state, step, error_code, message)
         job = self.active_assembly
+        if state != "PAUSED":
+            job["resume_feedback"] = payload
         self.latest_assembly_snapshot = advance_assembly_snapshot(
             self.latest_assembly_snapshot,
             payload,
@@ -923,6 +978,28 @@ class MockMoveJ(Node):
             String(data=json.dumps(payload, separators=(",", ":")))
         )
         self.get_logger().info(f"assembly {state}: job_id={job_id}")
+
+    def wait_if_paused(self, job):
+        if not job["pause_requested"]:
+            return
+        job["paused"] = True
+        self.publish_assembly_feedback(job["job_id"], "PAUSED")
+        while rclpy.ok() and job["pause_requested"]:
+            rclpy.spin_once(self, timeout_sec=0.1)
+        if not rclpy.ok() or self.active_assembly is not job:
+            raise RuntimeError("assembly pause was interrupted")
+        job["paused"] = False
+        payload = job["resume_feedback"]
+        self.latest_assembly_snapshot = advance_assembly_snapshot(
+            self.latest_assembly_snapshot,
+            payload,
+            job["recipe"]["recipe_version"],
+            len(job["resolved_steps"]),
+        )
+        self.assembly_feedback_publisher.publish(
+            String(data=json.dumps(payload, separators=(",", ":")))
+        )
+        self.get_logger().info(f"assembly resumed: job_id={job['job_id']}")
 
     def publish_status(self, value):
         self.status_publisher.publish(String(data=value))
@@ -1309,6 +1386,7 @@ class MockMoveJ(Node):
             joint_points = recipe["joint_points"]
             motion = recipe["motion"]
             for command in recipe["workflow"]["before_all"]:
+                self.wait_if_paused(job)
                 action, argument = next(iter(command.items()))
                 if (action, argument) == ("conveyor.move_to", "ASSEMBLY"):
                     self.publish_status("conveyor at assembly: confirmed by Unity")
@@ -1318,6 +1396,7 @@ class MockMoveJ(Node):
                     self.publish_status("vision targets: simulated valid (Mock)")
                 else:
                     raise RuntimeError(f"unknown preflight action: {command}")
+                self.wait_if_paused(job)
             for resolved in job["resolved_steps"]:
                 step = resolved["step"]
                 grasp_opening_percent = resolved[
@@ -1354,6 +1433,7 @@ class MockMoveJ(Node):
                 )
 
                 for command in recipe["workflow"]["per_step"]:
+                    self.wait_if_paused(job)
                     action, argument = next(iter(command.items()))
                     if action == "robot.move_joint":
                         self.run_joint_target(joint_points[argument])
@@ -1372,6 +1452,7 @@ class MockMoveJ(Node):
                         self.run_linear(target_retract, True)
                     else:
                         raise RuntimeError(f"unknown assembly action: {command}")
+                    self.wait_if_paused(job)
 
             self.publish_assembly_feedback(job_id, "ASSEMBLY_COMPLETED")
             job["phase"] = "awaiting_transfer"
@@ -1398,6 +1479,7 @@ class MockMoveJ(Node):
             motion = recipe["motion"]
             gripper = recipe["gripper"]["assembled_pcb"]
             for command in recipe["workflow"]["after_all"]:
+                self.wait_if_paused(job)
                 action, argument = next(iter(command.items()))
                 if (action, argument) in {
                     ("conveyor.move_to", "INSPECTION"),
@@ -1454,6 +1536,7 @@ class MockMoveJ(Node):
                 )
                 self.publish_assembly_feedback(job_id, "PCB_PLACED")
                 self.run_linear(target_retract, True)
+                self.wait_if_paused(job)
             terminal_state = "COMPLETED"
             error_code = ""
             message = ""
@@ -1480,6 +1563,9 @@ class MockMoveJ(Node):
             rclpy.spin_once(self, timeout_sec=0.1)
             job = self.active_assembly
             phase = job["phase"] if job is not None else None
+            if job is not None and job["pause_requested"]:
+                self.wait_if_paused(job)
+                continue
             is_assembly = phase in {"assembling", "transferring"}
             if phase == "assembling":
                 operation = lambda: self.run_assembly(job)
