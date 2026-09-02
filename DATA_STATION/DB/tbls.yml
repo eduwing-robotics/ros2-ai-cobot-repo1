@@ -1,0 +1,10 @@
+name: Main Unity production database
+dsn: ${PRODUCTION_DB_TEST_DSN}
+requiredVersion: '>= 1.95, < 1.96'
+
+include:
+  - production.*
+  - control.*
+
+er:
+  format: mermaid

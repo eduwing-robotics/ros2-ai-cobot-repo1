@@ -19,8 +19,25 @@
 
 ![production·control 8개 테이블 스키마](./images/production-schema.png)
 
+테이블·열·FK는 [자동 생성 Mermaid ERD](./db-schema.generated.md)에서
+확인한다. 이 파일은 [tbls 설정](../../DATA_STATION/DB/tbls.yml)으로 생성하고
+직접 편집하지 않는다.
+
 문서용 이미지는 현재 DDL의 테이블과 열을 기준으로 렌더했다. 편집 가능한 기존
 ERD 원본은 [db-erd-guide.drawio](./db-erd-guide.drawio)다.
+
+격리 테스트 DB에 `production_schema.sql`을 적용한 뒤 저장소 루트에서
+다음 명령으로 Mermaid를 갱신한다. `PRODUCTION_DB_TEST_DSN`은
+`postgres://...` URL 형식을 사용한다.
+
+~~~bash
+(
+  printf '```mermaid\n' &&
+  ~/.local/bin/tbls out -c DATA_STATION/DB/tbls.yml -t mermaid &&
+  printf '```\n'
+) > /tmp/db-schema.generated.md &&
+mv /tmp/db-schema.generated.md UnityDT/Docs/db-schema.generated.md
+~~~
 
 ### 테이블 역할
 
