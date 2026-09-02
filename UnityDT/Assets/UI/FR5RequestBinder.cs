@@ -473,7 +473,7 @@ namespace MainUnity.UI
             string signature = string.Concat(linked, idle, mock, state);
             if (signature == interlockSignature)
             {
-                ApplyStartState(linked, idle);
+                ApplyStartState(idle);
                 return;
             }
             interlockSignature = signature;
@@ -505,26 +505,16 @@ namespace MainUnity.UI
             note.style.marginTop = 8;
             interlockList.Add(note);
 
-            ApplyStartState(linked, idle);
+            ApplyStartState(idle);
         }
 
-        void ApplyStartState(bool linked, bool idle)
+        void ApplyStartState(bool idle)
         {
-            bool runnable = uiMaster == null || uiMaster.IsSimulated;
-            bool all = linked && idle && runnable;
-            start?.SetEnabled(all);
+            start?.SetEnabled(idle);
             if (startReason != null)
-                startReason.text = all
+                startReason.text = idle
                     ? "고정 레시피 assembly-r1 · 수량 1 로 시작합니다 (제품·수량 선택 계약 없음)"
-                    : FirstReason(linked, idle, runnable);
-        }
-
-        static string FirstReason(bool linked, bool idle, bool runnable)
-        {
-            if (!runnable) return "Real 자동 조립 미구현 — MOCK 에서만 요청할 수 있습니다 (API.md 2절)";
-            if (!linked) return "ROS 미연결 — 상태 수신이 없습니다";
-            if (!idle) return "이미 실행 중인 작업이 있습니다 (동시 1건)";
-            return "";
+                    : "이미 실행 중인 작업이 있습니다 (동시 1건)";
         }
 
         async void OnStart()
