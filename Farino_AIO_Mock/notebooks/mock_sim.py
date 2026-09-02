@@ -118,6 +118,17 @@ def joint_target_reached(current_radians, target_degrees, tolerance_degrees=0.1)
     )
 
 
+def trajectory_target_reached(current_radians, joint_names, target_radians):
+    if len(current_radians) != len(JOINTS) or len(joint_names) != len(target_radians):
+        return False
+    target_by_name = dict(zip(joint_names, target_radians))
+    try:
+        target_degrees = [math.degrees(target_by_name[name]) for name in JOINTS]
+    except KeyError:
+        return False
+    return joint_target_reached(current_radians, target_degrees)
+
+
 def arm_joint_positions(message):
     names = getattr(message, "name", None)
     positions = getattr(message, "position", None)
@@ -537,6 +548,11 @@ def self_check(runtime_recipe=None):
     assert joint_target_reached(home_radians, INITIAL_JOINTS_DEG)
     home_radians[0] += math.radians(0.2)
     assert not joint_target_reached(home_radians, INITIAL_JOINTS_DEG)
+    assert trajectory_target_reached(
+        [math.radians(value) for value in INITIAL_JOINTS_DEG],
+        JOINTS,
+        [math.radians(value) for value in INITIAL_JOINTS_DEG],
+    )
     assert arm_joint_positions(JointState(
         name=list(JOINTS), position=[0.0] * len(JOINTS)
     )) == (0.0,) * len(JOINTS)
@@ -730,6 +746,7 @@ class MockMoveJ(Node):
         self.pending_gripper_target = None
         self.active_assembly = None
         self.active_motion_goal = None
+        self.active_motion_cancel = None
         self.latest_assembly_snapshot = empty_assembly_snapshot()
         self.manual_executing = False
         self.execution_faulted = False
@@ -1011,8 +1028,17 @@ class MockMoveJ(Node):
 
     def cancel_active_motion(self):
         handle = self.active_motion_goal
-        if handle is not None:
-            handle.cancel_goal_async()
+        if handle is not None and self.active_motion_cancel is None:
+            self.active_motion_cancel = handle.cancel_goal_async()
+
+    def confirm_motion_cancellation(self, cancellation, label):
+        if cancellation is None:
+            return
+        response = self.wait_for_future(cancellation, f"{label} cancellation")
+        if response is None or not response.goals_canceling:
+            self.get_logger().warning(
+                f"{label} completed before the pause cancellation was accepted"
+            )
 
     def pause_requested(self):
         return self.active_assembly is not None and self.active_assembly["pause_requested"]
@@ -1200,8 +1226,8 @@ class MockMoveJ(Node):
     def validate_and_publish(self, trajectory, trajectory_start, label):
         joint_trajectory = trajectory.joint_trajectory
         points = joint_trajectory.points
-        if len(points) < 2:
-            raise RuntimeError(f"{label} returned fewer than two trajectory points")
+        if not points:
+            raise RuntimeError(f"{label} returned no trajectory points")
         try:
             j3_index = joint_trajectory.joint_names.index("j3")
         except ValueError as error:
@@ -1217,6 +1243,14 @@ class MockMoveJ(Node):
             raise RuntimeError(
                 f"{label} rejected: j3 would move below {self.args.min_j3_deg:.1f} deg"
             )
+        current = arm_joint_positions(self.joint_state)
+        if len(points) == 1:
+            if current is not None and trajectory_target_reached(
+                current, joint_trajectory.joint_names, points[0].positions
+            ):
+                self.publish_status(f"execution: {label} target already reached")
+                return None
+            raise RuntimeError(f"{label} returned fewer than two trajectory points")
         duration = points[-1].time_from_start.sec + points[-1].time_from_start.nanosec / 1e9
         if duration <= 0.0:
             for index, point in enumerate(points):
@@ -1301,6 +1335,8 @@ class MockMoveJ(Node):
             raise RuntimeError("execution blocked: active FakeSystem mock hardware is unavailable")
 
     def execute(self, trajectory):
+        if trajectory is None:
+            return
         self.require_mock_hardware()
         if not self.execute_client.wait_for_server(timeout_sec=5.0):
             raise RuntimeError("/execute_trajectory is unavailable")
@@ -1319,6 +1355,7 @@ class MockMoveJ(Node):
             raise RuntimeError("mock controller rejected the trajectory")
 
         self.active_motion_goal = handle
+        self.active_motion_cancel = None
         if self.pause_requested():
             self.cancel_active_motion()
         try:
@@ -1328,6 +1365,9 @@ class MockMoveJ(Node):
             if self.active_motion_goal is handle:
                 self.active_motion_goal = None
         if self.pause_requested():
+            self.confirm_motion_cancellation(
+                self.active_motion_cancel, "trajectory"
+            )
             self.joint_state = None
             self.wait_for_joint_state()
             raise AssemblyPaused()
@@ -1399,6 +1439,7 @@ class MockMoveJ(Node):
         if not handle or not handle.accepted:
             raise RuntimeError("gripper controller rejected the trajectory")
         self.active_motion_goal = handle
+        self.active_motion_cancel = None
         if self.pause_requested():
             self.cancel_active_motion()
         try:
@@ -1408,6 +1449,7 @@ class MockMoveJ(Node):
             if self.active_motion_goal is handle:
                 self.active_motion_goal = None
         if self.pause_requested():
+            self.confirm_motion_cancellation(self.active_motion_cancel, "gripper")
             raise AssemblyPaused()
         if result.error_code != FollowJointTrajectory.Result.SUCCESSFUL:
             raise RuntimeError("gripper execution failed")
