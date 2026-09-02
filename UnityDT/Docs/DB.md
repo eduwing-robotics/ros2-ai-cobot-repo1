@@ -162,7 +162,7 @@ MAIN_SERVER_DB_DSN='dbname=main_unity_mock_test' \
 
 1. Unity가 클라이언트 생성 UUID `job_id`, 제품, 목표 PASS 수량을 MainServer HTTP API에 보낸다.
 2. MainServer는 유효한 요청을 `PENDING` Job으로 등록하고, 같은 `job_id` 재요청에는 기존 Job을 반환한다.
-3. AssemblySequencer는 실행 중 Job이 없을 때 가장 오래된 `PENDING` Job을 선택하고 `recipe_version`의 YAML을 검증한 뒤 `RUNNING`으로 전이한다.
+3. 호출자는 같은 `job_id`와 실행 입력을 AssemblySequencer에 전달한다. Sequencer는 해당 `PENDING` Job을 claim하고 YAML을 검증한 뒤 `RUNNING`으로 전이한다.
 4. Sequencer는 Unit별로 YAML 순서를 실행하고 Backend의 실제 완료를 기다린다. 안전정지 중에는 Job과 Unit을 `RUNNING`으로 유지한다.
 5. PASS 수가 `requested_quantity`에 도달하면 Job을 완료한다. 검사 FAIL은 완료된 생산 시도로 남기고 새 Unit을 만들며, 실행 실패는 Unit `FAILED`로 기록한다.
 6. Sequencer는 실제 조립한 Unit의 재고 변동을 기록하고, 불량대책서 생성기는 완료된 FAIL 기록으로 XLSX를 발행한다.

@@ -26,20 +26,17 @@ def parse_command(raw):
 
     command_name = command.get("command")
     if command_name == "transfer_assembled_pcb":
-        if set(command) != {"command", "request_id", "assembled_pcb"}:
-            raise ValueError(
-                "command, request_id and assembled_pcb are required"
-            )
+        if set(command) != {"command", "job_id", "assembled_pcb"}:
+            raise ValueError("command, job_id and assembled_pcb are required")
         if not isinstance(command["assembled_pcb"], dict):
             raise ValueError("assembled_pcb must be an object")
         command_type = "transfer_assembled_pcb"
     else:
         if set(command) != {
-            "command", "request_id", "recipe_version", "observations",
-            "assembled_pcb",
+            "command", "job_id", "recipe_version", "observations",
         }:
             raise ValueError(
-                "command, request_id, recipe_version, observations and assembled_pcb are required"
+                "command, job_id, recipe_version and observations are required"
             )
         if command_name != "start":
             raise ValueError(
@@ -50,16 +47,12 @@ def parse_command(raw):
         if not isinstance(command["observations"], list) \
                 or not command["observations"]:
             raise ValueError("observations must be a non-empty list")
-        if not isinstance(command["assembled_pcb"], dict):
-            raise ValueError("assembled_pcb must be an object")
         command_type = "start"
 
     try:
-        command["request_id"] = str(uuid.UUID(command["request_id"]))
+        command["job_id"] = str(uuid.UUID(command["job_id"]))
     except (TypeError, ValueError, AttributeError) as error:
-        raise ValueError("request_id must be a UUID string") from error
-    if len(command["request_id"]) > 64:
-        raise ValueError("request_id must be at most 64 characters")
+        raise ValueError("job_id must be a UUID string") from error
     return command_type, command
 
 
@@ -82,15 +75,15 @@ def parse_feedback(raw):
         raise ValueError("feedback must be a JSON object")
 
     required = {
-        "request_id", "state", "step_order", "part_id", "slot_code",
+        "job_id", "state", "step_order", "part_id", "slot_code",
         "error_code", "message",
     }
     if not required.issubset(payload):
         raise ValueError("feedback is missing required fields")
     try:
-        payload["request_id"] = str(uuid.UUID(payload["request_id"]))
+        payload["job_id"] = str(uuid.UUID(payload["job_id"]))
     except (TypeError, ValueError, AttributeError) as error:
-        raise ValueError("feedback request_id must be a UUID string") from error
+        raise ValueError("feedback job_id must be a UUID string") from error
     if payload["state"] not in FEEDBACK_STATES:
         raise ValueError(f"unknown feedback state: {payload['state']}")
     if (isinstance(payload["step_order"], bool)
@@ -109,10 +102,10 @@ def parse_feedback(raw):
 
 
 def failed_feedback(
-    request_id, error_code, message, db_sync_state="NOT_STARTED"
+    job_id, error_code, message, db_sync_state="NOT_STARTED"
 ):
     return {
-        "request_id": request_id,
+        "job_id": job_id,
         "state": "FAILED",
         "step_order": 0,
         "part_id": "",
@@ -127,8 +120,7 @@ def unavailable_snapshot(message):
     return {
         "available": False,
         "active": False,
-        "request_id": "",
-        "job_id": 0,
+        "job_id": "",
         "unit_id": 0,
         "recipe_version": "",
         "state": "IDLE",
@@ -149,10 +141,9 @@ def assembly_snapshot(
     completed = state == "COMPLETED"
     return {
         "available": True,
+        "active": state in RELAY_STATES,
         "job_id": active["job_id"],
         "unit_id": active["unit_id"],
-        "active": state in RELAY_STATES,
-        "request_id": active["request_id"],
         "recipe_version": RECIPE_VERSION,
         "state": state,
         "placed_count": (
@@ -205,30 +196,28 @@ def choose_inspection(rng, fail_probability, slot_codes):
 
 
 def self_check():
-    request_id = "12345678-1234-5678-1234-567812345678"
+    job_id = "12345678-1234-5678-1234-567812345678"
     command = json.dumps({
         "command": "start",
-        "request_id": request_id,
+        "job_id": job_id,
         "recipe_version": RECIPE_VERSION,
         "observations": [{}],
-        "assembled_pcb": {},
     })
     assert parse_command(command)[0] == "start"
-    assert parse_command(command)[1]["request_id"] == request_id
+    assert parse_command(command)[1]["job_id"] == job_id
     assert parse_command(json.dumps({
         "command": "transfer_assembled_pcb",
-        "request_id": request_id,
+        "job_id": job_id,
         "assembled_pcb": {},
     }))[0] == "transfer_assembled_pcb"
     assert parse_command('{"command":"status"}')[0] == "status"
-    assert unavailable_snapshot("offline")["job_id"] == 0
+    assert unavailable_snapshot("offline")["job_id"] == ""
     assert choose_inspection(random.Random(1), 0.0, []) == ("PASS", [])
     result, defects = choose_inspection(random.Random(1), 1.0, ["SLOT-01"])
     assert result == "FAIL" and defects[0]["slot_code"] == "SLOT-01"
-    assert failed_feedback(request_id, "DB_ERROR", "x")["state"] == "FAILED"
+    assert failed_feedback(job_id, "DB_ERROR", "x")["state"] == "FAILED"
     active = {
-        "request_id": request_id,
-        "job_id": 11,
+        "job_id": job_id,
         "unit_id": 22,
         "placed_count": 0,
         "expected_step_count": 2,
@@ -237,7 +226,7 @@ def self_check():
         "held_slot_code": "",
     }
     picked = parse_feedback(json.dumps({
-        "request_id": request_id,
+        "job_id": job_id,
         "state": "PICKED",
         "step_order": 1,
         "part_id": "PART-01",
@@ -250,7 +239,7 @@ def self_check():
     assert assembly_snapshot(active, "PLACED")["active"]
     assert assembly_snapshot(active, "ASSEMBLY_COMPLETED")["active"]
     assert assembly_snapshot(active, "PCB_PICKED")["placed_count"] == 0
-    assert assembly_snapshot(active, "PLACED")["job_id"] == 11
+    assert assembly_snapshot(active, "PLACED")["job_id"] == job_id
     assert assembly_snapshot(active, "PLACED")["unit_id"] == 22
     completed = assembly_snapshot(active, "COMPLETED")
     assert not completed["active"] and completed["placed_count"] == 2

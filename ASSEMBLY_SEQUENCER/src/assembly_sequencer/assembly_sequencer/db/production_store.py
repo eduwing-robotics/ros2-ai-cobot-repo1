@@ -2,7 +2,7 @@
 
 import os
 from collections.abc import Mapping
-from typing import NamedTuple
+import uuid
 
 import psycopg
 from psycopg.rows import dict_row
@@ -11,11 +11,6 @@ from psycopg.rows import dict_row
 ACTIVE_JOB_STATUSES = ("PENDING", "RUNNING")
 FINAL_JOB_STATUSES = ("COMPLETED", "FAILED", "CANCELLED")
 DEFECT_TYPES = {"MISSING", "POSITION_ERROR", "ORIENTATION_ERROR", "CRACK"}
-
-
-class WorkReservation(NamedTuple):
-    job_id: int
-    unit_id: int
 
 
 def _connect():
@@ -31,6 +26,13 @@ def _connect():
 def _positive_id(value, label):
     if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
         raise ValueError(f"{label} must be a positive integer")
+
+
+def _job_id(value, label="job_id"):
+    try:
+        return str(uuid.UUID(str(value)))
+    except (TypeError, ValueError, AttributeError) as error:
+        raise ValueError(f"{label} must be a UUID") from error
 
 
 def _required_text(value, label):
@@ -61,70 +63,6 @@ def _lock_requirements(cursor, product_id):
     return requirements
 
 
-def _validate_job_request(product_code, product_version, quantity, recipe_version):
-    _required_text(product_code, "product_code")
-    _required_text(product_version, "product_version")
-    _required_text(recipe_version, "recipe_version")
-    _positive_id(quantity, "quantity")
-
-
-def _insert_job(cursor, product_code, product_version, quantity, recipe_version):
-    cursor.execute(
-        """
-        SELECT product_id, is_selectable
-        FROM production.products
-        WHERE product_code = %s AND product_version = %s
-        FOR UPDATE
-        """,
-        (product_code, product_version),
-    )
-    product = cursor.fetchone()
-    if product is None:
-        raise RuntimeError("product was not found")
-    if not product["is_selectable"]:
-        raise RuntimeError("product is not selectable")
-
-    requirements = _lock_requirements(cursor, product["product_id"])
-    shortages = [
-        row["part_id"]
-        for row in requirements
-        if row["stock_quantity"] < row["quantity_per_product"] * quantity
-    ]
-    if shortages:
-        raise RuntimeError("insufficient stock: " + ", ".join(shortages))
-
-    cursor.execute(
-        """
-        UPDATE production.products
-        SET definition_locked_at = COALESCE(definition_locked_at, now())
-        WHERE product_id = %s
-        """,
-        (product["product_id"],),
-    )
-    cursor.execute(
-        """
-        INSERT INTO production.jobs (
-            product_id, requested_quantity, recipe_version,
-            job_status, job_started_at
-        )
-        VALUES (%s, %s, %s, %s, now())
-        RETURNING job_id
-        """,
-        (product["product_id"], quantity, recipe_version, "RUNNING"),
-    )
-    return cursor.fetchone()["job_id"]
-
-
-def start_job(product_code, product_version, quantity, recipe_version):
-    _validate_job_request(product_code, product_version, quantity, recipe_version)
-
-    with _connect() as connection, connection.transaction():
-        with connection.cursor() as cursor:
-            return _insert_job(
-                cursor, product_code, product_version, quantity, recipe_version
-            )
-
-
 def _insert_next_unit(cursor, job_id):
     cursor.execute(
         """
@@ -144,19 +82,18 @@ def _insert_next_unit(cursor, job_id):
     cursor.execute(
         """
         SELECT COALESCE(MAX(unit_sequence_in_job), 0) AS last_sequence,
-               COUNT(*) FILTER (WHERE unit_status = %s) AS running_count,
-               COUNT(*) FILTER (WHERE unit_status = %s) AS completed_count
+               COUNT(*) FILTER (WHERE unit_status = 'RUNNING') AS running_count,
+               COUNT(*) FILTER (WHERE inspection_result = 'PASS') AS pass_count
         FROM production.units
         WHERE job_id = %s
         """,
-        ("RUNNING", "COMPLETED", job_id),
+        (job_id,),
     )
     units = cursor.fetchone()
     if units["running_count"]:
         raise RuntimeError("job already has a running unit")
-    if (units["last_sequence"] >= job["requested_quantity"]
-            or units["completed_count"] >= job["requested_quantity"]):
-        raise RuntimeError("job already has its requested quantity")
+    if units["pass_count"] >= job["requested_quantity"]:
+        raise RuntimeError("job already has its requested PASS quantity")
 
     cursor.execute(
         """
@@ -169,138 +106,93 @@ def _insert_next_unit(cursor, job_id):
     return cursor.fetchone()["unit_id"]
 
 
-def start_next_unit(job_id):
-    _positive_id(job_id, "job_id")
-
-    with _connect() as connection, connection.transaction():
-        with connection.cursor() as cursor:
-            return _insert_next_unit(cursor, job_id)
-
-
-def reserve_work(product_code, product_version, quantity, recipe_version):
-    """Atomically reserve one Job and its first Unit before robot movement."""
-    _validate_job_request(product_code, product_version, quantity, recipe_version)
-
-    with _connect() as connection, connection.transaction():
-        with connection.cursor() as cursor:
-            job_id = _insert_job(
-                cursor, product_code, product_version, quantity, recipe_version
-            )
-            unit_id = _insert_next_unit(cursor, job_id)
-            return WorkReservation(job_id, unit_id)
-
-
-
-
-def claim_queued_work(
-    runtime_mode, product_code, product_version, quantity, recipe_version
-):
-    """Claim the oldest command and reserve its Job and Unit atomically."""
-    if runtime_mode not in ("mock", "real"):
-        raise ValueError("runtime_mode must be mock or real")
-    _validate_job_request(product_code, product_version, quantity, recipe_version)
+def claim_job(job_id, product_code, product_version, recipe_version):
+    """Claim a MainServer-created Job and start one Unit attempt."""
+    job_id = _job_id(job_id)
+    _required_text(product_code, "product_code")
+    _required_text(product_version, "product_version")
+    _required_text(recipe_version, "recipe_version")
 
     with _connect() as connection, connection.transaction():
         with connection.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT request_id, payload
-                FROM control.assembly_requests
-                WHERE runtime_mode = %s AND request_status = 'QUEUED'
-                ORDER BY requested_at
-                FOR UPDATE SKIP LOCKED
-                LIMIT 1
+                SELECT j.product_id, j.requested_quantity, j.recipe_version,
+                       j.job_status, p.product_code, p.product_version,
+                       p.is_selectable
+                FROM production.jobs j
+                JOIN production.products p ON p.product_id = j.product_id
+                WHERE j.job_id = %s
+                FOR UPDATE OF j, p
                 """,
-                (runtime_mode,),
+                (job_id,),
             )
-            request = cursor.fetchone()
-            if request is None:
-                return None
+            job = cursor.fetchone()
+            if job is None:
+                raise RuntimeError("job was not found")
+            if (job["product_code"] != product_code
+                    or job["product_version"] != product_version
+                    or job["recipe_version"] != recipe_version):
+                raise RuntimeError("job product or recipe does not match this Sequencer")
+            if not job["is_selectable"]:
+                raise RuntimeError("product is not selectable")
+            if job["job_status"] not in ACTIVE_JOB_STATUSES:
+                raise RuntimeError("job is already finalized")
 
-            try:
-                job_id = _insert_job(
-                    cursor, product_code, product_version, quantity, recipe_version
-                )
-            except RuntimeError as error:
+            if job["job_status"] == "PENDING":
+                requirements = _lock_requirements(cursor, job["product_id"])
+                shortages = [
+                    row["part_id"]
+                    for row in requirements
+                    if row["stock_quantity"]
+                    < row["quantity_per_product"] * job["requested_quantity"]
+                ]
+                if shortages:
+                    raise RuntimeError("insufficient stock: " + ", ".join(shortages))
                 cursor.execute(
                     """
-                    UPDATE control.assembly_requests
-                    SET request_status = 'FAILED',
-                        finished_at = now(),
-                        error_message = %s
-                    WHERE request_id = %s
+                    UPDATE production.products
+                    SET definition_locked_at = COALESCE(definition_locked_at, now())
+                    WHERE product_id = %s
                     """,
-                    (str(error)[:512], request["request_id"]),
-                )
-                return {
-                    "request_id": str(request["request_id"]),
-                    "error": str(error),
-                }
-            unit_id = _insert_next_unit(cursor, job_id)
-            cursor.execute(
-                """
-                UPDATE control.assembly_requests
-                SET request_status = 'RUNNING',
-                    job_id = %s,
-                    unit_id = %s,
-                    claimed_at = now()
-                WHERE request_id = %s
-                """,
-                (job_id, unit_id, request["request_id"]),
-            )
-            return {
-                "request_id": str(request["request_id"]),
-                "payload": request["payload"],
-                "job_id": job_id,
-                "unit_id": unit_id,
-            }
-
-
-def fail_interrupted_requests(runtime_mode):
-    """Close work whose owning Sequencer process disappeared."""
-    if runtime_mode not in ("mock", "real"):
-        raise ValueError("runtime_mode must be mock or real")
-
-    with _connect() as connection, connection.transaction():
-        with connection.cursor() as cursor:
-            cursor.execute(
-                """
-                SELECT request_id, job_id
-                FROM control.assembly_requests
-                WHERE runtime_mode = %s AND request_status = 'RUNNING'
-                FOR UPDATE
-                """,
-                (runtime_mode,),
-            )
-            interrupted = cursor.fetchall()
-            for request in interrupted:
-                cursor.execute(
-                    """
-                    UPDATE production.units
-                    SET unit_status = 'FAILED'
-                    WHERE job_id = %s AND unit_status = 'RUNNING'
-                    """,
-                    (request["job_id"],),
+                    (job["product_id"],),
                 )
                 cursor.execute(
                     """
                     UPDATE production.jobs
-                    SET job_status = 'FAILED', job_finished_at = now()
-                    WHERE job_id = %s AND job_status IN ('PENDING', 'RUNNING')
+                    SET job_status = 'RUNNING', job_started_at = now()
+                    WHERE job_id = %s
                     """,
-                    (request["job_id"],),
+                    (job_id,),
                 )
+
+            unit_id = _insert_next_unit(cursor, job_id)
+            return {
+                "job_id": job_id,
+                "unit_id": unit_id,
+                "requested_quantity": job["requested_quantity"],
+                "recipe_version": job["recipe_version"],
+            }
+
+
+def recover_interrupted_units():
+    """Fail interrupted Unit attempts while leaving their Jobs resumable."""
+    with _connect() as connection, connection.transaction():
+        with connection.cursor() as cursor:
             cursor.execute(
                 """
-                UPDATE control.assembly_requests
-                SET request_status = 'FAILED',
-                    finished_at = now(),
-                    error_message = 'AssemblySequencer restarted during execution'
-                WHERE runtime_mode = %s AND request_status = 'RUNNING'
-                """,
-                (runtime_mode,),
+                UPDATE production.units u
+                SET unit_status = 'FAILED'
+                FROM production.jobs j
+                WHERE u.job_id = j.job_id
+                  AND u.unit_status = 'RUNNING'
+                  AND j.job_status = 'RUNNING'
+                RETURNING u.unit_id
+                """
             )
-            return len(interrupted)
+            return len(cursor.fetchall())
+
+
 def complete_assembly_and_consume_stock(unit_id):
     _positive_id(unit_id, "unit_id")
 
@@ -488,39 +380,8 @@ def record_inspection(unit_id, result, defects, image_path=None):
             )
 
 
-def fail_unit(unit_id):
-    _positive_id(unit_id, "unit_id")
-
-    with _connect() as connection, connection.transaction():
-        with connection.cursor() as cursor:
-            cursor.execute(
-                """
-                SELECT unit_status, inspection_result
-                FROM production.units
-                WHERE unit_id = %s
-                FOR UPDATE
-                """,
-                (unit_id,),
-            )
-            unit = cursor.fetchone()
-            if unit is None:
-                raise RuntimeError("unit was not found")
-            if unit["unit_status"] == "FAILED":
-                return
-            if unit["inspection_result"] != "PENDING":
-                raise RuntimeError("an inspected unit cannot be failed")
-            cursor.execute(
-                """
-                UPDATE production.units
-                SET unit_status = %s
-                WHERE unit_id = %s
-                """,
-                ("FAILED", unit_id),
-            )
-
-
 def finish_job(job_id, final_status):
-    _positive_id(job_id, "job_id")
+    job_id = _job_id(job_id)
     if final_status not in FINAL_JOB_STATUSES:
         raise ValueError("final_status must be COMPLETED, FAILED or CANCELLED")
 
@@ -545,28 +406,30 @@ def finish_job(job_id, final_status):
 
             cursor.execute(
                 """
-                SELECT COUNT(*) FILTER (WHERE unit_status = %s) AS completed_count,
-                       COUNT(*) FILTER (WHERE unit_status = %s) AS failed_count,
-                       COUNT(*) FILTER (WHERE unit_status = %s) AS running_count
+                SELECT COUNT(*) FILTER (
+                           WHERE inspection_result = 'PASS'
+                       ) AS pass_count,
+                       COUNT(*) FILTER (
+                           WHERE unit_status = 'RUNNING'
+                       ) AS running_count
                 FROM production.units
                 WHERE job_id = %s
                 """,
-                ("COMPLETED", "FAILED", "RUNNING", job_id),
+                (job_id,),
             )
             units = cursor.fetchone()
             if final_status == "COMPLETED":
-                if (units["completed_count"] != job["requested_quantity"]
-                        or units["failed_count"] != 0
+                if (units["pass_count"] < job["requested_quantity"]
                         or units["running_count"] != 0):
-                    raise RuntimeError("job has not completed its requested quantity")
+                    raise RuntimeError("job has not reached its requested PASS quantity")
             else:
                 cursor.execute(
                     """
                     UPDATE production.units
-                    SET unit_status = %s
-                    WHERE job_id = %s AND unit_status = %s
+                    SET unit_status = 'FAILED'
+                    WHERE job_id = %s AND unit_status = 'RUNNING'
                     """,
-                    ("FAILED", job_id, "RUNNING"),
+                    (job_id,),
                 )
 
             cursor.execute(
@@ -574,15 +437,6 @@ def finish_job(job_id, final_status):
                 UPDATE production.jobs
                 SET job_status = %s, job_finished_at = now()
                 WHERE job_id = %s
-                """,
-                (final_status, job_id),
-            )
-            cursor.execute(
-                """
-                UPDATE control.assembly_requests
-                SET request_status = %s,
-                    finished_at = now()
-                WHERE job_id = %s AND request_status = 'RUNNING'
                 """,
                 (final_status, job_id),
             )
@@ -603,46 +457,38 @@ def _get_job_state(connection, job_id):
         if state is None:
             raise RuntimeError("job was not found")
         state = dict(state)
+        state["job_id"] = str(state["job_id"])
         cursor.execute(
             """
-            SELECT COUNT(*) FILTER (WHERE unit_status = %s) AS completed_quantity,
-                   COUNT(*) FILTER (WHERE unit_status = %s) AS failed_quantity,
-                   COUNT(*) FILTER (WHERE unit_status = %s) AS running_quantity,
-                   MAX(unit_id) FILTER (WHERE unit_status = %s) AS current_unit_id
+            SELECT COUNT(*) FILTER (
+                       WHERE inspection_result = 'PASS'
+                   ) AS completed_quantity,
+                   COUNT(*) FILTER (
+                       WHERE unit_status = 'FAILED'
+                   ) AS failed_quantity,
+                   COUNT(*) FILTER (
+                       WHERE unit_status = 'RUNNING'
+                   ) AS running_quantity,
+                   MAX(unit_id) FILTER (
+                       WHERE unit_status = 'RUNNING'
+                   ) AS current_unit_id
             FROM production.units
             WHERE job_id = %s
             """,
-            ("COMPLETED", "FAILED", "RUNNING", "RUNNING", job_id),
+            (job_id,),
         )
         state.update(cursor.fetchone())
         return state
 
 
 def get_job_state(job_id):
-    _positive_id(job_id, "job_id")
+    job_id = _job_id(job_id)
     with _connect() as connection:
         return _get_job_state(connection, job_id)
 
 
-def get_active_job_state():
-    with _connect() as connection:
-        with connection.cursor() as cursor:
-            cursor.execute(
-                """
-                SELECT job_id
-                FROM production.jobs
-                WHERE job_status = ANY(%s)
-                ORDER BY requested_at
-                LIMIT 1
-                """,
-                (list(ACTIVE_JOB_STATUSES),),
-            )
-            job = cursor.fetchone()
-        return None if job is None else _get_job_state(connection, job["job_id"])
-
-
 def get_product_slot_codes(job_id):
-    _positive_id(job_id, "job_id")
+    job_id = _job_id(job_id)
     with _connect() as connection:
         with connection.cursor() as cursor:
             cursor.execute(

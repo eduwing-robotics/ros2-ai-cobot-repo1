@@ -757,7 +757,7 @@ namespace MainUnity.UI
                     frame != null && !string.IsNullOrEmpty(frame.RecipeVersion) ? frame.RecipeVersion : "—");
             if (requestId != null)
                 FR5EmptyState.Present(requestId,
-                    frame != null && !string.IsNullOrEmpty(frame.RequestId) ? frame.RequestId : "—");
+                    frame != null && !string.IsNullOrEmpty(frame.JobId) ? frame.JobId : "—");
         }
 
         static string Describe(AssemblyProgressFrame frame)

@@ -70,9 +70,18 @@ def positive(value, label):
     return int(value)
 
 
+def uuid_value(value, label):
+    try:
+        return str(uuid.UUID(value))
+    except (TypeError, ValueError, AttributeError) as error:
+        raise ValidationError(f"{label} must be a UUID string") from error
+
+
 def json_default(value):
     if isinstance(value, (date, datetime)):
         return value.isoformat()
+    if isinstance(value, uuid.UUID):
+        return str(value)
     if isinstance(value, Decimal):
         return float(value)
     raise TypeError(f"cannot serialize {type(value).__name__}")
@@ -205,11 +214,11 @@ class ApiHandler(BaseHTTPRequestHandler):
 
     def job(self, values, parameters):
         self._no_query(parameters)
-        return queries.job(positive(values["job_id"], "job_id"))
+        return queries.job(uuid_value(values["job_id"], "job_id"))
 
     def units(self, values, parameters):
         self._no_query(parameters)
-        return queries.units(positive(values["job_id"], "job_id"))
+        return queries.units(uuid_value(values["job_id"], "job_id"))
 
     def slot_rates(self, values, parameters):
         self._no_query(parameters)
@@ -220,7 +229,7 @@ class ApiHandler(BaseHTTPRequestHandler):
         command = self._request_json()
         self._validate_start_command(command)
         try:
-            return queries.enqueue_assembly(command, runtime_mode())
+            return queries.create_job(command)
         except queries.DuplicateRequest as error:
             raise AssemblyRejected(409, "duplicate_request", str(error)) from error
 
@@ -247,23 +256,22 @@ class ApiHandler(BaseHTTPRequestHandler):
     @staticmethod
     def _validate_start_command(command):
         if set(command) != {
-            "command", "request_id", "recipe_version", "observations", "assembled_pcb"
+            "command", "job_id", "product_code", "product_version",
+            "requested_quantity", "recipe_version",
         }:
             raise ValidationError(
-                "command, request_id, recipe_version, observations and assembled_pcb are required"
+                "command, job_id, product_code, product_version, "
+                "requested_quantity and recipe_version are required"
             )
         if command["command"] != "start":
             raise ValidationError("command must be start")
-        try:
-            command["request_id"] = str(uuid.UUID(command["request_id"]))
-        except (TypeError, ValueError, AttributeError) as error:
-            raise ValidationError("request_id must be a UUID string") from error
-        if not isinstance(command["recipe_version"], str) or not command["recipe_version"].strip():
-            raise ValidationError("recipe_version must be a nonblank string")
-        if not isinstance(command["observations"], list) or not command["observations"]:
-            raise ValidationError("observations must be a non-empty list")
-        if not isinstance(command["assembled_pcb"], dict):
-            raise ValidationError("assembled_pcb must be an object")
+        command["job_id"] = uuid_value(command["job_id"], "job_id")
+        for field in ("product_code", "product_version", "recipe_version"):
+            if not isinstance(command[field], str) or not command[field].strip():
+                raise ValidationError(f"{field} must be a nonblank string")
+        quantity = command["requested_quantity"]
+        if isinstance(quantity, bool) or not isinstance(quantity, int) or quantity <= 0:
+            raise ValidationError("requested_quantity must be a positive integer")
 
     @staticmethod
     def _raise_rejection(result):

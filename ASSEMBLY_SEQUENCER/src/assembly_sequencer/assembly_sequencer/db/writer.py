@@ -23,7 +23,7 @@ class DbQueueFull(RuntimeError):
 class DbUpdateEvent:
     event_id: str
     event_type: str
-    job_id: int | None = None
+    job_id: str | None = None
     unit_id: int | None = None
     payload: dict = field(default_factory=dict)
     created_at: str = field(
@@ -35,7 +35,7 @@ class DbUpdateEvent:
 
 
 class DbWriter:
-    """Reserve synchronously, then serialize lifecycle updates off callbacks."""
+    """Claim synchronously, then serialize lifecycle updates off callbacks."""
 
     def __init__(
         self,
@@ -85,48 +85,31 @@ class DbWriter:
         with self._condition:
             return self._pending_count
 
-    def reserve(
+    def claim(
         self,
-        request_id,
+        job_id,
         product_code,
         product_version,
         recipe_version,
-        quantity=1,
     ):
         with self._condition:
             if self._stop.is_set():
                 raise RuntimeError("DB writer is stopped")
             if self._fatal_error:
                 raise RuntimeError(self._last_error)
-        try:
-            uuid.UUID(request_id)
-        except (TypeError, ValueError, AttributeError) as error:
-            raise ValueError("request_id must be a UUID string") from error
-        return self._store.reserve_work(
-            product_code, product_version, quantity, recipe_version
+        return self._store.claim_job(
+            self._job_id(job_id), product_code, product_version, recipe_version
         )
 
-    def claim(
-        self,
-        runtime_mode,
-        product_code,
-        product_version,
-        recipe_version,
-        quantity=1,
-    ):
-        return self._store.claim_queued_work(
-            runtime_mode, product_code, product_version, quantity, recipe_version
-        )
-
-    def recover_interrupted(self, runtime_mode):
-        return self._store.fail_interrupted_requests(runtime_mode)
+    def recover_interrupted(self):
+        return self._store.recover_interrupted_units()
 
     def abort(self, job_id):
-        """Synchronously close a reservation rejected before robot acceptance."""
+        """Synchronously close a Job rejected before robot acceptance."""
         self._store.finish_job(job_id, "FAILED")
 
-    def get_active(self):
-        return self._store.get_active_job_state()
+    def get_job(self, job_id):
+        return self._store.get_job_state(self._job_id(job_id))
 
     def get_product_slot_codes(self, job_id):
         return self._store.get_product_slot_codes(job_id)
@@ -160,7 +143,7 @@ class DbWriter:
         ))
 
     def finish(self, job_id, final_status):
-        self._positive_id(job_id, "job_id")
+        job_id = self._job_id(job_id)
         if final_status not in production_store.FINAL_JOB_STATUSES:
             raise ValueError("final_status must be COMPLETED, FAILED or CANCELLED")
         return self._submit(DbUpdateEvent(
@@ -191,6 +174,13 @@ class DbWriter:
                     f"writer stopped with {self._pending_count} pending event(s)"
                 )
         return drained and not self._thread.is_alive() and not self._fatal_error
+
+    @staticmethod
+    def _job_id(value):
+        try:
+            return str(uuid.UUID(str(value)))
+        except (TypeError, ValueError, AttributeError) as error:
+            raise ValueError("job_id must be a UUID") from error
 
     @staticmethod
     def _positive_id(value, label):

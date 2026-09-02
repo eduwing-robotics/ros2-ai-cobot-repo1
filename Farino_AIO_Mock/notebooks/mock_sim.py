@@ -132,25 +132,25 @@ def parse_start_command(raw):
     except (TypeError, json.JSONDecodeError) as error:
         raise ValueError("cmd_str must be a JSON object") from error
     if not isinstance(command, dict) or set(command) != {
-        "command", "request_id", "recipe_version", "observations",
+        "command", "job_id", "recipe_version", "observations",
     }:
         raise ValueError(
-            "command, request_id, recipe_version and observations are required"
+            "command, job_id, recipe_version and observations are required"
         )
     if command["command"] != "start":
         raise ValueError("command must be start")
-    request_id = command["request_id"]
-    if not isinstance(request_id, str) or len(request_id) > 64:
-        raise ValueError("request_id must be a UUID string")
+    job_id = command["job_id"]
+    if not isinstance(job_id, str) or len(job_id) > 64:
+        raise ValueError("job_id must be a UUID string")
     try:
-        uuid.UUID(request_id)
+        uuid.UUID(job_id)
     except (ValueError, AttributeError) as error:
-        raise ValueError("request_id must be a UUID string") from error
+        raise ValueError("job_id must be a UUID string") from error
     recipe_version = command["recipe_version"]
     if not isinstance(recipe_version, str) or not recipe_version.strip():
         raise ValueError("recipe_version must be a non-empty string")
     return (
-        request_id, recipe_version,
+        job_id, recipe_version,
         validate_observations(command["observations"]),
     )
 
@@ -161,21 +161,21 @@ def parse_transfer_command(raw):
     except (TypeError, json.JSONDecodeError) as error:
         raise ValueError("cmd_str must be a JSON object") from error
     if not isinstance(command, dict) or set(command) != {
-        "command", "request_id", "assembled_pcb",
+        "command", "job_id", "assembled_pcb",
     }:
         raise ValueError(
-            "command, request_id and assembled_pcb are required"
+            "command, job_id and assembled_pcb are required"
         )
     if command["command"] != "transfer_assembled_pcb":
         raise ValueError("command must be transfer_assembled_pcb")
-    request_id = command["request_id"]
-    if not isinstance(request_id, str) or len(request_id) > 64:
-        raise ValueError("request_id must be a UUID string")
+    job_id = command["job_id"]
+    if not isinstance(job_id, str) or len(job_id) > 64:
+        raise ValueError("job_id must be a UUID string")
     try:
-        uuid.UUID(request_id)
+        uuid.UUID(job_id)
     except (ValueError, AttributeError) as error:
-        raise ValueError("request_id must be a UUID string") from error
-    return request_id, validate_assembled_pcb(command["assembled_pcb"])
+        raise ValueError("job_id must be a UUID string") from error
+    return job_id, validate_assembled_pcb(command["assembled_pcb"])
 
 
 def _finite_number(value, label):
@@ -424,7 +424,7 @@ def vertical_offset(value, dz_mm):
     }
 
 
-def assembly_feedback(request_id, state, step=None, error_code="", message=""):
+def assembly_feedback(job_id, state, step=None, error_code="", message=""):
     if state not in ASSEMBLY_STATES:
         raise ValueError(f"unknown assembly state: {state}")
     if state in STEP_STATES:
@@ -436,7 +436,7 @@ def assembly_feedback(request_id, state, step=None, error_code="", message=""):
     else:
         step_order, part_id, slot_code = 0, "", ""
     return {
-        "request_id": request_id,
+        "job_id": job_id,
         "state": state,
         "step_order": step_order,
         "part_id": part_id,
@@ -450,7 +450,7 @@ def empty_assembly_snapshot():
     return {
         "available": False,
         "active": False,
-        "request_id": "",
+        "job_id": "",
         "recipe_version": "",
         "state": "IDLE",
         "placed_count": 0,
@@ -469,7 +469,7 @@ def advance_assembly_snapshot(current, feedback, recipe_version, expected_step_c
     snapshot.update({
         "available": True,
         "active": state not in {"COMPLETED", "FAILED"},
-        "request_id": feedback["request_id"],
+        "job_id": feedback["job_id"],
         "recipe_version": recipe_version,
         "state": state,
         "expected_step_count": expected_step_count,
@@ -519,7 +519,7 @@ def self_check(runtime_recipe=None):
     assert arm_joint_positions(JointState(
         name=list(JOINTS[1:]), position=[0.0] * (len(JOINTS) - 1)
     )) is None
-    request_id = "12345678-1234-5678-1234-567812345678"
+    job_id = "12345678-1234-5678-1234-567812345678"
     observations = [{
         "order": 1,
         "part_id": "part",
@@ -536,17 +536,17 @@ def self_check(runtime_recipe=None):
     }
     parsed = parse_start_command(json.dumps({
         "command": "start",
-        "request_id": request_id,
+        "job_id": job_id,
         "recipe_version": "assembly-r1",
         "observations": observations,
     }))
-    assert parsed[:2] == (request_id, "assembly-r1")
+    assert parsed[:2] == (job_id, "assembly-r1")
     transfer = parse_transfer_command(json.dumps({
         "command": "transfer_assembled_pcb",
-        "request_id": request_id,
+        "job_id": job_id,
         "assembled_pcb": assembled_pcb,
     }))
-    assert transfer[0] == request_id
+    assert transfer[0] == job_id
     recipe = validate_recipe({
         "recipe_version": "assembly-r1",
         "frame": "base_link",
@@ -596,7 +596,7 @@ def self_check(runtime_recipe=None):
         } for step in runtime_recipe["steps"]]
         runtime_command = parse_start_command(json.dumps({
             "command": "start",
-            "request_id": request_id,
+            "job_id": job_id,
             "recipe_version": runtime_recipe["recipe_version"],
             "observations": runtime_observations,
         }))
@@ -613,13 +613,13 @@ def self_check(runtime_recipe=None):
         recipe["motion"]["assembled_pcb_drop_approach_dz_mm"],
     )
     assert pcb_drop_approach["xyz_mm"] == [350.0, 350.0, 350.0]
-    feedback = assembly_feedback(request_id, "PICKED", recipe["steps"][0])
+    feedback = assembly_feedback(job_id, "PICKED", recipe["steps"][0])
     assert feedback["step_order"] == 1 and feedback["part_id"] == "part"
-    terminal = assembly_feedback(request_id, "COMPLETED")
+    terminal = assembly_feedback(job_id, "COMPLETED")
     assert terminal["step_order"] == 0 and terminal["slot_code"] == ""
     snapshot = advance_assembly_snapshot(
         empty_assembly_snapshot(),
-        assembly_feedback(request_id, "STARTED"),
+        assembly_feedback(job_id, "STARTED"),
         "assembly-r1",
         1,
     )
@@ -627,21 +627,21 @@ def self_check(runtime_recipe=None):
     assert snapshot["active"] and snapshot["held_step_order"] == 1
     snapshot = advance_assembly_snapshot(
         snapshot,
-        assembly_feedback(request_id, "PLACED", recipe["steps"][0]),
+        assembly_feedback(job_id, "PLACED", recipe["steps"][0]),
         "assembly-r1",
         1,
     )
     assert snapshot["placed_count"] == 1 and snapshot["held_step_order"] == 0
     snapshot = advance_assembly_snapshot(
-        snapshot, assembly_feedback(request_id, "ASSEMBLY_COMPLETED"), "assembly-r1", 1
+        snapshot, assembly_feedback(job_id, "ASSEMBLY_COMPLETED"), "assembly-r1", 1
     )
     assert snapshot["active"] and snapshot["placed_count"] == 1
     snapshot = advance_assembly_snapshot(
-        snapshot, assembly_feedback(request_id, "PCB_PICKED"), "assembly-r1", 1
+        snapshot, assembly_feedback(job_id, "PCB_PICKED"), "assembly-r1", 1
     )
     assert snapshot["active"] and snapshot["placed_count"] == 1
     snapshot = advance_assembly_snapshot(
-        snapshot, assembly_feedback(request_id, "PCB_PLACED"), "assembly-r1", 1
+        snapshot, assembly_feedback(job_id, "PCB_PLACED"), "assembly-r1", 1
     )
     assert snapshot["active"] and snapshot["placed_count"] == 1
     snapshot = advance_assembly_snapshot(snapshot, terminal, "assembly-r1", 1)
@@ -662,7 +662,7 @@ def self_check(runtime_recipe=None):
     else:
         raise AssertionError("invalid assembly request was accepted")
     try:
-        assembly_feedback(request_id, "PICKED")
+        assembly_feedback(job_id, "PICKED")
     except ValueError:
         pass
     else:
@@ -809,10 +809,10 @@ class MockMoveJ(Node):
         ))
 
     @staticmethod
-    def start_response(response, accepted, request_id="", error_code="", message=""):
+    def start_response(response, accepted, job_id="", error_code="", message=""):
         response.cmd_res = json.dumps({
             "accepted": accepted,
-            "request_id": request_id,
+            "job_id": job_id,
             "error_code": error_code,
             "message": message,
         }, separators=(",", ":"))
@@ -832,37 +832,37 @@ class MockMoveJ(Node):
         if isinstance(command, dict) \
                 and command.get("command") == "transfer_assembled_pcb":
             try:
-                request_id, assembled_pcb = parse_transfer_command(request.cmd_str)
+                job_id, assembled_pcb = parse_transfer_command(request.cmd_str)
             except ValueError as error:
                 return self.start_response(
                     response, False, error_code="INVALID_REQUEST", message=str(error)
                 )
             if self.execution_faulted:
                 return self.start_response(
-                    response, False, request_id, "FAULTED", FAULT_RESTART_MESSAGE
+                    response, False, job_id, "FAULTED", FAULT_RESTART_MESSAGE
                 )
             job = self.active_assembly
-            if job is None or job["request_id"] != request_id:
+            if job is None or job["job_id"] != job_id:
                 return self.start_response(
-                    response, False, request_id, "NOT_ACTIVE",
+                    response, False, job_id, "NOT_ACTIVE",
                     "matching assembly is not active",
                 )
             if job["phase"] != "awaiting_transfer":
                 return self.start_response(
-                    response, False, request_id, "BUSY",
+                    response, False, job_id, "BUSY",
                     "assembly is not ready for PCB transfer",
                 )
             if self.args.plan_only:
                 return self.start_response(
-                    response, False, request_id, "PLAN_ONLY",
+                    response, False, job_id, "PLAN_ONLY",
                     "PCB transfer requires execution mode",
                 )
             job["assembled_pcb"] = assembled_pcb
             job["phase"] = "transferring"
-            return self.start_response(response, True, request_id)
+            return self.start_response(response, True, job_id)
 
         try:
-            request_id, recipe_version, observations = parse_start_command(
+            job_id, recipe_version, observations = parse_start_command(
                 request.cmd_str
             )
         except ValueError as error:
@@ -871,16 +871,16 @@ class MockMoveJ(Node):
             )
         if self.execution_faulted:
             return self.start_response(
-                response, False, request_id, "FAULTED", FAULT_RESTART_MESSAGE
+                response, False, job_id, "FAULTED", FAULT_RESTART_MESSAGE
             )
         if self.active_assembly is not None or self.manual_executing \
                 or self.manual_command_pending():
             return self.start_response(
-                response, False, request_id, "BUSY", "robot is already executing"
+                response, False, job_id, "BUSY", "robot is already executing"
             )
         if self.args.plan_only:
             return self.start_response(
-                response, False, request_id, "PLAN_ONLY", "assembly requires execution mode"
+                response, False, job_id, "PLAN_ONLY", "assembly requires execution mode"
             )
         try:
             recipe = self.assembly_recipe
@@ -891,27 +891,27 @@ class MockMoveJ(Node):
             resolved_steps = resolve_observations(recipe, observations)
         except ValueError as error:
             return self.start_response(
-                response, False, request_id, "INVALID_RECIPE", str(error)
+                response, False, job_id, "INVALID_RECIPE", str(error)
             )
 
         self.active_assembly = {
-            "request_id": request_id,
+            "job_id": job_id,
             "recipe": recipe,
             "resolved_steps": resolved_steps,
             "phase": "assembling",
         }
         self.latest_assembly_snapshot = advance_assembly_snapshot(
             self.latest_assembly_snapshot,
-            assembly_feedback(request_id, "STARTED"),
+            assembly_feedback(job_id, "STARTED"),
             recipe_version,
             len(resolved_steps),
         )
-        return self.start_response(response, True, request_id)
+        return self.start_response(response, True, job_id)
 
     def publish_assembly_feedback(
-        self, request_id, state, step=None, error_code="", message=""
+        self, job_id, state, step=None, error_code="", message=""
     ):
-        payload = assembly_feedback(request_id, state, step, error_code, message)
+        payload = assembly_feedback(job_id, state, step, error_code, message)
         job = self.active_assembly
         self.latest_assembly_snapshot = advance_assembly_snapshot(
             self.latest_assembly_snapshot,
@@ -922,7 +922,7 @@ class MockMoveJ(Node):
         self.assembly_feedback_publisher.publish(
             String(data=json.dumps(payload, separators=(",", ":")))
         )
-        self.get_logger().info(f"assembly {state}: request_id={request_id}")
+        self.get_logger().info(f"assembly {state}: job_id={job_id}")
 
     def publish_status(self, value):
         self.status_publisher.publish(String(data=value))
@@ -1301,11 +1301,11 @@ class MockMoveJ(Node):
         return self.pose_stamped(recipe["frame"], value["xyz_mm"], value["xyzw"])
 
     def run_assembly(self, job):
-        request_id = job["request_id"]
+        job_id = job["job_id"]
         recipe = job["recipe"]
         try:
             self.require_mock_hardware()
-            self.publish_assembly_feedback(request_id, "STARTED")
+            self.publish_assembly_feedback(job_id, "STARTED")
             joint_points = recipe["joint_points"]
             motion = recipe["motion"]
             for command in recipe["workflow"]["before_all"]:
@@ -1362,18 +1362,18 @@ class MockMoveJ(Node):
                         self.run_ptp_pose(source_approach)
                         self.run_linear(source, True)
                         self.run_gripper(grasp_opening_percent)
-                        self.publish_assembly_feedback(request_id, "PICKED", step)
+                        self.publish_assembly_feedback(job_id, "PICKED", step)
                         self.run_linear(source_retract, True)
                     elif (action, argument) == ("robot.place", "current_slot"):
                         self.run_ptp_pose(target_approach)
                         self.run_linear(target, True)
                         self.run_gripper(release_opening_percent)
-                        self.publish_assembly_feedback(request_id, "PLACED", step)
+                        self.publish_assembly_feedback(job_id, "PLACED", step)
                         self.run_linear(target_retract, True)
                     else:
                         raise RuntimeError(f"unknown assembly action: {command}")
 
-            self.publish_assembly_feedback(request_id, "ASSEMBLY_COMPLETED")
+            self.publish_assembly_feedback(job_id, "ASSEMBLY_COMPLETED")
             job["phase"] = "awaiting_transfer"
         except Exception as error:
             self.preview_publisher.publish(JointTrajectory())
@@ -1381,14 +1381,14 @@ class MockMoveJ(Node):
             self.publish_status(f"error: assembly failed: {message}")
             try:
                 self.publish_assembly_feedback(
-                    request_id, "FAILED", error_code="EXECUTION_FAILED",
+                    job_id, "FAILED", error_code="EXECUTION_FAILED",
                     message=message,
                 )
             finally:
                 self.active_assembly = None
 
     def run_assembled_pcb_transfer(self, job):
-        request_id = job["request_id"]
+        job_id = job["job_id"]
         recipe = job["recipe"]
         terminal_state = "FAILED"
         error_code = "INTERRUPTED"
@@ -1445,14 +1445,14 @@ class MockMoveJ(Node):
                 self.run_gripper(
                     gripper["grasp_opening_percent"]
                 )
-                self.publish_assembly_feedback(request_id, "PCB_PICKED")
+                self.publish_assembly_feedback(job_id, "PCB_PICKED")
                 self.run_linear(source_retract, True)
                 self.run_ptp_pose(target_approach)
                 self.run_linear(target, True)
                 self.run_gripper(
                     gripper["release_opening_percent"]
                 )
-                self.publish_assembly_feedback(request_id, "PCB_PLACED")
+                self.publish_assembly_feedback(job_id, "PCB_PLACED")
                 self.run_linear(target_retract, True)
             terminal_state = "COMPLETED"
             error_code = ""
@@ -1465,7 +1465,7 @@ class MockMoveJ(Node):
         finally:
             try:
                 self.publish_assembly_feedback(
-                    request_id, terminal_state, error_code=error_code, message=message
+                    job_id, terminal_state, error_code=error_code, message=message
                 )
             finally:
                 self.active_assembly = None

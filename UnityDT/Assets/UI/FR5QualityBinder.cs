@@ -37,7 +37,7 @@ namespace MainUnity.UI
             public string product_code;
             public bool is_selectable;
         }
-        [Serializable] sealed class AssemblySnapshot { public int job_id; }
+        [Serializable] sealed class AssemblySnapshot { public string job_id; }
         [Serializable] sealed class Job
         {
             public int product_id;
@@ -198,7 +198,7 @@ namespace MainUnity.UI
             if (!isActiveAndEnabled) yield break;
 
             Job job = null;
-            if (snapshot != null && snapshot.job_id > 0)
+            if (snapshot != null && !string.IsNullOrEmpty(snapshot.job_id))
             {
                 yield return Get($"/api/v1/jobs/{snapshot.job_id}",
                     json => job = JsonUtility.FromJson<JobResponse>(json)?.data,

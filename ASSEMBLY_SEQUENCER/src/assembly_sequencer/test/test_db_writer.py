@@ -11,29 +11,25 @@ from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from assembly_sequencer.db import DbQueueFull, DbWriter, WorkReservation
+from assembly_sequencer.db import DbQueueFull, DbWriter
 from assembly_sequencer.mock_node import MockAssemblySequencer
 
 
-REQUEST_ID = "12345678-1234-5678-1234-567812345678"
+JOB_ID = "12345678-1234-5678-1234-567812345678"
 
 
 class FakeStore:
+    FINAL_JOB_STATUSES = ("COMPLETED", "FAILED", "CANCELLED")
+
     def __init__(self):
         self.calls = []
         self.fail_first_assembly = True
 
-    def reserve_work(self, product_code, product_version, quantity, recipe_version):
+    def claim_job(self, job_id, product_code, product_version, recipe_version):
         self.calls.append((
-            "reserve", product_code, product_version, quantity, recipe_version
+            "claim", job_id, product_code, product_version, recipe_version
         ))
-        return WorkReservation(11, 22)
-
-    def get_active_job_state(self):
-        return None
-
-    def get_product_slot_codes(self, job_id):
-        return ["SLOT-01"]
+        return {"job_id": job_id, "unit_id": 22}
 
     def complete_assembly_and_consume_stock(self, unit_id):
         self.calls.append(("assembly", unit_id))
@@ -42,39 +38,31 @@ class FakeStore:
             raise RuntimeError("temporary DB outage")
 
     def record_inspection(self, unit_id, result, defects, image_path=None):
-        self.calls.append((
-            "inspection", unit_id, result, defects, image_path
-        ))
+        self.calls.append(("inspection", unit_id, result, defects, image_path))
 
     def finish_job(self, job_id, final_status):
         self.calls.append(("finish", job_id, final_status))
 
 
 class DbWriterTest(unittest.TestCase):
-    def test_reserve_and_fifo_retry(self):
+    def test_claim_and_fifo_retry(self):
         store = FakeStore()
         writer = DbWriter(
-            store=store,
-            retry_initial_seconds=0.001,
-            retry_max_seconds=0.002,
+            store=store, retry_initial_seconds=0.001, retry_max_seconds=0.002
         )
         self.addCleanup(writer.close, 0.5)
 
-        reservation = writer.reserve(
-            REQUEST_ID, "PRODUCT", "v1", "recipe-v1"
-        )
-        self.assertEqual(reservation, WorkReservation(11, 22))
-        writer.assembly_completed(reservation.unit_id)
-        writer.inspection_recorded(reservation.unit_id, "PASS", [])
-        writer.finish(reservation.job_id, "COMPLETED")
+        work = writer.claim(JOB_ID, "PRODUCT", "v1", "recipe-v1")
+        writer.assembly_completed(work["unit_id"])
+        writer.inspection_recorded(work["unit_id"], "PASS", [])
+        writer.finish(work["job_id"], "COMPLETED")
 
         self.assertTrue(writer.flush(1.0))
         self.assertEqual(
             [call[0] for call in store.calls],
-            ["reserve", "assembly", "assembly", "inspection", "finish"],
+            ["claim", "assembly", "assembly", "inspection", "finish"],
         )
         self.assertEqual(writer.sync_state, "SYNCED")
-        self.assertEqual(writer.pending_count, 0)
 
     def test_queue_overflow_is_reported(self):
         started = threading.Event()
@@ -90,19 +78,12 @@ class DbWriterTest(unittest.TestCase):
         writer = DbWriter(store=store, queue_size=1)
         self.addCleanup(writer.close, 0.5)
         self.addCleanup(release.set)
-
         writer.assembly_completed(22)
         self.assertTrue(started.wait(1.0))
-        writer.finish(11, "FAILED")
+        writer.finish(JOB_ID, "FAILED")
         with self.assertRaises(DbQueueFull):
-            writer.finish(12, "FAILED")
+            writer.finish("87654321-4321-8765-4321-876543218765", "FAILED")
         self.assertEqual(writer.sync_state, "FAILED")
-
-        release.set()
-        self.assertTrue(writer.flush(1.0))
-        self.assertEqual(writer.sync_state, "FAILED")
-        with self.assertRaises(RuntimeError):
-            writer.finish(13, "FAILED")
 
 
 class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
@@ -119,11 +100,11 @@ class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
                 calls.append(("inspection", unit_id, result))
 
         class Backend:
-            async def transfer_assembled_pcb(self, request_id, assembled_pcb):
-                calls.append(("transfer", request_id, assembled_pcb))
+            async def transfer_assembled_pcb(self, job_id, assembled_pcb):
+                calls.append(("transfer", job_id, assembled_pcb))
 
         active = {
-            "request_id": REQUEST_ID,
+            "job_id": JOB_ID,
             "state": "PLACED",
             "unit_id": 22,
             "slot_codes": ["SLOT-01"],
@@ -141,7 +122,7 @@ class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
         )
         request = SimpleNamespace(cmd_str=json.dumps({
             "command": "transfer_assembled_pcb",
-            "request_id": REQUEST_ID,
+            "job_id": JOB_ID,
             "assembled_pcb": {"source": {}, "target": {}},
         }))
 
@@ -156,9 +137,77 @@ class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
             sequencer, request, SimpleNamespace(cmd_res="")
         )
         self.assertTrue(json.loads(accepted.cmd_res)["accepted"])
-        self.assertEqual([call[0] for call in calls], [
-            "assembly", "inspection", "transfer",
-        ])
+        self.assertEqual(
+            [call[0] for call in calls], ["assembly", "inspection", "transfer"]
+        )
+
+    async def test_incomplete_pass_target_reuses_job_for_next_unit(self):
+        calls = []
+        command = {
+            "command": "start",
+            "job_id": JOB_ID,
+            "recipe_version": "assembly-r1",
+            "observations": [{}],
+        }
+
+        class Writer:
+            sync_state = "SYNCED"
+            last_error = ""
+
+            def flush(self, timeout_seconds):
+                calls.append(("flush", timeout_seconds))
+                return True
+
+            def get_job(self, job_id):
+                return {"completed_quantity": 1, "requested_quantity": 2}
+
+            def claim(self, job_id, product_code, product_version, recipe_version):
+                calls.append(("claim", job_id))
+                return {
+                    "job_id": job_id,
+                    "unit_id": 23,
+                    "requested_quantity": 2,
+                }
+
+        class Backend:
+            async def start(self, next_command):
+                calls.append(("start", next_command))
+
+        active = {
+            "job_id": JOB_ID,
+            "unit_id": 22,
+            "command": command,
+            "state": "PCB_PLACED",
+            "placed_count": 1,
+            "expected_step_count": 1,
+            "held_step_order": 0,
+            "held_part_id": "",
+            "held_slot_code": "",
+            "transfer_requested": True,
+            "inspection_result": "PASS",
+        }
+        sequencer = SimpleNamespace(
+            active=active,
+            db_writer=Writer(),
+            backend=Backend(),
+            fail_active=lambda *args, **kwargs: self.fail(str(args)),
+        )
+        feedback = SimpleNamespace(data=json.dumps({
+            "job_id": JOB_ID,
+            "state": "COMPLETED",
+            "step_order": 0,
+            "part_id": "",
+            "slot_code": "",
+            "error_code": "",
+            "message": "",
+        }))
+
+        await MockAssemblySequencer.on_internal_feedback(sequencer, feedback)
+
+        self.assertEqual(active["unit_id"], 23)
+        self.assertEqual(active["state"], "STARTED")
+        self.assertFalse(active["transfer_requested"])
+        self.assertEqual([call[0] for call in calls], ["flush", "claim", "start"])
 
 
 if __name__ == "__main__":

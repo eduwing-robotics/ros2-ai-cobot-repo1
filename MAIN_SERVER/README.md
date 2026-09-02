@@ -1,13 +1,12 @@
 # MAIN_SERVER
 
-제품·부품·재고·작업·검사 결과를 조회하고 조립 요청을 PostgreSQL의 영속
-제어 큐에 저장하는 HTTP 서버입니다.
+제품·부품·재고·Job·Unit·검사 결과를 조회하고 생산 Job을 생성하는 HTTP 서버입니다.
 
 ## 역할과 책임
 
 - 역할: UnityDT와 생산 데이터·조립 요청 사이의 HTTP 경계
-- 책임: 요청 검증, 생산 데이터 조회, `control.assembly_requests` 기록, 불량대책서 생성
-- 책임 아님: 생산 테이블 갱신, 조립 순서 제어, 로봇 직접 제어
+- 책임: 요청 검증, 생산 데이터 조회, `production.jobs` 생성, 불량대책서 생성
+- 책임 아님: Job 상태 전이, Unit 생성, 조립 순서 제어, 로봇 직접 제어
 
 ## 현재 기능
 
@@ -15,13 +14,14 @@
 - 요청 수량 기준 재고·부족분 조회
 - Job, Unit, 검사와 불량 슬롯 조회
 - 제품별 슬롯 불량률 조회
-- 조립 시작 요청의 `control.assembly_requests` 저장과 현재/최근 조립 스냅샷 조회
+- UUID `job_id` 기준 Job 생성과 현재/최근 조립 스냅샷 조회
 - production 불량과 XLSX 데이터시트를 결합한 불량대책서 파일 생성
 - `MAIN_SERVER_MODE=mock|real` 실행 설정 검증
 
-`POST /api/v1/assemblies`는 ROS2를 호출하지 않고 요청을 PostgreSQL에 저장한다.
-따라서 제품 조회와 조립 요청에는 DB 연결만 필요하다. 같은 DSN으로
-`production`은 조회하고 `control.assembly_requests`는 읽고 쓸 수 있어야 한다.
+`POST /api/v1/assemblies`는 ROS2를 호출하거나 좌표를 저장하지 않고
+`production.jobs`에 `PENDING` Job을 생성한다. 같은 `job_id`와 같은 내용의 재시도는
+기존 Job을 반환하고, 내용이 다르면 거절한다. Job 상태 전이와 Unit 기록은
+AssemblySequencer가 담당한다.
 
 `GET /api/v1/assemblies/current`만 AssemblySequencer의 ROS2 status service를
 호출하므로 이 route를 사용할 프로세스에는 ROS2와 `Farino_AIO_Mock` workspace가
@@ -47,7 +47,7 @@ MAIN_SERVER_DB_DSN='dbname=main_unity_mock_test' \
 
 부품·단가·검사항목은
 `data/semiconductor_assembly_quality_datasheet_2026-08-18.xlsx`를 직접 읽습니다.
-DB 업무 데이터는 `production` 7개 테이블과 `control.assembly_requests`에만 둡니다.
+DB 업무 데이터는 `production` 7개 테이블에만 둡니다.
 
 XLSX 접근은 [datasheet.py](datasheet.py) 한 곳에 모여 있고, HTTP API와 대책서
 생성기가 같이 씁니다. 파일 mtime이 바뀌면 다시 읽으므로 시트를 고쳐도 서버를

@@ -29,18 +29,16 @@ class MockBackend:
         return snapshot
 
     async def start(self, command):
-        payload = dict(command)
-        payload.pop("assembled_pcb")
-        result = parse_internal_response((await self._call(payload)).cmd_res)
+        result = parse_internal_response((await self._call(command)).cmd_res)
         if not result["accepted"]:
             raise RuntimeError(
                 result.get("message") or "internal Mock assembly rejected the request"
             )
 
-    async def transfer_assembled_pcb(self, request_id, assembled_pcb):
+    async def transfer_assembled_pcb(self, job_id, assembled_pcb):
         result = parse_internal_response((await self._call({
             "command": "transfer_assembled_pcb",
-            "request_id": request_id,
+            "job_id": job_id,
             "assembled_pcb": assembled_pcb,
         })).cmd_res)
         if not result["accepted"]:

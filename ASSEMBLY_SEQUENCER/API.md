@@ -30,16 +30,16 @@
 | 항목 | 계약 |
 | --- | --- |
 | 프로세스 경계 | `real_assembly`는 MainServer와 독립 실행한다. |
-| MainServer 중단 | DB에 적재된 `QUEUED` 요청과 이미 실행 중인 작업은 유지된다. MainServer 경유 신규 요청만 불가하다. |
-| 요청 수락 | HTTP `202`는 PostgreSQL 명령 queue 적재 성공이다. backend `accepted=true`도 작업 완료가 아니다. |
+| MainServer 중단 | DB에 적재된 `PENDING` Job과 이미 실행 중인 작업은 유지된다. MainServer 경유 신규 요청만 불가하다. |
+| 요청 수락 | HTTP `202`는 PostgreSQL Job 생성 성공이다. backend `accepted=true`도 작업 완료가 아니다. |
 | 작업 완료 | `COMPLETED`는 실제 조립과 검사가 모두 완료된 상태다. |
 | DB 상태 | 실제 작업 상태와 `db_sync_state`를 분리한다. |
-| 동시 실행 | 활성 작업은 1개만 허용하며 추가 HTTP 요청은 `QUEUED`로 대기한다. |
-| 요청 식별 | 호출자가 UUID 문자열 `request_id`를 생성하고 모든 비동기 결과를 대조한다. |
-| 중복 요청 | 같은 ID·같은 요청은 기존 결과를 반환하고, 같은 ID·다른 요청은 `DUPLICATE_REQUEST`로 거절한다. |
+| 동시 실행 | 활성 작업은 1개만 허용하며 추가 Job은 `PENDING`으로 대기한다. |
+| 요청 식별 | 호출자가 UUID 문자열 `job_id`를 생성하고 모든 비동기 결과를 대조한다. |
+| 중복 요청 | 같은 Job ID·같은 내용은 기존 결과를 반환하고, 같은 Job ID·다른 내용은 `DUPLICATE_REQUEST`로 거절한다. |
 | 완료 판정 | 명령 수락 응답이 아니라 실제 장비 상태, 검사 결과, timeout을 기준으로 판정한다. |
 | 재접속 | `/real/assembly/status`로 활성 작업 또는 최근 terminal snapshot을 조회한다. |
-| 재시작 복구 | PostgreSQL의 `QUEUED` 요청은 유지한다. 재시작 시 중단된 `RUNNING` 요청은 `FAILED`로 마감하며 실제 로봇 동작 자동 재개는 보장하지 않는다. |
+| 재시작 복구 | PostgreSQL의 `PENDING` Job은 유지한다. 재시작 시 중단된 RUNNING Unit만 FAILED로 마감하고 Job은 RUNNING으로 남긴다. 좌표는 저장하지 않으므로 호출자가 같은 job_id와 새 좌표로 재개한다. |
 
 ## 3. ROS-ASM-003 Real backend 자동 조립 시작
 
@@ -49,33 +49,32 @@
 
 | 항목 | 내용 |
 | --- | --- |
-| 목적 | AssemblySequencer가 claim·예약한 Real 조립 작업의 실행 Runner를 시작한다. |
+| 목적 | AssemblySequencer가 claim한 Real 조립 작업의 실행 Runner를 시작한다. |
 | 호출자 | AssemblySequencer Real adapter |
 | 제공자 | `real_assembly` backend |
 | 구분 | ROS 2 Service |
 | 인터페이스 | `/real/assembly/start` |
 | 타입 | `real_assembly_interfaces/srv/StartAssembly` |
 | 성공 조건 | backend가 실행 요청을 검증·수락한 뒤 `accepted=true` |
-| 멱등성 | `request_id` 기준 보장 |
+| 멱등성 | `job_id` 기준 보장 |
 | 상태 | 계약 확정·IDL/실행 노드 미구현 |
 
 ### 3.2 요청 필드
 
 | 필드 | 타입 | 필수 | 제약조건 | 설명 |
 | --- | --- | :---: | --- | --- |
-| `request_id` | string | Y | UUID 문자열 | 요청·결과 상관관계 및 중복 방지 ID |
+| `job_id` | string | Y | UUID 문자열 | Job·결과 상관관계 및 HTTP 재시도 중복 방지 ID |
 | `product_code` | string | Y | 비어 있지 않음 | 생산 제품 코드 |
 | `product_version` | string | Y | 비어 있지 않음 | 제품 버전 |
 | `recipe_version` | string | Y | 비어 있지 않음 | 조립 레시피 버전 |
-| `requested_quantity` | uint32 | Y | 현재는 `1`만 허용 | 요청 수량 |
+| `requested_quantity` | uint32 | Y | 양의 정수 | 요청 수량 |
 
 ### 3.3 응답 필드
 
 | 필드 | 타입 | 설명 |
 | --- | --- | --- |
 | `accepted` | bool | backend 검증과 실행 요청 수락 여부 |
-| `request_id` | string | 요청 ID |
-| `job_id` | int64 | 생성되거나 기존에 매핑된 Job ID |
+| `job_id` | string(UUID) | Job ID |
 | `unit_id` | int64 | 생성되거나 기존에 매핑된 Unit ID |
 | `error_code` | string | 실패 코드, 성공 시 빈 문자열 |
 | `message` | string | 처리 결과 설명 |
@@ -84,7 +83,7 @@
 
 | 순서 | 처리 | 실패 시 |
 | :---: | --- | --- |
-| 1 | AssemblySequencer가 PostgreSQL 명령을 claim하고 Job·Unit·재고를 한 transaction에서 예약 | backend 미호출·요청 실패 |
+| 1 | AssemblySequencer가 PostgreSQL Job을 claim하고 Unit 생성·재고 검증을 한 transaction에서 수행 | backend 미호출·요청 실패 |
 | 2 | adapter가 필수값·식별자와 중복 요청을 확인 | 요청 거절 |
 | 3 | backend가 안전·FR5 준비 상태와 활성 작업을 확인 | 요청 거절 |
 | 4 | `job_id`, `unit_id`를 활성 상태에 저장 | 요청 거절 |
@@ -97,9 +96,9 @@ Service callback에서는 실제 Pick·Place를 실행하지 않는다.
 | 오류 코드 | 발생 조건 |
 | --- | --- |
 | `INVALID_REQUEST` | 필수값·형식·수량 오류 |
-| `DUPLICATE_REQUEST` | 같은 `request_id`에 다른 요청 내용 사용 |
+| `DUPLICATE_REQUEST` | 같은 `job_id`에 다른 Job 내용 사용 |
 | `BUSY` | 다른 작업 실행 중 |
-| `DB_UNAVAILABLE` | Job·Unit 예약 또는 재고 검증 불가 |
+| `DB_UNAVAILABLE` | Job claim·Unit 생성 또는 재고 검증 불가 |
 | `STOCK_UNAVAILABLE` | 필요 재고 부족 |
 | `SAFETY_NOT_READY` | 안전 상태가 시작을 허용하지 않음 |
 | `ROBOT_UNAVAILABLE` | FR5 명령·상태 경계가 준비되지 않음 |
@@ -123,15 +122,14 @@ Service callback에서는 실제 Pick·Place를 실행하지 않는다.
 
 | 필드 | 타입 | 필수 | 설명 |
 | --- | --- | :---: | --- |
-| `request_id` | string | N | 비어 있으면 활성 작업 또는 최근 terminal snapshot 조회 |
+| `job_id` | string | N | 비어 있으면 활성 작업 또는 최근 terminal snapshot 조회 |
 
 ### 4.3 응답 필드
 
 | 필드 | 타입·형식 | Nullable | 설명 |
 | --- | --- | :---: | --- |
 | `found` | bool | N | 조회 결과 존재 여부 |
-| `request_id` | string | N | 요청 ID |
-| `job_id` | int64 | N | Job ID |
+| `job_id` | string(UUID) | N | Job ID |
 | `unit_id` | int64 | N | Unit ID |
 | `state` | string(enum) | N | 현재 작업 상태 |
 | `current_step` | string | N | 현재 실행 단계 |
@@ -162,8 +160,7 @@ Service callback에서는 실제 Pick·Place를 실행하지 않는다.
 | 필드 | 타입·형식 | 설명 |
 | --- | --- | --- |
 | `stamp` | `builtin_interfaces/Time` | 발행 시각 |
-| `request_id` | string | 요청 ID |
-| `job_id` | int64 | Job ID |
+| `job_id` | string(UUID) | Job ID |
 | `unit_id` | int64 | Unit ID |
 | `state` | string(enum) | 작업 상태 |
 | `current_step` | string | 현재 실행 단계 |
@@ -258,7 +255,7 @@ FAIRINO SDK IK solver를 선택한다. 두 solver 모두 같은 Tool 1 보정값
 
 ```text
 # Goal: 배열 index가 YAML steps 순서다.
-string request_id
+string job_id
 string recipe_version
 string[] part_ids
 string[] slot_codes
@@ -296,7 +293,7 @@ string message
 `MoveConveyorToStation.action` 정의:
 
 ```text
-string request_id
+string job_id
 string station
 ---
 bool success
@@ -342,8 +339,7 @@ string message
 `InspectAssembly.action` 정의:
 
 ```text
-string request_id
-int64 job_id
+string job_id
 int64 unit_id
 string product_code
 string product_version
@@ -382,14 +378,14 @@ ROS 2는 상태 전달, 신규 명령 차단과 작업 실패 전환을 담당�
 
 | 구분 | 소유자 | 연결 | 권한 |
 | --- | --- | --- | --- |
-| 생산 조회·명령 적재/조회 | MainServer | `MAIN_SERVER_DB_DSN` | `production` SELECT, `control.assembly_requests` INSERT·SELECT |
-| 명령 claim·생산 쓰기 | AssemblySequencer | `PRODUCTION_DB_DSN` | `control.assembly_requests`, `production` transaction |
+| 생산 조회·Job 생성 | MainServer | `MAIN_SERVER_DB_DSN` | 제품·Job SELECT, `production.jobs` INSERT |
+| Job claim·생산 쓰기 | AssemblySequencer | `PRODUCTION_DB_DSN` | `production` transaction |
 
 ### 7.2 내부 인터페이스
 
 | ID | 기능명 | 송신자 → 수신자 | 구분 | 상태 |
 | --- | --- | --- | --- | --- |
-| INT-DB-000 | 조립 명령 queue 적재·claim | MainServer → PostgreSQL → AssemblySequencer | persistent DB queue | Mock 구현 |
+| INT-DB-000 | 조립 Job 전달·claim | 호출자 → AssemblySequencer → PostgreSQL | UUID Job handoff | Mock 구현 |
 | INT-DB-001 | 생산 DB 갱신 예약 | Sequencer 업무 흐름 → DB Worker | bounded in-process queue | Mock·공통 구현 |
 | INT-DB-002 | 생산 DB transaction 적용 | DB Worker → PostgreSQL | DB transaction | Mock·공통 구현 |
 
@@ -422,14 +418,14 @@ ROS 2는 상태 전달, 신규 명령 차단과 작업 실패 전환을 담당�
 | 실패 | backoff 재시도하며 overflow와 최종 실패를 조용히 폐기하지 않는다. |
 | 멱등성 | 현재는 DB 상태로 보장하며 `event_id` 영속 중복 제거는 Outbox 단계에서 추가한다. |
 | 저장 제외 | 관절·TCP 스트림과 고빈도 상태는 생산 DB에 저장하지 않는다. |
-| 영속성 | 명령 queue(`control.assembly_requests`)는 영속이다. 완료 이벤트 queue(`DbWriter`)는 프로세스 재시작을 넘는 보존을 보장하지 않는다. |
+| 영속성 | Job은 `production.jobs`에 영속한다. 완료 이벤트 queue(`DbWriter`)는 프로세스 재시작을 넘는 보존을 보장하지 않는다. |
 
 ## 8. 실 로봇 구현자 준수사항
 
 | 구분 | 지켜야 할 내용 |
 | --- | --- |
 | 공개 계약 | endpoint·필드·상태·terminal 의미를 변경하지 않는다. 변경은 Unity 담당자와 먼저 합의한다. |
-| 상관관계 | 모든 비동기 결과를 `request_id`로 활성 작업과 대조한다. 다른 요청의 callback은 폐기한다. |
+| 상관관계 | 모든 비동기 결과를 UUID `job_id`로 활성 작업과 대조한다. 다른 요청의 callback은 폐기한다. |
 | 실행 완료 | `ExecuteAsync()`는 terminal 결과 전에는 성공으로 끝내지 않는다. |
 | 하위 경계 | 검증·변환·통신·실제 완료 감지·timeout·실패 전달을 각 하위 공개 진입점에서 완결한다. |
 | Sequencer | 작업 순서와 중단·건너뛰기·재시도 정책만 둔다. 좌표 변환·vendor 명령·SQL을 넣지 않는다. |
@@ -443,8 +439,8 @@ ROS 2는 상태 전달, 신규 명령 차단과 작업 실패 전환을 담당�
 
 | 확인 항목 | 기대 결과 |
 | --- | --- |
-| 같은 `request_id` 재호출 | 새 Job 미생성 |
-| 동시 HTTP 요청 | 한 건만 `RUNNING`, 나머지는 `QUEUED` 유지 |
+| 같은 `job_id` 재호출 | 새 Job 미생성 |
+| 동시 HTTP 요청 | 한 건만 `RUNNING`, 나머지는 `PENDING` 유지 |
 | MainServer 종료 | 이미 수락된 작업 계속 실행 |
 | DB claim·예약·재고 검증 실패 | 실제 로봇 미동작 |
 | DB 지연 | 로봇·안전 callback 정상 처리 |

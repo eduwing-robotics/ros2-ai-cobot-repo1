@@ -29,6 +29,9 @@ namespace MainUnity.Runtime.Robot.Mock
         [Header("MainServer")]
         [SerializeField] string mainServerBaseUrl = "http://127.0.0.1:8000";
 
+        [SerializeField] string productCode = "HBM-ACCELERATOR-PACKAGE-BOARD";
+        [SerializeField] string productVersion = "hbm-pkg-r1";
+        [SerializeField, Min(1)] int requestedQuantity = 1;
         [Header("ROS Feedback and Recovery")]
         [SerializeField] string startService = "/unity/assembly/start";
         [SerializeField] string feedbackTopic = "/unity/assembly/feedback";
@@ -60,7 +63,7 @@ namespace MainUnity.Runtime.Robot.Mock
         TaskCompletionSource<string> terminal;
         Task recoveryTask = Task.CompletedTask;
         Transform heldItem;
-        string activeRequestId;
+        string activeJobId;
         string heldPartId;
         string heldSlotCode;
         int expectedStepCount;
@@ -78,20 +81,30 @@ namespace MainUnity.Runtime.Robot.Mock
         int recoveryGeneration;
 
         [Serializable]
+        sealed class JobRequest
+        {
+            public string command;
+            public string job_id;
+            public string product_code;
+            public string product_version;
+            public int requested_quantity;
+            public string recipe_version;
+        }
+
+        [Serializable]
         sealed class StartRequest
         {
             public string command;
-            public string request_id;
+            public string job_id;
             public string recipe_version;
             public MockObservation[] observations;
-            public AssembledPcbTransfer assembled_pcb;
         }
 
         [Serializable]
         sealed class TransferRequest
         {
             public string command;
-            public string request_id;
+            public string job_id;
             public AssembledPcbTransfer assembled_pcb;
         }
 
@@ -122,7 +135,7 @@ namespace MainUnity.Runtime.Robot.Mock
         sealed class StartResponse
         {
             public bool accepted;
-            public string request_id;
+            public string job_id;
             public string error_code;
             public string message;
         }
@@ -144,7 +157,7 @@ namespace MainUnity.Runtime.Robot.Mock
         [Serializable]
         sealed class AssemblyFeedback
         {
-            public string request_id;
+            public string job_id;
             public string state;
             public int step_order;
             public string part_id;
@@ -158,7 +171,7 @@ namespace MainUnity.Runtime.Robot.Mock
         {
             public bool available;
             public bool active;
-            public string request_id;
+            public string job_id;
             public string recipe_version;
             public string state;
             public int placed_count;
@@ -212,12 +225,12 @@ namespace MainUnity.Runtime.Robot.Mock
             EnsureRosConnection();
             await conveyor.MoveBoardToAssemblyAsync();
             MockObservation[] observations = BuildObservations();
-            AssembledPcbTransfer pcbTransfer = BuildAssembledPcbTransfer();
 
             var current = new TaskCompletionSource<string>();
             terminal = current;
             assemblyRequested = true;
-            activeRequestId = Guid.NewGuid().ToString();
+            if (string.IsNullOrEmpty(activeJobId))
+                activeJobId = Guid.NewGuid().ToString();
             processedCallbacks.Clear();
             expectedStepCount = observations.Length;
             heldStepOrder = -1;
@@ -230,15 +243,24 @@ namespace MainUnity.Runtime.Robot.Mock
             bool accepted = false;
             try
             {
-                string json = JsonUtility.ToJson(new StartRequest
+                string jobJson = JsonUtility.ToJson(new JobRequest
                 {
                     command = "start",
-                    request_id = activeRequestId,
-                    recipe_version = recipeVersion,
-                    observations = observations,
-                    assembled_pcb = pcbTransfer
+                    job_id = activeJobId,
+                    product_code = productCode,
+                    product_version = productVersion,
+                    requested_quantity = requestedQuantity,
+                    recipe_version = recipeVersion
                 });
-                await PostStartAsync(json);
+                string startJson = JsonUtility.ToJson(new StartRequest
+                {
+                    command = "start",
+                    job_id = activeJobId,
+                    recipe_version = recipeVersion,
+                    observations = observations
+                });
+                await PostJobAsync(jobJson);
+                await StartMockAsync(startJson);
                 accepted = true;
                 Report(AssemblyState.Started, null);
 
@@ -256,7 +278,8 @@ namespace MainUnity.Runtime.Robot.Mock
                     terminal = null;
                 if (!accepted)
                     assemblyRequested = false;
-                activeRequestId = string.Empty;
+                else
+                    activeJobId = string.Empty;
                 processedCallbacks.Clear();
             }
         }
@@ -352,7 +375,7 @@ namespace MainUnity.Runtime.Robot.Mock
             heldSlotCode = string.Empty;
             heldStepOrder = -1;
             lastPlacedStepOrder = 0;
-            activeRequestId = snapshot.request_id;
+            activeJobId = snapshot.job_id;
             assembledPcbHeld = false;
             assembledPcbTransferred = false;
             inspectionTransferStarted = false;
@@ -376,7 +399,7 @@ namespace MainUnity.Runtime.Robot.Mock
                     string recoveredSlot = slots[slotIndex].name;
                     ApplyPicked(new AssemblyFeedback
                     {
-                        request_id = snapshot.request_id,
+                        job_id = snapshot.job_id,
                         state = Picked,
                         step_order = observation.order,
                         part_id = observation.part_id,
@@ -384,7 +407,7 @@ namespace MainUnity.Runtime.Robot.Mock
                     }, true);
                     ApplyPlaced(new AssemblyFeedback
                     {
-                        request_id = snapshot.request_id,
+                        job_id = snapshot.job_id,
                         state = Placed,
                         step_order = observation.order,
                         part_id = observation.part_id,
@@ -397,7 +420,7 @@ namespace MainUnity.Runtime.Robot.Mock
                     MockObservation observation = observations[snapshot.held_step_order - 1];
                     ApplyPicked(new AssemblyFeedback
                     {
-                        request_id = snapshot.request_id,
+                        job_id = snapshot.job_id,
                         state = Picked,
                         step_order = observation.order,
                         part_id = snapshot.held_part_id,
@@ -447,9 +470,9 @@ namespace MainUnity.Runtime.Robot.Mock
             if (snapshot.active != activeState)
                 throw new InvalidOperationException(
                     "Mock assembly status active flag does not match its state.");
-            if (!Guid.TryParse(snapshot.request_id, out _))
+            if (!Guid.TryParse(snapshot.job_id, out _))
                 throw new InvalidOperationException(
-                    "Mock assembly status request_id must be a UUID.");
+                    "Mock assembly status job_id must be a UUID.");
             if (snapshot.recipe_version != recipeVersion)
                 throw new InvalidOperationException(
                     "Mock assembly status recipe_version did not match.");
@@ -506,8 +529,14 @@ namespace MainUnity.Runtime.Robot.Mock
                 throw new InvalidOperationException(
                     "Assign MockRobotControl, MockConveyor, ItemManager and SimGripperCatcher.");
             if (string.IsNullOrWhiteSpace(startService) || string.IsNullOrWhiteSpace(feedbackTopic) ||
-                string.IsNullOrWhiteSpace(recipeVersion))
-                throw new InvalidOperationException("Mock assembly ROS names and recipe version are required.");
+                string.IsNullOrWhiteSpace(recipeVersion) ||
+                string.IsNullOrWhiteSpace(productCode) ||
+                string.IsNullOrWhiteSpace(productVersion))
+                throw new InvalidOperationException(
+                    "Mock ROS names, product identity and recipe version are required.");
+            if (requestedQuantity <= 0)
+                throw new InvalidOperationException(
+                    "Mock requested quantity must be a positive integer.");
             if (!Uri.TryCreate(mainServerBaseUrl, UriKind.Absolute, out Uri mainServerUri) ||
                 mainServerUri.Scheme != Uri.UriSchemeHttp &&
                 mainServerUri.Scheme != Uri.UriSchemeHttps)
@@ -518,7 +547,44 @@ namespace MainUnity.Runtime.Robot.Mock
                 throw new InvalidOperationException("Reload the Mock scene before starting another assembly.");
         }
 
-        async Task PostStartAsync(string json)
+        async Task StartMockAsync(string json)
+        {
+            Task<RemoteCmdInterfaceResponse> request = connection
+                .SendServiceMessage<RemoteCmdInterfaceResponse>(startService,
+                    new RemoteCmdInterfaceRequest(json));
+            if (await Task.WhenAny(request, Task.Delay(TimeSpan.FromSeconds(5))) != request)
+                throw new TimeoutException("Mock assembly start service timed out.");
+
+            RemoteCmdInterfaceResponse message = await request;
+            if (message == null || string.IsNullOrWhiteSpace(message.cmd_res))
+                throw new InvalidOperationException(
+                    "Mock assembly start returned an empty response.");
+            StartResponse response;
+            try
+            {
+                response = JsonUtility.FromJson<StartResponse>(message.cmd_res);
+            }
+            catch (Exception exception)
+            {
+                throw new InvalidOperationException(
+                    "Mock assembly start returned invalid JSON.", exception);
+            }
+            if (response == null || response.job_id != activeJobId)
+                throw new InvalidOperationException(
+                    "Mock assembly start response job_id did not match.");
+            if (!response.accepted)
+            {
+                string reason = string.IsNullOrWhiteSpace(response.message)
+                    ? "Mock assembly start was rejected."
+                    : response.message;
+                throw new InvalidOperationException(
+                    string.IsNullOrWhiteSpace(response.error_code)
+                        ? reason
+                        : response.error_code + ": " + reason);
+            }
+        }
+
+        async Task PostJobAsync(string json)
         {
             using var request = new UnityWebRequest(
                 mainServerBaseUrl.TrimEnd('/') + "/api/v1/assemblies",
@@ -555,9 +621,9 @@ namespace MainUnity.Runtime.Robot.Mock
                     ? reason
                     : $"{code}: {reason}");
             }
-            if (response?.data == null || response.data.request_id != activeRequestId)
+            if (response?.data == null || response.data.job_id != activeJobId)
                 throw new InvalidOperationException(
-                    "MainServer assembly response request_id did not match.");
+                    "MainServer assembly response job_id did not match.");
             if (response.data.accepted)
                 return;
 
@@ -585,7 +651,7 @@ namespace MainUnity.Runtime.Robot.Mock
                 string json = JsonUtility.ToJson(new TransferRequest
                 {
                     command = "transfer_assembled_pcb",
-                    request_id = activeRequestId,
+                    job_id = activeJobId,
                     assembled_pcb = BuildAssembledPcbTransfer()
                 });
                 Task<RemoteCmdInterfaceResponse> request = connection
@@ -610,9 +676,9 @@ namespace MainUnity.Runtime.Robot.Mock
                         "Mock PCB transfer returned invalid JSON.", exception);
                 }
 
-                if (response == null || response.request_id != activeRequestId)
+                if (response == null || response.job_id != activeJobId)
                     throw new InvalidOperationException(
-                        "Mock PCB transfer response request_id did not match.");
+                        "Mock PCB transfer response job_id did not match.");
                 if (!response.accepted)
                 {
                     string reason = string.IsNullOrWhiteSpace(response.message)
@@ -659,7 +725,7 @@ namespace MainUnity.Runtime.Robot.Mock
         void HandleFeedback(AssemblyFeedback feedback)
         {
             if (terminal == null || terminal.Task.IsCompleted ||
-                feedback.request_id != activeRequestId)
+                feedback.job_id != activeJobId)
                 return;
 
             try
@@ -672,6 +738,12 @@ namespace MainUnity.Runtime.Robot.Mock
                     feedback.step_order == heldStepOrder && feedback.part_id == heldPartId &&
                     feedback.slot_code == heldSlotCode)
                     return;
+
+                if (feedback.state == Started && lastPlacedStepOrder == expectedStepCount)
+                {
+                    ResetForNextUnit();
+                    processedCallbacks.Clear();
+                }
 
                 string key = string.Concat(feedback.state, "|", feedback.step_order, "|",
                     feedback.part_id, "|", feedback.slot_code);
@@ -736,6 +808,24 @@ namespace MainUnity.Runtime.Robot.Mock
             {
                 FailActive(exception.Message);
             }
+        }
+
+        void ResetForNextUnit()
+        {
+            if (heldItem != null || assembledPcbHeld)
+                throw new InvalidOperationException(
+                    "A new Mock Unit started while the previous object was held.");
+
+            // ponytail: Reuse the scene board and parts until the Mock scene models a board queue.
+            RestoreAssembledPcbAtAssembly();
+            nextItemIndices.Clear();
+            nextSlotIndices.Clear();
+            heldPartId = string.Empty;
+            heldSlotCode = string.Empty;
+            heldStepOrder = -1;
+            lastPlacedStepOrder = 0;
+            assembledPcbTransferred = false;
+            inspectionTransferStarted = false;
         }
 
         static void ValidateFeedback(AssemblyFeedback feedback)
@@ -1039,7 +1129,7 @@ namespace MainUnity.Runtime.Robot.Mock
             if (progress == null)
                 return;
             progress.Apply(new AssemblyProgressFrame(
-                activeRequestId,
+                activeJobId,
                 recipeVersion,
                 state,
                 feedback != null ? feedback.step_order : heldStepOrder > 0 ? heldStepOrder : 0,

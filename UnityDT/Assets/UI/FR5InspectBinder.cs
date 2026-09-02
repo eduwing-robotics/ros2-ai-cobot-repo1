@@ -27,7 +27,7 @@ namespace MainUnity.UI
 
         [Serializable] sealed class AssemblyResponse { public AssemblySnapshot data; }
         [Serializable] sealed class UnitsResponse { public Unit[] data; }
-        [Serializable] sealed class AssemblySnapshot { public int job_id; public int unit_id; }
+        [Serializable] sealed class AssemblySnapshot { public string job_id; public int unit_id; }
         [Serializable] sealed class Unit
         {
             public int unit_id;
@@ -141,7 +141,7 @@ namespace MainUnity.UI
             AssemblySnapshot snapshot = null;
             yield return Get("/api/v1/assemblies/current", json => snapshot = JsonUtility.FromJson<AssemblyResponse>(json)?.data);
             if (!isActiveAndEnabled) yield break;
-            if (snapshot == null || snapshot.job_id <= 0)
+            if (snapshot == null || string.IsNullOrEmpty(snapshot.job_id))
             {
                 ShowEmpty("활성 또는 최근 작업 없음");
                 loadRoutine = null;
@@ -174,7 +174,7 @@ namespace MainUnity.UI
             else ShowEmpty("MainServer 조회 실패 · " + request.responseCode);
         }
 
-        void ShowUnits(int jobId, Unit[] units, Unit selected)
+        void ShowUnits(string jobId, Unit[] units, Unit selected)
         {
             FR5EmptyState.Present(jobSummary, "JOB #" + jobId + " · UNIT #" + selected.unit_id);
             if (unitsSummary != null) unitsSummary.text = units.Length + " UNIT";

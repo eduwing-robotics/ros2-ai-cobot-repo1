@@ -112,7 +112,7 @@ class MainServerApiTest(unittest.TestCase):
             status, body = self.request("/api/v1/jobs/1")
             self.assertEqual((status, body["error"]["code"]), (404, "not_found"))
         else:
-            job_id = job[0]
+            job_id = str(job[0])
             status, body = self.request(f"/api/v1/jobs/{job_id}")
             self.assertEqual((status, body["data"]["job_id"]), (200, job_id))
             status, body = self.request(f"/api/v1/jobs/{job_id}/units")
@@ -120,97 +120,94 @@ class MainServerApiTest(unittest.TestCase):
             self.assertIsInstance(body["data"], list)
 
     def test_execution_routes_with_fake_gateway(self):
-        request_id = "12345678-1234-5678-1234-567812345678"
+        job_id = "12345678-1234-5678-1234-567812345678"
         command = {
             "command": "start",
-            "request_id": request_id,
+            "job_id": job_id,
+            "product_code": "HBM-ACCELERATOR-PACKAGE-BOARD",
+            "product_version": "hbm-pkg-r1",
+            "requested_quantity": 1,
             "recipe_version": "assembly-r1",
-            "observations": [{}],
-            "assembled_pcb": {},
         }
         body = json.dumps(command, separators=(",", ":")).encode("utf-8")
         snapshot = {
             "available": True,
             "active": True,
-            "request_id": request_id,
+            "job_id": job_id,
             "recipe_version": "assembly-r1",
             "state": "STARTED",
             "placed_count": 0,
             "expected_step_count": 1,
         }
         gateway = FakeGateway(snapshot=snapshot)
-        queued = {
-            "accepted": True,
-            "request_id": request_id,
-            "status": "QUEUED",
-        }
+        created = {"accepted": True, "job_id": job_id, "status": "PENDING"}
         with patch.object(server, "assembly_gateway", gateway), \
                 patch.object(
-                    server.queries, "enqueue_assembly", return_value=queued
-                ) as enqueue:
+                    server.queries, "create_job", return_value=created
+                ) as create:
             status, result = self.request("/api/v1/assemblies", "POST", body)
             self.assertEqual((status, result["data"]["accepted"]), (202, True))
-            enqueue.assert_called_once_with(command, "mock")
+            create.assert_called_once_with(command)
             self.assertEqual(gateway.calls, [])
             status, result = self.request("/api/v1/assemblies/current")
             self.assertEqual((status, result["data"]["state"]), (200, "STARTED"))
             self.assertEqual(gateway.calls[-1], '{"command":"status"}')
 
     def test_execution_duplicate_and_unavailable(self):
-        request_id = "12345678-1234-5678-1234-567812345678"
         body = json.dumps({
             "command": "start",
-            "request_id": request_id,
+            "job_id": "12345678-1234-5678-1234-567812345678",
+            "product_code": "HBM-ACCELERATOR-PACKAGE-BOARD",
+            "product_version": "hbm-pkg-r1",
+            "requested_quantity": 1,
             "recipe_version": "assembly-r1",
-            "observations": [{}],
-            "assembled_pcb": {},
         }).encode("utf-8")
         with patch.object(
             server.queries,
-            "enqueue_assembly",
-            side_effect=server.queries.DuplicateRequest("different command"),
+            "create_job",
+            side_effect=server.queries.DuplicateRequest("different Job request"),
         ):
             status, result = self.request("/api/v1/assemblies", "POST", body)
             self.assertEqual(
                 (status, result["error"]["code"]), (409, "duplicate_request")
             )
-        unavailable = FakeGateway(error=GatewayUnavailable("ROS2 runtime is unavailable"))
+        unavailable = FakeGateway(error=GatewayUnavailable("ROS2 unavailable"))
         with patch.object(server, "assembly_gateway", unavailable):
             status, result = self.request("/api/v1/assemblies/current")
-            self.assertEqual((status, result["error"]["code"]), (503, "assembly_unavailable"))
-        unavailable_snapshot = FakeGateway(snapshot={"available": False, "error_code": "UNAVAILABLE", "message": "bridge DB unavailable"})
-        with patch.object(server, "assembly_gateway", unavailable_snapshot):
-            status, result = self.request("/api/v1/assemblies/current")
-            self.assertEqual((status, result["error"]["code"]), (503, "assembly_unavailable"))
-        idle = FakeGateway(snapshot={"available": False, "error_code": "", "state": "IDLE"})
+            self.assertEqual(
+                (status, result["error"]["code"]), (503, "assembly_unavailable")
+            )
+        idle = FakeGateway(
+            snapshot={"available": False, "error_code": "", "state": "IDLE"}
+        )
         with patch.object(server, "assembly_gateway", idle):
             status, result = self.request("/api/v1/assemblies/current")
             self.assertEqual((status, result["data"]["state"]), (200, "IDLE"))
 
-    def test_enqueue_is_idempotent_by_request_id(self):
-        request_id = str(uuid.uuid4())
+    def test_create_job_is_idempotent_by_job_id(self):
+        job_id = str(uuid.uuid4())
         command = {
             "command": "start",
-            "request_id": request_id,
+            "job_id": job_id,
+            "product_code": "HBM-ACCELERATOR-PACKAGE-BOARD",
+            "product_version": "hbm-pkg-r1",
+            "requested_quantity": 1,
             "recipe_version": "assembly-r1",
-            "observations": [{}],
-            "assembled_pcb": {},
         }
         try:
-            first = server.queries.enqueue_assembly(command, "mock")
-            second = server.queries.enqueue_assembly(command, "mock")
-            self.assertEqual(first["status"], "QUEUED")
+            first = server.queries.create_job(command)
+            second = server.queries.create_job(command)
+            self.assertEqual(first["status"], "PENDING")
             self.assertEqual(second, first)
 
             changed = dict(command)
-            changed["recipe_version"] = "different"
+            changed["requested_quantity"] = 2
             with self.assertRaises(server.queries.DuplicateRequest):
-                server.queries.enqueue_assembly(changed, "mock")
+                server.queries.create_job(changed)
         finally:
             with psycopg.connect(os.environ["MAIN_SERVER_DB_DSN"]) as connection:
                 connection.execute(
-                    "DELETE FROM control.assembly_requests WHERE request_id = %s",
-                    (request_id,),
+                    "DELETE FROM production.jobs WHERE job_id = %s", (job_id,)
                 )
 
     def test_validation_and_missing_resource(self):

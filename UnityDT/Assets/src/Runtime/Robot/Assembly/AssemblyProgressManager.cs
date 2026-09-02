@@ -30,12 +30,12 @@ namespace MainUnity.Runtime.Robot.Assembly
     /// </summary>
     public sealed class AssemblyProgressFrame
     {
-        public AssemblyProgressFrame(string requestId, string recipeVersion, AssemblyState state,
+        public AssemblyProgressFrame(string jobId, string recipeVersion, AssemblyState state,
             int stepOrder, int expectedStepCount, int placedCount,
             string partId, string slotCode, string errorCode, string message,
             double receiveTimeSeconds)
         {
-            RequestId = requestId ?? string.Empty;
+            JobId = jobId ?? string.Empty;
             RecipeVersion = recipeVersion ?? string.Empty;
             State = state;
             StepOrder = stepOrder;
@@ -48,7 +48,7 @@ namespace MainUnity.Runtime.Robot.Assembly
             ReceiveTimeSeconds = receiveTimeSeconds;
         }
 
-        public string RequestId { get; }
+        public string JobId { get; }
         public string RecipeVersion { get; }
         public AssemblyState State { get; }
 

@@ -52,16 +52,10 @@ class MockAssemblySequencer(Node):
 
         self.db_writer = DbWriter()
         try:
-            recovered = self.db_writer.recover_interrupted("mock")
+            recovered = self.db_writer.recover_interrupted()
             if recovered:
                 self.get_logger().warning(
-                    f"failed {recovered} interrupted Mock assembly request(s)"
-                )
-            active_job = self.db_writer.get_active()
-            if active_job is not None:
-                raise RuntimeError(
-                    f"active DB job {active_job['job_id']} exists; "
-                    "this MVP cannot recover its Unity request_id"
+                    f"failed {recovered} interrupted Mock Unit attempt(s)"
                 )
         except Exception:
             self.db_writer.close(0.1)
@@ -95,15 +89,12 @@ class MockAssemblySequencer(Node):
             10,
             callback_group=feedback_group,
         )
-        self.queue_timer = self.create_timer(
-            0.5, self.poll_queue, callback_group=service_group
-        )
 
     @staticmethod
-    def set_response(response, accepted, request_id="", error_code="", message=""):
+    def set_response(response, accepted, job_id="", error_code="", message=""):
         response.cmd_res = json.dumps({
             "accepted": accepted,
-            "request_id": request_id,
+            "job_id": job_id,
             "error_code": error_code,
             "message": message[:512],
         }, separators=(",", ":"))
@@ -138,17 +129,17 @@ class MockAssemblySequencer(Node):
 
         if command_type == "transfer_assembled_pcb":
             active = self.active
-            request_id = command["request_id"]
-            if active is None or active["request_id"] != request_id:
+            job_id = command["job_id"]
+            if active is None or active["job_id"] != job_id:
                 return self.set_response(
-                    response, False, request_id, "NOT_ACTIVE",
+                    response, False, job_id, "NOT_ACTIVE",
                     "matching assembly is not active",
                 )
             if active["transfer_requested"]:
-                return self.set_response(response, True, request_id)
+                return self.set_response(response, True, job_id)
             if active["state"] != "ASSEMBLY_COMPLETED":
                 return self.set_response(
-                    response, False, request_id, "BUSY",
+                    response, False, job_id, "BUSY",
                     "assembly is not ready for inspection and PCB transfer",
                 )
 
@@ -167,56 +158,44 @@ class MockAssemblySequencer(Node):
             except Exception as error:
                 self.fail_active("DB_ERROR", error)
                 return self.set_response(
-                    response, False, request_id, "DB_ERROR", str(error)
+                    response, False, job_id, "DB_ERROR", str(error)
                 )
 
             try:
                 await self.backend.transfer_assembled_pcb(
-                    request_id, active["assembled_pcb"]
+                    job_id, active["assembled_pcb"]
                 )
             except Exception as error:
                 self.fail_active("INTERNAL_ERROR", error)
                 return self.set_response(
-                    response, False, request_id, "INTERNAL_ERROR", str(error)
+                    response, False, job_id, "INTERNAL_ERROR", str(error)
                 )
-            return self.set_response(response, True, request_id)
+            return self.set_response(response, True, job_id)
 
-        return self.set_response(
-            response, False, command["request_id"], "INVALID_REQUEST",
-            "start commands must be submitted through MainServer",
-        )
+        return await self.start_job(command, response)
 
-    async def poll_queue(self):
-        if self.active is not None or self.db_writer.pending_count:
-            return
+    async def start_job(self, command, response):
+        job_id = command["job_id"]
+        if self.active is not None:
+            if self.active["job_id"] == job_id:
+                return self.set_response(response, True, job_id)
+            return self.set_response(
+                response, False, job_id, "BUSY", "another Job is active"
+            )
         if not self.backend.is_available():
-            return
+            return self.set_response(
+                response, False, job_id, "INTERNAL_ERROR",
+                "internal Mock assembly service is unavailable",
+            )
+
         try:
             work = self.db_writer.claim(
-                "mock",
-                PRODUCT_CODE,
-                PRODUCT_VERSION,
-                RECIPE_VERSION,
+                job_id, PRODUCT_CODE, PRODUCT_VERSION, RECIPE_VERSION
             )
-        except Exception as error:
-            self.get_logger().error(f"failed to claim assembly request: {error}")
-            return
-        if work is None:
-            return
-        request_id = work["request_id"]
-        if "error" in work:
-            self.publish(failed_feedback(request_id, "DB_ERROR", work["error"]))
-            return
-
-        job_id = work["job_id"]
-        try:
-            command_type, command = parse_command(json.dumps(work["payload"]))
-            if command_type != "start" or command["request_id"] != request_id:
-                raise ValueError("queued request identity did not match its payload")
             self.active = {
-                "request_id": request_id,
-                "job_id": job_id,
+                "job_id": work["job_id"],
                 "unit_id": work["unit_id"],
+                "command": command,
                 "state": "STARTED",
                 "placed_count": 0,
                 "expected_step_count": len(command["observations"]),
@@ -224,22 +203,18 @@ class MockAssemblySequencer(Node):
                 "held_part_id": "",
                 "held_slot_code": "",
                 "slot_codes": self.db_writer.get_product_slot_codes(job_id),
-                "assembled_pcb": command["assembled_pcb"],
                 "transfer_requested": False,
                 "inspection_result": "",
             }
             self.terminal_snapshot = None
-        except Exception as error:
-            cleanup_error = self.fail_job(job_id, immediate=True)
-            if cleanup_error is not None:
-                error = RuntimeError(f"{error}; cleanup failed: {cleanup_error}")
-            self.publish(failed_feedback(request_id, "INVALID_REQUEST", str(error)))
-            return
-
-        try:
             await self.backend.start(command)
+            return self.set_response(response, True, job_id)
         except Exception as error:
-            self.fail_active("INTERNAL_ERROR", error, immediate=True)
+            if self.active is not None:
+                self.fail_active("INTERNAL_ERROR", error, immediate=True)
+            return self.set_response(
+                response, False, job_id, "INTERNAL_ERROR", str(error)
+            )
 
     def fail_job(self, job_id, immediate=False):
         try:
@@ -259,7 +234,7 @@ class MockAssemblySequencer(Node):
             error_code = "DB_ERROR"
             error = RuntimeError(f"{error}; cleanup failed: {cleanup_error}")
         failed = failed_feedback(
-            active["request_id"],
+            active["job_id"],
             error_code,
             str(error),
             self.db_writer.sync_state,
@@ -298,10 +273,10 @@ class MockAssemblySequencer(Node):
             return
 
         active = self.active
-        request_id = payload["request_id"]
-        if active is None or request_id != active["request_id"]:
+        job_id = payload["job_id"]
+        if active is None or job_id != active["job_id"]:
             self.get_logger().warning(
-                f"ignored feedback without matching active request: {request_id}"
+                f"ignored feedback without matching active Job: {job_id}"
             )
             return
 
@@ -327,7 +302,32 @@ class MockAssemblySequencer(Node):
             return
 
         try:
+            if not self.db_writer.flush(5.0):
+                raise RuntimeError(
+                    self.db_writer.last_error or "DB updates did not finish in time"
+                )
+            state = self.db_writer.get_job(active["job_id"])
+            if state["completed_quantity"] < state["requested_quantity"]:
+                work = self.db_writer.claim(
+                    active["job_id"], PRODUCT_CODE, PRODUCT_VERSION, RECIPE_VERSION
+                )
+                active.update({
+                    "unit_id": work["unit_id"],
+                    "state": "STARTED",
+                    "placed_count": 0,
+                    "held_step_order": 0,
+                    "held_part_id": "",
+                    "held_slot_code": "",
+                    "transfer_requested": False,
+                    "inspection_result": "",
+                })
+                await self.backend.start(active["command"])
+                return
             self.db_writer.finish(active["job_id"], "COMPLETED")
+            if not self.db_writer.flush(5.0):
+                raise RuntimeError(
+                    self.db_writer.last_error or "Job completion did not finish in time"
+                )
         except Exception as error:
             self.fail_active("DB_ERROR", error)
             return
