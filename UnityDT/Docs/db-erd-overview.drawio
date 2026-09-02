@@ -1,0 +1,505 @@
+<mxfile host="app.diagrams.net" type="device">
+  <diagram id="db-erd-overview" name="ERD">
+    <mxGraphModel dx="1900" dy="1200" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1880" pageHeight="1360" math="0" shadow="0" adaptiveColors="auto">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="production 스키마 ERD" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#1F3864;" vertex="1" parent="1">
+          <mxGeometry x="60" y="12" width="600" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="subtitle" value="7개 테이블 · 전체 열과 PostgreSQL 실제 타입 · 선은 FK 열 행에서 PK 열 행으로 직접 연결 · production_schema.sql (2026-09-02) 기준" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;fontSize=11;fontColor=#888888;" vertex="1" parent="1">
+          <mxGeometry x="900" y="16" width="900" height="24" as="geometry"/>
+        </mxCell>
+        <mxCell id="actor" value="사용자" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;strokeColor=#B85450;strokeWidth=2;fontSize=11;fontStyle=1;fontColor=#B85450;" vertex="1" parent="1">
+          <mxGeometry x="340" y="48" width="52" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="mainserver" value="MainServer" style="rounded=1;arcSize=20;html=1;whiteSpace=wrap;fillColor=#FFFFFF;strokeColor=#B85450;strokeWidth=2;fontSize=12;fontStyle=1;fontColor=#B85450;" vertex="1" parent="1">
+          <mxGeometry x="430" y="66" width="170" height="34" as="geometry"/>
+        </mxCell>
+        <mxCell id="sequencer" value="AssemblySequencer" style="rounded=1;arcSize=20;html=1;whiteSpace=wrap;fillColor=#FFFFFF;strokeColor=#B0B7C3;strokeWidth=1.5;fontSize=12;fontColor=#8A93A0;" vertex="1" parent="1">
+          <mxGeometry x="630" y="66" width="210" height="34" as="geometry"/>
+        </mxCell>
+        <mxCell id="seq_note" value="진입점이 아니다. units · unit_defects · inventory_movements 를 기록한다." style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=10;fontColor=#999999;" vertex="1" parent="1">
+          <mxGeometry x="855" y="66" width="450" height="34" as="geometry"/>
+        </mxCell>
+        <mxCell id="tbl_jobs" value="jobs" style="swimlane;html=1;startSize=34;collapsible=0;marginBottom=0;fontStyle=1;fontSize=15;fontColor=#1B5E20;rounded=1;arcSize=6;fillColor=#D5E8D4;strokeColor=#B85450;strokeWidth=3;swimlaneFillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="320" y="170" width="420" height="268" as="geometry"/>
+        </mxCell>
+        <mxCell id="tbl_jobs_role" value="production · 생산 요청 큐와 실행 기간" style="shape=partialRectangle;html=1;whiteSpace=wrap;top=0;left=0;right=0;bottom=1;fillColor=#F5FAF4;strokeColor=#82B366;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;fontStyle=2;movable=0;resizable=0;" vertex="1" parent="tbl_jobs">
+          <mxGeometry x="0" y="34" width="420" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="jobs_c1" value="&lt;b&gt;PK&lt;/b&gt;&amp;nbsp; job_id" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_jobs">
+          <mxGeometry x="0" y="60" width="420" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="jobs_c1_type" value="uuid" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_jobs">
+          <mxGeometry x="280" y="60" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="jobs_c2" value="&lt;b&gt;FK&lt;/b&gt;&amp;nbsp; product_id" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_jobs">
+          <mxGeometry x="0" y="86" width="420" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="jobs_c2_type" value="bigint" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_jobs">
+          <mxGeometry x="280" y="86" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="jobs_c3" value=" requested_quantity" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_jobs">
+          <mxGeometry x="0" y="112" width="420" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="jobs_c3_type" value="integer&amp;nbsp; [CK &amp;gt; 0]" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_jobs">
+          <mxGeometry x="280" y="112" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="jobs_c4" value=" recipe_version" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_jobs">
+          <mxGeometry x="0" y="138" width="420" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="jobs_c4_type" value="text" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_jobs">
+          <mxGeometry x="280" y="138" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="jobs_c5" value=" job_status" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_jobs">
+          <mxGeometry x="0" y="164" width="420" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="jobs_c5_type" value="text = 'PENDING'&amp;nbsp; [CHECK]" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_jobs">
+          <mxGeometry x="280" y="164" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="jobs_c6" value=" requested_at" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_jobs">
+          <mxGeometry x="0" y="190" width="420" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="jobs_c6_type" value="timestamptz = now()" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_jobs">
+          <mxGeometry x="280" y="190" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="jobs_c7" value=" job_started_at" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_jobs">
+          <mxGeometry x="0" y="216" width="420" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="jobs_c7_type" value="timestamptz NULL" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_jobs">
+          <mxGeometry x="280" y="216" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="jobs_c8" value=" job_finished_at" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_jobs">
+          <mxGeometry x="0" y="242" width="420" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="jobs_c8_type" value="timestamptz NULL" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_jobs">
+          <mxGeometry x="280" y="242" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="tbl_units" value="units" style="swimlane;html=1;startSize=34;collapsible=0;marginBottom=0;fontStyle=1;fontSize=15;fontColor=#1B5E20;rounded=1;arcSize=6;fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=2;swimlaneFillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="800" y="170" width="440" height="294" as="geometry"/>
+        </mxCell>
+        <mxCell id="tbl_units_role" value="production · 완성품 1대의 실행과 검사" style="shape=partialRectangle;html=1;whiteSpace=wrap;top=0;left=0;right=0;bottom=1;fillColor=#F5FAF4;strokeColor=#82B366;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;fontStyle=2;movable=0;resizable=0;" vertex="1" parent="tbl_units">
+          <mxGeometry x="0" y="34" width="440" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="units_c1" value="&lt;b&gt;PK&lt;/b&gt;&amp;nbsp; unit_id" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_units">
+          <mxGeometry x="0" y="60" width="440" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="units_c1_type" value="bigint identity" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_units">
+          <mxGeometry x="300" y="60" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="units_c2" value="&lt;b&gt;FK&lt;/b&gt;&amp;nbsp; job_id" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_units">
+          <mxGeometry x="0" y="86" width="440" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="units_c2_type" value="uuid&amp;nbsp; [U3]" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_units">
+          <mxGeometry x="300" y="86" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="units_c3" value=" unit_sequence_in_job" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_units">
+          <mxGeometry x="0" y="112" width="440" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="units_c3_type" value="integer&amp;nbsp; [U3 · CK &amp;gt; 0]" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_units">
+          <mxGeometry x="300" y="112" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="units_c4" value=" unit_status" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_units">
+          <mxGeometry x="0" y="138" width="440" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="units_c4_type" value="text = 'RUNNING'&amp;nbsp; [CHECK]" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_units">
+          <mxGeometry x="300" y="138" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="units_c5" value=" inspection_result" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_units">
+          <mxGeometry x="0" y="164" width="440" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="units_c5_type" value="text = 'PENDING'&amp;nbsp; [CHECK]" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_units">
+          <mxGeometry x="300" y="164" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="units_c6" value=" inspection_image_path" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_units">
+          <mxGeometry x="0" y="190" width="440" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="units_c6_type" value="text NULL" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_units">
+          <mxGeometry x="300" y="190" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="units_c7" value=" assembly_started_at" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_units">
+          <mxGeometry x="0" y="216" width="440" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="units_c7_type" value="timestamptz = now()" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_units">
+          <mxGeometry x="300" y="216" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="units_c8" value=" assembly_completed_at" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_units">
+          <mxGeometry x="0" y="242" width="440" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="units_c8_type" value="timestamptz NULL" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_units">
+          <mxGeometry x="300" y="242" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="units_c9" value=" inspected_at" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_units">
+          <mxGeometry x="0" y="268" width="440" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="units_c9_type" value="timestamptz NULL" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_units">
+          <mxGeometry x="300" y="268" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="tbl_defects" value="unit_defects" style="swimlane;html=1;startSize=34;collapsible=0;marginBottom=0;fontStyle=1;fontSize=15;fontColor=#8A4B00;rounded=1;arcSize=6;fillColor=#FFE6CC;strokeColor=#D79B00;strokeWidth=2;swimlaneFillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="1380" y="170" width="420" height="164" as="geometry"/>
+        </mxCell>
+        <mxCell id="tbl_defects_role" value="production · 불량 판정 슬롯만 행으로 기록" style="shape=partialRectangle;html=1;whiteSpace=wrap;top=0;left=0;right=0;bottom=1;fillColor=#FFF8F0;strokeColor=#D79B00;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;fontStyle=2;movable=0;resizable=0;" vertex="1" parent="tbl_defects">
+          <mxGeometry x="0" y="34" width="420" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="defects_c1" value="&lt;b&gt;PK&lt;/b&gt;&amp;nbsp; unit_defect_id" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_defects">
+          <mxGeometry x="0" y="60" width="420" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="defects_c1_type" value="bigint identity" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_defects">
+          <mxGeometry x="280" y="60" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="defects_c2" value="&lt;b&gt;FK&lt;/b&gt;&amp;nbsp; unit_id" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_defects">
+          <mxGeometry x="0" y="86" width="420" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="defects_c2_type" value="bigint&amp;nbsp; [U4]" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_defects">
+          <mxGeometry x="280" y="86" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="defects_c3" value="&lt;b&gt;FK&lt;/b&gt;&amp;nbsp; product_slot_id" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_defects">
+          <mxGeometry x="0" y="112" width="420" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="defects_c3_type" value="bigint&amp;nbsp; [U4]" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_defects">
+          <mxGeometry x="280" y="112" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="defects_c4" value=" defect_type" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_defects">
+          <mxGeometry x="0" y="138" width="420" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="defects_c4_type" value="text&amp;nbsp; [CHECK]" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_defects">
+          <mxGeometry x="280" y="138" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="tbl_products" value="products" style="swimlane;html=1;startSize=34;collapsible=0;marginBottom=0;fontStyle=1;fontSize=15;fontColor=#1F3864;rounded=1;arcSize=6;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=2;swimlaneFillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="320" y="530" width="420" height="216" as="geometry"/>
+        </mxCell>
+        <mxCell id="tbl_products_role" value="production · 완성체 제품의 한 버전 정의" style="shape=partialRectangle;html=1;whiteSpace=wrap;top=0;left=0;right=0;bottom=1;fillColor=#F5F7FA;strokeColor=#6C8EBF;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;fontStyle=2;movable=0;resizable=0;" vertex="1" parent="tbl_products">
+          <mxGeometry x="0" y="34" width="420" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="products_c1" value="&lt;b&gt;PK&lt;/b&gt;&amp;nbsp; product_id" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_products">
+          <mxGeometry x="0" y="60" width="420" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="products_c1_type" value="bigint identity" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_products">
+          <mxGeometry x="280" y="60" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="products_c2" value=" product_code" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_products">
+          <mxGeometry x="0" y="86" width="420" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="products_c2_type" value="text&amp;nbsp; [U1]" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_products">
+          <mxGeometry x="280" y="86" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="products_c3" value=" product_name" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_products">
+          <mxGeometry x="0" y="112" width="420" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="products_c3_type" value="text" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_products">
+          <mxGeometry x="280" y="112" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="products_c4" value=" product_version" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_products">
+          <mxGeometry x="0" y="138" width="420" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="products_c4_type" value="text&amp;nbsp; [U1]" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_products">
+          <mxGeometry x="280" y="138" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="products_c5" value=" is_selectable" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_products">
+          <mxGeometry x="0" y="164" width="420" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="products_c5_type" value="boolean = true" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_products">
+          <mxGeometry x="280" y="164" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="products_c6" value=" definition_locked_at" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_products">
+          <mxGeometry x="0" y="190" width="420" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="products_c6_type" value="timestamptz NULL" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_products">
+          <mxGeometry x="280" y="190" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="tbl_slots" value="product_slots" style="swimlane;html=1;startSize=34;collapsible=0;marginBottom=0;fontStyle=1;fontSize=15;fontColor=#1F3864;rounded=1;arcSize=6;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=2;swimlaneFillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="800" y="530" width="440" height="164" as="geometry"/>
+        </mxCell>
+        <mxCell id="tbl_slots_role" value="production · 완성체의 슬롯 구조 정의" style="shape=partialRectangle;html=1;whiteSpace=wrap;top=0;left=0;right=0;bottom=1;fillColor=#F5F7FA;strokeColor=#6C8EBF;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;fontStyle=2;movable=0;resizable=0;" vertex="1" parent="tbl_slots">
+          <mxGeometry x="0" y="34" width="440" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="slots_c1" value="&lt;b&gt;PK&lt;/b&gt;&amp;nbsp; product_slot_id" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_slots">
+          <mxGeometry x="0" y="60" width="440" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="slots_c1_type" value="bigint identity" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_slots">
+          <mxGeometry x="300" y="60" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="slots_c2" value="&lt;b&gt;FK&lt;/b&gt;&amp;nbsp; product_id" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_slots">
+          <mxGeometry x="0" y="86" width="440" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="slots_c2_type" value="bigint&amp;nbsp; [U2]" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_slots">
+          <mxGeometry x="300" y="86" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="slots_c3" value=" slot_code" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_slots">
+          <mxGeometry x="0" y="112" width="440" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="slots_c3_type" value="text&amp;nbsp; [U2]" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_slots">
+          <mxGeometry x="300" y="112" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="slots_c4" value="&lt;b&gt;FK&lt;/b&gt;&amp;nbsp; part_id" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_slots">
+          <mxGeometry x="0" y="138" width="440" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="slots_c4_type" value="text" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_slots">
+          <mxGeometry x="300" y="138" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="tbl_inventory" value="inventory_movements" style="swimlane;html=1;startSize=34;collapsible=0;marginBottom=0;fontStyle=1;fontSize=15;fontColor=#665500;rounded=1;arcSize=6;fillColor=#FFF2CC;strokeColor=#D6B656;strokeWidth=2;swimlaneFillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="1380" y="530" width="420" height="242" as="geometry"/>
+        </mxCell>
+        <mxCell id="tbl_inventory_role" value="production · append-only 재고 변동 원장" style="shape=partialRectangle;html=1;whiteSpace=wrap;top=0;left=0;right=0;bottom=1;fillColor=#FFFBEA;strokeColor=#D6B656;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;fontStyle=2;movable=0;resizable=0;" vertex="1" parent="tbl_inventory">
+          <mxGeometry x="0" y="34" width="420" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="inventory_c1" value="&lt;b&gt;PK&lt;/b&gt;&amp;nbsp; inventory_movement_id" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_inventory">
+          <mxGeometry x="0" y="60" width="420" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="inventory_c1_type" value="bigint identity" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_inventory">
+          <mxGeometry x="280" y="60" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="inventory_c2" value="&lt;b&gt;FK&lt;/b&gt;&amp;nbsp; part_id" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_inventory">
+          <mxGeometry x="0" y="86" width="420" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="inventory_c2_type" value="text&amp;nbsp; [U5]" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_inventory">
+          <mxGeometry x="280" y="86" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="inventory_c3" value=" quantity_delta" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_inventory">
+          <mxGeometry x="0" y="112" width="420" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="inventory_c3_type" value="integer&amp;nbsp; [CK ≠ 0]" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_inventory">
+          <mxGeometry x="280" y="112" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="inventory_c4" value=" movement_type" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_inventory">
+          <mxGeometry x="0" y="138" width="420" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="inventory_c4_type" value="text&amp;nbsp; [CHECK]" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_inventory">
+          <mxGeometry x="280" y="138" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="inventory_c5" value="&lt;b&gt;FK&lt;/b&gt;&amp;nbsp; unit_id" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_inventory">
+          <mxGeometry x="0" y="164" width="420" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="inventory_c5_type" value="bigint NULL&amp;nbsp; [U5]" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_inventory">
+          <mxGeometry x="280" y="164" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="inventory_c6" value=" reason" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_inventory">
+          <mxGeometry x="0" y="190" width="420" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="inventory_c6_type" value="text&amp;nbsp; [CK 공백 불가]" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_inventory">
+          <mxGeometry x="280" y="190" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="inventory_c7" value=" recorded_at" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_inventory">
+          <mxGeometry x="0" y="216" width="420" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="inventory_c7_type" value="timestamptz = now()" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_inventory">
+          <mxGeometry x="280" y="216" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="tbl_parts" value="parts" style="swimlane;html=1;startSize=34;collapsible=0;marginBottom=0;fontStyle=1;fontSize=15;fontColor=#1F3864;rounded=1;arcSize=6;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=2;swimlaneFillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="1380" y="800" width="420" height="164" as="geometry"/>
+        </mxCell>
+        <mxCell id="tbl_parts_role" value="production · 부품 기준정보와 현재고" style="shape=partialRectangle;html=1;whiteSpace=wrap;top=0;left=0;right=0;bottom=1;fillColor=#F5F7FA;strokeColor=#6C8EBF;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;fontStyle=2;movable=0;resizable=0;" vertex="1" parent="tbl_parts">
+          <mxGeometry x="0" y="34" width="420" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="parts_c1" value="&lt;b&gt;PK&lt;/b&gt;&amp;nbsp; part_id" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_parts">
+          <mxGeometry x="0" y="60" width="420" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="parts_c1_type" value="text" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_parts">
+          <mxGeometry x="280" y="60" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="parts_c2" value=" part_name" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_parts">
+          <mxGeometry x="0" y="86" width="420" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="parts_c2_type" value="text" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_parts">
+          <mxGeometry x="280" y="86" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="parts_c3" value=" part_category" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_parts">
+          <mxGeometry x="0" y="112" width="420" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="parts_c3_type" value="text" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_parts">
+          <mxGeometry x="280" y="112" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="parts_c4" value=" stock_quantity" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;fontSize=11;movable=0;resizable=0;" vertex="1" parent="tbl_parts">
+          <mxGeometry x="0" y="138" width="420" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="parts_c4_type" value="integer = 0&amp;nbsp; [CK ≥ 0]" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;spacingRight=8;fontSize=11;fontColor=#667085;movable=0;resizable=0;pointerEvents=0;" vertex="1" parent="tbl_parts">
+          <mxGeometry x="280" y="138" width="140" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_actor_main" value="조립 요청" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=blockThin;endFill=1;strokeColor=#B85450;fontSize=10;fontStyle=1;fontColor=#B85450;labelBackgroundColor=#FFFFFF;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor" target="mainserver">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_main_jobs" value="진입점 · INSERT job_status = &amp;#39;PENDING&amp;#39;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=blockThin;endFill=1;strokeColor=#B85450;fontSize=10;fontStyle=1;fontColor=#B85450;labelBackgroundColor=#FFFFFF;strokeWidth=2.5;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.464;entryY=0;entryDx=0;entryDy=0;verticalAlign=middle;" edge="1" parent="1" source="mainserver" target="tbl_jobs">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_units_jobs" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=ERmany;startFill=0;endArrow=ERone;endFill=0;strokeColor=#6E7B8B;strokeWidth=1.5;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="units_c2" target="jobs_c1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="770" y="269"/>
+              <mxPoint x="770" y="243"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_defects_units" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=ERmany;startFill=0;endArrow=ERone;endFill=0;strokeColor=#6E7B8B;strokeWidth=1.5;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="defects_c2" target="units_c1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1300" y="269"/>
+              <mxPoint x="1300" y="243"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_defects_slots" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=ERmany;startFill=0;endArrow=ERone;endFill=0;strokeColor=#6E7B8B;strokeWidth=1.5;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="defects_c3" target="slots_c1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1270" y="295"/>
+              <mxPoint x="1270" y="603"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_jobs_products" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=ERmany;startFill=0;endArrow=ERone;endFill=0;strokeColor=#6E7B8B;strokeWidth=1.5;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="jobs_c2" target="products_c1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="280" y="269"/>
+              <mxPoint x="280" y="603"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_slots_products" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=ERmany;startFill=0;endArrow=ERone;endFill=0;strokeColor=#6E7B8B;strokeWidth=1.5;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="slots_c2" target="products_c1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="770" y="629"/>
+              <mxPoint x="770" y="603"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_slots_parts" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=ERmany;startFill=0;endArrow=ERone;endFill=0;strokeColor=#6E7B8B;strokeWidth=1.5;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="slots_c4" target="parts_c1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1360" y="681"/>
+              <mxPoint x="1360" y="873"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_inventory_units" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=ERmany;startFill=0;endArrow=ERzeroToOne;endFill=0;strokeColor=#6E7B8B;strokeWidth=1.5;dashed=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="inventory_c5" target="units_c1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1330" y="707"/>
+              <mxPoint x="1330" y="243"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_inventory_parts" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=ERmany;startFill=0;endArrow=ERone;endFill=0;strokeColor=#6E7B8B;strokeWidth=1.5;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="inventory_c2" target="parts_c1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1835" y="629"/>
+              <mxPoint x="1835" y="873"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="lg_reference" value="기준정보" style="rounded=1;arcSize=20;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=11;fontColor=#1F3864;" vertex="1" parent="1">
+          <mxGeometry x="320" y="1000" width="110" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="lg_execution" value="실행" style="rounded=1;arcSize=20;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=11;fontColor=#1B5E20;" vertex="1" parent="1">
+          <mxGeometry x="440" y="1000" width="90" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="lg_inventory" value="재고 원장" style="rounded=1;arcSize=20;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=11;fontColor=#665500;" vertex="1" parent="1">
+          <mxGeometry x="540" y="1000" width="110" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="lg_inspection" value="검사" style="rounded=1;arcSize=20;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontSize=11;fontColor=#8A4B00;" vertex="1" parent="1">
+          <mxGeometry x="660" y="1000" width="90" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="lg_entry" value="진입점" style="rounded=1;arcSize=20;html=1;fillColor=#FFFFFF;strokeColor=#B85450;strokeWidth=3;fontSize=11;fontStyle=1;fontColor=#B85450;" vertex="1" parent="1">
+          <mxGeometry x="760" y="1000" width="90" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="lg_relation" value="FK 열 행 ──&amp;lt; PK 열 행&amp;nbsp;&amp;nbsp;·&amp;nbsp;&amp;nbsp;점선 = NULL 허용 FK (ERzeroToOne)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=11;fontColor=#6E7B8B;" vertex="1" parent="1">
+          <mxGeometry x="870" y="1000" width="420" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="divider" value="" style="line;strokeWidth=1;html=1;strokeColor=#DDE2E8;" vertex="1" parent="1">
+          <mxGeometry x="320" y="1048" width="1480" height="10" as="geometry"/>
+        </mxCell>
+        <mxCell id="note_rules" value="&lt;b&gt;고유 제약&lt;/b&gt;&lt;br&gt;U1&amp;nbsp;&amp;nbsp;products (product_code, product_version)&lt;br&gt;U2&amp;nbsp;&amp;nbsp;product_slots (product_id, slot_code)&lt;br&gt;U3&amp;nbsp;&amp;nbsp;units (job_id, unit_sequence_in_job)&lt;br&gt;U4&amp;nbsp;&amp;nbsp;unit_defects (unit_id, product_slot_id)&lt;br&gt;U5&amp;nbsp;&amp;nbsp;inventory_movements (unit_id, part_id) WHERE movement_type = 'CONSUMPTION'&lt;br&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;inventory_movements (part_id) WHERE movement_type = 'OPENING'&lt;br&gt;&lt;br&gt;&lt;b&gt;동시 실행 제한 (부분 유니크 인덱스)&lt;/b&gt;&lt;br&gt;jobs ((1)) WHERE job_status = 'RUNNING'&amp;nbsp; →&amp;nbsp; 전체에서 RUNNING Job 은 1건&lt;br&gt;units (job_id) WHERE unit_status = 'RUNNING'&amp;nbsp; →&amp;nbsp; Job 당 RUNNING Unit 은 1건&lt;br&gt;&lt;br&gt;&lt;font color=&quot;#B85450&quot;&gt;완료 수량은 저장하지 않는다. COMPLETED 인 units 를 COUNT(*) 한다.&lt;/font&gt;" style="rounded=1;arcSize=6;html=1;whiteSpace=wrap;fillColor=#FFFFFF;strokeColor=#C9CFD8;strokeWidth=1.5;align=left;verticalAlign=top;fontSize=11;fontColor=#555555;spacingLeft=16;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="320" y="1080" width="740" height="230" as="geometry"/>
+        </mxCell>
+        <mxCell id="note_scope" value="&lt;b&gt;스키마 경계&lt;/b&gt;&lt;br&gt;control 스키마와 assembly_requests 는 제거되었고 jobs 가 영속 요청 큐를 겸한다.&lt;br&gt;job_id 는 uuid 로, MainServer 가 발급한 값을 그대로 PK 로 쓴다.&lt;br&gt;&lt;br&gt;part_catalog · defect_report 는 DB 에 두지 않는다.&lt;br&gt;&amp;nbsp;&amp;nbsp;· 부품 데이터시트 →&amp;nbsp; MAIN_SERVER/data/*.xlsx (읽기 전용)&lt;br&gt;&amp;nbsp;&amp;nbsp;· 불량대책서 →&amp;nbsp; MAIN_SERVER/reports/defects/*.xlsx (자동 생성)&lt;br&gt;&lt;br&gt;로봇 레시피 본문은 DB 밖에 있고 jobs.recipe_version 이 실행 사실만 기록한다.&lt;br&gt;&lt;br&gt;&lt;font color=&quot;#999999&quot;&gt;원본 DDL&amp;nbsp; DATA_STATION/DB/production_schema.sql&lt;br&gt;자동 생성 ERD&amp;nbsp; UnityDT/Docs/db-schema.generated.md&lt;br&gt;칼럼 계약&amp;nbsp; UnityDT/Docs/DB.md&lt;/font&gt;" style="rounded=1;arcSize=6;html=1;whiteSpace=wrap;fillColor=#FFFFFF;strokeColor=#C9CFD8;strokeWidth=1.5;align=left;verticalAlign=top;fontSize=11;fontColor=#555555;spacingLeft=16;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="1080" width="700" height="230" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="design-principles" name="설계 원칙">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1150" pageHeight="700" math="0" shadow="0" adaptiveColors="auto">
+      <root>
+        <mxCell id="p0"/>
+        <mxCell id="p1" parent="p0"/>
+        <mxCell id="c1" value="" style="rounded=1;arcSize=6;html=1;fillColor=#FFFFFF;strokeColor=#C9CFD8;strokeWidth=1.5;" vertex="1" parent="p1">
+          <mxGeometry x="60" y="110" width="470" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="c1_n" value="1" style="ellipse;html=1;fillColor=#1F3864;strokeColor=none;fontColor=#FFFFFF;fontSize=13;fontStyle=1;" vertex="1" parent="p1">
+          <mxGeometry x="76" y="126" width="28" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="c1_t" value="정상은 세지 않고 역산한다" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=14;fontStyle=1;fontColor=#1F3864;" vertex="1" parent="p1">
+          <mxGeometry x="114" y="126" width="400" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="c1_b" value="검사 결과 중 &lt;b&gt;불량 슬롯만&lt;/b&gt; unit_defects 에 행으로 남긴다.&lt;br&gt;정상 수량은 검사 완료 units × product_slots 로 계산한다.&lt;br&gt;&lt;br&gt;&lt;font color=&quot;#B85450&quot;&gt;완성품 3대 × 슬롯 6곳 = 검사 18건, 저장은 불량 4행뿐&lt;/font&gt;" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=top;fontSize=11;fontColor=#555555;spacingTop=2;" vertex="1" parent="p1">
+          <mxGeometry x="114" y="160" width="396" height="88" as="geometry"/>
+        </mxCell>
+        <mxCell id="c2" value="" style="rounded=1;arcSize=6;html=1;fillColor=#FFFFFF;strokeColor=#C9CFD8;strokeWidth=1.5;" vertex="1" parent="p1">
+          <mxGeometry x="570" y="110" width="470" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="c2_n" value="2" style="ellipse;html=1;fillColor=#1F3864;strokeColor=none;fontColor=#FFFFFF;fontSize=13;fontStyle=1;" vertex="1" parent="p1">
+          <mxGeometry x="586" y="126" width="28" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="c2_t" value="수량은 칼럼이 아니라 행으로 센다" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=14;fontStyle=1;fontColor=#1F3864;" vertex="1" parent="p1">
+          <mxGeometry x="624" y="126" width="400" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="c2_b" value="jobs 에 완료 수량을 저장하지 않는다. requested_quantity 만 남기고&lt;br&gt;완료 수량은 COMPLETED 인 units 를 COUNT(*) 한다.&lt;br&gt;&lt;br&gt;&lt;font color=&quot;#B85450&quot;&gt;중복 저장이 없으므로 불일치가 구조적으로 생기지 않는다&lt;/font&gt;" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=top;fontSize=11;fontColor=#555555;spacingTop=2;" vertex="1" parent="p1">
+          <mxGeometry x="624" y="160" width="396" height="88" as="geometry"/>
+        </mxCell>
+        <mxCell id="c3" value="" style="rounded=1;arcSize=6;html=1;fillColor=#FFFFFF;strokeColor=#C9CFD8;strokeWidth=1.5;" vertex="1" parent="p1">
+          <mxGeometry x="60" y="290" width="470" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="c3_n" value="3" style="ellipse;html=1;fillColor=#1F3864;strokeColor=none;fontColor=#FFFFFF;fontSize=13;fontStyle=1;" vertex="1" parent="p1">
+          <mxGeometry x="76" y="306" width="28" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="c3_t" value="구조와 방법을 분리한다" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=14;fontStyle=1;fontColor=#1F3864;" vertex="1" parent="p1">
+          <mxGeometry x="114" y="306" width="400" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="c3_b" value="product_slots 는 &lt;b&gt;무엇이 어디에&lt;/b&gt; 들어가는지만 정의한다.&lt;br&gt;&lt;b&gt;어떤 순서·조건으로&lt;/b&gt; 넣는지는 로봇 레시피가 소유하고,&lt;br&gt;DB 는 jobs.recipe_version 으로 실행 사실만 기록한다.&lt;br&gt;&lt;br&gt;&lt;font color=&quot;#B85450&quot;&gt;순서를 두 곳에 두면 튜닝할 때마다 DB 값이 낡은 계획이 된다&lt;/font&gt;" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=top;fontSize=11;fontColor=#555555;spacingTop=2;" vertex="1" parent="p1">
+          <mxGeometry x="114" y="340" width="396" height="88" as="geometry"/>
+        </mxCell>
+        <mxCell id="c4" value="" style="rounded=1;arcSize=6;html=1;fillColor=#FFFFFF;strokeColor=#C9CFD8;strokeWidth=1.5;" vertex="1" parent="p1">
+          <mxGeometry x="570" y="290" width="470" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="c4_n" value="4" style="ellipse;html=1;fillColor=#1F3864;strokeColor=none;fontColor=#FFFFFF;fontSize=13;fontStyle=1;" vertex="1" parent="p1">
+          <mxGeometry x="586" y="306" width="28" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="c4_t" value="두 가지 버전을 구분한다" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=14;fontStyle=1;fontColor=#1F3864;" vertex="1" parent="p1">
+          <mxGeometry x="624" y="306" width="400" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="c4_b" value="&lt;b&gt;구조&lt;/b&gt; 변경 → 새 product_version. 과거 불량이 같은 슬롯을 계속 가리켜야 한다.&lt;br&gt;&lt;b&gt;방법&lt;/b&gt; 변경 → 새 recipe_version. 같은 제품 안에서 전후 비교가 유지된다.&lt;br&gt;&lt;br&gt;&lt;font color=&quot;#B85450&quot;&gt;불량 대책의 효과 검증이 이 구분 위에서 성립한다&lt;/font&gt;" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=top;fontSize=11;fontColor=#555555;spacingTop=2;" vertex="1" parent="p1">
+          <mxGeometry x="624" y="340" width="396" height="88" as="geometry"/>
+        </mxCell>
+        <mxCell id="c5" value="" style="rounded=1;arcSize=6;html=1;fillColor=#FFFFFF;strokeColor=#C9CFD8;strokeWidth=1.5;" vertex="1" parent="p1">
+          <mxGeometry x="60" y="470" width="470" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="c5_n" value="5" style="ellipse;html=1;fillColor=#1F3864;strokeColor=none;fontColor=#FFFFFF;fontSize=13;fontStyle=1;" vertex="1" parent="p1">
+          <mxGeometry x="76" y="486" width="28" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="c5_t" value="확정된 기록은 고치지 않는다" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=14;fontStyle=1;fontColor=#1F3864;" vertex="1" parent="p1">
+          <mxGeometry x="114" y="486" width="400" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="c5_b" value="첫 jobs 생성 시 definition_locked_at 으로 제품 &lt;b&gt;구조&lt;/b&gt;를 잠근다.&lt;br&gt;검사가 확정되면 units 와 unit_defects 도 추가만 하고 수정하지 않는다.&lt;br&gt;inventory_movements 는 append-only 원장으로 정정도 새 행으로 남긴다.&lt;br&gt;&lt;br&gt;&lt;font color=&quot;#B85450&quot;&gt;대책서가 발행 시점 집계를 스냅샷으로 갖기 때문에 필요하다&lt;/font&gt;" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=top;fontSize=11;fontColor=#555555;spacingTop=2;" vertex="1" parent="p1">
+          <mxGeometry x="114" y="520" width="396" height="88" as="geometry"/>
+        </mxCell>
+        <mxCell id="c6" value="" style="rounded=1;arcSize=6;html=1;fillColor=#FFFFFF;strokeColor=#C9CFD8;strokeWidth=1.5;" vertex="1" parent="p1">
+          <mxGeometry x="570" y="470" width="470" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="c6_n" value="6" style="ellipse;html=1;fillColor=#1F3864;strokeColor=none;fontColor=#FFFFFF;fontSize=13;fontStyle=1;" vertex="1" parent="p1">
+          <mxGeometry x="586" y="486" width="28" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="c6_t" value="이 스키마의 경계를 지킨다" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=14;fontStyle=1;fontColor=#1F3864;" vertex="1" parent="p1">
+          <mxGeometry x="624" y="486" width="400" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="c6_b" value="production 은 조립·검사 실행 기록과, 그 기록이 참조 무결성으로&lt;br&gt;의존하는 기준정보만 담는다. 레시피 본문·부품 데이터시트·&lt;br&gt;불량 임계 정책은 들어오지 않는다. control 스키마는 제거했고&lt;br&gt;jobs 가 영속 요청 큐를 겸한다.&lt;br&gt;&lt;br&gt;&lt;font color=&quot;#B85450&quot;&gt;품질 데이터시트와 대책서는 파일로 분리한다 → DB.md&lt;/font&gt;" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=top;fontSize=11;fontColor=#555555;spacingTop=2;" vertex="1" parent="p1">
+          <mxGeometry x="624" y="520" width="396" height="88" as="geometry"/>
+        </mxCell>
+        <mxCell id="ptitle" value="production 스키마 설계 원칙" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#1F3864;" vertex="1" parent="p1">
+          <mxGeometry x="60" y="40" width="600" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="psubtitle" value="테이블과 열은 ERD 탭 · 칼럼 계약은 DB.md" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;fontSize=11;fontColor=#888888;" vertex="1" parent="p1">
+          <mxGeometry x="640" y="46" width="400" height="28" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

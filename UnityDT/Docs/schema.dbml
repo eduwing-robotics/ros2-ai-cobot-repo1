@@ -43,7 +43,7 @@ Table product_slots {
 }
 
 Table jobs {
-  job_id bigint [pk, increment]
+  job_id uuid [pk]
   product_id bigint [not null]
   requested_quantity integer [not null, note: '1 이상']
   recipe_version text [not null, note: '이 작업을 실행한 조립 레시피 버전. 레시피 본문은 백엔드가 소유한다']
@@ -63,7 +63,7 @@ Table jobs {
 
 Table units {
   unit_id bigint [pk, increment]
-  job_id bigint [not null]
+  job_id uuid [not null]
   unit_sequence_in_job integer [not null, note: '작업 안에서 1부터 시작하는 완성품 순번']
   unit_status text [not null, default: 'RUNNING', note: 'RUNNING, COMPLETED, FAILED']
   inspection_result text [not null, default: 'PENDING', note: 'PENDING, PASS, FAIL']
