@@ -96,7 +96,7 @@ namespace MainUnity.UI
         {
             if (modeMockButton != null) modeMockButton.clicked += SelectMockMode;
             if (modeRealButton != null) modeRealButton.clicked += SelectRealMode;
-            if (stopAllButton != null) stopAllButton.clicked += ToggleStop;
+            if (stopAllButton != null) stopAllButton.clicked += TogglePause;
             if (viewFocusButton != null) viewFocusButton.clicked += ToggleFocus;
         }
 
@@ -104,7 +104,7 @@ namespace MainUnity.UI
         {
             if (modeMockButton != null) modeMockButton.clicked -= SelectMockMode;
             if (modeRealButton != null) modeRealButton.clicked -= SelectRealMode;
-            if (stopAllButton != null) stopAllButton.clicked -= ToggleStop;
+            if (stopAllButton != null) stopAllButton.clicked -= TogglePause;
             if (viewFocusButton != null) viewFocusButton.clicked -= ToggleFocus;
         }
 
@@ -150,19 +150,18 @@ namespace MainUnity.UI
             bool pauseSupported = uiMaster?.IsSimulated == true;
             if (stopAllButton != null)
             {
-                stopAllButton.text = paused ? "▶  RESUME" : "■  STOP";
+                stopAllButton.text = paused ? "▶  RESUME" : "Ⅱ  PAUSE";
                 stopAllButton.SetEnabled(pauseSupported && !stopRequestInFlight && frame != null &&
                     !frame.IsTerminal && uiMaster?.Scenario?.IsRunning == true);
-                stopAllButton.EnableInClassList("btn--danger", !paused);
                 stopAllButton.tooltip = !pauseSupported
                     ? "Real 일시정지는 아직 지원하지 않습니다."
                     : paused
                         ? "일시정지된 조립을 재개합니다."
-                        : "현재 동작 경계에서 조립을 일시정지합니다.";
+                        : "현재 로봇 동작을 정지 확인 뒤 일시정지합니다.";
             }
         }
 
-        async void ToggleStop()
+        async void TogglePause()
         {
             if (stopRequestInFlight || uiMaster?.Scenario == null) return;
             stopRequestInFlight = true;

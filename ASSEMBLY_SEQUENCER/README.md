@@ -94,7 +94,7 @@ ros2 launch assembly_sequencer mock.launch.py
 ```
 
 Pause·resume은 기존 `/unity/assembly/start` 서비스에 `job_id`와 함께 보내며,
-Mock은 YAML 고수준 동작 경계에서 정지하고 `PAUSED` 피드백으로 확인한다. DB Job·Unit은
+Mock은 실행 중인 MoveIt 목표를 취소하고, 컨트롤러 정지 뒤 `PAUSED` 피드백으로 확인한다. 재개 시 현재 관절 상태에서 같은 세부 동작을 다시 계획한다. DB Job·Unit은
 `RUNNING`을 유지한다.
 
 MainServer는 별도 터미널에서 같은 DB를 가리키고 `MAIN_SERVER_MODE=mock`으로

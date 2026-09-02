@@ -63,7 +63,7 @@
             </ui:VisualElement>
 
             <ui:VisualElement class="spacer" />
-            <ui:Button name="stop-all-button" text="■  STOP" class="btn btn--danger" style="width:160px; height:40px; font-size:17px; letter-spacing:2.4px;" />
+            <ui:Button name="stop-all-button" text="Ⅱ  PAUSE" class="btn" style="width:160px; height:40px; font-size:17px; letter-spacing:2.4px;" />
         </ui:VisualElement>
 
         <!--

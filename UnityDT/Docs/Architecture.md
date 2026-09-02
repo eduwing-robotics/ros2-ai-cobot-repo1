@@ -65,8 +65,7 @@ Job을 생성한다. 그 뒤 같은 `job_id`와 씬에서 계산한 source·targ
 `/unity/assembly/start`로 보낸다. HTTP와 ROS의 `accepted=true`는 완료가 아니며,
 terminal `COMPLETED`를 받아야 `ExecuteAsync()`가 성공한다.
 같은 서비스에 `{command: pause|resume, job_id}`를 보내며, `PAUSED` 피드백으로
-전이를 확인한다. Job·Unit은 `RUNNING`을 유지하고 Mock 실행기는 현재 YAML 고수준
-동작을 마친 경계에서 멈춘 뒤 직전 진행 상태를 재발행하며 이어서 실행한다.
+전이를 확인한다. Job·Unit은 `RUNNING`을 유지하고 Mock 실행기는 현재 MoveIt 목표를 취소해 컨트롤러가 멈춘 뒤 직전 진행 상태를 재발행한다. 재개 시 현재 관절 상태에서 취소된 세부 동작을 다시 계획한다.
 
 AssemblySequencer는 Job을 claim해 `RUNNING`으로 전이하고 Unit을 만든 뒤 좌표를
 내부 `mock_sim`에 전달한다. Unit 실행, 검사, 재고와 최종 Job 상태는 Sequencer가

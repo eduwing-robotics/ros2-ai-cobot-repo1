@@ -2,6 +2,7 @@
 """MoveIt mock control plus the minimal Unity assembly callback contract."""
 
 import argparse
+import copy
 import json
 import math
 import sys
@@ -68,6 +69,10 @@ WORKFLOW = {
         {"robot.transfer": "assembled_pcb"},
     ],
 }
+
+
+class AssemblyPaused(Exception):
+    """The active Mock controller goal stopped after an accepted pause request."""
 
 
 def quaternion_from_rpy(roll, pitch, yaw):
@@ -724,6 +729,7 @@ class MockMoveJ(Node):
         self.pending_ptp_pose = None
         self.pending_gripper_target = None
         self.active_assembly = None
+        self.active_motion_goal = None
         self.latest_assembly_snapshot = empty_assembly_snapshot()
         self.manual_executing = False
         self.execution_faulted = False
@@ -872,6 +878,8 @@ class MockMoveJ(Node):
                     response, False, job_id, "FAULTED", FAULT_RESTART_MESSAGE
                 )
             job["pause_requested"] = control == "pause"
+            if control == "pause":
+                self.cancel_active_motion()
             return self.start_response(response, True, job_id)
 
         if isinstance(command, dict) \
@@ -1001,6 +1009,23 @@ class MockMoveJ(Node):
         )
         self.get_logger().info(f"assembly resumed: job_id={job['job_id']}")
 
+    def cancel_active_motion(self):
+        handle = self.active_motion_goal
+        if handle is not None:
+            handle.cancel_goal_async()
+
+    def pause_requested(self):
+        return self.active_assembly is not None and self.active_assembly["pause_requested"]
+
+    def run_pauseable(self, job, operation):
+        while True:
+            self.wait_if_paused(job)
+            try:
+                operation()
+                return
+            except AssemblyPaused:
+                self.wait_if_paused(job)
+
     def publish_status(self, value):
         self.status_publisher.publish(String(data=value))
         self.get_logger().info(value)
@@ -1065,7 +1090,7 @@ class MockMoveJ(Node):
             target.orientation.w = qw
             frame = self.args.frame
         else:
-            target = pose_target.pose
+            target = copy.deepcopy(pose_target.pose)
             frame = pose_target.header.frame_id or self.args.frame
 
         values = (
@@ -1210,6 +1235,7 @@ class MockMoveJ(Node):
         return trajectory
 
     def plan_linear(self, target):
+        target = copy.deepcopy(target)
         if not self.cartesian_client.wait_for_service(timeout_sec=5.0):
             raise RuntimeError("/compute_cartesian_path is unavailable")
         if not target.header.frame_id:
@@ -1278,8 +1304,12 @@ class MockMoveJ(Node):
         self.require_mock_hardware()
         if not self.execute_client.wait_for_server(timeout_sec=5.0):
             raise RuntimeError("/execute_trajectory is unavailable")
+        if self.pause_requested():
+            raise AssemblyPaused()
 
         time.sleep(self.args.preview_seconds)
+        if self.pause_requested():
+            raise AssemblyPaused()
         self.publish_status("execution: sending trajectory to mock controller")
         future = self.execute_client.send_goal_async(
             ExecuteTrajectory.Goal(trajectory=trajectory)
@@ -1288,8 +1318,19 @@ class MockMoveJ(Node):
         if not handle or not handle.accepted:
             raise RuntimeError("mock controller rejected the trajectory")
 
-        future = handle.get_result_async()
-        result = self.wait_for_future(future, "trajectory execution").result
+        self.active_motion_goal = handle
+        if self.pause_requested():
+            self.cancel_active_motion()
+        try:
+            future = handle.get_result_async()
+            result = self.wait_for_future(future, "trajectory execution").result
+        finally:
+            if self.active_motion_goal is handle:
+                self.active_motion_goal = None
+        if self.pause_requested():
+            self.joint_state = None
+            self.wait_for_joint_state()
+            raise AssemblyPaused()
         if result.error_code.val != MoveItErrorCodes.SUCCESS:
             raise RuntimeError(f"mock execution failed: MoveIt code {result.error_code.val}")
         self.joint_state = None
@@ -1341,6 +1382,8 @@ class MockMoveJ(Node):
     def run_gripper(self, opening_percent):
         if not self.gripper_client.wait_for_server(timeout_sec=5.0):
             raise RuntimeError("gripper controller is unavailable")
+        if self.pause_requested():
+            raise AssemblyPaused()
         point = JointTrajectoryPoint(
             positions=[gripper_position(opening_percent)]
         )
@@ -1355,8 +1398,17 @@ class MockMoveJ(Node):
         handle = self.wait_for_future(future, "gripper goal acceptance")
         if not handle or not handle.accepted:
             raise RuntimeError("gripper controller rejected the trajectory")
-        future = handle.get_result_async()
-        result = self.wait_for_future(future, "gripper execution").result
+        self.active_motion_goal = handle
+        if self.pause_requested():
+            self.cancel_active_motion()
+        try:
+            future = handle.get_result_async()
+            result = self.wait_for_future(future, "gripper execution").result
+        finally:
+            if self.active_motion_goal is handle:
+                self.active_motion_goal = None
+        if self.pause_requested():
+            raise AssemblyPaused()
         if result.error_code != FollowJointTrajectory.Result.SUCCESSFUL:
             raise RuntimeError("gripper execution failed")
         self.publish_status("gripper: complete")
@@ -1436,20 +1488,20 @@ class MockMoveJ(Node):
                     self.wait_if_paused(job)
                     action, argument = next(iter(command.items()))
                     if action == "robot.move_joint":
-                        self.run_joint_target(joint_points[argument])
+                        self.run_pauseable(job, lambda: self.run_joint_target(joint_points[argument]))
                     elif (action, argument) == ("robot.pick", "current_part"):
-                        self.run_gripper(release_opening_percent)
-                        self.run_ptp_pose(source_approach)
-                        self.run_linear(source, True)
-                        self.run_gripper(grasp_opening_percent)
+                        self.run_pauseable(job, lambda: self.run_gripper(release_opening_percent))
+                        self.run_pauseable(job, lambda: self.run_ptp_pose(source_approach))
+                        self.run_pauseable(job, lambda: self.run_linear(source, True))
+                        self.run_pauseable(job, lambda: self.run_gripper(grasp_opening_percent))
                         self.publish_assembly_feedback(job_id, "PICKED", step)
-                        self.run_linear(source_retract, True)
+                        self.run_pauseable(job, lambda: self.run_linear(source_retract, True))
                     elif (action, argument) == ("robot.place", "current_slot"):
-                        self.run_ptp_pose(target_approach)
-                        self.run_linear(target, True)
-                        self.run_gripper(release_opening_percent)
+                        self.run_pauseable(job, lambda: self.run_ptp_pose(target_approach))
+                        self.run_pauseable(job, lambda: self.run_linear(target, True))
+                        self.run_pauseable(job, lambda: self.run_gripper(release_opening_percent))
                         self.publish_assembly_feedback(job_id, "PLACED", step)
-                        self.run_linear(target_retract, True)
+                        self.run_pauseable(job, lambda: self.run_linear(target_retract, True))
                     else:
                         raise RuntimeError(f"unknown assembly action: {command}")
                     self.wait_if_paused(job)
@@ -1519,23 +1571,23 @@ class MockMoveJ(Node):
                         transfer["target"], motion["retract_dz_mm"]
                     ),
                 )
-                self.run_gripper(
-                    gripper["release_opening_percent"]
+                self.run_pauseable(
+                    job, lambda: self.run_gripper(gripper["release_opening_percent"])
                 )
-                self.run_ptp_pose(source_approach)
-                self.run_linear(source, True)
-                self.run_gripper(
-                    gripper["grasp_opening_percent"]
+                self.run_pauseable(job, lambda: self.run_ptp_pose(source_approach))
+                self.run_pauseable(job, lambda: self.run_linear(source, True))
+                self.run_pauseable(
+                    job, lambda: self.run_gripper(gripper["grasp_opening_percent"])
                 )
                 self.publish_assembly_feedback(job_id, "PCB_PICKED")
-                self.run_linear(source_retract, True)
-                self.run_ptp_pose(target_approach)
-                self.run_linear(target, True)
-                self.run_gripper(
-                    gripper["release_opening_percent"]
+                self.run_pauseable(job, lambda: self.run_linear(source_retract, True))
+                self.run_pauseable(job, lambda: self.run_ptp_pose(target_approach))
+                self.run_pauseable(job, lambda: self.run_linear(target, True))
+                self.run_pauseable(
+                    job, lambda: self.run_gripper(gripper["release_opening_percent"])
                 )
                 self.publish_assembly_feedback(job_id, "PCB_PLACED")
-                self.run_linear(target_retract, True)
+                self.run_pauseable(job, lambda: self.run_linear(target_retract, True))
                 self.wait_if_paused(job)
             terminal_state = "COMPLETED"
             error_code = ""
