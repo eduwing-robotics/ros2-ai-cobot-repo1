@@ -57,7 +57,7 @@ INSERT INTO production.jobs (
     job_started_at,
     job_finished_at
 ) VALUES (
-    -7001,
+    '00000000-0000-0000-0000-000000007001',
     -1001,
     3,
     '__DATASTATION_TEST_PRODUCT__-test-v1-R1',
@@ -77,18 +77,60 @@ INSERT INTO production.units (
     assembly_completed_at,
     inspected_at
 ) VALUES
-    (-8001, -7001, 1, 'COMPLETED', 'PASS',
+    (-8001, '00000000-0000-0000-0000-000000007001', 1, 'COMPLETED', 'PASS',
      '2026-01-01T00:01:00Z', '2026-01-01T00:10:00Z', '2026-01-01T00:11:00Z'),
-    (-8002, -7001, 2, 'COMPLETED', 'FAIL',
+    (-8002, '00000000-0000-0000-0000-000000007001', 2, 'COMPLETED', 'FAIL',
      '2026-01-01T00:12:00Z', '2026-01-01T00:20:00Z', '2026-01-01T00:21:00Z'),
-    (-8003, -7001, 3, 'COMPLETED', 'PASS',
-     '2026-01-01T00:22:00Z', '2026-01-01T00:30:00Z', '2026-01-01T00:31:00Z');
+    (-8003, '00000000-0000-0000-0000-000000007001', 3, 'COMPLETED', 'PASS',
+     '2026-01-01T00:22:00Z', '2026-01-01T00:30:00Z', '2026-01-01T00:31:00Z'),
+    (-8004, '00000000-0000-0000-0000-000000007001', 4, 'COMPLETED', 'PASS',
+     '2026-01-01T00:32:00Z', '2026-01-01T00:38:00Z', '2026-01-01T00:39:00Z');
 
 INSERT INTO production.unit_defects (
     unit_defect_id, unit_id, product_slot_id, defect_type
 ) VALUES (
     -9001, -8002, -5001, 'CRACK'
 );
+
+INSERT INTO production.jobs (
+    job_id, product_id, requested_quantity, recipe_version, job_status
+) VALUES
+    ('00000000-0000-0000-0000-000000007011', -1001, 1, '__QUEUE_PENDING_1__', 'PENDING'),
+    ('00000000-0000-0000-0000-000000007012', -1001, 1, '__QUEUE_PENDING_2__', 'PENDING'),
+    ('00000000-0000-0000-0000-000000007013', -1001, 1, '__QUEUE_RUNNING__', 'RUNNING');
+
+INSERT INTO production.units (
+    unit_id, job_id, unit_sequence_in_job
+) VALUES (
+    -8101, '00000000-0000-0000-0000-000000007013', 1
+);
+
+DO $$
+BEGIN
+    BEGIN
+        INSERT INTO production.jobs (
+            job_id, product_id, requested_quantity, recipe_version, job_status
+        ) VALUES (
+            '00000000-0000-0000-0000-000000007014', -1001, 1,
+            '__QUEUE_SECOND_RUNNING__', 'RUNNING'
+        );
+        RAISE EXCEPTION 'second RUNNING Job was accepted';
+    EXCEPTION WHEN unique_violation THEN
+        NULL;
+    END;
+
+    BEGIN
+        INSERT INTO production.units (
+            unit_id, job_id, unit_sequence_in_job
+        ) VALUES (
+            -8102, '00000000-0000-0000-0000-000000007013', 2
+        );
+        RAISE EXCEPTION 'second RUNNING Unit was accepted';
+    EXCEPTION WHEN unique_violation THEN
+        NULL;
+    END;
+END
+$$;
 
 DO $$
 DECLARE
@@ -122,7 +164,7 @@ BEGIN
     WHERE ps.product_id = -1001
     GROUP BY p.part_id, p.stock_quantity;
 
-    IF inspected <> 3 OR defective <> 1 OR defect_rate <> 33.33 THEN
+    IF inspected <> 4 OR defective <> 1 OR defect_rate <> 25.00 THEN
         RAISE EXCEPTION
             'slot-rate check failed: inspected=%, defective=%, rate=%',
             inspected, defective, defect_rate;
@@ -136,7 +178,7 @@ $$;
 
 EXECUTE datastation_product(-1001);
 EXECUTE datastation_product_requirements(-1001, 3);
-EXECUTE datastation_job(-7001);
+EXECUTE datastation_job('00000000-0000-0000-0000-000000007001');
 EXECUTE datastation_slot_rates(-1001);
 EXECUTE datastation_part_rates(
     '2026-01-01T00:00:00Z',

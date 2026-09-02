@@ -4,7 +4,6 @@ requiredVersion: '>= 1.95, < 1.96'
 
 include:
   - production.*
-  - control.*
 
 er:
   format: mermaid

@@ -4,6 +4,10 @@ BEGIN;
 -- roles only define the privileges granted to those deployment-specific users.
 DO $$
 BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'job_submitter') THEN
+        CREATE ROLE job_submitter NOLOGIN;
+    END IF;
+
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'production_writer') THEN
         CREATE ROLE production_writer NOLOGIN;
     END IF;
@@ -14,6 +18,8 @@ BEGIN
 END
 $$;
 
+ALTER ROLE job_submitter
+    NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
 ALTER ROLE production_writer
     NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
 ALTER ROLE datastation_reader
@@ -35,27 +41,31 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA production
 ALTER DEFAULT PRIVILEGES IN SCHEMA production
     REVOKE ALL ON FUNCTIONS FROM PUBLIC;
 
--- Reset both group roles before applying the intended least-privilege matrix.
+-- Reset group roles before applying the intended least-privilege matrix.
 REVOKE ALL ON SCHEMA production
-    FROM production_writer, datastation_reader;
+    FROM job_submitter, production_writer, datastation_reader;
 REVOKE ALL ON ALL TABLES IN SCHEMA production
-    FROM production_writer, datastation_reader;
+    FROM job_submitter, production_writer, datastation_reader;
 REVOKE ALL ON ALL SEQUENCES IN SCHEMA production
-    FROM production_writer, datastation_reader;
+    FROM job_submitter, production_writer, datastation_reader;
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA production
-    FROM production_writer, datastation_reader;
+    FROM job_submitter, production_writer, datastation_reader;
 
--- ROS2 owns production writes. Reference definitions remain read-only.
+-- MainServer may submit and read Jobs, but cannot transition them.
+GRANT USAGE ON SCHEMA production TO job_submitter;
+GRANT SELECT ON production.jobs TO job_submitter;
+GRANT INSERT (job_id, product_id, requested_quantity, recipe_version)
+    ON production.jobs TO job_submitter;
+
+-- Sequencer owns production execution writes. Reference definitions remain read-only.
 GRANT USAGE ON SCHEMA production TO production_writer;
 GRANT SELECT ON ALL TABLES IN SCHEMA production TO production_writer;
 GRANT INSERT ON
-    production.jobs,
     production.units,
     production.unit_defects,
     production.inventory_movements
     TO production_writer;
 GRANT USAGE ON SEQUENCE
-    production.jobs_job_id_seq,
     production.units_unit_id_seq,
     production.unit_defects_unit_defect_id_seq,
     production.inventory_movements_inventory_movement_id_seq

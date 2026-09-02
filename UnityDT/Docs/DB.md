@@ -2,29 +2,24 @@
 
 ## 현재 구성
 
-2026-09-01 기준 DDL은 `production` 7개 테이블과 `control` 1개 테이블을
-정의한다.
+2026-09-02 기준 DDL은 `production` 7개 테이블을 정의한다.
 
 | 저장 위치 | 대상 | 소유·용도 |
 |---|---|---|
 | PostgreSQL `production` | `products`, `parts`, `product_slots`, `jobs`, `units`, `unit_defects`, `inventory_movements` | 제품 정의와 생산 실행·검사·재고 변동 기록 |
-| PostgreSQL `control` | `assembly_requests` | MainServer와 AssemblySequencer 사이의 영속 command queue |
 | [부품 데이터시트](../../MAIN_SERVER/data/semiconductor_assembly_quality_datasheet_2026-08-18.xlsx) | 부품 후보, 단가, 검사항목 | `part_catalog`을 대신하는 읽기 전용 XLSX |
 | `MAIN_SERVER/reports/defects/*.xlsx` | 불량대책서 | `defect_report`를 대신하는 자동 생성 파일 |
 
 `part_catalog`과 `defect_report` 스키마는 제거했다. 기준 DDL은
 [production_schema.sql](../../DATA_STATION/DB/production_schema.sql) 하나다.
+기존 `control.assembly_requests` DB는 MainServer와 Sequencer를 중지하고 백업한 뒤
+[006_jobs_entrypoint_migration.sql](../../DATA_STATION/DB/006_jobs_entrypoint_migration.sql)을 한 번 실행하고 [005_roles.sql](../../DATA_STATION/DB/005_roles.sql)로 권한을 갱신한다.
 
 ## 스키마
-
-![production·control 8개 테이블 스키마](./images/production-schema.png)
 
 테이블·열·FK는 [자동 생성 Mermaid ERD](./db-schema.generated.md)에서
 확인한다. 이 파일은 [tbls 설정](../../DATA_STATION/DB/tbls.yml)으로 생성하고
 직접 편집하지 않는다.
-
-문서용 이미지는 현재 DDL의 테이블과 열을 기준으로 렌더했다. 편집 가능한 기존
-ERD 원본은 [db-erd-guide.drawio](./db-erd-guide.drawio)다.
 
 격리 테스트 DB에 `production_schema.sql`을 적용한 뒤 저장소 루트에서
 다음 명령으로 Mermaid를 갱신한다. `PRODUCTION_DB_TEST_DSN`은
@@ -46,34 +41,31 @@ mv /tmp/db-schema.generated.md UnityDT/Docs/db-schema.generated.md
 | `products` | `product_id` | `product_code`, `product_name`, `product_version`, `is_selectable` | 제품 정의 |
 | `parts` | `part_id` | `part_name`, `part_category`, `stock_quantity` | 생산에 사용하는 부품과 재고 |
 | `product_slots` | `product_slot_id` | `product_id`, `slot_code`, `part_id` | 제품의 슬롯별 부품 배치 |
-| `jobs` | `job_id` | `product_id`, `requested_quantity`, `recipe_version`, `job_status` | 생산 요청과 실행 기간 |
+| `jobs` | UUID `job_id` | `product_id`, `requested_quantity`, `recipe_version`, `job_status` | 영속 요청 큐와 생산 실행 기간 |
 | `units` | `unit_id` | `job_id`, `unit_sequence_in_job`, `unit_status`, `inspection_result` | Job에서 생산한 개별 Unit |
 | `unit_defects` | `unit_defect_id` | `unit_id`, `product_slot_id`, `defect_type` | FAIL Unit의 슬롯 단위 불량 |
 | `inventory_movements` | `inventory_movement_id` | `part_id`, `quantity_delta`, `movement_type`, `unit_id` | 현재고의 증감 사유와 시각을 보존하는 원장 |
-| `control.assembly_requests` | `request_id` | `runtime_mode`, `payload`, `request_status`, `job_id`, `unit_id` | 영속 요청과 production 실행 연결 |
 
-관계는 다음 두 흐름으로 읽는다.
+관계는 다음과 같이 읽는다.
 
 ```text
 products ──< product_slots >── parts
 products ──< jobs ──< units ──< unit_defects >── product_slots
 parts ──< inventory_movements >── units
-control.assembly_requests ── job_id/unit_id ──> jobs/units
 ```
 
 ### DB가 보장하는 규칙
 
 - 제품 코드와 버전 조합은 유일하다.
 - 한 제품에서 같은 `slot_code`를 중복할 수 없다.
-- 동시에 `PENDING` 또는 `RUNNING`인 Job은 최대 1개다.
+- `PENDING` Job은 여러 개 대기할 수 있지만 `RUNNING` Job은 최대 1개다.
 - Job 상태는 `PENDING`, `RUNNING`, `COMPLETED`, `FAILED`, `CANCELLED`만 허용한다.
-- Unit 검사는 `PENDING`, `PASS`, `FAIL`만 허용하고, 완료 시각과 검사 시각의 순서를 검사한다.
+- 한 Job에서 `RUNNING` Unit은 최대 1개다.
+- Unit 상태는 `RUNNING`, `COMPLETED`, `FAILED`, 검사는 `PENDING`, `PASS`, `FAIL`만 허용하고 완료·검사 시각의 순서를 검사한다.
 - 불량 유형은 `MISSING`, `POSITION_ERROR`, `ORIENTATION_ERROR`, `CRACK`만 허용한다.
 - 한 Unit의 같은 Product Slot에는 불량 레코드를 하나만 기록한다.
 - 재고 변동량은 0일 수 없고 `CONSUMPTION`은 음수이며 Unit과 연결된다.
 - 한 Unit의 같은 Part 소비와 Part별 `OPENING` 기준값은 한 번만 기록한다.
-- command 상태는 `QUEUED`, `RUNNING`, `COMPLETED`, `FAILED`, `CANCELLED`만 허용한다.
-- `RUNNING` command는 최대 1개이며 Job·Unit과 claim 시각이 반드시 연결된다.
 
 ## 재고 원장
 
@@ -168,18 +160,19 @@ MAIN_SERVER_DB_DSN='dbname=main_unity_mock_test' \
 
 ## 실행 흐름과 소유권
 
-1. Unity가 MainServer HTTP API에 조립 command를 보낸다.
-2. MainServer는 command를 `control.assembly_requests`에 저장하고 `production`은 조회만 한다.
-3. AssemblySequencer가 command를 claim하면서 Job·Unit을 만들고 현재고·재고 변동·검사 결과를 `production`에 같은 트랜잭션으로 기록한다.
-4. 불량대책서 생성기가 완료된 FAIL 기록과 데이터시트를 결합해 XLSX를 발행한다.
-5. Unity/Scenario는 DB나 파일을 직접 다루지 않고 주입된 로봇 인터페이스를 사용한다.
+1. Unity가 클라이언트 생성 UUID `job_id`, 제품, 목표 PASS 수량을 MainServer HTTP API에 보낸다.
+2. MainServer는 유효한 요청을 `PENDING` Job으로 등록하고, 같은 `job_id` 재요청에는 기존 Job을 반환한다.
+3. AssemblySequencer는 실행 중 Job이 없을 때 가장 오래된 `PENDING` Job을 선택하고 `recipe_version`의 YAML을 검증한 뒤 `RUNNING`으로 전이한다.
+4. Sequencer는 Unit별로 YAML 순서를 실행하고 Backend의 실제 완료를 기다린다. 안전정지 중에는 Job과 Unit을 `RUNNING`으로 유지한다.
+5. PASS 수가 `requested_quantity`에 도달하면 Job을 완료한다. 검사 FAIL은 완료된 생산 시도로 남기고 새 Unit을 만들며, 실행 실패는 Unit `FAILED`로 기록한다.
+6. Sequencer는 실제 조립한 Unit의 재고 변동을 기록하고, 불량대책서 생성기는 완료된 FAIL 기록으로 XLSX를 발행한다.
+7. Unity/Scenario는 DB나 파일을 직접 다루지 않고 주입된 로봇 인터페이스를 사용한다.
 
 ## 검증
 
-Mock test DB의 schema 적용과 E2E에서 아래 8개 테이블을 확인했다.
+격리된 Mock test DB에서 아래 7개 production 테이블을 확인한다.
 
 ```text
-control.assembly_requests
 production.jobs
 production.inventory_movements
 production.parts

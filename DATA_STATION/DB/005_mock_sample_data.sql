@@ -8,7 +8,8 @@ SET LOCAL lock_timeout = '5s';
 SELECT pg_advisory_xact_lock(hashtext('production.mock_sample_data.v1'));
 
 CREATE TEMP TABLE mock_sample_jobs (
-    recipe_version text PRIMARY KEY,
+    job_id uuid PRIMARY KEY,
+    recipe_version text UNIQUE NOT NULL,
     requested_quantity integer NOT NULL,
     job_status text NOT NULL,
     requested_at timestamptz NOT NULL,
@@ -17,11 +18,11 @@ CREATE TEMP TABLE mock_sample_jobs (
 ) ON COMMIT DROP;
 
 INSERT INTO mock_sample_jobs VALUES
-    ('mock-sample-pass-202608-r1', 2, 'COMPLETED',
+    ('00000000-0000-0000-0000-000000000101', 'mock-sample-pass-202608-r1', 2, 'COMPLETED',
      TIMESTAMPTZ '2026-08-08 09:00:00+09', TIMESTAMPTZ '2026-08-08 09:01:00+09', TIMESTAMPTZ '2026-08-08 09:25:00+09'),
-    ('mock-sample-fail-202608-r1', 2, 'COMPLETED',
-     TIMESTAMPTZ '2026-08-12 13:00:00+09', TIMESTAMPTZ '2026-08-12 13:01:00+09', TIMESTAMPTZ '2026-08-12 13:28:00+09'),
-    ('mock-sample-assembly-failed-202608-r1', 1, 'FAILED',
+    ('00000000-0000-0000-0000-000000000102', 'mock-sample-fail-202608-r1', 2, 'COMPLETED',
+     TIMESTAMPTZ '2026-08-12 13:00:00+09', TIMESTAMPTZ '2026-08-12 13:01:00+09', TIMESTAMPTZ '2026-08-12 13:50:00+09'),
+    ('00000000-0000-0000-0000-000000000103', 'mock-sample-assembly-failed-202608-r1', 1, 'FAILED',
      TIMESTAMPTZ '2026-08-16 15:00:00+09', TIMESTAMPTZ '2026-08-16 15:01:00+09', TIMESTAMPTZ '2026-08-16 15:05:00+09');
 
 CREATE TEMP TABLE mock_sample_units (
@@ -45,6 +46,10 @@ INSERT INTO mock_sample_units VALUES
      TIMESTAMPTZ '2026-08-12 13:02:00+09', TIMESTAMPTZ '2026-08-12 13:12:00+09', TIMESTAMPTZ '2026-08-12 13:14:00+09'),
     ('mock-sample-fail-202608-r1', 2, 'COMPLETED', 'FAIL', 'InspectionSamples/mock-fail.jpg',
      TIMESTAMPTZ '2026-08-12 13:15:00+09', TIMESTAMPTZ '2026-08-12 13:26:00+09', TIMESTAMPTZ '2026-08-12 13:27:00+09'),
+    ('mock-sample-fail-202608-r1', 3, 'COMPLETED', 'PASS', 'InspectionSamples/mock-pass.jpg',
+     TIMESTAMPTZ '2026-08-12 13:28:00+09', TIMESTAMPTZ '2026-08-12 13:37:00+09', TIMESTAMPTZ '2026-08-12 13:38:00+09'),
+    ('mock-sample-fail-202608-r1', 4, 'COMPLETED', 'PASS', 'InspectionSamples/mock-pass.jpg',
+     TIMESTAMPTZ '2026-08-12 13:39:00+09', TIMESTAMPTZ '2026-08-12 13:48:00+09', TIMESTAMPTZ '2026-08-12 13:49:00+09'),
     ('mock-sample-assembly-failed-202608-r1', 1, 'FAILED', 'PENDING', NULL,
      TIMESTAMPTZ '2026-08-16 15:02:00+09', NULL, NULL);
 
@@ -62,7 +67,7 @@ INSERT INTO mock_sample_defects VALUES
 
 CREATE TEMP TABLE mock_sample_inserted_jobs (
     recipe_version text PRIMARY KEY,
-    job_id bigint NOT NULL
+    job_id uuid NOT NULL
 ) ON COMMIT DROP;
 
 DO $$
@@ -136,12 +141,12 @@ WITH product AS (
        AND product_version = 'hbm-pkg-r1'
 ), inserted AS (
     INSERT INTO production.jobs (
-        product_id, requested_quantity, recipe_version, job_status,
+        job_id, product_id, requested_quantity, recipe_version, job_status,
         requested_at, job_started_at, job_finished_at
     )
-    SELECT product.product_id, sample.requested_quantity, sample.recipe_version,
-           sample.job_status, sample.requested_at, sample.job_started_at,
-           sample.job_finished_at
+    SELECT sample.job_id, product.product_id, sample.requested_quantity,
+           sample.recipe_version, sample.job_status, sample.requested_at,
+           sample.job_started_at, sample.job_finished_at
       FROM mock_sample_jobs sample
       CROSS JOIN product
      WHERE NOT EXISTS (

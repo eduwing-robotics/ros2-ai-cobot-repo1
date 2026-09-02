@@ -69,7 +69,7 @@ GROUP BY p.part_id, p.part_name, p.part_category, p.stock_quantity
 ORDER BY p.part_id;
 
 -- GET /jobs/{job_id}
-PREPARE datastation_job(bigint) AS
+PREPARE datastation_job(uuid) AS
 SELECT j.job_id,
        j.product_id,
        pr.product_code,
@@ -78,7 +78,7 @@ SELECT j.job_id,
        j.job_status,
        j.requested_quantity,
        COUNT(u.unit_id) FILTER (
-           WHERE u.unit_status = 'COMPLETED'
+           WHERE u.inspection_result = 'PASS'
        ) AS completed_quantity,
        COUNT(u.unit_id) FILTER (
            WHERE u.unit_status = 'RUNNING'
@@ -88,7 +88,7 @@ SELECT j.job_id,
        ) AS failed_quantity,
        ROUND(
            100.0 * COUNT(u.unit_id) FILTER (
-               WHERE u.unit_status = 'COMPLETED'
+               WHERE u.inspection_result = 'PASS'
            ) / j.requested_quantity,
            2
        ) AS progress_percent,
@@ -204,5 +204,5 @@ ORDER BY defect_rate_percent DESC, p.part_id;
 -- EXECUTE datastation_health;
 -- EXECUTE datastation_product(1001);
 -- EXECUTE datastation_product_requirements(1001, 3);
--- EXECUTE datastation_job(7001);
+-- EXECUTE datastation_job('00000000-0000-0000-0000-000000007001');
 -- EXECUTE datastation_part_rates('2026-08-01T00:00:00Z', '2026-09-01T00:00:00Z');

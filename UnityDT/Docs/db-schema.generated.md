@@ -7,8 +7,6 @@ erDiagram
 "production.units" }o--|| "production.jobs" : "FOREIGN KEY (job_id) REFERENCES production.jobs(job_id)"
 "production.inventory_movements" }o--|| "production.parts" : "FOREIGN KEY (part_id) REFERENCES production.parts(part_id)"
 "production.inventory_movements" }o--o| "production.units" : "FOREIGN KEY (unit_id) REFERENCES production.units(unit_id)"
-"control.assembly_requests" |o--o| "production.jobs" : "FOREIGN KEY (job_id) REFERENCES production.jobs(job_id)"
-"control.assembly_requests" |o--o| "production.units" : "FOREIGN KEY (unit_id) REFERENCES production.units(unit_id)"
 "production.unit_defects" }o--|| "production.product_slots" : "FOREIGN KEY (product_slot_id) REFERENCES production.product_slots(product_slot_id)"
 "production.unit_defects" }o--|| "production.units" : "FOREIGN KEY (unit_id) REFERENCES production.units(unit_id)"
 
@@ -33,7 +31,7 @@ erDiagram
   text part_id FK
 }
 "production.jobs" {
-  bigint job_id
+  uuid job_id
   bigint product_id FK
   integer requested_quantity
   text recipe_version
@@ -44,7 +42,7 @@ erDiagram
 }
 "production.units" {
   bigint unit_id
-  bigint job_id FK
+  uuid job_id FK
   integer unit_sequence_in_job
   text unit_status
   text inspection_result
@@ -61,18 +59,6 @@ erDiagram
   bigint unit_id FK
   text reason
   timestamp_with_time_zone recorded_at
-}
-"control.assembly_requests" {
-  uuid request_id
-  text runtime_mode
-  jsonb payload
-  text request_status
-  bigint job_id FK
-  bigint unit_id FK
-  timestamp_with_time_zone requested_at
-  timestamp_with_time_zone claimed_at
-  timestamp_with_time_zone finished_at
-  text error_message
 }
 "production.unit_defects" {
   bigint unit_defect_id
