@@ -21,7 +21,7 @@ from rclpy.qos import DurabilityPolicy, QoSProfile
 
 from geometry_msgs.msg import Pose, PoseStamped
 from control_msgs.action import FollowJointTrajectory
-from moveit_msgs.action import ExecuteTrajectory, MoveGroup
+from moveit_msgs.action import MoveGroup
 from moveit_msgs.msg import (
     BoundingVolume,
     Constraints,
@@ -777,7 +777,10 @@ class MockMoveJ(Node):
                 self.on_start_assembly,
             )
         self.move_client = ActionClient(self, MoveGroup, "/move_action")
-        self.execute_client = ActionClient(self, ExecuteTrajectory, "/execute_trajectory")
+        self.arm_client = ActionClient(
+            self, FollowJointTrajectory,
+            "/fairino5_controller/follow_joint_trajectory"
+        )
         self.gripper_client = ActionClient(
             self, FollowJointTrajectory,
             "/gripper_controller/follow_joint_trajectory"
@@ -1338,8 +1341,8 @@ class MockMoveJ(Node):
         if trajectory is None:
             return
         self.require_mock_hardware()
-        if not self.execute_client.wait_for_server(timeout_sec=5.0):
-            raise RuntimeError("/execute_trajectory is unavailable")
+        if not self.arm_client.wait_for_server(timeout_sec=5.0):
+            raise RuntimeError("arm controller is unavailable")
         if self.pause_requested():
             raise AssemblyPaused()
 
@@ -1347,8 +1350,8 @@ class MockMoveJ(Node):
         if self.pause_requested():
             raise AssemblyPaused()
         self.publish_status("execution: sending trajectory to mock controller")
-        future = self.execute_client.send_goal_async(
-            ExecuteTrajectory.Goal(trajectory=trajectory)
+        future = self.arm_client.send_goal_async(
+            FollowJointTrajectory.Goal(trajectory=trajectory.joint_trajectory)
         )
         handle = self.wait_for_future(future, "trajectory goal acceptance")
         if not handle or not handle.accepted:
@@ -1371,8 +1374,8 @@ class MockMoveJ(Node):
             self.joint_state = None
             self.wait_for_joint_state()
             raise AssemblyPaused()
-        if result.error_code.val != MoveItErrorCodes.SUCCESS:
-            raise RuntimeError(f"mock execution failed: MoveIt code {result.error_code.val}")
+        if result.error_code != FollowJointTrajectory.Result.SUCCESSFUL:
+            raise RuntimeError("arm controller execution failed")
         self.joint_state = None
         self.wait_for_joint_state()
         self.publish_status("execution: complete")
