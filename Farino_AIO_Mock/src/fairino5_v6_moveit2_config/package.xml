@@ -23,7 +23,6 @@
   <exec_depend>controller_manager_msgs</exec_depend>
   <exec_depend>fairino_msgs</exec_depend>
   <exec_depend>lifecycle_msgs</exec_depend>
-  <exec_depend>python3-yaml</exec_depend>
   <exec_depend>rcl_interfaces</exec_depend>
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>trajectory_msgs</exec_depend>

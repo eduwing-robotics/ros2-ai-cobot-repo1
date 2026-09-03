@@ -401,7 +401,6 @@ def main(args=None):
         self_check()
         print("assembly_sequencer mock self-check passed")
         return
-    self_check()
     rclpy.init(args=args)
     node = MockAssemblySequencer()
     executor = MultiThreadedExecutor(num_threads=2)

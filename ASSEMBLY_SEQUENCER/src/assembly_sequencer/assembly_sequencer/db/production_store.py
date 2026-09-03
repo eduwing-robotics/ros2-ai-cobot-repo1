@@ -487,10 +487,6 @@ def get_job_state(job_id):
         return _get_job_state(connection, job_id)
 
 
-def get_product_slot_codes(job_id):
-    return [slot["slot_code"] for slot in get_product_slots(job_id)]
-
-
 def get_product_slots(job_id):
     job_id = _job_id(job_id)
     with _connect() as connection:

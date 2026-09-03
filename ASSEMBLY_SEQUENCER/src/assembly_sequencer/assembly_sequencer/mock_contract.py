@@ -77,7 +77,7 @@ def _validate_workflow(workflow):
             )
 
 
-def validate_recipe(recipe, expected_version):
+def validate_recipe(recipe):
     if not isinstance(recipe, dict):
         raise ValueError("recipe must be a YAML object")
     required_fields = {
@@ -89,10 +89,6 @@ def validate_recipe(recipe, expected_version):
             "recipe must contain exactly recipe_version, frame, joint_points, "
             "motion, workflow, gripper and steps"
         )
-    if not isinstance(expected_version, str) or not expected_version.strip():
-        raise ValueError("expected recipe version must be a non-empty string")
-    if recipe["recipe_version"] != expected_version:
-        raise ValueError("recipe_version does not match the expected version")
     if recipe["frame"] != "base_link":
         raise ValueError("recipe frame must be base_link")
 
@@ -186,7 +182,7 @@ def load_recipe(path):
         raise ValueError("recipe_version must be a non-empty string")
     if recipe_path.stem != recipe_version:
         raise ValueError("recipe_version does not match the recipe filename")
-    return validate_recipe(recipe, recipe_version)
+    return validate_recipe(recipe)
 
 
 def validate_ros_pose(value, label):

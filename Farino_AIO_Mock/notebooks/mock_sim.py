@@ -9,10 +9,8 @@ import sys
 import time
 import uuid
 from collections import Counter
-from pathlib import Path
 
 import rclpy
-import yaml
 from controller_manager_msgs.srv import ListHardwareComponents
 from fairino_msgs.srv import RemoteCmdInterface
 from lifecycle_msgs.msg import State
@@ -148,18 +146,12 @@ def parse_start_command(raw):
         command = json.loads(raw)
     except (TypeError, json.JSONDecodeError) as error:
         raise ValueError("cmd_str must be a JSON object") from error
-    legacy_fields = {
-        "command", "job_id", "recipe_version", "observations",
-    }
-    plan_fields = {
+    required_fields = {
         "command", "job_id", "recipe_version", "execution_plan",
     }
-    if not isinstance(command, dict) or frozenset(command) not in {
-        frozenset(legacy_fields), frozenset(plan_fields),
-    }:
+    if not isinstance(command, dict) or set(command) != required_fields:
         raise ValueError(
-            "command, job_id, recipe_version and observations or "
-            "execution_plan are required"
+            "command, job_id, recipe_version and execution_plan are required"
         )
     if command["command"] != "start":
         raise ValueError("command must be start")
@@ -173,13 +165,8 @@ def parse_start_command(raw):
     recipe_version = command["recipe_version"]
     if not isinstance(recipe_version, str) or not recipe_version.strip():
         raise ValueError("recipe_version must be a non-empty string")
-    observations = None
-    execution_plan = None
-    if "observations" in command:
-        observations = validate_observations(command["observations"])
-    else:
-        execution_plan = validate_execution_plan(command["execution_plan"])
-    return job_id, recipe_version, observations, execution_plan
+    execution_plan = validate_execution_plan(command["execution_plan"])
+    return job_id, recipe_version, execution_plan
 
 
 def parse_transfer_command(raw):
@@ -259,37 +246,6 @@ def validate_ros_pose(value, label):
     }
 
 
-def validate_observations(observations):
-    if not isinstance(observations, list) or not observations:
-        raise ValueError("observations must be a non-empty list")
-    pose_fields = {"order", "part_id", "source", "target"}
-    validated = []
-    for expected_order, observation in enumerate(observations, 1):
-        if not isinstance(observation, dict) or set(observation) != pose_fields:
-            raise ValueError(
-                f"observation {expected_order} must contain order, part_id, "
-                "source and target"
-            )
-        if isinstance(observation["order"], bool) \
-                or not isinstance(observation["order"], int) \
-                or observation["order"] != expected_order:
-            raise ValueError("observation order must be consecutive integers from 1")
-        part_id = observation["part_id"]
-        if not isinstance(part_id, str) or not part_id.strip():
-            raise ValueError(f"observation {expected_order} part_id must be non-empty")
-        validated.append({
-            "order": expected_order,
-            "part_id": part_id,
-            "source": validate_ros_pose(
-                observation["source"], f"observation {expected_order}.source"
-            ),
-            "target": validate_ros_pose(
-                observation["target"], f"observation {expected_order}.target"
-            ),
-        })
-    return validated
-
-
 def validate_assembled_pcb(value):
     pose_fields = {"source", "target"}
     if not isinstance(value, dict) or set(value) != pose_fields:
@@ -330,143 +286,6 @@ def validate_workflow(workflow):
             raise ValueError(
                 f"workflow.{section} must contain each required action"
             )
-
-
-def validate_recipe(recipe, expected_version):
-    if not isinstance(recipe, dict):
-        raise ValueError("recipe must be a YAML object")
-    required_fields = {
-        "recipe_version", "frame", "joint_points", "motion",
-        "workflow", "gripper", "steps",
-    }
-    if set(recipe) != required_fields:
-        raise ValueError(
-            "recipe must contain exactly recipe_version, frame, joint_points, "
-            "motion, workflow, gripper and steps"
-        )
-    if not isinstance(expected_version, str) or not expected_version.strip():
-        raise ValueError("expected recipe version must be a non-empty string")
-    if recipe["recipe_version"] != expected_version:
-        raise ValueError("recipe_version does not match the start request")
-    if recipe.get("frame") != "base_link":
-        raise ValueError("recipe frame must be base_link")
-    joint_points = recipe.get("joint_points")
-    if not isinstance(joint_points, dict) or set(joint_points) != {
-        "home", "item_ready", "assembly_ready"
-    }:
-        raise ValueError(
-            "joint_points must contain home, item_ready and assembly_ready"
-        )
-    for name in ("home", "item_ready", "assembly_ready"):
-        validate_joint_point(joint_points[name], f"joint_points.{name}")
-
-    motion = recipe.get("motion")
-    if not isinstance(motion, dict) or set(motion) != {
-        "approach_dz_mm", "retract_dz_mm",
-        "assembled_pcb_drop_approach_dz_mm",
-    }:
-        raise ValueError(
-            "motion must contain approach_dz_mm, retract_dz_mm and "
-            "assembled_pcb_drop_approach_dz_mm"
-        )
-    for name in (
-        "approach_dz_mm", "retract_dz_mm",
-        "assembled_pcb_drop_approach_dz_mm",
-    ):
-        if _finite_number(motion[name], f"motion.{name}") <= 0.0:
-            raise ValueError(f"motion.{name} must be greater than zero")
-
-    validate_workflow(recipe.get("workflow"))
-
-    steps = recipe.get("steps")
-    if not isinstance(steps, list) or not steps:
-        raise ValueError("recipe steps must be a non-empty list")
-    slot_codes = set()
-    for expected_order, step in enumerate(steps, 1):
-        if not isinstance(step, dict) or set(step) != {
-            "order", "part_id", "slot_code"
-        }:
-            raise ValueError(
-                f"step {expected_order} must contain exactly order, part_id "
-                "and slot_code"
-            )
-        if isinstance(step.get("order"), bool) \
-                or not isinstance(step.get("order"), int) \
-                or step["order"] != expected_order:
-            raise ValueError("step order must be consecutive integers from 1")
-        for field in ("part_id", "slot_code"):
-            if not isinstance(step.get(field), str) or not step[field].strip():
-                raise ValueError(f"step {expected_order} {field} must be non-empty")
-        if step["slot_code"] in slot_codes:
-            raise ValueError(f"duplicate slot_code: {step['slot_code']}")
-        slot_codes.add(step["slot_code"])
-
-    gripper = recipe.get("gripper")
-    if not isinstance(gripper, dict) or set(gripper) != {
-        "parts", "assembled_pcb"
-    }:
-        raise ValueError("gripper must contain parts and assembled_pcb")
-    part_profiles = gripper["parts"]
-    part_ids = {step["part_id"] for step in steps}
-    if not isinstance(part_profiles, dict) or set(part_profiles) != part_ids:
-        raise ValueError("gripper.parts must contain exactly the recipe part IDs")
-    profiles = list(part_profiles.items())
-    profiles.append(("assembled_pcb", gripper["assembled_pcb"]))
-    for name, profile in profiles:
-        if not isinstance(profile, dict) or set(profile) != {
-            "grasp_opening_percent", "release_opening_percent"
-        }:
-            raise ValueError(
-                f"gripper.{name} must contain grasp_opening_percent and "
-                "release_opening_percent"
-            )
-        for field, value in profile.items():
-            value = _finite_number(value, f"gripper.{name}.{field}")
-            if not 0.0 <= value <= 100.0:
-                raise ValueError(
-                    f"gripper.{name}.{field} must be between 0 and 100"
-                )
-    return recipe
-
-
-def load_recipe(path, expected_version=None):
-    recipe_path = Path(path)
-    with recipe_path.open(encoding="utf-8") as stream:
-        recipe = yaml.safe_load(stream)
-    if not isinstance(recipe, dict):
-        raise ValueError("recipe must be a YAML object")
-    recipe_version = recipe.get("recipe_version")
-    if not isinstance(recipe_version, str) or not recipe_version.strip():
-        raise ValueError("recipe_version must be a non-empty string")
-    if expected_version is not None and recipe_version != expected_version:
-        raise ValueError("recipe_version does not match the start request")
-    if recipe_path.stem != recipe_version:
-        raise ValueError("recipe_version does not match the recipe filename")
-    return validate_recipe(recipe, recipe_version)
-
-
-def resolve_observations(recipe, observations):
-    recipe_steps = recipe["steps"]
-    if len(recipe_steps) != len(observations):
-        raise ValueError("Unity observation count does not match the recipe")
-    resolved = []
-    for recipe_step, observation in zip(recipe_steps, observations):
-        if recipe_step["order"] != observation["order"]:
-            raise ValueError("Unity observation order does not match the recipe")
-        if recipe_step["part_id"] != observation["part_id"]:
-            raise ValueError(
-                f"Unity observation part_id does not match recipe step "
-                f"{recipe_step['order']}"
-            )
-        gripper = recipe["gripper"]["parts"][recipe_step["part_id"]]
-        resolved.append({
-            "step": recipe_step,
-            "gripper_grasp_opening_percent": gripper["grasp_opening_percent"],
-            "gripper_release_opening_percent": gripper["release_opening_percent"],
-            "source": observation["source"],
-            "target": observation["target"],
-        })
-    return resolved
 
 
 def validate_execution_plan(value):
@@ -674,7 +493,7 @@ def advance_assembly_snapshot(current, feedback, recipe_version, expected_step_c
     return snapshot
 
 
-def self_check(runtime_recipe=None):
+def self_check():
     assert gripper_position(100.0) == 0.0
     assert gripper_position(0.0) == GRIPPER_CLOSED_METERS
     home_radians = [math.radians(value) for value in INITIAL_JOINTS_DEG]
@@ -693,23 +512,12 @@ def self_check(runtime_recipe=None):
         name=list(JOINTS[1:]), position=[0.0] * (len(JOINTS) - 1)
     )) is None
     job_id = "12345678-1234-5678-1234-567812345678"
-    observations = [{
-        "order": 1,
-        "part_id": "part",
-        "source": {"xyz_mm": [350, -150, 250], "xyzw": [0, 0, 0, 1]},
-        "target": {"xyz_mm": [350, 150, 250], "xyzw": [0, 0, 0, 1]},
-    }]
+    source = {"xyz_mm": [350, -150, 250], "xyzw": [0, 0, 0, 1]}
+    target = {"xyz_mm": [350, 150, 250], "xyzw": [0, 0, 0, 1]}
     assembled_pcb = {
         "source": {"xyz_mm": [450, 0, 200], "xyzw": [0, 0, 0, 1]},
         "target": {"xyz_mm": [350, 350, 200], "xyzw": [0, 0, 0, 1]},
     }
-    parsed = parse_start_command(json.dumps({
-        "command": "start",
-        "job_id": job_id,
-        "recipe_version": "assembly-r1",
-        "observations": observations,
-    }))
-    assert parsed[:2] == (job_id, "assembly-r1")
     transfer = parse_transfer_command(json.dumps({
         "command": "transfer_assembled_pcb",
         "job_id": job_id,
@@ -739,8 +547,7 @@ def self_check(runtime_recipe=None):
             {"robot.transfer": "assembled_pcb"},
         ],
     }
-    recipe = validate_recipe({
-        "recipe_version": "assembly-r1",
+    plan = validate_execution_plan({
         "frame": "base_link",
         "joint_points": {
             "home": [-4.689, -86.951, 84.467, -87.516, -90.000, -4.688],
@@ -753,74 +560,48 @@ def self_check(runtime_recipe=None):
             "assembled_pcb_drop_approach_dz_mm": 150,
         },
         "workflow": sample_workflow,
-        "gripper": {
-            "parts": {
-                "part": {
-                    "grasp_opening_percent": 20,
-                    "release_opening_percent": 30,
-                },
+        "resolved_steps": [{
+            "step": {
+                "order": 1,
+                "part_id": "part",
+                "slot_code": "slot-01",
             },
-            "assembled_pcb": {
-                "grasp_opening_percent": 0,
-                "release_opening_percent": 100,
-            },
-        },
-        "steps": [{
-            "order": 1,
-            "part_id": "part",
-            "slot_code": "slot-01",
+            "gripper_grasp_opening_percent": 20,
+            "gripper_release_opening_percent": 30,
+            "source": source,
+            "target": target,
         }],
-    }, "assembly-r1")
-    resolved = resolve_observations(recipe, parsed[2])
-    plan = validate_execution_plan({
-        "frame": recipe["frame"],
-        "joint_points": recipe["joint_points"],
-        "motion": recipe["motion"],
-        "workflow": recipe["workflow"],
-        "resolved_steps": resolved,
-        "assembled_pcb_gripper": recipe["gripper"]["assembled_pcb"],
+        "assembled_pcb_gripper": {
+            "grasp_opening_percent": 0,
+            "release_opening_percent": 100,
+        },
     })
-    plan_command = parse_start_command(json.dumps({
+    parsed = parse_start_command(json.dumps({
         "command": "start",
         "job_id": job_id,
         "recipe_version": "assembly-r1",
         "execution_plan": plan,
     }))
-    assert plan_command[2] is None and len(plan_command[3]["resolved_steps"]) == 1
+    assert parsed[:2] == (job_id, "assembly-r1")
+    assert len(parsed[2]["resolved_steps"]) == 1
+    resolved = parsed[2]["resolved_steps"]
     assert transfer[1]["target"]["xyz_mm"] == [350.0, 350.0, 200.0]
-    assert "source" not in recipe["steps"][0]
     assert (
         resolved[0]["gripper_grasp_opening_percent"],
         resolved[0]["gripper_release_opening_percent"],
     ) == (20, 30)
     assert resolved[0]["source"]["xyz_mm"] == [350.0, -150.0, 250.0]
-    if runtime_recipe is not None:
-        runtime_observations = [{
-            "order": step["order"],
-            "part_id": step["part_id"],
-            "source": observations[0]["source"],
-            "target": observations[0]["target"],
-        } for step in runtime_recipe["steps"]]
-        runtime_command = parse_start_command(json.dumps({
-            "command": "start",
-            "job_id": job_id,
-            "recipe_version": runtime_recipe["recipe_version"],
-            "observations": runtime_observations,
-        }))
-        assert len(resolve_observations(
-            runtime_recipe, runtime_command[2]
-        )) == len(runtime_recipe["steps"])
     approach = vertical_offset(
-        resolved[0]["source"], recipe["motion"]["approach_dz_mm"]
+        resolved[0]["source"], plan["motion"]["approach_dz_mm"]
     )
     assert approach["xyz_mm"] == [350.0, -150.0, 350.0]
     assert resolved[0]["source"]["xyz_mm"] == [350.0, -150.0, 250.0]
     pcb_drop_approach = vertical_offset(
         transfer[1]["target"],
-        recipe["motion"]["assembled_pcb_drop_approach_dz_mm"],
+        plan["motion"]["assembled_pcb_drop_approach_dz_mm"],
     )
     assert pcb_drop_approach["xyz_mm"] == [350.0, 350.0, 350.0]
-    feedback = assembly_feedback(job_id, "PICKED", recipe["steps"][0])
+    feedback = assembly_feedback(job_id, "PICKED", resolved[0]["step"])
     assert feedback["step_order"] == 1 and feedback["part_id"] == "part"
     terminal = assembly_feedback(job_id, "COMPLETED")
     assert terminal["step_order"] == 0 and terminal["slot_code"] == ""
@@ -834,7 +615,7 @@ def self_check(runtime_recipe=None):
     assert snapshot["active"] and snapshot["held_step_order"] == 1
     snapshot = advance_assembly_snapshot(
         snapshot,
-        assembly_feedback(job_id, "PLACED", recipe["steps"][0]),
+        assembly_feedback(job_id, "PLACED", resolved[0]["step"]),
         "assembly-r1",
         1,
     )
@@ -877,17 +658,9 @@ def self_check(runtime_recipe=None):
 
 
 class MockMoveJ(Node):
-    def __init__(self, args, assembly_recipe=None):
+    def __init__(self, args):
         super().__init__("mock_movej")
         self.args = args
-        self.assembly_recipe = assembly_recipe
-        if assembly_recipe is not None:
-            self.get_logger().info(
-                "validated recipe {} with {} step(s)".format(
-                    assembly_recipe["recipe_version"],
-                    len(assembly_recipe["steps"]),
-                )
-            )
         scaling_descriptor = ParameterDescriptor(
             floating_point_range=[
                 FloatingPointRange(from_value=0.01, to_value=1.0, step=0.0)
@@ -1101,7 +874,7 @@ class MockMoveJ(Node):
             return self.start_response(response, True, job_id)
 
         try:
-            job_id, recipe_version, observations, execution_plan = parse_start_command(
+            job_id, recipe_version, execution_plan = parse_start_command(
                 request.cmd_str
             )
         except ValueError as error:
@@ -1121,31 +894,10 @@ class MockMoveJ(Node):
             return self.start_response(
                 response, False, job_id, "PLAN_ONLY", "assembly requires execution mode"
             )
-        try:
-            if execution_plan is None:
-                recipe = self.assembly_recipe
-                if recipe is None or recipe["recipe_version"] != recipe_version:
-                    raise ValueError(
-                        "recipe_version does not match the validated runtime recipe"
-                    )
-                execution_plan = validate_execution_plan({
-                    "frame": recipe["frame"],
-                    "joint_points": recipe["joint_points"],
-                    "motion": recipe["motion"],
-                    "workflow": recipe["workflow"],
-                    "resolved_steps": resolve_observations(recipe, observations),
-                    "assembled_pcb_gripper": recipe["gripper"]["assembled_pcb"],
-                })
-        except ValueError as error:
-            return self.start_response(
-                response, False, job_id, "INVALID_RECIPE", str(error)
-            )
-
         self.active_assembly = {
             "job_id": job_id,
             "recipe_version": recipe_version,
             "execution_plan": execution_plan,
-            "resolved_steps": execution_plan["resolved_steps"],
             "phase": "assembling",
             "pause_requested": False,
             "paused": False,
@@ -1170,7 +922,7 @@ class MockMoveJ(Node):
             self.latest_assembly_snapshot,
             payload,
             job["recipe_version"],
-            len(job["resolved_steps"]),
+            len(job["execution_plan"]["resolved_steps"]),
         )
         self.assembly_feedback_publisher.publish(
             String(data=json.dumps(payload, separators=(",", ":")))
@@ -1192,7 +944,7 @@ class MockMoveJ(Node):
             self.latest_assembly_snapshot,
             payload,
             job["recipe_version"],
-            len(job["resolved_steps"]),
+            len(job["execution_plan"]["resolved_steps"]),
         )
         self.assembly_feedback_publisher.publish(
             String(data=json.dumps(payload, separators=(",", ":")))
@@ -1664,7 +1416,7 @@ class MockMoveJ(Node):
                 else:
                     raise RuntimeError(f"unknown preflight action: {command}")
                 self.wait_if_paused(job)
-            for resolved in job["resolved_steps"]:
+            for resolved in execution_plan["resolved_steps"]:
                 step = resolved["step"]
                 grasp_opening_percent = resolved[
                     "gripper_grasp_opening_percent"
@@ -1903,10 +1655,6 @@ def parse_args(argv=None):
     parser.add_argument("--min-j3-deg", type=float, default=0.0)
     parser.add_argument("--plan-only", action="store_true")
     parser.add_argument("--listen-unity", action="store_true")
-    parser.add_argument(
-        "--recipe",
-        help="Legacy direct-Unity Recipe YAML path",
-    )
     args = parser.parse_args(argv)
     if not args.listen_unity and args.joints is None and args.pose is None:
         parser.error("one of --joints, --pose or --listen-unity is required")
@@ -1922,12 +1670,11 @@ def parse_args(argv=None):
 def main():
     args = parse_args(rclpy.utilities.remove_ros_args(args=sys.argv)[1:])
     try:
-        assembly_recipe = load_recipe(args.recipe) if args.recipe else None
-        self_check(assembly_recipe)
-    except (OSError, ValueError, yaml.YAMLError, AssertionError) as error:
+        self_check()
+    except (ValueError, AssertionError) as error:
         raise SystemExit(f"mock startup validation failed: {error}") from error
     rclpy.init()
-    node = MockMoveJ(args, assembly_recipe)
+    node = MockMoveJ(args)
     try:
         node.listen() if args.listen_unity else node.run()
     except Exception as error:

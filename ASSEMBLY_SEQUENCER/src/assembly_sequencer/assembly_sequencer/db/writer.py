@@ -104,9 +104,6 @@ class DbWriter:
     def get_job(self, job_id):
         return self._store.get_job_state(self._job_id(job_id))
 
-    def get_product_slot_codes(self, job_id):
-        return self._store.get_product_slot_codes(job_id)
-
     def get_product_slots(self, job_id):
         return self._store.get_product_slots(self._job_id(job_id))
 
