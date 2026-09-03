@@ -1,44 +1,67 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
     <ui:Style src="project://database/Assets/UI/FR5Theme.uss" />
     <ui:Template src="project://database/Assets/UI/FR5Shell.uxml" name="FR5Shell" />
-    <!--
-      RUN · 작업 요청 — UnityDT/Docs/ui/recommendation/mockups-monitor-aligned/01_run.png
-      실데이터: 제품 · 요구 재고 · 인터록 · START (FR5RequestBinder)
-      현재 Scenario 계약은 고정 레시피 · 수량 1이며 선택값을 실행 요청에 싣지 않는다.
-    -->
-    <ui:VisualElement name="fr5-request" class="page fr5--mock">
 
+    <ui:VisualElement name="fr5-request" class="page fr5--mock">
         <ui:VisualElement class="page-heading">
-            <ui:Label text="REQUEST" class="page-heading__title" />
+            <ui:Label text="JOBS" class="page-heading__title" />
             <ui:Label text="/" class="page-heading__divider" />
-            <ui:Label text="작업 요청" class="page-heading__title" />
+            <ui:Label text="작업 현황" class="page-heading__title" />
             <ui:VisualElement class="spacer" />
-            <ui:Label text="생산 요청 · Scenario 고정 제품 / 수량 1" class="page-heading__meta" />
+            <ui:Label text="영속 요청 큐 · 최근 생산 이력" class="page-heading__meta" />
         </ui:VisualElement>
 
-        <!-- 좌 : 제품 미리보기 -->
-        <ui:VisualElement name="product-panel" class="panel" style="position:absolute; left:112px; top:164px; width:620px; height:868px;">
+        <ui:VisualElement class="panel" style="position:absolute; left:112px; top:164px; width:1118px; height:868px;">
             <ui:VisualElement class="panel__spine" />
             <ui:VisualElement class="panel__head">
-                <ui:Label text="REFERENCE PRODUCT" class="panel__title" />
+                <ui:Label text="JOB QUEUE · RECENT" class="panel__title" />
+                <ui:Label name="job-count" text="—" class="panel__badge" style="margin-left:14px;" />
                 <ui:VisualElement class="spacer" />
-                <ui:Label name="product-slot-count" text="—" class="panel__badge" />
+                <ui:Button name="job-refresh" text="새로고침" class="btn" style="width:112px; height:34px;" />
+            </ui:VisualElement>
+            <ui:VisualElement class="panel__body">
+                <ui:VisualElement class="row" style="margin-bottom:14px;">
+                    <ui:Button name="filter-all" text="ALL" class="btn job-filter job-filter--on" />
+                    <ui:Button name="filter-queue" text="QUEUE" class="btn job-filter" />
+                    <ui:Button name="filter-attention" text="ATTENTION" class="btn job-filter" />
+                    <ui:Button name="filter-done" text="DONE" class="btn job-filter" />
+                    <ui:VisualElement class="spacer" />
+                    <ui:Label name="job-error" text="" class="bad" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="trow trow--head">
+                    <ui:Label text="STATUS" class="tcell tcell--head" style="width:104px;" />
+                    <ui:Label text="JOB" class="tcell tcell--head" style="width:150px;" />
+                    <ui:Label text="PRODUCT" class="tcell tcell--head" style="width:260px;" />
+                    <ui:Label text="PASS / TARGET" class="tcell tcell--head tcell--num" style="width:112px;" />
+                    <ui:Label text="RESULT" class="tcell tcell--head" style="width:148px;" />
+                    <ui:Label text="REQUESTED" class="tcell tcell--head" style="width:126px;" />
+                    <ui:Label text="LINK" class="tcell tcell--head" style="width:132px;" />
+                </ui:VisualElement>
+                <ui:ScrollView mode="Vertical" style="flex-grow:1;">
+                    <ui:VisualElement name="job-list" class="vlist" />
+                </ui:ScrollView>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:VisualElement class="panel" style="position:absolute; left:1254px; top:164px; width:642px; height:868px;">
+            <ui:VisualElement class="panel__spine" />
+            <ui:VisualElement class="panel__head">
+                <ui:Label text="NEW JOB" class="panel__title" />
+                <ui:VisualElement class="spacer" />
+                <ui:Label text="production.jobs" class="panel__badge" />
             </ui:VisualElement>
             <ui:VisualElement class="panel__body">
                 <ui:Label name="product-name" text="—" class="value value--lg wrap" />
-                <ui:Label name="product-meta" text="—" class="muted" style="margin-top:6px;" />
-                <ui:VisualElement class="rule" style="margin-top:16px; margin-bottom:16px;" />
+                <ui:Label name="product-meta" text="—" class="muted" style="margin-top:5px;" />
 
-                <!--
-                  완성체 — 제품마다 그림 파일을 두지 않는다. production.products 에
-                  이미지 경로 컬럼이 없어서 파일을 쓰면 product_code → PNG 매핑을
-                  화면이 떠안고, 제품이 늘 때마다 조용히 빈 그림이 된다.
-                  대신 씬의 기판을 비추는 카메라의 RenderTexture 를 그대로 받는다 —
-                  제품 정의가 바뀌면 그림도 따라가고, 조립 중에는 부품이 놓이는
-                  것까지 보인다. 미지정이면 아래 빈 상태가 그 사실을 적는다.
-                -->
-                <ui:VisualElement class="sect"><ui:VisualElement class="sect__tick" /><ui:Label text="완성체" class="sect__title" /><ui:VisualElement class="spacer" /><ui:Label name="preview-source" text="—" class="sect__unit" /></ui:VisualElement>
-                <ui:VisualElement name="product-preview-frame" style="height:186px; background-color:rgb(20,28,36); margin-bottom:16px;">
+                <ui:VisualElement class="sect" style="margin-top:14px;">
+                    <ui:VisualElement class="sect__tick" />
+                    <ui:Label text="조립체" class="sect__title" />
+                    <ui:VisualElement class="spacer" />
+                    <ui:Label name="preview-source" text="—" class="sect__unit" />
+                </ui:VisualElement>
+                <ui:VisualElement style="height:178px; background-color:rgb(20,28,36); margin-bottom:14px;">
                     <ui:Image name="product-preview" style="position:absolute; left:0; top:0; right:0; bottom:0;" />
                     <ui:VisualElement name="product-preview-empty" class="empty">
                         <ui:Label text="연결 없음" class="empty__title empty__title--miss" />
@@ -46,80 +69,39 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
 
-                <ui:VisualElement class="rule" style="margin-bottom:16px;" />
-
-                <!--
-                  필요 부품 — 슬롯이 아니라 부품 타입 단위다. 우측 재고표가 부품
-                  단위로 세므로 같은 단위여야 좌우를 겹쳐 읽을 수 있다.
-                  타일은 바인더가 product_slots 를 part_id 로 접어 만든다.
-                -->
-                <ui:VisualElement class="sect"><ui:VisualElement class="sect__tick" /><ui:Label text="필요 부품" class="sect__title" /><ui:VisualElement class="spacer" /><ui:Label text="타입 · 수량" class="sect__unit" /></ui:VisualElement>
-                <ui:VisualElement name="slot-list" class="row vlist" style="flex-wrap:wrap;" />
-
-                <ui:VisualElement class="rule" style="margin-top:16px; margin-bottom:16px;" />
-                <ui:VisualElement class="sect"><ui:VisualElement class="sect__tick" /><ui:Label text="RECIPE" class="sect__title" /></ui:VisualElement>
-                <ui:VisualElement class="row">
-                    <ui:Label name="recipe-version" text="assembly-r1" style="color:rgb(226,236,241);" />
-                    <ui:VisualElement name="recipe-match-chip" class="chip chip--good" style="margin-left:16px;"><ui:Label text="VERSION MATCH" class="chip__text" /></ui:VisualElement>
+                <ui:VisualElement class="sect">
+                    <ui:VisualElement class="sect__tick" />
+                    <ui:Label text="필요 부품" class="sect__title" />
+                    <ui:VisualElement class="spacer" />
+                    <ui:Label name="product-slot-count" text="—" class="sect__unit" />
                 </ui:VisualElement>
-                <ui:Label text="불일치 시 노드가 goal 을 거부한다. 요청 전에 여기서 보인다." class="muted" style="margin-top:12px;" />
-            </ui:VisualElement>
-        </ui:VisualElement>
+                <ui:VisualElement name="slot-list" class="row vlist" style="flex-wrap:wrap; margin-bottom:10px;" />
 
-        <!-- 우 : 요청 폼 -->
-        <ui:VisualElement name="request-panel" class="panel" style="position:absolute; left:756px; top:164px; width:1140px; height:868px;">
-            <ui:VisualElement class="panel__spine" />
-            <ui:VisualElement class="panel__head">
-                <ui:Label text="작업 요청" class="panel__title" />
-                <ui:VisualElement class="spacer" />
-                <ui:Label text="AssemblyJob · goal" class="panel__badge" />
-            </ui:VisualElement>
-            <ui:VisualElement class="panel__body">
-
-                <ui:VisualElement class="sect"><ui:VisualElement class="sect__tick" /><ui:Label text="1   실행 제품" class="sect__title" /><ui:VisualElement class="spacer" /><ui:Label text="Scenario 고정" class="sect__unit" /></ui:VisualElement>
-                <ui:VisualElement class="row" style="margin-bottom:16px;">
-                    <ui:Label text="Scenario 고정 제품" class="value value--lg" />
-                    <ui:Label text="recipe assembly-r1 · 조회 제품은 좌측 미리보기만 갱신" class="muted" style="margin-left:18px;" />
-                </ui:VisualElement>
-                <!-- 바인더가 첫 실제 제품을 로드하도록 이름 계약만 유지한다. -->
-                <ui:VisualElement name="product-list" class="vlist" style="display:none;" />
-
-                <ui:VisualElement class="sect"><ui:VisualElement class="sect__tick" /><ui:Label text="2   실행 수량" class="sect__title" /><ui:VisualElement class="spacer" /><ui:Label text="Scenario 고정" class="sect__unit" /></ui:VisualElement>
-                <ui:VisualElement class="row" style="margin-bottom:16px;">
-                    <ui:Label name="qty-value" text="1" class="value value--xl" style="width:72px; font-size:40px; -unity-text-align:middle-center;" />
-                    <ui:Label text="개 · 고정" class="value" />
-                    <ui:VisualElement style="margin-left:32px;">
-                        <ui:Label name="qty-max" text="수량 1 고정" class="muted" />
-                        <ui:Label name="qty-eta" text="예상 소요 —" class="muted" style="margin-top:6px;" />
+                <ui:VisualElement class="rule" style="margin-bottom:14px;" />
+                <ui:VisualElement class="row" style="height:46px;">
+                    <ui:VisualElement style="width:230px;">
+                        <ui:Label text="RECIPE" class="micro" />
+                        <ui:Label name="recipe-version" text="assembly-r1" class="value" style="margin-top:4px;" />
                     </ui:VisualElement>
-                    <ui:Button name="qty-minus" text="−" style="display:none;" />
-                    <ui:Button name="qty-plus" text="+" style="display:none;" />
+                    <ui:VisualElement>
+                        <ui:Label text="TARGET PASS" class="micro" />
+                        <ui:Label name="qty-value" text="1" class="value value--lg" style="margin-top:4px;" />
+                    </ui:VisualElement>
                 </ui:VisualElement>
 
-                <ui:VisualElement class="sect"><ui:VisualElement class="sect__tick" /><ui:Label text="3   재고 사전 검증" class="sect__title" /><ui:VisualElement class="spacer" /><ui:Label text="전체 수량분 · 노드 응답" class="sect__unit" /></ui:VisualElement>
-                <ui:VisualElement class="trow trow--head">
-                    <ui:Label text="SLOT" class="tcell tcell--head" style="width:280px;" />
-                    <ui:Label text="PART" class="tcell tcell--head" style="width:220px;" />
-                    <ui:Label text="필요" class="tcell tcell--head tcell--num" style="width:120px;" />
-                    <ui:Label text="보유" class="tcell tcell--head tcell--num" style="width:120px;" />
-                    <ui:Label text="판정" class="tcell tcell--head tcell--num" style="width:160px;" />
+                <ui:VisualElement class="sect" style="margin-top:12px;">
+                    <ui:VisualElement class="sect__tick" />
+                    <ui:Label text="등록 전 확인" class="sect__title" />
+                    <ui:VisualElement class="spacer" />
+                    <ui:Label text="모두 충족해야 등록" class="sect__unit" />
                 </ui:VisualElement>
-                <!-- 제품 requirements 조회 결과를 바인더가 채운다. -->
-                <ui:VisualElement name="stock-list" class="vlist" style="margin-bottom:16px;" />
-
-                <ui:VisualElement class="sect"><ui:VisualElement class="sect__tick" /><ui:Label text="4   실행 인터록" class="sect__title" /><ui:VisualElement class="spacer" /><ui:Label text="모두 충족해야 START" class="sect__unit" /></ui:VisualElement>
-                <ui:VisualElement name="interlock-list" class="row vlist" style="flex-wrap:wrap; margin-bottom:14px;" />
-
+                <ui:VisualElement name="interlock-list" class="vlist" />
                 <ui:VisualElement class="spacer" />
-                <ui:Button name="start-button" text="START" class="btn btn--accent" style="height:64px; font-size:22px; letter-spacing:6px;" />
-                <ui:Label name="start-reason" text="" class="bad" style="margin-top:8px; -unity-text-align:middle-center;" />
+                <ui:Button name="start-button" text="REGISTER JOB" class="btn btn--accent" style="height:62px; font-size:20px; letter-spacing:4px;" />
+                <ui:Label name="start-reason" text="" class="muted wrap" style="margin-top:8px; -unity-text-align:middle-center;" />
             </ui:VisualElement>
         </ui:VisualElement>
 
-        <!--
-          공통 셸: 상단 바 + 페이지 레일 + 알람 띠.
-          맨 마지막에 둔다 — 알람 띠가 페이지 패널 위로 그려져야 하기 때문이다.
-        -->
         <ui:Instance template="FR5Shell" name="shell" class="shell-host" picking-mode="Ignore" />
     </ui:VisualElement>
 </ui:UXML>

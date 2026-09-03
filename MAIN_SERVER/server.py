@@ -20,6 +20,7 @@ ROUTES = (
     ("GET", "/api/v1/products/{product_id}", "product"),
     ("GET", "/api/v1/products/{product_id}/requirements", "requirements"),
     ("GET", "/api/v1/parts/{part_id}", "part"),
+    ("GET", "/api/v1/jobs", "jobs"),
     ("GET", "/api/v1/jobs/{job_id}", "job"),
     ("GET", "/api/v1/jobs/{job_id}/units", "units"),
     ("GET", "/api/v1/products/{product_id}/quality/slot-rates", "slot_rates"),
@@ -30,6 +31,7 @@ if len({(method, path) for method, path, _ in ROUTES}) != len(ROUTES):
     raise RuntimeError("duplicate API method/path")
 
 VALID_RUNTIME_MODES = ("mock", "real")
+VALID_JOB_STATUSES = ("PENDING", "RUNNING", "COMPLETED", "FAILED", "CANCELLED")
 MAX_REQUEST_BODY_BYTES = 1_000_000
 assembly_gateway = AssemblyGateway()
 
@@ -215,6 +217,19 @@ class ApiHandler(BaseHTTPRequestHandler):
     def job(self, values, parameters):
         self._no_query(parameters)
         return queries.job(uuid_value(values["job_id"], "job_id"))
+
+    def jobs(self, values, parameters):
+        if not set(parameters).issubset({"status", "limit"}):
+            raise ValidationError("only status and limit query parameters are accepted")
+        if any(len(items) != 1 for items in parameters.values()):
+            raise ValidationError("status and limit may be supplied at most once")
+        status = parameters.get("status", [None])[0]
+        if status is not None and status not in VALID_JOB_STATUSES:
+            raise ValidationError("status must be a production Job status")
+        limit = positive(parameters.get("limit", ["12"])[0], "limit")
+        if limit > 50:
+            raise ValidationError("limit must be at most 50")
+        return queries.jobs(status, limit)
 
     def units(self, values, parameters):
         self._no_query(parameters)

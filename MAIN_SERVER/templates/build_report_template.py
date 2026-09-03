@@ -318,7 +318,7 @@ def build_cover(wb, d):
     heights = {
         1: 15, 2: 17, 3: 17, 4: 6,
         5: 19, 6: 26, 7: 19, 8: 19,
-        9: 23, 10: 17, 11: 19, 12: 15, 13: 21, 14: 19,
+        9: 23, 10: 17, 11: 19, 12: 15, 13: 21, 14: 34,
         15: 17, 16: 19, 17: 19, 18: 19, 19: 19,
         20: 17,
         21: 16, 22: 18, 23: 18, 24: 18,
@@ -441,10 +441,12 @@ def build_cover(wb, d):
     label(ws, "A14", "발생 위치")
     ws.merge_cells("B14:D14")
     put(ws, "B14", d["hotspot"], al=align("left", "center", indent=1))
-    label(ws, "E14", "데이터시트 대조")
+    label(ws, "E14", "제조사 P/N")
     ws.merge_cells("F14:H14")
-    put(ws, "F14", d["datasheet_match"], f=font(T_BODY),
-        al=align("left", "center", indent=1))
+    put(ws, "F14",
+        f"{d['datasheet_match']} · {d['selected_mpn']}\n"
+        f"정격 {d['selected_spec']} · 공급사 {d['selected_supplier']}",
+        f=font(T_SMALL), al=align("left", "center", wrap=True, indent=1))
 
     # ── 2. 시스템이 먼저 본 것 ──────────────────────────────────────
     band(ws, "A15:H15", "2.  시스템이 먼저 본 것")

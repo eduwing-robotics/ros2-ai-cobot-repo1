@@ -386,6 +386,29 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
 .parttile__name { color: var(--c-ink); font-size: 14px; -unity-font-style: bold; letter-spacing: 1.1px; }
 .parttile__count { color: var(--c-ink-2); font-size: 14px; -unity-font-style: bold; margin-left: 8px; }
 
+.parttile--compact {
+    width: 91px;
+    height: 112px;
+    margin-right: 6px;
+    margin-bottom: 6px;
+}
+.parttile--compact .parttile__icon { width: 42px; height: 42px; }
+.parttile--compact .parttile__fallback { font-size: 15px; }
+.parttile--compact .parttile__line { margin-top: 5px; }
+.parttile--compact .parttile__name,
+.parttile--compact .parttile__count { font-size: 11px; }
+.parttile--compact .parttile__count { margin-left: 4px; }
+.parttile__stock { color: var(--c-ink-3); font-size: 10px; margin-top: 4px; }
+
+.job-filter { width: 112px; height: 34px; margin-right: 7px; font-size: 12px; }
+.job-filter--on { border-bottom-width: 2px; border-bottom-color: var(--c-accent); color: var(--c-accent); }
+.job-link { height: 28px; min-width: 52px; margin-right: 5px; padding-left: 8px; padding-right: 8px; font-size: 11px; }
+.job-status { font-size: 11px; -unity-font-style: bold; letter-spacing: 0.7px; }
+.job-status--running { color: var(--c-accent); }
+.job-status--pending { color: var(--c-warn); }
+.job-status--failed { color: var(--c-bad); }
+.job-status--completed { color: var(--c-ok); }
+
 /*
   part_id 하나 = 규칙 두 줄. 그림을 얹고, 그림이 가린 이니셜을 걷는다.
   그림 출처는 Assets/UI/Icons/README.md 참고.

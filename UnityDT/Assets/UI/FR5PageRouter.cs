@@ -1,10 +1,10 @@
-// 역할: 페이지 5개를 UIDocument 단위로 전환한다.
+// 역할: 페이지 4개를 UIDocument 단위로 전환한다.
 //
 // 페이지는 최상위 계층이므로 어느 패널에도 종속되지 않는다(Docs/UI.md).
 // 각 페이지는 자기 GameObject 에 UIDocument 하나 + 바인더를 갖고, 라우터는
 // 활성 페이지의 UIDocument 만 켠다. 비활성 페이지는 Update 가 돌지 않는다.
 //
-// 각 페이지 UXML 은 nav-run / nav-monitor / nav-inspect / nav-manual / nav-quality / nav-setup
+// 각 페이지 UXML 은 nav-run / nav-monitor / nav-inspect / nav-manual / nav-setup
 // 이라는 같은 이름의 버튼을 갖고 있으므로, 라우터가 모든 문서에서 한 번에 등록한다.
 
 using System;
@@ -45,7 +45,6 @@ namespace MainUnity.UI
             new PageEntry { page = FR5Page.Run },
             new PageEntry { page = FR5Page.Inspect },
             new PageEntry { page = FR5Page.Manual },
-            new PageEntry { page = FR5Page.Quality },
             // SETUP 은 아직 UXML 이 없다. 화면이 생기면 available 을 켠다.
             new PageEntry { page = FR5Page.Setup, available = false },
         };
@@ -55,7 +54,6 @@ namespace MainUnity.UI
             (FR5Page.Run, "nav-run"),
             (FR5Page.Inspect, "nav-inspect"),
             (FR5Page.Manual, "nav-manual"),
-            (FR5Page.Quality, "nav-quality"),
             (FR5Page.Setup, "nav-setup"),
         };
 
@@ -63,6 +61,7 @@ namespace MainUnity.UI
             new System.Collections.Generic.HashSet<UIDocument>();
 
         UIDocument requestDocument;
+        FR5InspectBinder inspectBinder;
         AssemblyProgressManager assemblyProgress;
         bool progressSubscribed;
         bool monitorRequested;
@@ -79,6 +78,7 @@ namespace MainUnity.UI
             monitorRequested = false;
 
             ResolveRequestDocument();
+            inspectBinder = GetComponentInChildren<FR5InspectBinder>(true);
             ResolveProgress();
             Apply();
         }
@@ -156,7 +156,7 @@ namespace MainUnity.UI
         }
 
         /// <summary>한 문서의 nav 버튼을 한 번만 등록한다.</summary>
-void Wire(VisualElement root)
+        void Wire(VisualElement root)
         {
             Button monitor = root.Q<Button>("nav-monitor");
             if (monitor != null)
@@ -183,6 +183,14 @@ void Wire(VisualElement root)
             Apply();
         }
 
+        /// <summary>JOBS 행에서 선택한 Job의 검사 이력을 연다.</summary>
+        internal void OpenInspect(string jobId)
+        {
+            if (string.IsNullOrEmpty(jobId) || IsAvailable(FR5Page.Inspect) == false) return;
+            inspectBinder?.ShowJob(jobId);
+            Go(FR5Page.Inspect);
+        }
+
         /// <summary>진행 상태와 무관하게 실행 모니터 화면을 연다.</summary>
         public void OpenMonitor()
         {
@@ -201,7 +209,7 @@ void Wire(VisualElement root)
         }
 
         /// <summary>활성 페이지 하나만 켠다. 나머지는 꺼서 Update 비용을 없앤다.</summary>
-void Apply()
+        void Apply()
         {
             UIDocument selected = DocumentFor(current);
             foreach (PageEntry entry in pages)

@@ -104,6 +104,10 @@ class MainServerApiTest(unittest.TestCase):
         )
         status, rates = self.request(f"/api/v1/products/{product_id}/quality/slot-rates")
         self.assertEqual((status, len(rates["data"])), (200, len(detail["data"]["slots"])))
+        status, jobs = self.request("/api/v1/jobs?limit=5")
+        self.assertEqual(status, 200)
+        self.assertIsInstance(jobs["data"], list)
+        self.assertLessEqual(len(jobs["data"]), 5)
         with psycopg.connect(os.environ["MAIN_SERVER_DB_DSN"]) as connection:
             with connection.cursor() as cursor:
                 cursor.execute("SELECT job_id FROM production.jobs ORDER BY job_id DESC LIMIT 1")
@@ -211,6 +215,10 @@ class MainServerApiTest(unittest.TestCase):
                 )
 
     def test_validation_and_missing_resource(self):
+        status, body = self.request("/api/v1/jobs?status=UNKNOWN")
+        self.assertEqual((status, body["error"]["code"]), (400, "invalid_request"))
+        status, body = self.request("/api/v1/jobs?limit=51")
+        self.assertEqual((status, body["error"]["code"]), (400, "invalid_request"))
         status, body = self.request("/api/v1/products/1/requirements?quantity=0")
         self.assertEqual((status, body["error"]["code"]), (400, "invalid_request"))
         status, body = self.request("/api/v1/parts/not-a-part")

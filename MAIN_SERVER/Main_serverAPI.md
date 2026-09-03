@@ -18,6 +18,7 @@ MAIN_SERVER_MODE=mock MAIN_SERVER_DB_DSN='dbname=main_unity_mock_test' python3 M
 | `GET` | `/api/v1/products/{product_id}` | Get product and slot/part composition |
 | `GET` | `/api/v1/products/{product_id}/requirements?quantity={quantity}` | Get required parts, stock, and shortage |
 | `GET` | `/api/v1/parts/{part_id}` | Get part information and stock |
+| `GET` | `/api/v1/jobs?status={status}&limit={limit}` | List the active queue and recent Jobs |
 | `GET` | `/api/v1/jobs/{job_id}` | Get assembly job progress |
 | `GET` | `/api/v1/jobs/{job_id}/units` | Get assembled units, inspections, and defects |
 | `GET` | `/api/v1/products/{product_id}/quality/slot-rates` | Get accumulated slot inspection/defect rates |
@@ -41,6 +42,10 @@ Failure:
 All query routes return `200`. Query invalid input is `400`, missing
 resources are `404`, and unavailable DB or inconsistent part datasheet is
 `503`.
+
+`GET /api/v1/jobs` accepts an optional production Job `status` and a `limit`
+from 1 to 50 (default 12). Without a status filter, `RUNNING` and `PENDING`
+Jobs are returned before recent terminal Jobs.
 
 ## Assembly execution
 

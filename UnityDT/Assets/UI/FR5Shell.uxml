@@ -2,7 +2,7 @@
     <ui:Style src="project://database/Assets/UI/FR5Theme.uss" />
     <!--
       공통 셸 — 상단 바 + 페이지 레일.
-      5개 페이지가 이 템플릿 하나를 인스턴스로 물어 쓴다. 페이지마다 따로 적으면
+      4개 페이지가 이 템플릿 하나를 인스턴스로 물어 쓴다. 페이지마다 따로 적으면
       항목과 순서가 갈라진다 (실제로 갈라져 있었다).
 
       값은 FR5ShellBinder 가 채운다. 활성 탭 표시는 FR5PageRouter 가 붙인다.
@@ -90,10 +90,10 @@
                 <ui:Label text="RUN" class="tab__text" /><ui:Label text="운전 현황" class="micro" />
             </ui:Button>
 
-            <!-- REQUEST — 생산 요청 화면 -->
+            <!-- JOBS — 영속 작업 큐와 신규 작업 등록 -->
             <ui:Button name="nav-run" class="tab" style="width:88px; height:96px; align-items:center; margin:0;">
                 <ui:VisualElement class="tab__icon" style="background-image:url(&quot;project://database/Assets/UI/Icons/nav-run.png&quot;);" />
-                <ui:Label text="REQUEST" class="tab__text" /><ui:Label text="작업 요청" class="micro" />
+                <ui:Label text="JOBS" class="tab__text" /><ui:Label text="작업" class="micro" />
             </ui:Button>
 
             <!-- INSPECT — 렌즈(원 + 중심점) -->
@@ -106,12 +106,6 @@
             <ui:Button name="nav-manual" class="tab" style="width:88px; height:96px; align-items:center; margin:0;">
                 <ui:VisualElement class="tab__icon" style="background-image:url(&quot;project://database/Assets/UI/Icons/nav-manual.png&quot;);" />
                 <ui:Label text="MANUAL" class="tab__text" /><ui:Label text="수동" class="micro" />
-            </ui:Button>
-
-            <!-- QUALITY — 슬롯 2x2 (한 칸 불량) -->
-            <ui:Button name="nav-quality" class="tab" style="width:88px; height:96px; align-items:center; margin:0;">
-                <ui:VisualElement class="tab__icon" style="background-image:url(&quot;project://database/Assets/UI/Icons/nav-quality.png&quot;);" />
-                <ui:Label text="QUALITY" class="tab__text" /><ui:Label text="품질" class="micro" />
             </ui:Button>
 
             <!-- SETUP — 다이얼(원 + 지시선) -->
@@ -131,7 +125,7 @@
               아니라 "그 화면을 어떻게 보는가"라서 페이지 탭과 같은 무리가 아니다.
               그래서 spacer 로 떼어 놓고 선을 하나 긋는다.
 
-              보조 패널이 없는 화면(검사 · 품질 · 요청)에서는 FR5ShellBinder 가 숨긴다.
+              보조 패널이 없는 화면(검사 · 작업)에서는 FR5ShellBinder 가 숨긴다.
               눌러도 아무 일도 없는 버튼은 고장으로 보인다.
             -->
             <ui:VisualElement class="spacer" />

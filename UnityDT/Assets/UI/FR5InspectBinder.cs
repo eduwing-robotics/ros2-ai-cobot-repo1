@@ -55,6 +55,7 @@ namespace MainUnity.UI
         Coroutine loadRoutine, evidenceRoutine;
         Texture2D evidenceTexture;
         string evidenceStats;
+        string requestedJobId;
 
         void OnEnable() => cached = false;
 
@@ -136,26 +137,42 @@ namespace MainUnity.UI
             if (loadRoutine == null && isActiveAndEnabled) loadRoutine = StartCoroutine(Load());
         }
 
+        internal void ShowJob(string jobId)
+        {
+            if (string.IsNullOrEmpty(jobId)) return;
+            requestedJobId = jobId;
+            if (loadRoutine != null) StopCoroutine(loadRoutine);
+            loadRoutine = null;
+            if (cached) BeginLoad();
+        }
+
         IEnumerator Load()
         {
-            AssemblySnapshot snapshot = null;
-            yield return Get("/api/v1/assemblies/current", json => snapshot = JsonUtility.FromJson<AssemblyResponse>(json)?.data);
-            if (!isActiveAndEnabled) yield break;
-            if (snapshot == null || string.IsNullOrEmpty(snapshot.job_id))
+            string jobId = requestedJobId;
+            int unitId = 0;
+            if (string.IsNullOrEmpty(jobId))
             {
-                ShowEmpty("활성 또는 최근 작업 없음");
-                loadRoutine = null;
-                yield break;
+                AssemblySnapshot snapshot = null;
+                yield return Get("/api/v1/assemblies/current", json => snapshot = JsonUtility.FromJson<AssemblyResponse>(json)?.data);
+                if (!isActiveAndEnabled) yield break;
+                if (snapshot == null || string.IsNullOrEmpty(snapshot.job_id))
+                {
+                    ShowEmpty("활성 또는 최근 작업 없음");
+                    loadRoutine = null;
+                    yield break;
+                }
+                jobId = snapshot.job_id;
+                unitId = snapshot.unit_id;
             }
 
             Unit[] units = null;
-            yield return Get("/api/v1/jobs/" + snapshot.job_id + "/units", json => units = JsonUtility.FromJson<UnitsResponse>(json)?.data ?? Array.Empty<Unit>());
+            yield return Get("/api/v1/jobs/" + jobId + "/units", json => units = JsonUtility.FromJson<UnitsResponse>(json)?.data ?? Array.Empty<Unit>());
             if (isActiveAndEnabled && units != null)
             {
-                Unit selected = Array.Find(units, unit => unit.unit_id == snapshot.unit_id);
+                Unit selected = Array.Find(units, unit => unit.unit_id == unitId);
                 if (selected == null && units.Length > 0) selected = units[units.Length - 1];
-                if (selected == null) ShowEmpty("JOB #" + snapshot.job_id + " 유닛 결과 없음");
-                else ShowUnits(snapshot.job_id, units, selected);
+                if (selected == null) ShowEmpty("JOB #" + jobId + " 유닛 결과 없음");
+                else ShowUnits(jobId, units, selected);
             }
             loadRoutine = null;
         }

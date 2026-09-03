@@ -194,6 +194,38 @@ def job(job_id):
     return row
 
 
+def jobs(status=None, limit=12):
+    """List the active queue first, followed by recent production Jobs."""
+    return _all("""
+        SELECT j.job_id, j.product_id, pr.product_code, pr.product_name,
+               pr.product_version, j.recipe_version, j.job_status,
+               j.requested_quantity,
+               COUNT(u.unit_id)::integer AS attempted_quantity,
+               COUNT(u.unit_id) FILTER (WHERE u.inspection_result = 'PASS')::integer AS completed_quantity,
+               COUNT(u.unit_id) FILTER (WHERE u.unit_status = 'RUNNING')::integer AS running_quantity,
+               COUNT(u.unit_id) FILTER (WHERE u.unit_status = 'FAILED')::integer AS failed_quantity,
+               COUNT(u.unit_id) FILTER (WHERE u.inspection_result = 'FAIL')::integer AS inspection_failed_quantity,
+               ROUND(100.0 * COUNT(u.unit_id) FILTER (WHERE u.inspection_result = 'PASS')
+                     / j.requested_quantity, 2) AS progress_percent,
+               j.requested_at, j.job_started_at, j.job_finished_at
+        FROM production.jobs j
+        JOIN production.products pr ON pr.product_id = j.product_id
+        LEFT JOIN production.units u ON u.job_id = j.job_id
+        WHERE (%s::text IS NULL OR j.job_status::text = %s)
+        GROUP BY j.job_id, j.product_id, pr.product_code, pr.product_name,
+                 pr.product_version, j.recipe_version, j.job_status,
+                 j.requested_quantity, j.requested_at, j.job_started_at,
+                 j.job_finished_at
+        ORDER BY CASE j.job_status
+                     WHEN 'RUNNING' THEN 0
+                     WHEN 'PENDING' THEN 1
+                     ELSE 2
+                 END,
+                 j.requested_at DESC, j.job_id
+        LIMIT %s
+    """, (status, status, limit))
+
+
 def units(job_id):
     if _one("SELECT 1 FROM production.jobs WHERE job_id = %s", (job_id,)) is None:
         raise ResourceNotFound("job was not found")
