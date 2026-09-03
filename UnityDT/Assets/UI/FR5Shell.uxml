@@ -57,9 +57,13 @@
             <ui:VisualElement class="row" style="margin-left:32px;">
                 <ui:Label text="LINK" class="micro" style="margin-right:12px;" />
                 <ui:VisualElement name="link-joint-dot" class="dot" />
-                <ui:Label name="link-joint-age" text="—" class="muted" style="margin-left:8px; margin-right:16px; font-size:12px;" />
+                <ui:Label name="link-joint-age" text="ROS" class="muted" style="margin-left:8px; margin-right:14px; font-size:12px;" />
                 <ui:VisualElement name="link-image-dot" class="dot" />
-                <ui:Label name="link-image-age" text="—" class="muted" style="margin-left:8px; font-size:12px;" />
+                <ui:Label name="link-image-age" text="CAM" class="muted" style="margin-left:8px; margin-right:14px; font-size:12px;" />
+                <ui:VisualElement name="link-api-dot" class="dot" />
+                <ui:Label name="link-api-label" text="API·DB" class="muted" style="margin-left:8px; margin-right:14px; font-size:12px;" />
+                <ui:VisualElement name="link-sequencer-dot" class="dot" />
+                <ui:Label name="link-sequencer-label" text="SEQ" class="muted" style="margin-left:8px; font-size:12px;" />
             </ui:VisualElement>
 
             <ui:VisualElement class="spacer" />

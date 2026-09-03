@@ -30,7 +30,7 @@ namespace MainUnity.UrdfImport
         /// <summary>지정한 열림 비율(0~100%)을 그리퍼 이동 범위에 반영한다.</summary>
         public void SetOpeningPercent(float openingPercent)
         {
-            Target = Mathf.Lerp(driverUpper, driverLower, Mathf.Clamp01(openingPercent / 100f));
+            Target = Mathf.Lerp(driverLower, driverUpper, Mathf.Clamp01(openingPercent / 100f));
             ApplyTargets(target);
         }
 

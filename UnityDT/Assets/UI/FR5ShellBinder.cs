@@ -3,16 +3,19 @@
 // 페이지마다 같은 코드를 복사하면 항목과 판정 기준이 갈라진다. 실제로 갈라져 있었다.
 // 모드 · 로봇 상태 · 링크 · 속도는 페이지와 무관하므로 여기 한 곳에서만 다룬다.
 //
-//   실연결 : 모드 · RobotRunState · joint_states 링크 · board/image 링크
+//   실연결 : 모드 · RobotRunState · joint_states · board/image · MainServer · Sequencer 링크
 //   샘플   : 속도 오버라이드  [TODO(API): 속도 지령 경로가 없다]
 //
 // 작업(JOB)·사이클은 페이지가 아는 값이라 각 페이지 바인더가 채운다.
 
+using System;
+using System.Collections;
 using MainUnity.Runtime.Camera;
 using MainUnity.Runtime.Robot.Assembly;
 using MainUnity.Runtime.Robot;
 using MainUnity.Runtime.Robot.Status;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.UIElements;
 
 namespace MainUnity.UI
@@ -29,10 +32,17 @@ namespace MainUnity.UI
         [Tooltip("이 시간을 넘겨 프레임이 없으면 영상 링크를 끊긴 것으로 봅니다.")]
         [SerializeField] float visionStaleSeconds = 2f;
 
-        VisualElement modeMock, modeReal, robotChip, linkJointDot, linkImageDot, alarmBanner;
+        [Header("서비스 상태")]
+        [SerializeField] string mainServerBaseUrl = "http://127.0.0.1:8000";
+        [SerializeField, Min(1f)] float servicePollSeconds = 5f;
+
+        VisualElement modeMock, modeReal, robotChip, linkJointDot, linkImageDot,
+            linkApiDot, linkSequencerDot, alarmBanner;
         VisualElement pageRoot;
         Button modeMockButton, modeRealButton, stopAllButton, viewFocusButton;
-        Label robotText, linkJointAge, linkImageAge, alarmLabel, alarmDetail;
+        Label robotText, linkJointAge, linkImageAge, linkApiLabel, linkSequencerLabel,
+            alarmLabel, alarmDetail;
+        Coroutine servicePolling;
         bool cached;
         bool stopRequestInFlight;
         bool hasAuxPanels;
@@ -41,9 +51,18 @@ namespace MainUnity.UI
         // 집중이 풀린다. 접어 둔 것은 접어 둔 채로 있어야 하므로 static 이다.
         static bool focusMode;
 
-        void OnEnable() => cached = false;
+        void OnEnable()
+        {
+            cached = false;
+            servicePolling = StartCoroutine(PollServiceLinks());
+        }
 
-        void OnDisable() => UnbindCommands();
+        void OnDisable()
+        {
+            UnbindCommands();
+            if (servicePolling != null) StopCoroutine(servicePolling);
+            servicePolling = null;
+        }
 
         void Update()
         {
@@ -73,6 +92,10 @@ namespace MainUnity.UI
             linkJointAge = root.Q<Label>("link-joint-age");
             linkImageDot = root.Q<VisualElement>("link-image-dot");
             linkImageAge = root.Q<Label>("link-image-age");
+            linkApiDot = root.Q<VisualElement>("link-api-dot");
+            linkApiLabel = root.Q<Label>("link-api-label");
+            linkSequencerDot = root.Q<VisualElement>("link-sequencer-dot");
+            linkSequencerLabel = root.Q<Label>("link-sequencer-label");
             alarmBanner = root.Q<VisualElement>("alarm-banner");
             alarmLabel = root.Q<Label>("alarm-label");
             alarmDetail = root.Q<Label>("alarm-detail");
@@ -223,7 +246,8 @@ namespace MainUnity.UI
             {
                 bool mock = uiMaster == null || uiMaster.IsSimulated;
                 string topic = mock ? "joint_states" : "nonrt_state_data";
-                linkJointAge.text = jointLive ? topic : "수신 없음";
+                linkJointAge.text = "ROS";
+                linkJointAge.tooltip = jointLive ? topic + " 수신 중" : topic + " 수신 없음";
             }
 
             bool received = vision != null && vision.HasReceivedImage;
@@ -234,7 +258,67 @@ namespace MainUnity.UI
             linkImageDot?.EnableInClassList("dot--good", false);
             linkImageDot?.EnableInClassList("dot--bad", received && !fresh);
             if (linkImageAge != null)
-                linkImageAge.text = fresh ? $"{age * 1000:0} ms" : "board/image";
+            {
+                linkImageAge.text = "CAM";
+                linkImageAge.tooltip = fresh
+                    ? $"board/image · {age * 1000:0} ms"
+                    : received ? "board/image 수신 지연" : "board/image 수신 없음";
+            }
+        }
+
+        IEnumerator PollServiceLinks()
+        {
+            while (true)
+            {
+                yield return RefreshServiceLinks();
+                yield return new WaitForSecondsRealtime(Mathf.Max(1f, servicePollSeconds));
+            }
+        }
+
+        IEnumerator RefreshServiceLinks()
+        {
+            string baseUrl = mainServerBaseUrl?.TrimEnd('/');
+            if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out Uri uri) ||
+                uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)
+            {
+                SetLinkState(linkApiDot, linkApiLabel, false, "MainServer URL이 올바르지 않습니다.");
+                SetLinkState(linkSequencerDot, linkSequencerLabel, null,
+                    "MainServer에 연결할 수 없어 확인하지 못했습니다.");
+                yield break;
+            }
+
+            using (UnityWebRequest health = UnityWebRequest.Get(baseUrl + "/api/v1/health"))
+            {
+                health.timeout = 3;
+                yield return health.SendWebRequest();
+                if (health.result != UnityWebRequest.Result.Success)
+                {
+                    SetLinkState(linkApiDot, linkApiLabel, false,
+                        "MainServer API·DB 응답 실패 · HTTP " + health.responseCode);
+                    SetLinkState(linkSequencerDot, linkSequencerLabel, null,
+                        "MainServer에 연결할 수 없어 확인하지 못했습니다.");
+                    yield break;
+                }
+            }
+
+            SetLinkState(linkApiDot, linkApiLabel, true, "MainServer API·DB 정상");
+            using UnityWebRequest sequencer = UnityWebRequest.Get(
+                baseUrl + "/api/v1/assemblies/current");
+            sequencer.timeout = 3;
+            yield return sequencer.SendWebRequest();
+            SetLinkState(linkSequencerDot, linkSequencerLabel,
+                sequencer.result == UnityWebRequest.Result.Success,
+                sequencer.result == UnityWebRequest.Result.Success
+                    ? "AssemblySequencer 응답 정상"
+                    : "AssemblySequencer 응답 실패 · HTTP " + sequencer.responseCode);
+        }
+
+        static void SetLinkState(VisualElement dot, Label label, bool? connected, string detail)
+        {
+            dot?.EnableInClassList("dot--ok", connected == true);
+            dot?.EnableInClassList("dot--bad", connected == false);
+            if (dot != null) dot.tooltip = detail;
+            if (label != null) label.tooltip = detail;
         }
 
         /// <summary>

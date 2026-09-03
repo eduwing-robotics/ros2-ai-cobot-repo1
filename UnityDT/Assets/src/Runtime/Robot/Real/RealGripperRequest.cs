@@ -21,14 +21,12 @@ namespace MainUnity.Runtime.Robot.Real
         [SerializeField, Range(0, 100)] int forcePercent = 30;
         [SerializeField, Range(0, 30000)] int maxTimeMilliseconds = 3000;
 
-        RealShadowing shadowing;
         RobotStatusManager statusManager;
 
         bool requestInFlight;
 
         void Awake()
         {
-            shadowing = GetComponentInParent<RealShadowing>();
             ROSConnection.GetOrCreateInstance()
                 .RegisterRosService<RemoteCmdInterfaceRequest, RemoteCmdInterfaceResponse>(serviceName);
         }
@@ -65,8 +63,6 @@ namespace MainUnity.Runtime.Robot.Real
                 return false;
 
             float opening = Mathf.Round(targetOpeningPercent);
-            shadowing?.ApplyGripperOpeningPercent(opening);
-
             requestInFlight = true;
             string command = string.Format(CultureInfo.InvariantCulture,
                 "MoveGripper({0},{1},{2},{3},{4},0,0,0,0,0)", GripperId, opening,
