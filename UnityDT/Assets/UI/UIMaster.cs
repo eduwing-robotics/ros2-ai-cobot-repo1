@@ -67,7 +67,7 @@ namespace MainUnity.UI
         /// 기판의 슬롯 구성이다. 타입별 슬롯 수와 실행 순서를 여기서만 읽는다.
         /// 진행 프레임은 "몇 번째까지 놓았는가"만 말하므로, "전부 몇 개인가"는 트윈이 답한다.
         /// Backend 와 무관한 씬 데이터라 Mock/Real 어느 쪽에서도 같은 값이다.
-        /// TODO(API): 완성체 슬롯 조회가 생기면 그쪽으로 옮긴다 (Docs/DB.md product_slots).
+        /// TODO(API): 완성체 슬롯 조회가 생기면 그쪽으로 옮긴다 (DATA_STATION/DB/README.md의 Product Slot 계약).
         /// </summary>
         public ItemManager Board => board != null
             ? board

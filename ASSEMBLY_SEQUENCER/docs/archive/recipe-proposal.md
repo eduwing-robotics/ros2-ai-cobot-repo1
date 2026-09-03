@@ -1,11 +1,13 @@
-# 조립 레시피 규격 — 로봇이 소유하는 것
+# 과거 조립 레시피 설계안
+
+> 이 문서는 현재 실행 계약이 아니다. 당시 검토한 확장형 레시피 구조를 보존하며, 현재 기준은 `ASSEMBLY_SEQUENCER/README.md`, 실제 YAML과 parser를 따른다.
 
 ## 이 문서의 범위
 
 조립 레시피 파일의 형식과 소유 경계를 정한다. 레시피는 **DB에 저장하지 않고 로봇 관리 PC에
 파일로 두며 Git으로 버전을 관리한다.**
 
-스키마는 [DB.md](./DB.md), 계층 구조는 [Architecture.md](./Architecture.md)를 참고한다.
+스키마는 [생산 데이터 설계](../../../DATA_STATION/DB/README.md), 계층 구조는 [시스템 아키텍처](../../../docs/architecture/index.md)를 참고한다.
 
 ## 왜 DB가 아니라 파일인가
 

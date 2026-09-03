@@ -2,7 +2,7 @@
     <ui:Style src="project://database/Assets/UI/FR5Theme.uss" />
     <ui:Template src="project://database/Assets/UI/FR5Shell.uxml" name="FR5Shell" />
     <!--
-      INSPECT · 검사 판정 — docs/ui_recommendation/mockups-monitor-aligned/02_inspect-v2.png
+      INSPECT · 검사 판정 — UnityDT/Docs/ui/recommendation/mockups-monitor-aligned/02_inspect-v2.png
       카메라 증거와 MainServer의 유닛 판정·불량·이력을 읽기 전용으로 보여 준다.
     -->
     <ui:VisualElement name="fr5-inspect" class="page page--dim fr5--mock">

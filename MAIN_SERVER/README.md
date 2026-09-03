@@ -1,68 +1,37 @@
 # MAIN_SERVER
 
-제품·부품·재고·Job·Unit·검사 결과를 조회하고 생산 Job을 생성하는 HTTP 서버입니다.
+외부 클라이언트와 생산 데이터 사이의 HTTP 요청 경계입니다.
 
 ## 역할과 책임
 
-- 역할: UnityDT와 생산 데이터·조립 요청 사이의 HTTP 경계
-- 책임: 요청 검증, 생산 데이터 조회, `production.jobs` 생성, 불량대책서 생성
-- 책임 아님: Job 상태 전이, Unit 생성, 조립 순서 제어, 로봇 직접 제어
+- 외부 입력과 업무 식별자 검증
+- 제품, 재고, Job, Unit과 품질 결과 조회
+- 클라이언트가 만든 UUID `job_id`로 `PENDING` Job 등록
+- 저장된 생산·검사 사실을 이용한 품질 문서 생성
 
-## 현재 기능
+Job·Unit 실행 상태 전이, 조립 순서, 좌표 해석과 로봇 직접 제어는 소유하지 않습니다.
 
-- 제품, 슬롯·부품 구성과 생산 가능 수량 조회
-- 요청 수량 기준 재고·부족분 조회
-- Job, Unit, 검사와 불량 슬롯 조회
-- 제품별 슬롯 불량률 조회
-- UUID `job_id` 기준 Job 생성과 현재/최근 조립 스냅샷 조회
-- production 불량과 XLSX 데이터시트를 결합한 불량대책서 파일 생성
-- `MAIN_SERVER_MODE=mock|real` 실행 설정 검증
+## Job 등록 원칙
 
-`POST /api/v1/assemblies`는 ROS2를 호출하거나 좌표를 저장하지 않고
-`production.jobs`에 `PENDING` Job을 생성한다. 같은 `job_id`와 같은 내용의 재시도는
-기존 Job을 반환하고, 내용이 다르면 거절한다. Job 상태 전이와 Unit 기록은
-AssemblySequencer가 담당한다.
+`production.jobs`가 유일한 영속 생산 요청 진입점입니다. 같은 `job_id`와 같은 내용의 재요청은 기존 Job을 반환하고, 다른 내용은 거절합니다.
 
-`GET /api/v1/assemblies/current`만 AssemblySequencer의 ROS2 status service를
-호출하므로 이 route를 사용할 프로세스에는 ROS2와 `Farino_AIO_Mock` workspace가
-source돼야 한다. Mock 전체 실행은 [Farino_AIO_Mock](../Farino_AIO_Mock/README.md#mock-올인원-실행)을 따른다.
+Job 등록 성공은 실행 시작이나 생산 완료가 아닙니다. 실행 상태와 결과는 Assembly Sequencer가 소유하며 MainServer의 조회 경로는 상태를 변경하지 않습니다.
 
-## 불량대책서 생성
+## 조회 경계
 
-`generate_defect_reports.py`는 완료된 Job의 FAIL 기록을 읽고, Job·부품·불량유형별
-대책서를 `reports/defects/QA-J{job_id}-{part_id}-{defect_type}.xlsx`로 생성합니다.
-같은 파일이 있으면 담당자 회신을 보호하기 위해 덮어쓰지 않습니다.
+MainServer는 production 데이터를 읽어 사용자에게 필요한 업무 단위로 제공합니다. Unity 오브젝트, 설비 좌표와 ROS 메시지 의미를 해석하지 않습니다.
 
-```bash
-cd /home/codlab/Main_Unity
-MAIN_SERVER_DB_DSN='dbname=main_unity_mock_test' \
-  python3 MAIN_SERVER/generate_defect_reports.py
-```
+현재 실행 snapshot을 조회할 수 있지만 조회 실패가 설비 동작이나 저장된 생산 상태를 바꾸어서는 안 됩니다.
 
-자동 발행은 운영 계정의 crontab에서 같은 명령을 1분마다 호출합니다.
+## 품질 문서
 
-```cron
-* * * * * cd /home/codlab/Main_Unity && /usr/bin/flock -n /tmp/main-unity-defect-reports.lock /usr/bin/env MAIN_SERVER_DB_DSN='dbname=main_unity_mock_test' /usr/bin/python3 MAIN_SERVER/generate_defect_reports.py >> MAIN_SERVER/reports/defects/generator.log 2>&1
-```
+불량대책서는 완료된 생산·검사 사실과 승인된 부품 데이터시트를 결합해 생성합니다. 기존 문서는 작업자 회신을 보호하기 위해 덮어쓰지 않으며, 사용한 데이터 원본을 추적할 수 있어야 합니다.
 
-부품·단가·검사항목은
-`data/semiconductor_assembly_quality_datasheet_2026-08-18.xlsx`를 직접 읽습니다.
-DB 업무 데이터는 `production` 7개 테이블에만 둡니다.
-
-XLSX 접근은 [datasheet.py](datasheet.py) 한 곳에 모여 있고, HTTP API와 대책서
-생성기가 같이 씁니다. 파일 mtime이 바뀌면 다시 읽으므로 시트를 고쳐도 서버를
-재시작하지 않아도 됩니다. 조회 키는 `production.parts.part_category`이고,
-데이터시트의 `부품 타입`과 같은 값이어야 합니다.
-
-운영 원본은 지정된 부품·품질 데이터 담당자만 수정하고, 다른 담당자가 필수값·단가·
-검사 기준을 검토한 커밋만 배포합니다. 운영 중인 파일을 직접 덮어쓰지 않고 승인된
-파일을 교체합니다. 로더는 필수 문자열, 양수 단가, `YYYY-MM-DD` 확인일,
-`(부품 타입, MPN)` 중복, Components/Checklist 카테고리 일치를 검사합니다.
-DB 선택 MPN이 없으면 최저가로 대체하지 않고 오류를 반환하며, 불량대책서에는 원본
-파일명과 SHA-256을 함께 기록합니다.
+부품 데이터시트는 공급·대체 후보와 검사 기준을 소유하지만 생산 재고나 제품 슬롯을 소유하지 않습니다.
 
 ## 문서
 
 - [HTTP API 계약](Main_serverAPI.md)
-- [현재 시스템 구조](../UnityDT/Docs/Architecture.md)
-- [DB 핵심 설계](../UnityDT/Docs/DB.md)
+- [시스템 아키텍처](../docs/architecture/index.md)
+- [생산 데이터 설계](../DATA_STATION/DB/README.md)
+- [불량대책서 필드 계약](templates/불량대책서_필드매핑.md)

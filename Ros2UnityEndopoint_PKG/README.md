@@ -1,34 +1,23 @@
 # Ros2UnityEndopoint_PKG
 
-UnityDT와 로봇 PC의 ROS 2 사이를 연결하는 ROS-TCP Endpoint 패키지입니다. Endpoint는 브리지이며 FAIRINO 드라이버나 `fr_command_server`를 대체하지 않습니다.
+Unity와 ROS 2 사이의 메시지 전송을 담당하는 ROS-TCP Endpoint 패키지입니다.
 
 ## 역할과 책임
 
-- 역할: Unity TCP 메시지와 ROS 2 pub/sub/service 사이의 전송 경계
-- 책임: 연결 수립, 메시지 전달, Endpoint 실행·빌드 스크립트 제공
-- 책임 아님: 좌표 변환 규칙, 조립 흐름, FAIRINO 드라이버와 로봇 제어
+- Unity TCP 연결 수립과 해제
+- Unity 메시지와 ROS pub/sub/service 사이의 전달
+- 연결 오류와 전송 실패 보고
+- Endpoint 빌드·실행 진입점 제공
 
-## 실행
+좌표 변환, 생산 상태, 조립 흐름, FAIRINO 드라이버와 로봇 제어는 소유하지 않습니다.
 
-필요 환경은 Ubuntu 24.04, ROS2 Jazzy와 `python3-colcon-common-extensions`입니다.
-로봇 PC로 옮길 때는 소스만 복사하고 `build`, `install`, `log`는 복사·재사용하지 않습니다.
+## 설계 경계
 
-```bash
-cd Ros2UnityEndopoint_PKG
-chmod +x run.sh
-./run.sh
-```
+Endpoint는 전송 내용을 업무 상태로 해석하지 않습니다. 요청 수락을 완료로 바꾸거나, 연결 복구를 작업 재개로 판단하거나, 실패를 숨긴 기본값으로 대체하지 않습니다.
 
-`run.sh`가 `~/.bashrc`를 불러오고, 로컬 설치가 없거나 다른 PC에서 복사됐거나 소스보다 오래됐으면 자동으로 빌드합니다. FAIRINO workspace setup도 `~/.bashrc`에서 자동으로 사용합니다. 자동 감지가 안 될 때만 다음처럼 setup 경로를 지정합니다.
-
-```bash
-ROS_SETUP=~/fairino_ws/install/setup.bash ./run.sh
-```
-
-FAIRINO workspace가 없으면 `/opt/ros/jazzy/setup.bash`로 Endpoint만 빌드하고 경고합니다.
-
-기본 수신 주소는 `0.0.0.0:10000`입니다. Unity에는 Endpoint PC의 실제 LAN IP와 포트 `10000`을 설정합니다.
+전송 방식이나 배포 위치가 바뀌더라도 송신자와 수신자의 공개 계약 및 완료 의미는 유지되어야 합니다.
 
 ## 문서
 
 - [상세 실행 방법](실행방법.md)
+- [계층 간 통합 계약](../docs/API.md)

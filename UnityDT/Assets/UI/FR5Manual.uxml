@@ -2,7 +2,7 @@
     <ui:Style src="project://database/Assets/UI/FR5Theme.uss" />
     <ui:Template src="project://database/Assets/UI/FR5Shell.uxml" name="FR5Shell" />
     <!--
-      MANUAL · 수동 조그 — docs/ui_recommendation/mockups-monitor-aligned/03_manual-v2.png
+      MANUAL · 수동 조그 — UnityDT/Docs/ui/recommendation/mockups-monitor-aligned/03_manual-v2.png
       작업 흐름 밖이다. jobs·units 를 만들지 않고 DB 에 아무것도 기록하지 않는다.
       실데이터: 관절 ACTUAL · TCP · RPY · 그리퍼 · APPLY/OPEN/CLOSE (FR5ManualBinder)
       샘플데이터: 없음. 이 페이지는 거의 전부 실제로 붙는다.

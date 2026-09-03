@@ -5,10 +5,10 @@
 AssemblySequencer` 구조가 구현되면서 아래의 `mock_db_bridge`, MainServer read-only, Unity의
 ROS 직접 시작과 비영속 명령 설명은 더 이상 현재 상태가 아니다.
 
-현재 기준은 [현재 시스템 구조](Architecture.md), [AssemblySequencer](../../ASSEMBLY_SEQUENCER/README.md), [MainServer API](../../MAIN_SERVER/Main_serverAPI.md)를 따른다.
+현재 기준은 [현재 시스템 구조](../../architecture/index.md), [AssemblySequencer](../../../ASSEMBLY_SEQUENCER/README.md), [MainServer API](../../../MAIN_SERVER/Main_serverAPI.md)를 따른다.
 
 기준 문서: [ISA-95 레벨 정리](https://ros2-ai-cobot-project-01-team-01.atlassian.net/wiki/spaces/KSMC/pages/9568269/ISA-95) ·
-[현재 시스템 구조](Architecture.md) · [MainServer API](../../MAIN_SERVER/Main_serverAPI.md) · [AssemblySequencer API](../../ASSEMBLY_SEQUENCER/API.md)
+[현재 시스템 구조](../../architecture/index.md) · [MainServer API](../../../MAIN_SERVER/Main_serverAPI.md) · [AssemblySequencer API](../../../ASSEMBLY_SEQUENCER/API.md)
 
 ---
 
@@ -216,7 +216,7 @@ E-STOP 관련 코드는 전부 수신 전용이다 — Real `/nonrt_state_data`�
 `FR5RequestBinder.cs` · `FR5InspectBinder.cs` · `FR5QualityBinder.cs`가 조회 라우트를 호출한다.
 조립 시작은 HTTP를 쓰지 않고 ROS2 서비스를 직접 호출한다.
 
-전체 라우트는 [MainServer API](../../MAIN_SERVER/Main_serverAPI.md) 참조.
+전체 라우트는 [MainServer API](../../../MAIN_SERVER/Main_serverAPI.md) 참조.
 
 ---
 

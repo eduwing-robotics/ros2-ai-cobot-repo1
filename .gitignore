@@ -1,6 +1,11 @@
 # Published repository scope
 /*
 !/.gitignore
+!/AGENTS.md
+!/README.md
+!/docs/
+!/mkdocs.yml
+!/requirements-docs.txt
 !/ASSEMBLY_SEQUENCER/
 !/DATA_STATION/
 !/Farino_AIO_Mock/
@@ -83,3 +88,7 @@ UnityDT/mono_crash.*.blob
 
 # Local quarantine
 Trash/
+
+# Local documentation captures and derived UI exports
+docs/images/captures/
+UnityDT/Docs/ui/local-exports/

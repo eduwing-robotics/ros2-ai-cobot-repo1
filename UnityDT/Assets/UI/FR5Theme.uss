@@ -1,7 +1,7 @@
 /*
   FR5 공용 테마 — Docs/ui/mock-01-run.svg 에서 확정한 패널 언어.
 
-  원칙 (Docs/UI.md 6절)
+  원칙 (Docs/ui-design.md)
     · 대비를 배경에 맡기지 않는다. 패널은 완전히 불투명한 계기 표면이다.
       트윈에서 배경은 변수이므로 스크림·글자그림자로는 가독성이 상수가 되지 않는다.
       알파를 조금이라도 남기면 밝은 셀 렌더가 그만큼 비쳐 대비가 배경에 종속된다.
@@ -298,7 +298,7 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
 
 /*
   슬롯 칩 — 완성체의 장착 위치 하나.
-  같은 그림을 요청 · 검사 · 품질이 재사용한다 (Docs/UI.md 5.3).
+  같은 그림을 요청 · 검사 · 품질이 재사용한다 (Docs/ui-design.md의 화면 안정성).
 */
 .slotchip {
     width: 138px;
@@ -377,7 +377,7 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
 /*
   조립 진행 — 부품 타입 하나가 묶음 하나, 칸 하나가 슬롯 하나다.
   레시피의 한 스텝이 곧 슬롯 하나이므로 칸을 세는 것이 곧 스텝을 세는 것이다
-  (Docs/Recipe.md). 같은 칸 어휘를 INSPECT · QUALITY 의 슬롯 맵이 재사용한다.
+  (DATA_STATION/DB/README.md의 슬롯 계약). 같은 칸 어휘를 INSPECT · QUALITY 의 슬롯 맵이 재사용한다.
 */
 .grp { flex-grow: 1; flex-shrink: 0; margin-right: 16px; }
 .grp__head { flex-direction: row; align-items: center; margin-bottom: 9px; }

@@ -1,26 +1,28 @@
 # UnityDT
 
-HBM 조립체의 Unity 디지털 트윈, 운전 UI, Scenario와 Mock/Real robot backend를 포함합니다.
+HBM 조립체의 작업자 화면과 디지털 트윈을 소유하는 Unity 프로젝트입니다.
 
 ## 역할과 책임
 
-- 역할: 작업자 UI와 로봇·생산 상태의 디지털 트윈 표시
-- 책임: Scene·Asset, 운전 화면, Scenario 진입점, `RobotMaster`의 Mock/Real backend 주입
-- 책임 아님: 생산 DB 쓰기, ROS-TCP 중계, 실제 자동 조립 순서 제어
+- Scene과 Asset, 작업자 UI와 3D 상태 표현
+- Scenario의 상위 업무 흐름
+- `RobotMaster`에서 Mock/Real backend 선택과 계약 주입
+- 자동 조립의 진행·완료·실패 표현
+- 주입된 수동 제어 계약을 통한 작업자 조작
 
-## 현재 기능
+생산 DB 쓰기, Job·Unit 상태 전이, ROS 전송 중계와 설비의 실제 완료 판정은 소유하지 않습니다.
 
-- FR5 관절·TCP·그리퍼 상태 표시
-- RUN, INSPECT, MANUAL, QUALITY 페이지
-- `RobotMaster`의 단일 Mock/Real backend 선택과 의존성 주입
-- Mock 자동 조립 요청, feedback 기반 진행 표시와 메모리 스냅샷 복구
-- 주입된 `IRobotControl` 기반 수동 조작
+## 설계 경계
 
-Real 자동 조립과 MainServer 조회 데이터의 UI 연결은 아직 완료되지 않았습니다.
+Scenario는 주입된 자동 조립 계약만 사용합니다. UI와 Scenario는 구체 Mock/Real 구현을 참조하거나 캐스팅하지 않습니다.
+
+자동 조립과 수동 조작은 별도 계약입니다. 자동 흐름은 수동 명령을 조합해 만들지 않으며, 수동 UI는 생산 Job 상태를 변경하지 않습니다.
+
+요청 수락은 완료가 아닙니다. Unity는 backend가 실제 완료를 반환한 뒤에만 성공을 표시하고 실패와 timeout을 사용자에게 전달합니다.
 
 ## 문서
 
-- [현재 시스템 구조](Docs/Architecture.md)
-- [현재 UI](Docs/UI.md)
-- [DB 핵심 설계](Docs/DB.md)
-- [조립 레시피 규격](Docs/Recipe.md)
+- [Unity UI 책임](Docs/UI.md)
+- [HMI 설계 원칙](Docs/ui-design.md)
+- [전체 시스템 아키텍처](../docs/architecture/index.md)
+- [계층 간 통합 계약](../docs/API.md)

@@ -1,7 +1,6 @@
 // production 스키마 — dbdiagram.io 붙여넣기용
 // https://dbdiagram.io/d
-// 상세 계약과 칼럼 평가는 Docs/DB.md를 참고한다.
-// 부품 데이터시트와 불량대책서는 Docs/DB.md를 참고한다.
+// 업무 의미는 ../README.md, 정확한 스키마는 ../production_schema.sql을 따른다.
 // 이 파일은 production 스키마만 정의한다.
 
 Table parts {

@@ -2,7 +2,7 @@
     <ui:Style src="project://database/Assets/UI/FR5Theme.uss" />
     <ui:Template src="project://database/Assets/UI/FR5Shell.uxml" name="FR5Shell" />
     <!--
-      RUN · 작업 요청 — docs/ui_recommendation/mockups-monitor-aligned/01_run.png
+      RUN · 작업 요청 — UnityDT/Docs/ui/recommendation/mockups-monitor-aligned/01_run.png
       실데이터: 제품 · 요구 재고 · 인터록 · START (FR5RequestBinder)
       현재 Scenario 계약은 고정 레시피 · 수량 1이며 선택값을 실행 요청에 싣지 않는다.
     -->

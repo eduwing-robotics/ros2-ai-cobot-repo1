@@ -188,7 +188,7 @@ namespace MainUnity.UI
             FR5EmptyState.Detail(verdictScore, string.IsNullOrEmpty(selected.inspected_at) ? "검사 완료 대기" : selected.inspected_at);
             checkList?.Clear();
             // 실행 실패와 검사 불량은 다른 사실이지만, 둘 다 이상이므로 둘 다 색을 얻는다.
-            // 색 없이 적으면 FAILED 가 정상 항목과 같은 무게로 보인다(Docs/UI.md 6절).
+            // 색 없이 적으면 FAILED 가 정상 항목과 같은 무게로 보인다(Docs/ui-design.md의 색 역할).
             checkList?.Add(CheckLine("UNIT STATUS · " + selected.unit_status,
                 selected.unit_status == "FAILED"));
             checkList?.Add(CheckLine("INSPECTION · " + result, result == "FAIL"));

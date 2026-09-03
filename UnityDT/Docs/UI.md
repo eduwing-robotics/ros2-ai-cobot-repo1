@@ -1,33 +1,41 @@
-# 현재 Unity UI
+# Unity UI 책임과 화면 구조
 
-이 문서는 현재 UI 파일과 데이터 경계만 설명한다.
+Unity UI는 작업자가 생산 상태를 이해하고 안전한 다음 행동을 선택하도록 돕는 표현 계층입니다. 생산 상태를 직접 만들거나 DB와 설비 구현을 소유하지 않습니다.
 
-## 페이지
+## 화면별 결정
 
-| 페이지 | 현재 상태 |
+| 화면 | 사용자가 내려야 할 결정 |
 |---|---|
-| RUN | 로봇 상태, 조립 진행과 Scenario 시작 경로가 있다. |
-| REQUEST | UXML과 binder가 있으나 MainServer 작업 API 연결은 완료되지 않았다. |
-| INSPECT | 카메라·검사 레이아웃이 있으나 실제 Unit·불량 조회 연결은 완료되지 않았다. |
-| MANUAL | 로봇 상태를 표시한다. APPLY·그리퍼 실동작과 `IRobotControl` 명령 경로는 아직 연결되지 않았다. |
-| QUALITY | 레이아웃과 빈 상태가 있으나 실제 품질 조회 연결은 완료되지 않았다. |
-| SETUP | 라우터 항목만 있고 UXML은 없어 비활성이다. |
+| RUN | 현재 작업이 정상적으로 진행 중인지, 개입이 필요한지 판단 |
+| REQUEST | 선택한 제품과 수량으로 생산을 요청해도 되는지 판단 |
+| INSPECT | 검사 결과와 근거를 확인하고 후속 조치를 판단 |
+| MANUAL | 현재 모드와 안전 조건 안에서 수동 목표를 적용할지 판단 |
+| QUALITY | 반복되는 불량과 우선 대응 대상을 판단 |
+| SETUP | 검증된 셀 구성을 활성화할지 판단 |
 
-`FR5PageRouter`는 활성 페이지의 `UIDocument`만 켠다. 공통 셸과 색·타이포 규칙은 `FR5Shell.uxml`과 `FR5Theme.uss`에 있다.
+한 화면은 하나의 대표 결정을 중심으로 구성합니다. 다른 화면의 책임을 복제해 여러 곳에서 같은 상태를 수정하지 않습니다.
 
 ## 데이터 경계
 
-- `UIMaster`가 `RobotMaster`, 공통 상태, 조립 진행과 Scene 참조를 UI binder에 제공한다.
-- UI와 Scenario는 Mock/Real 구현 클래스를 직접 참조하거나 캐스팅하지 않는다.
-- 실시간 로봇·조립 상태는 ROS/공통 runtime 상태에서 읽는다.
-- 제품·재고·Job·검사·품질 데이터는 MainServer API 연결 전까지 `FR5EmptyState`로 미연결임을 표시한다.
-- UI는 DB에 직접 접속하지 않는다.
+- 로봇과 조립 진행은 주입된 runtime 계약에서 읽습니다.
+- 제품, 재고, Job, 검사와 품질 정보는 MainServer를 통해 조회합니다.
+- UI는 DB, 구체 Mock/Real 구현과 설비 통신을 직접 호출하지 않습니다.
+- UI에 보이는 진행 상태는 표현용이며 생산 상태의 원본이 아닙니다.
+- 데이터가 없거나 오래됐거나 샘플이면 그 상태를 명확히 표시합니다.
 
-## 구현 파일
+## 자동과 수동
 
-- `Assets/UI/FR5Run.uxml`, `FR5RunBinder.cs`
-- `Assets/UI/FR5Request.uxml`, `FR5RequestBinder.cs`
-- `Assets/UI/FR5Inspect.uxml`, `FR5InspectBinder.cs`
-- `Assets/UI/FR5Manual.uxml`, `FR5ManualBinder.cs`, `ManualJointPanel.cs`
-- `Assets/UI/FR5Quality.uxml`, `FR5QualityBinder.cs`
-- `Assets/UI/FR5PageRouter.cs`, `UIMaster.cs`, `FR5EmptyState.cs`
+자동 조립은 Scenario의 단일 공개 진입점을 사용합니다. 수동 조작은 별도 저수준 제어 계약을 사용하며 자동 공정 순서를 대신하지 않습니다.
+
+Mock과 Real 선택은 RobotMaster가 담당합니다. 화면과 Scenario는 구체 구현을 검사하거나 캐스팅하지 않습니다.
+
+## 안전 경계
+
+- 요청 수락을 완료로 표시하지 않습니다.
+- 실제값과 목표값을 구분합니다.
+- 위험 조작보다 운전 모드, 연결 상태와 제한 조건을 먼저 보여줍니다.
+- 지원되지 않거나 확인할 수 없는 Real 동작은 비활성화하고 이유를 표시합니다.
+- 화면의 STOP과 확인 동작은 물리 E-Stop과 안전회로를 대체하지 않습니다.
+- 실패와 timeout은 숨기지 않고 사용자가 취할 수 있는 다음 행동과 함께 표시합니다.
+
+시각 표현 원칙은 [HMI 화면 설계](ui-design.md)를 따릅니다.
