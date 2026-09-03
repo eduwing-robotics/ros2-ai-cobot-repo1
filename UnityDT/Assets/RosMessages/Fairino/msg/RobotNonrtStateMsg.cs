@@ -71,6 +71,8 @@ namespace RosMessageTypes.Fairino
         public byte[] safetyboxsig;
         public byte robot_motion_done;
         public byte grip_motion_done;
+        public byte gripper_position;
+        public bool gripper_feedback_valid;
         public byte weldbreakoffstate;
         public byte weldarcstate;
         public double welding_voltage;
@@ -135,8 +137,9 @@ namespace RosMessageTypes.Fairino
         public double slave_status_1;
         public double slave_status_2;
         public int slave_domain_id;
-        public byte gripper_position;
-        public bool gripper_feedback_valid;
+        public byte program_run_state;
+        public double speed_scale_manual;
+        public double speed_scale_auto;
 
         public RobotNonrtStateMsg()
         {
@@ -197,6 +200,8 @@ namespace RosMessageTypes.Fairino
             this.safetyboxsig = new byte[6];
             this.robot_motion_done = 0;
             this.grip_motion_done = 0;
+            this.gripper_position = 0;
+            this.gripper_feedback_valid = false;
             this.weldbreakoffstate = 0;
             this.weldarcstate = 0;
             this.welding_voltage = 0.0;
@@ -261,11 +266,12 @@ namespace RosMessageTypes.Fairino
             this.slave_status_1 = 0.0;
             this.slave_status_2 = 0.0;
             this.slave_domain_id = 0;
-            this.gripper_position = 0;
-            this.gripper_feedback_valid = false;
+            this.program_run_state = 0;
+            this.speed_scale_manual = 0.0;
+            this.speed_scale_auto = 0.0;
         }
 
-        public RobotNonrtStateMsg(double j1_cur_pos, double j2_cur_pos, double j3_cur_pos, double j4_cur_pos, double j5_cur_pos, double j6_cur_pos, double j1_cur_tor, double j2_cur_tor, double j3_cur_tor, double j4_cur_tor, double j5_cur_tor, double j6_cur_tor, double cart_x_cur_pos, double cart_y_cur_pos, double cart_z_cur_pos, double cart_a_cur_pos, double cart_b_cur_pos, double cart_c_cur_pos, double flange_x_cur_pos, double flange_y_cur_pos, double flange_z_cur_pos, double flange_a_cur_pos, double flange_b_cur_pos, double flange_c_cur_pos, double exaxispos1, int[] exaxistatus1, double exaxispos2, int[] exaxistatus2, double exaxispos3, int[] exaxistatus3, double exaxispos4, int[] exaxistatus4, double ft_fx_data, double ft_fy_data, double ft_fz_data, double ft_tx_data, double ft_ty_data, double ft_tz_data, byte ft_actstatus, byte robot_mode, byte tool_num, byte work_num, byte prg_state, byte abnormal_stop, string prg_name, byte prg_total_line, byte prg_cur_line, byte dgt_output_h, byte dgt_output_l, byte dgt_input_h, byte dgt_input_l, byte tl_dgt_output_l, byte tl_dgt_input_l, byte emg, byte[] safetyboxsig, byte robot_motion_done, byte grip_motion_done, byte weldbreakoffstate, byte weldarcstate, double welding_voltage, double welding_current, double weldtrackspeed, uint main_error_code, uint sub_error_code, byte check_sum, ulong timestamp, string version, byte tpd_exception, byte alarm_reboot_robot, byte modbusmasterconnectstate, byte mdbsslaveconnect, byte socket_conn_timeout, byte socket_read_timeout, byte btn_box_stop_signa, byte strangeposflag, byte drag_alarm, byte alarm, byte safetydoor_alarm, byte safetyplanealarm, byte motionalarm, byte interferealarm, ushort endluaerrcode, double dr_alarm, ushort udpcmdstate, byte aliveslavenumerror, ushort gripperfaultnum, byte[] slavecomerror, byte cmdpointerror, byte ioerror, byte grippererro, byte fileerror, byte paraerror, byte exaxis_out_slimit_error, byte[] dr_com_err, double dr_err, double out_sflimit_err, double collision_err, byte weld_readystate, byte alarm_check_emerg_stop_btn, byte ts_web_state_com_error, byte ts_tm_cmd_com_error, byte ts_tm_state_com_error, ushort ctrlboxerror, byte safety_data_state, byte forcesensorerrstate, byte[] ctrlopenluaerrcode, byte auxservoservoid, int auxservoerrcode, int auxservostate, double auxservoactualpos, double auxservoctualspeed, double auxservoactualtorque, ushort[] extpioinput, ushort[] extpiooutput, ushort[] extadcinput, ushort[] extadcoutput, byte reconnect_flag, byte exaxiscoordid, double slave_status_1, double slave_status_2, int slave_domain_id, byte gripper_position, bool gripper_feedback_valid)
+        public RobotNonrtStateMsg(double j1_cur_pos, double j2_cur_pos, double j3_cur_pos, double j4_cur_pos, double j5_cur_pos, double j6_cur_pos, double j1_cur_tor, double j2_cur_tor, double j3_cur_tor, double j4_cur_tor, double j5_cur_tor, double j6_cur_tor, double cart_x_cur_pos, double cart_y_cur_pos, double cart_z_cur_pos, double cart_a_cur_pos, double cart_b_cur_pos, double cart_c_cur_pos, double flange_x_cur_pos, double flange_y_cur_pos, double flange_z_cur_pos, double flange_a_cur_pos, double flange_b_cur_pos, double flange_c_cur_pos, double exaxispos1, int[] exaxistatus1, double exaxispos2, int[] exaxistatus2, double exaxispos3, int[] exaxistatus3, double exaxispos4, int[] exaxistatus4, double ft_fx_data, double ft_fy_data, double ft_fz_data, double ft_tx_data, double ft_ty_data, double ft_tz_data, byte ft_actstatus, byte robot_mode, byte tool_num, byte work_num, byte prg_state, byte abnormal_stop, string prg_name, byte prg_total_line, byte prg_cur_line, byte dgt_output_h, byte dgt_output_l, byte dgt_input_h, byte dgt_input_l, byte tl_dgt_output_l, byte tl_dgt_input_l, byte emg, byte[] safetyboxsig, byte robot_motion_done, byte grip_motion_done, byte gripper_position, bool gripper_feedback_valid, byte weldbreakoffstate, byte weldarcstate, double welding_voltage, double welding_current, double weldtrackspeed, uint main_error_code, uint sub_error_code, byte check_sum, ulong timestamp, string version, byte tpd_exception, byte alarm_reboot_robot, byte modbusmasterconnectstate, byte mdbsslaveconnect, byte socket_conn_timeout, byte socket_read_timeout, byte btn_box_stop_signa, byte strangeposflag, byte drag_alarm, byte alarm, byte safetydoor_alarm, byte safetyplanealarm, byte motionalarm, byte interferealarm, ushort endluaerrcode, double dr_alarm, ushort udpcmdstate, byte aliveslavenumerror, ushort gripperfaultnum, byte[] slavecomerror, byte cmdpointerror, byte ioerror, byte grippererro, byte fileerror, byte paraerror, byte exaxis_out_slimit_error, byte[] dr_com_err, double dr_err, double out_sflimit_err, double collision_err, byte weld_readystate, byte alarm_check_emerg_stop_btn, byte ts_web_state_com_error, byte ts_tm_cmd_com_error, byte ts_tm_state_com_error, ushort ctrlboxerror, byte safety_data_state, byte forcesensorerrstate, byte[] ctrlopenluaerrcode, byte auxservoservoid, int auxservoerrcode, int auxservostate, double auxservoactualpos, double auxservoctualspeed, double auxservoactualtorque, ushort[] extpioinput, ushort[] extpiooutput, ushort[] extadcinput, ushort[] extadcoutput, byte reconnect_flag, byte exaxiscoordid, double slave_status_1, double slave_status_2, int slave_domain_id, byte program_run_state, double speed_scale_manual, double speed_scale_auto)
         {
             this.j1_cur_pos = j1_cur_pos;
             this.j2_cur_pos = j2_cur_pos;
@@ -324,6 +330,8 @@ namespace RosMessageTypes.Fairino
             this.safetyboxsig = safetyboxsig;
             this.robot_motion_done = robot_motion_done;
             this.grip_motion_done = grip_motion_done;
+            this.gripper_position = gripper_position;
+            this.gripper_feedback_valid = gripper_feedback_valid;
             this.weldbreakoffstate = weldbreakoffstate;
             this.weldarcstate = weldarcstate;
             this.welding_voltage = welding_voltage;
@@ -388,8 +396,9 @@ namespace RosMessageTypes.Fairino
             this.slave_status_1 = slave_status_1;
             this.slave_status_2 = slave_status_2;
             this.slave_domain_id = slave_domain_id;
-            this.gripper_position = gripper_position;
-            this.gripper_feedback_valid = gripper_feedback_valid;
+            this.program_run_state = program_run_state;
+            this.speed_scale_manual = speed_scale_manual;
+            this.speed_scale_auto = speed_scale_auto;
         }
 
         public static RobotNonrtStateMsg Deserialize(MessageDeserializer deserializer) => new RobotNonrtStateMsg(deserializer);
@@ -453,6 +462,8 @@ namespace RosMessageTypes.Fairino
             deserializer.Read(out this.safetyboxsig, sizeof(byte), 6);
             deserializer.Read(out this.robot_motion_done);
             deserializer.Read(out this.grip_motion_done);
+            deserializer.Read(out this.gripper_position);
+            deserializer.Read(out this.gripper_feedback_valid);
             deserializer.Read(out this.weldbreakoffstate);
             deserializer.Read(out this.weldarcstate);
             deserializer.Read(out this.welding_voltage);
@@ -517,8 +528,9 @@ namespace RosMessageTypes.Fairino
             deserializer.Read(out this.slave_status_1);
             deserializer.Read(out this.slave_status_2);
             deserializer.Read(out this.slave_domain_id);
-            deserializer.Read(out this.gripper_position);
-            deserializer.Read(out this.gripper_feedback_valid);
+            deserializer.Read(out this.program_run_state);
+            deserializer.Read(out this.speed_scale_manual);
+            deserializer.Read(out this.speed_scale_auto);
         }
 
         public override void SerializeTo(MessageSerializer serializer)
@@ -580,6 +592,8 @@ namespace RosMessageTypes.Fairino
             serializer.Write(this.safetyboxsig);
             serializer.Write(this.robot_motion_done);
             serializer.Write(this.grip_motion_done);
+            serializer.Write(this.gripper_position);
+            serializer.Write(this.gripper_feedback_valid);
             serializer.Write(this.weldbreakoffstate);
             serializer.Write(this.weldarcstate);
             serializer.Write(this.welding_voltage);
@@ -644,8 +658,9 @@ namespace RosMessageTypes.Fairino
             serializer.Write(this.slave_status_1);
             serializer.Write(this.slave_status_2);
             serializer.Write(this.slave_domain_id);
-            serializer.Write(this.gripper_position);
-            serializer.Write(this.gripper_feedback_valid);
+            serializer.Write(this.program_run_state);
+            serializer.Write(this.speed_scale_manual);
+            serializer.Write(this.speed_scale_auto);
         }
 
         public override string ToString()
@@ -708,6 +723,8 @@ namespace RosMessageTypes.Fairino
             "\nsafetyboxsig: " + System.String.Join(", ", safetyboxsig.ToList()) +
             "\nrobot_motion_done: " + robot_motion_done.ToString() +
             "\ngrip_motion_done: " + grip_motion_done.ToString() +
+            "\ngripper_position: " + gripper_position.ToString() +
+            "\ngripper_feedback_valid: " + gripper_feedback_valid.ToString() +
             "\nweldbreakoffstate: " + weldbreakoffstate.ToString() +
             "\nweldarcstate: " + weldarcstate.ToString() +
             "\nwelding_voltage: " + welding_voltage.ToString() +
@@ -772,8 +789,9 @@ namespace RosMessageTypes.Fairino
             "\nslave_status_1: " + slave_status_1.ToString() +
             "\nslave_status_2: " + slave_status_2.ToString() +
             "\nslave_domain_id: " + slave_domain_id.ToString() +
-            "\ngripper_position: " + gripper_position.ToString() +
-            "\ngripper_feedback_valid: " + gripper_feedback_valid.ToString();
+            "\nprogram_run_state: " + program_run_state.ToString() +
+            "\nspeed_scale_manual: " + speed_scale_manual.ToString() +
+            "\nspeed_scale_auto: " + speed_scale_auto.ToString();
         }
 
 #if UNITY_EDITOR
