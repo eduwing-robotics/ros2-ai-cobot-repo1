@@ -11,10 +11,6 @@ class GatewayUnavailable(RuntimeError):
     """The ROS2 runtime or assembly bridge cannot answer a request."""
 
 
-class GatewayResponseError(RuntimeError):
-    """The assembly bridge returned a response outside its JSON contract."""
-
-
 class AssemblyGateway:
     """Query the existing assembly bridge without importing ROS2 at API import time."""
 
@@ -68,7 +64,7 @@ class AssemblyGateway:
         try:
             response = json.loads(raw)
         except (TypeError, json.JSONDecodeError) as error:
-            raise GatewayResponseError("assembly bridge response is not valid JSON") from error
+            raise GatewayUnavailable("assembly bridge response is not valid JSON") from error
         if not isinstance(response, dict):
-            raise GatewayResponseError("assembly bridge response must be a JSON object")
+            raise GatewayUnavailable("assembly bridge response must be a JSON object")
         return response

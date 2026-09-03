@@ -120,3 +120,5 @@ uint8 exaxiscoordid
 float64 slave_status_1
 float64 slave_status_2
 int32 slave_domain_id
+uint8 gripper_position
+bool gripper_feedback_valid

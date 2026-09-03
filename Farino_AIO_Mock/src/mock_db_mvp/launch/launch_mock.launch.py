@@ -14,7 +14,7 @@ from launch.substitutions import EnvironmentVariable, FindExecutable, LaunchConf
 
 
 def generate_launch_description():
-    package_share = get_package_share_directory("mock_db_mvp")
+    sequencer_share = get_package_share_directory("assembly_sequencer")
     production_dsn = LaunchConfiguration("production_db_dsn")
 
     return LaunchDescription([
@@ -41,7 +41,7 @@ def generate_launch_description():
             SetEnvironmentVariable("PRODUCTION_DB_DSN", production_dsn),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
-                    f"{package_share}/launch/mock_db_mvp.launch.py"
+                    f"{sequencer_share}/launch/mock.launch.py"
                 ),
                 launch_arguments={
                     "endpoint_ip": LaunchConfiguration("endpoint_ip"),

@@ -1,7 +1,7 @@
-// 역할: HUD가 필요로 하는 런타임 참조를 한 곳에서 해석해 UI 컴포넌트에 중계한다.
+// 역할: Inspector로 주입된 런타임 참조를 HUD 컴포넌트에 중계한다.
 //
 // UI 컴포넌트(FR5RunBinder, ManualJointPanel 등)는 씬을 직접 뒤지지 않는다.
-// 씬 스캔은 이 클래스에만 남겨 두고, 나머지는 RobotMaster가 주입한 경로를 따라간다.
+// RobotMaster가 주입한 경로를 따라간다.
 //   RobotMaster ─ Status(RobotStatusMaster) ─ StatusManager / Gripper
 //               ├ AssemblyProgress(AssemblyProgressManager)
 //               └ Scenario
@@ -26,22 +26,20 @@ namespace MainUnity.UI
     public sealed class UIMaster : MonoBehaviour
     {
         [Header("런타임 참조")]
-        [Tooltip("비우면 씬에서 찾습니다. HUD가 로봇 계층으로 들어가는 유일한 입구입니다.")]
+        [Tooltip("HUD가 로봇 계층으로 들어가는 유일한 입구입니다.")]
         [SerializeField] RobotMaster robotMaster;
 
-        [Tooltip("비우면 씬에서 찾습니다. RobotMaster 계층 밖의 시각화 전용 컴포넌트입니다.")]
+        [Tooltip("RobotMaster 계층 밖의 시각화 전용 컴포넌트입니다.")]
         [SerializeField] GhostMaster ghostMaster;
 
-        [Tooltip("비우면 같은 오브젝트에서 찾습니다. ROBOT 뷰포트에 실카메라 영상을 넣는 수신기입니다.")]
+        [Tooltip("ROBOT 뷰포트에 실카메라 영상을 넣는 수신기입니다.")]
         [SerializeField] CamVisionReceiver visionImage;
 
-        [Tooltip("비우면 씬에서 찾습니다. 기판 슬롯 구성을 들고 있는 트윈 쪽 데이터입니다.")]
+        [Tooltip("기판 슬롯 구성을 들고 있는 트윈 쪽 데이터입니다.")]
         [SerializeField] ItemManager board;
 
         /// <summary>Mock/Real Backend를 선택해 주입하는 로봇 진입점이다.</summary>
-        public RobotMaster RobotMaster => robotMaster != null
-            ? robotMaster
-            : robotMaster = FindAnyObjectByType<RobotMaster>();
+        public RobotMaster RobotMaster => robotMaster;
 
         /// <summary>현재 선택된 Backend다. RobotMaster를 못 찾으면 실측으로 오인하지 않도록 Mock으로 본다.</summary>
         public RobotOperatingMode OperatingMode => RobotMaster != null
@@ -69,9 +67,7 @@ namespace MainUnity.UI
         /// Backend 와 무관한 씬 데이터라 Mock/Real 어느 쪽에서도 같은 값이다.
         /// TODO(API): 완성체 슬롯 조회가 생기면 그쪽으로 옮긴다 (DATA_STATION/DB/README.md의 Product Slot 계약).
         /// </summary>
-        public ItemManager Board => board != null
-            ? board
-            : board = FindAnyObjectByType<ItemManager>();
+        public ItemManager Board => board;
 
         /// <summary>공통 그리퍼 상태 컴포넌트다.</summary>
         public GripperSubscriber Gripper => RobotMaster != null
@@ -84,26 +80,9 @@ namespace MainUnity.UI
             : null;
 
         /// <summary>관절 목표 미리보기를 담당하는 Ghost 진입점이다.</summary>
-        public GhostMaster Ghost => ghostMaster != null
-            ? ghostMaster
-            : ghostMaster = FindAnyObjectByType<GhostMaster>();
+        public GhostMaster Ghost => ghostMaster;
 
         /// <summary>ROBOT 뷰포트의 실카메라 영상 수신기다. HUD와 같은 오브젝트에 붙어 있다.</summary>
-        public CamVisionReceiver VisionImage => visionImage != null
-            ? visionImage
-            : visionImage = GetComponent<CamVisionReceiver>();
-
-        void Awake() => RefreshReferences();
-
-        void OnValidate() => RefreshReferences();
-
-        /// <summary>Inspector가 비어 있는 참조만 씬에서 채운다.</summary>
-        public void RefreshReferences()
-        {
-            _ = RobotMaster;
-            _ = Ghost;
-            _ = VisionImage;
-            _ = Board;
-        }
+        public CamVisionReceiver VisionImage => visionImage;
     }
 }

@@ -276,12 +276,6 @@ def candidates(part_category: str, path: Path | None = None) -> list[dict[str, o
     return catalog(path)["parts"].get(part_category, [])
 
 
-def gates(part_category: str, path: Path | None = None) -> dict[str, str]:
-    """해당 타입의 품질 게이트. 없으면 '공통'만."""
-    loaded = catalog(path)
-    return loaded["checklist"].get(part_category, loaded["checklist"].get(COMMON, {}))
-
-
 def selected_candidate(part_category: str, part_name: str,
                        path: Path | None = None) -> dict[str, object]:
     """DB가 선택한 MPN. 카테고리나 MPN 불일치는 잘못된 단가 대신 오류다."""

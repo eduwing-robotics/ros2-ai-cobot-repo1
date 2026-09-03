@@ -252,15 +252,9 @@ def validate_observations(observations):
     if not isinstance(observations, list) or not observations:
         raise ValueError("observations must be a non-empty list")
     pose_fields = {"order", "part_id", "source", "target"}
-    legacy_gripper_fields = {
-        "gripper_grasp_opening_percent",
-        "gripper_release_opening_percent",
-    }
     validated = []
     for expected_order, observation in enumerate(observations, 1):
-        if not isinstance(observation, dict) or set(observation) not in (
-            pose_fields, pose_fields | legacy_gripper_fields
-        ):
+        if not isinstance(observation, dict) or set(observation) != pose_fields:
             raise ValueError(
                 f"observation {expected_order} must contain order, part_id, "
                 "source and target"
@@ -287,13 +281,7 @@ def validate_observations(observations):
 
 def validate_assembled_pcb(value):
     pose_fields = {"source", "target"}
-    legacy_gripper_fields = {
-        "gripper_grasp_opening_percent",
-        "gripper_release_opening_percent",
-    }
-    if not isinstance(value, dict) or set(value) not in (
-        pose_fields, pose_fields | legacy_gripper_fields
-    ):
+    if not isinstance(value, dict) or set(value) != pose_fields:
         raise ValueError("assembled_pcb must contain source and target")
     return {
         "source": validate_ros_pose(value["source"], "assembled_pcb.source"),
@@ -563,14 +551,10 @@ def self_check(runtime_recipe=None):
     observations = [{
         "order": 1,
         "part_id": "part",
-        "gripper_grasp_opening_percent": 18,
-        "gripper_release_opening_percent": 25,
         "source": {"xyz_mm": [350, -150, 250], "xyzw": [0, 0, 0, 1]},
         "target": {"xyz_mm": [350, 150, 250], "xyzw": [0, 0, 0, 1]},
     }]
     assembled_pcb = {
-        "gripper_grasp_opening_percent": 0,
-        "gripper_release_opening_percent": 100,
         "source": {"xyz_mm": [450, 0, 200], "xyzw": [0, 0, 0, 1]},
         "target": {"xyz_mm": [350, 350, 200], "xyzw": [0, 0, 0, 1]},
     }

@@ -11,7 +11,7 @@ from urllib.parse import parse_qs, urlsplit
 
 import datasheet
 import queries
-from assembly_gateway import AssemblyGateway, GatewayResponseError, GatewayUnavailable
+from assembly_gateway import AssemblyGateway, GatewayUnavailable
 
 
 ROUTES = (
@@ -108,7 +108,7 @@ class ApiHandler(BaseHTTPRequestHandler):
             self._error(400, "invalid_request", str(error))
         except AssemblyRejected as error:
             self._error(error.status, error.code, error.message)
-        except (GatewayUnavailable, GatewayResponseError):
+        except GatewayUnavailable:
             self._error(503, "assembly_unavailable", "assembly bridge is unavailable")
         except queries.ResourceNotFound as error:
             self._error(404, "not_found", str(error))

@@ -11934,6 +11934,9 @@ void robot_command_thread::_state_recv_callback(){
         msg.slave_status_1 = 0;
         msg.slave_status_2 = 0;
         msg.slave_domain_id = 0;
+        msg.gripper_position = ctrl_state.gripper_position;
+        msg.gripper_feedback_valid =
+            ctrl_state.gripper_active != 0 && ctrl_state.gripper_position <= 100;
 
 
         // _state_publisher->publish(msg);

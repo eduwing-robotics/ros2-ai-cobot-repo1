@@ -5,7 +5,6 @@ import threading
 import time
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 
 from . import production_store
 
@@ -21,16 +20,10 @@ class DbQueueFull(RuntimeError):
 
 @dataclass
 class DbUpdateEvent:
-    event_id: str
     event_type: str
     job_id: str | None = None
     unit_id: int | None = None
     payload: dict = field(default_factory=dict)
-    created_at: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
-    )
-    attempt_count: int = 0
-    next_retry_at: float = 0.0
     last_error: str = ""
 
 
@@ -117,7 +110,6 @@ class DbWriter:
     def assembly_completed(self, unit_id):
         self._positive_id(unit_id, "unit_id")
         return self._submit(DbUpdateEvent(
-            event_id=str(uuid.uuid4()),
             event_type=ASSEMBLY_COMPLETED,
             unit_id=unit_id,
         ))
@@ -132,7 +124,6 @@ class DbWriter:
             for slot_code, defect_type in normalized
         ]
         return self._submit(DbUpdateEvent(
-            event_id=str(uuid.uuid4()),
             event_type=INSPECTION_RECORDED,
             unit_id=unit_id,
             payload={
@@ -147,7 +138,6 @@ class DbWriter:
         if final_status not in production_store.FINAL_JOB_STATUSES:
             raise ValueError("final_status must be COMPLETED, FAILED or CANCELLED")
         return self._submit(DbUpdateEvent(
-            event_id=str(uuid.uuid4()),
             event_type=JOB_FINISHED,
             job_id=job_id,
             payload={"final_status": final_status},
@@ -204,7 +194,6 @@ class DbWriter:
             self._sync_state = "PENDING"
             self._last_error = ""
             self._condition.notify_all()
-        return event.event_id
 
     def _run(self):
         while not self._stop.is_set():
@@ -218,9 +207,7 @@ class DbWriter:
                 try:
                     self._dispatch(event)
                 except Exception as error:
-                    event.attempt_count += 1
                     event.last_error = str(error)
-                    event.next_retry_at = time.time() + delay
                     with self._condition:
                         if not self._fatal_error:
                             self._sync_state = "PENDING"

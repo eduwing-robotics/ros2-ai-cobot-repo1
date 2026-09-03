@@ -399,13 +399,9 @@ ROS 2는 상태 전달, 신규 명령 차단과 작업 실패 전환을 담당�
 
 | `DbUpdateEvent` 필드 | 설명 |
 | --- | --- |
-| `event_id` | 중복 적용 방지 식별자 |
 | `event_type` | DB 갱신 종류 |
 | `job_id`, `unit_id` | 작업 식별자 |
 | `payload` | Store 호출에 필요한 데이터, Raw SQL 금지 |
-| `created_at` | 이벤트 생성 시각 |
-| `attempt_count` | 시도 횟수 |
-| `next_retry_at` | 다음 재시도 시각 |
 | `last_error` | 최근 오류 |
 
 ### 7.4 Queue 정책
@@ -416,7 +412,7 @@ ROS 2는 상태 전달, 신규 명령 차단과 작업 실패 전환을 담당�
 | 순서 | 한 작업의 순서를 보장하는 bounded FIFO·단일 Worker를 우선 사용한다. |
 | 제거 | PostgreSQL commit 성공 후에만 제거한다. 검사 callback이 제거하지 않는다. |
 | 실패 | backoff 재시도하며 overflow와 최종 실패를 조용히 폐기하지 않는다. |
-| 멱등성 | 현재는 DB 상태로 보장하며 `event_id` 영속 중복 제거는 Outbox 단계에서 추가한다. |
+| 멱등성 | 현재는 ProductionStore의 DB 상태와 transaction 경계로 보장한다. |
 | 저장 제외 | 관절·TCP 스트림과 고빈도 상태는 생산 DB에 저장하지 않는다. |
 | 영속성 | Job은 `production.jobs`에 영속한다. 완료 이벤트 queue(`DbWriter`)는 프로세스 재시작을 넘는 보존을 보장하지 않는다. |
 
