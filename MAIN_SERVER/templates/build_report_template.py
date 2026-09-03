@@ -3,7 +3,7 @@
 # requires-python = ">=3.10"
 # dependencies = [
 #     "openpyxl>=3.1",   # CellRichText 는 3.1 부터다
-#     "pillow>=10",      # 표지 부품 이미지. 없으면 그림 없이 발행된다
+#     "pillow>=10",      # 검사 이미지용 JPEG·PNG 자리 생성
 # ]
 # ///
 """불량대책서 표준양식과 샘플을 한 정의에서 생성한다.
@@ -37,9 +37,6 @@ from openpyxl.workbook.defined_name import DefinedName
 from openpyxl.worksheet.datavalidation import DataValidation
 
 OUT_DIR = Path(__file__).resolve().parent
-REPO_ROOT = OUT_DIR.parent.parent
-# 데이터시트 BOM 의 Image 열은 Unity 프로젝트의 Assets/ 기준 경로다.
-UNITY_ASSETS = REPO_ROOT / "UnityDT" / "Assets"
 TEMPLATE_PATH = OUT_DIR / "불량대책서_표준양식.xlsx"
 SAMPLE_PATH = OUT_DIR / "불량대책서_표준양식_샘플.xlsx"
 CLOSED_PATH = OUT_DIR / "불량대책서_샘플_종결본.xlsx"
@@ -189,42 +186,6 @@ def page(ws, orientation="portrait", fit_height=0, gridlines=False):
     ws.page_margins.top = ws.page_margins.bottom = 0.45
 
 
-def place_part_image(ws, cell_ref, rel_path, px=42, dx=8, dy=10):
-    """부품 렌더를 시트에 얹는다.
-
-    담당자가 문서를 열었을 때 어떤 부품인지 글자를 읽기 전에 알아보게 하려는 것이다.
-    경로는 데이터시트 BOM 의 Image 열(Assets/ 기준)에서 온다.
-    Pillow 가 없거나 파일이 없으면 조용히 건너뛴다 — 그림 때문에 발행이 막히면 안 된다.
-    """
-    if not rel_path:
-        return False
-    src = UNITY_ASSETS / rel_path
-    if not src.is_file():
-        return False
-    try:
-        from openpyxl.drawing.image import Image as XLImage
-    except ImportError:
-        return False
-    try:
-        img = XLImage(str(src))
-    except Exception:
-        return False
-    from openpyxl.drawing.spreadsheet_drawing import AnchorMarker, OneCellAnchor
-    from openpyxl.drawing.xdr import XDRPositiveSize2D
-    from openpyxl.utils import coordinate_to_tuple
-    from openpyxl.utils.units import pixels_to_EMU
-
-    row, col = coordinate_to_tuple(cell_ref)
-    img.width = img.height = px
-    img.anchor = OneCellAnchor(
-        _from=AnchorMarker(col=col - 1, colOff=pixels_to_EMU(dx),
-                           row=row - 1, rowOff=pixels_to_EMU(dy)),
-        ext=XDRPositiveSize2D(pixels_to_EMU(px), pixels_to_EMU(px)),
-    )
-    ws.add_image(img)
-    return True
-
-
 def place_inspection_placeholders(ws, cell_ref):
     """Keep one blank JPEG layer and one transparent PNG layer for runtime replacement."""
     from PIL import Image
@@ -370,11 +331,9 @@ def build_cover(wb, d):
         ws.row_dimensions[row].height = h
 
     # ── 제목 · 결재란 ────────────────────────────────────────────────
-    # 부품 렌더에 전용 칸을 준다. 제목 위에 떠 있으면 로고처럼 보이고, 무엇을 가리키는지
-    # 애매하다. 칸을 나눠 두면 "이 문서가 다루는 부품"이라는 자리값이 생긴다.
     ws.merge_cells("A1:A3")
-    put(ws, "A1", None, bg=LABEL)
-    place_part_image(ws, "A1", d.get("part_image"), px=46, dx=29, dy=10)
+    put(ws, "A1", d["part_id"], f=font(8, True), bg=LABEL,
+        al=align("center", "center", wrap=True))
 
     ws.merge_cells("B1:D3")
     title = ws["B1"]
@@ -852,7 +811,6 @@ TOKEN_DATA = {
     "due_cause": "{{due_cause}}",
     "due_action": "{{due_action}}",
     "due_verify": "{{due_verify}}",
-    "part_image": None,   # 표준양식에는 넣지 않는다 — 발행 시점에 부품이 정해진다
     "part_line": "{{part_id}} · {{part_name}} ({{category_label}})",
     "part_id": "{{part_id}}",
     "part_name": "{{part_name}}",
@@ -926,7 +884,6 @@ SAMPLE_DATA = {
     "due_cause": "08-22 (3일)",
     "due_action": "09-05 (2주)",
     "due_verify": "적용 후 2~4주",
-    "part_image": "UI/Icons/item-cap.png",
     "part_id": "CAP",
     "part_name": "Contoso CX-0603X7R104K100",
     "category_label": "MLCC",
@@ -991,7 +948,7 @@ SAMPLE_DATA = {
     },
     "alternates_header": "조회 시각 2026-08-19 09:00:00   ·   데이터시트 "
                          "semiconductor_assembly_quality_datasheet_2026-08-18.xlsx "
-                         "(기준일 2026-08-18)   ·   부품 타입 MLCC   ·   후보 3종   "
+                         "(기준일 2026-08-18)   ·   부품 타입 MLCC   ·   후보 2종   "
                          "·   단가 $0.09 ~ $0.15   ·   현재 선정 $0.15",
     "selected_mpn": "Contoso CX-0603X7R104K100",
     "selected_spec": "0.10µF ±10% 100V X7R 0603",

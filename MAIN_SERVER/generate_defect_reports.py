@@ -312,7 +312,7 @@ def load_inspection_image(value: object, root: Path,
 
 def write_report(template: Path, output: Path, tokens: dict[str, str],
                  image: dict[str, object] | None = None) -> None:
-    output.parent.mkdir(parents=True, exist_ok=True)
+    output.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
     replacements = {
         f"{{{{{key}}}}}": html.escape(_text(value), quote=False)
         for key, value in tokens.items()
@@ -635,6 +635,12 @@ def self_check() -> None:
     mock_image = load_inspection_image(
         "InspectionSamples/mock-fail.jpg", DEFAULT_IMAGE_ROOT, 10 * 1024 * 1024)
     assert mock_image["kind"] == "jpeg"
+    png_image = load_inspection_image(
+        "InspectionSamples/mock-inspect-pass-board-1.png",
+        DEFAULT_IMAGE_ROOT,
+        10 * 1024 * 1024,
+    )
+    assert png_image["kind"] == "png"
     blocked_image = load_inspection_image(
         "../UI/Icons/item-cap.png", DEFAULT_IMAGE_ROOT, 10 * 1024 * 1024)
     assert blocked_image["status"] == "허용 경로 밖 이미지 차단"
@@ -679,6 +685,18 @@ def self_check() -> None:
         report_tokens.update(tokens)
         write_report(TEMPLATE, output, report_tokens, mock_image)
         assert output.is_file()
+        assert stat.S_IMODE(output.stat().st_mode) == 0o600
+        with zipfile.ZipFile(output) as report:
+            assert report.read(IMAGE_MEDIA["jpeg"]) == mock_image["bytes"]
+            xml = b"".join(
+                report.read(name) for name in report.namelist()
+                if name.endswith(".xml")
+            )
+            assert loaded["source_sha256"].encode() in xml
+        png_output = directory / "check-png.xlsx"
+        write_report(TEMPLATE, png_output, report_tokens, png_image)
+        with zipfile.ZipFile(png_output) as report:
+            assert report.read(IMAGE_MEDIA["png"]) == png_image["bytes"]
         message_tokens = {
             "alert_code": "QA-CHECK",
             "part_id": "CAP",
@@ -715,9 +733,19 @@ def main() -> None:
         delivery = claim_delivery(args.dsn, args.unit_defect_id)
         if delivery is None:
             parser.error("unit defect delivery is not pending")
-        process_delivery(
-            args.dsn, delivery, args.datasheet, args.template,
-            args.output_dir, config)
+        try:
+            process_delivery(
+                args.dsn, delivery, args.datasheet, args.template,
+                args.output_dir, config)
+        except Exception as error:
+            mark_failed(
+                args.dsn,
+                int(delivery["unit_defect_id"]),
+                int(delivery["attempt_count"]),
+                int(config["max_attempts"]),
+                error,
+            )
+            raise
         return
     if not args.watch and not args.once:
         parser.error("--unit-defect-id, --watch or --once is required")

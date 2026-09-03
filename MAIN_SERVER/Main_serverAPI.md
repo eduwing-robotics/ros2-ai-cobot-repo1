@@ -90,8 +90,9 @@ same `job_id`; MainServer does not receive or persist them.
 
 `MAIN_SERVER_MODE` must be exactly `mock` or `real`; it reports deployment
 configuration only and is not stored in the DB. `MAIN_SERVER_DB_DSN` must allow
-production reads and insertion of the documented Job columns. MainServer does
-not transition Jobs or write Units.
+the documented production reads and Job insert. The defect-report worker also
+updates only `production.defect_report_deliveries`. MainServer does not
+transition Jobs or write Units and defects.
 
 Product, Job and POST assembly routes need PostgreSQL only. The current-status
 route additionally requires a shell where ROS2 and the included
