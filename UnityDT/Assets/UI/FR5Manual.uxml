@@ -14,15 +14,15 @@
             <ui:Label text="/" class="page-heading__divider" />
             <ui:Label text="수동" class="page-heading__title" />
             <ui:VisualElement class="spacer" />
-            <ui:Label text="GHOST PREVIEW · DB 비기록 · 실동작 차단" class="page-heading__meta" />
+            <ui:Label text="PREVIEW ONLY · DB 비기록 · 실동작 차단" class="page-heading__meta" />
         </ui:VisualElement>
 
         <!--
           경고 띠는 공통 알람(64..108)과 페이지 제목 아래에 고정한다.
         -->
         <ui:VisualElement name="manual-banner" style="position:absolute; left:112px; top:164px; right:24px; height:46px; background-color:rgb(34,31,24); border-left-width:3px; border-left-color:rgba(246,173,55,0.9); padding-left:18px; flex-direction:row; align-items:center;">
-            <ui:Label text="수동 조작 주의" class="warn" style="font-size:16px;" />
-            <ui:Label text="작업 영역을 확인하십시오.  APPLY · 그리퍼 명령은 현재 로봇으로 전송되지 않으며 jobs · units 를 기록하지 않습니다." style="color:rgb(194,164,99); font-size:13px; margin-left:18px;" />
+            <ui:Label text="미리보기 전용" class="warn" style="font-size:16px;" />
+            <ui:Label text="슬라이더 · HOME · CANCEL은 Ghost만 변경합니다. APPLY · 그리퍼 명령은 사용할 수 없습니다." style="color:rgb(194,164,99); font-size:13px; margin-left:18px;" />
         </ui:VisualElement>
 
         <!-- 좌 : TCP 조그 -->
@@ -57,8 +57,8 @@
                     <ui:VisualElement name="gripper-fill" class="gauge__fill" />
                 </ui:VisualElement>
                 <ui:VisualElement class="row" style="margin-top:16px;">
-                    <ui:Button name="gripper-open-button" text="OPEN" class="btn" style="width:150px; height:48px;" />
-                    <ui:Button name="gripper-close-button" text="CLOSE" class="btn" style="width:150px; height:48px; margin-left:12px;" />
+                    <ui:Button name="gripper-open-button" text="OPEN · 차단" class="btn" style="width:150px; height:48px;" />
+                    <ui:Button name="gripper-close-button" text="CLOSE · 차단" class="btn" style="width:150px; height:48px; margin-left:12px;" />
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
@@ -162,7 +162,7 @@
                     <ui:Button name="jog-home-button" text="HOME" class="btn" style="width:200px; height:48px;" />
                     <ui:Button name="jog-cancel-button" text="CANCEL" class="btn" style="width:200px; height:48px; margin-left:12px;" />
                     <ui:VisualElement class="spacer" />
-                    <ui:Button name="jog-apply-button" text="APPLY" class="btn" style="width:260px; height:48px; font-size:16px;" />
+                    <ui:Button name="jog-apply-button" text="APPLY · PREVIEW ONLY" class="btn" style="width:260px; height:48px; font-size:16px;" />
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>

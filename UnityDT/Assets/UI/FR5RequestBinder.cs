@@ -86,6 +86,7 @@ namespace MainUnity.UI
         ProductDetail selectedProduct;
         Requirement[] requirements = Array.Empty<Requirement>();
         string apiError;
+        bool startRequestInFlight;
 
         void OnEnable()
         {
@@ -510,15 +511,21 @@ namespace MainUnity.UI
 
         void ApplyStartState(bool idle)
         {
-            start?.SetEnabled(idle);
+            start?.SetEnabled(idle && !startRequestInFlight);
+            if (start != null)
+                start.text = startRequestInFlight ? "RUNNING…" : "START";
             if (startReason != null)
-                startReason.text = idle
+                startReason.text = startRequestInFlight
+                    ? "작업을 실행하고 있습니다. 운전 현황은 RUN 화면에서 확인할 수 있습니다."
+                    : idle
                     ? "고정 레시피 assembly-r1 · 수량 1 로 시작합니다 (제품·수량 선택 계약 없음)"
                     : "이미 실행 중인 작업이 있습니다 (동시 1건)";
         }
 
         async void OnStart()
         {
+            if (startRequestInFlight) return;
+
             var scenario = uiMaster != null ? uiMaster.Scenario : null;
             if (scenario == null)
             {
@@ -526,6 +533,8 @@ namespace MainUnity.UI
                 return;
             }
 
+            startRequestInFlight = true;
+            ApplyStartState(false);
             try
             {
                 await scenario.Run();
@@ -534,6 +543,10 @@ namespace MainUnity.UI
             {
                 if (startReason != null) startReason.text = exception.Message;
                 Debug.LogException(exception, this);
+            }
+            finally
+            {
+                startRequestInFlight = false;
             }
         }
     }

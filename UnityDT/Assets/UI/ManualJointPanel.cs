@@ -165,9 +165,19 @@ namespace MainUnity.UI
             }
 
             if (gripperOpenButton != null)
+            {
+                gripperOpenButton.SetEnabled(false);
+                gripperOpenButton.tooltip = "실동작 그리퍼 명령은 연결되어 있지 않습니다.";
                 gripperOpenButton.clicked += OpenGripper;
+            }
             if (gripperCloseButton != null)
+            {
+                gripperCloseButton.SetEnabled(false);
+                gripperCloseButton.tooltip = "실동작 그리퍼 명령은 연결되어 있지 않습니다.";
                 gripperCloseButton.clicked += CloseGripper;
+            }
+            applyButton.SetEnabled(false);
+            applyButton.tooltip = "목표 자세는 슬라이더 조작 즉시 Ghost에 반영됩니다.";
             applyButton.clicked += Apply;
             cancelButton.clicked += Cancel;
             homeButton.clicked += SetHome;

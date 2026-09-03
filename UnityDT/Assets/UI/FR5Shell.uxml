@@ -84,16 +84,16 @@
         <!-- ===================== 페이지 레일 ===================== -->
         <ui:VisualElement name="navrail" class="panel" style="position:absolute; left:0; top:64px; bottom:0; width:88px; border-left-width:0; border-bottom-width:0; align-items:center; padding-top:44px;">
 
-            <!-- MONITOR — 실행 화면을 강제로 연다. -->
+            <!-- RUN — 실행 현황 화면을 강제로 연다. -->
             <ui:Button name="nav-monitor" class="tab" style="width:88px; height:96px; align-items:center; margin:0;">
                 <ui:VisualElement class="tab__icon" style="background-image:url(&quot;project://database/Assets/UI/Icons/nav-monitor.png&quot;);" />
-                <ui:Label text="MONITOR" class="tab__text" /><ui:Label text="모니터" class="micro" />
+                <ui:Label text="RUN" class="tab__text" /><ui:Label text="운전 현황" class="micro" />
             </ui:Button>
 
-            <!-- RUN — 진행 막대 3개 -->
+            <!-- REQUEST — 생산 요청 화면 -->
             <ui:Button name="nav-run" class="tab" style="width:88px; height:96px; align-items:center; margin:0;">
                 <ui:VisualElement class="tab__icon" style="background-image:url(&quot;project://database/Assets/UI/Icons/nav-run.png&quot;);" />
-                <ui:Label text="RUN" class="tab__text" /><ui:Label text="운전" class="micro" />
+                <ui:Label text="REQUEST" class="tab__text" /><ui:Label text="작업 요청" class="micro" />
             </ui:Button>
 
             <!-- INSPECT — 렌즈(원 + 중심점) -->
@@ -115,7 +115,7 @@
             </ui:Button>
 
             <!-- SETUP — 다이얼(원 + 지시선) -->
-            <ui:Button name="nav-setup" class="tab" style="width:88px; height:96px; align-items:center; margin:0;">
+            <ui:Button name="nav-setup" class="tab" style="display:none; width:88px; height:96px; align-items:center; margin:0;">
                 <ui:VisualElement class="tab__icon" style="background-image:url(&quot;project://database/Assets/UI/Icons/nav-setup.png&quot;);" />
                 <ui:Label text="SETUP" class="tab__text" /><ui:Label text="설정" class="micro" />
             </ui:Button>

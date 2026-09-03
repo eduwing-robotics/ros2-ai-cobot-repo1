@@ -9,9 +9,9 @@
     <ui:VisualElement name="fr5-request" class="page fr5--mock">
 
         <ui:VisualElement class="page-heading">
-            <ui:Label text="RUN" class="page-heading__title" />
+            <ui:Label text="REQUEST" class="page-heading__title" />
             <ui:Label text="/" class="page-heading__divider" />
-            <ui:Label text="운전" class="page-heading__title" />
+            <ui:Label text="작업 요청" class="page-heading__title" />
             <ui:VisualElement class="spacer" />
             <ui:Label text="생산 요청 · Scenario 고정 제품 / 수량 1" class="page-heading__meta" />
         </ui:VisualElement>
@@ -20,7 +20,7 @@
         <ui:VisualElement name="product-panel" class="panel" style="position:absolute; left:112px; top:164px; width:620px; height:868px;">
             <ui:VisualElement class="panel__spine" />
             <ui:VisualElement class="panel__head">
-                <ui:Label text="PRODUCT" class="panel__title" />
+                <ui:Label text="REFERENCE PRODUCT" class="panel__title" />
                 <ui:VisualElement class="spacer" />
                 <ui:Label name="product-slot-count" text="—" class="panel__badge" />
             </ui:VisualElement>
