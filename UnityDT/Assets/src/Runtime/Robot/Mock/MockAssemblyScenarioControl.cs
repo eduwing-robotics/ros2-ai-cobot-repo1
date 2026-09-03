@@ -366,6 +366,8 @@ namespace MainUnity.Runtime.Robot.Mock
                     Failed => AssemblyState.Failed,
                     _ => throw new InvalidOperationException("Unknown Mock assembly state.")
                 }, null, snapshot.state == Failed ? snapshot.message : null);
+                if (!snapshot.active)
+                    activeJobId = string.Empty;
                 foreach (AssemblyFeedback feedback in bufferedFeedback.ToArray())
                     HandleFeedback(feedback);
             }
@@ -865,14 +867,14 @@ namespace MainUnity.Runtime.Robot.Mock
                             throw new InvalidOperationException(
                                 "COMPLETED arrived before the assembled PCB was transferred.");
                         Report(AssemblyState.Completed, feedback);
-                        terminal.TrySetResult(string.Empty);
+                        CompleteActive(string.Empty);
                         break;
                     case Failed:
                         string reason = string.IsNullOrWhiteSpace(feedback.message)
                             ? "Mock assembly failed."
                             : feedback.message;
                         Report(AssemblyState.Failed, feedback);
-                        terminal.TrySetResult(string.IsNullOrWhiteSpace(feedback.error_code)
+                        CompleteActive(string.IsNullOrWhiteSpace(feedback.error_code)
                             ? reason
                             : $"{feedback.error_code}: {reason}");
                         break;
@@ -1191,10 +1193,23 @@ namespace MainUnity.Runtime.Robot.Mock
                 gripperCatcher.Release();
                 assembledPcbHeld = false;
             }
-            if (terminal == null || !terminal.TrySetResult(error))
+            if (!CompleteActive(error))
                 return;
             Debug.LogError("Mock assembly failed: " + error, this);
             Report(AssemblyState.Failed, null, error);
+        }
+
+        bool CompleteActive(string failure)
+        {
+            TaskCompletionSource<string> current = terminal;
+            if (current == null || !current.TrySetResult(failure))
+                return false;
+            if (ReferenceEquals(terminal, current))
+            {
+                terminal = null;
+                processedCallbacks.Clear();
+            }
+            return true;
         }
 
         /// <summary>
