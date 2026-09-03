@@ -211,9 +211,16 @@ namespace MainUnity.UI
                 string unitResult = string.IsNullOrEmpty(unit.inspection_result) ? "PENDING" : unit.inspection_result;
                 Unit target = unit;
                 var item = new Button();
-                item.text = "#" + unit.unit_sequence_in_job + "  " + unitResult;
                 item.clicked += () => ShowUnits(jobId, units, target);
                 item.AddToClassList("chip");
+                // 글자는 .chip__text 자식이 맡는다. Button.text 로 직접 적으면 .chip 은
+                // 상자만 꾸미고 글자는 기본값(15px · Normal · 자간 0 · 회색)으로 남아
+                // 화면의 다른 칩과 규격이 어긋난다. 무엇보다 .chip--bad .chip__text 와
+                // .chip--accent .chip__text 가 겨냥할 자식이 없어, FAIL 유닛의 글자가
+                // 판정 색을 얻지 못하고 고른 유닛도 액센트를 얻지 못한다.
+                var itemText = new Label("#" + unit.unit_sequence_in_job + "  " + unitResult);
+                itemText.AddToClassList("chip__text");
+                item.Add(itemText);
                 // 선택은 "지금 여기"이므로 액센트다. 이전에는 chip--good(초록)이었는데,
                 // 초록은 이 화면에서 합격을 뜻하므로 PENDING·FAIL 인 대를 골라도 합격처럼
                 // 보였다. 판정은 판정 색으로만 말한다.
