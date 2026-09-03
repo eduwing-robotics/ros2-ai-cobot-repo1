@@ -928,8 +928,7 @@ namespace MainUnity.UI
                 gripperChip?.EnableInClassList("chip--accent", false);
                 return;
             }
-            float mm = gripperStrokeMillimeters * percent * 0.01f;
-            if (gripperValue != null) gripperValue.text = $"{mm:0.0} / {gripperStrokeMillimeters:0}";
+            if (gripperValue != null) gripperValue.text = $"{percent:0.0} / 100 %";
             if (gripperFill != null) gripperFill.style.width = Length.Percent(percent);
             bool holding = percent < 95f;
             if (gripperText != null) gripperText.text = holding ? "HOLDING" : "OPEN";
