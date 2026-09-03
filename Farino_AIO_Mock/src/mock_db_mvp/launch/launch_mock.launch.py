@@ -9,6 +9,7 @@ from launch.actions import (
     IncludeLaunchDescription,
     SetEnvironmentVariable,
 )
+from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import EnvironmentVariable, FindExecutable, LaunchConfiguration
 
@@ -37,6 +38,19 @@ def generate_launch_description():
                 "MAIN_SERVER_SCRIPT", default_value="MAIN_SERVER/server.py"
             ),
         ),
+        DeclareLaunchArgument(
+            "defect_mail_enabled",
+            default_value=EnvironmentVariable(
+                "DEFECT_MAIL_ENABLED", default_value="false"
+            ),
+        ),
+        DeclareLaunchArgument(
+            "defect_report_script",
+            default_value=EnvironmentVariable(
+                "DEFECT_REPORT_SCRIPT",
+                default_value="MAIN_SERVER/generate_defect_reports.py",
+            ),
+        ),
         GroupAction(scoped=True, actions=[
             SetEnvironmentVariable("PRODUCTION_DB_DSN", production_dsn),
             IncludeLaunchDescription(
@@ -60,6 +74,18 @@ def generate_launch_description():
                 "MAIN_SERVER_MODE": "mock",
                 "MAIN_SERVER_DB_DSN": LaunchConfiguration("main_server_db_dsn"),
             },
+            output="screen",
+        ),
+        ExecuteProcess(
+            cmd=[
+                FindExecutable(name="python3"),
+                LaunchConfiguration("defect_report_script"),
+                "--watch",
+            ],
+            additional_env={
+                "MAIN_SERVER_DB_DSN": LaunchConfiguration("main_server_db_dsn"),
+            },
+            condition=IfCondition(LaunchConfiguration("defect_mail_enabled")),
             output="screen",
         ),
     ])

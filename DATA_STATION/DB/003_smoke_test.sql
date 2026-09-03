@@ -92,6 +92,9 @@ INSERT INTO production.unit_defects (
     -9001, -8002, -5001, 'CRACK'
 );
 
+INSERT INTO production.defect_report_deliveries (unit_defect_id)
+VALUES (-9001);
+
 INSERT INTO production.jobs (
     job_id, product_id, requested_quantity, recipe_version, job_status
 ) VALUES
@@ -172,6 +175,11 @@ BEGIN
 
     IF shortage <> 1 THEN
         RAISE EXCEPTION 'requirement check failed: shortage=%', shortage;
+    END IF;
+
+    IF (SELECT delivery_status FROM production.defect_report_deliveries
+        WHERE unit_defect_id = -9001) <> 'PENDING' THEN
+        RAISE EXCEPTION 'defect report delivery was not queued';
     END IF;
 END
 $$;

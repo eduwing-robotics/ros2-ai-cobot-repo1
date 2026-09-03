@@ -364,8 +364,17 @@ def record_inspection(unit_id, result, defects, image_path=None):
                         unit_id, product_slot_id, defect_type
                     )
                     VALUES (%s, %s, %s)
+                    RETURNING unit_defect_id
                     """,
                     (unit_id, slot_ids[slot_code], defect_type),
+                )
+                unit_defect_id = cursor.fetchone()["unit_defect_id"]
+                cursor.execute(
+                    """
+                    INSERT INTO production.defect_report_deliveries (unit_defect_id)
+                    VALUES (%s)
+                    """,
+                    (unit_defect_id,),
                 )
             cursor.execute(
                 """

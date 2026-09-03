@@ -164,6 +164,18 @@ class ProductionStoreIntegrationTest(unittest.TestCase):
         self.complete(first["unit_id"], "FAIL", ({
             "slot_code": "SLOT-A-01", "defect_type": "MISSING"
         },))
+        self.assertEqual(
+            self.scalar(
+                """
+                SELECT COUNT(*)
+                FROM production.defect_report_deliveries delivery
+                JOIN production.unit_defects defect USING (unit_defect_id)
+                WHERE defect.unit_id = %s AND delivery.delivery_status = 'PENDING'
+                """,
+                (first["unit_id"],),
+            ),
+            1,
+        )
         with self.assertRaisesRegex(RuntimeError, "PASS quantity"):
             store.finish_job(job_id, "COMPLETED")
 

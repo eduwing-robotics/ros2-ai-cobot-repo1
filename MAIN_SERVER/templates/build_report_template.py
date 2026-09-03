@@ -26,6 +26,7 @@ openpyxl 이 없고, 문서 양식을 뽑자고 서버 환경에 넣을 이유�
 from __future__ import annotations
 
 import datetime as dt
+from io import BytesIO
 from pathlib import Path
 
 from openpyxl import Workbook
@@ -224,6 +225,24 @@ def place_part_image(ws, cell_ref, rel_path, px=42, dx=8, dy=10):
     return True
 
 
+def place_inspection_placeholders(ws, cell_ref):
+    """Keep one blank JPEG layer and one transparent PNG layer for runtime replacement."""
+    from PIL import Image
+    from openpyxl.drawing.image import Image as XLImage
+
+    for mode, color, image_format in (
+        ("RGB", "white", "JPEG"),
+        ("RGBA", (255, 255, 255, 0), "PNG"),
+    ):
+        content = BytesIO()
+        Image.new(mode, (16, 9), color).save(content, image_format)
+        content.seek(0)
+        image = XLImage(content)
+        image.width, image.height = 620, 300
+        image.anchor = cell_ref
+        ws.add_image(image)
+
+
 def lock_sheet(ws, allow_filter=True):
     ws.protection.sheet = True
     ws.protection.selectLockedCells = False
@@ -256,13 +275,13 @@ REPLY_CELLS = [
     ),
     (
         "reply_root_cause", "대책서", "B26", "② 발생 원인 — 왜 만들어졌는가",
-        "「판단자료」 A·B로 급증 시점과 레시피 변경 시점을 대조한다.\n"
+        "「근거」의 발생 기록과 검사 이미지를 확인한다.\n"
         "재현 또는 실물 확인으로 검증한 근거를 적는다.\n"
         "가설이면 '가설'이라고 표시한다.\n"
     ),
     (
         "reply_escape_cause", "대책서", "B28", "③ 유출 원인 — 왜 검사에서 걸리지 않았는가",
-        "「판단자료」 D의 검사 항목과 대조해 판정 기준의 한계를 적는다.\n"
+        "「판단자료」의 데이터시트 검사 항목과 대조해 판정 기준의 한계를 적는다.\n"
         "검사를 안 한 것인지, 했는데 못 걸른 것인지 구분한다.\n"
     ),
     (
@@ -337,7 +356,7 @@ def build_cover(wb, d):
         ws.column_dimensions[col].width = w
     heights = {
         1: 15, 2: 17, 3: 17, 4: 6,
-        5: 19, 6: 26, 7: 19, 8: 6,
+        5: 19, 6: 26, 7: 19, 8: 19,
         9: 23, 10: 17, 11: 19, 12: 15, 13: 21, 14: 19,
         15: 17, 16: 19, 17: 19, 18: 19, 19: 19,
         20: 17,
@@ -392,6 +411,14 @@ def build_cover(wb, d):
               "별지 3장은 유형과 무관하게 항상 첨부한다.\n"
               "어느 자료가 이번 건에 쓸모 있는지는 담당자가 판단한다.")
 
+    label(ws, "A8", "발행 대상")
+    ws.merge_cells("B8:D8")
+    put(ws, "B8", d["event_line"], al=align("left", "center", indent=1))
+    label(ws, "E8", "검사 시각")
+    ws.merge_cells("F8:H8")
+    put(ws, "F8", d["target_inspected_at"],
+        al=align("left", "center", indent=1))
+
     # ── 할 일 띠 — 이 문서에서 담당자가 제일 먼저 읽어야 할 한 줄 ──────
     ws.merge_cells("A9:H9")
     todo = ws["A9"]
@@ -435,7 +462,7 @@ def build_cover(wb, d):
     ws.merge_cells("C12:D12")
     ws.merge_cells("F12:H12")
     for ref, text in (("A12", "검사 수량"), ("B12", "불량 수량"),
-                      ("C12", d["ppm_header"]), ("E12", "기준 대비"),
+                      ("C12", d["ppm_header"]), ("E12", "발행 기준"),
                       ("F12", "완제품 영향")):
         put(ws, ref, text, f=font(T_MICRO, True, MUTED), bg=LABEL,
             al=align("center", "center", wrap=True))
@@ -452,12 +479,12 @@ def build_cover(wb, d):
     ws.merge_cells("F13:H13")
     put(ws, "F13", d["unit_impact"], f=font(T_BODY, True), al=align("center", "center"))
 
-    label(ws, "A14", "발생 집중")
+    label(ws, "A14", "발생 위치")
     ws.merge_cells("B14:D14")
     put(ws, "B14", d["hotspot"], al=align("left", "center", indent=1))
-    label(ws, "E14", "직전 기간 대비")
+    label(ws, "E14", "데이터시트 대조")
     ws.merge_cells("F14:H14")
-    put(ws, "F14", d["trend_vs_prev"], f=font(T_BODY),
+    put(ws, "F14", d["datasheet_match"], f=font(T_BODY),
         al=align("left", "center", indent=1))
 
     # ── 2. 시스템이 먼저 본 것 ──────────────────────────────────────
@@ -669,7 +696,26 @@ def build_evidence(wb, d):
         ws.row_dimensions[row].height = 16
         row += 1
 
+    row += 1
+    ws.merge_cells(f"A{row}:E{row}")
+    put(ws, f"A{row}", "검사 이미지", f=font(9, True), bg=SECTION,
+        al=align("left", "center", indent=1))
+    row += 1
+    ws.merge_cells(f"A{row}:E{row}")
+    put(ws, f"A{row}",
+        f"{d['inspection_image_status']} · {d['inspection_image_path']} · "
+        f"SHA-256 {d['inspection_image_sha256']}",
+        f=font(7.5, False, MUTED), al=align("left", "center", wrap=True, indent=1))
+    row += 1
+    image_row = row
+    ws.merge_cells(start_row=row, start_column=1, end_row=row + 5, end_column=5)
+    put(ws, f"A{row}", None, bg="00FFFFFF", al=align("center", "center"))
+    for image_area_row in range(row, row + 6):
+        ws.row_dimensions[image_area_row].height = 40
+    place_inspection_placeholders(ws, f"A{image_row}")
+
     ws.freeze_panes = f"A{head_row + 1}"
+    ws.print_area = f"A1:E{row + 5}"
     page(ws, "portrait")
     lock_sheet(ws)
     return ws
@@ -678,99 +724,26 @@ def build_evidence(wb, d):
 # ---------------------------------------------------------------- 시트: 판단자료
 def build_analysis(wb, d):
     ws = wb.create_sheet("판단자료")
-    for col, w in {"A": 20, "B": 13, "C": 13, "D": 13, "E": 13, "F": 13,
-                   "G": 30, "H": 30}.items():
+    for col, w in {"A": 20, "B": 18, "C": 18, "D": 18,
+                   "E": 20, "F": 18, "G": 18, "H": 18}.items():
         ws.column_dimensions[col].width = w
 
-    band(ws, "A1:H1", "판단 자료")
+    band(ws, "A1:H1", "품질 기준", "[조회 시점 참조]")
     note_line(ws, "A2:H2",
-              "담당자가 ②발생 원인 · ③유출 원인을 좁히는 데 쓰는 참고 자료 · 자동 조회 · 결재 대상 아님")
+              "부품 데이터시트 Checklist 시트에서 조회 · 원인 자동 추정 자료가 아님")
     ws.merge_cells("A3:H3")
     put(ws, "A3",
-        "판단 순서    ①「근거」어느 슬롯에 몰렸나  →  ② A 언제부터 올랐나  →  "
-        "③ B 그때 무엇이 바뀌었나  →  ④ C 전에도 있었나  →  ⑤ D 무엇을 확인하나",
+        f"부품 범주 {d['category_label']} · 데이터시트 대조 {d['datasheet_match']} · "
+        f"기준일 {d['source_dated_on']} · 조회 {d['queried_at']}",
         f=font(8, True, NAVY), bg=LABEL, al=align("left", "center", indent=1))
     ws.row_dimensions[1].height = 20
     ws.row_dimensions[3].height = 20
 
     row = 5
-
-    def block(title, note):
-        nonlocal row
-        ws.merge_cells(f"A{row}:H{row}")
-        put(ws, f"A{row}", title, f=font(9, True), bg=SECTION,
-            al=align("left", "center", indent=1))
-        ws.row_dimensions[row].height = 17
-        row += 1
-        note_line(ws, f"A{row}:H{row}", note)
-        ws.row_dimensions[row].height = 14
-        row += 1
-
-    block("A.  주차별 추세        [발행 시점 고정]",
-          "언제부터 올라갔는지 · 급변 시점과 아래 B의 레시피 변경 시점을 대조한다. "
-          "주차 경계와 대책서 집계 구간은 일치하지 않는다.")
-    table_head(ws, row, 1, 7,
-               ["주차", "검사 수량", "불량 수량", "불량률", "기준 대비", "레시피", "비고"])
-    ws.merge_cells(f"G{row}:H{row}")
+    ws.merge_cells(f"A{row}:H{row}")
+    put(ws, f"A{row}", "데이터시트 품질 체크리스트",
+        f=font(9, True), bg=SECTION, al=align("left", "center", indent=1))
     row += 1
-    for r in d["weekly_rows"]:
-        put(ws, f"A{row}", r["week"], al=align("center"))
-        put(ws, f"B{row}", r["inspected"], al=align("center"), fmt=QTY_FMT)
-        put(ws, f"C{row}", r["defective"], al=align("center"), fmt=QTY_FMT)
-        put(ws, f"D{row}", r["rate"], al=align("center"), fmt=RATE_FMT)
-        put(ws, f"E{row}", r["vs_threshold"], al=align("center"), fmt=MULT_FMT)
-        put(ws, f"F{row}", r["recipe"], al=align("center"))
-        ws.merge_cells(f"G{row}:H{row}")
-        put(ws, f"G{row}", r.get("note"), f=font(8), al=align("left", "center", indent=1))
-        ws.row_dimensions[row].height = 16
-        row += 1
-
-    row += 1
-    block("B.  레시피 변경 전후 불량률        [발행 시점 고정]",
-          "datastation_part_rates · 공정 조건이 원인인지 부품이 원인인지 가르는 1차 근거")
-    table_head(ws, row, 1, 7,
-               ["레시피", "적용 기간", "검사 수량", "불량 수량", "불량률", "기준 대비", "변경 내용"])
-    ws.merge_cells(f"G{row}:H{row}")
-    row += 1
-    for r in d["recipe_rows"]:
-        put(ws, f"A{row}", r["recipe"], al=align("center"))
-        put(ws, f"B{row}", r["period"], al=align("center"))
-        put(ws, f"C{row}", r["inspected"], al=align("center"), fmt=QTY_FMT)
-        put(ws, f"D{row}", r["defective"], al=align("center"), fmt=QTY_FMT)
-        put(ws, f"E{row}", r["rate"], al=align("center"), fmt=RATE_FMT)
-        put(ws, f"F{row}", r["vs_threshold"], al=align("center"), fmt=MULT_FMT)
-        ws.merge_cells(f"G{row}:H{row}")
-        put(ws, f"G{row}", r.get("change_note"), f=font(8),
-            al=align("left", "top", wrap=True, indent=1))
-        ws.row_dimensions[row].height = 26
-        row += 1
-
-    row += 1
-    block("C.  동일 부품 · 동일 유형 과거 대책서        [발행 시점 고정]",
-          "datastation_alerts · 재발이면 이전 대책이 왜 듣지 않았는지부터 확인한다")
-    table_head(ws, row, 1, 7,
-               ["문서번호", "집계 기간", "불량률", "상태", "적용 대책", "",
-                "당시 근본 원인"])
-    ws.merge_cells(f"E{row}:F{row}")
-    ws.merge_cells(f"G{row}:H{row}")
-    row += 1
-    for r in d["history_rows"]:
-        put(ws, f"A{row}", r["alert_code"], f=font(8), al=align("center"))
-        put(ws, f"B{row}", r["period"], f=font(8), al=align("center"))
-        put(ws, f"C{row}", r["defect_rate"], f=font(8), al=align("center"), fmt=RATE_FMT)
-        put(ws, f"D{row}", r["status"], f=font(8), al=align("center"))
-        ws.merge_cells(f"E{row}:F{row}")
-        put(ws, f"E{row}", r["applied"], f=font(8), al=align("center", "center", wrap=True))
-        ws.merge_cells(f"G{row}:H{row}")
-        put(ws, f"G{row}", r["root_cause"], f=font(8),
-            al=align("left", "top", wrap=True, indent=1))
-        ws.row_dimensions[row].height = 32
-        row += 1
-
-    row += 1
-    block("D.  품질 체크리스트        [조회 시점 참조 · 데이터시트 갱신 시 바뀜]",
-          "데이터시트 Checklist 시트 · 범주 = "
-          "part_groups.category_label · 이 범주에서 무엇을 확인해야 하는지")
     table_head(ws, row, 1, 5, ["구분", "확인 항목", "", "", "이상 시 조치"])
     ws.merge_cells(f"B{row}:D{row}")
     ws.merge_cells(f"E{row}:H{row}")
@@ -790,7 +763,11 @@ def build_analysis(wb, d):
         ws.row_dimensions[row].height = 40
         row += 1
 
-    page(ws, "landscape")
+    row += 1
+    note_line(ws, f"A{row}:H{row}", f"원본 {d['source_file']}")
+
+    ws.print_area = f"A1:H{row}"
+    page(ws, "landscape", fit_height=1)
     lock_sheet(ws)
     return ws
 
@@ -801,27 +778,39 @@ def build_alternates(wb, d):
     for col, w in {"A": 30, "B": 30, "C": 20, "D": 12, "E": 16, "F": 13}.items():
         ws.column_dimensions[col].width = w
 
-    band(ws, "A1:F1", "대체품 후보", "[조회 시점 참조]")
+    band(ws, "A1:F1", "현재 부품과 대체품 후보", "[조회 시점 참조]")
     note_line(ws, "A2:F2",
-              "불량 유형과 무관하게 항상 첨부한다 · 부품 교체가 이번 건의 대책인지는 "
-              "② 발생 원인을 확정한 담당자가 판단한다")
-    ws.merge_cells("A3:F3")
-    put(ws, "A3",
+              f"DB parts: {d['part_id']} / {d['part_name']} / {d['category_label']} · "
+              f"데이터시트 MPN 대조: {d['datasheet_match']}")
+    table_head(ws, 3, 1, 6, [
+        "현재 MPN", "핵심 정격", "공급사", "단가", "가격 기준 수량", "가격 확인일",
+    ])
+    for offset, value in enumerate([
+            d["selected_mpn"], d["selected_spec"], d["selected_supplier"],
+            d["selected_unit_price"], d["selected_price_basis"],
+            d["selected_price_checked_at"]]):
+        put(ws, ws.cell(row=4, column=offset + 1).coordinate, value,
+            f=font(8, True), bg=PRIMARY_ROW,
+            al=align("right" if offset == 3 else "left", "top", wrap=True, indent=1))
+    ws.row_dimensions[4].height = 50
+
+    ws.merge_cells("A6:F6")
+    put(ws, "A6",
         "같은 부품 타입이라는 것 외에 검증된 것은 없다 · 동일 정격만으로 drop-in 판단 "
         "금지 · 핀/패키지/정격/열/수명 재검증과 변경 승인을 거친 뒤에만 적용한다.",
         f=font(8, True, ALERT_INK), bg=ALERT, al=align("left", "center", wrap=True, indent=1))
     ws.row_dimensions[1].height = 20
-    ws.row_dimensions[3].height = 22
+    ws.row_dimensions[6].height = 22
 
-    note_line(ws, "A4:F4", d["alternates_header"], color="00595959")
-    ws.row_dimensions[4].height = 15
+    note_line(ws, "A7:F7", d["alternates_header"], color="00595959")
+    ws.row_dimensions[7].height = 15
 
-    table_head(ws, 6, 1, 6, [
+    table_head(ws, 9, 1, 6, [
         "제조사 / P/N", "핵심 정격", "공급사", "단가", "가격 기준 수량", "가격 확인일",
     ])
-    ws.row_dimensions[6].height = 26
+    ws.row_dimensions[9].height = 26
 
-    row = 7
+    row = 10
     for cand in d["candidate_rows"]:
         is_primary = bool(cand.get("selected"))
         bg = PRIMARY_ROW if is_primary else None
@@ -843,10 +832,10 @@ def build_alternates(wb, d):
     ws.merge_cells(f"A{row}:F{row}")
     put(ws, f"A{row}",
         "단가는 데이터시트 기준일의 값이고 발주 근거가 아니다. MOQ·재고·리드타임과 "
-        "상호호환 판정은 이 문서에 없다 → GET /parts/{part_id} 또는 구매·품질 담당",
+        f"상호호환 판정은 이 문서에 없다 → GET /parts/{d['part_id']} 또는 구매·품질 담당",
         f=font(7.5, False, MUTED), al=align("left", "center", wrap=True, indent=1), border=None)
 
-    ws.freeze_panes = "A7"
+    ws.freeze_panes = "A10"
     page(ws, "landscape", fit_height=1)
     lock_sheet(ws)
     return ws
@@ -865,19 +854,21 @@ TOKEN_DATA = {
     "due_verify": "{{due_verify}}",
     "part_image": None,   # 표준양식에는 넣지 않는다 — 발행 시점에 부품이 정해진다
     "part_line": "{{part_id}} · {{part_name}} ({{category_label}})",
+    "part_id": "{{part_id}}",
+    "part_name": "{{part_name}}",
+    "event_line": "Job {{job_id}} · Unit {{target_unit_id}} · {{target_slot_code}}",
+    "target_inspected_at": "{{target_inspected_at}}",
     "defect_type": "{{defect_type}}",
     "period_line": "{{period_start}} ~ {{period_end}} ({{window_days}}일 / {{evaluation_mode}})",
     "source_recipe_version": "{{source_recipe_version}}",
     "inspected_quantity": "{{inspected_quantity}}",
     "defective_quantity": "{{defective_quantity}}",
-    "threshold_rate": "{{threshold_rate}}",
-    "defect_rate": "{{defect_rate}}",
-    "ppm_header": "실제 PPM (기준 {{threshold_ppm}})",
+    "ppm_header": "발행 시점 PPM",
     "defect_ppm": "{{defect_ppm}}",
     "vs_threshold_ratio": "{{vs_threshold_ratio}}",
     "unit_impact": "{{unit_impact}}",
     "hotspot": "{{hotspot}}",
-    "trend_vs_prev": "{{trend_vs_prev}}",
+    "datasheet_match": "{{datasheet_match}}",
     "auto_analysis": "{{auto_analysis}}",
     "verify_header": "{{alert_code}}   ·   {{part_id}} / {{defect_type}}   ·   "
                      "발행 {{issued_at}}   ·   ④ 적용 후 다시 집계해서 채운다",
@@ -887,18 +878,9 @@ TOKEN_DATA = {
     "evidence_rows": [{"unit_id": "{{unit_id}}", "slot_code": "{{slot_code}}",
                        "defect_type": "{{defect_type}}", "inspected_at": "{{inspected_at}}",
                        "image_path": "{{inspection_image_path}}"}],
-    "weekly_rows": [{"week": "{{week}}", "inspected": "{{inspected}}",
-                     "defective": "{{defective}}", "rate": "{{rate}}",
-                     "vs_threshold": "{{vs_threshold}}", "recipe": "{{recipe_version}}",
-                     "note": "{{note}}"}],
-    "recipe_rows": [{"recipe": "{{recipe_version}}", "period": "{{applied_period}}",
-                     "inspected": "{{inspected}}", "defective": "{{defective}}",
-                     "rate": "{{rate}}", "vs_threshold": "{{vs_threshold}}",
-                     "change_note": "{{change_note}}"}],
-    "history_rows": [{"alert_code": "{{alert_code}}", "period": "{{period}}",
-                      "defect_rate": "{{defect_rate}}", "status": "{{alert_status}}",
-                      "applied": "{{applied_recipe_version}} / {{applied_at}}",
-                      "root_cause": "{{root_cause_summary}}"}],
+    "inspection_image_status": "{{inspection_image_status}}",
+    "inspection_image_path": "{{inspection_image_path}}",
+    "inspection_image_sha256": "{{inspection_image_sha256}}",
     "checklist": {
         "incoming_inspection": "{{incoming_inspection}}",
         "assembly_control": "{{assembly_control}}",
@@ -909,6 +891,16 @@ TOKEN_DATA = {
                          "(기준일 {{source_dated_on}})   ·   부품 타입 {{category_label}}   "
                          "·   후보 {{candidate_count}}종   ·   단가 {{price_range}}   "
                          "·   현재 선정 {{price_selected}}",
+    "selected_mpn": "{{selected_mpn}}",
+    "selected_spec": "{{selected_spec}}",
+    "selected_supplier": "{{selected_supplier}}",
+    "selected_unit_price": "{{selected_unit_price}}",
+    "selected_price_basis": "{{selected_price_basis}}",
+    "selected_price_checked_at": "{{selected_price_checked_at}}",
+    "category_label": "{{category_label}}",
+    "source_file": "{{source_file}}",
+    "source_dated_on": "{{source_dated_on}}",
+    "queried_at": "{{queried_at}}",
     "candidate_rows": [{
         "maker_pn": "{{manufacturer_part_number}}", "key_spec": "{{key_spec}}",
         "supplier": "{{supplier}}", "unit_price": "{{unit_price}}",
@@ -919,14 +911,10 @@ TOKEN_DATA = {
 # 샘플 수치는 004_mock_seed.sql 을 따른다.
 # CAP 슬롯은 CAP-01~05, 유닛당 5개다. 검사 수량 = 완성품 2,500대 × 5 = 12,500.
 #
-# 기준은 400 PPM(0.04%)으로 잡았다. 슬롯이 25개인 보드에서 부품 단위 400 PPM 이면
-# 완제품 수율은 (1-0.0004)^25 = 99.0% 다. 이전 샘플의 0.30% 기준은 완제품 기준으로
-# 7.2% 불량이라 대책서를 쓸 상황이 아니라 라인을 세울 상황이었다.
 BASE_UNITS = 2500
 CAP_SLOTS = 5
 INSPECTED = BASE_UNITS * CAP_SLOTS      # 12,500
 DEFECTIVE = 16                          # 1,280 PPM
-THRESHOLD = 0.0004                      # 400 PPM
 
 SAMPLE_DATA = {
     "alert_code": "QA-CAP-CRACK-20260819-001",
@@ -939,28 +927,27 @@ SAMPLE_DATA = {
     "due_action": "09-05 (2주)",
     "due_verify": "적용 후 2~4주",
     "part_image": "UI/Icons/item-cap.png",
+    "part_id": "CAP",
+    "part_name": "Contoso CX-0603X7R104K100",
+    "category_label": "MLCC",
     "part_line": "CAP  (MLCC)",
+    "event_line": "Job 7112 · Unit 10412 · CAP-02",
+    "target_inspected_at": "2026-08-18 16:30:12",
     "defect_type": "CRACK",
+    "datasheet_match": "일치",
     "period_line": "2026-08-12 ~ 08-19  (7일 / ROLLING)",
     "source_recipe_version": "mock-v3",
     "inspected_quantity": INSPECTED,
     "defective_quantity": DEFECTIVE,
-    "threshold_rate": THRESHOLD,
-    "defect_rate": DEFECTIVE / INSPECTED,
-    "ppm_header": f"실제 PPM (기준 {THRESHOLD * 1e6:,.0f})",
+    "ppm_header": "발행 시점 PPM",
     "defect_ppm": DEFECTIVE / INSPECTED * 1e6,
-    "vs_threshold_ratio": DEFECTIVE / INSPECTED / THRESHOLD,
+    "vs_threshold_ratio": "확정 불량 1건",
     "unit_impact": "2,500대 중 15대 (0.60%)",
     "hotspot": "CAP-02 8건 · CAP-04 5건",
-    "trend_vs_prev": "200 → 1,280 PPM  (6.4배 · 08-18 초과)",
     "auto_analysis": (
-        "① 발생이 CAP-02·CAP-04에 81.3% 집중(판정 기준 60%) → 부품 Lot보다 공정·설비 원인을 "
-        "먼저 의심한다.「근거」\n"
-        "② 최초 초과(08-18)가 mock-v3 적용(08-16)과 3일 이내 → 변경 내용 "
-        "'그리퍼 파지력 상향 · 배치 하강속도 상향'이 1순위 확인 대상.「판단자료」B\n"
-        "③ 동일 부품·유형 CLOSED 대책서 1건(2026-04-12 · 배치 하강속도 과다) → 재발. "
-        "당시 대책이 왜 듣지 않았는지 먼저 확인한다.「판단자료」C\n"
-        "④ C-001 대체 후보 2종 · CRACK 관련 소견 2종.「대체품」"
+        "확정 불량 1건을 기준으로 즉시 발행했다. 발행 시점까지 동일 Job·부품·유형은 "
+        "16건이며 CAP-02·CAP-04에 13건이 기록됐다. 원인은 자동 추정하지 않으며 "
+        "담당자가 검사 이미지와 데이터시트 품질 기준을 확인한다."
     ),
     "verify_header": "QA-CAP-CRACK-20260819-001   ·   CAP / CRACK   ·   "
                      "발행 2026-08-19   ·   ④ 적용 후 다시 집계해서 채운다",
@@ -991,40 +978,9 @@ SAMPLE_DATA = {
         {"unit_id": "…", "slot_code": "…", "defect_type": "…", "inspected_at": "…",
          "image_path": "총 16행 · 발행 시점 스냅샷"},
     ],
-    "weekly_rows": [
-        {"week": "2026-W29", "inspected": 12400, "defective": 2, "rate": 2 / 12400,
-         "vs_threshold": (2 / 12400) / THRESHOLD, "recipe": "mock-v1", "note": None},
-        {"week": "2026-W30", "inspected": 12550, "defective": 3, "rate": 3 / 12550,
-         "vs_threshold": (3 / 12550) / THRESHOLD, "recipe": "mock-v1", "note": None},
-        {"week": "2026-W31", "inspected": 12480, "defective": 2, "rate": 2 / 12480,
-         "vs_threshold": (2 / 12480) / THRESHOLD, "recipe": "mock-v2",
-         "note": "08-05 mock-v2 적용"},
-        {"week": "2026-W32", "inspected": 12575, "defective": 3, "rate": 3 / 12575,
-         "vs_threshold": (3 / 12575) / THRESHOLD, "recipe": "mock-v2", "note": None},
-        {"week": "2026-W33", "inspected": 12650, "defective": 8, "rate": 8 / 12650,
-         "vs_threshold": (8 / 12650) / THRESHOLD, "recipe": "mock-v3",
-         "note": "08-16 mock-v3 적용 · 급증 시점"},
-        {"week": "2026-W34", "inspected": 5420, "defective": 8, "rate": 8 / 5420,
-         "vs_threshold": (8 / 5420) / THRESHOLD, "recipe": "mock-v3",
-         "note": "진행 중 · 08-19 09:00 기준"},
-    ],
-    "recipe_rows": [
-        {"recipe": "mock-v1", "period": "~ 2026-08-05", "inspected": 124000,
-         "defective": 20, "rate": 20 / 124000,
-         "vs_threshold": (20 / 124000) / THRESHOLD, "change_note": "기준 레시피"},
-        {"recipe": "mock-v2", "period": "08-05 ~ 08-16", "inspected": 99500,
-         "defective": 24, "rate": 24 / 99500,
-         "vs_threshold": (24 / 99500) / THRESHOLD, "change_note": "픽업 속도 조정"},
-        {"recipe": "mock-v3", "period": "08-16 ~ 현재", "inspected": 30600,
-         "defective": 33, "rate": 33 / 30600,
-         "vs_threshold": (33 / 30600) / THRESHOLD,
-         "change_note": "그리퍼 파지력 상향 · 배치 하강속도 상향 — 변경 직후 CRACK 급증"},
-    ],
-    "history_rows": [
-        {"alert_code": "QA-CAP-CRACK-20260412-001", "period": "2026-04-05 ~ 04-12",
-         "defect_rate": 0.0009, "status": "CLOSED", "applied": "mock-v1 / 04-15",
-         "root_cause": "배치 하강속도 과다로 착지 충격. 속도 하향 후 160 PPM으로 회복."},
-    ],
+    "inspection_image_status": "샘플 이미지 미포함",
+    "inspection_image_path": "InspectionSamples/mock-fail.jpg",
+    "inspection_image_sha256": "—",
     "checklist": {
         "incoming_inspection": "외관/단자, 0603·100V·X7R 확인, LCR·절연저항 샘플",
         "assembly_control": "land/reflow 준수; panel depanel·ICT probe·connector 체결 시 "
@@ -1037,11 +993,16 @@ SAMPLE_DATA = {
                          "semiconductor_assembly_quality_datasheet_2026-08-18.xlsx "
                          "(기준일 2026-08-18)   ·   부품 타입 MLCC   ·   후보 3종   "
                          "·   단가 $0.09 ~ $0.15   ·   현재 선정 $0.15",
+    "selected_mpn": "Contoso CX-0603X7R104K100",
+    "selected_spec": "0.10µF ±10% 100V X7R 0603",
+    "selected_supplier": "Northwind Traders",
+    "selected_unit_price": "$0.15",
+    "selected_price_basis": "1개 (Cut Tape)",
+    "selected_price_checked_at": "2026-08-14",
+    "source_file": "semiconductor_assembly_quality_datasheet_2026-08-18.xlsx",
+    "source_dated_on": "2026-08-18",
+    "queried_at": "2026-08-19 09:00:00",
     "candidate_rows": [
-        {"maker_pn": "Contoso CX-0603X7R104K100",
-         "key_spec": "0.10µF ±10% 100V X7R 0603", "supplier": "Northwind Traders",
-         "unit_price": "$0.15", "price_basis": "1개 (Cut Tape)",
-         "price_checked_at": "2026-08-14", "selected": True},
         {"maker_pn": "Litware LW-C0603-104K-100",
          "key_spec": "0.10µF ±10% 100V X7R 0603", "supplier": "Northwind Traders",
          "unit_price": "$0.12", "price_basis": "1개 (Cut Tape)",
@@ -1083,7 +1044,7 @@ SAMPLE_CLOSED = dict(
     ),
     reply_28=(
         "인라인 AOI 판정 기준이 단자 들뜸과 외관 결손만 보고 있어 미세 굽힘 크랙을 걸러내지 못했다.\n"
-        "「판단자료」 D 의 MLCC 항목은 '크랙 의심 Lot 단면 또는 비파괴 검사'를 요구하지만, "
+        "「판단자료」의 MLCC 항목은 '크랙 의심 Lot 단면 또는 비파괴 검사'를 요구하지만, "
         "현재 인라인에는 해당 항목이 없고 단면 검사는 주 1회 샘플로만 돌고 있었다.\n"
         "그 결과 08-16 생산분에 이미 크랙이 있었으나 08-18 16:30 임계 초과 시점까지 검출되지 않았다."
     ),
