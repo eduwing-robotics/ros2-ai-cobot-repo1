@@ -289,4 +289,3 @@ Real shadowing은 관절값만 Unity Articulation에 적용하고 실제 Cartesi
 
 - Scene, URDF, C#, Python, ROS 설정은 수정하지 않았다.
 - 본 추가 조사 보고서만 생성했다.
-
