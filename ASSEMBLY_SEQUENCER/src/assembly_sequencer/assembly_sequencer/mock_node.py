@@ -138,6 +138,12 @@ class MockAssemblySequencer(Node):
             response.cmd_res = json.dumps(snapshot, separators=(",", ":"))
             return response
 
+        if command_type == "conveyor_arrived":
+            return await self.conveyor_arrived(command, response)
+
+        if command_type == "conveyor_failed":
+            return self.conveyor_failed(command, response)
+
         if command_type in {"pause", "resume"}:
             job_id = command["job_id"]
             if self.active is None or self.active["job_id"] != job_id:
@@ -200,6 +206,47 @@ class MockAssemblySequencer(Node):
 
         return await self.start_job(command, response)
 
+    async def conveyor_arrived(self, command, response):
+        active = self.active
+        job_id = command["job_id"]
+        if active is None or active["job_id"] != job_id:
+            return self.set_response(
+                response, False, job_id, "NOT_ACTIVE",
+                "matching assembly is not active",
+            )
+        if active["state"] != "CONVEYOR_MOVING":
+            return self.set_response(
+                response, False, job_id, "BUSY",
+                "conveyor arrival is not expected",
+            )
+
+        active["state"] = "STARTED"
+        try:
+            await self.backend.start(active["backend_command"])
+        except Exception as error:
+            self.fail_active("INTERNAL_ERROR", error, immediate=True)
+            return self.set_response(
+                response, False, job_id, "INTERNAL_ERROR", str(error)
+            )
+        return self.set_response(response, True, job_id)
+
+    def conveyor_failed(self, command, response):
+        active = self.active
+        job_id = command["job_id"]
+        if active is None or active["job_id"] != job_id:
+            return self.set_response(
+                response, False, job_id, "NOT_ACTIVE",
+                "matching assembly is not active",
+            )
+        if active["state"] not in {"CONVEYOR_MOVING", "ASSEMBLY_COMPLETED"}:
+            return self.set_response(
+                response, False, job_id, "BUSY", "conveyor movement is not expected"
+            )
+
+        self.fail_active("CONVEYOR_FAILED", command["message"],
+                         immediate=active["state"] == "CONVEYOR_MOVING")
+        return self.set_response(response, True, job_id)
+
     async def start_job(self, command, response):
         job_id = command["job_id"]
         if self.active is not None:
@@ -239,7 +286,7 @@ class MockAssemblySequencer(Node):
                 "unit_id": work["unit_id"],
                 "recipe_version": self.recipe_version,
                 "backend_command": backend_command,
-                "state": "STARTED",
+                "state": "CONVEYOR_MOVING",
                 "placed_count": 0,
                 "expected_step_count": len(self.recipe["steps"]),
                 "held_step_order": 0,
@@ -250,7 +297,16 @@ class MockAssemblySequencer(Node):
                 "inspection_result": "",
             }
             self.terminal_snapshot = None
-            await self.backend.start(backend_command)
+            self.publish({
+                "job_id": job_id,
+                "state": "CONVEYOR_MOVING",
+                "step_order": 0,
+                "part_id": "",
+                "slot_code": "",
+                "error_code": "",
+                "message": "",
+                "db_sync_state": self.db_writer.sync_state,
+            })
             return self.set_response(response, True, job_id)
         except Exception as error:
             if self.active is not None:
@@ -357,7 +413,7 @@ class MockAssemblySequencer(Node):
                 )
                 active.update({
                     "unit_id": work["unit_id"],
-                    "state": "STARTED",
+                    "state": "CONVEYOR_MOVING",
                     "placed_count": 0,
                     "held_step_order": 0,
                     "held_part_id": "",
@@ -365,7 +421,16 @@ class MockAssemblySequencer(Node):
                     "transfer_requested": False,
                     "inspection_result": "",
                 })
-                await self.backend.start(active["backend_command"])
+                self.publish({
+                    "job_id": active["job_id"],
+                    "state": "CONVEYOR_MOVING",
+                    "step_order": 0,
+                    "part_id": "",
+                    "slot_code": "",
+                    "error_code": "",
+                    "message": "",
+                    "db_sync_state": self.db_writer.sync_state,
+                })
                 return
             self.db_writer.finish(active["job_id"], "COMPLETED")
             if not self.db_writer.flush(5.0):

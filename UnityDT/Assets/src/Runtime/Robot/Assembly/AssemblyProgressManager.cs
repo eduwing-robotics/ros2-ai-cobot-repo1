@@ -17,6 +17,7 @@ namespace MainUnity.Runtime.Robot.Assembly
     {
         /// <summary>작업이 없다. 시작 전이거나 종료 후 초기화된 상태다.</summary>
         Idle,
+        ConveyorMoving,
         Started,
         Picked,
         Placed,

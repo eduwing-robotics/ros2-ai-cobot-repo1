@@ -167,6 +167,58 @@ class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(sequencer.active["state"], "STARTED")
             self.assertEqual(calls[-1], (JOB_ID, paused))
 
+    async def test_backend_waits_for_conveyor_arrival(self):
+        calls = []
+
+        class Backend:
+            async def start(self, command):
+                calls.append(("start", command))
+
+        active = {
+            "job_id": JOB_ID,
+            "state": "CONVEYOR_MOVING",
+            "backend_command": {"command": "start"},
+        }
+        sequencer = SimpleNamespace(
+            active=active,
+            recipe_version="assembly-r1",
+            backend=Backend(),
+            set_response=MockAssemblySequencer.set_response,
+        )
+        self.assertEqual(calls, [])
+        response = await MockAssemblySequencer.on_external_request(
+            sequencer,
+            SimpleNamespace(cmd_str=json.dumps({
+                "command": "conveyor_arrived", "job_id": JOB_ID,
+            })),
+            SimpleNamespace(cmd_res=""),
+        )
+
+        self.assertTrue(json.loads(response.cmd_res)["accepted"])
+        self.assertEqual(active["state"], "STARTED")
+        self.assertEqual(calls, [("start", {"command": "start"})])
+
+    async def test_conveyor_failure_finalizes_the_active_job(self):
+        failures = []
+        sequencer = SimpleNamespace(
+            active={"job_id": JOB_ID, "state": "CONVEYOR_MOVING"},
+            recipe_version="assembly-r1",
+            set_response=MockAssemblySequencer.set_response,
+            fail_active=lambda *args, **kwargs: failures.append((args, kwargs)),
+        )
+        response = await MockAssemblySequencer.on_external_request(
+            sequencer,
+            SimpleNamespace(cmd_str=json.dumps({
+                "command": "conveyor_failed",
+                "job_id": JOB_ID,
+                "message": "belt timeout",
+            })),
+            SimpleNamespace(cmd_res=""),
+        )
+
+        self.assertTrue(json.loads(response.cmd_res)["accepted"])
+        self.assertEqual(failures, [(("CONVEYOR_FAILED", "belt timeout"), {"immediate": True})])
+
     async def test_incomplete_pass_target_reuses_job_for_next_unit(self):
         calls = []
 

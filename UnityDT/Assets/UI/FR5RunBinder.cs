@@ -747,6 +747,8 @@ namespace MainUnity.UI
                 case AssemblyState.Failed:
                     string reason = !string.IsNullOrEmpty(frame.ErrorCode) ? frame.ErrorCode : frame.Message;
                     return string.IsNullOrEmpty(reason) ? "실패" : "실패   ·   " + reason;
+                case AssemblyState.ConveyorMoving:
+                    return "컨베이어 이동 중";
                 case AssemblyState.Paused:
                     return "일시정지";
                 case AssemblyState.Completed:

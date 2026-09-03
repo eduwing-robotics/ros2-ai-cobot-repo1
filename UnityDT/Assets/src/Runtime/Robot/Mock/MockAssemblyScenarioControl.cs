@@ -17,6 +17,7 @@ namespace MainUnity.Runtime.Robot.Mock
     /// <summary>Mock 조립 작업을 요청하고 callback을 씬 시각화에 반영한다.</summary>
     public sealed class MockAssemblyScenarioControl : MonoBehaviour, IRobotScenarioControl
     {
+        const string ConveyorMoving = "CONVEYOR_MOVING";
         const string Started = "STARTED";
         const string Picked = "PICKED";
         const string Placed = "PLACED";
@@ -80,6 +81,8 @@ namespace MainUnity.Runtime.Robot.Mock
         bool feedbackSubscribed;
         bool sceneNeedsReset;
         bool inspectionTransferStarted;
+        bool assemblyConveyorStarted;
+        bool awaitingAssemblyConveyor;
         bool recovering;
         int recoveryGeneration;
 
@@ -116,6 +119,14 @@ namespace MainUnity.Runtime.Robot.Mock
         {
             public string command;
             public string job_id;
+        }
+
+        [Serializable]
+        sealed class ConveyorFailureRequest
+        {
+            public string command;
+            public string job_id;
+            public string message;
         }
 
         [Serializable]
@@ -213,6 +224,9 @@ namespace MainUnity.Runtime.Robot.Mock
             recoveryGeneration++;
             recovering = false;
             bufferedFeedback.Clear();
+            if (awaitingAssemblyConveyor)
+                _ = ReportConveyorFailureAsync(
+                    "Mock assembly control was disabled during conveyor movement.");
             FailActive("Mock assembly control was disabled.");
             if (feedbackSubscribed && connection != null)
             {
@@ -241,7 +255,6 @@ namespace MainUnity.Runtime.Robot.Mock
                 sceneNeedsReset = false;
             }
             EnsureRosConnection();
-            await conveyor.MoveBoardToAssemblyAsync();
             MockObservation[] observations = BuildObservations();
 
             var current = new TaskCompletionSource<string>();
@@ -256,6 +269,8 @@ namespace MainUnity.Runtime.Robot.Mock
             assembledPcbHeld = false;
             assembledPcbTransferred = false;
             inspectionTransferStarted = false;
+            assemblyConveyorStarted = false;
+            awaitingAssemblyConveyor = false;
 
             Task timeout = Task.Delay(TimeSpan.FromSeconds(completionTimeoutSeconds));
             bool accepted = false;
@@ -280,7 +295,6 @@ namespace MainUnity.Runtime.Robot.Mock
                 await PostJobAsync(jobJson);
                 await SendMockAsync(startJson, "start");
                 accepted = true;
-                Report(AssemblyState.Started, null);
 
                 if (await Task.WhenAny(current.Task, timeout) != current.Task)
                     throw new TimeoutException(
@@ -365,7 +379,8 @@ namespace MainUnity.Runtime.Robot.Mock
                 recovering = false;
                 Report(snapshot.state switch
                 {
-                    Started => AssemblyState.Started,
+                    ConveyorMoving => AssemblyState.ConveyorMoving,
+                        Started => AssemblyState.Started,
                     Picked => AssemblyState.Picked,
                     Placed => AssemblyState.Placed,
                     AssemblyCompleted => AssemblyState.Placed,
@@ -482,7 +497,9 @@ namespace MainUnity.Runtime.Robot.Mock
 
             sceneNeedsReset = true;
             terminal = snapshot.active ? new TaskCompletionSource<string>() : null;
-            if (snapshot.state == AssemblyCompleted)
+            if (snapshot.state == ConveyorMoving)
+                _ = MoveToAssemblyAndConfirmAsync();
+            else if (snapshot.state == AssemblyCompleted)
                 _ = MoveToInspectionAndRequestTransferAsync();
             string summary = $"Mock assembly restored: {snapshot.state}, " +
                 $"{snapshot.placed_count}/{snapshot.expected_step_count} placed.";
@@ -494,7 +511,7 @@ namespace MainUnity.Runtime.Robot.Mock
 
         void ValidateSnapshot(AssemblySnapshot snapshot, MockObservation[] observations)
         {
-            bool activeState = snapshot.state == Started || snapshot.state == Picked ||
+            bool activeState = snapshot.state == ConveyorMoving || snapshot.state == Started || snapshot.state == Picked ||
                 snapshot.state == Placed || snapshot.state == AssemblyCompleted ||
                 snapshot.state == PcbPicked || snapshot.state == Paused ||
                 snapshot.state == PcbPlaced;
@@ -699,15 +716,67 @@ namespace MainUnity.Runtime.Robot.Mock
                 : $"{response.data.error_code}: {rejected}");
         }
 
+        async Task MoveToAssemblyAndConfirmAsync()
+        {
+            if (assemblyConveyorStarted)
+                return;
+
+            assemblyConveyorStarted = true;
+            awaitingAssemblyConveyor = true;
+            try
+            {
+                await conveyor.MoveBoardToAssemblyAsync();
+                if (!isActiveAndEnabled || terminal == null || terminal.Task.IsCompleted)
+                    return;
+
+                await SendMockAsync(JsonUtility.ToJson(new ControlRequest
+                {
+                    command = "conveyor_arrived",
+                    job_id = activeJobId
+                }), "conveyor arrival");
+                awaitingAssemblyConveyor = false;
+            }
+            catch (Exception exception)
+            {
+                await ReportConveyorFailureAsync(exception.Message);
+                FailActive(exception.Message);
+            }
+        }
+
+        async Task ReportConveyorFailureAsync(string message)
+        {
+            if (string.IsNullOrEmpty(activeJobId))
+                return;
+
+            try
+            {
+                await SendMockAsync(JsonUtility.ToJson(new ConveyorFailureRequest
+                {
+                    command = "conveyor_failed",
+                    job_id = activeJobId,
+                    message = string.IsNullOrWhiteSpace(message)
+                        ? "Mock conveyor movement failed."
+                        : message
+                }), "conveyor failure");
+            }
+            catch (Exception exception)
+            {
+                Debug.LogWarning(
+                    "Mock conveyor failure could not be reported: " + exception.Message, this);
+            }
+        }
+
         async Task MoveToInspectionAndRequestTransferAsync()
         {
             if (inspectionTransferStarted)
                 return;
             inspectionTransferStarted = true;
+            bool conveyorArrived = false;
 
             try
             {
                 await conveyor.MoveBoardToInspectionAsync();
+                conveyorArrived = true;
                 if (!isActiveAndEnabled || terminal == null || terminal.Task.IsCompleted)
                     return;
 
@@ -756,6 +825,8 @@ namespace MainUnity.Runtime.Robot.Mock
             }
             catch (Exception exception)
             {
+                if (!conveyorArrived)
+                    await ReportConveyorFailureAsync(exception.Message);
                 FailActive(exception.Message);
             }
         }
@@ -805,6 +876,7 @@ namespace MainUnity.Runtime.Robot.Mock
                 {
                     Report(feedback.state switch
                     {
+                        ConveyorMoving => AssemblyState.ConveyorMoving,
                         Started => AssemblyState.Started,
                         Picked => AssemblyState.Picked,
                         Placed => AssemblyState.Placed,
@@ -826,8 +898,9 @@ namespace MainUnity.Runtime.Robot.Mock
                     feedback.slot_code == heldSlotCode)
                     return;
 
-                if (feedback.state == Started && lastPlacedStepOrder == expectedStepCount)
-                    ResetForNextUnit();
+                if (feedback.state == ConveyorMoving &&
+                    lastPlacedStepOrder == expectedStepCount)
+                    ResetVisualization(false);
 
                 string key = string.Concat(feedback.state, "|", feedback.step_order, "|",
                     feedback.part_id, "|", feedback.slot_code);
@@ -836,6 +909,12 @@ namespace MainUnity.Runtime.Robot.Mock
 
                 switch (feedback.state)
                 {
+                    case ConveyorMoving:
+                        assemblyConveyorStarted = false;
+                        awaitingAssemblyConveyor = false;
+                        Report(AssemblyState.ConveyorMoving, feedback);
+                        _ = MoveToAssemblyAndConfirmAsync();
+                        break;
                     case Started:
                         Report(AssemblyState.Started, feedback);
                         break;
@@ -892,15 +971,6 @@ namespace MainUnity.Runtime.Robot.Mock
             {
                 FailActive(exception.Message);
             }
-        }
-
-        void ResetForNextUnit()
-        {
-            if (heldItem != null || assembledPcbHeld)
-                throw new InvalidOperationException(
-                    "A new Mock Unit started while the previous object was held.");
-
-            ResetVisualization(true);
         }
 
         void CaptureInitialSceneState()
@@ -966,7 +1036,7 @@ namespace MainUnity.Runtime.Robot.Mock
                  string.IsNullOrWhiteSpace(feedback.slot_code)))
                 throw new InvalidOperationException(
                     "PICKED and PLACED feedback require part_id and slot_code.");
-            if ((feedback.state == AssemblyCompleted || feedback.state == PcbPicked ||
+            if ((feedback.state == ConveyorMoving || feedback.state == AssemblyCompleted || feedback.state == PcbPicked ||
                     feedback.state == PcbPlaced || feedback.state == Paused) &&
                 (feedback.step_order != 0 || !string.IsNullOrWhiteSpace(feedback.part_id) ||
                  !string.IsNullOrWhiteSpace(feedback.slot_code)))
@@ -1251,6 +1321,8 @@ namespace MainUnity.Runtime.Robot.Mock
 
         bool CompleteActive(string failure)
         {
+            awaitingAssemblyConveyor = false;
+            assemblyConveyorStarted = false;
             TaskCompletionSource<string> current = terminal;
             if (current == null || !current.TrySetResult(failure))
                 return false;

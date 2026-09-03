@@ -455,3 +455,7 @@ ROS 2는 상태 전달, 신규 명령 차단과 작업 실패 전환을 담당�
 | SECS/GEM·GEM300 Adapter | 현재 범위 밖 |
 | 다중 작업 병렬 실행 | 현재 범위 밖 |
 | 별도 DB Writer 서버·메시지 브로커 | 현재 범위 밖 |
+
+## Mock 컨베이어 시작 게이트
+
+Mock의 `/unity/assembly/start` 서비스는 기존 `start` 요청을 수락하면 `CONVEYOR_MOVING` feedback을 발행하고, Unity의 `conveyor_arrived` 요청을 받을 때까지 내부 Robot Runner를 시작하지 않는다. Unity는 컨베이어 이동 실패·취소·timeout 시 같은 `job_id`와 `message`를 포함한 `conveyor_failed`를 보내며, Sequencer는 해당 Unit과 Job을 `FAILED`로 마감한다. `conveyor_arrived`는 `{command, job_id}`를 사용한다. `conveyor_failed`는 비어 있지 않은 `message`를 추가로 요구한다.

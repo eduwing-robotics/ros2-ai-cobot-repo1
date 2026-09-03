@@ -11,7 +11,7 @@ import yaml
 
 DEFECT_TYPES = ("MISSING", "POSITION_ERROR", "ORIENTATION_ERROR", "CRACK")
 RELAY_STATES = {
-    "STARTED", "PICKED", "PLACED", "ASSEMBLY_COMPLETED",
+    "CONVEYOR_MOVING", "STARTED", "PICKED", "PLACED", "ASSEMBLY_COMPLETED",
     "PCB_PICKED", "PCB_PLACED", "PAUSED",
 }
 FEEDBACK_STATES = RELAY_STATES | {"COMPLETED", "FAILED"}
@@ -300,9 +300,15 @@ def parse_command(raw, expected_recipe_version):
         raise ValueError("cmd_str must be a JSON object")
 
     command_name = command.get("command")
-    if command_name in {"pause", "resume"}:
+    if command_name in {"pause", "resume", "conveyor_arrived"}:
         if set(command) != {"command", "job_id"}:
             raise ValueError("command and job_id are required")
+        command_type = command_name
+    elif command_name == "conveyor_failed":
+        if set(command) != {"command", "job_id", "message"}:
+            raise ValueError("command, job_id and message are required")
+        if not isinstance(command["message"], str) or not command["message"].strip():
+            raise ValueError("message must be a nonblank string")
         command_type = command_name
     elif command_name == "transfer_assembled_pcb":
         if set(command) != {"command", "job_id", "assembled_pcb"}:
@@ -319,8 +325,8 @@ def parse_command(raw, expected_recipe_version):
             )
         if command_name != "start":
             raise ValueError(
-                "command must be start, pause, resume, "
-                "transfer_assembled_pcb or status"
+                "command must be start, conveyor_arrived, conveyor_failed, "
+                "pause, resume, transfer_assembled_pcb or status"
             )
         if command["recipe_version"] != expected_recipe_version:
             raise ValueError(
@@ -500,6 +506,12 @@ def self_check(recipe=None):
     if recipe is not None:
         execution = build_execution_command(recipe, parsed[1])
         assert len(execution["execution_plan"]["resolved_steps"]) == len(steps)
+    assert parse_command(json.dumps({
+        "command": "conveyor_arrived", "job_id": job_id,
+    }), recipe_version)[0] == "conveyor_arrived"
+    assert parse_command(json.dumps({
+        "command": "conveyor_failed", "job_id": job_id, "message": "stopped",
+    }), recipe_version)[0] == "conveyor_failed"
     assert parse_command(json.dumps({
         "command": "transfer_assembled_pcb",
         "job_id": job_id,
