@@ -188,7 +188,6 @@ GameObject:
   - component: {fileID: 14890713}
   - component: {fileID: 14890712}
   - component: {fileID: 14890709}
-  - component: {fileID: 14890711}
   - component: {fileID: 14890710}
   m_Layer: 0
   m_Name: RealMaster
@@ -209,8 +208,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49ad41fb80f44dc4b0535bb56407ec11, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Robot.Real.RealRobotGhostControl
-  solverMode: 0
-  moveItSolver: {fileID: 14890711}
   fairinoSdkSolver: {fileID: 14890710}
   toolPositionMillimeters: {x: -2, y: -2, z: 157}
   toolRotationDegrees: {x: 0, y: 0, z: 0}
@@ -227,24 +224,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Robot.Real.RealFairinoSdkGhostSolver
   targetTopic: /real/ghost/target
-  expectedFrame: base_link
---- !u!114 &14890711
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 14890708}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b14f0a2c7e3d4b9ea1c6f8052d9473ab, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Robot.Real.RealMoveItGhostSolver
-  targetTopic: /real/ghost/target
-  moveItTargetTopic: /twin_visual/movel_target
-  previewTopic: /twin_visual/movel_preview
-  statusTopic: /twin_visual/status
-  jointStateTopic: /joint_states
   expectedFrame: base_link
 --- !u!114 &14890712
 MonoBehaviour:
@@ -11815,7 +11794,6 @@ GameObject:
   - component: {fileID: 2494761539128691210}
   - component: {fileID: 2494761539128691211}
   - component: {fileID: 2494761539128691212}
-  - component: {fileID: 2494761539128691213}
   - component: {fileID: 2494761539128691214}
   m_Layer: 0
   m_Name: RealMaster
@@ -16886,29 +16864,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49ad41fb80f44dc4b0535bb56407ec11, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Robot.Real.RealRobotGhostControl
-  solverMode: 0
-  moveItSolver: {fileID: 2494761539128691213}
   fairinoSdkSolver: {fileID: 2494761539128691214}
   toolPositionMillimeters: {x: -2, y: -2, z: 157}
   toolRotationDegrees: {x: 0, y: 0, z: 0}
---- !u!114 &2494761539128691213
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1511203712}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b14f0a2c7e3d4b9ea1c6f8052d9473ab, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Robot.Real.RealMoveItGhostSolver
-  targetTopic: /real/ghost/target
-  moveItTargetTopic: /twin_visual/movel_target
-  previewTopic: /twin_visual/movel_preview
-  statusTopic: /twin_visual/status
-  jointStateTopic: /joint_states
-  expectedFrame: base_link
 --- !u!114 &2494761539128691214
 MonoBehaviour:
   m_ObjectHideFlags: 0

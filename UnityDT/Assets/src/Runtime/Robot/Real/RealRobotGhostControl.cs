@@ -6,20 +6,6 @@ using UnityEngine;
 
 namespace MainUnity.Runtime.Robot.Real
 {
-    public enum RealGhostSolverMode
-    {
-        MoveIt,
-        FairinoSdk
-    }
-
-    interface IRealGhostSolver
-    {
-        bool Initialize(GhostMaster ghostMaster, RobotStatusManager statusManager,
-            RealRobotControl robotControl, Vector3 toolPositionMillimeters,
-            Vector3 toolRotationDegrees);
-        void SetActive(bool active);
-    }
-
     readonly struct RealGhostToolPose
     {
         public RealGhostToolPose(Vector3 positionMillimeters, Vector3 rotationDegrees)
@@ -120,8 +106,6 @@ namespace MainUnity.Runtime.Robot.Real
     [DisallowMultipleComponent]
     public sealed class RealRobotGhostControl : MonoBehaviour, IRobotGhostControl
     {
-        [SerializeField] RealGhostSolverMode solverMode = RealGhostSolverMode.MoveIt;
-        [SerializeField] RealMoveItGhostSolver moveItSolver;
         [SerializeField] RealFairinoSdkGhostSolver fairinoSdkSolver;
 
         [Header("Tool 1 TCP relative to wrist3_link / flange")]
@@ -131,15 +115,8 @@ namespace MainUnity.Runtime.Robot.Real
         GhostMaster ghostMaster;
         RobotStatusManager statusManager;
         RealRobotControl robotControl;
-        bool active;
 
-        public RealGhostSolverMode SolverMode => solverMode;
-
-        void OnDisable()
-        {
-            active = false;
-            SetSolverActive(false);
-        }
+        void OnDisable() => fairinoSdkSolver?.SetActive(false);
         void OnValidate() => RefreshReferences();
 
         public bool Initialize(GhostMaster destination)
@@ -147,7 +124,7 @@ namespace MainUnity.Runtime.Robot.Real
             ghostMaster = destination;
             RefreshReferences();
             if (ghostMaster != null)
-                return InitializeSolvers();
+                return InitializeSolver();
             Debug.LogError("Assign the common GhostMaster.", this);
             return false;
         }
@@ -157,55 +134,27 @@ namespace MainUnity.Runtime.Robot.Real
         {
             statusManager = injectedStatusManager;
             robotControl = injectedRobotControl;
-            InitializeSolvers();
+            InitializeSolver();
         }
 
         public void SetActive(bool value)
         {
-            active = value;
+            fairinoSdkSolver?.SetActive(value);
             enabled = value;
-            SetSolverActive(value);
         }
 
-        public bool TrySetSolverMode(RealGhostSolverMode mode)
-        {
-            if (mode != RealGhostSolverMode.MoveIt && mode != RealGhostSolverMode.FairinoSdk)
-                return false;
-            if (solverMode == mode)
-                return true;
-
-            SetSolverActive(false);
-            solverMode = mode;
-            SetSolverActive(active);
-            return true;
-        }
-
-        bool InitializeSolvers()
+        bool InitializeSolver()
         {
             if (ghostMaster == null || statusManager == null || robotControl == null)
                 return false;
 
-            bool moveItReady = InitializeSolver(moveItSolver);
-            bool sdkReady = InitializeSolver(fairinoSdkSolver);
-            return moveItReady && sdkReady;
-        }
-
-        bool InitializeSolver(IRealGhostSolver solver) => solver != null &&
-            solver.Initialize(ghostMaster, statusManager, robotControl,
+            return fairinoSdkSolver != null && fairinoSdkSolver.Initialize(
+                ghostMaster, statusManager, robotControl,
                 toolPositionMillimeters, toolRotationDegrees);
-
-        void SetSolverActive(bool value)
-        {
-            (moveItSolver as IRealGhostSolver)?.SetActive(
-                value && solverMode == RealGhostSolverMode.MoveIt);
-            (fairinoSdkSolver as IRealGhostSolver)?.SetActive(
-                value && solverMode == RealGhostSolverMode.FairinoSdk);
         }
 
         void RefreshReferences()
         {
-            if (moveItSolver == null)
-                moveItSolver = GetComponent<RealMoveItGhostSolver>();
             if (fairinoSdkSolver == null)
                 fairinoSdkSolver = GetComponent<RealFairinoSdkGhostSolver>();
         }

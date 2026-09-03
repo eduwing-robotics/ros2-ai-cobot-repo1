@@ -20,8 +20,17 @@ namespace MainUnity.Runtime.RobotGhost
         }
         void OnValidate() => RefreshReferences();
 
-        public bool PreviewJoints(IReadOnlyList<float> jointDegrees) =>
-            jointPreview != null && jointPreview.TryPreviewJoints(jointDegrees);
+        public bool PreviewJoints(IReadOnlyList<float> jointDegrees)
+        {
+            if (jointPreview == null || !SetVisible(true))
+                return false;
+
+            if (jointPreview.TryPreviewJoints(jointDegrees))
+                return true;
+
+            SetVisible(false);
+            return false;
+        }
 
         public bool Play(JointTrajectoryMsg trajectory) =>
             movePreview != null && movePreview.Play(trajectory);

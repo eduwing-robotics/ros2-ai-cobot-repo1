@@ -10,7 +10,7 @@ using UnityEngine;
 namespace MainUnity.Runtime.Robot.Real
 {
     [DisallowMultipleComponent]
-    public sealed class RealFairinoSdkGhostSolver : MonoBehaviour, IRealGhostSolver
+    public sealed class RealFairinoSdkGhostSolver : MonoBehaviour
     {
         const int JointCount = 6;
 
@@ -32,7 +32,7 @@ namespace MainUnity.Runtime.Robot.Real
 
         void OnDisable() => Deactivate();
 
-        bool IRealGhostSolver.Initialize(GhostMaster destination,
+        internal bool Initialize(GhostMaster destination,
             RobotStatusManager injectedStatusManager, RealRobotControl injectedRobotControl,
             Vector3 toolPositionMillimeters, Vector3 toolRotationDegrees)
         {
@@ -46,7 +46,7 @@ namespace MainUnity.Runtime.Robot.Real
                 !string.IsNullOrWhiteSpace(targetTopic) && !string.IsNullOrWhiteSpace(expectedFrame);
         }
 
-        void IRealGhostSolver.SetActive(bool value)
+        internal void SetActive(bool value)
         {
             if (!value)
             {
@@ -147,7 +147,7 @@ namespace MainUnity.Runtime.Robot.Real
                         Debug.LogWarning(error, this);
                         continue;
                     }
-                    if (!ghostMaster.PreviewJoints(jointDegrees) || !ghostMaster.SetVisible(true))
+                    if (!ghostMaster.PreviewJoints(jointDegrees))
                     {
                         Debug.LogWarning("Real FAIRINO SDK Ghost rejected the solved joints.", this);
                         continue;

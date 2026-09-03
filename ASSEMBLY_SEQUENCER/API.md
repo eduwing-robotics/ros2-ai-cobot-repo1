@@ -225,9 +225,8 @@ Service callback에서는 실제 Pick·Place를 실행하지 않는다.
 
 `ROS-RBT-009`는 Real 모드에서만 사용한다. AssemblySequencer 공통 흐름은 Ghost 응답을
 기다리지 않으며, `real_assembly` backend가 목표 자세를 확정했을 때 선택적으로 발행한다.
-Unity의 `SampleScene > FR5 > RealMaster > RealRobotGhostControl` Inspector에서 MoveIt 또는
-FAIRINO SDK IK solver를 선택한다. 두 solver 모두 같은 Tool 1 보정값으로 flange 목표를
-계산하며 실제 이동 API를 호출하지 않는다.
+Unity의 `SampleScene > FR5 > RealMaster > RealRobotGhostControl`은 FAIRINO SDK IK로 같은
+Tool 1 보정값을 적용해 flange 목표를 계산하며 실제 이동 API를 호출하지 않는다.
 
 ### 6.2 타 브랜치 제공 API
 
