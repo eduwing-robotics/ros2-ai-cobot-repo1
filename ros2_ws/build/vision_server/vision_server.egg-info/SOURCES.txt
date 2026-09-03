@@ -6,10 +6,12 @@ config/cameras.yaml
 config/conveyor_roi.yaml
 config/dataset.yaml
 config/inspection.yaml
+config/orchestration_api.yaml
 config/parts.yaml
 config/yolo.yaml
 launch/conveyor_roi.launch.py
 launch/mock.launch.py
+launch/orchestration_api.launch.py
 launch/vision.launch.py
 models/README.md
 resource/vision_server
@@ -21,6 +23,8 @@ vision_server/conveyor_controller.py
 vision_server/conveyor_roi.py
 vision_server/depth_utils.py
 vision_server/inspection_rules.py
+vision_server/orchestration_action_server.py
+vision_server/orchestration_contract.py
 vision_server/part_detector.py
 vision_server/vision_mock.py
 vision_server.egg-info/PKG-INFO

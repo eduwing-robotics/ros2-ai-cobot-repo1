@@ -92,6 +92,40 @@ rosidl_generator_c/vision_interfaces/msg/part.h: rosidl_adapter/vision_interface
 rosidl_generator_c/vision_interfaces/msg/part.h: rosidl_adapter/vision_interfaces/msg/Detections.idl
 rosidl_generator_c/vision_interfaces/msg/part.h: rosidl_adapter/vision_interfaces/msg/Inspection.idl
 rosidl_generator_c/vision_interfaces/msg/part.h: rosidl_adapter/vision_interfaces/msg/VisionStatus.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: rosidl_adapter/vision_interfaces/action/DetectTrayParts.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: rosidl_adapter/vision_interfaces/action/CalibratePcbPose.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/geometry_msgs/msg/Accel.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/geometry_msgs/msg/AccelStamped.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/geometry_msgs/msg/AccelWithCovariance.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/geometry_msgs/msg/AccelWithCovarianceStamped.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/geometry_msgs/msg/Inertia.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/geometry_msgs/msg/InertiaStamped.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/geometry_msgs/msg/Point.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/geometry_msgs/msg/Point32.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/geometry_msgs/msg/PointStamped.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/geometry_msgs/msg/Polygon.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/geometry_msgs/msg/PolygonInstance.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/geometry_msgs/msg/PolygonInstanceStamped.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/geometry_msgs/msg/PolygonStamped.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/geometry_msgs/msg/Pose.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/geometry_msgs/msg/Pose2D.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/geometry_msgs/msg/PoseArray.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/geometry_msgs/msg/PoseStamped.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/geometry_msgs/msg/PoseWithCovariance.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/geometry_msgs/msg/PoseWithCovarianceStamped.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/geometry_msgs/msg/Quaternion.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/geometry_msgs/msg/QuaternionStamped.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/geometry_msgs/msg/Transform.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/geometry_msgs/msg/TransformStamped.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/geometry_msgs/msg/Twist.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/geometry_msgs/msg/TwistStamped.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/geometry_msgs/msg/TwistWithCovariance.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/geometry_msgs/msg/TwistWithCovarianceStamped.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/geometry_msgs/msg/Vector3.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/geometry_msgs/msg/Vector3Stamped.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/geometry_msgs/msg/VelocityStamped.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/geometry_msgs/msg/Wrench.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/geometry_msgs/msg/WrenchStamped.idl
 rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/std_msgs/msg/Bool.idl
 rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/std_msgs/msg/Byte.idl
 rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/std_msgs/msg/ByteMultiArray.idl
@@ -124,6 +158,12 @@ rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/std_msgs/m
 rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/std_msgs/msg/UInt8MultiArray.idl
 rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/builtin_interfaces/msg/Duration.idl
 rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/builtin_interfaces/msg/Time.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/service_msgs/msg/ServiceEventInfo.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/action_msgs/msg/GoalInfo.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/action_msgs/msg/GoalStatus.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/action_msgs/msg/GoalStatusArray.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/action_msgs/srv/CancelGoal.idl
+rosidl_generator_c/vision_interfaces/msg/part.h: /opt/ros/jazzy/share/unique_identifier_msgs/msg/UUID.idl
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Generating C code for ROS interfaces"
 	/usr/bin/python3 /opt/ros/jazzy/share/rosidl_generator_c/cmake/../../../lib/rosidl_generator_c/rosidl_generator_c --generator-arguments-file /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_c__arguments.json
 
@@ -172,6 +212,30 @@ rosidl_generator_c/vision_interfaces/msg/detail/vision_status__struct.h: rosidl_
 rosidl_generator_c/vision_interfaces/msg/detail/vision_status__type_support.h: rosidl_generator_c/vision_interfaces/msg/part.h
 	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_c/vision_interfaces/msg/detail/vision_status__type_support.h
 
+rosidl_generator_c/vision_interfaces/action/detect_tray_parts.h: rosidl_generator_c/vision_interfaces/msg/part.h
+	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_c/vision_interfaces/action/detect_tray_parts.h
+
+rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.h: rosidl_generator_c/vision_interfaces/msg/part.h
+	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.h
+
+rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__struct.h: rosidl_generator_c/vision_interfaces/msg/part.h
+	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__struct.h
+
+rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.h: rosidl_generator_c/vision_interfaces/msg/part.h
+	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.h
+
+rosidl_generator_c/vision_interfaces/action/calibrate_pcb_pose.h: rosidl_generator_c/vision_interfaces/msg/part.h
+	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_c/vision_interfaces/action/calibrate_pcb_pose.h
+
+rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.h: rosidl_generator_c/vision_interfaces/msg/part.h
+	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.h
+
+rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__struct.h: rosidl_generator_c/vision_interfaces/msg/part.h
+	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__struct.h
+
+rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.h: rosidl_generator_c/vision_interfaces/msg/part.h
+	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.h
+
 rosidl_generator_c/vision_interfaces/msg/detail/part__description.c: rosidl_generator_c/vision_interfaces/msg/part.h
 	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_c/vision_interfaces/msg/detail/part__description.c
 
@@ -207,6 +271,24 @@ rosidl_generator_c/vision_interfaces/msg/detail/vision_status__functions.c: rosi
 
 rosidl_generator_c/vision_interfaces/msg/detail/vision_status__type_support.c: rosidl_generator_c/vision_interfaces/msg/part.h
 	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_c/vision_interfaces/msg/detail/vision_status__type_support.c
+
+rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.c: rosidl_generator_c/vision_interfaces/msg/part.h
+	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.c
+
+rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.c: rosidl_generator_c/vision_interfaces/msg/part.h
+	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.c
+
+rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c: rosidl_generator_c/vision_interfaces/msg/part.h
+	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c
+
+rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.c: rosidl_generator_c/vision_interfaces/msg/part.h
+	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.c
+
+rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.c: rosidl_generator_c/vision_interfaces/msg/part.h
+	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.c
+
+rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c: rosidl_generator_c/vision_interfaces/msg/part.h
+	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c
 
 CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/msg/detail/part__description.c.o: CMakeFiles/vision_interfaces__rosidl_generator_c.dir/flags.make
 CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/msg/detail/part__description.c.o: rosidl_generator_c/vision_interfaces/msg/detail/part__description.c
@@ -376,6 +458,90 @@ CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_i
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/msg/detail/vision_status__type_support.c.s"
 	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_c/vision_interfaces/msg/detail/vision_status__type_support.c -o CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/msg/detail/vision_status__type_support.c.s
 
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.c.o: CMakeFiles/vision_interfaces__rosidl_generator_c.dir/flags.make
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.c.o: rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.c
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.c.o: CMakeFiles/vision_interfaces__rosidl_generator_c.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Building C object CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.c.o -MF CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.c.o.d -o CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.c.o -c /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.c
+
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.c > CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.c.i
+
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.c -o CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.c.s
+
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.c.o: CMakeFiles/vision_interfaces__rosidl_generator_c.dir/flags.make
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.c.o: rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.c
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.c.o: CMakeFiles/vision_interfaces__rosidl_generator_c.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/CMakeFiles --progress-num=$(CMAKE_PROGRESS_15) "Building C object CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.c.o -MF CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.c.o.d -o CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.c.o -c /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.c
+
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.c > CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.c.i
+
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.c -o CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.c.s
+
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.o: CMakeFiles/vision_interfaces__rosidl_generator_c.dir/flags.make
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.o: rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.o: CMakeFiles/vision_interfaces__rosidl_generator_c.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Building C object CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.o -MF CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.o.d -o CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.o -c /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c
+
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c > CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.i
+
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c -o CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.s
+
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.c.o: CMakeFiles/vision_interfaces__rosidl_generator_c.dir/flags.make
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.c.o: rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.c
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.c.o: CMakeFiles/vision_interfaces__rosidl_generator_c.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/CMakeFiles --progress-num=$(CMAKE_PROGRESS_17) "Building C object CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.c.o -MF CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.c.o.d -o CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.c.o -c /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.c
+
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.c > CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.c.i
+
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.c -o CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.c.s
+
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.c.o: CMakeFiles/vision_interfaces__rosidl_generator_c.dir/flags.make
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.c.o: rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.c
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.c.o: CMakeFiles/vision_interfaces__rosidl_generator_c.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/CMakeFiles --progress-num=$(CMAKE_PROGRESS_18) "Building C object CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.c.o -MF CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.c.o.d -o CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.c.o -c /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.c
+
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.c > CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.c.i
+
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.c -o CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.c.s
+
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.o: CMakeFiles/vision_interfaces__rosidl_generator_c.dir/flags.make
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.o: rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.o: CMakeFiles/vision_interfaces__rosidl_generator_c.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/CMakeFiles --progress-num=$(CMAKE_PROGRESS_19) "Building C object CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.o -MF CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.o.d -o CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.o -c /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c
+
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c > CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.i
+
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c -o CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.s
+
 # Object files for target vision_interfaces__rosidl_generator_c
 vision_interfaces__rosidl_generator_c_OBJECTS = \
 "CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/msg/detail/part__description.c.o" \
@@ -389,7 +555,13 @@ vision_interfaces__rosidl_generator_c_OBJECTS = \
 "CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/msg/detail/inspection__type_support.c.o" \
 "CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/msg/detail/vision_status__description.c.o" \
 "CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/msg/detail/vision_status__functions.c.o" \
-"CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/msg/detail/vision_status__type_support.c.o"
+"CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/msg/detail/vision_status__type_support.c.o" \
+"CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.c.o" \
+"CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.c.o" \
+"CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.o" \
+"CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.c.o" \
+"CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.c.o" \
+"CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.o"
 
 # External object files for target vision_interfaces__rosidl_generator_c
 vision_interfaces__rosidl_generator_c_EXTERNAL_OBJECTS =
@@ -406,13 +578,23 @@ libvision_interfaces__rosidl_generator_c.so: CMakeFiles/vision_interfaces__rosid
 libvision_interfaces__rosidl_generator_c.so: CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/msg/detail/vision_status__description.c.o
 libvision_interfaces__rosidl_generator_c.so: CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/msg/detail/vision_status__functions.c.o
 libvision_interfaces__rosidl_generator_c.so: CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/msg/detail/vision_status__type_support.c.o
+libvision_interfaces__rosidl_generator_c.so: CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.c.o
+libvision_interfaces__rosidl_generator_c.so: CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.c.o
+libvision_interfaces__rosidl_generator_c.so: CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.o
+libvision_interfaces__rosidl_generator_c.so: CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.c.o
+libvision_interfaces__rosidl_generator_c.so: CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.c.o
+libvision_interfaces__rosidl_generator_c.so: CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.o
 libvision_interfaces__rosidl_generator_c.so: CMakeFiles/vision_interfaces__rosidl_generator_c.dir/build.make
+libvision_interfaces__rosidl_generator_c.so: /opt/ros/jazzy/lib/libgeometry_msgs__rosidl_generator_c.so
 libvision_interfaces__rosidl_generator_c.so: /opt/ros/jazzy/lib/libstd_msgs__rosidl_generator_c.so
+libvision_interfaces__rosidl_generator_c.so: /opt/ros/jazzy/lib/libaction_msgs__rosidl_generator_c.so
+libvision_interfaces__rosidl_generator_c.so: /opt/ros/jazzy/lib/libunique_identifier_msgs__rosidl_generator_c.so
+libvision_interfaces__rosidl_generator_c.so: /opt/ros/jazzy/lib/libservice_msgs__rosidl_generator_c.so
 libvision_interfaces__rosidl_generator_c.so: /opt/ros/jazzy/lib/libbuiltin_interfaces__rosidl_generator_c.so
 libvision_interfaces__rosidl_generator_c.so: /opt/ros/jazzy/lib/librosidl_runtime_c.so
 libvision_interfaces__rosidl_generator_c.so: /opt/ros/jazzy/lib/librcutils.so
 libvision_interfaces__rosidl_generator_c.so: CMakeFiles/vision_interfaces__rosidl_generator_c.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Linking C shared library libvision_interfaces__rosidl_generator_c.so"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/CMakeFiles --progress-num=$(CMAKE_PROGRESS_20) "Linking C shared library libvision_interfaces__rosidl_generator_c.so"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/vision_interfaces__rosidl_generator_c.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
@@ -423,6 +605,20 @@ CMakeFiles/vision_interfaces__rosidl_generator_c.dir/clean:
 	$(CMAKE_COMMAND) -P CMakeFiles/vision_interfaces__rosidl_generator_c.dir/cmake_clean.cmake
 .PHONY : CMakeFiles/vision_interfaces__rosidl_generator_c.dir/clean
 
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/depend: rosidl_generator_c/vision_interfaces/action/calibrate_pcb_pose.h
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/depend: rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.c
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/depend: rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.c
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/depend: rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.h
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/depend: rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__struct.h
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/depend: rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/depend: rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.h
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/depend: rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.c
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/depend: rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.c
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/depend: rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.h
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/depend: rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__struct.h
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/depend: rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/depend: rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.h
+CMakeFiles/vision_interfaces__rosidl_generator_c.dir/depend: rosidl_generator_c/vision_interfaces/action/detect_tray_parts.h
 CMakeFiles/vision_interfaces__rosidl_generator_c.dir/depend: rosidl_generator_c/vision_interfaces/msg/detail/detections__description.c
 CMakeFiles/vision_interfaces__rosidl_generator_c.dir/depend: rosidl_generator_c/vision_interfaces/msg/detail/detections__functions.c
 CMakeFiles/vision_interfaces__rosidl_generator_c.dir/depend: rosidl_generator_c/vision_interfaces/msg/detail/detections__functions.h

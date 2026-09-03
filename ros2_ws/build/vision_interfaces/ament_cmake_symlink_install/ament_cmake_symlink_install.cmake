@@ -330,6 +330,12 @@ ament_cmake_symlink_install_files("/home/juchan-yoon/FR5_robot_control/ros2_ws/s
 # install(FILES "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_type_description/vision_interfaces/msg/VisionStatus.json" "DESTINATION" "share/vision_interfaces/msg")
 ament_cmake_symlink_install_files("/home/juchan-yoon/FR5_robot_control/ros2_ws/src/vision_interfaces" FILES "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_type_description/vision_interfaces/msg/VisionStatus.json" "DESTINATION" "share/vision_interfaces/msg")
 
+# install(FILES "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_type_description/vision_interfaces/action/DetectTrayParts.json" "DESTINATION" "share/vision_interfaces/action")
+ament_cmake_symlink_install_files("/home/juchan-yoon/FR5_robot_control/ros2_ws/src/vision_interfaces" FILES "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_type_description/vision_interfaces/action/DetectTrayParts.json" "DESTINATION" "share/vision_interfaces/action")
+
+# install(FILES "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_type_description/vision_interfaces/action/CalibratePcbPose.json" "DESTINATION" "share/vision_interfaces/action")
+ament_cmake_symlink_install_files("/home/juchan-yoon/FR5_robot_control/ros2_ws/src/vision_interfaces" FILES "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_type_description/vision_interfaces/action/CalibratePcbPose.json" "DESTINATION" "share/vision_interfaces/action")
+
 # install(DIRECTORY "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_c/vision_interfaces/" "DESTINATION" "include/vision_interfaces/vision_interfaces" "PATTERN" "*.h")
 ament_cmake_symlink_install_directory("/home/juchan-yoon/FR5_robot_control/ros2_ws/src/vision_interfaces" DIRECTORY "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_c/vision_interfaces/" "DESTINATION" "include/vision_interfaces/vision_interfaces" "PATTERN" "*.h")
 
@@ -342,14 +348,14 @@ ament_cmake_symlink_install_files("/home/juchan-yoon/FR5_robot_control/ros2_ws/s
 # install(DIRECTORY "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_typesupport_fastrtps_c/vision_interfaces/" "DESTINATION" "include/vision_interfaces/vision_interfaces" "PATTERN_EXCLUDE" "*.cpp")
 ament_cmake_symlink_install_directory("/home/juchan-yoon/FR5_robot_control/ros2_ws/src/vision_interfaces" DIRECTORY "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_typesupport_fastrtps_c/vision_interfaces/" "DESTINATION" "include/vision_interfaces/vision_interfaces" "PATTERN_EXCLUDE" "*.cpp")
 
-# install(DIRECTORY "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_typesupport_introspection_c/vision_interfaces/" "DESTINATION" "include/vision_interfaces/vision_interfaces" "PATTERN" "*.h")
-ament_cmake_symlink_install_directory("/home/juchan-yoon/FR5_robot_control/ros2_ws/src/vision_interfaces" DIRECTORY "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_typesupport_introspection_c/vision_interfaces/" "DESTINATION" "include/vision_interfaces/vision_interfaces" "PATTERN" "*.h")
-
 # install(DIRECTORY "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_cpp/vision_interfaces/" "DESTINATION" "include/vision_interfaces/vision_interfaces" "PATTERN" "*.hpp")
 ament_cmake_symlink_install_directory("/home/juchan-yoon/FR5_robot_control/ros2_ws/src/vision_interfaces" DIRECTORY "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_cpp/vision_interfaces/" "DESTINATION" "include/vision_interfaces/vision_interfaces" "PATTERN" "*.hpp")
 
 # install(DIRECTORY "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_typesupport_fastrtps_cpp/vision_interfaces/" "DESTINATION" "include/vision_interfaces/vision_interfaces" "PATTERN_EXCLUDE" "*.cpp")
 ament_cmake_symlink_install_directory("/home/juchan-yoon/FR5_robot_control/ros2_ws/src/vision_interfaces" DIRECTORY "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_typesupport_fastrtps_cpp/vision_interfaces/" "DESTINATION" "include/vision_interfaces/vision_interfaces" "PATTERN_EXCLUDE" "*.cpp")
+
+# install(DIRECTORY "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_typesupport_introspection_c/vision_interfaces/" "DESTINATION" "include/vision_interfaces/vision_interfaces" "PATTERN" "*.h")
+ament_cmake_symlink_install_directory("/home/juchan-yoon/FR5_robot_control/ros2_ws/src/vision_interfaces" DIRECTORY "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_typesupport_introspection_c/vision_interfaces/" "DESTINATION" "include/vision_interfaces/vision_interfaces" "PATTERN" "*.h")
 
 # install(DIRECTORY "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_typesupport_introspection_cpp/vision_interfaces/" "DESTINATION" "include/vision_interfaces/vision_interfaces" "PATTERN" "*.hpp")
 ament_cmake_symlink_install_directory("/home/juchan-yoon/FR5_robot_control/ros2_ws/src/vision_interfaces" DIRECTORY "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_typesupport_introspection_cpp/vision_interfaces/" "DESTINATION" "include/vision_interfaces/vision_interfaces" "PATTERN" "*.hpp")
@@ -393,6 +399,12 @@ ament_cmake_symlink_install_files("/home/juchan-yoon/FR5_robot_control/ros2_ws/s
 # install(FILES "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_adapter/vision_interfaces/msg/VisionStatus.idl" "DESTINATION" "share/vision_interfaces/msg")
 ament_cmake_symlink_install_files("/home/juchan-yoon/FR5_robot_control/ros2_ws/src/vision_interfaces" FILES "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_adapter/vision_interfaces/msg/VisionStatus.idl" "DESTINATION" "share/vision_interfaces/msg")
 
+# install(FILES "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_adapter/vision_interfaces/action/DetectTrayParts.idl" "DESTINATION" "share/vision_interfaces/action")
+ament_cmake_symlink_install_files("/home/juchan-yoon/FR5_robot_control/ros2_ws/src/vision_interfaces" FILES "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_adapter/vision_interfaces/action/DetectTrayParts.idl" "DESTINATION" "share/vision_interfaces/action")
+
+# install(FILES "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_adapter/vision_interfaces/action/CalibratePcbPose.idl" "DESTINATION" "share/vision_interfaces/action")
+ament_cmake_symlink_install_files("/home/juchan-yoon/FR5_robot_control/ros2_ws/src/vision_interfaces" FILES "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_adapter/vision_interfaces/action/CalibratePcbPose.idl" "DESTINATION" "share/vision_interfaces/action")
+
 # install(FILES "/home/juchan-yoon/FR5_robot_control/ros2_ws/src/vision_interfaces/msg/Part.msg" "DESTINATION" "share/vision_interfaces/msg")
 ament_cmake_symlink_install_files("/home/juchan-yoon/FR5_robot_control/ros2_ws/src/vision_interfaces" FILES "/home/juchan-yoon/FR5_robot_control/ros2_ws/src/vision_interfaces/msg/Part.msg" "DESTINATION" "share/vision_interfaces/msg")
 
@@ -404,6 +416,12 @@ ament_cmake_symlink_install_files("/home/juchan-yoon/FR5_robot_control/ros2_ws/s
 
 # install(FILES "/home/juchan-yoon/FR5_robot_control/ros2_ws/src/vision_interfaces/msg/VisionStatus.msg" "DESTINATION" "share/vision_interfaces/msg")
 ament_cmake_symlink_install_files("/home/juchan-yoon/FR5_robot_control/ros2_ws/src/vision_interfaces" FILES "/home/juchan-yoon/FR5_robot_control/ros2_ws/src/vision_interfaces/msg/VisionStatus.msg" "DESTINATION" "share/vision_interfaces/msg")
+
+# install(FILES "/home/juchan-yoon/FR5_robot_control/ros2_ws/src/vision_interfaces/action/DetectTrayParts.action" "DESTINATION" "share/vision_interfaces/action")
+ament_cmake_symlink_install_files("/home/juchan-yoon/FR5_robot_control/ros2_ws/src/vision_interfaces" FILES "/home/juchan-yoon/FR5_robot_control/ros2_ws/src/vision_interfaces/action/DetectTrayParts.action" "DESTINATION" "share/vision_interfaces/action")
+
+# install(FILES "/home/juchan-yoon/FR5_robot_control/ros2_ws/src/vision_interfaces/action/CalibratePcbPose.action" "DESTINATION" "share/vision_interfaces/action")
+ament_cmake_symlink_install_files("/home/juchan-yoon/FR5_robot_control/ros2_ws/src/vision_interfaces" FILES "/home/juchan-yoon/FR5_robot_control/ros2_ws/src/vision_interfaces/action/CalibratePcbPose.action" "DESTINATION" "share/vision_interfaces/action")
 
 # install(FILES "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/ament_cmake_index/share/ament_index/resource_index/package_run_dependencies/vision_interfaces" "DESTINATION" "share/ament_index/resource_index/package_run_dependencies")
 ament_cmake_symlink_install_files("/home/juchan-yoon/FR5_robot_control/ros2_ws/src/vision_interfaces" FILES "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/ament_cmake_index/share/ament_index/resource_index/package_run_dependencies/vision_interfaces" "DESTINATION" "share/ament_index/resource_index/package_run_dependencies")

@@ -86,6 +86,16 @@ CMakeFiles/vision_interfaces__cpp: rosidl_generator_cpp/vision_interfaces/msg/de
 CMakeFiles/vision_interfaces__cpp: rosidl_generator_cpp/vision_interfaces/msg/detail/vision_status__struct.hpp
 CMakeFiles/vision_interfaces__cpp: rosidl_generator_cpp/vision_interfaces/msg/detail/vision_status__traits.hpp
 CMakeFiles/vision_interfaces__cpp: rosidl_generator_cpp/vision_interfaces/msg/detail/vision_status__type_support.hpp
+CMakeFiles/vision_interfaces__cpp: rosidl_generator_cpp/vision_interfaces/action/detect_tray_parts.hpp
+CMakeFiles/vision_interfaces__cpp: rosidl_generator_cpp/vision_interfaces/action/detail/detect_tray_parts__builder.hpp
+CMakeFiles/vision_interfaces__cpp: rosidl_generator_cpp/vision_interfaces/action/detail/detect_tray_parts__struct.hpp
+CMakeFiles/vision_interfaces__cpp: rosidl_generator_cpp/vision_interfaces/action/detail/detect_tray_parts__traits.hpp
+CMakeFiles/vision_interfaces__cpp: rosidl_generator_cpp/vision_interfaces/action/detail/detect_tray_parts__type_support.hpp
+CMakeFiles/vision_interfaces__cpp: rosidl_generator_cpp/vision_interfaces/action/calibrate_pcb_pose.hpp
+CMakeFiles/vision_interfaces__cpp: rosidl_generator_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__builder.hpp
+CMakeFiles/vision_interfaces__cpp: rosidl_generator_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__struct.hpp
+CMakeFiles/vision_interfaces__cpp: rosidl_generator_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__traits.hpp
+CMakeFiles/vision_interfaces__cpp: rosidl_generator_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.hpp
 CMakeFiles/vision_interfaces__cpp: rosidl_generator_cpp/vision_interfaces/msg/rosidl_generator_cpp__visibility_control.hpp
 
 rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/lib/rosidl_generator_cpp/rosidl_generator_cpp
@@ -111,6 +121,40 @@ rosidl_generator_cpp/vision_interfaces/msg/part.hpp: rosidl_adapter/vision_inter
 rosidl_generator_cpp/vision_interfaces/msg/part.hpp: rosidl_adapter/vision_interfaces/msg/Detections.idl
 rosidl_generator_cpp/vision_interfaces/msg/part.hpp: rosidl_adapter/vision_interfaces/msg/Inspection.idl
 rosidl_generator_cpp/vision_interfaces/msg/part.hpp: rosidl_adapter/vision_interfaces/msg/VisionStatus.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: rosidl_adapter/vision_interfaces/action/DetectTrayParts.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: rosidl_adapter/vision_interfaces/action/CalibratePcbPose.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/geometry_msgs/msg/Accel.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/geometry_msgs/msg/AccelStamped.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/geometry_msgs/msg/AccelWithCovariance.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/geometry_msgs/msg/AccelWithCovarianceStamped.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/geometry_msgs/msg/Inertia.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/geometry_msgs/msg/InertiaStamped.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/geometry_msgs/msg/Point.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/geometry_msgs/msg/Point32.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/geometry_msgs/msg/PointStamped.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/geometry_msgs/msg/Polygon.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/geometry_msgs/msg/PolygonInstance.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/geometry_msgs/msg/PolygonInstanceStamped.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/geometry_msgs/msg/PolygonStamped.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/geometry_msgs/msg/Pose.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/geometry_msgs/msg/Pose2D.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/geometry_msgs/msg/PoseArray.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/geometry_msgs/msg/PoseStamped.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/geometry_msgs/msg/PoseWithCovariance.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/geometry_msgs/msg/PoseWithCovarianceStamped.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/geometry_msgs/msg/Quaternion.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/geometry_msgs/msg/QuaternionStamped.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/geometry_msgs/msg/Transform.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/geometry_msgs/msg/TransformStamped.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/geometry_msgs/msg/Twist.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/geometry_msgs/msg/TwistStamped.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/geometry_msgs/msg/TwistWithCovariance.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/geometry_msgs/msg/TwistWithCovarianceStamped.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/geometry_msgs/msg/Vector3.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/geometry_msgs/msg/Vector3Stamped.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/geometry_msgs/msg/VelocityStamped.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/geometry_msgs/msg/Wrench.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/geometry_msgs/msg/WrenchStamped.idl
 rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/std_msgs/msg/Bool.idl
 rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/std_msgs/msg/Byte.idl
 rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/std_msgs/msg/ByteMultiArray.idl
@@ -143,6 +187,12 @@ rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/std_ms
 rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/std_msgs/msg/UInt8MultiArray.idl
 rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/builtin_interfaces/msg/Duration.idl
 rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/builtin_interfaces/msg/Time.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/service_msgs/msg/ServiceEventInfo.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/action_msgs/msg/GoalInfo.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/action_msgs/msg/GoalStatus.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/action_msgs/msg/GoalStatusArray.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/action_msgs/srv/CancelGoal.idl
+rosidl_generator_cpp/vision_interfaces/msg/part.hpp: /opt/ros/jazzy/share/unique_identifier_msgs/msg/UUID.idl
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Generating C++ code for ROS interfaces"
 	/usr/bin/python3 /opt/ros/jazzy/share/rosidl_generator_cpp/cmake/../../../lib/rosidl_generator_cpp/rosidl_generator_cpp --generator-arguments-file /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_cpp__arguments.json
 
@@ -203,10 +253,50 @@ rosidl_generator_cpp/vision_interfaces/msg/detail/vision_status__traits.hpp: ros
 rosidl_generator_cpp/vision_interfaces/msg/detail/vision_status__type_support.hpp: rosidl_generator_cpp/vision_interfaces/msg/part.hpp
 	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_cpp/vision_interfaces/msg/detail/vision_status__type_support.hpp
 
+rosidl_generator_cpp/vision_interfaces/action/detect_tray_parts.hpp: rosidl_generator_cpp/vision_interfaces/msg/part.hpp
+	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_cpp/vision_interfaces/action/detect_tray_parts.hpp
+
+rosidl_generator_cpp/vision_interfaces/action/detail/detect_tray_parts__builder.hpp: rosidl_generator_cpp/vision_interfaces/msg/part.hpp
+	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_cpp/vision_interfaces/action/detail/detect_tray_parts__builder.hpp
+
+rosidl_generator_cpp/vision_interfaces/action/detail/detect_tray_parts__struct.hpp: rosidl_generator_cpp/vision_interfaces/msg/part.hpp
+	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_cpp/vision_interfaces/action/detail/detect_tray_parts__struct.hpp
+
+rosidl_generator_cpp/vision_interfaces/action/detail/detect_tray_parts__traits.hpp: rosidl_generator_cpp/vision_interfaces/msg/part.hpp
+	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_cpp/vision_interfaces/action/detail/detect_tray_parts__traits.hpp
+
+rosidl_generator_cpp/vision_interfaces/action/detail/detect_tray_parts__type_support.hpp: rosidl_generator_cpp/vision_interfaces/msg/part.hpp
+	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_cpp/vision_interfaces/action/detail/detect_tray_parts__type_support.hpp
+
+rosidl_generator_cpp/vision_interfaces/action/calibrate_pcb_pose.hpp: rosidl_generator_cpp/vision_interfaces/msg/part.hpp
+	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_cpp/vision_interfaces/action/calibrate_pcb_pose.hpp
+
+rosidl_generator_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__builder.hpp: rosidl_generator_cpp/vision_interfaces/msg/part.hpp
+	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__builder.hpp
+
+rosidl_generator_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__struct.hpp: rosidl_generator_cpp/vision_interfaces/msg/part.hpp
+	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__struct.hpp
+
+rosidl_generator_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__traits.hpp: rosidl_generator_cpp/vision_interfaces/msg/part.hpp
+	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__traits.hpp
+
+rosidl_generator_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.hpp: rosidl_generator_cpp/vision_interfaces/msg/part.hpp
+	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.hpp
+
 rosidl_generator_cpp/vision_interfaces/msg/rosidl_generator_cpp__visibility_control.hpp: rosidl_generator_cpp/vision_interfaces/msg/part.hpp
 	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_cpp/vision_interfaces/msg/rosidl_generator_cpp__visibility_control.hpp
 
 vision_interfaces__cpp: CMakeFiles/vision_interfaces__cpp
+vision_interfaces__cpp: rosidl_generator_cpp/vision_interfaces/action/calibrate_pcb_pose.hpp
+vision_interfaces__cpp: rosidl_generator_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__builder.hpp
+vision_interfaces__cpp: rosidl_generator_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__struct.hpp
+vision_interfaces__cpp: rosidl_generator_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__traits.hpp
+vision_interfaces__cpp: rosidl_generator_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.hpp
+vision_interfaces__cpp: rosidl_generator_cpp/vision_interfaces/action/detail/detect_tray_parts__builder.hpp
+vision_interfaces__cpp: rosidl_generator_cpp/vision_interfaces/action/detail/detect_tray_parts__struct.hpp
+vision_interfaces__cpp: rosidl_generator_cpp/vision_interfaces/action/detail/detect_tray_parts__traits.hpp
+vision_interfaces__cpp: rosidl_generator_cpp/vision_interfaces/action/detail/detect_tray_parts__type_support.hpp
+vision_interfaces__cpp: rosidl_generator_cpp/vision_interfaces/action/detect_tray_parts.hpp
 vision_interfaces__cpp: rosidl_generator_cpp/vision_interfaces/msg/detail/detections__builder.hpp
 vision_interfaces__cpp: rosidl_generator_cpp/vision_interfaces/msg/detail/detections__struct.hpp
 vision_interfaces__cpp: rosidl_generator_cpp/vision_interfaces/msg/detail/detections__traits.hpp

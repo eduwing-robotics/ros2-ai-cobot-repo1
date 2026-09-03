@@ -88,6 +88,8 @@ typedef struct fairino_msgs__msg__RobotNonrtState
   uint8_t safetyboxsig[6];
   uint8_t robot_motion_done;
   uint8_t grip_motion_done;
+  uint8_t gripper_position;
+  bool gripper_feedback_valid;
   uint8_t weldbreakoffstate;
   uint8_t weldarcstate;
   double welding_voltage;

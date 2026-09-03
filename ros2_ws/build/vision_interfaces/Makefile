@@ -250,32 +250,6 @@ vision_interfaces__rosidl_typesupport_fastrtps_c/fast:
 .PHONY : vision_interfaces__rosidl_typesupport_fastrtps_c/fast
 
 #=============================================================================
-# Target rules for targets named vision_interfaces__rosidl_typesupport_introspection_c
-
-# Build rule for target.
-vision_interfaces__rosidl_typesupport_introspection_c: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 vision_interfaces__rosidl_typesupport_introspection_c
-.PHONY : vision_interfaces__rosidl_typesupport_introspection_c
-
-# fast build rule for target.
-vision_interfaces__rosidl_typesupport_introspection_c/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_introspection_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_introspection_c.dir/build
-.PHONY : vision_interfaces__rosidl_typesupport_introspection_c/fast
-
-#=============================================================================
-# Target rules for targets named vision_interfaces__rosidl_typesupport_c
-
-# Build rule for target.
-vision_interfaces__rosidl_typesupport_c: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 vision_interfaces__rosidl_typesupport_c
-.PHONY : vision_interfaces__rosidl_typesupport_c
-
-# fast build rule for target.
-vision_interfaces__rosidl_typesupport_c/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_c.dir/build
-.PHONY : vision_interfaces__rosidl_typesupport_c/fast
-
-#=============================================================================
 # Target rules for targets named vision_interfaces__cpp
 
 # Build rule for target.
@@ -300,6 +274,32 @@ vision_interfaces__rosidl_typesupport_fastrtps_cpp: cmake_check_build_system
 vision_interfaces__rosidl_typesupport_fastrtps_cpp/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_fastrtps_cpp.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_fastrtps_cpp.dir/build
 .PHONY : vision_interfaces__rosidl_typesupport_fastrtps_cpp/fast
+
+#=============================================================================
+# Target rules for targets named vision_interfaces__rosidl_typesupport_introspection_c
+
+# Build rule for target.
+vision_interfaces__rosidl_typesupport_introspection_c: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 vision_interfaces__rosidl_typesupport_introspection_c
+.PHONY : vision_interfaces__rosidl_typesupport_introspection_c
+
+# fast build rule for target.
+vision_interfaces__rosidl_typesupport_introspection_c/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_introspection_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_introspection_c.dir/build
+.PHONY : vision_interfaces__rosidl_typesupport_introspection_c/fast
+
+#=============================================================================
+# Target rules for targets named vision_interfaces__rosidl_typesupport_c
+
+# Build rule for target.
+vision_interfaces__rosidl_typesupport_c: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 vision_interfaces__rosidl_typesupport_c
+.PHONY : vision_interfaces__rosidl_typesupport_c
+
+# fast build rule for target.
+vision_interfaces__rosidl_typesupport_c/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_c.dir/build
+.PHONY : vision_interfaces__rosidl_typesupport_c/fast
 
 #=============================================================================
 # Target rules for targets named vision_interfaces__rosidl_typesupport_introspection_cpp
@@ -430,6 +430,150 @@ vision_interfaces__rs: cmake_check_build_system
 vision_interfaces__rs/fast:
 	$(MAKE) $(MAKESILENT) -f /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/vision_interfaces__rs/CMakeFiles/vision_interfaces__rs.dir/build.make /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/vision_interfaces__rs/CMakeFiles/vision_interfaces__rs.dir/build
 .PHONY : vision_interfaces__rs/fast
+
+rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.o: rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.c.o
+.PHONY : rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.o
+
+# target to build an object file
+rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_generator_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.c.o
+.PHONY : rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.c.o
+
+rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.i: rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.c.i
+.PHONY : rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.i
+
+# target to preprocess a source file
+rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_generator_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.c.i
+.PHONY : rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.c.i
+
+rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.s: rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.c.s
+.PHONY : rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.s
+
+# target to generate assembly for a file
+rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_generator_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.c.s
+.PHONY : rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.c.s
+
+rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.o: rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.c.o
+.PHONY : rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.o
+
+# target to build an object file
+rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_generator_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.c.o
+.PHONY : rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.c.o
+
+rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.i: rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.c.i
+.PHONY : rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.i
+
+# target to preprocess a source file
+rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_generator_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.c.i
+.PHONY : rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.c.i
+
+rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.s: rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.c.s
+.PHONY : rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.s
+
+# target to generate assembly for a file
+rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_generator_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.c.s
+.PHONY : rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.c.s
+
+rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.o: rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.o
+.PHONY : rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.o
+
+# target to build an object file
+rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_generator_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.o
+.PHONY : rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.o
+
+rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.i: rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.i
+.PHONY : rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.i
+
+# target to preprocess a source file
+rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_generator_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.i
+.PHONY : rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.i
+
+rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.s: rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.s
+.PHONY : rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.s
+
+# target to generate assembly for a file
+rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_generator_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.s
+.PHONY : rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.s
+
+rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.o: rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.c.o
+.PHONY : rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.o
+
+# target to build an object file
+rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_generator_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.c.o
+.PHONY : rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.c.o
+
+rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.i: rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.c.i
+.PHONY : rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.i
+
+# target to preprocess a source file
+rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_generator_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.c.i
+.PHONY : rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.c.i
+
+rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.s: rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.c.s
+.PHONY : rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.s
+
+# target to generate assembly for a file
+rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_generator_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.c.s
+.PHONY : rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.c.s
+
+rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.o: rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.c.o
+.PHONY : rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.o
+
+# target to build an object file
+rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_generator_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.c.o
+.PHONY : rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.c.o
+
+rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.i: rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.c.i
+.PHONY : rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.i
+
+# target to preprocess a source file
+rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_generator_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.c.i
+.PHONY : rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.c.i
+
+rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.s: rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.c.s
+.PHONY : rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.s
+
+# target to generate assembly for a file
+rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_generator_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.c.s
+.PHONY : rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.c.s
+
+rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.o: rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.o
+.PHONY : rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.o
+
+# target to build an object file
+rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_generator_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.o
+.PHONY : rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.o
+
+rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.i: rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.i
+.PHONY : rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.i
+
+# target to preprocess a source file
+rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_generator_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.i
+.PHONY : rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.i
+
+rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.s: rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.s
+.PHONY : rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.s
+
+# target to generate assembly for a file
+rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_generator_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_generator_c.dir/rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.s
+.PHONY : rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.s
 
 rosidl_generator_c/vision_interfaces/msg/detail/detections__description.o: rosidl_generator_c/vision_interfaces/msg/detail/detections__description.c.o
 .PHONY : rosidl_generator_c/vision_interfaces/msg/detail/detections__description.o
@@ -791,6 +935,54 @@ rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces_s__rosidl_typesupport_introspection_c.dir/build.make CMakeFiles/vision_interfaces_s__rosidl_typesupport_introspection_c.dir/rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_introspection_c.c.s
 .PHONY : rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_introspection_c.c.s
 
+rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.o: rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.c.o
+.PHONY : rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.o
+
+# target to build an object file
+rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_generator_py.dir/build.make CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.c.o
+.PHONY : rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.c.o
+
+rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.i: rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.c.i
+.PHONY : rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.i
+
+# target to preprocess a source file
+rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_generator_py.dir/build.make CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.c.i
+.PHONY : rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.c.i
+
+rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.s: rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.c.s
+.PHONY : rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.s
+
+# target to generate assembly for a file
+rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_generator_py.dir/build.make CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.c.s
+.PHONY : rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.c.s
+
+rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.o: rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.c.o
+.PHONY : rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.o
+
+# target to build an object file
+rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_generator_py.dir/build.make CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.c.o
+.PHONY : rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.c.o
+
+rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.i: rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.c.i
+.PHONY : rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.i
+
+# target to preprocess a source file
+rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_generator_py.dir/build.make CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.c.i
+.PHONY : rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.c.i
+
+rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.s: rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.c.s
+.PHONY : rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.s
+
+# target to generate assembly for a file
+rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_generator_py.dir/build.make CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.c.s
+.PHONY : rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.c.s
+
 rosidl_generator_py/vision_interfaces/msg/_detections_s.o: rosidl_generator_py/vision_interfaces/msg/_detections_s.c.o
 .PHONY : rosidl_generator_py/vision_interfaces/msg/_detections_s.o
 
@@ -886,6 +1078,54 @@ rosidl_generator_py/vision_interfaces/msg/_vision_status_s.s: rosidl_generator_p
 rosidl_generator_py/vision_interfaces/msg/_vision_status_s.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_generator_py.dir/build.make CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/msg/_vision_status_s.c.s
 .PHONY : rosidl_generator_py/vision_interfaces/msg/_vision_status_s.c.s
+
+rosidl_typesupport_c/vision_interfaces/action/calibrate_pcb_pose__type_support.o: rosidl_typesupport_c/vision_interfaces/action/calibrate_pcb_pose__type_support.cpp.o
+.PHONY : rosidl_typesupport_c/vision_interfaces/action/calibrate_pcb_pose__type_support.o
+
+# target to build an object file
+rosidl_typesupport_c/vision_interfaces/action/calibrate_pcb_pose__type_support.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/vision_interfaces/action/calibrate_pcb_pose__type_support.cpp.o
+.PHONY : rosidl_typesupport_c/vision_interfaces/action/calibrate_pcb_pose__type_support.cpp.o
+
+rosidl_typesupport_c/vision_interfaces/action/calibrate_pcb_pose__type_support.i: rosidl_typesupport_c/vision_interfaces/action/calibrate_pcb_pose__type_support.cpp.i
+.PHONY : rosidl_typesupport_c/vision_interfaces/action/calibrate_pcb_pose__type_support.i
+
+# target to preprocess a source file
+rosidl_typesupport_c/vision_interfaces/action/calibrate_pcb_pose__type_support.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/vision_interfaces/action/calibrate_pcb_pose__type_support.cpp.i
+.PHONY : rosidl_typesupport_c/vision_interfaces/action/calibrate_pcb_pose__type_support.cpp.i
+
+rosidl_typesupport_c/vision_interfaces/action/calibrate_pcb_pose__type_support.s: rosidl_typesupport_c/vision_interfaces/action/calibrate_pcb_pose__type_support.cpp.s
+.PHONY : rosidl_typesupport_c/vision_interfaces/action/calibrate_pcb_pose__type_support.s
+
+# target to generate assembly for a file
+rosidl_typesupport_c/vision_interfaces/action/calibrate_pcb_pose__type_support.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/vision_interfaces/action/calibrate_pcb_pose__type_support.cpp.s
+.PHONY : rosidl_typesupport_c/vision_interfaces/action/calibrate_pcb_pose__type_support.cpp.s
+
+rosidl_typesupport_c/vision_interfaces/action/detect_tray_parts__type_support.o: rosidl_typesupport_c/vision_interfaces/action/detect_tray_parts__type_support.cpp.o
+.PHONY : rosidl_typesupport_c/vision_interfaces/action/detect_tray_parts__type_support.o
+
+# target to build an object file
+rosidl_typesupport_c/vision_interfaces/action/detect_tray_parts__type_support.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/vision_interfaces/action/detect_tray_parts__type_support.cpp.o
+.PHONY : rosidl_typesupport_c/vision_interfaces/action/detect_tray_parts__type_support.cpp.o
+
+rosidl_typesupport_c/vision_interfaces/action/detect_tray_parts__type_support.i: rosidl_typesupport_c/vision_interfaces/action/detect_tray_parts__type_support.cpp.i
+.PHONY : rosidl_typesupport_c/vision_interfaces/action/detect_tray_parts__type_support.i
+
+# target to preprocess a source file
+rosidl_typesupport_c/vision_interfaces/action/detect_tray_parts__type_support.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/vision_interfaces/action/detect_tray_parts__type_support.cpp.i
+.PHONY : rosidl_typesupport_c/vision_interfaces/action/detect_tray_parts__type_support.cpp.i
+
+rosidl_typesupport_c/vision_interfaces/action/detect_tray_parts__type_support.s: rosidl_typesupport_c/vision_interfaces/action/detect_tray_parts__type_support.cpp.s
+.PHONY : rosidl_typesupport_c/vision_interfaces/action/detect_tray_parts__type_support.s
+
+# target to generate assembly for a file
+rosidl_typesupport_c/vision_interfaces/action/detect_tray_parts__type_support.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/vision_interfaces/action/detect_tray_parts__type_support.cpp.s
+.PHONY : rosidl_typesupport_c/vision_interfaces/action/detect_tray_parts__type_support.cpp.s
 
 rosidl_typesupport_c/vision_interfaces/msg/detections__type_support.o: rosidl_typesupport_c/vision_interfaces/msg/detections__type_support.cpp.o
 .PHONY : rosidl_typesupport_c/vision_interfaces/msg/detections__type_support.o
@@ -983,6 +1223,54 @@ rosidl_typesupport_c/vision_interfaces/msg/vision_status__type_support.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/vision_interfaces/msg/vision_status__type_support.cpp.s
 .PHONY : rosidl_typesupport_c/vision_interfaces/msg/vision_status__type_support.cpp.s
 
+rosidl_typesupport_cpp/vision_interfaces/action/calibrate_pcb_pose__type_support.o: rosidl_typesupport_cpp/vision_interfaces/action/calibrate_pcb_pose__type_support.cpp.o
+.PHONY : rosidl_typesupport_cpp/vision_interfaces/action/calibrate_pcb_pose__type_support.o
+
+# target to build an object file
+rosidl_typesupport_cpp/vision_interfaces/action/calibrate_pcb_pose__type_support.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_cpp.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/vision_interfaces/action/calibrate_pcb_pose__type_support.cpp.o
+.PHONY : rosidl_typesupport_cpp/vision_interfaces/action/calibrate_pcb_pose__type_support.cpp.o
+
+rosidl_typesupport_cpp/vision_interfaces/action/calibrate_pcb_pose__type_support.i: rosidl_typesupport_cpp/vision_interfaces/action/calibrate_pcb_pose__type_support.cpp.i
+.PHONY : rosidl_typesupport_cpp/vision_interfaces/action/calibrate_pcb_pose__type_support.i
+
+# target to preprocess a source file
+rosidl_typesupport_cpp/vision_interfaces/action/calibrate_pcb_pose__type_support.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_cpp.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/vision_interfaces/action/calibrate_pcb_pose__type_support.cpp.i
+.PHONY : rosidl_typesupport_cpp/vision_interfaces/action/calibrate_pcb_pose__type_support.cpp.i
+
+rosidl_typesupport_cpp/vision_interfaces/action/calibrate_pcb_pose__type_support.s: rosidl_typesupport_cpp/vision_interfaces/action/calibrate_pcb_pose__type_support.cpp.s
+.PHONY : rosidl_typesupport_cpp/vision_interfaces/action/calibrate_pcb_pose__type_support.s
+
+# target to generate assembly for a file
+rosidl_typesupport_cpp/vision_interfaces/action/calibrate_pcb_pose__type_support.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_cpp.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/vision_interfaces/action/calibrate_pcb_pose__type_support.cpp.s
+.PHONY : rosidl_typesupport_cpp/vision_interfaces/action/calibrate_pcb_pose__type_support.cpp.s
+
+rosidl_typesupport_cpp/vision_interfaces/action/detect_tray_parts__type_support.o: rosidl_typesupport_cpp/vision_interfaces/action/detect_tray_parts__type_support.cpp.o
+.PHONY : rosidl_typesupport_cpp/vision_interfaces/action/detect_tray_parts__type_support.o
+
+# target to build an object file
+rosidl_typesupport_cpp/vision_interfaces/action/detect_tray_parts__type_support.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_cpp.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/vision_interfaces/action/detect_tray_parts__type_support.cpp.o
+.PHONY : rosidl_typesupport_cpp/vision_interfaces/action/detect_tray_parts__type_support.cpp.o
+
+rosidl_typesupport_cpp/vision_interfaces/action/detect_tray_parts__type_support.i: rosidl_typesupport_cpp/vision_interfaces/action/detect_tray_parts__type_support.cpp.i
+.PHONY : rosidl_typesupport_cpp/vision_interfaces/action/detect_tray_parts__type_support.i
+
+# target to preprocess a source file
+rosidl_typesupport_cpp/vision_interfaces/action/detect_tray_parts__type_support.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_cpp.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/vision_interfaces/action/detect_tray_parts__type_support.cpp.i
+.PHONY : rosidl_typesupport_cpp/vision_interfaces/action/detect_tray_parts__type_support.cpp.i
+
+rosidl_typesupport_cpp/vision_interfaces/action/detect_tray_parts__type_support.s: rosidl_typesupport_cpp/vision_interfaces/action/detect_tray_parts__type_support.cpp.s
+.PHONY : rosidl_typesupport_cpp/vision_interfaces/action/detect_tray_parts__type_support.s
+
+# target to generate assembly for a file
+rosidl_typesupport_cpp/vision_interfaces/action/detect_tray_parts__type_support.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_cpp.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/vision_interfaces/action/detect_tray_parts__type_support.cpp.s
+.PHONY : rosidl_typesupport_cpp/vision_interfaces/action/detect_tray_parts__type_support.cpp.s
+
 rosidl_typesupport_cpp/vision_interfaces/msg/detections__type_support.o: rosidl_typesupport_cpp/vision_interfaces/msg/detections__type_support.cpp.o
 .PHONY : rosidl_typesupport_cpp/vision_interfaces/msg/detections__type_support.o
 
@@ -1078,6 +1366,54 @@ rosidl_typesupport_cpp/vision_interfaces/msg/vision_status__type_support.s: rosi
 rosidl_typesupport_cpp/vision_interfaces/msg/vision_status__type_support.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_cpp.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/vision_interfaces/msg/vision_status__type_support.cpp.s
 .PHONY : rosidl_typesupport_cpp/vision_interfaces/msg/vision_status__type_support.cpp.s
+
+rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support_c.o: rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support_c.cpp.o
+.PHONY : rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support_c.o
+
+# target to build an object file
+rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support_c.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_fastrtps_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support_c.cpp.o
+.PHONY : rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support_c.cpp.o
+
+rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support_c.i: rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support_c.cpp.i
+.PHONY : rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support_c.i
+
+# target to preprocess a source file
+rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support_c.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_fastrtps_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support_c.cpp.i
+.PHONY : rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support_c.cpp.i
+
+rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support_c.s: rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support_c.cpp.s
+.PHONY : rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support_c.s
+
+# target to generate assembly for a file
+rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support_c.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_fastrtps_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support_c.cpp.s
+.PHONY : rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support_c.cpp.s
+
+rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/detect_tray_parts__type_support_c.o: rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/detect_tray_parts__type_support_c.cpp.o
+.PHONY : rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/detect_tray_parts__type_support_c.o
+
+# target to build an object file
+rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/detect_tray_parts__type_support_c.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_fastrtps_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/detect_tray_parts__type_support_c.cpp.o
+.PHONY : rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/detect_tray_parts__type_support_c.cpp.o
+
+rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/detect_tray_parts__type_support_c.i: rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/detect_tray_parts__type_support_c.cpp.i
+.PHONY : rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/detect_tray_parts__type_support_c.i
+
+# target to preprocess a source file
+rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/detect_tray_parts__type_support_c.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_fastrtps_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/detect_tray_parts__type_support_c.cpp.i
+.PHONY : rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/detect_tray_parts__type_support_c.cpp.i
+
+rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/detect_tray_parts__type_support_c.s: rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/detect_tray_parts__type_support_c.cpp.s
+.PHONY : rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/detect_tray_parts__type_support_c.s
+
+# target to generate assembly for a file
+rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/detect_tray_parts__type_support_c.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_fastrtps_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/detect_tray_parts__type_support_c.cpp.s
+.PHONY : rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/detect_tray_parts__type_support_c.cpp.s
 
 rosidl_typesupport_fastrtps_c/vision_interfaces/msg/detail/detections__type_support_c.o: rosidl_typesupport_fastrtps_c/vision_interfaces/msg/detail/detections__type_support_c.cpp.o
 .PHONY : rosidl_typesupport_fastrtps_c/vision_interfaces/msg/detail/detections__type_support_c.o
@@ -1175,6 +1511,54 @@ rosidl_typesupport_fastrtps_c/vision_interfaces/msg/detail/vision_status__type_s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_fastrtps_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/vision_interfaces/msg/detail/vision_status__type_support_c.cpp.s
 .PHONY : rosidl_typesupport_fastrtps_c/vision_interfaces/msg/detail/vision_status__type_support_c.cpp.s
 
+rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/calibrate_pcb_pose__type_support.o: rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/calibrate_pcb_pose__type_support.cpp.o
+.PHONY : rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/calibrate_pcb_pose__type_support.o
+
+# target to build an object file
+rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/calibrate_pcb_pose__type_support.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_fastrtps_cpp.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/calibrate_pcb_pose__type_support.cpp.o
+.PHONY : rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/calibrate_pcb_pose__type_support.cpp.o
+
+rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/calibrate_pcb_pose__type_support.i: rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/calibrate_pcb_pose__type_support.cpp.i
+.PHONY : rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/calibrate_pcb_pose__type_support.i
+
+# target to preprocess a source file
+rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/calibrate_pcb_pose__type_support.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_fastrtps_cpp.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/calibrate_pcb_pose__type_support.cpp.i
+.PHONY : rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/calibrate_pcb_pose__type_support.cpp.i
+
+rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/calibrate_pcb_pose__type_support.s: rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/calibrate_pcb_pose__type_support.cpp.s
+.PHONY : rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/calibrate_pcb_pose__type_support.s
+
+# target to generate assembly for a file
+rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/calibrate_pcb_pose__type_support.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_fastrtps_cpp.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/calibrate_pcb_pose__type_support.cpp.s
+.PHONY : rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/calibrate_pcb_pose__type_support.cpp.s
+
+rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/detect_tray_parts__type_support.o: rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/detect_tray_parts__type_support.cpp.o
+.PHONY : rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/detect_tray_parts__type_support.o
+
+# target to build an object file
+rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/detect_tray_parts__type_support.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_fastrtps_cpp.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/detect_tray_parts__type_support.cpp.o
+.PHONY : rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/detect_tray_parts__type_support.cpp.o
+
+rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/detect_tray_parts__type_support.i: rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/detect_tray_parts__type_support.cpp.i
+.PHONY : rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/detect_tray_parts__type_support.i
+
+# target to preprocess a source file
+rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/detect_tray_parts__type_support.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_fastrtps_cpp.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/detect_tray_parts__type_support.cpp.i
+.PHONY : rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/detect_tray_parts__type_support.cpp.i
+
+rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/detect_tray_parts__type_support.s: rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/detect_tray_parts__type_support.cpp.s
+.PHONY : rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/detect_tray_parts__type_support.s
+
+# target to generate assembly for a file
+rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/detect_tray_parts__type_support.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_fastrtps_cpp.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/detect_tray_parts__type_support.cpp.s
+.PHONY : rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/detect_tray_parts__type_support.cpp.s
+
 rosidl_typesupport_fastrtps_cpp/vision_interfaces/msg/detail/dds_fastrtps/detections__type_support.o: rosidl_typesupport_fastrtps_cpp/vision_interfaces/msg/detail/dds_fastrtps/detections__type_support.cpp.o
 .PHONY : rosidl_typesupport_fastrtps_cpp/vision_interfaces/msg/detail/dds_fastrtps/detections__type_support.o
 
@@ -1271,6 +1655,54 @@ rosidl_typesupport_fastrtps_cpp/vision_interfaces/msg/detail/dds_fastrtps/vision
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_fastrtps_cpp.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/vision_interfaces/msg/detail/dds_fastrtps/vision_status__type_support.cpp.s
 .PHONY : rosidl_typesupport_fastrtps_cpp/vision_interfaces/msg/detail/dds_fastrtps/vision_status__type_support.cpp.s
 
+rosidl_typesupport_introspection_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.o: rosidl_typesupport_introspection_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.o
+.PHONY : rosidl_typesupport_introspection_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.o
+
+# target to build an object file
+rosidl_typesupport_introspection_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_introspection_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.o
+.PHONY : rosidl_typesupport_introspection_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.o
+
+rosidl_typesupport_introspection_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.i: rosidl_typesupport_introspection_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.i
+.PHONY : rosidl_typesupport_introspection_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.i
+
+# target to preprocess a source file
+rosidl_typesupport_introspection_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_introspection_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.i
+.PHONY : rosidl_typesupport_introspection_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.i
+
+rosidl_typesupport_introspection_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.s: rosidl_typesupport_introspection_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.s
+.PHONY : rosidl_typesupport_introspection_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.s
+
+# target to generate assembly for a file
+rosidl_typesupport_introspection_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_introspection_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.s
+.PHONY : rosidl_typesupport_introspection_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.c.s
+
+rosidl_typesupport_introspection_c/vision_interfaces/action/detail/detect_tray_parts__type_support.o: rosidl_typesupport_introspection_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.o
+.PHONY : rosidl_typesupport_introspection_c/vision_interfaces/action/detail/detect_tray_parts__type_support.o
+
+# target to build an object file
+rosidl_typesupport_introspection_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_introspection_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.o
+.PHONY : rosidl_typesupport_introspection_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.o
+
+rosidl_typesupport_introspection_c/vision_interfaces/action/detail/detect_tray_parts__type_support.i: rosidl_typesupport_introspection_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.i
+.PHONY : rosidl_typesupport_introspection_c/vision_interfaces/action/detail/detect_tray_parts__type_support.i
+
+# target to preprocess a source file
+rosidl_typesupport_introspection_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_introspection_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.i
+.PHONY : rosidl_typesupport_introspection_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.i
+
+rosidl_typesupport_introspection_c/vision_interfaces/action/detail/detect_tray_parts__type_support.s: rosidl_typesupport_introspection_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.s
+.PHONY : rosidl_typesupport_introspection_c/vision_interfaces/action/detail/detect_tray_parts__type_support.s
+
+# target to generate assembly for a file
+rosidl_typesupport_introspection_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_introspection_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.s
+.PHONY : rosidl_typesupport_introspection_c/vision_interfaces/action/detail/detect_tray_parts__type_support.c.s
+
 rosidl_typesupport_introspection_c/vision_interfaces/msg/detail/detections__type_support.o: rosidl_typesupport_introspection_c/vision_interfaces/msg/detail/detections__type_support.c.o
 .PHONY : rosidl_typesupport_introspection_c/vision_interfaces/msg/detail/detections__type_support.o
 
@@ -1366,6 +1798,54 @@ rosidl_typesupport_introspection_c/vision_interfaces/msg/detail/vision_status__t
 rosidl_typesupport_introspection_c/vision_interfaces/msg/detail/vision_status__type_support.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_introspection_c.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/vision_interfaces/msg/detail/vision_status__type_support.c.s
 .PHONY : rosidl_typesupport_introspection_c/vision_interfaces/msg/detail/vision_status__type_support.c.s
+
+rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.o: rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.cpp.o
+.PHONY : rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.o
+
+# target to build an object file
+rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_introspection_cpp.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.cpp.o
+.PHONY : rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.cpp.o
+
+rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.i: rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.cpp.i
+.PHONY : rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.i
+
+# target to preprocess a source file
+rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_introspection_cpp.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.cpp.i
+.PHONY : rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.cpp.i
+
+rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.s: rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.cpp.s
+.PHONY : rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.s
+
+# target to generate assembly for a file
+rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_introspection_cpp.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.cpp.s
+.PHONY : rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.cpp.s
+
+rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/detect_tray_parts__type_support.o: rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/detect_tray_parts__type_support.cpp.o
+.PHONY : rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/detect_tray_parts__type_support.o
+
+# target to build an object file
+rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/detect_tray_parts__type_support.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_introspection_cpp.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/detect_tray_parts__type_support.cpp.o
+.PHONY : rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/detect_tray_parts__type_support.cpp.o
+
+rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/detect_tray_parts__type_support.i: rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/detect_tray_parts__type_support.cpp.i
+.PHONY : rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/detect_tray_parts__type_support.i
+
+# target to preprocess a source file
+rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/detect_tray_parts__type_support.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_introspection_cpp.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/detect_tray_parts__type_support.cpp.i
+.PHONY : rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/detect_tray_parts__type_support.cpp.i
+
+rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/detect_tray_parts__type_support.s: rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/detect_tray_parts__type_support.cpp.s
+.PHONY : rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/detect_tray_parts__type_support.s
+
+# target to generate assembly for a file
+rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/detect_tray_parts__type_support.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vision_interfaces__rosidl_typesupport_introspection_cpp.dir/build.make CMakeFiles/vision_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/detect_tray_parts__type_support.cpp.s
+.PHONY : rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/detect_tray_parts__type_support.cpp.s
 
 rosidl_typesupport_introspection_cpp/vision_interfaces/msg/detail/detections__type_support.o: rosidl_typesupport_introspection_cpp/vision_interfaces/msg/detail/detections__type_support.cpp.o
 .PHONY : rosidl_typesupport_introspection_cpp/vision_interfaces/msg/detail/detections__type_support.o
@@ -1496,6 +1976,24 @@ help:
 	@echo "... vision_interfaces_s__rosidl_typesupport_c"
 	@echo "... vision_interfaces_s__rosidl_typesupport_fastrtps_c"
 	@echo "... vision_interfaces_s__rosidl_typesupport_introspection_c"
+	@echo "... rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.o"
+	@echo "... rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.i"
+	@echo "... rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__description.s"
+	@echo "... rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.o"
+	@echo "... rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.i"
+	@echo "... rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__functions.s"
+	@echo "... rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.o"
+	@echo "... rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.i"
+	@echo "... rosidl_generator_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.s"
+	@echo "... rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.o"
+	@echo "... rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.i"
+	@echo "... rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__description.s"
+	@echo "... rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.o"
+	@echo "... rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.i"
+	@echo "... rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__functions.s"
+	@echo "... rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.o"
+	@echo "... rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.i"
+	@echo "... rosidl_generator_c/vision_interfaces/action/detail/detect_tray_parts__type_support.s"
 	@echo "... rosidl_generator_c/vision_interfaces/msg/detail/detections__description.o"
 	@echo "... rosidl_generator_c/vision_interfaces/msg/detail/detections__description.i"
 	@echo "... rosidl_generator_c/vision_interfaces/msg/detail/detections__description.s"
@@ -1541,6 +2039,12 @@ help:
 	@echo "... rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_introspection_c.o"
 	@echo "... rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_introspection_c.i"
 	@echo "... rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_introspection_c.s"
+	@echo "... rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.o"
+	@echo "... rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.i"
+	@echo "... rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.s"
+	@echo "... rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.o"
+	@echo "... rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.i"
+	@echo "... rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.s"
 	@echo "... rosidl_generator_py/vision_interfaces/msg/_detections_s.o"
 	@echo "... rosidl_generator_py/vision_interfaces/msg/_detections_s.i"
 	@echo "... rosidl_generator_py/vision_interfaces/msg/_detections_s.s"
@@ -1553,6 +2057,12 @@ help:
 	@echo "... rosidl_generator_py/vision_interfaces/msg/_vision_status_s.o"
 	@echo "... rosidl_generator_py/vision_interfaces/msg/_vision_status_s.i"
 	@echo "... rosidl_generator_py/vision_interfaces/msg/_vision_status_s.s"
+	@echo "... rosidl_typesupport_c/vision_interfaces/action/calibrate_pcb_pose__type_support.o"
+	@echo "... rosidl_typesupport_c/vision_interfaces/action/calibrate_pcb_pose__type_support.i"
+	@echo "... rosidl_typesupport_c/vision_interfaces/action/calibrate_pcb_pose__type_support.s"
+	@echo "... rosidl_typesupport_c/vision_interfaces/action/detect_tray_parts__type_support.o"
+	@echo "... rosidl_typesupport_c/vision_interfaces/action/detect_tray_parts__type_support.i"
+	@echo "... rosidl_typesupport_c/vision_interfaces/action/detect_tray_parts__type_support.s"
 	@echo "... rosidl_typesupport_c/vision_interfaces/msg/detections__type_support.o"
 	@echo "... rosidl_typesupport_c/vision_interfaces/msg/detections__type_support.i"
 	@echo "... rosidl_typesupport_c/vision_interfaces/msg/detections__type_support.s"
@@ -1565,6 +2075,12 @@ help:
 	@echo "... rosidl_typesupport_c/vision_interfaces/msg/vision_status__type_support.o"
 	@echo "... rosidl_typesupport_c/vision_interfaces/msg/vision_status__type_support.i"
 	@echo "... rosidl_typesupport_c/vision_interfaces/msg/vision_status__type_support.s"
+	@echo "... rosidl_typesupport_cpp/vision_interfaces/action/calibrate_pcb_pose__type_support.o"
+	@echo "... rosidl_typesupport_cpp/vision_interfaces/action/calibrate_pcb_pose__type_support.i"
+	@echo "... rosidl_typesupport_cpp/vision_interfaces/action/calibrate_pcb_pose__type_support.s"
+	@echo "... rosidl_typesupport_cpp/vision_interfaces/action/detect_tray_parts__type_support.o"
+	@echo "... rosidl_typesupport_cpp/vision_interfaces/action/detect_tray_parts__type_support.i"
+	@echo "... rosidl_typesupport_cpp/vision_interfaces/action/detect_tray_parts__type_support.s"
 	@echo "... rosidl_typesupport_cpp/vision_interfaces/msg/detections__type_support.o"
 	@echo "... rosidl_typesupport_cpp/vision_interfaces/msg/detections__type_support.i"
 	@echo "... rosidl_typesupport_cpp/vision_interfaces/msg/detections__type_support.s"
@@ -1577,6 +2093,12 @@ help:
 	@echo "... rosidl_typesupport_cpp/vision_interfaces/msg/vision_status__type_support.o"
 	@echo "... rosidl_typesupport_cpp/vision_interfaces/msg/vision_status__type_support.i"
 	@echo "... rosidl_typesupport_cpp/vision_interfaces/msg/vision_status__type_support.s"
+	@echo "... rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support_c.o"
+	@echo "... rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support_c.i"
+	@echo "... rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support_c.s"
+	@echo "... rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/detect_tray_parts__type_support_c.o"
+	@echo "... rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/detect_tray_parts__type_support_c.i"
+	@echo "... rosidl_typesupport_fastrtps_c/vision_interfaces/action/detail/detect_tray_parts__type_support_c.s"
 	@echo "... rosidl_typesupport_fastrtps_c/vision_interfaces/msg/detail/detections__type_support_c.o"
 	@echo "... rosidl_typesupport_fastrtps_c/vision_interfaces/msg/detail/detections__type_support_c.i"
 	@echo "... rosidl_typesupport_fastrtps_c/vision_interfaces/msg/detail/detections__type_support_c.s"
@@ -1589,6 +2111,12 @@ help:
 	@echo "... rosidl_typesupport_fastrtps_c/vision_interfaces/msg/detail/vision_status__type_support_c.o"
 	@echo "... rosidl_typesupport_fastrtps_c/vision_interfaces/msg/detail/vision_status__type_support_c.i"
 	@echo "... rosidl_typesupport_fastrtps_c/vision_interfaces/msg/detail/vision_status__type_support_c.s"
+	@echo "... rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/calibrate_pcb_pose__type_support.o"
+	@echo "... rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/calibrate_pcb_pose__type_support.i"
+	@echo "... rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/calibrate_pcb_pose__type_support.s"
+	@echo "... rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/detect_tray_parts__type_support.o"
+	@echo "... rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/detect_tray_parts__type_support.i"
+	@echo "... rosidl_typesupport_fastrtps_cpp/vision_interfaces/action/detail/dds_fastrtps/detect_tray_parts__type_support.s"
 	@echo "... rosidl_typesupport_fastrtps_cpp/vision_interfaces/msg/detail/dds_fastrtps/detections__type_support.o"
 	@echo "... rosidl_typesupport_fastrtps_cpp/vision_interfaces/msg/detail/dds_fastrtps/detections__type_support.i"
 	@echo "... rosidl_typesupport_fastrtps_cpp/vision_interfaces/msg/detail/dds_fastrtps/detections__type_support.s"
@@ -1601,6 +2129,12 @@ help:
 	@echo "... rosidl_typesupport_fastrtps_cpp/vision_interfaces/msg/detail/dds_fastrtps/vision_status__type_support.o"
 	@echo "... rosidl_typesupport_fastrtps_cpp/vision_interfaces/msg/detail/dds_fastrtps/vision_status__type_support.i"
 	@echo "... rosidl_typesupport_fastrtps_cpp/vision_interfaces/msg/detail/dds_fastrtps/vision_status__type_support.s"
+	@echo "... rosidl_typesupport_introspection_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.o"
+	@echo "... rosidl_typesupport_introspection_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.i"
+	@echo "... rosidl_typesupport_introspection_c/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.s"
+	@echo "... rosidl_typesupport_introspection_c/vision_interfaces/action/detail/detect_tray_parts__type_support.o"
+	@echo "... rosidl_typesupport_introspection_c/vision_interfaces/action/detail/detect_tray_parts__type_support.i"
+	@echo "... rosidl_typesupport_introspection_c/vision_interfaces/action/detail/detect_tray_parts__type_support.s"
 	@echo "... rosidl_typesupport_introspection_c/vision_interfaces/msg/detail/detections__type_support.o"
 	@echo "... rosidl_typesupport_introspection_c/vision_interfaces/msg/detail/detections__type_support.i"
 	@echo "... rosidl_typesupport_introspection_c/vision_interfaces/msg/detail/detections__type_support.s"
@@ -1613,6 +2147,12 @@ help:
 	@echo "... rosidl_typesupport_introspection_c/vision_interfaces/msg/detail/vision_status__type_support.o"
 	@echo "... rosidl_typesupport_introspection_c/vision_interfaces/msg/detail/vision_status__type_support.i"
 	@echo "... rosidl_typesupport_introspection_c/vision_interfaces/msg/detail/vision_status__type_support.s"
+	@echo "... rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.o"
+	@echo "... rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.i"
+	@echo "... rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/calibrate_pcb_pose__type_support.s"
+	@echo "... rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/detect_tray_parts__type_support.o"
+	@echo "... rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/detect_tray_parts__type_support.i"
+	@echo "... rosidl_typesupport_introspection_cpp/vision_interfaces/action/detail/detect_tray_parts__type_support.s"
 	@echo "... rosidl_typesupport_introspection_cpp/vision_interfaces/msg/detail/detections__type_support.o"
 	@echo "... rosidl_typesupport_introspection_cpp/vision_interfaces/msg/detail/detections__type_support.i"
 	@echo "... rosidl_typesupport_introspection_cpp/vision_interfaces/msg/detail/detections__type_support.s"

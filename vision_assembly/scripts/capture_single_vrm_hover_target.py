@@ -48,6 +48,7 @@ def main():
     p.add_argument("--max-position-span-mm",type=float,default=2.0)
     p.add_argument("--max-angle-span-deg",type=float,default=8.0)
     p.add_argument("--min-confidence",type=float,default=.70)
+    p.add_argument("--allow-single-gpu-as-instance-1",action="store_true")
     a=p.parse_args()
     if (a.expected_base_x_mm is None)!=(a.expected_base_y_mm is None):
         p.error("--expected-base-x-mm and --expected-base-y-mm must be provided together")
@@ -78,18 +79,22 @@ def main():
                 if len(instant)!=1 or len(stable)!=1: raise ValueError(f"exactly one {a.display_name} required; instant={len(instant)}, stable={len(stable)}")
                 d=stable[0]
             else:
-                matches=[d for d in stable if int(d.get("instance_index",-1))==a.instance_index]
-                if len(instant)<a.instance_index or len(matches)!=1: raise ValueError(f"{a.display_name} instance {a.instance_index} unavailable; instant={len(instant)}, stable_matches={len(matches)}")
-                d=matches[0]
-                required=required_visible_count(a.part_type,a.instance_index)
-                if len(stable)<required: raise ValueError(f"{a.display_name} physical-order validation needs {required} stable instances; got {len(stable)}")
-                physical=physical_order(a.part_type,stable)
-                if a.instance_index>len(physical): raise ValueError(f"physical index {a.instance_index} unavailable")
-                expected=physical[a.instance_index-1]
-                selected_px=np.asarray(d["reference_center_pixel"],float)
-                expected_px=np.asarray(expected["reference_center_pixel"],float)
-                if float(np.linalg.norm(selected_px-expected_px))>1.0:
-                    raise ValueError(f"{a.display_name} index mismatch: reported={a.instance_index} selected_ref={selected_px.tolist()} physical_ref={expected_px.tolist()}")
+                if (a.allow_single_gpu_as_instance_1 and a.part_type=="gpu"
+                        and a.instance_index==1 and len(instant)==1 and len(stable)==1):
+                    d=stable[0]
+                else:
+                    matches=[d for d in stable if int(d.get("instance_index",-1))==a.instance_index]
+                    if len(instant)<a.instance_index or len(matches)!=1: raise ValueError(f"{a.display_name} instance {a.instance_index} unavailable; instant={len(instant)}, stable_matches={len(matches)}")
+                    d=matches[0]
+                    required=required_visible_count(a.part_type,a.instance_index)
+                    if len(stable)<required: raise ValueError(f"{a.display_name} physical-order validation needs {required} stable instances; got {len(stable)}")
+                    physical=physical_order(a.part_type,stable)
+                    if a.instance_index>len(physical): raise ValueError(f"physical index {a.instance_index} unavailable")
+                    expected=physical[a.instance_index-1]
+                    selected_px=np.asarray(d["reference_center_pixel"],float)
+                    expected_px=np.asarray(expected["reference_center_pixel"],float)
+                    if float(np.linalg.norm(selected_px-expected_px))>1.0:
+                        raise ValueError(f"{a.display_name} index mismatch: reported={a.instance_index} selected_ref={selected_px.tolist()} physical_ref={expected_px.tolist()}")
             if float(d.get("median_cad_area_match_score",0))<a.min_confidence: raise ValueError(f"{a.display_name} confidence is too low")
             xyz=np.asarray(d["base_xyz_mm"],float); angle=float(d["long_axis_angle_base_deg"])
             if xyz.shape!=(3,) or not np.all(np.isfinite(xyz)) or not math.isfinite(angle): raise ValueError("invalid target coordinate")

@@ -574,6 +574,26 @@
           "default_value": ""
         },
         {
+          "name": "gripper_position",
+          "type": {
+            "type_id": 3,
+            "capacity": 0,
+            "string_capacity": 0,
+            "nested_type_name": ""
+          },
+          "default_value": ""
+        },
+        {
+          "name": "gripper_feedback_valid",
+          "type": {
+            "type_id": 15,
+            "capacity": 0,
+            "string_capacity": 0,
+            "nested_type_name": ""
+          },
+          "default_value": ""
+        },
+        {
           "name": "weldbreakoffstate",
           "type": {
             "type_id": 3,
@@ -1250,7 +1270,7 @@
   "type_hashes": [
     {
       "type_name": "fairino_msgs/msg/RobotNonrtState",
-      "hash_string": "RIHS01_d02bc6974b40c3d9395b07447858932f2a29bee7148bfb56be05654074e0f536"
+      "hash_string": "RIHS01_2fe3f74013dda8f063a6d5f07d54bd8d71fb83f6859a556777ff3f42243977ec"
     }
   ]
 }

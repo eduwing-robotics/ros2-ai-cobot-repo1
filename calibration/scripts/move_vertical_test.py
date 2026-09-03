@@ -7,10 +7,12 @@ import math
 import time
 from pathlib import Path
 
+import numpy as np
 import rclpy
 from fairino_msgs.msg import RobotNonrtState
 from fairino_msgs.srv import RemoteCmdInterface
 from rclpy.node import Node
+from scipy.spatial.transform import Rotation
 
 
 class VerticalTest(Node):
@@ -41,8 +43,31 @@ class VerticalTest(Node):
         if future.result() is None:
             raise RuntimeError(f'No response for command: {command}')
         result = str(future.result().cmd_res)
-        if result != '0':
+        if result.split(',', 1)[0] != '0':
             raise RuntimeError(f'FR5 rejected command: {command}, result={result}')
+        return result
+
+    def wait_pose(self, target_pose, target_joints, timeout_sec=90.0):
+        target_xyz=np.asarray(target_pose[:3],dtype=float)
+        target_rotation=Rotation.from_euler('xyz',target_pose[3:],degrees=True)
+        deadline=time.monotonic()+timeout_sec
+        while rclpy.ok() and time.monotonic()<deadline:
+            rclpy.spin_once(self,timeout_sec=0.1)
+            state=self.state
+            if state is None: continue
+            if (int(state.emg)!=0 or int(state.abnormal_stop)!=0
+                    or int(state.main_error_code)!=0 or float(state.collision_err)!=0.0):
+                raise RuntimeError('robot safety fault during vertical motion')
+            xyz=np.asarray([state.cart_x_cur_pos,state.cart_y_cur_pos,state.cart_z_cur_pos])
+            rotation=Rotation.from_euler('xyz',[state.cart_a_cur_pos,state.cart_b_cur_pos,state.cart_c_cur_pos],degrees=True)
+            angle_error=math.degrees((rotation.inv()*target_rotation).magnitude())
+            joints=np.asarray([state.j1_cur_pos,state.j2_cur_pos,state.j3_cur_pos,state.j4_cur_pos,state.j5_cur_pos,state.j6_cur_pos])
+            if (int(state.robot_motion_done)==1
+                    and float(np.linalg.norm(xyz-target_xyz))<=1.0
+                    and angle_error<=1.0
+                    and float(np.max(np.abs(joints-target_joints)))<=1.0):
+                return
+        raise RuntimeError('vertical pose/joint verification timeout')
 
 
 def main():
@@ -133,15 +158,29 @@ def main():
         if not node.client.wait_for_service(timeout_sec=3.0):
             raise RuntimeError('/fairino_remote_command_service unavailable')
         node.command(f'SetSpeed({args.speed_percent})')
-        command = (
-            f'MoveCart({target[0]:.3f},{target[1]:.3f},{target[2]:.3f},'
-            f'{target[3]:.3f},{target[4]:.3f},{target[5]:.3f},'
-            f'{args.tool_id},{args.user_id},{args.speed_percent},'
-            f'{args.speed_percent},{args.speed_percent},-1,-1)'
-        )
-        print(f'Sending: {command}')
+        reference=np.asarray([
+            state.j1_cur_pos,state.j2_cur_pos,state.j3_cur_pos,
+            state.j4_cur_pos,state.j5_cur_pos,state.j6_cur_pos,
+        ],dtype=float)
+        soft=np.asarray([float(value) for value in node.command('GetJointSoftLimitDeg(1)').split(',')[1:13]])
+        negative,positive=soft[:6],soft[6:]
+        safety=np.asarray([float(value) for value in node.command('GetSafetyStopState()').split(',')[1:3]])
+        if np.any(safety!=0.0):
+            raise RuntimeError(f'safety stop active: {safety.astype(int).tolist()}')
+        ik_command='GetInverseKinRef('+','.join(
+            f'{value:.6f}' for value in [0.0,*target,*reference.tolist()]
+        )+')'
+        target_joints=np.asarray([float(value) for value in node.command(ik_command).split(',')[1:7]])
+        margins=np.minimum(target_joints-negative,positive-target_joints)
+        if np.any(margins<10.0) or np.any(np.abs(target_joints-reference)>90.0):
+            raise RuntimeError('vertical descent IK violates joint margin or branch-change limit')
+        define='JNTPoint(1,'+','.join(f'{value:.6f}' for value in target_joints)+')'
+        command=f'MoveL(JNT1,{args.speed_percent},{args.tool_id},{args.user_id})'
+        print(f'Sending: {define}; {command}')
+        node.command(define)
         node.command(command)
-        print('100 mm descent completed; no gripper command was sent.')
+        node.wait_pose(target,target_joints)
+        print(f'{args.down_mm:.1f} mm vertical descent completed; no gripper command was sent.')
     finally:
         node.destroy_node()
         if rclpy.ok():

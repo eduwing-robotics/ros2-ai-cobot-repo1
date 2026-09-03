@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "mode": "single_part_hover_target",
+  "timestamp_unix": 1788164224.6649067,
+  "part_type": "right_white_brown",
+  "display_name": "SMD Capacitor",
+  "instance_index": 4,
+  "selection_mode": "instance_index",
+  "part_center_base_mm": [
+    -629.02,
+    -132.059,
+    -48.365
+  ],
+  "long_axis_angle_base_deg": 1.537,
+  "center_pixel": [
+    570.915,
+    370.01
+  ],
+  "center_pixel_span": [
+    0.09,
+    0.09
+  ],
+  "camera_xyz_m": [
+    -0.039246,
+    -0.005247,
+    0.484
+  ],
+  "sample_count": 6,
+  "position_span_mm": [
+    0.008,
+    0.012,
+    0.004
+  ],
+  "angle_span_deg": 0.0,
+  "hover_offset_mm": 100.0,
+  "robot_motion_authorized": false,
+  "source_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/tray_detections_last.json"
+}

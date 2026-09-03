@@ -1,3 +1,7 @@
+action/CalibratePcbPose.action
+action/CalibratePcbPose.idl
+action/DetectTrayParts.action
+action/DetectTrayParts.idl
 msg/Detections.idl
 msg/Detections.msg
 msg/Inspection.idl

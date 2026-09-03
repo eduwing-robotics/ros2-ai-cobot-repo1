@@ -15,9 +15,16 @@ from rclpy.node import Node
 from scipy.spatial.transform import Rotation
 
 
-def symmetric_angle_delta_deg(target_deg, current_deg):
-    """Smallest rotation aligning an unoriented rectangular axis (period 180°)."""
-    return (target_deg - current_deg + 90.0) % 180.0 - 90.0
+def symmetric_angle_delta_deg(target_deg, current_deg, branch="shortest"):
+    """Rotate onto an unoriented axis, optionally selecting its +/-180° branch."""
+    delta = (target_deg - current_deg + 90.0) % 180.0 - 90.0
+    if branch == "shortest":
+        return delta
+    if branch == "positive":
+        return delta if delta > 0.0 else delta + 180.0
+    if branch == "negative":
+        return delta if delta < 0.0 else delta - 180.0
+    raise ValueError(f"unknown symmetric rotation branch: {branch}")
 
 
 class Mover(Node):
@@ -41,16 +48,23 @@ class Mover(Node):
         self.wait_state(timeout)
         return self.state
 
-    def wait_motion_done(self, target_xyz, tool_id, timeout=30.0, tolerance_mm=1.0):
+    def wait_motion_done(self, target_pose, target_joints, tool_id, timeout=90.0, tolerance_mm=1.0):
         deadline=time.monotonic()+timeout
-        target=np.asarray(target_xyz,dtype=float)
+        target=np.asarray(target_pose[:3],dtype=float)
+        target_rotation=Rotation.from_euler("xyz",target_pose[3:],degrees=True)
         while rclpy.ok() and time.monotonic()<deadline:
             state=self.refresh_state(timeout=min(3.0,max(0.1,deadline-time.monotonic())))
             assert_safe_state(state,tool_id,require_auto=True,require_stationary=False)
             current=np.asarray([state.cart_x_cur_pos,state.cart_y_cur_pos,state.cart_z_cur_pos],dtype=float)
-            if int(state.robot_motion_done)==1 and float(np.linalg.norm(current-target))<=tolerance_mm:
+            rotation=Rotation.from_euler("xyz",[state.cart_a_cur_pos,state.cart_b_cur_pos,state.cart_c_cur_pos],degrees=True)
+            angle_error=math.degrees((rotation.inv()*target_rotation).magnitude())
+            joints=np.asarray([state.j1_cur_pos,state.j2_cur_pos,state.j3_cur_pos,state.j4_cur_pos,state.j5_cur_pos,state.j6_cur_pos],dtype=float)
+            joint_error=float(np.max(np.abs(joints-target_joints)))
+            if (int(state.robot_motion_done)==1
+                    and float(np.linalg.norm(current-target))<=tolerance_mm
+                    and angle_error<=1.0 and joint_error<=1.0):
                 return state
-        raise RuntimeError("robot motion completion/target verification timeout")
+        raise RuntimeError("robot motion pose/joint verification timeout")
 
     def request(self, text):
         if not self.client.wait_for_service(timeout_sec=3):
@@ -111,9 +125,17 @@ def main():
     p.add_argument("--target-file",type=Path)
     p.add_argument("--align-part",action="store_true",help="align the gripper axis with the detected part long axis")
     p.add_argument("--gripper-axis",choices=("tool_x","tool_y"),default="tool_x")
+    p.add_argument(
+        "--symmetric-rotation-branch",
+        choices=("shortest", "positive", "negative"),
+        default="shortest",
+        help="select the directed +/-180-degree-equivalent gripper branch",
+    )
     p.add_argument("--max-rotation-deg",type=float,default=90.0)
     p.add_argument("--tool-correction-x-mm",type=float,default=-2.05)
     p.add_argument("--tool-correction-y-mm",type=float,default=-2.55)
+    p.add_argument("--base-correction-x-mm",type=float,default=0.0)
+    p.add_argument("--base-correction-y-mm",type=float,default=0.0)
     p.add_argument("--center-correction",action=argparse.BooleanOptionalAction,default=True)
     p.add_argument("--approach-offset-mm",type=float,default=100.0)
     p.add_argument("--max-target-age-sec",type=float,default=120.0)
@@ -147,13 +169,18 @@ def main():
             p.error(f"cannot load target file: {exc}")
         if age < -5 or age > a.max_target_age_sec:
             p.error(f"target file is stale ({age:.1f} s); detect the part again")
+        if a.approach_offset_mm < 20.0:
+            p.error(
+                "camera-derived targets must stop at least 20 mm above the detected surface; "
+                "verify the hover pose, then use a separate direct-XYZ command for final vertical descent"
+            )
         a.x=float(center[0]); a.y=float(center[1]); a.z=float(center[2]+a.approach_offset_mm)
     if a.execute != a.confirm_move:p.error("실제 이동에는 --execute와 --confirm-move가 모두 필요합니다")
     if a.dry_run and a.execute:p.error("--dry-run and --execute cannot be combined")
     if not 1<=a.speed_percent<=50:p.error("--speed-percent must be between 1 and 50")
     if not 1<=a.descent_speed_percent<=50:p.error("--descent-speed-percent must be between 1 and 50")
     if not 1<=a.rotation_speed_percent<=50:p.error("--rotation-speed-percent must be between 1 and 50")
-    if not 0<a.max_rotation_deg<=90:p.error("--max-rotation-deg must be in (0, 90]")
+    if not 0<a.max_rotation_deg<=180:p.error("--max-rotation-deg must be in (0, 180]")
     if a.safe_z_mm is None and a.safe_clearance_mm<50:p.error("--safe-clearance-mm must be >= 50")
     if not 0<a.joint_limit_margin_deg<45:p.error("--joint-limit-margin-deg must be in (0, 45)")
     if not 0<a.max_joint_step_deg<=180:p.error("--max-joint-step-deg must be in (0, 180]")
@@ -186,7 +213,11 @@ def main():
             if np.linalg.norm(axis_xy)<0.5:
                 raise RuntimeError(f"{a.gripper_axis} is nearly vertical; cannot align in Base XY")
             current_axis_angle=math.degrees(math.atan2(axis_xy[1],axis_xy[0]))
-            rotation_delta=symmetric_angle_delta_deg(part_base_angle,current_axis_angle)
+            rotation_delta=symmetric_angle_delta_deg(
+                part_base_angle,
+                current_axis_angle,
+                a.symmetric_rotation_branch,
+            )
             if abs(rotation_delta)>a.max_rotation_deg+1e-6:
                 raise RuntimeError(f"required rotation {rotation_delta:.1f} deg exceeds limit {a.max_rotation_deg:.1f}")
             base_z_rotation=Rotation.from_euler("z",rotation_delta,degrees=True).as_matrix()
@@ -197,7 +228,12 @@ def main():
             a.tool_correction_y_mm,
             0.0,
         ]) if a.center_correction and a.target_file is not None else np.zeros(3)
-        correction_base=target_rotation@correction_tool
+        correction_base_fixed=np.asarray([
+            a.base_correction_x_mm,
+            a.base_correction_y_mm,
+            0.0,
+        ]) if a.center_correction and a.target_file is not None else np.zeros(3)
+        correction_base=target_rotation@correction_tool+correction_base_fixed
         a.x+=float(correction_base[0]); a.y+=float(correction_base[1]); a.z+=float(correction_base[2])
         values=np.array([a.x,a.y,a.z],float)
         if not np.all(np.isfinite(values)):raise RuntimeError("target contains NaN/Inf")
@@ -244,10 +280,16 @@ def main():
             reference=joints
         print("OBJECT APPROACH ONLY - no surface descent, no gripper command")
         print(f"Target TCP/Base [mm]: [{a.x:.3f}, {a.y:.3f}, {a.z:.3f}]")
-        print(f"Center correction Tool [mm]: {np.round(correction_tool,3).tolist()}; Base [mm]: {np.round(correction_base,3).tolist()}")
+        print(f"Center correction Tool [mm]: {np.round(correction_tool,3).tolist()}; "
+              f"fixed Base [mm]: {np.round(correction_base_fixed,3).tolist()}; "
+              f"total Base [mm]: {np.round(correction_base,3).tolist()}")
         if a.align_part:
             print(f"Part long axis/Base XY: {part_base_angle:.3f} deg")
-            print(f"Gripper alignment: {a.gripper_axis}, delta={rotation_delta:.3f} deg, target ABC={np.round(target_abc,3).tolist()}")
+            print(
+                f"Gripper alignment: {a.gripper_axis}, "
+                f"branch={a.symmetric_rotation_branch}, delta={rotation_delta:.3f} deg, "
+                f"target ABC={np.round(target_abc,3).tolist()}"
+            )
         else:
             print(f"Current orientation preserved: {np.round(abc,3).tolist()}; distance={distance:.1f} mm")
         print(f"Controller soft limits [deg]: negative={negative.tolist()}, positive={positive.tolist()}")
@@ -260,9 +302,14 @@ def main():
             assert_safe_state(n.refresh_state(),a.tool_id,require_auto=True)
             safety_stop=parse_response(n.request("GetSafetyStopState()"),2,"safety-stop")
             if np.any(safety_stop != 0):raise RuntimeError(f"safety stop is active: SI0/SI1={safety_stop.astype(int).tolist()}")
-            cmd=f"MoveCart({x:.3f},{y:.3f},{z:.3f},{rx:.3f},{ry:.3f},{rz:.3f},{a.tool_id},{a.user_id},{speed},{speed},{speed},-1,-1)"
-            print(f"Sending stage {i}/{len(planned)} ({name}): {cmd}"); n.command(cmd)
-            n.wait_motion_done([x,y,z],a.tool_id)
+            define="JNTPoint(1,"+",".join(f"{value:.6f}" for value in joints)+")"
+            linear=name in ("vertical raise","vertical approach")
+            motion="MoveL" if linear else "MoveJ"
+            cmd=f"{motion}(JNT1,{speed},{a.tool_id},{a.user_id})"
+            print(f"Sending stage {i}/{len(planned)} ({name}): {define}; {cmd}")
+            n.command(define)
+            n.command(cmd)
+            n.wait_motion_done([x,y,z,rx,ry,rz],joints,a.tool_id)
         print("Object safe approach completed; no descent to surface and no gripper actuation")
     finally:
         n.destroy_node()

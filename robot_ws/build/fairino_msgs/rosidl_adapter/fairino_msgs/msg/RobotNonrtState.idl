@@ -130,6 +130,10 @@ module fairino_msgs {
 
       uint8 grip_motion_done;
 
+      uint8 gripper_position;
+
+      boolean gripper_feedback_valid;
+
       uint8 weldbreakoffstate;
 
       uint8 weldarcstate;

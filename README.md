@@ -50,6 +50,23 @@ cp config/ksmc.env.example config/ksmc.env
 
 `config/ksmc.env`는 장비별 값이므로 Git에 넣지 않는다.
 
+## 조립 스택 통합 실행
+
+여러 터미널에서 카메라·FAIRINO·Unity Endpoint·비전 노드를 따로 띄우지 않고
+다음 한 명령으로 관리한다.
+
+```bash
+./run_fr5_assembly_stack.sh start
+./run_fr5_assembly_stack.sh check
+./run_fr5_assembly_stack.sh view
+./run_fr5_assembly_stack.sh restart
+./run_fr5_assembly_stack.sh clean
+```
+
+이 실행기는 로봇 이동 명령을 보내지 않는다. 중복 프로세스 종료 정책, 카메라
+프로필, 상태 및 로그 명령은 [통합 실행 명령](docs/FR5_ASSEMBLY_STACK_COMMANDS.md)을
+참고한다.
+
 ## 안전한 개발 순서
 
 1. D435 RGB-D와 CameraInfo 토픽만 확인한다.

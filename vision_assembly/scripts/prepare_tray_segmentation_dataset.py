@@ -3,6 +3,7 @@
 
 import argparse
 import json
+import re
 import shutil
 from pathlib import Path
 
@@ -25,7 +26,10 @@ def main():
         fields = path.stem.split("__")
         if len(fields) < 2:
             raise RuntimeError(f"Invalid labeled image name: {path.name}")
-        return "__".join(fields[:-1]), fields[-1]
+        frame = "__".join(fields[:-1])
+        # Group photometric variants of one source frame into one split.
+        frame = re.sub(r"_v\d+$", "", frame)
+        return frame, fields[-1]
 
     frames = sorted({frame_and_part(path)[0] for path in images})
     if len(frames) <= args.val_frames + args.test_frames:

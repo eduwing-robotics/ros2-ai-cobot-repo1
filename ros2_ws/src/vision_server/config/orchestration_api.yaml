@@ -1,0 +1,60 @@
+orchestration_api:
+  frame_id: base_link
+  detection_timeout_sec: 5.0
+  source_max_age_sec: 2.5
+
+  topics:
+    tray_state: /vision/tray/unity_state
+    pcb_state: /vision/board/pose_3d/status
+    conveyor_stopped: /orchestrator/conveyor_stopped
+
+  endpoints:
+    detect_tray_parts: /vision/tray/detect_parts
+    calibrate_pcb_pose: /vision/pcb/calibrate_pose
+
+  tray:
+    minimum_observation_frames: 5
+    pose_convention:
+      origin: detected_depth_surface_center
+      local_x: detected_part_long_axis
+      local_z: base_link_positive_z
+      roll_pitch: zero_planar_assumption
+      ambiguity: detector_long_axis_is_180_degree_symmetric
+      unity_requirement: prefab_root_and_axes_must_follow_this_convention
+    part_mappings:
+      gpu:
+        part_id: GPU
+        yaw_offset_deg: 0.0
+        origin_offset_local_m: [0.0, 0.0, 0.0]
+      hbm:
+        part_id: HBM
+        yaw_offset_deg: 0.0
+        origin_offset_local_m: [0.0, 0.0, 0.0]
+      long_orange:
+        part_id: PM
+        yaw_offset_deg: 0.0
+        origin_offset_local_m: [0.0, 0.0, 0.0]
+      black_block:
+        part_id: VRM
+        yaw_offset_deg: 0.0
+        origin_offset_local_m: [0.0, 0.0, 0.0]
+      marked_white:
+        part_id: IND
+        yaw_offset_deg: 0.0
+        origin_offset_local_m: [0.0, 0.0, 0.0]
+      right_white_brown:
+        part_id: CAP
+        yaw_offset_deg: 0.0
+        origin_offset_local_m: [0.0, 0.0, 0.0]
+
+  pcb:
+    expected_product_code: printed_semiconductor_package_board
+    expected_product_version: assembly-r1
+    maximum_hole_fit_rms_mm: 1.5
+    maximum_plane_mad_mm: 2.0
+    minimum_plane_inliers: 200
+    require_conveyor_stopped: true
+    pose_convention:
+      origin: physical_board_geometric_center
+      axes: physical_board_canonical_xy_and_right_handed_z
+      unity_requirement: PCB_root_and_Recipe_PCB_frame_must_match_this_convention

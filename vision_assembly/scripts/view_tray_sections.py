@@ -48,6 +48,7 @@ class Viewer(Node):
   self.ref_kp,self.ref_desc=self.sift.detectAndCompute(ref_small,mask_small)
   self.last_state=None
   self.homography_corners=deque(maxlen=args.smoothing_frames)
+  self.trayhome_translations=deque(maxlen=args.smoothing_frames)
   self.last_good_corners=None
   self.missed_frames=0
   self.candidate_corners=deque(maxlen=args.initialization_frames)
@@ -203,6 +204,7 @@ class Viewer(Node):
  def invalidate_registration(self):
   self.last_good_corners=None
   self.homography_corners.clear()
+  self.trayhome_translations.clear()
   self.candidate_corners.clear()
   self.missed_frames=0
   self.reference_failures=0
@@ -308,42 +310,37 @@ class Viewer(Node):
   gray=cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
   at_trayhome=self.robot_at_trayhome() and self.trayhome_homography is not None
   if at_trayhome:
+   # TrayHome is a tightly checked, repeatable robot pose with a calibrated
+   # reference-to-image homography. Do not refine it from the thick tray rim:
+   # the fitter can select an inner edge at one corner and an outer edge at
+   # another, then accumulate that mistake into a false projective skew.
    corners=np.float32([[0,0],[self.ref_w,0],[self.ref_w,self.ref_h],[0,self.ref_h]])
-   if self.at_trayhome and self.last_good_corners is not None:
-    seed_H=cv2.getPerspectiveTransform(corners,self.last_good_corners.astype(np.float32))
-   else:
-    seed_H=self.trayhome_homography.copy()
-    self.homography_corners.clear();self.edge_corners=None
-   previous_edge_corners=None if self.edge_corners is None else self.edge_corners.copy()
-   edge_H=self.refine_with_tray_edges(gray,seed_H)
-   if edge_H is not None:
-    moved=cv2.perspectiveTransform(corners.reshape(1,-1,2),edge_H)[0]
-    jump=(0. if self.last_good_corners is None else
-     float(np.max(np.linalg.norm(moved-self.last_good_corners,axis=1))))
-    refinement_limit=(self.args.max_trayhome_startup_jump_px
-     if len(self.homography_corners)<self.args.smoothing_frames
-     else self.args.max_trayhome_refinement_jump_px)
-    edge_jump=(0. if previous_edge_corners is None else float(np.max(
-     np.linalg.norm(self.edge_corners-previous_edge_corners,axis=1))))
-    if previous_edge_corners is not None and edge_jump>refinement_limit:
-     edge_H=None;self.edge_corners=previous_edge_corners
-    else:
-     self.last_corner_motion_px=jump
-     self.homography_corners.append(moved.astype(np.float32))
-     smooth=np.median(np.asarray(self.homography_corners),axis=0).astype(np.float32)
-     H=cv2.getPerspectiveTransform(corners,smooth)
-     self.last_good_corners=smooth.copy();self.missed_frames=0
-     matches=0;inliers=0;state='TRACKING'
-     self.visual_stable_frames=self.args.stable_tracking_frames
-     if not self.at_trayhome:self.reset_optical_tracking(gray)
-   if edge_H is None:
-    matches=0;inliers=0
-    if self.at_trayhome and self.last_good_corners is not None:
-     H=cv2.getPerspectiveTransform(corners,self.last_good_corners.astype(np.float32))
-     state='TRACKING'
-     self.edge_corners=previous_edge_corners
-    else:
-     H=None;state='INITIALIZING'
+   base_H=self.trayhome_homography.copy()
+   calibrated_edges=cv2.perspectiveTransform(
+    self.tray_reference_corners.reshape(1,-1,2),base_H)[0]
+   if not self.at_trayhome:self.trayhome_translations.clear()
+   self.edge_corners=None
+   edge_H=self.refine_with_tray_edges(gray,base_H)
+   if edge_H is not None and self.edge_corners is not None:
+    offsets=self.edge_corners-calibrated_edges
+    candidate=np.median(offsets,axis=0)
+    residual=float(np.max(np.linalg.norm(offsets-candidate,axis=1)))
+    if (residual<=self.args.max_trayhome_translation_residual_px and
+        float(np.linalg.norm(candidate))<=self.args.max_trayhome_translation_px):
+     self.trayhome_translations.append(candidate.astype(np.float32))
+   translation=(np.median(np.asarray(self.trayhome_translations),axis=0)
+    if self.trayhome_translations else np.zeros(2,np.float32))
+   shift=np.array([[1.,0.,translation[0]],[0.,1.,translation[1]],[0.,0.,1.]])
+   H=shift@base_H
+   calibrated=cv2.perspectiveTransform(corners.reshape(1,-1,2),H)[0]
+   self.last_corner_motion_px=(0. if self.last_good_corners is None else float(
+    np.max(np.linalg.norm(calibrated-self.last_good_corners,axis=1))))
+   self.last_good_corners=calibrated.astype(np.float32)
+   self.homography_corners.clear();self.homography_corners.append(self.last_good_corners.copy())
+   self.edge_corners=(calibrated_edges+translation).astype(np.float32);self.missed_frames=0
+   matches=0;inliers=0;state='TRACKING'
+   self.visual_stable_frames=self.args.stable_tracking_frames
+   if not self.at_trayhome:self.reset_optical_tracking(gray)
    self.at_trayhome=True
   elif self.last_good_corners is None:
    H,matches,inliers=self.register(gray)
@@ -392,7 +389,7 @@ class Viewer(Node):
    self.get_logger().info(f'Tray state={state}, matches={matches}, inliers={inliers}')
    self.last_state=state
   stamp_ns=msg.header.stamp.sec*1000000000+msg.header.stamp.nanosec
-  registration={'timestamp_ros_ns':stamp_ns,'state':state}
+  registration={'timestamp_ros_ns':stamp_ns,'state':state,'at_trayhome':bool(at_trayhome)}
   if H is not None:
    registration['homography_reference_to_image']=np.asarray(H,float).tolist()
    if self.edge_corners is not None:
@@ -463,6 +460,8 @@ def main():
  p.add_argument('--max-edge-correction-px',type=float,default=32.)
  p.add_argument('--max-trayhome-startup-jump-px',type=float,default=10.)
  p.add_argument('--max-trayhome-refinement-jump-px',type=float,default=3.)
+ p.add_argument('--max-trayhome-translation-px',type=float,default=20.)
+ p.add_argument('--max-trayhome-translation-residual-px',type=float,default=8.)
  p.add_argument('--edge-correction-gain',type=float,default=.65)
  p.add_argument('--edge-canny-low',type=int,default=45)
  p.add_argument('--edge-canny-high',type=int,default=120)

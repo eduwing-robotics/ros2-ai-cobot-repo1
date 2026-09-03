@@ -135,6 +135,8 @@ class RobotNonrtState(metaclass=Metaclass_RobotNonrtState):
         '_safetyboxsig',
         '_robot_motion_done',
         '_grip_motion_done',
+        '_gripper_position',
+        '_gripper_feedback_valid',
         '_weldbreakoffstate',
         '_weldarcstate',
         '_welding_voltage',
@@ -263,6 +265,8 @@ class RobotNonrtState(metaclass=Metaclass_RobotNonrtState):
         'safetyboxsig': 'uint8[6]',
         'robot_motion_done': 'uint8',
         'grip_motion_done': 'uint8',
+        'gripper_position': 'uint8',
+        'gripper_feedback_valid': 'boolean',
         'weldbreakoffstate': 'uint8',
         'weldarcstate': 'uint8',
         'welding_voltage': 'double',
@@ -392,6 +396,8 @@ class RobotNonrtState(metaclass=Metaclass_RobotNonrtState):
         rosidl_parser.definition.Array(rosidl_parser.definition.BasicType('uint8'), 6),  # noqa: E501
         rosidl_parser.definition.BasicType('uint8'),  # noqa: E501
         rosidl_parser.definition.BasicType('uint8'),  # noqa: E501
+        rosidl_parser.definition.BasicType('uint8'),  # noqa: E501
+        rosidl_parser.definition.BasicType('boolean'),  # noqa: E501
         rosidl_parser.definition.BasicType('uint8'),  # noqa: E501
         rosidl_parser.definition.BasicType('uint8'),  # noqa: E501
         rosidl_parser.definition.BasicType('double'),  # noqa: E501
@@ -542,6 +548,8 @@ class RobotNonrtState(metaclass=Metaclass_RobotNonrtState):
             self.safetyboxsig = kwargs.get('safetyboxsig')
         self.robot_motion_done = kwargs.get('robot_motion_done', int())
         self.grip_motion_done = kwargs.get('grip_motion_done', int())
+        self.gripper_position = kwargs.get('gripper_position', int())
+        self.gripper_feedback_valid = kwargs.get('gripper_feedback_valid', bool())
         self.weldbreakoffstate = kwargs.get('weldbreakoffstate', int())
         self.weldarcstate = kwargs.get('weldarcstate', int())
         self.welding_voltage = kwargs.get('welding_voltage', float())
@@ -774,6 +782,10 @@ class RobotNonrtState(metaclass=Metaclass_RobotNonrtState):
         if self.robot_motion_done != other.robot_motion_done:
             return False
         if self.grip_motion_done != other.grip_motion_done:
+            return False
+        if self.gripper_position != other.gripper_position:
+            return False
+        if self.gripper_feedback_valid != other.gripper_feedback_valid:
             return False
         if self.weldbreakoffstate != other.weldbreakoffstate:
             return False
@@ -1848,6 +1860,34 @@ class RobotNonrtState(metaclass=Metaclass_RobotNonrtState):
             assert value >= 0 and value < 256, \
                 "The 'grip_motion_done' field must be an unsigned integer in [0, 255]"
         self._grip_motion_done = value
+
+    @builtins.property
+    def gripper_position(self):
+        """Message field 'gripper_position'."""
+        return self._gripper_position
+
+    @gripper_position.setter
+    def gripper_position(self, value):
+        if self._check_fields:
+            assert \
+                isinstance(value, int), \
+                "The 'gripper_position' field must be of type 'int'"
+            assert value >= 0 and value < 256, \
+                "The 'gripper_position' field must be an unsigned integer in [0, 255]"
+        self._gripper_position = value
+
+    @builtins.property
+    def gripper_feedback_valid(self):
+        """Message field 'gripper_feedback_valid'."""
+        return self._gripper_feedback_valid
+
+    @gripper_feedback_valid.setter
+    def gripper_feedback_valid(self, value):
+        if self._check_fields:
+            assert \
+                isinstance(value, bool), \
+                "The 'gripper_feedback_valid' field must be of type 'bool'"
+        self._gripper_feedback_valid = value
 
     @builtins.property
     def weldbreakoffstate(self):

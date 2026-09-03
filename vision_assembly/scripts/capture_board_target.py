@@ -11,6 +11,7 @@ import numpy as np
 import rclpy
 from geometry_msgs.msg import PoseStamped
 from rclpy.node import Node
+from std_msgs.msg import String
 
 
 class Collector(Node):
@@ -19,10 +20,37 @@ class Collector(Node):
         self.args = args
         self.samples = deque(maxlen=args.frames)
         self.received = 0
+        self.selected_slot = None
+        self.selection_verified = False
+        self.create_subscription(String, args.status_topic, self.status_cb, 10)
         self.create_subscription(PoseStamped, args.topic, self.pose_cb, 1)
-        self.get_logger().info(f'NO MOTION: collecting {args.frames} board target poses from {args.topic}')
+        self.get_logger().info(
+            f'NO MOTION: waiting for selected_slot={args.target_slot} on '
+            f'{args.status_topic}, then collecting {args.frames} poses from {args.topic}'
+        )
+
+    def status_cb(self, message):
+        try:
+            payload = json.loads(message.data)
+        except (TypeError, ValueError):
+            return
+        selected = str(payload.get('selected_slot', '')).strip().upper().replace('_', '-')
+        expected = self.args.target_slot.strip().upper().replace('_', '-')
+        self.selected_slot = selected or None
+        verified = bool(payload.get('valid')) and selected == expected
+        if self.selection_verified and not verified:
+            self.samples.clear()
+            self.received = 0
+            self.get_logger().warn(
+                f'Board selection changed to {selected or "UNKNOWN"}; sample window cleared'
+            )
+        if verified and not self.selection_verified:
+            self.get_logger().info(f'Verified selected_slot={selected}')
+        self.selection_verified = verified
 
     def pose_cb(self, message):
+        if not self.selection_verified:
+            return
         self.received += 1
         if self.received <= self.args.warmup_frames:
             return
@@ -87,6 +115,7 @@ class Collector(Node):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--topic', default='/vision/board/target_pose')
+    parser.add_argument('--status-topic', default='/vision/board/pose_3d/status')
     parser.add_argument('--target-slot', default='right_white_brown_01')
     parser.add_argument('--frames', type=int, default=30)
     parser.add_argument('--warmup-frames', type=int, default=10)

@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "mode": "verified_smd_section_view_return_target",
+  "timestamp_unix": 1788227675.0,
+  "robot_motion_authorized": false,
+  "part_center_base_mm": [-527.998, -120.961, 57.862],
+  "long_axis_angle_base_deg": 0.0,
+  "note": "With 20 mm approach offset this restores SMDSectionView TCP Z=77.862; aligning tool_y to Base 0 deg restores TCP Rz=90 deg."
+}

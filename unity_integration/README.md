@@ -1,5 +1,9 @@
 # D435 tray to Unity digital-twin synchronization
 
+## 관제 연동 기준
+
+이 문서의 /vision/tray/unity_state JSON 구독기는 실시간 미리보기용 레거시 경로다. 실제 조립 사이클의 권위 있는 계약은 /vision/tray/detect_parts 및 /vision/pcb/calibrate_pose 두 Action이며, 상세 계약은 docs/unity_vision_actions_ko.md를 따른다.
+
 The tray detector publishes a complete, camera-derived snapshot as `std_msgs/msg/String` on:
 
 ```text

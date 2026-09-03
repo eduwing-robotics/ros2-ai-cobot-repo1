@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "mode": "single_part_hover_target",
+  "timestamp_unix": 1788414332.2901165,
+  "part_type": "marked_white",
+  "display_name": "Inductor",
+  "instance_index": 1,
+  "selection_mode": "instance_index",
+  "part_center_base_mm": [
+    -620.682,
+    -226.626,
+    -45.269
+  ],
+  "long_axis_angle_base_deg": -89.807,
+  "center_pixel": [
+    392.26,
+    382.5
+  ],
+  "center_pixel_span": [
+    0.03,
+    0.08
+  ],
+  "camera_xyz_m": [
+    -0.133953,
+    0.001462,
+    0.481
+  ],
+  "sample_count": 6,
+  "position_span_mm": [
+    0.027,
+    0.035,
+    0.008
+  ],
+  "angle_span_deg": 0.0,
+  "hover_offset_mm": 100.0,
+  "robot_motion_authorized": false,
+  "source_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/tray_detections_last.json"
+}

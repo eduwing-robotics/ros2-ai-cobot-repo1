@@ -1,0 +1,18 @@
+string job_id
+---
+bool success
+
+# All part_poses share this acquisition timestamp and coordinate frame.
+# frame_id is always base_link.
+std_msgs/Header header
+
+# Entries with the same index describe one detected physical part.
+# Repeated part_ids represent multiple instances of the same Recipe part.
+string[] part_ids
+geometry_msgs/Pose[] part_poses
+
+string error_code
+string message
+---
+string stage
+uint32 detected_count

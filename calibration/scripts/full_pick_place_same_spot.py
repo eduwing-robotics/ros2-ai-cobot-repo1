@@ -57,7 +57,7 @@ def main():
     parser.add_argument('--gripper-open-position', type=int, default=100)
     parser.add_argument('--gripper-close-position', type=int, default=5)
     parser.add_argument('--gripper-axis', choices=('tool_x', 'tool_y'), default='tool_y')
-    parser.add_argument('--return-point', default='ClosePin')
+    parser.add_argument('--return-point', default='TrayHome')
     parser.add_argument('--return-safe-clearance-mm', type=float, default=100.0)
     parser.add_argument('--no-return', action='store_true')
     parser.add_argument('--dry-run', action='store_true')
@@ -69,6 +69,8 @@ def main():
         parser.error('실제 전체 동작에는 --execute와 --confirm-full-cycle이 모두 필요합니다')
     if args.dry_run and args.execute:
         parser.error('--dry-run and --execute cannot be combined')
+    if args.execute:
+        parser.error('legacy continuous-descent workflow is disabled; use vision_assembly/run_safe_part_pick.sh prepare and descend')
     if not 0.0 <= args.extra_descent_mm <= 10.0:
         parser.error('--extra-descent-mm must be between 0 and 10')
     if not 1 <= args.grasp_descent_speed_percent <= 50:

@@ -5,9 +5,9 @@
 #include <string.h>
 
 #include "vision_interfaces/msg/detail/part__functions.h"
-#include "rosidl_typesupport_interface/macros.h"
 #include "vision_interfaces/msg/detail/part__type_support.h"
 #include "vision_interfaces/msg/detail/part__struct.h"
+#include "rosidl_typesupport_interface/macros.h"
 
 #ifdef __cplusplus
 extern "C"

@@ -1,0 +1,13 @@
+string job_id
+string product_code
+string product_version
+---
+bool success
+
+# Absolute PCB root pose in base_link at the acquisition timestamp.
+geometry_msgs/PoseStamped pcb_pose
+
+string error_code
+string message
+---
+string stage

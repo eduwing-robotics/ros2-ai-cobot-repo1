@@ -1,0 +1,57 @@
+{
+  "schema": "fr5.full_fixed_cycle_run/v1",
+  "started_unix": 1788350997.2655244,
+  "cycle_id": "20260902-210344",
+  "plan_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/full_restart_25_plan_2026-09-02.json",
+  "transfer_z_mm": 350.0,
+  "speeds_percent": {
+    "travel": 20,
+    "combined_rotation": 15,
+    "vertical": 10
+  },
+  "completed_slots": [
+    "GPU-01"
+  ],
+  "actual_orientation_decisions": [
+    {
+      "slot_code": "GPU-01",
+      "rotation_skipped": false,
+      "current_axis_base_deg": -2.712428744473174,
+      "target_axis_base_deg": 90.59212855184414,
+      "symmetry_period_deg": 180.0,
+      "rotation_delta_deg": 93.30455729631728,
+      "target_tcp_abc_deg": [
+        179.96890258789062,
+        -0.006471717730154391,
+        -179.40786793561634
+      ],
+      "preferred_tcp_c_deg": 180.0
+    },
+    {
+      "slot_code": "HBM-01",
+      "rotation_skipped": true,
+      "current_axis_base_deg": 1.9758041079774553,
+      "target_axis_base_deg": 90.59212855184414,
+      "symmetry_period_deg": 90.0,
+      "rotation_delta_deg": -1.383675556133312,
+      "target_tcp_abc_deg": [
+        179.95579528808594,
+        0.005894134752466314,
+        90.59212400441356
+      ],
+      "preferred_tcp_c_deg": null
+    }
+  ],
+  "status": "stopped_on_error",
+  "last_verified_tcp": [
+    41.580379486083984,
+    -519.4701538085938,
+    187.89501953125,
+    179.9548797607422,
+    -0.006155313458293676,
+    -179.46481323242188
+  ],
+  "last_gripper_position": 70,
+  "error": "RuntimeError: FR5 safety fault during motion: abnormal_stop=1",
+  "stopped_unix": 1788351138.4965084
+}

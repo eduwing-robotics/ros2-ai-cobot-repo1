@@ -1,0 +1,227 @@
+{
+  "schema_version": 2,
+  "mode": "clean_registered_smd_section",
+  "timestamp_unix": 1788166853.4392045,
+  "source_image": "vision_assembly/data/smd_section_clean_reference_raw.jpg",
+  "config_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/config/smd_section_view.json",
+  "tray_registration_required": false,
+  "tape_required": false,
+  "registration": {
+    "mode": "clean_section_feature_homography",
+    "reference_image": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/smd_section_clean_reference_raw.jpg",
+    "matches": 592,
+    "inliers": 592,
+    "scale_area": 1.0,
+    "current_polygon_pixel": [
+      [
+        500.33099365234375,
+        231.14599609375
+      ],
+      [
+        873.2479858398438,
+        228.82200622558594
+      ],
+      [
+        873.8200073242188,
+        635.280029296875
+      ],
+      [
+        487.2229919433594,
+        634.0239868164062
+      ]
+    ]
+  },
+  "detection_count": 10,
+  "detections": [
+    {
+      "instance_index": 1,
+      "center_canonical_pixel": [
+        186.0,
+        131.5
+      ],
+      "center_source_pixel": [
+        583.89697265625,
+        338.55999755859375
+      ],
+      "area_px": 519.5,
+      "long_axis_canonical_deg": 0.0,
+      "bbox": [
+        171,
+        122,
+        31,
+        20
+      ]
+    },
+    {
+      "instance_index": 2,
+      "center_canonical_pixel": [
+        280.5,
+        134.0
+      ],
+      "center_source_pixel": [
+        628.22900390625,
+        340.47100830078125
+      ],
+      "area_px": 573.0,
+      "long_axis_canonical_deg": 0.0,
+      "bbox": [
+        264,
+        124,
+        34,
+        21
+      ]
+    },
+    {
+      "instance_index": 3,
+      "center_canonical_pixel": [
+        403.5,
+        132.5
+      ],
+      "center_source_pixel": [
+        686.155029296875,
+        339.01300048828125
+      ],
+      "area_px": 537.5,
+      "long_axis_canonical_deg": 0.0,
+      "bbox": [
+        387,
+        123,
+        34,
+        20
+      ]
+    },
+    {
+      "instance_index": 4,
+      "center_canonical_pixel": [
+        510.0,
+        123.5
+      ],
+      "center_source_pixel": [
+        736.4979858398438,
+        331.3450012207031
+      ],
+      "area_px": 639.5,
+      "long_axis_canonical_deg": 0.0,
+      "bbox": [
+        493,
+        113,
+        35,
+        22
+      ]
+    },
+    {
+      "instance_index": 5,
+      "center_canonical_pixel": [
+        618.5,
+        120.5
+      ],
+      "center_source_pixel": [
+        787.8049926757812,
+        328.6520080566406
+      ],
+      "area_px": 681.5,
+      "long_axis_canonical_deg": 0.0,
+      "bbox": [
+        600,
+        110,
+        38,
+        22
+      ]
+    },
+    {
+      "instance_index": 6,
+      "center_canonical_pixel": [
+        201.5,
+        267.0
+      ],
+      "center_source_pixel": [
+        588.4409790039062,
+        452.0299987792969
+      ],
+      "area_px": 403.0,
+      "long_axis_canonical_deg": 0.0,
+      "bbox": [
+        188,
+        258,
+        28,
+        19
+      ]
+    },
+    {
+      "instance_index": 7,
+      "center_canonical_pixel": [
+        314.0,
+        269.5
+      ],
+      "center_source_pixel": [
+        641.7940063476562,
+        454.0929870605469
+      ],
+      "area_px": 448.0,
+      "long_axis_canonical_deg": 0.0,
+      "bbox": [
+        299,
+        260,
+        31,
+        20
+      ]
+    },
+    {
+      "instance_index": 8,
+      "center_canonical_pixel": [
+        420.5,
+        264.0
+      ],
+      "center_source_pixel": [
+        692.5419921875,
+        449.37799072265625
+      ],
+      "area_px": 452.0,
+      "long_axis_canonical_deg": 0.0,
+      "bbox": [
+        406,
+        255,
+        30,
+        19
+      ]
+    },
+    {
+      "instance_index": 9,
+      "center_canonical_pixel": [
+        504.0,
+        258.0
+      ],
+      "center_source_pixel": [
+        732.4010009765625,
+        444.2449951171875
+      ],
+      "area_px": 446.5,
+      "long_axis_canonical_deg": 0.0,
+      "bbox": [
+        490,
+        249,
+        29,
+        19
+      ]
+    },
+    {
+      "instance_index": 10,
+      "center_canonical_pixel": [
+        608.5,
+        262.5
+      ],
+      "center_source_pixel": [
+        782.2689819335938,
+        448.0060119628906
+      ],
+      "area_px": 534.0,
+      "long_axis_canonical_deg": 0.0,
+      "bbox": [
+        593,
+        253,
+        32,
+        20
+      ]
+    }
+  ]
+}

@@ -70,6 +70,8 @@ CMakeFiles/vision_interfaces__rosidl_generator_type_description: rosidl_generato
 CMakeFiles/vision_interfaces__rosidl_generator_type_description: rosidl_generator_type_description/vision_interfaces/msg/Detections.json
 CMakeFiles/vision_interfaces__rosidl_generator_type_description: rosidl_generator_type_description/vision_interfaces/msg/Inspection.json
 CMakeFiles/vision_interfaces__rosidl_generator_type_description: rosidl_generator_type_description/vision_interfaces/msg/VisionStatus.json
+CMakeFiles/vision_interfaces__rosidl_generator_type_description: rosidl_generator_type_description/vision_interfaces/action/DetectTrayParts.json
+CMakeFiles/vision_interfaces__rosidl_generator_type_description: rosidl_generator_type_description/vision_interfaces/action/CalibratePcbPose.json
 
 rosidl_generator_type_description/vision_interfaces/msg/Part.json: /opt/ros/jazzy/lib/rosidl_generator_type_description/rosidl_generator_type_description
 rosidl_generator_type_description/vision_interfaces/msg/Part.json: /opt/ros/jazzy/lib/python3.12/site-packages/rosidl_generator_type_description/__init__.py
@@ -77,6 +79,8 @@ rosidl_generator_type_description/vision_interfaces/msg/Part.json: rosidl_adapte
 rosidl_generator_type_description/vision_interfaces/msg/Part.json: rosidl_adapter/vision_interfaces/msg/Detections.idl
 rosidl_generator_type_description/vision_interfaces/msg/Part.json: rosidl_adapter/vision_interfaces/msg/Inspection.idl
 rosidl_generator_type_description/vision_interfaces/msg/Part.json: rosidl_adapter/vision_interfaces/msg/VisionStatus.idl
+rosidl_generator_type_description/vision_interfaces/msg/Part.json: rosidl_adapter/vision_interfaces/action/DetectTrayParts.idl
+rosidl_generator_type_description/vision_interfaces/msg/Part.json: rosidl_adapter/vision_interfaces/action/CalibratePcbPose.idl
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Generating type hashes for ROS interfaces"
 	/usr/bin/python3 /opt/ros/jazzy/lib/rosidl_generator_type_description/rosidl_generator_type_description --generator-arguments-file /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_type_description__arguments.json
 
@@ -89,7 +93,15 @@ rosidl_generator_type_description/vision_interfaces/msg/Inspection.json: rosidl_
 rosidl_generator_type_description/vision_interfaces/msg/VisionStatus.json: rosidl_generator_type_description/vision_interfaces/msg/Part.json
 	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_type_description/vision_interfaces/msg/VisionStatus.json
 
+rosidl_generator_type_description/vision_interfaces/action/DetectTrayParts.json: rosidl_generator_type_description/vision_interfaces/msg/Part.json
+	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_type_description/vision_interfaces/action/DetectTrayParts.json
+
+rosidl_generator_type_description/vision_interfaces/action/CalibratePcbPose.json: rosidl_generator_type_description/vision_interfaces/msg/Part.json
+	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_type_description/vision_interfaces/action/CalibratePcbPose.json
+
 vision_interfaces__rosidl_generator_type_description: CMakeFiles/vision_interfaces__rosidl_generator_type_description
+vision_interfaces__rosidl_generator_type_description: rosidl_generator_type_description/vision_interfaces/action/CalibratePcbPose.json
+vision_interfaces__rosidl_generator_type_description: rosidl_generator_type_description/vision_interfaces/action/DetectTrayParts.json
 vision_interfaces__rosidl_generator_type_description: rosidl_generator_type_description/vision_interfaces/msg/Detections.json
 vision_interfaces__rosidl_generator_type_description: rosidl_generator_type_description/vision_interfaces/msg/Inspection.json
 vision_interfaces__rosidl_generator_type_description: rosidl_generator_type_description/vision_interfaces/msg/Part.json

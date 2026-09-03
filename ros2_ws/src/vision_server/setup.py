@@ -31,6 +31,7 @@ setup(
             'conveyor_roi = vision_server.conveyor_roi:main',
             'conveyor_controller = vision_server.conveyor_controller:main',
             'vision_mock = vision_server.vision_mock:main',
+            'orchestration_action_server = vision_server.orchestration_action_server:main',
         ],
     },
 )

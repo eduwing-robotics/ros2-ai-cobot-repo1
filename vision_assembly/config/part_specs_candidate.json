@@ -32,8 +32,8 @@
       "validated_pick": {
         "status": "physical_pick_to_trayhome_validated_2026-08-30",
         "grasp_z_offset_from_detected_surface_mm": -7.0,
-        "initial_lift_mm": 5.0,
-        "initial_lift_speed_percent": 10,
+        "initial_lift_mm": 20.0,
+        "initial_lift_speed_percent": 20,
         "travel_speed_percent": 30,
         "tool_id": 1,
         "user_id": 0
@@ -42,7 +42,10 @@
       "tray_pick_order": {
         "sort_by": "center_pixel_x",
         "direction": "ascending",
-        "instance_labels": ["left_1", "right_2"],
+        "instance_labels": [
+          "left_1",
+          "right_2"
+        ],
         "description": "트레이 영상 기준 왼쪽 GPU가 1번, 오른쪽 GPU가 2번"
       }
     },
@@ -58,11 +61,11 @@
       "dimension_status": "cad_candidate_needs_caliper_validation",
       "validated_pick": {
         "status": "operator_grasp_height_taught_2026-08-30_needs_lift_validation",
-        "grasp_z_offset_from_detected_surface_mm": -3.010,
-        "taught_grasp_tcp_z_mm": -46.550,
-        "source_detected_surface_z_mm": -43.540,
-        "initial_lift_mm": 5.0,
-        "initial_lift_speed_percent": 10,
+        "grasp_z_offset_from_detected_surface_mm": -3.01,
+        "taught_grasp_tcp_z_mm": -46.55,
+        "source_detected_surface_z_mm": -43.54,
+        "initial_lift_mm": 20.0,
+        "initial_lift_speed_percent": 20,
         "travel_speed_percent": 30,
         "tool_id": 1,
         "user_id": 0
@@ -71,11 +74,20 @@
       "tray_pick_order": {
         "set_order": "left_to_right",
         "instances_per_set": 8,
-        "layout_per_set": {"rows": 4, "columns": 2},
+        "layout_per_set": {
+          "rows": 4,
+          "columns": 2
+        },
         "within_set_order": "row_major_top_to_bottom_left_to_right",
         "instance_ranges": {
-          "left_set": [1, 8],
-          "right_set": [9, 16]
+          "left_set": [
+            1,
+            8
+          ],
+          "right_set": [
+            9,
+            16
+          ]
         },
         "description": "왼쪽 세트 1~8 완료 후 오른쪽 세트 9~16; 각 세트는 위쪽 행부터 같은 행의 왼쪽, 오른쪽 순서"
       }
@@ -94,11 +106,20 @@
       "tray_pick_order": {
         "set_order": "top_to_bottom",
         "instances_per_set": 5,
-        "layout": {"rows": 2, "columns": 5},
+        "layout": {
+          "rows": 2,
+          "columns": 5
+        },
         "within_set_order": "left_to_right",
         "instance_ranges": {
-          "top_set": [1, 5],
-          "bottom_set": [6, 10]
+          "top_set": [
+            1,
+            5
+          ],
+          "bottom_set": [
+            6,
+            10
+          ]
         },
         "description": "위쪽 세트는 왼쪽부터 1~5, 그다음 아래쪽 세트는 왼쪽부터 6~10 순서"
       }
@@ -116,10 +137,10 @@
       "validated_pick": {
         "status": "physical_pick_and_5mm_lift_visually_passed_2026-08-30_needs_repeat_confirmation",
         "grasp_z_offset_from_detected_surface_mm": -4.738,
-        "taught_grasp_tcp_z_mm": -50.550,
+        "taught_grasp_tcp_z_mm": -50.55,
         "source_detected_surface_z_mm": -45.812,
-        "initial_lift_mm": 5.0,
-        "initial_lift_speed_percent": 10,
+        "initial_lift_mm": 20.0,
+        "initial_lift_speed_percent": 20,
         "travel_speed_percent": 30,
         "tool_id": 1,
         "user_id": 0
@@ -128,11 +149,20 @@
       "tray_pick_order": {
         "set_order": "left_to_right",
         "instances_per_set": 4,
-        "layout_per_set": {"rows": 2, "columns": 2},
+        "layout_per_set": {
+          "rows": 2,
+          "columns": 2
+        },
         "within_set_order": "row_major_top_to_bottom_left_to_right",
         "instance_ranges": {
-          "left_set": [1, 4],
-          "right_set": [5, 8]
+          "left_set": [
+            1,
+            4
+          ],
+          "right_set": [
+            5,
+            8
+          ]
         },
         "description": "왼쪽 세트 1~4 완료 후 오른쪽 세트 5~8; 각 세트는 위쪽 행부터 같은 행의 왼쪽, 오른쪽 순서"
       }
@@ -151,11 +181,20 @@
       "tray_pick_order": {
         "set_order": "top_to_bottom",
         "instances_per_set": 2,
-        "layout": {"rows": 2, "columns": 2},
+        "layout": {
+          "rows": 2,
+          "columns": 2
+        },
         "within_set_order": "left_to_right",
         "instance_ranges": {
-          "top_set": [1, 2],
-          "bottom_set": [3, 4]
+          "top_set": [
+            1,
+            2
+          ],
+          "bottom_set": [
+            3,
+            4
+          ]
         },
         "description": "위쪽 줄은 왼쪽부터 1~2, 그다음 아래쪽 줄은 왼쪽부터 3~4 순서"
       }
@@ -174,11 +213,20 @@
       "tray_pick_order": {
         "set_order": "top_to_bottom",
         "instances_per_set": 5,
-        "layout": {"rows": 2, "columns": 5},
+        "layout": {
+          "rows": 2,
+          "columns": 5
+        },
         "within_set_order": "left_to_right",
         "instance_ranges": {
-          "top_set": [1, 5],
-          "bottom_set": [6, 10]
+          "top_set": [
+            1,
+            5
+          ],
+          "bottom_set": [
+            6,
+            10
+          ]
         },
         "description": "위쪽 줄은 왼쪽부터 1~5, 그다음 아래쪽 줄은 왼쪽부터 6~10 순서"
       }

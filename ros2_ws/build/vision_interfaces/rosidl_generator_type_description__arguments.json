@@ -5,10 +5,16 @@
     "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_adapter/vision_interfaces:msg/Part.idl",
     "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_adapter/vision_interfaces:msg/Detections.idl",
     "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_adapter/vision_interfaces:msg/Inspection.idl",
-    "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_adapter/vision_interfaces:msg/VisionStatus.idl"
+    "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_adapter/vision_interfaces:msg/VisionStatus.idl",
+    "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_adapter/vision_interfaces:action/DetectTrayParts.idl",
+    "/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_adapter/vision_interfaces:action/CalibratePcbPose.idl"
   ],
   "include_paths": [
+    "geometry_msgs:/opt/ros/jazzy/share/geometry_msgs",
     "std_msgs:/opt/ros/jazzy/share/std_msgs",
-    "builtin_interfaces:/opt/ros/jazzy/share/builtin_interfaces"
+    "builtin_interfaces:/opt/ros/jazzy/share/builtin_interfaces",
+    "service_msgs:/opt/ros/jazzy/share/service_msgs",
+    "action_msgs:/opt/ros/jazzy/share/action_msgs",
+    "unique_identifier_msgs:/opt/ros/jazzy/share/unique_identifier_msgs"
   ]
 }

@@ -4,10 +4,10 @@
 
 #include <string.h>
 
-#include "vision_interfaces/msg/detail/inspection__type_support.h"
 #include "vision_interfaces/msg/detail/inspection__functions.h"
-#include "rosidl_typesupport_interface/macros.h"
+#include "vision_interfaces/msg/detail/inspection__type_support.h"
 #include "vision_interfaces/msg/detail/inspection__struct.h"
+#include "rosidl_typesupport_interface/macros.h"
 
 #ifdef __cplusplus
 extern "C"

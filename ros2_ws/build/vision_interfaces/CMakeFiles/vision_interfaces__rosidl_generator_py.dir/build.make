@@ -125,12 +125,42 @@ CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/msg/_vision_status_s.c.s"
 	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_py/vision_interfaces/msg/_vision_status_s.c -o CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/msg/_vision_status_s.c.s
 
+CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.c.o: CMakeFiles/vision_interfaces__rosidl_generator_py.dir/flags.make
+CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.c.o: rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.c
+CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.c.o: CMakeFiles/vision_interfaces__rosidl_generator_py.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building C object CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.c.o -MF CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.c.o.d -o CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.c.o -c /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.c
+
+CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.c > CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.c.i
+
+CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.c -o CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.c.s
+
+CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.c.o: CMakeFiles/vision_interfaces__rosidl_generator_py.dir/flags.make
+CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.c.o: rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.c
+CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.c.o: CMakeFiles/vision_interfaces__rosidl_generator_py.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building C object CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.c.o -MF CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.c.o.d -o CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.c.o -c /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.c
+
+CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.c > CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.c.i
+
+CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.c -o CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.c.s
+
 # Object files for target vision_interfaces__rosidl_generator_py
 vision_interfaces__rosidl_generator_py_OBJECTS = \
 "CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/msg/_part_s.c.o" \
 "CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/msg/_detections_s.c.o" \
 "CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/msg/_inspection_s.c.o" \
-"CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/msg/_vision_status_s.c.o"
+"CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/msg/_vision_status_s.c.o" \
+"CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.c.o" \
+"CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.c.o"
 
 # External object files for target vision_interfaces__rosidl_generator_py
 vision_interfaces__rosidl_generator_py_EXTERNAL_OBJECTS =
@@ -139,23 +169,57 @@ libvision_interfaces__rosidl_generator_py.so: CMakeFiles/vision_interfaces__rosi
 libvision_interfaces__rosidl_generator_py.so: CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/msg/_detections_s.c.o
 libvision_interfaces__rosidl_generator_py.so: CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/msg/_inspection_s.c.o
 libvision_interfaces__rosidl_generator_py.so: CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/msg/_vision_status_s.c.o
+libvision_interfaces__rosidl_generator_py.so: CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.c.o
+libvision_interfaces__rosidl_generator_py.so: CMakeFiles/vision_interfaces__rosidl_generator_py.dir/rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.c.o
 libvision_interfaces__rosidl_generator_py.so: CMakeFiles/vision_interfaces__rosidl_generator_py.dir/build.make
 libvision_interfaces__rosidl_generator_py.so: libvision_interfaces__rosidl_typesupport_c.so
+libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libgeometry_msgs__rosidl_typesupport_fastrtps_c.so
+libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libgeometry_msgs__rosidl_typesupport_introspection_c.so
+libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libgeometry_msgs__rosidl_typesupport_fastrtps_cpp.so
+libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libgeometry_msgs__rosidl_typesupport_introspection_cpp.so
+libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libgeometry_msgs__rosidl_typesupport_cpp.so
+libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libgeometry_msgs__rosidl_generator_py.so
 libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libstd_msgs__rosidl_typesupport_fastrtps_c.so
 libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libstd_msgs__rosidl_typesupport_fastrtps_cpp.so
 libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libstd_msgs__rosidl_typesupport_introspection_c.so
 libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libstd_msgs__rosidl_typesupport_introspection_cpp.so
 libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libstd_msgs__rosidl_typesupport_cpp.so
 libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libstd_msgs__rosidl_generator_py.so
+libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libaction_msgs__rosidl_typesupport_fastrtps_c.so
+libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libaction_msgs__rosidl_typesupport_fastrtps_cpp.so
+libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libaction_msgs__rosidl_typesupport_introspection_c.so
+libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libaction_msgs__rosidl_typesupport_introspection_cpp.so
+libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libaction_msgs__rosidl_typesupport_cpp.so
+libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libaction_msgs__rosidl_generator_py.so
+libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libunique_identifier_msgs__rosidl_typesupport_fastrtps_c.so
+libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libunique_identifier_msgs__rosidl_typesupport_introspection_c.so
+libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libunique_identifier_msgs__rosidl_typesupport_fastrtps_cpp.so
+libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libunique_identifier_msgs__rosidl_typesupport_introspection_cpp.so
+libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libunique_identifier_msgs__rosidl_typesupport_cpp.so
+libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libunique_identifier_msgs__rosidl_generator_py.so
+libvision_interfaces__rosidl_generator_py.so: libvision_interfaces__rosidl_generator_c.so
+libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libgeometry_msgs__rosidl_typesupport_c.so
+libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libgeometry_msgs__rosidl_generator_c.so
+libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libstd_msgs__rosidl_typesupport_c.so
+libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libstd_msgs__rosidl_generator_c.so
+libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libservice_msgs__rosidl_typesupport_fastrtps_c.so
+libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libservice_msgs__rosidl_typesupport_fastrtps_cpp.so
+libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libservice_msgs__rosidl_typesupport_introspection_c.so
+libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libservice_msgs__rosidl_typesupport_introspection_cpp.so
+libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libservice_msgs__rosidl_typesupport_cpp.so
+libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libservice_msgs__rosidl_generator_py.so
 libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libbuiltin_interfaces__rosidl_typesupport_fastrtps_c.so
 libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libbuiltin_interfaces__rosidl_typesupport_introspection_c.so
 libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libbuiltin_interfaces__rosidl_typesupport_fastrtps_cpp.so
 libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libbuiltin_interfaces__rosidl_typesupport_introspection_cpp.so
 libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libbuiltin_interfaces__rosidl_typesupport_cpp.so
 libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libbuiltin_interfaces__rosidl_generator_py.so
-libvision_interfaces__rosidl_generator_py.so: libvision_interfaces__rosidl_generator_c.so
-libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libstd_msgs__rosidl_typesupport_c.so
-libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libstd_msgs__rosidl_generator_c.so
+libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libaction_msgs__rosidl_typesupport_c.so
+libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libservice_msgs__rosidl_typesupport_c.so
+libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libbuiltin_interfaces__rosidl_typesupport_c.so
+libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libaction_msgs__rosidl_generator_c.so
+libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libservice_msgs__rosidl_generator_c.so
+libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libbuiltin_interfaces__rosidl_generator_c.so
 libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/librosidl_typesupport_fastrtps_c.so
 libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/librosidl_typesupport_fastrtps_cpp.so
 libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libfastcdr.so.2.2.7
@@ -164,12 +228,12 @@ libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/librosidl_dynam
 libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/librosidl_typesupport_introspection_cpp.so
 libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/librosidl_typesupport_introspection_c.so
 libvision_interfaces__rosidl_generator_py.so: /usr/lib/x86_64-linux-gnu/libpython3.12.so
-libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libbuiltin_interfaces__rosidl_typesupport_c.so
-libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libbuiltin_interfaces__rosidl_generator_c.so
+libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libunique_identifier_msgs__rosidl_typesupport_c.so
+libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/libunique_identifier_msgs__rosidl_generator_c.so
 libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/librosidl_runtime_c.so
 libvision_interfaces__rosidl_generator_py.so: /opt/ros/jazzy/lib/librcutils.so
 libvision_interfaces__rosidl_generator_py.so: CMakeFiles/vision_interfaces__rosidl_generator_py.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Linking C shared library libvision_interfaces__rosidl_generator_py.so"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Linking C shared library libvision_interfaces__rosidl_generator_py.so"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/vision_interfaces__rosidl_generator_py.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

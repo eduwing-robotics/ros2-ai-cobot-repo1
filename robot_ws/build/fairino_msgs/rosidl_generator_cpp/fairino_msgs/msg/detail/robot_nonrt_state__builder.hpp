@@ -1096,16 +1096,48 @@ private:
   ::fairino_msgs::msg::RobotNonrtState msg_;
 };
 
+class Init_RobotNonrtState_gripper_feedback_valid
+{
+public:
+  explicit Init_RobotNonrtState_gripper_feedback_valid(::fairino_msgs::msg::RobotNonrtState & msg)
+  : msg_(msg)
+  {}
+  Init_RobotNonrtState_weldbreakoffstate gripper_feedback_valid(::fairino_msgs::msg::RobotNonrtState::_gripper_feedback_valid_type arg)
+  {
+    msg_.gripper_feedback_valid = std::move(arg);
+    return Init_RobotNonrtState_weldbreakoffstate(msg_);
+  }
+
+private:
+  ::fairino_msgs::msg::RobotNonrtState msg_;
+};
+
+class Init_RobotNonrtState_gripper_position
+{
+public:
+  explicit Init_RobotNonrtState_gripper_position(::fairino_msgs::msg::RobotNonrtState & msg)
+  : msg_(msg)
+  {}
+  Init_RobotNonrtState_gripper_feedback_valid gripper_position(::fairino_msgs::msg::RobotNonrtState::_gripper_position_type arg)
+  {
+    msg_.gripper_position = std::move(arg);
+    return Init_RobotNonrtState_gripper_feedback_valid(msg_);
+  }
+
+private:
+  ::fairino_msgs::msg::RobotNonrtState msg_;
+};
+
 class Init_RobotNonrtState_grip_motion_done
 {
 public:
   explicit Init_RobotNonrtState_grip_motion_done(::fairino_msgs::msg::RobotNonrtState & msg)
   : msg_(msg)
   {}
-  Init_RobotNonrtState_weldbreakoffstate grip_motion_done(::fairino_msgs::msg::RobotNonrtState::_grip_motion_done_type arg)
+  Init_RobotNonrtState_gripper_position grip_motion_done(::fairino_msgs::msg::RobotNonrtState::_grip_motion_done_type arg)
   {
     msg_.grip_motion_done = std::move(arg);
-    return Init_RobotNonrtState_weldbreakoffstate(msg_);
+    return Init_RobotNonrtState_gripper_position(msg_);
   }
 
 private:

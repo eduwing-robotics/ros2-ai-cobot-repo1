@@ -64,7 +64,7 @@ def select_board_overlay(target_slot):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--board-point', default='PCB')
-    parser.add_argument('--part-view-point', default='ClosePin')
+    parser.add_argument('--part-view-point', default='TrayHome')
     parser.add_argument('--target-slot', default='right_white_brown_01')
     parser.add_argument('--part-length-mm', type=float, default=6.0)
     parser.add_argument('--part-width-mm', type=float, default=3.5)
@@ -91,9 +91,10 @@ def main():
         parser.error('actual workflow requires --execute --confirm-full-cycle')
     if not args.execute:
         parser.error('this stateful workflow supports actual execution only')
+    parser.error('legacy continuous-descent workflow is disabled; use vision_assembly/run_safe_part_pick.sh prepare and descend')
 
     print('FULL PICK -> PCB SLOT HOVER WORKFLOW')
-    print('ClosePin -> detect/pick/lift -> PCB view -> fresh board target -> 100 mm hover')
+    print('TrayHome -> detect/pick/lift -> PCB view -> fresh board target -> 100 mm hover')
     print('Stops 100 mm above the slot. No board descent or gripper release.')
     grasped = False
     board_view = None

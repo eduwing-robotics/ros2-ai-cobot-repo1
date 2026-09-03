@@ -56,6 +56,8 @@ uint8 emg
 uint8[6] safetyboxsig #V2.1 added
 uint8 robot_motion_done
 uint8 grip_motion_done
+uint8 gripper_position
+bool gripper_feedback_valid
 uint8 weldbreakoffstate
 uint8 weldarcstate
 float64 welding_voltage

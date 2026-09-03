@@ -494,7 +494,7 @@ void assign_function__RobotNonrtState__extadcoutput(
   item = value;
 }
 
-static const ::rosidl_typesupport_introspection_cpp::MessageMember RobotNonrtState_message_member_array[124] = {
+static const ::rosidl_typesupport_introspection_cpp::MessageMember RobotNonrtState_message_member_array[126] = {
   {
     "j1_cur_pos",  // name
     ::rosidl_typesupport_introspection_cpp::ROS_TYPE_DOUBLE,  // type
@@ -1513,6 +1513,42 @@ static const ::rosidl_typesupport_introspection_cpp::MessageMember RobotNonrtSta
     0,  // array size
     false,  // is upper bound
     offsetof(fairino_msgs::msg::RobotNonrtState, grip_motion_done),  // bytes offset in struct
+    nullptr,  // default value
+    nullptr,  // size() function pointer
+    nullptr,  // get_const(index) function pointer
+    nullptr,  // get(index) function pointer
+    nullptr,  // fetch(index, &value) function pointer
+    nullptr,  // assign(index, value) function pointer
+    nullptr  // resize(index) function pointer
+  },
+  {
+    "gripper_position",  // name
+    ::rosidl_typesupport_introspection_cpp::ROS_TYPE_UINT8,  // type
+    0,  // upper bound of string
+    nullptr,  // members of sub message
+    false,  // is key
+    false,  // is array
+    0,  // array size
+    false,  // is upper bound
+    offsetof(fairino_msgs::msg::RobotNonrtState, gripper_position),  // bytes offset in struct
+    nullptr,  // default value
+    nullptr,  // size() function pointer
+    nullptr,  // get_const(index) function pointer
+    nullptr,  // get(index) function pointer
+    nullptr,  // fetch(index, &value) function pointer
+    nullptr,  // assign(index, value) function pointer
+    nullptr  // resize(index) function pointer
+  },
+  {
+    "gripper_feedback_valid",  // name
+    ::rosidl_typesupport_introspection_cpp::ROS_TYPE_BOOLEAN,  // type
+    0,  // upper bound of string
+    nullptr,  // members of sub message
+    false,  // is key
+    false,  // is array
+    0,  // array size
+    false,  // is upper bound
+    offsetof(fairino_msgs::msg::RobotNonrtState, gripper_feedback_valid),  // bytes offset in struct
     nullptr,  // default value
     nullptr,  // size() function pointer
     nullptr,  // get_const(index) function pointer
@@ -2732,7 +2768,7 @@ static const ::rosidl_typesupport_introspection_cpp::MessageMember RobotNonrtSta
 static const ::rosidl_typesupport_introspection_cpp::MessageMembers RobotNonrtState_message_members = {
   "fairino_msgs::msg",  // message namespace
   "RobotNonrtState",  // message name
-  124,  // number of fields
+  126,  // number of fields
   sizeof(fairino_msgs::msg::RobotNonrtState),
   false,  // has_any_key_member_
   RobotNonrtState_message_member_array,  // message members

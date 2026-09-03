@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "phase": "grasp_height_verified",
+  "timestamp_unix": 1788336545.792891,
+  "part_type": "hbm",
+  "instance_index": 3,
+  "target_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/safe_pick_hbm_3.json",
+  "detection": {
+    "schema_version": 1,
+    "mode": "single_part_hover_target",
+    "timestamp_unix": 1788336499.7343493,
+    "part_type": "hbm",
+    "display_name": "HBM",
+    "instance_index": null,
+    "selection_mode": "nearest_expected_base_xy",
+    "part_center_base_mm": [
+      -561.916,
+      -40.675,
+      -46.84
+    ],
+    "long_axis_angle_base_deg": 0.528,
+    "center_pixel": [
+      740.805,
+      498.945
+    ],
+    "center_pixel_span": [
+      0.33,
+      0.05
+    ],
+    "camera_xyz_m": [
+      0.051023,
+      0.063248,
+      0.48
+    ],
+    "sample_count": 6,
+    "position_span_mm": [
+      0.005,
+      0.02,
+      0.003
+    ],
+    "angle_span_deg": 0.002,
+    "hover_offset_mm": 100.0,
+    "robot_motion_authorized": false,
+    "source_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/tray_detections_last.json"
+  },
+  "recipe": {
+    "part_type": "hbm",
+    "display_name": "HBM",
+    "tool_correction_xy_mm": [
+      0.0,
+      0.0
+    ],
+    "base_correction_xy_mm": [
+      -0.717,
+      1.253
+    ],
+    "grasp_z_offset_mm": -3.01,
+    "gripper_axis": "tool_y",
+    "grip_args": [
+      1,
+      18,
+      50,
+      30,
+      3000,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "verified_hover_tcp": [
+    -562.6287231445312,
+    -39.421791076660156,
+    53.150630950927734,
+    179.9987335205078,
+    0.00037819810677319765,
+    90.5275650024414
+  ],
+  "descent_detection_source": "prepare_verified_detection",
+  "verified_grasp_tcp": [
+    -562.6348266601562,
+    -39.42531967163086,
+    -49.842933654785156,
+    -179.999755859375,
+    0.0001888060651253909,
+    90.52799987792969
+  ],
+  "gripper_closed": false
+}

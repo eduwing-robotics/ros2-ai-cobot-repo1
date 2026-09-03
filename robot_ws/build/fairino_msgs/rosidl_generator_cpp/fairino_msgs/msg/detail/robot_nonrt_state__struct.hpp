@@ -99,6 +99,8 @@ struct RobotNonrtState_
       std::fill<typename std::array<uint8_t, 6>::iterator, uint8_t>(this->safetyboxsig.begin(), this->safetyboxsig.end(), 0);
       this->robot_motion_done = 0;
       this->grip_motion_done = 0;
+      this->gripper_position = 0;
+      this->gripper_feedback_valid = false;
       this->weldbreakoffstate = 0;
       this->weldarcstate = 0;
       this->welding_voltage = 0.0;
@@ -245,6 +247,8 @@ struct RobotNonrtState_
       std::fill<typename std::array<uint8_t, 6>::iterator, uint8_t>(this->safetyboxsig.begin(), this->safetyboxsig.end(), 0);
       this->robot_motion_done = 0;
       this->grip_motion_done = 0;
+      this->gripper_position = 0;
+      this->gripper_feedback_valid = false;
       this->weldbreakoffstate = 0;
       this->weldarcstate = 0;
       this->welding_voltage = 0.0;
@@ -487,6 +491,12 @@ struct RobotNonrtState_
   using _grip_motion_done_type =
     uint8_t;
   _grip_motion_done_type grip_motion_done;
+  using _gripper_position_type =
+    uint8_t;
+  _gripper_position_type gripper_position;
+  using _gripper_feedback_valid_type =
+    bool;
+  _gripper_feedback_valid_type gripper_feedback_valid;
   using _weldbreakoffstate_type =
     uint8_t;
   _weldbreakoffstate_type weldbreakoffstate;
@@ -1030,6 +1040,18 @@ struct RobotNonrtState_
     const uint8_t & _arg)
   {
     this->grip_motion_done = _arg;
+    return *this;
+  }
+  Type & set__gripper_position(
+    const uint8_t & _arg)
+  {
+    this->gripper_position = _arg;
+    return *this;
+  }
+  Type & set__gripper_feedback_valid(
+    const bool & _arg)
+  {
+    this->gripper_feedback_valid = _arg;
     return *this;
   }
   Type & set__weldbreakoffstate(
@@ -1646,6 +1668,12 @@ struct RobotNonrtState_
       return false;
     }
     if (this->grip_motion_done != other.grip_motion_done) {
+      return false;
+    }
+    if (this->gripper_position != other.gripper_position) {
+      return false;
+    }
+    if (this->gripper_feedback_valid != other.gripper_feedback_valid) {
       return false;
     }
     if (this->weldbreakoffstate != other.weldbreakoffstate) {

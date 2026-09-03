@@ -354,6 +354,16 @@ bool cdr_serialize_fairino_msgs__msg__RobotNonrtState(
     cdr << ros_message->grip_motion_done;
   }
 
+  // Field name: gripper_position
+  {
+    cdr << ros_message->gripper_position;
+  }
+
+  // Field name: gripper_feedback_valid
+  {
+    cdr << (ros_message->gripper_feedback_valid ? true : false);
+  }
+
   // Field name: weldbreakoffstate
   {
     cdr << ros_message->weldbreakoffstate;
@@ -1024,6 +1034,18 @@ bool cdr_deserialize_fairino_msgs__msg__RobotNonrtState(
   // Field name: grip_motion_done
   {
     cdr >> ros_message->grip_motion_done;
+  }
+
+  // Field name: gripper_position
+  {
+    cdr >> ros_message->gripper_position;
+  }
+
+  // Field name: gripper_feedback_valid
+  {
+    uint8_t tmp;
+    cdr >> tmp;
+    ros_message->gripper_feedback_valid = tmp ? true : false;
   }
 
   // Field name: weldbreakoffstate
@@ -1812,6 +1834,20 @@ size_t get_serialized_size_fairino_msgs__msg__RobotNonrtState(
   // Field name: grip_motion_done
   {
     size_t item_size = sizeof(ros_message->grip_motion_done);
+    current_alignment += item_size +
+      eprosima::fastcdr::Cdr::alignment(current_alignment, item_size);
+  }
+
+  // Field name: gripper_position
+  {
+    size_t item_size = sizeof(ros_message->gripper_position);
+    current_alignment += item_size +
+      eprosima::fastcdr::Cdr::alignment(current_alignment, item_size);
+  }
+
+  // Field name: gripper_feedback_valid
+  {
+    size_t item_size = sizeof(ros_message->gripper_feedback_valid);
     current_alignment += item_size +
       eprosima::fastcdr::Cdr::alignment(current_alignment, item_size);
   }
@@ -2768,6 +2804,20 @@ size_t max_serialized_size_fairino_msgs__msg__RobotNonrtState(
     current_alignment += array_size * sizeof(uint8_t);
   }
 
+  // Field name: gripper_position
+  {
+    size_t array_size = 1;
+    last_member_size = array_size * sizeof(uint8_t);
+    current_alignment += array_size * sizeof(uint8_t);
+  }
+
+  // Field name: gripper_feedback_valid
+  {
+    size_t array_size = 1;
+    last_member_size = array_size * sizeof(uint8_t);
+    current_alignment += array_size * sizeof(uint8_t);
+  }
+
   // Field name: weldbreakoffstate
   {
     size_t array_size = 1;
@@ -3595,6 +3645,16 @@ bool cdr_serialize_key_fairino_msgs__msg__RobotNonrtState(
     cdr << ros_message->grip_motion_done;
   }
 
+  // Field name: gripper_position
+  {
+    cdr << ros_message->gripper_position;
+  }
+
+  // Field name: gripper_feedback_valid
+  {
+    cdr << (ros_message->gripper_feedback_valid ? true : false);
+  }
+
   // Field name: weldbreakoffstate
   {
     cdr << ros_message->weldbreakoffstate;
@@ -4379,6 +4439,20 @@ size_t get_serialized_size_key_fairino_msgs__msg__RobotNonrtState(
   // Field name: grip_motion_done
   {
     size_t item_size = sizeof(ros_message->grip_motion_done);
+    current_alignment += item_size +
+      eprosima::fastcdr::Cdr::alignment(current_alignment, item_size);
+  }
+
+  // Field name: gripper_position
+  {
+    size_t item_size = sizeof(ros_message->gripper_position);
+    current_alignment += item_size +
+      eprosima::fastcdr::Cdr::alignment(current_alignment, item_size);
+  }
+
+  // Field name: gripper_feedback_valid
+  {
+    size_t item_size = sizeof(ros_message->gripper_feedback_valid);
     current_alignment += item_size +
       eprosima::fastcdr::Cdr::alignment(current_alignment, item_size);
   }
@@ -5327,6 +5401,20 @@ size_t max_serialized_size_key_fairino_msgs__msg__RobotNonrtState(
   }
 
   // Field name: grip_motion_done
+  {
+    size_t array_size = 1;
+    last_member_size = array_size * sizeof(uint8_t);
+    current_alignment += array_size * sizeof(uint8_t);
+  }
+
+  // Field name: gripper_position
+  {
+    size_t array_size = 1;
+    last_member_size = array_size * sizeof(uint8_t);
+    current_alignment += array_size * sizeof(uint8_t);
+  }
+
+  // Field name: gripper_feedback_valid
   {
     size_t array_size = 1;
     last_member_size = array_size * sizeof(uint8_t);

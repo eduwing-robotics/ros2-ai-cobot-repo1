@@ -6,36 +6,48 @@ from rclpy.node import Node
 from rclpy.executors import ExternalShutdownException
 from rclpy.qos import HistoryPolicy,QoSProfile,ReliabilityPolicy
 from sensor_msgs.msg import CompressedImage
+from fairino_msgs.msg import RobotNonrtState
 from std_msgs.msg import String
 COLORS={'black_block':(0,0,255),'long_orange':(0,165,255),'marked_white':(0,255,255),'right_white_brown':(0,200,0),'gpu':(255,80,0),'hbm':(220,0,220)}
 class Renderer(Node):
  def __init__(self,a):
   super().__init__('tray_live_renderer');self.a=a;self.layout=json.loads(a.layout.read_text());self.bins=self.layout['bins']
   image=cv2.imread(self.layout['reference_image']);self.rh,self.rw=image.shape[:2]
-  self.H=None;self.edge_corners=None;self.tracks={};self.counts={};self.last=0.
+  self.H=None;self.edge_corners=None;self.tracks={};self.counts={};self.close_overlay=None;self.last=0.;self.at_trayhome=False;self.robot_motion_done=1;self.registration_state='NONE'
   qos=QoSProfile(history=HistoryPolicy.KEEP_LAST,depth=1,reliability=ReliabilityPolicy.BEST_EFFORT)
   self.pub=self.create_publisher(CompressedImage,a.output_topic,qos)
   self.create_subscription(CompressedImage,a.color_topic,self.image_cb,qos)
   self.create_subscription(String,a.registration_topic,self.registration_cb,10)
   self.create_subscription(String,a.overlay_topic,self.overlay_cb,10)
+  self.create_subscription(String,a.close_overlay_topic,self.close_overlay_cb,10)
+  self.create_subscription(RobotNonrtState,a.robot_state_topic,self.robot_cb,10)
   self.get_logger().info('Independent live renderer ready')
  def ref_points(self,item):return np.array([[round(x*self.rw),round(y*self.rh)] for x,y in item['section_polygon_normalized']],np.float32)
  def registration_cb(self,m):
   try:
    q=json.loads(m.data)
-   if q.get('state')!='TRACKING':self.H=None;self.edge_corners=None;self.tracks={};self.counts={};return
+   self.at_trayhome=bool(q.get('at_trayhome',False))
+   self.registration_state=str(q.get('state','NONE'))
+   if self.registration_state not in ('TRACKING','DISPLAY_ONLY'):self.H=None;self.edge_corners=None;return
+   if self.registration_state=='DISPLAY_ONLY':self.tracks={};self.counts={}
    H=np.asarray(q['homography_reference_to_image'],float)
    self.H=H if H.shape==(3,3) and np.all(np.isfinite(H)) else None
    corners=np.asarray(q.get('tray_edge_corners_image',[]),np.float32)
    self.edge_corners=corners if corners.shape==(4,2) else None
-  except Exception:self.H=None;self.edge_corners=None;self.tracks={};self.counts={}
+  except Exception:self.H=None;self.edge_corners=None
+ def robot_cb(self,m):
+  self.robot_motion_done=int(m.robot_motion_done)
+  if self.robot_motion_done!=1:self.close_overlay=None
  def overlay_cb(self,m):
   try:
    q=json.loads(m.data)
-   if not q.get('valid'):self.tracks={};self.counts={};return
+   if not q.get('valid'):return
    self.tracks={str(k):[np.asarray(c,np.float32).reshape(-1,1,2) for c in v] for k,v in q.get('tracks',{}).items()}
    self.counts={str(k):int(v) for k,v in q.get('counts',{}).items()}
-  except Exception:self.tracks={};self.counts={}
+  except Exception:pass
+ def close_overlay_cb(self,m):
+  try:self.close_overlay=json.loads(m.data)
+  except Exception:self.close_overlay=None
  @staticmethod
  def marker(image,center):
   cv2.drawMarker(image,center,(0,0,0),cv2.MARKER_CROSS,7,3,cv2.LINE_AA);cv2.drawMarker(image,center,(255,255,255),cv2.MARKER_CROSS,7,1,cv2.LINE_AA)
@@ -45,9 +57,24 @@ class Renderer(Node):
   self.last=now;image=cv2.imdecode(np.frombuffer(m.data,np.uint8),cv2.IMREAD_COLOR)
   if image is None:return
   H=None if self.H is None else self.H.copy()
-  if H is None:cv2.putText(image,'CAMERA MOVING / TRAY NOT REGISTERED',(25,50),cv2.FONT_HERSHEY_SIMPLEX,.65,(0,0,255),2,cv2.LINE_AA)
+  live=image.copy()
+  if self.robot_motion_done!=1:
+   image=live;cv2.putText(image,'ROBOT MOVING - OVERLAY HIDDEN',(25,42),cv2.FONT_HERSHEY_SIMPLEX,.65,(0,165,255),2,cv2.LINE_AA)
+  elif not self.at_trayhome:
+   image=live;close=self.close_overlay;color=COLORS['right_white_brown']
+   if close and close.get('valid') and time.time()-float(close.get('timestamp_unix',0))<2.0:
+    section=np.rint(np.asarray(close['section_polygon_source_pixel'],np.float32)).astype(np.int32);cv2.polylines(image,[section],True,color,2,cv2.LINE_AA)
+    for item in close.get('detections',[]):
+     poly=np.rint(np.asarray(item['polygon_source_pixel'],np.float32)).astype(np.int32);cv2.polylines(image,[poly],True,color,2,cv2.LINE_AA);center=np.rint(poly.mean(axis=0)).astype(int);self.marker(image,tuple(center));cv2.putText(image,str(item['instance_index']),tuple(center+np.array([8,-8])),cv2.FONT_HERSHEY_SIMPLEX,.48,color,1,cv2.LINE_AA)
+    required=int(close.get('required_count',5))
+    cv2.putText(image,f"SMD Capacitor {int(close.get('count',0))}/{required}",(int(section[:,0].min())+10,int(section[:,1].max())-14),cv2.FONT_HERSHEY_SIMPLEX,.55,color,2,cv2.LINE_AA)
+   else:cv2.putText(image,'LIVE CLOSE VIEW - TRAY OVERLAY DISABLED',(25,42),cv2.FONT_HERSHEY_SIMPLEX,.65,(0,255,255),2,cv2.LINE_AA)
+  elif H is None:cv2.putText(image,'TRAY NOT REGISTERED',(25,50),cv2.FONT_HERSHEY_SIMPLEX,.65,(0,0,255),2,cv2.LINE_AA)
   else:
-   cv2.putText(image,'LIVE VIEW - DETECTION ENABLED',(25,42),cv2.FONT_HERSHEY_SIMPLEX,.65,(0,220,0),2,cv2.LINE_AA)
+   if self.registration_state=='DISPLAY_ONLY':
+    cv2.putText(image,'DISPLAY ONLY - REGISTRATION INVALID',(25,42),cv2.FONT_HERSHEY_SIMPLEX,.65,(0,165,255),2,cv2.LINE_AA)
+   else:
+    cv2.putText(image,'LIVE VIEW - DETECTION ENABLED',(25,42),cv2.FONT_HERSHEY_SIMPLEX,.65,(0,220,0),2,cv2.LINE_AA)
    for part,contours in self.tracks.items():
     color=COLORS.get(part,(255,255,255));th=1 if part in ('right_white_brown','marked_white') else 2
     for ref in contours:
@@ -66,7 +93,7 @@ class Renderer(Node):
   if ok:
    out=CompressedImage();out.header=m.header;out.format='jpeg';out.data=jpg.tobytes();self.pub.publish(out)
 def main():
- root=Path(__file__).resolve().parents[1];p=argparse.ArgumentParser();p.add_argument('--layout',type=Path,default=root/'config/tray_layout_candidate.json');p.add_argument('--color-topic',default='/camera/camera/color/image_raw/compressed');p.add_argument('--registration-topic',default='/vision/tray/registration');p.add_argument('--overlay-topic',default='/vision/tray/detection_overlay_state');p.add_argument('--output-topic',default='/vision/tray/detections_image/compressed');p.add_argument('--display-hz',type=float,default=10.);p.add_argument('--display-scale',type=float,default=.75);p.add_argument('--jpeg-quality',type=int,default=75)
+ root=Path(__file__).resolve().parents[1];p=argparse.ArgumentParser();p.add_argument('--layout',type=Path,default=root/'config/tray_layout_candidate.json');p.add_argument('--color-topic',default='/camera/camera/color/image_raw/compressed');p.add_argument('--registration-topic',default='/vision/tray/registration');p.add_argument('--overlay-topic',default='/vision/tray/detection_overlay_state');p.add_argument('--close-overlay-topic',default='/vision/smd/close_overlay_state');p.add_argument('--robot-state-topic',default='/nonrt_state_data');p.add_argument('--output-topic',default='/vision/tray/detections_image/compressed');p.add_argument('--display-hz',type=float,default=10.);p.add_argument('--display-scale',type=float,default=.75);p.add_argument('--jpeg-quality',type=int,default=75)
  a=p.parse_args();rclpy.init();node=Renderer(a)
  try:rclpy.spin(node)
  except (KeyboardInterrupt,ExternalShutdownException):pass

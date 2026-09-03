@@ -382,13 +382,25 @@ class Detector(Node):
     values=self.depth[(cv2.dilate(cm,np.ones((5,5),np.uint8))>0)&(self.depth>100)&(self.depth<2000)]
    if values.size<3:continue
    zmm=float(np.median(values));z=zmm/1000.
+   reference_contour=reference.reshape(-1,1,2).astype(np.float32)
+   reference_area=float(cv2.contourArea(reference_contour))
+   (_, _),(reference_w,reference_h),_=cv2.minAreaRect(reference_contour)
+   reference_aspect=max(reference_w,reference_h)/max(1.,min(reference_w,reference_h))
+   expected_size=self.specs[part]['nominal_size_mm']
+   expected_aspect=max(expected_size['x'],expected_size['y'])/max(1e-6,min(expected_size['x'],expected_size['y']))
+   area_match=float(np.exp(-abs(np.log(max(reference_area,1.)/self.seg_single_areas[part]))))
+   aspect_match=float(np.exp(-abs(np.log(max(reference_aspect,1e-6)/expected_aspect))))
+   rectangularity=float(reference_area/max(1.,reference_w*reference_h))
+   mask_shape=float((area_match*aspect_match*max(0.,min(1.,rectangularity)))**(1/3))
    found.append({'center_pixel':[round(u,2),round(v,2)],
     'bbox_size_px':[round(float(bw),2),round(float(bh),2)],'angle_deg':round(float(angle),2),
     'depth_m':round(z,6),'height_above_tray_mm':None,'area_ratio':None,'instance_estimate':1,
     'camera_xyz_m':[round((u-cx)*z/fx,6),round((v-cy)*z/fy,6),round(z,6)],
     'cad_area_match_score':round(score,4),'aspect_ratio':round(max(bw,bh)/max(1.,min(bw,bh)),3),
-    'aspect_match_score':None,'rectangularity':round(area/max(1.,bw*bh),3),
-    'shape_score':round(score,4),'segmentation_confidence':round(score,4),'detector':'yolo26_seg',
+    'mask_area_match_score':round(area_match,4),'aspect_match_score':round(aspect_match,4),
+    'rectangularity':round(rectangularity,4),'shape_score':round(mask_shape,4),
+    'mask_shape_score':round(mask_shape,4),'segmentation_confidence':round(score,4),
+    'detector':'yolo26_seg',
     '_contour':contour})
   poly=np.rint(cv2.perspectiveTransform(self.ref_points(item).astype(np.float32).reshape(-1,1,2),H)[:,0,:]).astype(np.int32)
   found.sort(key=lambda item:item['segmentation_confidence'],reverse=True)
@@ -436,13 +448,14 @@ class Detector(Node):
   def y(item):return item['reference_center_pixel'][1]
   if part=='gpu':
    return sorted(group,key=x)
-  if part=='black_block':
-   # VRM numbering is row-major: top row 1..5, bottom row 6..10.
+  if part in ('black_block','marked_white','right_white_brown'):
+   # Row-major numbering: VRM and SMD use 5 columns; the 2x2 inductors use 2.
    # Same-row Y jitter must not scramble the left-to-right numbering.
+   row_size=2 if part=='marked_white' else 5
    by_y=sorted(group,key=y)
    ordered=[]
-   for row_start in range(0,len(by_y),5):
-    ordered.extend(sorted(by_y[row_start:row_start+5],key=x))
+   for row_start in range(0,len(by_y),row_size):
+    ordered.extend(sorted(by_y[row_start:row_start+row_size],key=x))
    return ordered
   if part not in ('hbm','long_orange'):
    return sorted(group,key=lambda item:(y(item),x(item)))
@@ -479,7 +492,8 @@ class Detector(Node):
      if value<distance:best,distance=cluster,value
     if best is None or distance>radius:
      best={'part_type':d['part_type'],'display_name':d['display_name'],
-           'points':[],'cameras':[],'angles':[],'frames':set(),'scores':[]};clusters.append(best)
+           'points':[],'cameras':[],'angles':[],'frames':set(),'scores':[],
+           'confidences':[],'shapes':[],'rectangularities':[]};clusters.append(best)
     if best['part_type']!=d['part_type']:
      same=[x for x in clusters if x['part_type']==d['part_type']]
      best=None;distance=1e9
@@ -488,10 +502,14 @@ class Detector(Node):
       if value<distance:best,distance=cluster,value
      if best is None or distance>radius:
       best={'part_type':d['part_type'],'display_name':d['display_name'],
-            'points':[],'cameras':[],'angles':[],'frames':set(),'scores':[]};clusters.append(best)
+            'points':[],'cameras':[],'angles':[],'frames':set(),'scores':[],
+            'confidences':[],'shapes':[],'rectangularities':[]};clusters.append(best)
     best['points'].append(point);best['cameras'].append(d['camera_xyz_m'])
     best['angles'].append(d['angle_deg'])
     best['frames'].add(frame_id);best['scores'].append(d['cad_area_match_score'])
+    best['confidences'].append(d.get('segmentation_confidence',d['cad_area_match_score']))
+    best['shapes'].append(d.get('mask_shape_score',d['shape_score']))
+    best['rectangularities'].append(d['rectangularity'])
   stable=[]
   for cluster in clusters:
    hits=len(cluster['frames'])
@@ -511,7 +529,10 @@ class Detector(Node):
     'angle_deg':round(float(angle),2),'depth_m':round(z,6),
     'camera_xyz_m':np.round(camera,6).tolist(),
     'observation_frames':hits,
-    'median_cad_area_match_score':round(float(np.median(cluster['scores'])),3)})
+    'median_cad_area_match_score':round(float(np.median(cluster['scores'])),3),
+    'median_detection_confidence':round(float(np.median(cluster['confidences'])),3),
+    'median_mask_shape_score':round(float(np.median(cluster['shapes'])),3),
+    'median_rectangularity':round(float(np.median(cluster['rectangularities'])),3)})
   limits={item['part_spec_id']:item['expected_count'] for item in self.bins}
   selected=[]
   for part in limits:
@@ -791,9 +812,10 @@ class Detector(Node):
    'schema':'fr5.tray.unity_state/v1',
    'sequence':self.frame_index,
    'timestamp_ros_ns':result['timestamp_ros_ns'],
-   'valid':bool(fresh_registration and result['base_transform_status']=='OK'),
+   'valid':bool(fresh_registration and result['base_transform_status'] in ('OK','VALID_COORDINATES_ONLY')),
    'registration_state':result['tray_registration'],
-   'coordinate_frame':'FR5_BASE',
+   'base_transform_status':result['base_transform_status'],
+   'coordinate_frame':'base_link',
    'position_units':'mm',
    'counts':counts,
    'required':required,

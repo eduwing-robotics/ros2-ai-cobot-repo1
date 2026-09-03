@@ -23,9 +23,9 @@ vision_interfaces__msg__Detections__get_type_hash(
 #include <string.h>
 
 // Include directives for referenced types
-#include "vision_interfaces/msg/detail/part__functions.h"
 #include "builtin_interfaces/msg/detail/time__functions.h"
 #include "std_msgs/msg/detail/header__functions.h"
+#include "vision_interfaces/msg/detail/part__functions.h"
 
 // Hashes for external referenced types
 #ifndef NDEBUG

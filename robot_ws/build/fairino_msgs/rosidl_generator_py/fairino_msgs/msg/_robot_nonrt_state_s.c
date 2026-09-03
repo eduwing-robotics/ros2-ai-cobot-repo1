@@ -650,6 +650,24 @@ bool fairino_msgs__msg__robot_nonrt_state__convert_from_py(PyObject * _pymsg, vo
     ros_message->grip_motion_done = (uint8_t)PyLong_AsUnsignedLong(field);
     Py_DECREF(field);
   }
+  {  // gripper_position
+    PyObject * field = PyObject_GetAttrString(_pymsg, "gripper_position");
+    if (!field) {
+      return false;
+    }
+    assert(PyLong_Check(field));
+    ros_message->gripper_position = (uint8_t)PyLong_AsUnsignedLong(field);
+    Py_DECREF(field);
+  }
+  {  // gripper_feedback_valid
+    PyObject * field = PyObject_GetAttrString(_pymsg, "gripper_feedback_valid");
+    if (!field) {
+      return false;
+    }
+    assert(PyBool_Check(field));
+    ros_message->gripper_feedback_valid = (Py_True == field);
+    Py_DECREF(field);
+  }
   {  // weldbreakoffstate
     PyObject * field = PyObject_GetAttrString(_pymsg, "weldbreakoffstate");
     if (!field) {
@@ -2048,6 +2066,28 @@ PyObject * fairino_msgs__msg__robot_nonrt_state__convert_to_py(void * raw_ros_me
     field = PyLong_FromUnsignedLong(ros_message->grip_motion_done);
     {
       int rc = PyObject_SetAttrString(_pymessage, "grip_motion_done", field);
+      Py_DECREF(field);
+      if (rc) {
+        return NULL;
+      }
+    }
+  }
+  {  // gripper_position
+    PyObject * field = NULL;
+    field = PyLong_FromUnsignedLong(ros_message->gripper_position);
+    {
+      int rc = PyObject_SetAttrString(_pymessage, "gripper_position", field);
+      Py_DECREF(field);
+      if (rc) {
+        return NULL;
+      }
+    }
+  }
+  {  // gripper_feedback_valid
+    PyObject * field = NULL;
+    field = PyBool_FromLong(ros_message->gripper_feedback_valid ? 1 : 0);
+    {
+      int rc = PyObject_SetAttrString(_pymessage, "gripper_feedback_valid", field);
       Py_DECREF(field);
       if (rc) {
         return NULL;

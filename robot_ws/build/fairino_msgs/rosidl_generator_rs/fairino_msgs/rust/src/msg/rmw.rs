@@ -309,6 +309,16 @@ pub struct RobotNonrtState {
 
     // This member is not documented.
     #[allow(missing_docs)]
+    pub gripper_position: u8,
+
+
+    // This member is not documented.
+    #[allow(missing_docs)]
+    pub gripper_feedback_valid: bool,
+
+
+    // This member is not documented.
+    #[allow(missing_docs)]
     pub weldbreakoffstate: u8,
 
 

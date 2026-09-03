@@ -4,3 +4,11 @@ vision_interfaces.egg-info/PKG-INFO
 vision_interfaces.egg-info/SOURCES.txt
 vision_interfaces.egg-info/dependency_links.txt
 vision_interfaces.egg-info/top_level.txt
+vision_interfaces/action/__init__.py
+vision_interfaces/action/_calibrate_pcb_pose.py
+vision_interfaces/action/_detect_tray_parts.py
+vision_interfaces/msg/__init__.py
+vision_interfaces/msg/_detections.py
+vision_interfaces/msg/_inspection.py
+vision_interfaces/msg/_part.py
+vision_interfaces/msg/_vision_status.py

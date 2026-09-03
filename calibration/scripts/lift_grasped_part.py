@@ -2,6 +2,7 @@
 """Close the gripper at the current pick pose and lift vertically."""
 
 import argparse
+import math
 import time
 
 import numpy as np
@@ -10,6 +11,7 @@ import rclpy
 from fairino_msgs.msg import RobotNonrtState
 from fairino_msgs.srv import RemoteCmdInterface
 from rclpy.node import Node
+from scipy.spatial.transform import Rotation
 
 
 class LiftNode(Node):
@@ -53,22 +55,31 @@ class LiftNode(Node):
             raise RuntimeError(f'Unexpected gripper-position response: {result}')
         return int(float(values[-1]))
 
-    def wait_motion_done(self, target_xyz, timeout=30.0, tolerance_mm=1.0):
+    def wait_motion_done(self, target_pose, target_joints, timeout=90.0, tolerance_mm=1.0):
         deadline=time.monotonic()+timeout
-        target=np.asarray(target_xyz,dtype=float)
+        target=np.asarray(target_pose[:3],dtype=float)
+        target_rotation=Rotation.from_euler('xyz',target_pose[3:],degrees=True)
         while rclpy.ok() and time.monotonic()<deadline:
             rclpy.spin_once(self,timeout_sec=0.1)
             if self.state is None:continue
-            if int(self.state.emg)!=0 or int(self.state.main_error_code)!=0 or float(self.state.collision_err)!=0.0:
-                raise RuntimeError('robot emergency/error/collision state is not clear')
+            if (int(self.state.emg)!=0 or int(self.state.abnormal_stop)!=0
+                    or int(self.state.main_error_code)!=0 or float(self.state.collision_err)!=0.0):
+                raise RuntimeError('robot emergency/stop/error/collision state is not clear')
             current=np.asarray([self.state.cart_x_cur_pos,self.state.cart_y_cur_pos,self.state.cart_z_cur_pos],dtype=float)
-            if int(self.state.robot_motion_done)==1 and float(np.linalg.norm(current-target))<=tolerance_mm:return
-        raise RuntimeError('lift completion/target verification timeout')
+            rotation=Rotation.from_euler('xyz',[self.state.cart_a_cur_pos,self.state.cart_b_cur_pos,self.state.cart_c_cur_pos],degrees=True)
+            angle_error=math.degrees((rotation.inv()*target_rotation).magnitude())
+            joints=np.asarray([self.state.j1_cur_pos,self.state.j2_cur_pos,self.state.j3_cur_pos,self.state.j4_cur_pos,self.state.j5_cur_pos,self.state.j6_cur_pos],dtype=float)
+            if (int(self.state.robot_motion_done)==1
+                    and float(np.linalg.norm(current-target))<=tolerance_mm
+                    and angle_error<=1.0
+                    and float(np.max(np.abs(joints-target_joints)))<=1.0):
+                return
+        raise RuntimeError('lift pose/joint verification timeout')
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--lift-mm', type=float, default=5.0)
+    parser.add_argument('--lift-mm', type=float, default=100.0)
     parser.add_argument('--speed-percent', type=int, default=15)
     parser.add_argument('--close-position', type=int, default=5)
     parser.add_argument('--skip-close', action='store_true', help='lift only after verifying the gripper is already closed')
@@ -76,7 +87,7 @@ def main():
     parser.add_argument('--confirm-grasp', action='store_true')
     args = parser.parse_args()
     if args.execute != args.confirm_grasp: parser.error('requires --execute --confirm-grasp')
-    if not 1 <= args.lift_mm <= 20: parser.error('--lift-mm must be 1..20')
+    if not 1 <= args.lift_mm <= 120: parser.error('--lift-mm must be 1..120')
     rclpy.init(); node = LiftNode()
     try:
         node.wait_state(); state = node.state
@@ -112,12 +123,25 @@ def main():
                 f'Gripper remained open (actual={after}); lift blocked'
             )
         time.sleep(0.5)
-        node.command(
-            f'MoveCart({target[0]:.3f},{target[1]:.3f},{target[2]:.3f},'
-            f'{target[3]:.3f},{target[4]:.3f},{target[5]:.3f},1,0,'
-            f'{args.speed_percent},{args.speed_percent},{args.speed_percent},-1,-1)'
-        )
-        node.wait_motion_done(target[:3])
+        reference=np.asarray([
+            state.j1_cur_pos,state.j2_cur_pos,state.j3_cur_pos,
+            state.j4_cur_pos,state.j5_cur_pos,state.j6_cur_pos,
+        ],dtype=float)
+        soft=np.asarray([float(value) for value in node.command('GetJointSoftLimitDeg(1)').split(',')[1:13]])
+        negative,positive=soft[:6],soft[6:]
+        safety=np.asarray([float(value) for value in node.command('GetSafetyStopState()').split(',')[1:3]])
+        if np.any(safety!=0.0):
+            raise RuntimeError(f'safety stop active: {safety.astype(int).tolist()}')
+        ik_command='GetInverseKinRef('+','.join(
+            f'{value:.6f}' for value in [0.0,*target,*reference.tolist()]
+        )+')'
+        target_joints=np.asarray([float(value) for value in node.command(ik_command).split(',')[1:7]])
+        margins=np.minimum(target_joints-negative,positive-target_joints)
+        if np.any(margins<10.0) or np.any(np.abs(target_joints-reference)>90.0):
+            raise RuntimeError('vertical lift IK violates joint margin or branch-change limit')
+        node.command('JNTPoint(1,'+','.join(f'{value:.6f}' for value in target_joints)+')')
+        node.command(f'MoveL(JNT1,{args.speed_percent},1,0)')
+        node.wait_motion_done(target,target_joints)
         print(f'Initial slow lift completed: {args.lift_mm:.1f} mm')
     finally:
         node.destroy_node()

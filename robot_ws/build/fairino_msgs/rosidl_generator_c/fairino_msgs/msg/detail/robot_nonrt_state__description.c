@@ -11,10 +11,10 @@ fairino_msgs__msg__RobotNonrtState__get_type_hash(
 {
   (void)type_support;
   static rosidl_type_hash_t hash = {1, {
-      0xd0, 0x2b, 0xc6, 0x97, 0x4b, 0x40, 0xc3, 0xd9,
-      0x39, 0x5b, 0x07, 0x44, 0x78, 0x58, 0x93, 0x2f,
-      0x2a, 0x29, 0xbe, 0xe7, 0x14, 0x8b, 0xfb, 0x56,
-      0xbe, 0x05, 0x65, 0x40, 0x74, 0xe0, 0xf5, 0x36,
+      0x2f, 0xe3, 0xf7, 0x40, 0x13, 0xdd, 0xa8, 0xf0,
+      0x63, 0xa6, 0xd5, 0xf0, 0x7d, 0x54, 0xbd, 0x8d,
+      0x71, 0xfb, 0x83, 0xf6, 0x85, 0x9a, 0x55, 0x67,
+      0x77, 0xff, 0x3f, 0x42, 0x24, 0x39, 0x77, 0xec,
     }};
   return &hash;
 }
@@ -88,6 +88,8 @@ static char fairino_msgs__msg__RobotNonrtState__FIELD_NAME__emg[] = "emg";
 static char fairino_msgs__msg__RobotNonrtState__FIELD_NAME__safetyboxsig[] = "safetyboxsig";
 static char fairino_msgs__msg__RobotNonrtState__FIELD_NAME__robot_motion_done[] = "robot_motion_done";
 static char fairino_msgs__msg__RobotNonrtState__FIELD_NAME__grip_motion_done[] = "grip_motion_done";
+static char fairino_msgs__msg__RobotNonrtState__FIELD_NAME__gripper_position[] = "gripper_position";
+static char fairino_msgs__msg__RobotNonrtState__FIELD_NAME__gripper_feedback_valid[] = "gripper_feedback_valid";
 static char fairino_msgs__msg__RobotNonrtState__FIELD_NAME__weldbreakoffstate[] = "weldbreakoffstate";
 static char fairino_msgs__msg__RobotNonrtState__FIELD_NAME__weldarcstate[] = "weldarcstate";
 static char fairino_msgs__msg__RobotNonrtState__FIELD_NAME__welding_voltage[] = "welding_voltage";
@@ -721,6 +723,26 @@ static rosidl_runtime_c__type_description__Field fairino_msgs__msg__RobotNonrtSt
     {fairino_msgs__msg__RobotNonrtState__FIELD_NAME__grip_motion_done, 16, 16},
     {
       rosidl_runtime_c__type_description__FieldType__FIELD_TYPE_UINT8,
+      0,
+      0,
+      {NULL, 0, 0},
+    },
+    {NULL, 0, 0},
+  },
+  {
+    {fairino_msgs__msg__RobotNonrtState__FIELD_NAME__gripper_position, 16, 16},
+    {
+      rosidl_runtime_c__type_description__FieldType__FIELD_TYPE_UINT8,
+      0,
+      0,
+      {NULL, 0, 0},
+    },
+    {NULL, 0, 0},
+  },
+  {
+    {fairino_msgs__msg__RobotNonrtState__FIELD_NAME__gripper_feedback_valid, 22, 22},
+    {
+      rosidl_runtime_c__type_description__FieldType__FIELD_TYPE_BOOLEAN,
       0,
       0,
       {NULL, 0, 0},
@@ -1408,7 +1430,7 @@ fairino_msgs__msg__RobotNonrtState__get_type_description(
   static const rosidl_runtime_c__type_description__TypeDescription description = {
     {
       {fairino_msgs__msg__RobotNonrtState__TYPE_NAME, 32, 32},
-      {fairino_msgs__msg__RobotNonrtState__FIELDS, 124, 124},
+      {fairino_msgs__msg__RobotNonrtState__FIELDS, 126, 126},
     },
     {NULL, 0, 0},
   };
@@ -1477,6 +1499,8 @@ static char toplevel_type_raw_source[] =
   "uint8[6] safetyboxsig #V2.1 added\n"
   "uint8 robot_motion_done\n"
   "uint8 grip_motion_done\n"
+  "uint8 gripper_position\n"
+  "bool gripper_feedback_valid\n"
   "uint8 weldbreakoffstate\n"
   "uint8 weldarcstate\n"
   "float64 welding_voltage\n"
@@ -1557,7 +1581,7 @@ fairino_msgs__msg__RobotNonrtState__get_individual_type_description_source(
   static const rosidl_runtime_c__type_description__TypeSource source = {
     {fairino_msgs__msg__RobotNonrtState__TYPE_NAME, 32, 32},
     {msg_encoding, 3, 3},
-    {toplevel_type_raw_source, 2669, 2669},
+    {toplevel_type_raw_source, 2720, 2720},
   };
   return &source;
 }

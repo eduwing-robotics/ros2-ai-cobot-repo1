@@ -83,6 +83,8 @@ fairino_msgs__msg__RobotNonrtState__init(fairino_msgs__msg__RobotNonrtState * ms
   // safetyboxsig
   // robot_motion_done
   // grip_motion_done
+  // gripper_position
+  // gripper_feedback_valid
   // weldbreakoffstate
   // weldarcstate
   // welding_voltage
@@ -221,6 +223,8 @@ fairino_msgs__msg__RobotNonrtState__fini(fairino_msgs__msg__RobotNonrtState * ms
   // safetyboxsig
   // robot_motion_done
   // grip_motion_done
+  // gripper_position
+  // gripper_feedback_valid
   // weldbreakoffstate
   // weldarcstate
   // welding_voltage
@@ -535,6 +539,14 @@ fairino_msgs__msg__RobotNonrtState__are_equal(const fairino_msgs__msg__RobotNonr
   }
   // grip_motion_done
   if (lhs->grip_motion_done != rhs->grip_motion_done) {
+    return false;
+  }
+  // gripper_position
+  if (lhs->gripper_position != rhs->gripper_position) {
+    return false;
+  }
+  // gripper_feedback_valid
+  if (lhs->gripper_feedback_valid != rhs->gripper_feedback_valid) {
     return false;
   }
   // weldbreakoffstate
@@ -960,6 +972,10 @@ fairino_msgs__msg__RobotNonrtState__copy(
   output->robot_motion_done = input->robot_motion_done;
   // grip_motion_done
   output->grip_motion_done = input->grip_motion_done;
+  // gripper_position
+  output->gripper_position = input->gripper_position;
+  // gripper_feedback_valid
+  output->gripper_feedback_valid = input->gripper_feedback_valid;
   // weldbreakoffstate
   output->weldbreakoffstate = input->weldbreakoffstate;
   // weldarcstate

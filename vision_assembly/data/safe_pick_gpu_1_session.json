@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "phase": "grasp_height_verified",
+  "timestamp_unix": 1788332283.9607666,
+  "part_type": "gpu",
+  "instance_index": 1,
+  "target_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/safe_pick_gpu_1.json",
+  "detection": {
+    "schema_version": 1,
+    "mode": "single_part_hover_target",
+    "timestamp_unix": 1788332144.0728512,
+    "part_type": "gpu",
+    "display_name": "GPU",
+    "instance_index": 1,
+    "selection_mode": "instance_index",
+    "part_center_base_mm": [
+      -522.4,
+      -167.702,
+      -42.615
+    ],
+    "long_axis_angle_base_deg": 1.957,
+    "center_pixel": [
+      498.18,
+      571.35
+    ],
+    "center_pixel_span": [
+      0.16,
+      0.04
+    ],
+    "camera_xyz_m": [
+      -0.076641,
+      0.100546,
+      0.475
+    ],
+    "sample_count": 6,
+    "position_span_mm": [
+      0.005,
+      0.008,
+      0.003
+    ],
+    "angle_span_deg": 0.002,
+    "hover_offset_mm": 100.0,
+    "robot_motion_authorized": false,
+    "source_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/tray_detections_last.json"
+  },
+  "recipe": {
+    "part_type": "gpu",
+    "display_name": "GPU",
+    "tool_correction_xy_mm": [
+      0.0,
+      0.0
+    ],
+    "base_correction_xy_mm": [
+      0.0,
+      0.0
+    ],
+    "grasp_z_offset_mm": -7.0,
+    "gripper_axis": "tool_y",
+    "grip_args": [
+      1,
+      65,
+      50,
+      30,
+      3000,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "verified_hover_tcp": [
+    -522.4014282226562,
+    -167.70074462890625,
+    57.39986801147461,
+    -179.99937438964844,
+    0.00027315717306919396,
+    91.95687103271484
+  ],
+  "descent_detection_source": "prepare_verified_detection",
+  "verified_grasp_tcp": [
+    -522.4002075195312,
+    -167.70155334472656,
+    -49.616233825683594,
+    179.99801635742188,
+    0.0002641965402290225,
+    91.95643615722656
+  ],
+  "gripper_closed": false
+}

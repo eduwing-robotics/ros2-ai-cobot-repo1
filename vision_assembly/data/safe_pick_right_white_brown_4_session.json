@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "phase": "grasp_height_verified",
+  "timestamp_unix": 1788164603.022364,
+  "part_type": "right_white_brown",
+  "instance_index": 4,
+  "target_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/safe_pick_right_white_brown_4.json",
+  "detection": {
+    "schema_version": 1,
+    "mode": "single_part_hover_target",
+    "timestamp_unix": 1788164224.6649067,
+    "part_type": "right_white_brown",
+    "display_name": "SMD Capacitor",
+    "instance_index": 4,
+    "selection_mode": "instance_index",
+    "part_center_base_mm": [
+      -629.02,
+      -132.059,
+      -48.365
+    ],
+    "long_axis_angle_base_deg": 1.537,
+    "center_pixel": [
+      570.915,
+      370.01
+    ],
+    "center_pixel_span": [
+      0.09,
+      0.09
+    ],
+    "camera_xyz_m": [
+      -0.039246,
+      -0.005247,
+      0.484
+    ],
+    "sample_count": 6,
+    "position_span_mm": [
+      0.008,
+      0.012,
+      0.004
+    ],
+    "angle_span_deg": 0.0,
+    "hover_offset_mm": 100.0,
+    "robot_motion_authorized": false,
+    "source_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/tray_detections_last.json"
+  },
+  "recipe": {
+    "part_type": "right_white_brown",
+    "display_name": "SMD Capacitor",
+    "tool_correction_xy_mm": [
+      0.0,
+      0.0
+    ],
+    "base_correction_xy_mm": [
+      -1.0,
+      4.0
+    ],
+    "grasp_z_offset_mm": -5.862,
+    "gripper_axis": "tool_x",
+    "grip_args": [
+      1,
+      12,
+      50,
+      1,
+      3000,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "verified_hover_tcp": [
+    -630.0272216796875,
+    -128.0625,
+    -28.347990036010742,
+    179.99844360351562,
+    0.002147810999304056,
+    1.5372157096862793
+  ],
+  "descent_detection_source": "prepare_verified_detection",
+  "verified_grasp_tcp": [
+    -630.0238037109375,
+    -128.0628204345703,
+    -54.23293685913086,
+    179.99891662597656,
+    -0.0006720826495438814,
+    1.5374332666397095
+  ],
+  "gripper_closed": false
+}

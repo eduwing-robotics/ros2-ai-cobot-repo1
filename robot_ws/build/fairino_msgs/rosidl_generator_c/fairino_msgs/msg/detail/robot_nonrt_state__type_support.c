@@ -4,10 +4,10 @@
 
 #include <string.h>
 
-#include "fairino_msgs/msg/detail/robot_nonrt_state__struct.h"
 #include "rosidl_typesupport_interface/macros.h"
-#include "fairino_msgs/msg/detail/robot_nonrt_state__functions.h"
 #include "fairino_msgs/msg/detail/robot_nonrt_state__type_support.h"
+#include "fairino_msgs/msg/detail/robot_nonrt_state__functions.h"
+#include "fairino_msgs/msg/detail/robot_nonrt_state__struct.h"
 
 #ifdef __cplusplus
 extern "C"

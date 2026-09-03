@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "phase": "hover_verified",
+  "timestamp_unix": 1788413968.3931696,
+  "part_type": "marked_white",
+  "instance_index": 2,
+  "target_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/safe_pick_marked_white_2.json",
+  "detection": {
+    "schema_version": 1,
+    "mode": "single_part_hover_target",
+    "timestamp_unix": 1788413935.842529,
+    "part_type": "marked_white",
+    "display_name": "Inductor",
+    "instance_index": 2,
+    "selection_mode": "instance_index",
+    "part_center_base_mm": [
+      -619.196,
+      -204.371,
+      -45.401
+    ],
+    "long_axis_angle_base_deg": -89.807,
+    "center_pixel": [
+      434.075,
+      386.05
+    ],
+    "center_pixel_span": [
+      0.01,
+      0.05
+    ],
+    "camera_xyz_m": [
+      -0.111725,
+      0.003308,
+      0.481
+    ],
+    "sample_count": 6,
+    "position_span_mm": [
+      0.006,
+      0.002,
+      0.004
+    ],
+    "angle_span_deg": 0.0,
+    "hover_offset_mm": 100.0,
+    "robot_motion_authorized": false,
+    "source_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/tray_detections_last.json"
+  },
+  "recipe": {
+    "part_type": "marked_white",
+    "display_name": "Inductor",
+    "tool_correction_xy_mm": [
+      0.0,
+      0.0
+    ],
+    "base_correction_xy_mm": [
+      -0.503,
+      5.513
+    ],
+    "grasp_z_offset_mm": -8.05,
+    "gripper_axis": "tool_y",
+    "grip_args": [
+      1,
+      14,
+      50,
+      30,
+      3000,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "verified_hover_tcp": [
+    -619.7044677734375,
+    -198.8548126220703,
+    54.589290618896484,
+    179.99972534179688,
+    0.0003966662334278226,
+    0.1927502304315567
+  ]
+}

@@ -4,6 +4,8 @@
     "/home/juchan-yoon/FR5_robot_control/ros2_ws/src/vision_interfaces:msg/Part.msg",
     "/home/juchan-yoon/FR5_robot_control/ros2_ws/src/vision_interfaces:msg/Detections.msg",
     "/home/juchan-yoon/FR5_robot_control/ros2_ws/src/vision_interfaces:msg/Inspection.msg",
-    "/home/juchan-yoon/FR5_robot_control/ros2_ws/src/vision_interfaces:msg/VisionStatus.msg"
+    "/home/juchan-yoon/FR5_robot_control/ros2_ws/src/vision_interfaces:msg/VisionStatus.msg",
+    "/home/juchan-yoon/FR5_robot_control/ros2_ws/src/vision_interfaces:action/DetectTrayParts.action",
+    "/home/juchan-yoon/FR5_robot_control/ros2_ws/src/vision_interfaces:action/CalibratePcbPose.action"
   ]
 }

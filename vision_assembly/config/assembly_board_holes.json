@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "timestamp_unix": 1788254383.29408,
+  "image": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/placecamera_board_holes_reference.jpg",
+  "image_size": [
+    1280,
+    720
+  ],
+  "order": [
+    "top_left",
+    "top_right",
+    "bottom_right",
+    "bottom_left"
+  ],
+  "hole_centers_board_mm": [
+    [-43.318, -50.033],
+    [50.088, -49.798],
+    [50.019, 49.341],
+    [-43.081, 49.553]
+  ],
+  "hole_centers_pixel": [
+    [
+      606.5,
+      302.5
+    ],
+    [
+      859.5,
+      300.5
+    ],
+    [
+      865.5,
+      571.5
+    ],
+    [
+      608.5,
+      573.5
+    ]
+  ],
+  "status": "four natural board holes circle-refined; robot target validation pending",
+  "display_only": true,
+  "robot_motion_sent": false,
+  "hole_radii_pixel": [
+    11.0,
+    10.3,
+    6.9,
+    6.9
+  ],
+  "previous_baseline_hole_centers_pixel": [
+    [
+      599.5,
+      302.5
+    ],
+    [
+      852.5,
+      300.5
+    ],
+    [
+      857.5,
+      572.5
+    ],
+    [
+      601.5,
+      573.5
+    ]
+  ],
+  "previous_baseline_hole_radii_pixel": [
+    5.5,
+    11.100000381469727,
+    6.900000095367432,
+    6.599999904632568
+  ]
+}

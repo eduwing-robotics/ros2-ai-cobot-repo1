@@ -12,6 +12,7 @@ import numpy as np
 from fairino_msgs.msg import RobotNonrtState
 from fairino_msgs.srv import RemoteCmdInterface
 from rclpy.node import Node
+from scipy.spatial.transform import Rotation
 
 
 class Cycle(Node):
@@ -42,25 +43,30 @@ class Cycle(Node):
         result = str(future.result().cmd_res)
         if result.split(',', 1)[0] != '0':
             raise RuntimeError(f'FR5 rejected {command}: {result}')
+        return result
 
-    def wait_motion_done(self, target_xyz, timeout=30.0, tolerance_mm=1.0):
+    def wait_motion_done(self, target_pose, target_joints, timeout=90.0, tolerance_mm=1.0):
         deadline = time.monotonic() + timeout
+        target_xyz=np.asarray(target_pose[:3],dtype=float)
+        target_rotation=Rotation.from_euler('xyz',target_pose[3:],degrees=True)
         while rclpy.ok() and time.monotonic() < deadline:
             rclpy.spin_once(self, timeout_sec=0.1)
-            if self.state is None:
+            state=self.state
+            if state is None:
                 continue
-            current = np.asarray([
-                self.state.cart_x_cur_pos,
-                self.state.cart_y_cur_pos,
-                self.state.cart_z_cur_pos,
-            ], dtype=float)
-            error = float(np.linalg.norm(current - np.asarray(target_xyz, dtype=float)))
-            # MoveCart with blendT=-1 is blocking. The service response can
-            # arrive after robot_motion_done has already returned to 1, so do
-            # not require observing the transient 0 state.
-            if int(self.state.robot_motion_done) == 1 and error <= tolerance_mm:
+            if (int(state.emg)!=0 or int(state.abnormal_stop)!=0
+                    or int(state.main_error_code)!=0 or float(state.collision_err)!=0.0):
+                raise RuntimeError('robot safety fault during same-position cycle')
+            current=np.asarray([state.cart_x_cur_pos,state.cart_y_cur_pos,state.cart_z_cur_pos],dtype=float)
+            rotation=Rotation.from_euler('xyz',[state.cart_a_cur_pos,state.cart_b_cur_pos,state.cart_c_cur_pos],degrees=True)
+            angle_error=math.degrees((rotation.inv()*target_rotation).magnitude())
+            joints=np.asarray([state.j1_cur_pos,state.j2_cur_pos,state.j3_cur_pos,state.j4_cur_pos,state.j5_cur_pos,state.j6_cur_pos])
+            if (int(state.robot_motion_done)==1
+                    and float(np.linalg.norm(current-target_xyz))<=tolerance_mm
+                    and angle_error<=1.0
+                    and float(np.max(np.abs(joints-target_joints)))<=1.0):
                 return
-        raise RuntimeError('Robot motion completion/target verification timeout')
+        raise RuntimeError('Robot motion pose/joint verification timeout')
 
     def wait_gripper_done(self, timeout=10.0):
         deadline = time.monotonic() + timeout
@@ -161,16 +167,25 @@ def main():
 
         if not node.client.wait_for_service(timeout_sec=3.0):
             raise RuntimeError('/fairino_remote_command_service unavailable')
+        soft=np.asarray([float(value) for value in node.command('GetJointSoftLimitDeg(1)').split(',')[1:13]])
+        negative,positive=soft[:6],soft[6:]
         def move(pose, name):
-            command = (
-                f'MoveCart({pose[0]:.3f},{pose[1]:.3f},{pose[2]:.3f},'
-                f'{pose[3]:.3f},{pose[4]:.3f},{pose[5]:.3f},'
-                f'{args.tool_id},{args.user_id},{args.motion_speed_percent},'
-                f'{args.motion_speed_percent},{args.motion_speed_percent},-1,-1)'
-            )
-            print(f'{name}: {command}')
+            state=node.state
+            reference=np.asarray([state.j1_cur_pos,state.j2_cur_pos,state.j3_cur_pos,state.j4_cur_pos,state.j5_cur_pos,state.j6_cur_pos],dtype=float)
+            safety=np.asarray([float(value) for value in node.command('GetSafetyStopState()').split(',')[1:3]])
+            if np.any(safety!=0.0):
+                raise RuntimeError(f'safety stop active: {safety.astype(int).tolist()}')
+            ik='GetInverseKinRef('+','.join(f'{value:.6f}' for value in [0.0,*pose,*reference.tolist()])+')'
+            joints=np.asarray([float(value) for value in node.command(ik).split(',')[1:7]])
+            margins=np.minimum(joints-negative,positive-joints)
+            if np.any(margins<10.0) or np.any(np.abs(joints-reference)>90.0):
+                raise RuntimeError(f'{name} IK violates joint margin or branch-change limit')
+            define='JNTPoint(1,'+','.join(f'{value:.6f}' for value in joints)+')'
+            command=f'MoveL(JNT1,{args.motion_speed_percent},{args.tool_id},{args.user_id})'
+            print(f'{name}: {define}; {command}')
+            node.command(define)
             node.command(command)
-            node.wait_motion_done(pose[:3])
+            node.wait_motion_done(pose,joints)
 
         if args.resume_after_lift:
             place = list(pick); place[2] -= args.lift_mm

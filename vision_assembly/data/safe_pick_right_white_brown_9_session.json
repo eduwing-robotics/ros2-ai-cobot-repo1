@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "phase": "grasp_height_verified",
+  "timestamp_unix": 1788164914.3029509,
+  "part_type": "right_white_brown",
+  "instance_index": 9,
+  "target_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/safe_pick_right_white_brown_9.json",
+  "detection": {
+    "schema_version": 1,
+    "mode": "single_part_hover_target",
+    "timestamp_unix": 1788164798.1240842,
+    "part_type": "right_white_brown",
+    "display_name": "SMD Capacitor",
+    "instance_index": 9,
+    "selection_mode": "instance_index",
+    "part_center_base_mm": [
+      -601.192,
+      -131.621,
+      -46.25
+    ],
+    "long_axis_angle_base_deg": 1.507,
+    "center_pixel": [
+      570.425,
+      422.15
+    ],
+    "center_pixel_span": [
+      0.11,
+      0.07
+    ],
+    "camera_xyz_m": [
+      -0.039272,
+      0.022503,
+      0.481
+    ],
+    "sample_count": 6,
+    "position_span_mm": [
+      0.003,
+      0.008,
+      0.002
+    ],
+    "angle_span_deg": 0.0,
+    "hover_offset_mm": 100.0,
+    "robot_motion_authorized": false,
+    "source_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/tray_detections_last.json"
+  },
+  "recipe": {
+    "part_type": "right_white_brown",
+    "display_name": "SMD Capacitor",
+    "tool_correction_xy_mm": [
+      0.0,
+      0.0
+    ],
+    "base_correction_xy_mm": [
+      -1.0,
+      4.0
+    ],
+    "grasp_z_offset_mm": -5.862,
+    "gripper_axis": "tool_x",
+    "grip_args": [
+      1,
+      12,
+      50,
+      1,
+      3000,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "verified_hover_tcp": [
+    -602.1891479492188,
+    -127.6195068359375,
+    -26.245603561401367,
+    179.9989013671875,
+    0.00041345847421325743,
+    1.5069761276245117
+  ],
+  "descent_detection_source": "prepare_verified_detection",
+  "verified_grasp_tcp": [
+    -602.1909790039062,
+    -127.62214660644531,
+    -52.12051773071289,
+    179.99783325195312,
+    -0.00047812474076636136,
+    1.5069761276245117
+  ],
+  "gripper_closed": false
+}

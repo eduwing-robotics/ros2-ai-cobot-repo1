@@ -217,6 +217,12 @@ cdr_serialize(
   // Member: grip_motion_done
   cdr << ros_message.grip_motion_done;
 
+  // Member: gripper_position
+  cdr << ros_message.gripper_position;
+
+  // Member: gripper_feedback_valid
+  cdr << (ros_message.gripper_feedback_valid ? true : false);
+
   // Member: weldbreakoffstate
   cdr << ros_message.weldbreakoffstate;
 
@@ -621,6 +627,16 @@ cdr_deserialize(
 
   // Member: grip_motion_done
   cdr >> ros_message.grip_motion_done;
+
+  // Member: gripper_position
+  cdr >> ros_message.gripper_position;
+
+  // Member: gripper_feedback_valid
+  {
+    uint8_t tmp;
+    cdr >> tmp;
+    ros_message.gripper_feedback_valid = tmp ? true : false;
+  }
 
   // Member: weldbreakoffstate
   cdr >> ros_message.weldbreakoffstate;
@@ -1252,6 +1268,20 @@ get_serialized_size(
   // Member: grip_motion_done
   {
     size_t item_size = sizeof(ros_message.grip_motion_done);
+    current_alignment += item_size +
+      eprosima::fastcdr::Cdr::alignment(current_alignment, item_size);
+  }
+
+  // Member: gripper_position
+  {
+    size_t item_size = sizeof(ros_message.gripper_position);
+    current_alignment += item_size +
+      eprosima::fastcdr::Cdr::alignment(current_alignment, item_size);
+  }
+
+  // Member: gripper_feedback_valid
+  {
+    size_t item_size = sizeof(ros_message.gripper_feedback_valid);
     current_alignment += item_size +
       eprosima::fastcdr::Cdr::alignment(current_alignment, item_size);
   }
@@ -2138,6 +2168,18 @@ max_serialized_size_RobotNonrtState(
     last_member_size = array_size * sizeof(uint8_t);
     current_alignment += array_size * sizeof(uint8_t);
   }
+  // Member: gripper_position
+  {
+    size_t array_size = 1;
+    last_member_size = array_size * sizeof(uint8_t);
+    current_alignment += array_size * sizeof(uint8_t);
+  }
+  // Member: gripper_feedback_valid
+  {
+    size_t array_size = 1;
+    last_member_size = array_size * sizeof(uint8_t);
+    current_alignment += array_size * sizeof(uint8_t);
+  }
   // Member: weldbreakoffstate
   {
     size_t array_size = 1;
@@ -2777,6 +2819,12 @@ cdr_serialize_key(
   // Member: grip_motion_done
   cdr << ros_message.grip_motion_done;
 
+  // Member: gripper_position
+  cdr << ros_message.gripper_position;
+
+  // Member: gripper_feedback_valid
+  cdr << (ros_message.gripper_feedback_valid ? true : false);
+
   // Member: weldbreakoffstate
   cdr << ros_message.weldbreakoffstate;
 
@@ -3406,6 +3454,20 @@ get_serialized_size_key(
   // Member: grip_motion_done
   {
     size_t item_size = sizeof(ros_message.grip_motion_done);
+    current_alignment += item_size +
+      eprosima::fastcdr::Cdr::alignment(current_alignment, item_size);
+  }
+
+  // Member: gripper_position
+  {
+    size_t item_size = sizeof(ros_message.gripper_position);
+    current_alignment += item_size +
+      eprosima::fastcdr::Cdr::alignment(current_alignment, item_size);
+  }
+
+  // Member: gripper_feedback_valid
+  {
+    size_t item_size = sizeof(ros_message.gripper_feedback_valid);
     current_alignment += item_size +
       eprosima::fastcdr::Cdr::alignment(current_alignment, item_size);
   }
@@ -4342,6 +4404,20 @@ max_serialized_size_key_RobotNonrtState(
   }
 
   // Member: grip_motion_done
+  {
+    size_t array_size = 1;
+    last_member_size = array_size * sizeof(uint8_t);
+    current_alignment += array_size * sizeof(uint8_t);
+  }
+
+  // Member: gripper_position
+  {
+    size_t array_size = 1;
+    last_member_size = array_size * sizeof(uint8_t);
+    current_alignment += array_size * sizeof(uint8_t);
+  }
+
+  // Member: gripper_feedback_valid
   {
     size_t array_size = 1;
     last_member_size = array_size * sizeof(uint8_t);

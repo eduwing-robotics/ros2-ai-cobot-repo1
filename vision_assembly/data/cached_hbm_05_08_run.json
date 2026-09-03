@@ -1,0 +1,137 @@
+{
+  "schema": "fr5.cached_hbm_05_08_run/v1",
+  "started_unix": 1788339380.0794837,
+  "board_snapshot": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/fixed_cycle_snapshot.json",
+  "tray_snapshot": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/fixed_cycle_tray_hbm_remaining_2026-09-02.json",
+  "transfer_z_mm": 487.88,
+  "plan": [
+    {
+      "slot_code": "HBM-05",
+      "tray_instance_index": 1,
+      "tray_surface_base_mm": [
+        -537.409,
+        -38.911,
+        -46.622
+      ],
+      "tray_long_axis_base_deg": -179.463,
+      "pick_final_tcp": [
+        -538.126,
+        -37.658,
+        -49.632,
+        -180.0,
+        0.0,
+        90.53700000000003
+      ],
+      "place_final_tcp": [
+        24.529146,
+        -538.119888,
+        87.268366,
+        179.998,
+        0.001,
+        180.0
+      ],
+      "grip_position": 18,
+      "release_position": 25
+    },
+    {
+      "slot_code": "HBM-06",
+      "tray_instance_index": 2,
+      "tray_surface_base_mm": [
+        -539.222,
+        -10.639,
+        -44.67
+      ],
+      "tray_long_axis_base_deg": 2.007,
+      "pick_final_tcp": [
+        -539.939,
+        -9.386,
+        -47.68,
+        -180.0,
+        0.0,
+        92.007
+      ],
+      "place_final_tcp": [
+        24.633955,
+        -521.88534,
+        87.676034,
+        179.998,
+        0.001,
+        180.0
+      ],
+      "grip_position": 18,
+      "release_position": 25
+    },
+    {
+      "slot_code": "HBM-07",
+      "tray_instance_index": 3,
+      "tray_surface_base_mm": [
+        -511.627,
+        -37.759,
+        -45.445
+      ],
+      "tray_long_axis_base_deg": 1.997,
+      "pick_final_tcp": [
+        -512.344,
+        -36.506,
+        -48.455,
+        -180.0,
+        0.0,
+        91.99700000000001
+      ],
+      "place_final_tcp": [
+        24.735516,
+        -505.344861,
+        88.091263,
+        179.998,
+        0.001,
+        180.0
+      ],
+      "grip_position": 18,
+      "release_position": 25
+    },
+    {
+      "slot_code": "HBM-08",
+      "tray_instance_index": 4,
+      "tray_surface_base_mm": [
+        -512.197,
+        -10.372,
+        -44.53
+      ],
+      "tray_long_axis_base_deg": 2.007,
+      "pick_final_tcp": [
+        -512.914,
+        -9.119,
+        -47.54,
+        -180.0,
+        0.0,
+        92.007
+      ],
+      "place_final_tcp": [
+        24.845135,
+        -489.49323,
+        88.489484,
+        179.998,
+        0.001,
+        180.0
+      ],
+      "grip_position": 18,
+      "release_position": 25
+    }
+  ],
+  "completed_slots": [
+    "HBM-05",
+    "HBM-06",
+    "HBM-07",
+    "HBM-08"
+  ],
+  "status": "complete",
+  "last_verified_tcp": [
+    24.77318000793457,
+    -489.5277099609375,
+    188.43753051757812,
+    179.98854064941406,
+    0.004088618792593479,
+    179.97998046875
+  ],
+  "completed_unix": 1788339688.4985473
+}

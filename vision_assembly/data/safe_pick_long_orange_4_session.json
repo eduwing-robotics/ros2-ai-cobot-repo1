@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "phase": "grasp_height_verified",
+  "timestamp_unix": 1788410920.9131618,
+  "part_type": "long_orange",
+  "instance_index": 4,
+  "target_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/safe_pick_long_orange_4.json",
+  "detection": {
+    "schema_version": 1,
+    "mode": "single_part_hover_target",
+    "timestamp_unix": 1788410859.9595702,
+    "part_type": "long_orange",
+    "display_name": "Power Module",
+    "instance_index": 4,
+    "selection_mode": "instance_index",
+    "part_center_base_mm": [
+      -656.976,
+      -31.396,
+      -46.854
+    ],
+    "long_axis_angle_base_deg": 1.787,
+    "center_pixel": [
+      760.41,
+      320.65
+    ],
+    "center_pixel_span": [
+      0.02,
+      0.01
+    ],
+    "camera_xyz_m": [
+      0.061849,
+      -0.031606,
+      0.483
+    ],
+    "sample_count": 6,
+    "position_span_mm": [
+      0.005,
+      0.003,
+      0.002
+    ],
+    "angle_span_deg": 0.002,
+    "hover_offset_mm": 100.0,
+    "robot_motion_authorized": false,
+    "source_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/tray_detections_last.json"
+  },
+  "recipe": {
+    "part_type": "long_orange",
+    "display_name": "Power Module",
+    "tool_correction_xy_mm": [
+      0.469,
+      -2.357
+    ],
+    "base_correction_xy_mm": [
+      0.5,
+      1.3
+    ],
+    "grasp_z_offset_mm": -4.738,
+    "gripper_axis": "tool_y",
+    "grip_args": [
+      1,
+      25,
+      50,
+      30,
+      3000,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "verified_hover_tcp": [
+    -658.843505859375,
+    -29.699098587036133,
+    53.137046813964844,
+    179.9987335205078,
+    0.0004032709402963519,
+    91.78652954101562
+  ],
+  "descent_detection_source": "prepare_verified_detection",
+  "verified_grasp_tcp": [
+    -658.8321533203125,
+    -29.701393127441406,
+    -51.60877990722656,
+    179.99769592285156,
+    0.0007752368110232055,
+    91.78718566894531
+  ],
+  "gripper_closed": false
+}

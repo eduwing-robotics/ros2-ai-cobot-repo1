@@ -1,5 +1,15 @@
 # AI / Vision Server
 
+## Unity/Real Orchestrator Action API
+
+관제 연동은 통합 resolve 서비스 대신 다음 두 Action을 사용한다.
+
+- /vision/tray/detect_parts (vision_interfaces/action/DetectTrayParts)
+- /vision/pcb/calibrate_pose (vision_interfaces/action/CalibratePcbPose)
+
+서버는 로봇·컨베이어를 움직이지 않는다. 실행 순서, 좌표계, part_id 매핑과
+오류 계약은 docs/unity_vision_actions_ko.md에 정리되어 있다.
+
 3대 카메라 입력을 정리하고 YOLO 부품 검출 결과를 조립 수량 규칙과 비교해
 검사 결과를 발행하는 ROS 2 Jazzy 패키지다. 물리적으로 Main Server와 같은
 노트북에서 실행해도 소프트웨어 프로세스는 분리된다.

@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "timestamp_unix": 1788246131.8401008,
+  "reference_image": "/home/juchan-yoon/Desktop/프로젝트 구현 사진/assembly_slot_coordinates_overlay.png",
+  "live_image": "/tmp/placecamera_retaught_live.jpg",
+  "reference_corners_pixel": [
+    [
+      164.0,
+      148.0
+    ],
+    [
+      1076.0,
+      165.0
+    ],
+    [
+      1063.0,
+      882.0
+    ],
+    [
+      151.0,
+      868.0
+    ]
+  ],
+  "live_corners_pixel": [
+    [
+      536.0,
+      290.0
+    ],
+    [
+      912.0,
+      286.0
+    ],
+    [
+      920.0,
+      587.0
+    ],
+    [
+      536.0,
+      589.0
+    ]
+  ],
+  "homography_reference_to_live": [
+    [
+      0.3990518044284651,
+      -0.00814770185847737,
+      468.47413581528747
+    ],
+    [
+      -0.015136185604785834,
+      0.39558673501279473,
+      232.15696004774898
+    ],
+    [
+      -1.1361708875242318e-05,
+      -2.884843279207236e-05,
+      1.0
+    ]
+  ],
+  "corner_reprojection_error_px": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "status": "operator-rotated reference aligned to PlaceCamera; display only",
+  "place_camera_tcp_base_mm": [
+    36.943001,
+    -449.13501,
+    321.34201
+  ],
+  "display_only": true,
+  "registration_correction": "reference image rotated 180 degrees by operator; direct orientation"
+}

@@ -73,11 +73,16 @@ include /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/visi
 /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/vision_interfaces__py/CMakeFiles/vision_interfaces__py: rosidl_generator_py/vision_interfaces/msg/_detections.py
 /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/vision_interfaces__py/CMakeFiles/vision_interfaces__py: rosidl_generator_py/vision_interfaces/msg/_inspection.py
 /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/vision_interfaces__py/CMakeFiles/vision_interfaces__py: rosidl_generator_py/vision_interfaces/msg/_vision_status.py
+/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/vision_interfaces__py/CMakeFiles/vision_interfaces__py: rosidl_generator_py/vision_interfaces/action/_detect_tray_parts.py
+/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/vision_interfaces__py/CMakeFiles/vision_interfaces__py: rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose.py
 /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/vision_interfaces__py/CMakeFiles/vision_interfaces__py: rosidl_generator_py/vision_interfaces/msg/__init__.py
+/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/vision_interfaces__py/CMakeFiles/vision_interfaces__py: rosidl_generator_py/vision_interfaces/action/__init__.py
 /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/vision_interfaces__py/CMakeFiles/vision_interfaces__py: rosidl_generator_py/vision_interfaces/msg/_part_s.c
 /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/vision_interfaces__py/CMakeFiles/vision_interfaces__py: rosidl_generator_py/vision_interfaces/msg/_detections_s.c
 /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/vision_interfaces__py/CMakeFiles/vision_interfaces__py: rosidl_generator_py/vision_interfaces/msg/_inspection_s.c
 /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/vision_interfaces__py/CMakeFiles/vision_interfaces__py: rosidl_generator_py/vision_interfaces/msg/_vision_status_s.c
+/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/vision_interfaces__py/CMakeFiles/vision_interfaces__py: rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.c
+/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/vision_interfaces__py/CMakeFiles/vision_interfaces__py: rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.c
 
 rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/lib/rosidl_generator_py/rosidl_generator_py
 rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/lib/python3.12/site-packages/rosidl_generator_py/__init__.py
@@ -96,6 +101,40 @@ rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport
 rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: rosidl_adapter/vision_interfaces/msg/Detections.idl
 rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: rosidl_adapter/vision_interfaces/msg/Inspection.idl
 rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: rosidl_adapter/vision_interfaces/msg/VisionStatus.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: rosidl_adapter/vision_interfaces/action/DetectTrayParts.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: rosidl_adapter/vision_interfaces/action/CalibratePcbPose.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/geometry_msgs/msg/Accel.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/geometry_msgs/msg/AccelStamped.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/geometry_msgs/msg/AccelWithCovariance.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/geometry_msgs/msg/AccelWithCovarianceStamped.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/geometry_msgs/msg/Inertia.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/geometry_msgs/msg/InertiaStamped.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/geometry_msgs/msg/Point.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/geometry_msgs/msg/Point32.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/geometry_msgs/msg/PointStamped.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/geometry_msgs/msg/Polygon.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/geometry_msgs/msg/PolygonInstance.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/geometry_msgs/msg/PolygonInstanceStamped.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/geometry_msgs/msg/PolygonStamped.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/geometry_msgs/msg/Pose.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/geometry_msgs/msg/Pose2D.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/geometry_msgs/msg/PoseArray.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/geometry_msgs/msg/PoseStamped.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/geometry_msgs/msg/PoseWithCovariance.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/geometry_msgs/msg/PoseWithCovarianceStamped.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/geometry_msgs/msg/Quaternion.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/geometry_msgs/msg/QuaternionStamped.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/geometry_msgs/msg/Transform.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/geometry_msgs/msg/TransformStamped.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/geometry_msgs/msg/Twist.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/geometry_msgs/msg/TwistStamped.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/geometry_msgs/msg/TwistWithCovariance.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/geometry_msgs/msg/TwistWithCovarianceStamped.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/geometry_msgs/msg/Vector3.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/geometry_msgs/msg/Vector3Stamped.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/geometry_msgs/msg/VelocityStamped.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/geometry_msgs/msg/Wrench.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/geometry_msgs/msg/WrenchStamped.idl
 rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/std_msgs/msg/Bool.idl
 rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/std_msgs/msg/Byte.idl
 rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/std_msgs/msg/ByteMultiArray.idl
@@ -128,6 +167,12 @@ rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport
 rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/std_msgs/msg/UInt8MultiArray.idl
 rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/builtin_interfaces/msg/Duration.idl
 rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/builtin_interfaces/msg/Time.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/service_msgs/msg/ServiceEventInfo.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/action_msgs/msg/GoalInfo.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/action_msgs/msg/GoalStatus.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/action_msgs/msg/GoalStatusArray.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/action_msgs/srv/CancelGoal.idl
+rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/jazzy/share/unique_identifier_msgs/msg/UUID.idl
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Generating Python code for ROS interfaces"
 	cd /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/vision_interfaces__py && /usr/bin/python3 /opt/ros/jazzy/share/rosidl_generator_py/cmake/../../../lib/rosidl_generator_py/rosidl_generator_py --generator-arguments-file /home/juchan-yoon/FR5_robot_control/ros2_ws/build/vision_interfaces/rosidl_generator_py__arguments.json --typesupport-impls "rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c;rosidl_typesupport_c"
 
@@ -149,8 +194,17 @@ rosidl_generator_py/vision_interfaces/msg/_inspection.py: rosidl_generator_py/vi
 rosidl_generator_py/vision_interfaces/msg/_vision_status.py: rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c
 	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_py/vision_interfaces/msg/_vision_status.py
 
+rosidl_generator_py/vision_interfaces/action/_detect_tray_parts.py: rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c
+	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_py/vision_interfaces/action/_detect_tray_parts.py
+
+rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose.py: rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c
+	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose.py
+
 rosidl_generator_py/vision_interfaces/msg/__init__.py: rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c
 	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_py/vision_interfaces/msg/__init__.py
+
+rosidl_generator_py/vision_interfaces/action/__init__.py: rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c
+	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_py/vision_interfaces/action/__init__.py
 
 rosidl_generator_py/vision_interfaces/msg/_part_s.c: rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c
 	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_py/vision_interfaces/msg/_part_s.c
@@ -164,9 +218,20 @@ rosidl_generator_py/vision_interfaces/msg/_inspection_s.c: rosidl_generator_py/v
 rosidl_generator_py/vision_interfaces/msg/_vision_status_s.c: rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c
 	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_py/vision_interfaces/msg/_vision_status_s.c
 
+rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.c: rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c
+	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.c
+
+rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.c: rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c
+	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.c
+
 vision_interfaces__py: rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_c.c
 vision_interfaces__py: rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c
 vision_interfaces__py: rosidl_generator_py/vision_interfaces/_vision_interfaces_s.ep.rosidl_typesupport_introspection_c.c
+vision_interfaces__py: rosidl_generator_py/vision_interfaces/action/__init__.py
+vision_interfaces__py: rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose.py
+vision_interfaces__py: rosidl_generator_py/vision_interfaces/action/_calibrate_pcb_pose_s.c
+vision_interfaces__py: rosidl_generator_py/vision_interfaces/action/_detect_tray_parts.py
+vision_interfaces__py: rosidl_generator_py/vision_interfaces/action/_detect_tray_parts_s.c
 vision_interfaces__py: rosidl_generator_py/vision_interfaces/msg/__init__.py
 vision_interfaces__py: rosidl_generator_py/vision_interfaces/msg/_detections.py
 vision_interfaces__py: rosidl_generator_py/vision_interfaces/msg/_detections_s.c

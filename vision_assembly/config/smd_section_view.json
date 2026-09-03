@@ -1,0 +1,158 @@
+{
+  "schema_version": 3,
+  "name": "SMDSectionView",
+  "reference_tcp_base": [
+    -527.998,
+    -120.961,
+    77.862,
+    180.0,
+    0.0,
+    89.999
+  ],
+  "source_image_size": [
+    1920,
+    1080
+  ],
+  "corner_marker": "black_tape",
+  "corner_order": [
+    "TL",
+    "TR",
+    "BR",
+    "BL"
+  ],
+  "section_polygon_pixel": [
+    [
+      750.4965,
+      346.719
+    ],
+    [
+      1309.872,
+      343.233
+    ],
+    [
+      1310.73,
+      952.92
+    ],
+    [
+      730.8345,
+      951.0360000000001
+    ]
+  ],
+  "canonical_size": [
+    1200,
+    720
+  ],
+  "pose_tolerance": {
+    "translation_mm": 2.0,
+    "rotation_deg": 1.0
+  },
+  "status": "clean_reference_captured_tape_removed_2026-08-31",
+  "marker_details": {
+    "TL": {
+      "center": [
+        500.331,
+        231.146
+      ],
+      "area": 181.5,
+      "bbox": [
+        492,
+        222,
+        19,
+        18
+      ],
+      "seed_distance_px": 1.87
+    },
+    "TR": {
+      "center": [
+        873.248,
+        228.822
+      ],
+      "area": 183.5,
+      "bbox": [
+        861,
+        223,
+        24,
+        14
+      ],
+      "seed_distance_px": 1.2
+    },
+    "BR": {
+      "center": [
+        873.82,
+        635.28
+      ],
+      "area": 288.5,
+      "bbox": [
+        866,
+        623,
+        17,
+        23
+      ],
+      "seed_distance_px": 1.21
+    },
+    "BL": {
+      "center": [
+        487.223,
+        634.024
+      ],
+      "area": 145.0,
+      "bbox": [
+        476,
+        625,
+        21,
+        15
+      ],
+      "seed_distance_px": 1.05
+    }
+  },
+  "registration_mode": "clean_section_feature_homography",
+  "clean_reference_raw": "vision_assembly/data/smd_section_clean_reference_1920_raw.jpg",
+  "clean_reference_rectified": "vision_assembly/data/smd_section_clean_reference_1920_rectified.jpg",
+  "tape_required_at_runtime": false,
+  "camera_profile": "1920x1080x15",
+  "camera_profile_requires_color_stream_restart": true,
+  "set_layout": {
+    "set_count": 2,
+    "parts_per_set": 5,
+    "required_count": 10,
+    "set_axis": "canonical_y",
+    "set_order": "top_to_bottom",
+    "part_order_within_set": "left_to_right",
+    "canonical_y_ranges": [
+      [0, 360],
+      [360, 720]
+    ]
+  },
+  "learned_detection": {
+    "model": "vision_assembly/models/tray_segmentation/pilot_06/weights/best.pt",
+    "class_id": 2,
+    "confidence": 0.20,
+    "image_size": 1280,
+    "required_count": 10,
+    "row_size": 5,
+    "frames": 8,
+    "max_center_span_canonical_px": 3.5,
+    "max_angle_span_deg": 3.0,
+    "status": "center_validated_angle_not_yet_validated"
+  },
+  "obb_detection": {
+    "model": "vision_assembly/models/smd_obb/pilot_03/weights/best.pt",
+    "confidence": 0.50,
+    "frames": 8,
+    "required_count": 10,
+    "row_size": 5,
+    "max_center_span_canonical_px": 3.5,
+    "robust_angle_gate": {
+      "median_absolute_deviation_max_deg": 1.0,
+      "inlier_radius_deg": 1.5,
+      "minimum_inliers": 6
+    },
+    "validated_rotation_range_deg": [
+      -23.9625,
+      21.8014
+    ],
+    "holdout_reference_error_max_deg": 2.634,
+    "coordinate_status": "canonical_angle_validated_base_angle_mapping_pending",
+    "robot_rotation_authorized": false
+  }
+}

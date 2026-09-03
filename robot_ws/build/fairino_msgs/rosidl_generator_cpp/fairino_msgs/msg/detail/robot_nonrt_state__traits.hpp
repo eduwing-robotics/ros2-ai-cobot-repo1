@@ -482,6 +482,20 @@ inline void to_flow_style_yaml(
     out << ", ";
   }
 
+  // member: gripper_position
+  {
+    out << "gripper_position: ";
+    rosidl_generator_traits::value_to_yaml(msg.gripper_position, out);
+    out << ", ";
+  }
+
+  // member: gripper_feedback_valid
+  {
+    out << "gripper_feedback_valid: ";
+    rosidl_generator_traits::value_to_yaml(msg.gripper_feedback_valid, out);
+    out << ", ";
+  }
+
   // member: weldbreakoffstate
   {
     out << "weldbreakoffstate: ";
@@ -1650,6 +1664,26 @@ inline void to_block_style_yaml(
     }
     out << "grip_motion_done: ";
     rosidl_generator_traits::value_to_yaml(msg.grip_motion_done, out);
+    out << "\n";
+  }
+
+  // member: gripper_position
+  {
+    if (indentation > 0) {
+      out << std::string(indentation, ' ');
+    }
+    out << "gripper_position: ";
+    rosidl_generator_traits::value_to_yaml(msg.gripper_position, out);
+    out << "\n";
+  }
+
+  // member: gripper_feedback_valid
+  {
+    if (indentation > 0) {
+      out << std::string(indentation, ' ');
+    }
+    out << "gripper_feedback_valid: ";
+    rosidl_generator_traits::value_to_yaml(msg.gripper_feedback_valid, out);
     out << "\n";
   }
 

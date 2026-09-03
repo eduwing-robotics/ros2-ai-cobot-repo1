@@ -1,5 +1,7 @@
 file(REMOVE_RECURSE
   "CMakeFiles/vision_interfaces__rosidl_generator_type_description"
+  "rosidl_generator_type_description/vision_interfaces/action/CalibratePcbPose.json"
+  "rosidl_generator_type_description/vision_interfaces/action/DetectTrayParts.json"
   "rosidl_generator_type_description/vision_interfaces/msg/Detections.json"
   "rosidl_generator_type_description/vision_interfaces/msg/Inspection.json"
   "rosidl_generator_type_description/vision_interfaces/msg/Part.json"

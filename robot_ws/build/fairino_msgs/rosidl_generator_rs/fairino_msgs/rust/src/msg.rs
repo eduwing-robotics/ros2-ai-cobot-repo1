@@ -295,6 +295,16 @@ pub struct RobotNonrtState {
 
     // This member is not documented.
     #[allow(missing_docs)]
+    pub gripper_position: u8,
+
+
+    // This member is not documented.
+    #[allow(missing_docs)]
+    pub gripper_feedback_valid: bool,
+
+
+    // This member is not documented.
+    #[allow(missing_docs)]
     pub weldbreakoffstate: u8,
 
 
@@ -700,6 +710,8 @@ impl rosidl_runtime_rs::Message for RobotNonrtState {
         safetyboxsig: msg.safetyboxsig,
         robot_motion_done: msg.robot_motion_done,
         grip_motion_done: msg.grip_motion_done,
+        gripper_position: msg.gripper_position,
+        gripper_feedback_valid: msg.gripper_feedback_valid,
         weldbreakoffstate: msg.weldbreakoffstate,
         weldarcstate: msg.weldarcstate,
         welding_voltage: msg.welding_voltage,
@@ -826,6 +838,8 @@ impl rosidl_runtime_rs::Message for RobotNonrtState {
         safetyboxsig: msg.safetyboxsig,
       robot_motion_done: msg.robot_motion_done,
       grip_motion_done: msg.grip_motion_done,
+      gripper_position: msg.gripper_position,
+      gripper_feedback_valid: msg.gripper_feedback_valid,
       weldbreakoffstate: msg.weldbreakoffstate,
       weldarcstate: msg.weldarcstate,
       welding_voltage: msg.welding_voltage,
@@ -956,6 +970,8 @@ impl rosidl_runtime_rs::Message for RobotNonrtState {
       safetyboxsig: msg.safetyboxsig,
       robot_motion_done: msg.robot_motion_done,
       grip_motion_done: msg.grip_motion_done,
+      gripper_position: msg.gripper_position,
+      gripper_feedback_valid: msg.gripper_feedback_valid,
       weldbreakoffstate: msg.weldbreakoffstate,
       weldarcstate: msg.weldarcstate,
       welding_voltage: msg.welding_voltage,

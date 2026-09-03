@@ -2,47 +2,260 @@
   "schema_version": 1,
   "status": "physical_gripper_test_values_user_provided_2026-08-26",
   "command": "MoveGripper",
-  "argument_order": ["index", "position", "velocity", "force", "max_time_ms", "block", "type", "rotation_count", "rotation_velocity", "rotation_torque"],
+  "argument_order": [
+    "index",
+    "position",
+    "velocity",
+    "force",
+    "max_time_ms",
+    "block",
+    "type",
+    "rotation_count",
+    "rotation_velocity",
+    "rotation_torque"
+  ],
   "warnings": [
     "These values are saved recipes only and must not trigger robot motion without an explicitly authorized pick/place workflow.",
     "Grip and release values were supplied from physical tests; verify payload retention and collision clearance before autonomous use."
   ],
+  "placement_safety": {
+    "applies_to_all_parts": true,
+    "pre_place_clearance_mm": 20.0,
+    "pre_place_descent_percent": 20,
+    "final_place_descent_percent": 10,
+    "require_two_stage_vertical_place_approach": true,
+    "post_release_vertical_retract_mm": 100.0,
+    "post_release_vertical_retract_percent": 20,
+    "preserve_place_xy_and_orientation": true,
+    "require_retract_pose_verified_before_next_motion": true,
+    "forbid_rotation_or_horizontal_motion_before_retract": true
+  },
+  "tray_snapshot_quality": {
+    "minimum_observation_frames": 20,
+    "parts": {
+      "gpu": {
+        "minimum_detection_confidence": 0.45,
+        "minimum_mask_shape_score": 0.45,
+        "minimum_rectangularity": 0.45
+      },
+      "hbm": {
+        "minimum_detection_confidence": 0.55,
+        "minimum_mask_shape_score": 0.45,
+        "minimum_rectangularity": 0.45
+      },
+      "long_orange": {
+        "minimum_detection_confidence": 0.7,
+        "minimum_mask_shape_score": 0.6,
+        "minimum_rectangularity": 0.6
+      },
+      "black_block": {
+        "minimum_detection_confidence": 0.7,
+        "minimum_mask_shape_score": 0.65,
+        "minimum_rectangularity": 0.7
+      },
+      "marked_white": {
+        "minimum_detection_confidence": 0.7,
+        "minimum_mask_shape_score": 0.35,
+        "minimum_rectangularity": 0.35
+      },
+      "right_white_brown": {
+        "minimum_detection_confidence": 0.7,
+        "minimum_mask_shape_score": 0.35,
+        "minimum_rectangularity": 0.35
+      }
+    },
+    "rules": [
+      "Every frozen part must carry detector-generated median quality metrics.",
+      "A complete count never overrides a low-confidence or malformed mask.",
+      "Any quality failure blocks snapshot creation and forces a fresh tray measurement."
+    ]
+  },
   "parts": {
     "gpu": {
-      "status": "physical_pick_to_trayhome_validated_2026-08-30",
-      "grip":    {"args": [1, 65, 50, 30, 3000, 0, 0, 0, 0, 0]},
-      "release": {"args": [1, 100, 50, 30, 3000, 0, 0, 0, 0, 0]}
+      "status": "physical_pick_validated_instance_1_2026-09-01",
+      "display_name": "GPU",
+      "gripper_axis": "tool_y",
+      "placement_orientation_abc_deg": [
+        179.99771118164062,
+        0.0007336472626775503,
+        179.99978637695312
+      ],
+      "placement_orientation_source": "operator_confirmed_successful_GPU-01_place_2026-09-01_and_2026-09-02",
+      "placement_final_tcp_z_mm": 88.46085,
+      "placement_final_z_source": "operator_requested_raise_0.3_mm_after_full_cycle_pressing_observation_2026-09-02",
+      "placement_xy_source": "fresh_live_GPU-01_board_surface_center_each_cycle",
+      "placement_release_position": 70,
+      "placement_vertical_clearance_mm": 100.0,
+      "placement_vertical_descent_percent": 20,
+      "placement_post_release_lift_mm": 100.0,
+      "placement_post_release_lift_percent": 20,
+      "ignore_generic_slot_long_axis_for_placement": false,
+      "grasp_center_correction_base_mm": {
+        "x": 0.0,
+        "y": 0.0,
+        "reference_tcp_rz_deg": 86.181,
+        "application_rule": "GPU tray-plane calibration is already included in the detector Base coordinates; apply no additional XY correction. Physically pick-validated on GPU instance 1 on 2026-09-01."
+      },
+      "grasp_z_offset_from_detected_surface_mm": -7.0,
+      "safe_pick_speeds": {
+        "travel_percent": 30,
+        "rotation_percent": 30,
+        "hover_descent_percent": 20,
+        "final_descent_percent": 10
+      },
+      "tray_pick_open": {
+        "args": [
+          1,
+          70,
+          50,
+          30,
+          3000,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "grip": {
+        "args": [
+          1,
+          65,
+          50,
+          30,
+          3000,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "release": {
+        "args": [
+          1,
+          70,
+          50,
+          30,
+          3000,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "placement_orientation_policy": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "source": "GPU actual pick C91.957 and successful place C180; compute from each cycle tray grasp and board pose",
+        "skip_rotation_below_deg": 0.5
+      }
     },
     "hbm": {
-      "status": "visual_center_and_operator_grasp_height_taught_2026-08-30_needs_lift_validation",
+      "status": "physical_pick_and_place_validated_HBM-01_2026-09-02",
+      "placement_orientation_abc_deg": [
+        179.997467,
+        0.001248,
+        179.999557
+      ],
+      "placement_surface_to_tcp_z_offset_mm": 0.03792,
+      "placement_z_source": "operator_requested_raise_0.3_mm_after_full_cycle_pressing_observation_2026-09-02",
+      "placement_release_position": 25,
+      "placement_vertical_clearance_mm": 100.0,
+      "placement_vertical_speed_percent": 20,
       "grasp_center_correction_base_mm": {
         "x": -0.717,
         "y": 1.253,
         "reference_tcp_rz_deg": 90.0,
-        "source_detection_base_xy_mm": [-597.539, -49.443],
-        "visually_centered_base_xy_mm": [-598.256, -48.190],
+        "source_detection_base_xy_mm": [
+          -597.539,
+          -49.443
+        ],
+        "visually_centered_base_xy_mm": [
+          -598.256,
+          -48.19
+        ],
         "application_rule": "Apply in Base XY only when the commanded TCP orientation is approximately Rz=90 deg; transform or recalibrate for other orientations."
       },
-      "grip":    {"args": [1, 18, 50, 30, 3000, 0, 0, 0, 0, 0]},
-      "release": {"args": [1, 25, 50, 30, 3000, 0, 0, 0, 0, 0]},
-      "grasp_z_offset_from_detected_surface_mm": -3.010,
-      "taught_grasp_tcp_z_mm": -46.550,
-      "source_detected_surface_z_mm": -43.540,
+      "grip": {
+        "args": [
+          1,
+          18,
+          50,
+          30,
+          3000,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "release": {
+        "args": [
+          1,
+          25,
+          50,
+          30,
+          3000,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "grasp_z_offset_from_detected_surface_mm": -3.01,
+      "taught_grasp_tcp_z_mm": -46.55,
+      "source_detected_surface_z_mm": -43.54,
       "notes": [
         "Operator visually confirmed HBM center alignment with gripper opened to position 25.",
         "Operator manually taught the HBM grasp height on HBM instance 4.",
         "Close position 18 and payload retention after a vertical lift remain to be physically validated."
-      ]
+      ],
+      "safe_pick_speeds": {
+        "travel_percent": 30,
+        "rotation_percent": 30,
+        "hover_descent_percent": 20,
+        "final_descent_percent": 20,
+        "initial_lift_percent": 20,
+        "carry_vertical_percent": 30,
+        "board_hover_descent_percent": 20,
+        "placement_final_descent_percent": 20,
+        "placement_retract_percent": 20
+      },
+      "gripper_axis": "tool_y",
+      "placement_orientation_policy": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "source": "corrected after physical full-cycle test on 2026-09-02: HBM quarter turns are not assembly-equivalent; align the carried long axis to the slot and prefer the successful C≈180 placement branch",
+        "skip_rotation_below_deg": 3.0,
+        "preference_tie_threshold_deg": 10.0
+      }
     },
     "long_orange": {
       "display_name": "Power Module",
-      "status": "physical_pick_and_5mm_lift_visually_passed_2026-08-30_needs_repeat_confirmation",
+      "placement_surface_to_tcp_z_offset_mm": 0.098,
+      "placement_z_source": "operator_manual_PM-01_actual_part_teach_2026-09-02; fresh_surface_z_mm=87.610762, taught_tcp_z_mm=87.709000; PM-02 actual-part reuse confirmed 2026-09-02 with surface_z_mm=89.975930 and final_tcp_z_mm=90.073930",
+      "placement_release_position": 30,
+      "status": "physical_pick_center_plus_base_x_0p5_and_close25_validated_PM01_PM02_2026-09-03; placement_PM01_PM02_validated_2026-09-02",
       "grasp_center_correction_base_mm": {
         "x": -2.309,
         "y": 0.665,
         "reference_tcp_rz_deg": 85.185,
-        "source_detection_base_xy_mm": [-747.753, -72.317],
-        "visually_centered_base_xy_mm": [-750.062, -71.652],
+        "source_detection_base_xy_mm": [
+          -747.753,
+          -72.317
+        ],
+        "visually_centered_base_xy_mm": [
+          -750.062,
+          -71.652
+        ],
         "application_rule": "Align tool_y to the detected unoriented long axis first, then rotate this correction consistently with the commanded TCP orientation."
       },
       "grasp_center_correction_tool_mm": {
@@ -52,57 +265,392 @@
         "source": "inverse-rotated from the visually centered Base correction using scipy Rotation.from_euler xyz at Rz=85.185 deg"
       },
       "operator_additional_correction_base_mm": {
-        "x": 0.0,
+        "x": 0.5,
         "y": 1.3,
         "z": 0.0,
-        "source": "operator visual correction toward Base +Y on 2026-08-31; apply in Base after rotating the tool-fixed grasp-center correction"
+        "source": "operator visual corrections: Base +Y 1.3 mm on 2026-08-31 and Base +X 0.5 mm on PM-02 on 2026-09-03; apply in Base after rotating the tool-fixed grasp-center correction"
       },
       "grasp_z_offset_from_detected_surface_mm": -4.738,
-      "taught_grasp_tcp_z_mm": -50.550,
+      "taught_grasp_tcp_z_mm": -50.55,
       "source_detected_surface_z_mm": -45.812,
-      "grip":    {"args": [1, 26, 50, 30, 3000, 0, 0, 0, 0, 0]},
-      "release": {"args": [1, 30, 50, 30, 3000, 0, 0, 0, 0, 0]},
+      "grip": {
+        "args": [
+          1,
+          25,
+          50,
+          30,
+          3000,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "release": {
+        "args": [
+          1,
+          30,
+          50,
+          30,
+          3000,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
       "notes": [
         "Operator confirmed the current TCP height as the Power Module grasp height.",
         "Gripper close 26 and reopen 30 commands were physically exercised at the taught area.",
         "Power Module 2 was grasped and lifted but appeared slightly off-center.",
         "Power Module 3 was grasped and lifted 5 mm; operator judged that it appeared successful.",
-        "The direct gripper-position query briefly returned 0 after the Power Module 3 close, while the subsequent ROS state reported 26 with no fault; repeat once before marking fully validated."
-      ]
+        "The direct gripper-position query briefly returned 0 after the Power Module 3 close, while the subsequent ROS state reported 26 with no fault; repeat once before marking fully validated.",
+        "2026-09-03 PM-01: existing center and Z were operator-confirmed; close 26 failed to retain the part, while close 25 retained it through a 15 mm vertical lift.",
+        "2026-09-03 PM-02: operator observed the gripper 0.5 mm high in the RQT image; Base +X 0.5 mm moved it image-down, and close 25 retained the part through a 5 mm lift with center confirmed.",
+        "2026-09-03 PM-01 retest: the same common Base +X 0.5 mm correction and close 25 retained the part through a 25 mm vertical lift; operator confirmed the center."
+      ],
+      "gripper_axis": "tool_y",
+      "placement_orientation_policy": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 5.0,
+        "source": "PM-01 actual carried part required C180 on 2026-09-02; never use empty-gripper absolute C as a direct motion target",
+        "skip_rotation_below_deg": 3.0
+      }
     },
     "black_block": {
       "display_name": "VRM",
+      "placement_surface_to_tcp_z_offset_mm": -2.157053,
+      "placement_z_source": "operator_taught_actual_VRM-01_live_surface_86.264582_to_tcp_84.107529_2026-09-02",
+      "placement_vertical_clearance_mm": 100.0,
+      "placement_vertical_speed_percent": 20,
       "orientation_selection": "Use horizontal or vertical recipe from the detected grasp-axis orientation.",
       "grasp_center_correction_base_mm": {
-        "x": 0.0,
-        "y": 1.0,
+        "x": -2.0,
+        "y": 1.6,
         "reference_tcp_rz_deg": 91.277,
-        "application_rule": "Apply as fixed Base +Y after aligning tool_y to the detected VRM long axis."
+        "application_rule": "For the uniformly oriented physical tray, apply fixed Base X -2.0 mm and Y +1.6 mm after aligning tool_y to the detected VRM long axis. This is the operator-validated VRM-7/VRM-9 pickup correction."
       },
       "grasp_center_correction_tool_at_reference_mm": {
-        "x": 1.000,
-        "y": 0.022,
+        "x": 1.644,
+        "y": -1.964,
         "z": 0.0,
-        "source": "inverse-rotated from Base [0,+1,0] at VRM 1 reference pose on 2026-08-31"
+        "source": "inverse-rotated from Base [-2.0,+1.6,0] at TCP Rz=91.277 deg; restored after operator rejected the no-X multi-part run on 2026-09-02"
+      },
+      "pick_correction_status": "restored_operator_validated_Base_X_minus2_Y_plus1.6_after_multi_part_offcenter_diagnosis_2026-09-02",
+      "grasp_height": {
+        "taught_tcp_z_mm": -54.108,
+        "detected_surface_z_mm": -45.876,
+        "tcp_z_offset_from_detected_surface_mm": -7.932,
+        "operator_adjusted_reference_tcp_z_mm": -53.808,
+        "operator_clearance_adjustment_mm": 0.3,
+        "reference_part": "VRM-1",
+        "reference_base_xy_mm": [
+          -758.494,
+          -227.791
+        ],
+        "reference_tcp_rz_deg": 90.277,
+        "gripper_position_during_teach": 26,
+        "status": "operator_raised_common_vrm_pick_z_by_0p3_after_VRM01_05_pick_tests_2026-09-03"
       },
       "horizontal": {
-        "grip":    {"args": [1, 24, 50, 30, 3000, 0, 0, 0, 0, 0]},
-        "release": {"args": [1, 26, 50, 30, 3000, 0, 0, 0, 0, 0]}
+        "tray_pick_open": {
+          "args": [
+            1,
+            28,
+            50,
+            30,
+            3000,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "grip": {
+          "args": [
+            1,
+            24,
+            50,
+            30,
+            3000,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "release": {
+          "args": [
+            1,
+            26,
+            50,
+            30,
+            3000,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
       },
       "vertical": {
-        "grip":    {"args": [1, 32, 50, 30, 3000, 0, 0, 0, 0, 0]},
-        "release": {"args": [1, 34, 50, 30, 3000, 0, 0, 0, 0, 0]}
+        "grip": {
+          "args": [
+            1,
+            32,
+            50,
+            30,
+            3000,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "release": {
+          "args": [
+            1,
+            34,
+            50,
+            30,
+            3000,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      },
+      "gripper_axis": "tool_y",
+      "placement_orientation_policy": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "source": "derive from actual tray grasp and current slot long axis; legacy slot C values were empty-gripper checks",
+        "skip_rotation_below_deg": 2.0
       }
     },
     "marked_white": {
       "display_name": "Inductor",
-      "grip":    {"args": [1, 16, 50, 30, 3000, 0, 0, 0, 0, 0]},
-      "release": {"args": [1, 20, 50, 30, 3000, 0, 0, 0, 0, 0]}
+      "placement_surface_to_tcp_z_offset_mm": -1.121,
+      "placement_z_source": "operator_taught_actual_IND-01_surface_89.712_to_tcp_88.591_and_operator_confirmed_IND-02_prediction_88.210_2026-09-02",
+      "placement_release_position": 20,
+      "placement_vertical_clearance_mm": 100.0,
+      "placement_vertical_speed_percent": 20,
+      "grasp_center_correction_base_mm": {
+        "x": -0.254,
+        "y": 5.515,
+        "reference_tcp_rz_deg": 0.193,
+        "application_rule": "Apply as fixed Base X/Y correction after aligning tool_y to the detected inductor long axis. Midpoint of operator-centered Inductor-01 and Inductor-02 corrections on 2026-09-03."
+      },
+      "grasp_center_correction_tool_at_reference_mm": {
+        "x": -0.235,
+        "y": -5.516,
+        "z": 0.0,
+        "source": "inverse-rotated from midpoint Base [-0.254,+5.515,0] at TCP Rz=0.193 deg on 2026-09-03"
+      },
+      "tray_pick_open": {
+        "args": [
+          1,
+          21,
+          50,
+          30,
+          3000,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "grip": {
+        "args": [
+          1,
+          14,
+          50,
+          30,
+          3000,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "release": {
+        "args": [
+          1,
+          20,
+          50,
+          30,
+          3000,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "grasp_height": {
+        "taught_tcp_z_mm": -51.194,
+        "detected_surface_z_mm": -43.144,
+        "tcp_z_offset_from_detected_surface_mm": -8.05,
+        "reference_part": "Inductor-1",
+        "reference_base_xy_mm": [
+          -623.872,
+          -232.497
+        ],
+        "corrected_tcp_xy_mm": [
+          -624.867,
+          -228.498
+        ],
+        "reference_tcp_rz_deg": 1.374,
+        "gripper_position_during_teach": 20,
+        "status": "operator_taught_grasp_height_2026-08-31"
+      },
+      "gripper_axis": "tool_y",
+      "placement_orientation_policy": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "source": "operator physically rotated tray parts to placement-compatible orientation; preserve grasp orientation whenever axes already match",
+        "skip_rotation_below_deg": 1.0
+      }
     },
     "right_white_brown": {
+      "status": "physical_pick_direction_and_absolute_z_reconfirmed_2026-09-03",
       "display_name": "SMD Capacitor",
-      "grip":    {"args": [1, 5, 50, 1, 3000, 0, 0, 0, 0, 0]},
-      "release": {"args": [1, 8, 50, 1, 3000, 0, 0, 0, 0, 0]}
+      "placement_surface_to_tcp_z_offset_mm": -1.005,
+      "placement_z_source": "operator_taught_empty_gripper_CAP-02_surface_90.101_to_tcp_89.096_2026-09-02; actual_part_confirmation_pending",
+      "placement_release_position": 17,
+      "placement_vertical_clearance_mm": 100.0,
+      "placement_vertical_speed_percent": 20,
+      "grip": {
+        "args": [
+          1,
+          12,
+          50,
+          1,
+          3000,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "release": {
+        "args": [
+          1,
+          17,
+          50,
+          1,
+          3000,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "gripper_axis": "tool_x",
+      "pick_orientation_policy": {
+        "gripper_axis": "tool_x",
+        "symmetric_rotation_branch": "negative",
+        "maximum_rotation_deg": 95.0,
+        "maximum_joint_step_deg": 96.0,
+        "expected_start_pose": "SMDSectionView TCP C approximately 90 degrees",
+        "validated_result": "TCP C approximately 0 degrees on the J6-increasing branch"
+      },
+      "grasp_center_correction_base_mm": {
+        "x": 0.041,
+        "y": 4.548,
+        "reference_tcp_rz_deg": 2.197,
+        "application_rule": "Apply as fixed Base X/Y correction after aligning tool_x to the detected SMD long axis; manually centered on instance 7 and physically pick-validated on instances 7 and 10 on 2026-09-01. Select the 180-degree-symmetric wrist solution that increases J6."
+      },
+      "grasp_height": {
+        "position_mode": "fixed_fixture_absolute",
+        "taught_tcp_z_mm": -53.153,
+        "detected_surface_z_mm": -47.291,
+        "diagnostic_tcp_z_offset_from_detected_surface_mm": -5.862,
+        "reference_part": "SMD-Capacitor-1",
+        "reference_base_xy_mm": [
+          -626.785,
+          -170.008
+        ],
+        "corrected_tcp_xy_mm": [
+          -627.785,
+          -166.006
+        ],
+        "reference_tcp_rz_deg": 1.497,
+        "gripper_position_during_teach": 20,
+        "status": "operator_reconfirmed_fixed_absolute_grasp_z_2026-09-03"
+      },
+      "tray_pick_open": {
+        "args": [
+          1,
+          18,
+          50,
+          1,
+          3000,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "safe_pick_speeds": {
+        "travel_percent": 30,
+        "rotation_percent": 30,
+        "hover_descent_percent": 20,
+        "final_descent_percent": 10
+      },
+      "placement_orientation_policy": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "gripper_axis": "tool_x",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "source": "derive each slot rotation from actual close-view grasp axis and current board slot axis",
+        "skip_rotation_below_deg": 0.5
+      }
     }
+  },
+  "pick_safety": {
+    "applies_to_all_parts": true,
+    "travel_speed_percent": 40,
+    "intentional_rotation_speed_percent": 40,
+    "pre_grasp_vertical_clearance_mm": 100.0,
+    "pre_grasp_vertical_descent_percent": 20,
+    "post_grasp_vertical_lift_mm": 100.0,
+    "post_grasp_vertical_lift_percent": 20,
+    "preserve_pick_xy_and_orientation": true,
+    "require_lift_pose_verified_before_rotation_or_horizontal_motion": true,
+    "board_place_vertical_clearance_mm": 100.0,
+    "board_place_vertical_descent_percent": 20,
+    "post_release_vertical_lift_mm": 100.0,
+    "post_release_vertical_lift_percent": 20,
+    "require_post_release_lift_before_rotation_or_horizontal_motion": true,
+    "preserve_pick_abc_during_transfer_by_default": true,
+    "forbid_teaching_point_orientation_while_holding_part": true,
+    "allow_rotation_only_with_explicit_part_place_rotation": false,
+    "verify_orientation_delta_before_each_motion": true,
+    "forbid_simultaneous_xy_z_change_during_pick_or_place_approach": true,
+    "require_horizontal_positioning_at_safe_z_before_vertical_descent": true,
+    "require_constant_xy_abc_from_safe_z_through_release_and_retract": true,
+    "allow_rotation_only_with_validated_carried_axis_to_slot_axis_plan": true,
+    "forbid_unconditional_absolute_tcp_c_placement": true
   }
 }

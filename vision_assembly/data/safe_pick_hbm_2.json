@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "mode": "single_part_hover_target",
+  "timestamp_unix": 1788334077.6611073,
+  "part_type": "hbm",
+  "display_name": "HBM",
+  "instance_index": null,
+  "selection_mode": "nearest_expected_base_xy",
+  "part_center_base_mm": [
+    -590.283,
+    -14.713,
+    -48.038
+  ],
+  "long_axis_angle_base_deg": -13.384,
+  "center_pixel": [
+    789.815,
+    446.185
+  ],
+  "center_pixel_span": [
+    0.52,
+    0.05
+  ],
+  "camera_xyz_m": [
+    0.077448,
+    0.035355,
+    0.482
+  ],
+  "sample_count": 6,
+  "position_span_mm": [
+    0.013,
+    0.005,
+    0.003
+  ],
+  "angle_span_deg": 0.002,
+  "hover_offset_mm": 100.0,
+  "robot_motion_authorized": false,
+  "source_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/tray_detections_last.json"
+}
