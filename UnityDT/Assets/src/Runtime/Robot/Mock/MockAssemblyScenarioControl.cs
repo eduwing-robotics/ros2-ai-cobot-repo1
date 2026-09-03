@@ -57,6 +57,8 @@ namespace MainUnity.Runtime.Robot.Mock
         readonly Dictionary<string, int> nextSlotIndices = new(StringComparer.Ordinal);
         readonly HashSet<string> processedCallbacks = new(StringComparer.Ordinal);
         readonly List<AssemblyFeedback> bufferedFeedback = new();
+        readonly List<(Transform Target, Transform Parent, Vector3 LocalPosition,
+            Quaternion LocalRotation)> initialSceneStates = new();
 
         MockRobotControl control;
         AssemblyProgressManager progress;
@@ -76,7 +78,7 @@ namespace MainUnity.Runtime.Robot.Mock
         bool assembledPcbHeld;
         bool assembledPcbTransferred;
         bool feedbackSubscribed;
-        bool assemblyRequested;
+        bool sceneNeedsReset;
         bool inspectionTransferStarted;
         bool recovering;
         int recoveryGeneration;
@@ -194,11 +196,14 @@ namespace MainUnity.Runtime.Robot.Mock
         void Awake()
         {
             RefreshReferences();
+            CaptureInitialSceneState();
             EnsureRosConnection();
         }
 
         void OnEnable()
         {
+            RefreshReferences();
+            CaptureInitialSceneState();
             EnsureRosConnection();
             recoveryTask = RecoverAsync(++recoveryGeneration);
         }
@@ -230,13 +235,18 @@ namespace MainUnity.Runtime.Robot.Mock
         {
             await recoveryTask;
             ValidateExecution();
+            if (sceneNeedsReset)
+            {
+                ResetVisualization(false);
+                sceneNeedsReset = false;
+            }
             EnsureRosConnection();
             await conveyor.MoveBoardToAssemblyAsync();
             MockObservation[] observations = BuildObservations();
 
             var current = new TaskCompletionSource<string>();
             terminal = current;
-            assemblyRequested = true;
+            sceneNeedsReset = true;
             if (string.IsNullOrEmpty(activeJobId))
                 activeJobId = Guid.NewGuid().ToString();
             processedCallbacks.Clear();
@@ -285,7 +295,7 @@ namespace MainUnity.Runtime.Robot.Mock
                 if (ReferenceEquals(terminal, current))
                     terminal = null;
                 if (!accepted)
-                    assemblyRequested = false;
+                    sceneNeedsReset = false;
                 else
                     activeJobId = string.Empty;
                 processedCallbacks.Clear();
@@ -470,7 +480,7 @@ namespace MainUnity.Runtime.Robot.Mock
                 }
             }
 
-            assemblyRequested = snapshot.active;
+            sceneNeedsReset = true;
             terminal = snapshot.active ? new TaskCompletionSource<string>() : null;
             if (snapshot.state == AssemblyCompleted)
                 _ = MoveToInspectionAndRequestTransferAsync();
@@ -569,8 +579,6 @@ namespace MainUnity.Runtime.Robot.Mock
                 throw new InvalidOperationException("Mock MainServer URL must use HTTP or HTTPS.");
             if (!float.IsFinite(completionTimeoutSeconds) || completionTimeoutSeconds <= 0f)
                 throw new InvalidOperationException("Mock assembly timeout must be positive and finite.");
-            if (assemblyRequested)
-                throw new InvalidOperationException("Reload the Mock scene before starting another assembly.");
         }
 
         async Task SendMockAsync(string json, string operation)
@@ -819,10 +827,7 @@ namespace MainUnity.Runtime.Robot.Mock
                     return;
 
                 if (feedback.state == Started && lastPlacedStepOrder == expectedStepCount)
-                {
                     ResetForNextUnit();
-                    processedCallbacks.Clear();
-                }
 
                 string key = string.Concat(feedback.state, "|", feedback.step_order, "|",
                     feedback.part_id, "|", feedback.slot_code);
@@ -895,10 +900,55 @@ namespace MainUnity.Runtime.Robot.Mock
                 throw new InvalidOperationException(
                     "A new Mock Unit started while the previous object was held.");
 
-            // ponytail: Reuse the scene board and parts until the Mock scene models a board queue.
-            RestoreAssembledPcbAtAssembly();
+            ResetVisualization(true);
+        }
+
+        void CaptureInitialSceneState()
+        {
+            if (initialSceneStates.Count > 0 || itemManager == null || assembledPcb == null)
+                return;
+
+            void Capture(Transform target)
+            {
+                if (target != null)
+                    initialSceneStates.Add((target, target.parent,
+                        target.localPosition, target.localRotation));
+            }
+
+            foreach (ItemManager.ItemGroup group in itemManager.ItemGroups)
+            {
+                if (group?.Items == null)
+                    continue;
+                foreach (Transform item in group.Items)
+                    Capture(item);
+            }
+            Capture(assembledPcb);
+        }
+
+        void ResetVisualization(bool boardAtAssembly)
+        {
+            if (initialSceneStates.Count == 0)
+                CaptureInitialSceneState();
+            if (initialSceneStates.Count == 0)
+                throw new InvalidOperationException(
+                    "Mock initial PCB and part state is unavailable.");
+
+            gripperCatcher.Release();
+            foreach (var state in initialSceneStates)
+            {
+                if (state.Target == null)
+                    continue;
+                state.Target.SetParent(state.Parent, false);
+                state.Target.localPosition = state.LocalPosition;
+                state.Target.localRotation = state.LocalRotation;
+            }
+            if (boardAtAssembly)
+                RestoreAssembledPcbAtAssembly();
+
             nextItemIndices.Clear();
             nextSlotIndices.Clear();
+            processedCallbacks.Clear();
+            heldItem = null;
             heldPartId = string.Empty;
             heldSlotCode = string.Empty;
             heldStepOrder = -1;
