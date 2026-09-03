@@ -38,17 +38,17 @@ CREATE TEMP TABLE mock_sample_units (
 ) ON COMMIT DROP;
 
 INSERT INTO mock_sample_units VALUES
-    ('mock-sample-pass-202608-r1', 1, 'COMPLETED', 'PASS', 'InspectionSamples/mock-pass.jpg',
+    ('mock-sample-pass-202608-r1', 1, 'COMPLETED', 'PASS', 'InspectionSamples/mock-inspect-pass-board-1.png',
      TIMESTAMPTZ '2026-08-08 09:02:00+09', TIMESTAMPTZ '2026-08-08 09:12:00+09', TIMESTAMPTZ '2026-08-08 09:14:00+09'),
-    ('mock-sample-pass-202608-r1', 2, 'COMPLETED', 'PASS', 'InspectionSamples/mock-pass.jpg',
+    ('mock-sample-pass-202608-r1', 2, 'COMPLETED', 'PASS', 'InspectionSamples/mock-inspect-pass-board-1.png',
      TIMESTAMPTZ '2026-08-08 09:14:30+09', TIMESTAMPTZ '2026-08-08 09:23:00+09', TIMESTAMPTZ '2026-08-08 09:24:00+09'),
     ('mock-sample-fail-202608-r1', 1, 'COMPLETED', 'FAIL', 'InspectionSamples/mock-fail.jpg',
      TIMESTAMPTZ '2026-08-12 13:02:00+09', TIMESTAMPTZ '2026-08-12 13:12:00+09', TIMESTAMPTZ '2026-08-12 13:14:00+09'),
     ('mock-sample-fail-202608-r1', 2, 'COMPLETED', 'FAIL', 'InspectionSamples/mock-fail.jpg',
      TIMESTAMPTZ '2026-08-12 13:15:00+09', TIMESTAMPTZ '2026-08-12 13:26:00+09', TIMESTAMPTZ '2026-08-12 13:27:00+09'),
-    ('mock-sample-fail-202608-r1', 3, 'COMPLETED', 'PASS', 'InspectionSamples/mock-pass.jpg',
+    ('mock-sample-fail-202608-r1', 3, 'COMPLETED', 'PASS', 'InspectionSamples/mock-inspect-pass-board-1.png',
      TIMESTAMPTZ '2026-08-12 13:28:00+09', TIMESTAMPTZ '2026-08-12 13:37:00+09', TIMESTAMPTZ '2026-08-12 13:38:00+09'),
-    ('mock-sample-fail-202608-r1', 4, 'COMPLETED', 'PASS', 'InspectionSamples/mock-pass.jpg',
+    ('mock-sample-fail-202608-r1', 4, 'COMPLETED', 'PASS', 'InspectionSamples/mock-inspect-pass-board-1.png',
      TIMESTAMPTZ '2026-08-12 13:39:00+09', TIMESTAMPTZ '2026-08-12 13:48:00+09', TIMESTAMPTZ '2026-08-12 13:49:00+09'),
     ('mock-sample-assembly-failed-202608-r1', 1, 'FAILED', 'PENDING', NULL,
      TIMESTAMPTZ '2026-08-16 15:02:00+09', NULL, NULL);
@@ -63,7 +63,9 @@ CREATE TEMP TABLE mock_sample_defects (
 
 INSERT INTO mock_sample_defects VALUES
     ('mock-sample-fail-202608-r1', 1, 'HBM-01', 'MISSING'),
-    ('mock-sample-fail-202608-r1', 2, 'PM-01', 'POSITION_ERROR');
+    ('mock-sample-fail-202608-r1', 1, 'HBM-02', 'ORIENTATION_ERROR'),
+    ('mock-sample-fail-202608-r1', 2, 'PM-01', 'POSITION_ERROR'),
+    ('mock-sample-fail-202608-r1', 2, 'VRM-03', 'CRACK');
 
 CREATE TEMP TABLE mock_sample_inserted_jobs (
     recipe_version text PRIMARY KEY,
@@ -199,15 +201,20 @@ UPDATE production.units unit
 INSERT INTO production.unit_defects (unit_id, product_slot_id, defect_type)
 SELECT unit.unit_id, slot.product_slot_id, defect.defect_type
   FROM mock_sample_defects defect
-  JOIN mock_sample_inserted_units unit
-    ON unit.recipe_version = defect.recipe_version
-   AND unit.unit_sequence_in_job = defect.unit_sequence_in_job
   JOIN production.products product
     ON product.product_code = 'HBM-ACCELERATOR-PACKAGE-BOARD'
    AND product.product_version = 'hbm-pkg-r1'
+  JOIN production.jobs job
+    ON job.product_id = product.product_id
+   AND job.recipe_version = defect.recipe_version
+  JOIN production.units unit
+    ON unit.job_id = job.job_id
+   AND unit.unit_sequence_in_job = defect.unit_sequence_in_job
   JOIN production.product_slots slot
     ON slot.product_id = product.product_id
-   AND slot.slot_code = defect.slot_code;
+   AND slot.slot_code = defect.slot_code
+ON CONFLICT (unit_id, product_slot_id) DO UPDATE
+   SET defect_type = EXCLUDED.defect_type;
 
 WITH consumption AS (
     SELECT unit.unit_id,

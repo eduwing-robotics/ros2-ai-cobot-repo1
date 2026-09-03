@@ -76,7 +76,7 @@
                 <ui:Label text="불량 슬롯만 기록된다" class="panel__badge" />
             </ui:VisualElement>
             <ui:VisualElement class="panel__body">
-                <!-- TODO(API): unit_defects 조회로 채운다. 정상 슬롯은 행을 만들지 않는다 -->
+                <!-- 정상 슬롯은 행을 만들지 않는다. unit_defects 조회 결과만 표시한다. -->
                 <ui:VisualElement name="defect-grid" class="row vlist" style="flex-wrap:wrap;" />
                 <ui:VisualElement class="spacer" />
                 <ui:VisualElement class="rule" style="margin-bottom:12px;" />

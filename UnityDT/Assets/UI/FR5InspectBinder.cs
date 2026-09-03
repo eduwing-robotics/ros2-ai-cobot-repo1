@@ -1,8 +1,7 @@
 // 역할: INSPECT 페이지(FR5Inspect.uxml)의 카메라 상태와 판정 표시를 담당한다.
 //
-//   실연결 : 모드 · 비전 스트리밍 상태 · 프레임 경과 · 빈 상태 전환
-//   미연결 : 판정 · 항목별 결과 · 불량 슬롯 · 유닛 목록 — 값을 지어내지 않고
-//            FR5EmptyState 로 필요한 조회 이름을 적는다  [TODO(API)]
+//   실연결 : 모드 · 비전 스트리밍 상태 · 프레임 경과 · 유닛 판정·불량·증거
+//   미연결 : 항목별 검사 결과와 검출 좌표 — 계약이 생기기 전까지 지어내지 않는다.
 //
 // 카메라 텍스처 자체는 CamVisionReceiver 가 `camera-image` Image 요소에 직접 넣는다.
 // 이 바인더는 "지금 영상이 살아 있는가"와 판정 표시만 맡는다.
@@ -23,6 +22,7 @@ namespace MainUnity.UI
     public sealed class FR5InspectBinder : MonoBehaviour
     {
         const string MockPassImagePath = "InspectionSamples/mock-pass.jpg";
+        const string MockInspectPassImagePath = "InspectionSamples/mock-inspect-pass-board-1.png";
         const string MockFailImagePath = "InspectionSamples/mock-fail.jpg";
 
         [Serializable] sealed class AssemblyResponse { public AssemblySnapshot data; }
@@ -209,7 +209,10 @@ namespace MainUnity.UI
             foreach (Unit unit in units)
             {
                 string unitResult = string.IsNullOrEmpty(unit.inspection_result) ? "PENDING" : unit.inspection_result;
-                var item = new Label("#" + unit.unit_sequence_in_job + "  " + unitResult);
+                Unit target = unit;
+                var item = new Button();
+                item.text = "#" + unit.unit_sequence_in_job + "  " + unitResult;
+                item.clicked += () => ShowUnits(jobId, units, target);
                 item.AddToClassList("chip");
                 // 선택은 "지금 여기"이므로 액센트다. 이전에는 chip--good(초록)이었는데,
                 // 초록은 이 화면에서 합격을 뜻하므로 PENDING·FAIL 인 대를 골라도 합격처럼
@@ -243,7 +246,7 @@ namespace MainUnity.UI
             StopEvidenceLoad();
             ClearEvidence();
             if (evidenceImage == null || string.IsNullOrEmpty(path)) return;
-            if (path != MockPassImagePath && path != MockFailImagePath)
+            if (path != MockPassImagePath && path != MockInspectPassImagePath && path != MockFailImagePath)
             {
                 Debug.LogWarning("거부된 검사 이미지 경로: " + path, this);
                 return;

@@ -1,6 +1,7 @@
 // 역할: QUALITY 페이지(FR5Quality.uxml)의 슬롯 파레토와 선택 슬롯 상세를 그린다.
 //
 //   실연결 : assemblies/current → jobs/{job_id} → products/{product_id}/quality/slot-rates
+//            (슬롯 집계는 제품 전체 누적이며 현재 Job은 화면의 기준정보다.)
 //   미연결 : 임계(defect_report.thresholds) · 불량 유형별 집계 · 대책서
 //
 // Unity 는 DB 에 직접 접속하지 않고 MainServer HTTP 조회만 쓴다.
@@ -150,7 +151,7 @@ namespace MainUnity.UI
             }
 
             FR5EmptyState.Detail(root.Q<Label>("source-note"),
-                "출처: MainServer HTTP · production units / unit_defects / product_slots      ·      "
+                "출처: MainServer HTTP · 제품 전체 누적 · production units / unit_defects / product_slots      ·      "
                 + "임계 · 불량 유형별 집계 · 대책서는 조회 계약이 생길 때까지 빈 상태로 존재한다.");
 
             Reload();
@@ -275,7 +276,7 @@ namespace MainUnity.UI
         /// </summary>
         void ShowFilters(Job job)
         {
-            FR5EmptyState.Detail(root.Q<Label>("filter-note"), "조회 전용 · production 읽기");
+            FR5EmptyState.Detail(root.Q<Label>("filter-note"), "조회 전용 · 제품 전체 누적 · 현재 Job 기준정보");
             FR5EmptyState.Present(root.Q<Label>("filter-product"),
                 string.IsNullOrEmpty(job.product_code) ? FR5EmptyState.Title : job.product_code);
             FR5EmptyState.Present(root.Q<Label>("filter-recipe"),
@@ -339,7 +340,7 @@ namespace MainUnity.UI
             foreach (SlotRate rate in rates) defects += rate.defective_quantity;
             FR5EmptyState.Present(root.Q<Label>("filter-count"), $"{rates.Length} SLOT");
             FR5EmptyState.Present(root.Q<Label>("pareto-total"),
-                $"불량 {defects}건 · 슬롯 {rates.Length}");
+                $"전체 누적 불량 {defects}건 · 슬롯 {rates.Length}");
 
             BuildChips();
             Rebuild();

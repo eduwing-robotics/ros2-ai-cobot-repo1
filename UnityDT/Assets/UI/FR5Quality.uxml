@@ -31,9 +31,9 @@
         <ui:VisualElement name="filter-panel" class="panel row" style="position:absolute; left:112px; top:164px; width:1784px; height:76px; padding-left:24px; padding-right:24px;">
             <ui:VisualElement class="panel__spine" />
             <!-- TODO(API): 기간·제품·레시피 필터는 조회 API 파라미터로 넘긴다 -->
-            <ui:VisualElement style="width:300px;"><ui:Label text="기간" class="micro" /><ui:Label name="filter-period" text="—" class="value" style="font-size:18px; margin-top:4px;" /></ui:VisualElement>
-            <ui:VisualElement style="width:460px;"><ui:Label text="제품" class="micro" /><ui:Label name="filter-product" text="—" class="value" style="font-size:18px; margin-top:4px;" /></ui:VisualElement>
-            <ui:VisualElement style="width:320px;"><ui:Label text="레시피" class="micro" /><ui:Label name="filter-recipe" text="—" class="value" style="font-size:18px; margin-top:4px;" /></ui:VisualElement>
+            <ui:VisualElement style="width:300px;"><ui:Label text="현재 Job 기간" class="micro" /><ui:Label name="filter-period" text="—" class="value" style="font-size:18px; margin-top:4px;" /></ui:VisualElement>
+            <ui:VisualElement style="width:460px;"><ui:Label text="제품 · 전체 누적" class="micro" /><ui:Label name="filter-product" text="—" class="value" style="font-size:18px; margin-top:4px;" /></ui:VisualElement>
+            <ui:VisualElement style="width:320px;"><ui:Label text="현재 Job 레시피" class="micro" /><ui:Label name="filter-recipe" text="—" class="value" style="font-size:18px; margin-top:4px;" /></ui:VisualElement>
             <ui:VisualElement class="spacer" />
             <ui:VisualElement name="source-chip" class="chip" style="margin-right:16px;">
                 <ui:Label name="source-text" text="—" class="chip__text" />

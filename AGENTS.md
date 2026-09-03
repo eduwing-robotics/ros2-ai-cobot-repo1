@@ -17,6 +17,13 @@
 - 승인 요청에는 정확한 이름과 경로, 단일 책임, 예상 호출자와 연결 위치, 기존 소유자·기본 기능·설치된 의존성으로 해결할 수 없는 이유와 영향 범위를 포함한다.
 - 승인 전에는 관련 폴더, 설정, 테스트 파일, Unity Asset과 `.meta` 파일도 생성하지 않는다. 승인은 보고한 경로와 범위에만 적용한다.
 
+## Mock 통합 실행 진입점
+
+- Mock 전체 스택의 유일한 공개 진입점은 `ros2 launch mock_db_mvp launch_mock.launch.py`이다.
+- 새 올인원 launch나 실행 스크립트를 만들지 않고 `Farino_AIO_Mock/src/mock_db_mvp/launch/launch_mock.launch.py`를 수정한다.
+- 빌드, 환경 변수와 검증 절차의 단일 원본은 `Farino_AIO_Mock/README.md`의 `Mock 올인원 실행` 절이다.
+- `build/`, `install/`, `log/`는 생성물이므로 최신성 판단 기준으로 삼지 않는다.
+
 ## 시스템 3계층 계약
 
 - 시스템은 `요청·표현 → 업무·조정 → 실행·설비`의 3계층으로 유지한다.
