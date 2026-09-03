@@ -20,7 +20,7 @@ def generate_launch_description():
         output="screen",
         arguments=[
             "--listen-unity", "--velocity", "100", "--acceleration", "100",
-            "--preview-seconds", "0.5", "--recipe", LaunchConfiguration("recipe"),
+            "--preview-seconds", "0.5",
         ],
         remappings=[
             (
@@ -72,6 +72,7 @@ def generate_launch_description():
             name="assembly_sequencer_mock",
             output="screen",
             parameters=[{
+                "recipe": LaunchConfiguration("recipe"),
                 "inspection_fail_probability": ParameterValue(
                     LaunchConfiguration("inspection_fail_probability"),
                     value_type=float,

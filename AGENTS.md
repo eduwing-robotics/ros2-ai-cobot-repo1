@@ -35,7 +35,7 @@
 - `production.jobs`가 영속 요청 큐의 유일한 진입점이다. MainServer가 클라이언트 생성 UUID `job_id`로 `PENDING` Job을 등록하며, 같은 UUID 재요청은 새 Job을 만들지 않는다.
 - `requested_quantity`는 목표 PASS 수량이다. Sequencer만 Job·Unit 실행 상태를 전이하고, 동시에 `RUNNING`인 Job은 하나, Job별 `RUNNING` Unit도 하나로 제한한다.
 - Unit은 생산 시도 단위다. 검사 FAIL은 `COMPLETED`지만 목표 수량에 포함하지 않고 같은 Job에 다음 Unit을 만들며, 실행 실패는 `FAILED`로 기록한다. 따라서 `unit_sequence_in_job`은 요청 수량을 넘을 수 있다.
-- YAML은 `recipe_version`별 조립 순서와 `part_id`·`slot_code`만 소유한다. Sequencer는 시작 시 고정된 레시피를 검증해 순서대로 실행하며 DB에 payload나 단계 checkpoint를 중복 저장하지 않는다.
+- YAML은 `recipe_version`별 조립 순서와 `part_id`·`slot_code`, Mock·Real이 동일하게 사용하는 frame·joint point·motion·gripper profile·workflow를 소유한다. Sequencer는 시작 시 고정된 레시피를 한 번 검증해 순서대로 실행하며 DB에 payload나 단계 checkpoint를 중복 저장하지 않는다. 장비별 통신 설정·안전 상한·현장 보정값은 Backend가 소유한다.
 - Backend는 의미 단위 동작의 실제 완료·실패, 좌표 변환, ROS·통신 재시도, timeout과 안전정지를 책임진다. 안전정지 중 DB 상태는 `RUNNING`을 유지하며 Backend는 Job·수량·YAML 흐름을 소유하지 않는다.
 - Sequencer 재시작 시 실행 중 Unit은 `FAILED` 처리하고 Job은 유지한다. 설비 준비·reset 확인 뒤 같은 Job의 새 Unit으로 YAML 첫 단계부터 재실행하며 불명확한 중간 동작을 자동 재개하지 않는다.
 

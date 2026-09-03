@@ -15,12 +15,13 @@ from std_msgs.msg import String
 from .db import DbWriter
 from .mock_backend import MockBackend
 from .mock_contract import (
-    RECIPE_VERSION,
     RELAY_STATES,
     apply_relay_feedback,
     assembly_snapshot,
+    build_execution_command,
     choose_inspection,
     failed_feedback,
+    load_recipe,
     parse_command,
     parse_feedback,
     self_check,
@@ -41,6 +42,14 @@ FAIL_IMAGE_PATH = "InspectionSamples/mock-fail.jpg"
 class MockAssemblySequencer(Node):
     def __init__(self):
         super().__init__("assembly_sequencer_mock")
+        recipe_path = self.declare_parameter("recipe", "").value
+        self.recipe = load_recipe(recipe_path)
+        self.recipe_version = self.recipe["recipe_version"]
+        self.recipe_slots = [
+            (step["slot_code"], step["part_id"])
+            for step in self.recipe["steps"]
+        ]
+        self_check(self.recipe)
         probability = self.declare_parameter(
             "inspection_fail_probability", 0.2
         ).value
@@ -102,7 +111,9 @@ class MockAssemblySequencer(Node):
 
     async def on_external_request(self, request, response):
         try:
-            command_type, command = parse_command(request.cmd_str)
+            command_type, command = parse_command(
+                request.cmd_str, self.recipe_version
+            )
         except ValueError as error:
             return self.set_response(
                 response, False, error_code="INVALID_REQUEST", message=str(error)
@@ -204,25 +215,42 @@ class MockAssemblySequencer(Node):
             )
 
         try:
+            backend_command = build_execution_command(self.recipe, command)
+        except ValueError as error:
+            return self.set_response(
+                response, False, job_id, "INVALID_RECIPE", str(error)
+            )
+
+        try:
+            product_slots = self.db_writer.get_product_slots(job_id)
+            db_slots = {
+                (slot["slot_code"], slot["part_id"])
+                for slot in product_slots
+            }
+            if db_slots != set(self.recipe_slots):
+                raise RuntimeError(
+                    "database product slots do not match the loaded recipe"
+                )
             work = self.db_writer.claim(
-                job_id, PRODUCT_CODE, PRODUCT_VERSION, RECIPE_VERSION
+                job_id, PRODUCT_CODE, PRODUCT_VERSION, self.recipe_version
             )
             self.active = {
                 "job_id": work["job_id"],
                 "unit_id": work["unit_id"],
-                "command": command,
+                "recipe_version": self.recipe_version,
+                "backend_command": backend_command,
                 "state": "STARTED",
                 "placed_count": 0,
-                "expected_step_count": len(command["observations"]),
+                "expected_step_count": len(self.recipe["steps"]),
                 "held_step_order": 0,
                 "held_part_id": "",
                 "held_slot_code": "",
-                "slot_codes": self.db_writer.get_product_slot_codes(job_id),
+                "slot_codes": [slot_code for slot_code, _ in self.recipe_slots],
                 "transfer_requested": False,
                 "inspection_result": "",
             }
             self.terminal_snapshot = None
-            await self.backend.start(command)
+            await self.backend.start(backend_command)
             return self.set_response(response, True, job_id)
         except Exception as error:
             if self.active is not None:
@@ -324,7 +352,8 @@ class MockAssemblySequencer(Node):
             state = self.db_writer.get_job(active["job_id"])
             if state["completed_quantity"] < state["requested_quantity"]:
                 work = self.db_writer.claim(
-                    active["job_id"], PRODUCT_CODE, PRODUCT_VERSION, RECIPE_VERSION
+                    active["job_id"], PRODUCT_CODE, PRODUCT_VERSION,
+                    self.recipe_version,
                 )
                 active.update({
                     "unit_id": work["unit_id"],
@@ -336,7 +365,7 @@ class MockAssemblySequencer(Node):
                     "transfer_requested": False,
                     "inspection_result": "",
                 })
-                await self.backend.start(active["command"])
+                await self.backend.start(active["backend_command"])
                 return
             self.db_writer.finish(active["job_id"], "COMPLETED")
             if not self.db_writer.flush(5.0):

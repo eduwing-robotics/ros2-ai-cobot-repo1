@@ -488,12 +488,16 @@ def get_job_state(job_id):
 
 
 def get_product_slot_codes(job_id):
+    return [slot["slot_code"] for slot in get_product_slots(job_id)]
+
+
+def get_product_slots(job_id):
     job_id = _job_id(job_id)
     with _connect() as connection:
         with connection.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT ps.slot_code
+                SELECT ps.slot_code, ps.part_id
                 FROM production.jobs j
                 JOIN production.product_slots ps ON ps.product_id = j.product_id
                 WHERE j.job_id = %s
@@ -501,7 +505,7 @@ def get_product_slot_codes(job_id):
                 """,
                 (job_id,),
             )
-            slots = [row["slot_code"] for row in cursor.fetchall()]
+            slots = [dict(row) for row in cursor.fetchall()]
             if not slots:
                 raise RuntimeError("job or product slots were not found")
             return slots

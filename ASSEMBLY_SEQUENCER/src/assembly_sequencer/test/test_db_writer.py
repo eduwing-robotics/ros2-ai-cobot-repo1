@@ -114,6 +114,7 @@ class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
         }
         sequencer = SimpleNamespace(
             active=active,
+            recipe_version="assembly-r1",
             rng=random.Random(1),
             fail_probability=0.0,
             db_writer=Writer(),
@@ -150,6 +151,7 @@ class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
 
         sequencer = SimpleNamespace(
             active={"job_id": JOB_ID, "state": "STARTED"},
+            recipe_version="assembly-r1",
             backend=Backend(),
             set_response=MockAssemblySequencer.set_response,
         )
@@ -167,12 +169,6 @@ class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_incomplete_pass_target_reuses_job_for_next_unit(self):
         calls = []
-        command = {
-            "command": "start",
-            "job_id": JOB_ID,
-            "recipe_version": "assembly-r1",
-            "observations": [{}],
-        }
 
         class Writer:
             sync_state = "SYNCED"
@@ -200,7 +196,8 @@ class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
         active = {
             "job_id": JOB_ID,
             "unit_id": 22,
-            "command": command,
+            "recipe_version": "assembly-r1",
+            "backend_command": {"command": "start", "execution_plan": {}},
             "state": "PCB_PLACED",
             "placed_count": 1,
             "expected_step_count": 1,
@@ -212,6 +209,7 @@ class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
         }
         sequencer = SimpleNamespace(
             active=active,
+            recipe_version="assembly-r1",
             db_writer=Writer(),
             backend=Backend(),
             fail_active=lambda *args, **kwargs: self.fail(str(args)),

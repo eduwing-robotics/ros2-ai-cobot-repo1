@@ -27,7 +27,7 @@ PASS 누적이 목표 수량에 도달한 뒤에만 Job을 완료합니다.
 
 ## 레시피
 
-레시피는 조립 순서와 `part_id`·`slot_code`의 의미를 소유합니다. 시작 시 검증한 snapshot만 실행하며, DB에 레시피 본문이나 단계 checkpoint를 복제하지 않습니다.
+레시피는 Mock·Real 공통 조립 순서와 `part_id`·`slot_code`, frame·joint point·motion·gripper profile·workflow를 소유합니다. Sequencer가 시작 시 한 번 검증한 snapshot만 실행하며, Backend는 YAML 파일을 직접 읽지 않고 검증된 실행 계획만 받습니다. DB에는 레시피 본문이나 단계 checkpoint를 복제하지 않습니다.
 
 현재 파일 형식의 기준은 실제 YAML과 parser입니다. 과거 확장 설계안은 `docs/archive/`에 보관하며 실행 계약으로 사용하지 않습니다.
 

@@ -8,6 +8,7 @@ import math
 import sys
 import time
 import uuid
+from collections import Counter
 from pathlib import Path
 
 import rclpy
@@ -50,24 +51,24 @@ ASSEMBLY_STATES = {
     "PCB_PICKED", "PCB_PLACED", "PAUSED", "COMPLETED", "FAILED",
 }
 STEP_STATES = {"PICKED", "PLACED"}
-WORKFLOW = {
-    "before_all": [
-        {"conveyor.move_to": "ASSEMBLY"},
-        {"vision.resolve_targets": "recipe_steps"},
-    ],
-    "per_step": [
-        {"robot.move_joint": "home"},
-        {"robot.move_joint": "item_ready"},
-        {"robot.pick": "current_part"},
-        {"robot.move_joint": "home"},
-        {"robot.move_joint": "assembly_ready"},
-        {"robot.place": "current_slot"},
-    ],
-    "after_all": [
-        {"conveyor.move_to": "INSPECTION"},
-        {"inspection.run": "assembled_pcb"},
-        {"robot.transfer": "assembled_pcb"},
-    ],
+WORKFLOW_ACTIONS = {
+    "before_all": (
+        ("conveyor.move_to", "ASSEMBLY"),
+        ("vision.resolve_targets", "recipe_steps"),
+    ),
+    "per_step": (
+        ("robot.move_joint", "home"),
+        ("robot.move_joint", "item_ready"),
+        ("robot.pick", "current_part"),
+        ("robot.move_joint", "home"),
+        ("robot.move_joint", "assembly_ready"),
+        ("robot.place", "current_slot"),
+    ),
+    "after_all": (
+        ("conveyor.move_to", "INSPECTION"),
+        ("inspection.run", "assembled_pcb"),
+        ("robot.transfer", "assembled_pcb"),
+    ),
 }
 
 
@@ -147,11 +148,18 @@ def parse_start_command(raw):
         command = json.loads(raw)
     except (TypeError, json.JSONDecodeError) as error:
         raise ValueError("cmd_str must be a JSON object") from error
-    if not isinstance(command, dict) or set(command) != {
+    legacy_fields = {
         "command", "job_id", "recipe_version", "observations",
+    }
+    plan_fields = {
+        "command", "job_id", "recipe_version", "execution_plan",
+    }
+    if not isinstance(command, dict) or frozenset(command) not in {
+        frozenset(legacy_fields), frozenset(plan_fields),
     }:
         raise ValueError(
-            "command, job_id, recipe_version and observations are required"
+            "command, job_id, recipe_version and observations or "
+            "execution_plan are required"
         )
     if command["command"] != "start":
         raise ValueError("command must be start")
@@ -165,10 +173,13 @@ def parse_start_command(raw):
     recipe_version = command["recipe_version"]
     if not isinstance(recipe_version, str) or not recipe_version.strip():
         raise ValueError("recipe_version must be a non-empty string")
-    return (
-        job_id, recipe_version,
-        validate_observations(command["observations"]),
-    )
+    observations = None
+    execution_plan = None
+    if "observations" in command:
+        observations = validate_observations(command["observations"])
+    else:
+        execution_plan = validate_execution_plan(command["execution_plan"])
+    return job_id, recipe_version, observations, execution_plan
 
 
 def parse_transfer_command(raw):
@@ -296,6 +307,31 @@ def validate_joint_point(value, label):
         _finite_number(number, f"{label}[{index}]")
 
 
+def validate_workflow(workflow):
+    if not isinstance(workflow, dict) or set(workflow) != set(WORKFLOW_ACTIONS):
+        raise ValueError("workflow must contain before_all, per_step and after_all")
+    for section, allowed in WORKFLOW_ACTIONS.items():
+        commands = workflow[section]
+        if not isinstance(commands, list) or not commands:
+            raise ValueError(f"workflow.{section} must be a non-empty list")
+        actions = []
+        for index, command in enumerate(commands):
+            if not isinstance(command, dict) or len(command) != 1:
+                raise ValueError(
+                    f"workflow.{section}[{index}] must contain one action"
+                )
+            action = next(iter(command.items()))
+            actions.append(action)
+            if action not in allowed:
+                raise ValueError(
+                    f"unsupported workflow.{section} action: {command}"
+                )
+        if Counter(actions) != Counter(allowed):
+            raise ValueError(
+                f"workflow.{section} must contain each required action"
+            )
+
+
 def validate_recipe(recipe, expected_version):
     if not isinstance(recipe, dict):
         raise ValueError("recipe must be a YAML object")
@@ -340,13 +376,7 @@ def validate_recipe(recipe, expected_version):
         if _finite_number(motion[name], f"motion.{name}") <= 0.0:
             raise ValueError(f"motion.{name} must be greater than zero")
 
-    workflow = recipe.get("workflow")
-    if not isinstance(workflow, dict) \
-            or set(workflow) != {"before_all", "per_step", "after_all"} \
-            or workflow != WORKFLOW:
-        raise ValueError(
-            "workflow must preserve the supported assembly action order"
-        )
+    validate_workflow(recipe.get("workflow"))
 
     steps = recipe.get("steps")
     if not isinstance(steps, list) or not steps:
@@ -437,6 +467,121 @@ def resolve_observations(recipe, observations):
             "target": observation["target"],
         })
     return resolved
+
+
+def validate_execution_plan(value):
+    required = {
+        "frame", "joint_points", "motion", "workflow", "resolved_steps",
+        "assembled_pcb_gripper",
+    }
+    if not isinstance(value, dict) or set(value) != required:
+        raise ValueError(
+            "execution_plan must contain frame, joint_points, motion, workflow, "
+            "resolved_steps and assembled_pcb_gripper"
+        )
+    if value["frame"] != "base_link":
+        raise ValueError("execution_plan frame must be base_link")
+
+    joint_points = value["joint_points"]
+    if not isinstance(joint_points, dict) or set(joint_points) != {
+        "home", "item_ready", "assembly_ready"
+    }:
+        raise ValueError(
+            "execution_plan joint_points must contain home, item_ready and "
+            "assembly_ready"
+        )
+    for name in ("home", "item_ready", "assembly_ready"):
+        validate_joint_point(joint_points[name], f"joint_points.{name}")
+
+    motion = value["motion"]
+    if not isinstance(motion, dict) or set(motion) != {
+        "approach_dz_mm", "retract_dz_mm",
+        "assembled_pcb_drop_approach_dz_mm",
+    }:
+        raise ValueError("execution_plan motion fields are invalid")
+    for name, number in motion.items():
+        if _finite_number(number, f"motion.{name}") <= 0.0:
+            raise ValueError(f"motion.{name} must be greater than zero")
+
+    validate_workflow(value["workflow"])
+    assembled_profile = value["assembled_pcb_gripper"]
+    validate_gripper_profile(assembled_profile, "assembled_pcb_gripper")
+
+    resolved_steps = value["resolved_steps"]
+    if not isinstance(resolved_steps, list) or not resolved_steps:
+        raise ValueError("execution_plan resolved_steps must be a non-empty list")
+    normalized = []
+    slot_codes = set()
+    required_step_fields = {
+        "step", "gripper_grasp_opening_percent",
+        "gripper_release_opening_percent", "source", "target",
+    }
+    for expected_order, resolved in enumerate(resolved_steps, 1):
+        if not isinstance(resolved, dict) or set(resolved) != required_step_fields:
+            raise ValueError(
+                f"resolved step {expected_order} has invalid fields"
+            )
+        step = resolved["step"]
+        if not isinstance(step, dict) or set(step) != {
+            "order", "part_id", "slot_code"
+        }:
+            raise ValueError(
+                f"resolved step {expected_order} identity is invalid"
+            )
+        if isinstance(step["order"], bool) \
+                or not isinstance(step["order"], int) \
+                or step["order"] != expected_order:
+            raise ValueError("resolved step order must be consecutive from 1")
+        if not isinstance(step["part_id"], str) or not step["part_id"].strip():
+            raise ValueError(f"resolved step {expected_order} part_id is invalid")
+        if not isinstance(step["slot_code"], str) or not step["slot_code"].strip():
+            raise ValueError(f"resolved step {expected_order} slot_code is invalid")
+        if step["slot_code"] in slot_codes:
+            raise ValueError(f"duplicate resolved slot_code: {step['slot_code']}")
+        slot_codes.add(step["slot_code"])
+        grasp = _finite_number(
+            resolved["gripper_grasp_opening_percent"],
+            f"resolved step {expected_order} grasp opening",
+        )
+        release = _finite_number(
+            resolved["gripper_release_opening_percent"],
+            f"resolved step {expected_order} release opening",
+        )
+        if not 0.0 <= grasp <= 100.0 or not 0.0 <= release <= 100.0:
+            raise ValueError("resolved gripper openings must be between 0 and 100")
+        normalized.append({
+            "step": dict(step),
+            "gripper_grasp_opening_percent": grasp,
+            "gripper_release_opening_percent": release,
+            "source": validate_ros_pose(
+                resolved["source"], f"resolved step {expected_order}.source"
+            ),
+            "target": validate_ros_pose(
+                resolved["target"], f"resolved step {expected_order}.target"
+            ),
+        })
+    return {
+        "frame": value["frame"],
+        "joint_points": joint_points,
+        "motion": motion,
+        "workflow": value["workflow"],
+        "resolved_steps": normalized,
+        "assembled_pcb_gripper": assembled_profile,
+    }
+
+
+def validate_gripper_profile(profile, label):
+    if not isinstance(profile, dict) or set(profile) != {
+        "grasp_opening_percent", "release_opening_percent"
+    }:
+        raise ValueError(
+            f"{label} must contain grasp_opening_percent and "
+            "release_opening_percent"
+        )
+    for field, value in profile.items():
+        value = _finite_number(value, f"{label}.{field}")
+        if not 0.0 <= value <= 100.0:
+            raise ValueError(f"{label}.{field} must be between 0 and 100")
 
 
 def vertical_offset(value, dz_mm):
@@ -575,6 +720,25 @@ def self_check(runtime_recipe=None):
         "command": "pause", "job_id": job_id,
     })) == ("pause", job_id)
     assert assembly_feedback(job_id, "PAUSED")["state"] == "PAUSED"
+    sample_workflow = {
+        "before_all": [
+            {"conveyor.move_to": "ASSEMBLY"},
+            {"vision.resolve_targets": "recipe_steps"},
+        ],
+        "per_step": [
+            {"robot.move_joint": "home"},
+            {"robot.move_joint": "item_ready"},
+            {"robot.pick": "current_part"},
+            {"robot.move_joint": "home"},
+            {"robot.move_joint": "assembly_ready"},
+            {"robot.place": "current_slot"},
+        ],
+        "after_all": [
+            {"conveyor.move_to": "INSPECTION"},
+            {"inspection.run": "assembled_pcb"},
+            {"robot.transfer": "assembled_pcb"},
+        ],
+    }
     recipe = validate_recipe({
         "recipe_version": "assembly-r1",
         "frame": "base_link",
@@ -588,7 +752,7 @@ def self_check(runtime_recipe=None):
             "retract_dz_mm": 120,
             "assembled_pcb_drop_approach_dz_mm": 150,
         },
-        "workflow": WORKFLOW,
+        "workflow": sample_workflow,
         "gripper": {
             "parts": {
                 "part": {
@@ -608,6 +772,21 @@ def self_check(runtime_recipe=None):
         }],
     }, "assembly-r1")
     resolved = resolve_observations(recipe, parsed[2])
+    plan = validate_execution_plan({
+        "frame": recipe["frame"],
+        "joint_points": recipe["joint_points"],
+        "motion": recipe["motion"],
+        "workflow": recipe["workflow"],
+        "resolved_steps": resolved,
+        "assembled_pcb_gripper": recipe["gripper"]["assembled_pcb"],
+    })
+    plan_command = parse_start_command(json.dumps({
+        "command": "start",
+        "job_id": job_id,
+        "recipe_version": "assembly-r1",
+        "execution_plan": plan,
+    }))
+    assert plan_command[2] is None and len(plan_command[3]["resolved_steps"]) == 1
     assert transfer[1]["target"]["xyz_mm"] == [350.0, 350.0, 200.0]
     assert "source" not in recipe["steps"][0]
     assert (
@@ -701,8 +880,6 @@ class MockMoveJ(Node):
     def __init__(self, args, assembly_recipe=None):
         super().__init__("mock_movej")
         self.args = args
-        if args.listen_unity and assembly_recipe is None:
-            raise ValueError("validated assembly recipe is required")
         self.assembly_recipe = assembly_recipe
         if assembly_recipe is not None:
             self.get_logger().info(
@@ -924,7 +1101,7 @@ class MockMoveJ(Node):
             return self.start_response(response, True, job_id)
 
         try:
-            job_id, recipe_version, observations = parse_start_command(
+            job_id, recipe_version, observations, execution_plan = parse_start_command(
                 request.cmd_str
             )
         except ValueError as error:
@@ -945,12 +1122,20 @@ class MockMoveJ(Node):
                 response, False, job_id, "PLAN_ONLY", "assembly requires execution mode"
             )
         try:
-            recipe = self.assembly_recipe
-            if recipe is None or recipe["recipe_version"] != recipe_version:
-                raise ValueError(
-                    "recipe_version does not match the validated runtime recipe"
-                )
-            resolved_steps = resolve_observations(recipe, observations)
+            if execution_plan is None:
+                recipe = self.assembly_recipe
+                if recipe is None or recipe["recipe_version"] != recipe_version:
+                    raise ValueError(
+                        "recipe_version does not match the validated runtime recipe"
+                    )
+                execution_plan = validate_execution_plan({
+                    "frame": recipe["frame"],
+                    "joint_points": recipe["joint_points"],
+                    "motion": recipe["motion"],
+                    "workflow": recipe["workflow"],
+                    "resolved_steps": resolve_observations(recipe, observations),
+                    "assembled_pcb_gripper": recipe["gripper"]["assembled_pcb"],
+                })
         except ValueError as error:
             return self.start_response(
                 response, False, job_id, "INVALID_RECIPE", str(error)
@@ -958,8 +1143,9 @@ class MockMoveJ(Node):
 
         self.active_assembly = {
             "job_id": job_id,
-            "recipe": recipe,
-            "resolved_steps": resolved_steps,
+            "recipe_version": recipe_version,
+            "execution_plan": execution_plan,
+            "resolved_steps": execution_plan["resolved_steps"],
             "phase": "assembling",
             "pause_requested": False,
             "paused": False,
@@ -969,7 +1155,7 @@ class MockMoveJ(Node):
             self.latest_assembly_snapshot,
             assembly_feedback(job_id, "STARTED"),
             recipe_version,
-            len(resolved_steps),
+            len(execution_plan["resolved_steps"]),
         )
         return self.start_response(response, True, job_id)
 
@@ -983,7 +1169,7 @@ class MockMoveJ(Node):
         self.latest_assembly_snapshot = advance_assembly_snapshot(
             self.latest_assembly_snapshot,
             payload,
-            job["recipe"]["recipe_version"],
+            job["recipe_version"],
             len(job["resolved_steps"]),
         )
         self.assembly_feedback_publisher.publish(
@@ -1005,7 +1191,7 @@ class MockMoveJ(Node):
         self.latest_assembly_snapshot = advance_assembly_snapshot(
             self.latest_assembly_snapshot,
             payload,
-            job["recipe"]["recipe_version"],
+            job["recipe_version"],
             len(job["resolved_steps"]),
         )
         self.assembly_feedback_publisher.publish(
@@ -1460,13 +1646,13 @@ class MockMoveJ(Node):
 
     def run_assembly(self, job):
         job_id = job["job_id"]
-        recipe = job["recipe"]
+        execution_plan = job["execution_plan"]
         try:
             self.require_mock_hardware()
             self.publish_assembly_feedback(job_id, "STARTED")
-            joint_points = recipe["joint_points"]
-            motion = recipe["motion"]
-            for command in recipe["workflow"]["before_all"]:
+            joint_points = execution_plan["joint_points"]
+            motion = execution_plan["motion"]
+            for command in execution_plan["workflow"]["before_all"]:
                 self.wait_if_paused(job)
                 action, argument = next(iter(command.items()))
                 if (action, argument) == ("conveyor.move_to", "ASSEMBLY"):
@@ -1486,34 +1672,34 @@ class MockMoveJ(Node):
                 release_opening_percent = resolved[
                     "gripper_release_opening_percent"
                 ]
-                source = self.request_pose(recipe, resolved["source"])
-                target = self.request_pose(recipe, resolved["target"])
+                source = self.request_pose(execution_plan, resolved["source"])
+                target = self.request_pose(execution_plan, resolved["target"])
                 source_approach = self.request_pose(
-                    recipe,
+                    execution_plan,
                     vertical_offset(
                         resolved["source"], motion["approach_dz_mm"]
                     ),
                 )
                 source_retract = self.request_pose(
-                    recipe,
+                    execution_plan,
                     vertical_offset(
                         resolved["source"], motion["retract_dz_mm"]
                     ),
                 )
                 target_approach = self.request_pose(
-                    recipe,
+                    execution_plan,
                     vertical_offset(
                         resolved["target"], motion["approach_dz_mm"]
                     ),
                 )
                 target_retract = self.request_pose(
-                    recipe,
+                    execution_plan,
                     vertical_offset(
                         resolved["target"], motion["retract_dz_mm"]
                     ),
                 )
 
-                for command in recipe["workflow"]["per_step"]:
+                for command in execution_plan["workflow"]["per_step"]:
                     self.wait_if_paused(job)
                     action, argument = next(iter(command.items()))
                     if action == "robot.move_joint":
@@ -1551,15 +1737,15 @@ class MockMoveJ(Node):
 
     def run_assembled_pcb_transfer(self, job):
         job_id = job["job_id"]
-        recipe = job["recipe"]
+        execution_plan = job["execution_plan"]
         terminal_state = "FAILED"
         error_code = "INTERRUPTED"
         message = "assembled PCB transfer interrupted"
         try:
             self.require_mock_hardware()
-            motion = recipe["motion"]
-            gripper = recipe["gripper"]["assembled_pcb"]
-            for command in recipe["workflow"]["after_all"]:
+            motion = execution_plan["motion"]
+            gripper = execution_plan["assembled_pcb_gripper"]
+            for command in execution_plan["workflow"]["after_all"]:
                 self.wait_if_paused(job)
                 action, argument = next(iter(command.items()))
                 if (action, argument) in {
@@ -1573,29 +1759,29 @@ class MockMoveJ(Node):
                         f"unknown final assembly action: {command}"
                     )
                 transfer = job["assembled_pcb"]
-                source = self.request_pose(recipe, transfer["source"])
-                target = self.request_pose(recipe, transfer["target"])
+                source = self.request_pose(execution_plan, transfer["source"])
+                target = self.request_pose(execution_plan, transfer["target"])
                 source_approach = self.request_pose(
-                    recipe,
+                    execution_plan,
                     vertical_offset(
                         transfer["source"], motion["approach_dz_mm"]
                     ),
                 )
                 source_retract = self.request_pose(
-                    recipe,
+                    execution_plan,
                     vertical_offset(
                         transfer["source"], motion["retract_dz_mm"]
                     ),
                 )
                 target_approach = self.request_pose(
-                    recipe,
+                    execution_plan,
                     vertical_offset(
                         transfer["target"],
                         motion["assembled_pcb_drop_approach_dz_mm"],
                     ),
                 )
                 target_retract = self.request_pose(
-                    recipe,
+                    execution_plan,
                     vertical_offset(
                         transfer["target"], motion["retract_dz_mm"]
                     ),
@@ -1719,13 +1905,11 @@ def parse_args(argv=None):
     parser.add_argument("--listen-unity", action="store_true")
     parser.add_argument(
         "--recipe",
-        help="AssemblySequencer-owned Recipe YAML path",
+        help="Legacy direct-Unity Recipe YAML path",
     )
     args = parser.parse_args(argv)
     if not args.listen_unity and args.joints is None and args.pose is None:
         parser.error("one of --joints, --pose or --listen-unity is required")
-    if args.listen_unity and not args.recipe:
-        parser.error("--recipe is required with --listen-unity")
     if args.preview_seconds < 0.0 or args.max_step <= 0.0 or args.max_joint_step <= 0.0:
         parser.error("preview-seconds must be nonnegative and Cartesian steps positive")
     if args.min_j3_deg < 0.0:
@@ -1738,10 +1922,10 @@ def parse_args(argv=None):
 def main():
     args = parse_args(rclpy.utilities.remove_ros_args(args=sys.argv)[1:])
     try:
-        assembly_recipe = load_recipe(args.recipe) if args.listen_unity else None
+        assembly_recipe = load_recipe(args.recipe) if args.recipe else None
         self_check(assembly_recipe)
     except (OSError, ValueError, yaml.YAMLError, AssertionError) as error:
-        raise SystemExit(f"mock recipe validation failed: {error}") from error
+        raise SystemExit(f"mock startup validation failed: {error}") from error
     rclpy.init()
     node = MockMoveJ(args, assembly_recipe)
     try:

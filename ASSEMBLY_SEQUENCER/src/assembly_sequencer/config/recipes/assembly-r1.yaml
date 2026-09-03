@@ -1,4 +1,4 @@
-# Common assembly order and motion settings used by Mock and Real executors.
+# Common assembly recipe interpreted by the Sequencer for Mock and Real backends.
 recipe_version: assembly-r1
 frame: base_link
 

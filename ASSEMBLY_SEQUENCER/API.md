@@ -231,7 +231,7 @@ FAIRINO SDK IK solver를 선택한다. 두 solver 모두 같은 Tool 1 보정값
 
 ### 6.2 타 브랜치 제공 API
 
-아래 계약은 AssemblySequencer가 YAML 실행 순서만 조정하고 각 컴포넌트가
+아래 계약은 AssemblySequencer가 검증한 YAML workflow와 steps를 조정하고 각 컴포넌트가
 검증·좌표 변환·통신·완료 감지·timeout·취소를 완결하기 위한 최소 경계다.
 
 | 대상 브랜치 | 생성·보완할 항목 |
