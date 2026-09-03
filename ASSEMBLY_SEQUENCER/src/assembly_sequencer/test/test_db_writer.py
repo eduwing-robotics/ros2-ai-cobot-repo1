@@ -181,16 +181,13 @@ class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
         }
         sequencer = SimpleNamespace(
             active=active,
-            recipe_version="assembly-r1",
             backend=Backend(),
             set_response=MockAssemblySequencer.set_response,
+            conveyor_deadline=1.0,
         )
         self.assertEqual(calls, [])
-        response = await MockAssemblySequencer.on_external_request(
-            sequencer,
-            SimpleNamespace(cmd_str=json.dumps({
-                "command": "conveyor_arrived", "job_id": JOB_ID,
-            })),
+        response = await MockAssemblySequencer.conveyor_arrived(
+            sequencer, {"job_id": JOB_ID},
             SimpleNamespace(cmd_res=""),
         )
 
@@ -202,17 +199,12 @@ class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
         failures = []
         sequencer = SimpleNamespace(
             active={"job_id": JOB_ID, "state": "CONVEYOR_MOVING"},
-            recipe_version="assembly-r1",
             set_response=MockAssemblySequencer.set_response,
             fail_active=lambda *args, **kwargs: failures.append((args, kwargs)),
         )
-        response = await MockAssemblySequencer.on_external_request(
+        response = MockAssemblySequencer.conveyor_failed(
             sequencer,
-            SimpleNamespace(cmd_str=json.dumps({
-                "command": "conveyor_failed",
-                "job_id": JOB_ID,
-                "message": "belt timeout",
-            })),
+            {"job_id": JOB_ID, "message": "belt timeout"},
             SimpleNamespace(cmd_res=""),
         )
 
@@ -241,10 +233,6 @@ class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
                     "requested_quantity": 2,
                 }
 
-        class Backend:
-            async def start(self, next_command):
-                calls.append(("start", next_command))
-
         active = {
             "job_id": JOB_ID,
             "unit_id": 22,
@@ -263,7 +251,9 @@ class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
             active=active,
             recipe_version="assembly-r1",
             db_writer=Writer(),
-            backend=Backend(),
+            conveyor_deadline=None,
+            arm_conveyor_timeout=lambda: calls.append(("arm",)),
+            publish=lambda payload: calls.append(("publish", payload["state"])),
             fail_active=lambda *args, **kwargs: self.fail(str(args)),
         )
         feedback = SimpleNamespace(data=json.dumps({
@@ -279,9 +269,27 @@ class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
         await MockAssemblySequencer.on_internal_feedback(sequencer, feedback)
 
         self.assertEqual(active["unit_id"], 23)
-        self.assertEqual(active["state"], "STARTED")
+        self.assertEqual(active["state"], "CONVEYOR_MOVING")
         self.assertFalse(active["transfer_requested"])
-        self.assertEqual([call[0] for call in calls], ["flush", "claim", "start"])
+        self.assertEqual(
+            [call[0] for call in calls], ["flush", "claim", "arm", "publish"]
+        )
+
+    def test_missing_conveyor_signal_fails_the_active_job(self):
+        failures = []
+        sequencer = SimpleNamespace(
+            active={"job_id": JOB_ID, "state": "CONVEYOR_MOVING"},
+            conveyor_deadline=0.0,
+            fail_active=lambda *args, **kwargs: failures.append((args, kwargs)),
+        )
+
+        MockAssemblySequencer.on_conveyor_timeout(sequencer)
+
+        self.assertEqual(failures, [(
+            ("CONVEYOR_FAILED",
+             "conveyor completion was not reported within 60 seconds"),
+            {"immediate": True},
+        )])
 
 
 if __name__ == "__main__":

@@ -147,14 +147,17 @@ namespace MainUnity.UI
 
             AssemblyProgressFrame frame = uiMaster?.AssemblyProgress?.Latest;
             bool paused = frame?.State == AssemblyState.Paused;
+            bool conveyorMoving = frame?.State == AssemblyState.ConveyorMoving;
             bool pauseSupported = uiMaster?.IsSimulated == true;
             if (stopAllButton != null)
             {
                 stopAllButton.text = paused ? "▶  RESUME" : "Ⅱ  PAUSE";
                 stopAllButton.SetEnabled(pauseSupported && !stopRequestInFlight && frame != null &&
-                    !frame.IsTerminal && uiMaster?.Scenario?.IsRunning == true);
+                    !frame.IsTerminal && !conveyorMoving && uiMaster?.Scenario?.IsRunning == true);
                 stopAllButton.tooltip = !pauseSupported
                     ? "Real 일시정지는 아직 지원하지 않습니다."
+                    : conveyorMoving
+                        ? "컨베이어 이동 중에는 일시정지할 수 없습니다."
                     : paused
                         ? "일시정지된 조립을 재개합니다."
                         : "현재 로봇 동작을 정지 확인 뒤 일시정지합니다.";

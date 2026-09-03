@@ -82,7 +82,6 @@ namespace MainUnity.Runtime.Robot.Mock
         bool sceneNeedsReset;
         bool inspectionTransferStarted;
         bool assemblyConveyorStarted;
-        bool awaitingAssemblyConveyor;
         bool recovering;
         int recoveryGeneration;
 
@@ -224,9 +223,10 @@ namespace MainUnity.Runtime.Robot.Mock
             recoveryGeneration++;
             recovering = false;
             bufferedFeedback.Clear();
-            if (awaitingAssemblyConveyor)
+            if (progress?.Latest?.State == AssemblyState.ConveyorMoving)
                 _ = ReportConveyorFailureAsync(
                     "Mock assembly control was disabled during conveyor movement.");
+            conveyor?.StopConveyor();
             FailActive("Mock assembly control was disabled.");
             if (feedbackSubscribed && connection != null)
             {
@@ -270,7 +270,6 @@ namespace MainUnity.Runtime.Robot.Mock
             assembledPcbTransferred = false;
             inspectionTransferStarted = false;
             assemblyConveyorStarted = false;
-            awaitingAssemblyConveyor = false;
 
             Task timeout = Task.Delay(TimeSpan.FromSeconds(completionTimeoutSeconds));
             bool accepted = false;
@@ -372,7 +371,7 @@ namespace MainUnity.Runtime.Robot.Mock
                 if (snapshot == null || !snapshot.available)
                     return;
 
-                RestoreAssembledPcbAtAssembly();
+                ResetVisualization(snapshot.state != ConveyorMoving);
                 MockObservation[] observations = BuildObservations();
                 _ = BuildAssembledPcbTransfer();
                 RestoreSnapshot(snapshot, observations);
@@ -380,7 +379,7 @@ namespace MainUnity.Runtime.Robot.Mock
                 Report(snapshot.state switch
                 {
                     ConveyorMoving => AssemblyState.ConveyorMoving,
-                        Started => AssemblyState.Started,
+                    Started => AssemblyState.Started,
                     Picked => AssemblyState.Picked,
                     Placed => AssemblyState.Placed,
                     AssemblyCompleted => AssemblyState.Placed,
@@ -391,6 +390,10 @@ namespace MainUnity.Runtime.Robot.Mock
                     Failed => AssemblyState.Failed,
                     _ => throw new InvalidOperationException("Unknown Mock assembly state.")
                 }, null, snapshot.state == Failed ? snapshot.message : null);
+                if (snapshot.state == ConveyorMoving)
+                    _ = MoveToAssemblyAndConfirmAsync();
+                else if (snapshot.state == AssemblyCompleted)
+                    _ = MoveToInspectionAndRequestTransferAsync();
                 if (!snapshot.active)
                     activeJobId = string.Empty;
                 foreach (AssemblyFeedback feedback in bufferedFeedback.ToArray())
@@ -497,10 +500,6 @@ namespace MainUnity.Runtime.Robot.Mock
 
             sceneNeedsReset = true;
             terminal = snapshot.active ? new TaskCompletionSource<string>() : null;
-            if (snapshot.state == ConveyorMoving)
-                _ = MoveToAssemblyAndConfirmAsync();
-            else if (snapshot.state == AssemblyCompleted)
-                _ = MoveToInspectionAndRequestTransferAsync();
             string summary = $"Mock assembly restored: {snapshot.state}, " +
                 $"{snapshot.placed_count}/{snapshot.expected_step_count} placed.";
             if (snapshot.state == Failed)
@@ -645,6 +644,9 @@ namespace MainUnity.Runtime.Robot.Mock
                 throw new InvalidOperationException(resume
                     ? "Mock assembly is not paused."
                     : "Mock assembly is already paused.");
+            if (!resume && latest?.State == AssemblyState.ConveyorMoving)
+                throw new InvalidOperationException(
+                    "Mock assembly cannot pause while the conveyor is moving.");
         }
 
         Task SendControlAsync(string command) => SendMockAsync(JsonUtility.ToJson(
@@ -722,7 +724,6 @@ namespace MainUnity.Runtime.Robot.Mock
                 return;
 
             assemblyConveyorStarted = true;
-            awaitingAssemblyConveyor = true;
             try
             {
                 await conveyor.MoveBoardToAssemblyAsync();
@@ -734,11 +735,11 @@ namespace MainUnity.Runtime.Robot.Mock
                     command = "conveyor_arrived",
                     job_id = activeJobId
                 }), "conveyor arrival");
-                awaitingAssemblyConveyor = false;
             }
             catch (Exception exception)
             {
-                await ReportConveyorFailureAsync(exception.Message);
+                if (isActiveAndEnabled)
+                    await ReportConveyorFailureAsync(exception.Message);
                 FailActive(exception.Message);
             }
         }
@@ -771,6 +772,7 @@ namespace MainUnity.Runtime.Robot.Mock
             if (inspectionTransferStarted)
                 return;
             inspectionTransferStarted = true;
+            Report(AssemblyState.ConveyorMoving, null);
             bool conveyorArrived = false;
 
             try
@@ -825,7 +827,7 @@ namespace MainUnity.Runtime.Robot.Mock
             }
             catch (Exception exception)
             {
-                if (!conveyorArrived)
+                if (!conveyorArrived && isActiveAndEnabled)
                     await ReportConveyorFailureAsync(exception.Message);
                 FailActive(exception.Message);
             }
@@ -911,7 +913,6 @@ namespace MainUnity.Runtime.Robot.Mock
                 {
                     case ConveyorMoving:
                         assemblyConveyorStarted = false;
-                        awaitingAssemblyConveyor = false;
                         Report(AssemblyState.ConveyorMoving, feedback);
                         _ = MoveToAssemblyAndConfirmAsync();
                         break;
@@ -937,9 +938,11 @@ namespace MainUnity.Runtime.Robot.Mock
                         break;
                     case PcbPicked:
                         ApplyAssembledPcbPicked();
+                        Report(AssemblyState.Placed, feedback);
                         break;
                     case PcbPlaced:
                         ApplyAssembledPcbPlaced();
+                        Report(AssemblyState.Placed, feedback);
                         break;
                     case Completed:
                         if (heldItem != null || assembledPcbHeld)
@@ -1198,6 +1201,13 @@ namespace MainUnity.Runtime.Robot.Mock
 
         MockObservation[] BuildObservations()
         {
+            if (assembledPcb == null || assembledPcbAssemblyStopPoint == null)
+                throw new InvalidOperationException(
+                    "Assign assembled PCB and its assembly stop point.");
+            // The Job is claimed before motion, so target slots must be resolved at
+            // the assembly stop rather than at the PCB's incoming position.
+            Vector3 assemblyOffset = Vector3.forward *
+                (assembledPcbAssemblyStopPoint.position.z - assembledPcb.position.z);
             ItemManager.AssemblySlot[] slotGroups = itemManager.AssemblySlots;
             if (slotGroups == null || slotGroups.Length == 0)
                 throw new InvalidOperationException("Mock assembly requires at least one slot group.");
@@ -1247,7 +1257,8 @@ namespace MainUnity.Runtime.Robot.Mock
                         0f, itemGroup.PickupOffsetXZ.y), pickupRotation);
                     Vector3 gripOffset = Quaternion.Inverse(item.rotation) *
                         (pickup.position - item.position);
-                    Pose placement = new(slot.position + slot.rotation * gripOffset,
+                    Pose placement = new(slot.position + assemblyOffset +
+                        slot.rotation * gripOffset,
                         slot.rotation);
 
                     observations.Add(new MockObservation
@@ -1321,7 +1332,6 @@ namespace MainUnity.Runtime.Robot.Mock
 
         bool CompleteActive(string failure)
         {
-            awaitingAssemblyConveyor = false;
             assemblyConveyorStarted = false;
             TaskCompletionSource<string> current = terminal;
             if (current == null || !current.TrySetResult(failure))

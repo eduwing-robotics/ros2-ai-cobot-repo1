@@ -4,6 +4,7 @@
 import json
 import random
 import sys
+import time
 
 import rclpy
 from fairino_msgs.srv import RemoteCmdInterface
@@ -37,6 +38,9 @@ EXTERNAL_START = "/unity/assembly/start"
 EXTERNAL_FEEDBACK = "/unity/assembly/feedback"
 PASS_IMAGE_PATH = "InspectionSamples/mock-pass.jpg"
 FAIL_IMAGE_PATH = "InspectionSamples/mock-fail.jpg"
+# Unity owns the Mock conveyor signal; this deadline prevents a lost process
+# from leaving its DB Job RUNNING indefinitely.
+CONVEYOR_SIGNAL_TIMEOUT_SECONDS = 60.0
 
 
 class MockAssemblySequencer(Node):
@@ -74,6 +78,7 @@ class MockAssemblySequencer(Node):
         self.rng = random.Random(None if seed == -1 else seed)
         self.active = None
         self.terminal_snapshot = None
+        self.conveyor_deadline = None
 
         service_group = MutuallyExclusiveCallbackGroup()
         feedback_group = MutuallyExclusiveCallbackGroup()
@@ -87,6 +92,9 @@ class MockAssemblySequencer(Node):
             EXTERNAL_START,
             self.on_external_request,
             callback_group=service_group,
+        )
+        self.create_timer(
+            1.0, self.on_conveyor_timeout, callback_group=service_group
         )
         self.external_publisher = self.create_publisher(
             String, EXTERNAL_FEEDBACK, 10
@@ -175,6 +183,7 @@ class MockAssemblySequencer(Node):
                     "assembly is not ready for inspection and PCB transfer",
                 )
 
+            self.conveyor_deadline = None
             active["transfer_requested"] = True
             active["assembled_pcb"] = command["assembled_pcb"]
             try:
@@ -220,6 +229,7 @@ class MockAssemblySequencer(Node):
                 "conveyor arrival is not expected",
             )
 
+        self.conveyor_deadline = None
         active["state"] = "STARTED"
         try:
             await self.backend.start(active["backend_command"])
@@ -296,6 +306,7 @@ class MockAssemblySequencer(Node):
                 "transfer_requested": False,
                 "inspection_result": "",
             }
+            self.arm_conveyor_timeout()
             self.terminal_snapshot = None
             self.publish({
                 "job_id": job_id,
@@ -328,6 +339,7 @@ class MockAssemblySequencer(Node):
 
     def fail_active(self, error_code, error, immediate=False):
         active = self.active
+        self.conveyor_deadline = None
         cleanup_error = self.fail_job(active["job_id"], immediate)
         if cleanup_error is not None:
             error_code = "DB_ERROR"
@@ -382,6 +394,8 @@ class MockAssemblySequencer(Node):
         state = payload["state"]
         if state in RELAY_STATES:
             apply_relay_feedback(active, payload)
+            if state == "ASSEMBLY_COMPLETED":
+                self.arm_conveyor_timeout()
             payload["db_sync_state"] = self.db_writer.sync_state
             self.publish(payload)
             return
@@ -421,6 +435,7 @@ class MockAssemblySequencer(Node):
                     "transfer_requested": False,
                     "inspection_result": "",
                 })
+                self.arm_conveyor_timeout()
                 self.publish({
                     "job_id": active["job_id"],
                     "state": "CONVEYOR_MOVING",
@@ -447,11 +462,31 @@ class MockAssemblySequencer(Node):
             "COMPLETED",
             db_sync_state=self.db_writer.sync_state,
         )
+        self.conveyor_deadline = None
         self.active = None
         self.publish(payload)
         self.get_logger().info(
             f"job {active['job_id']} completed with inspection "
             f"{active['inspection_result']}"
+        )
+
+    def arm_conveyor_timeout(self):
+        self.conveyor_deadline = time.monotonic() + CONVEYOR_SIGNAL_TIMEOUT_SECONDS
+
+    def on_conveyor_timeout(self):
+        active = self.active
+        deadline = self.conveyor_deadline
+        if active is None or deadline is None or time.monotonic() < deadline:
+            return
+        state = active["state"]
+        self.conveyor_deadline = None
+        if state not in {"CONVEYOR_MOVING", "ASSEMBLY_COMPLETED"}:
+            return
+        self.fail_active(
+            "CONVEYOR_FAILED",
+            f"conveyor completion was not reported within "
+            f"{CONVEYOR_SIGNAL_TIMEOUT_SECONDS:g} seconds",
+            immediate=state == "CONVEYOR_MOVING",
         )
 
     def destroy_node(self):
