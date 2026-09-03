@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-labelledby="title desc">
+  <title id="title">FR5 독립 JOBS 페이지 제안</title>
+  <desc id="desc">생산 Job 큐와 선택 Job 상세를 분리한 1920x1080 산업용 UI 목업</desc>
+  <defs>
+    <style>
+      text{font-family:"Noto Sans KR","Noto Sans",sans-serif;fill:#e2ecf1} .micro{font-size:11px;fill:#8494a0;letter-spacing:1.5px}.small{font-size:13px;fill:#93a5b2}.body{font-size:15px}.head{font-size:22px;font-weight:700}.panelTitle{font-size:13px;font-weight:700;letter-spacing:2px}.value{font-size:28px;font-weight:700}.num{font-size:20px;font-weight:700}.accent{fill:#facc33}.bad{fill:#f0475a}.warn{fill:#f6ad37}.muted{fill:#64707a}.mono{font-family:"DejaVu Sans Mono",monospace}
+    </style>
+  </defs>
+  <rect width="1920" height="1080" fill="#070b10"/>
+  <rect x="0" y="0" width="1920" height="64" fill="#04070a"/>
+  <rect x="0" y="64" width="88" height="1016" fill="#0a0f14"/>
+  <line x1="0" y1="64" x2="1920" y2="64" stroke="#ffffff" stroke-opacity=".12"/>
+  <line x1="88" y1="64" x2="88" y2="1080" stroke="#ffffff" stroke-opacity=".12"/>
+  <text x="30" y="40" class="head">FR5</text><text x="96" y="39" class="micro">FAIRINO · CELL A</text>
+  <text x="302" y="38" class="micro">MODE</text><rect x="354" y="20" width="72" height="28" fill="#facc33" fill-opacity=".16" stroke="#facc33"/><text x="373" y="39" class="micro accent">MOCK</text>
+  <text x="468" y="38" class="micro">ROBOT</text><text x="530" y="39" class="small">IDLE</text>
+  <text x="642" y="38" class="micro">JOB</text><text x="682" y="39" class="small mono">0142</text><rect x="746" y="30" width="120" height="6" fill="#ffffff" fill-opacity=".08"/><rect x="746" y="30" width="72" height="6" fill="#facc33"/><text x="880" y="39" class="small">3 / 5</text>
+  <line x1="974" y1="18" x2="974" y2="46" stroke="#ffffff" stroke-opacity=".14"/><text x="1008" y="38" class="micro">LINK</text><circle cx="1065" cy="34" r="4" fill="#8fa6b4"/><text x="1078" y="39" class="small">joint_states</text><circle cx="1198" cy="34" r="4" fill="#8fa6b4"/><text x="1211" y="39" class="small">18 ms</text>
+  <rect x="1734" y="12" width="160" height="40" fill="#ffffff" fill-opacity=".05" stroke="#ffffff" stroke-opacity=".16"/><text x="1781" y="38" class="panelTitle">Ⅱ PAUSE</text>
+  <g text-anchor="middle"><text x="44" y="158" class="micro">RUN</text><text x="44" y="254" class="micro">REQUEST</text><text x="44" y="350" class="micro">INSPECT</text><rect x="0" y="382" width="3" height="74" fill="#facc33"/><text x="44" y="424" class="panelTitle accent">JOBS</text><text x="44" y="520" class="micro">MANUAL</text></g>
+  <text x="112" y="126" class="head">JOBS</text><text x="182" y="126" class="head muted">/</text><text x="206" y="126" class="head">작업 현황</text><text x="1896" y="125" class="micro" text-anchor="end">영속 요청 큐 · 최근 작업 · 읽기 전용</text>
+  <rect x="112" y="164" width="1784" height="76" fill="#0a0f14" stroke="#ffffff" stroke-opacity=".12"/>
+  <text x="136" y="189" class="micro">FILTER</text>
+  <rect x="136" y="198" width="70" height="28" fill="#facc33" fill-opacity=".14" stroke="#facc33"/><text x="155" y="217" class="micro accent">ALL 12</text>
+  <rect x="214" y="198" width="100" height="28" fill="#ffffff" fill-opacity=".05"/><text x="232" y="217" class="micro">RUNNING 1</text><rect x="322" y="198" width="112" height="28" fill="#ffffff" fill-opacity=".05"/><text x="340" y="217" class="micro">ATTENTION 2</text><rect x="442" y="198" width="92" height="28" fill="#ffffff" fill-opacity=".05"/><text x="460" y="217" class="micro">DONE 9</text>
+  <text x="1240" y="189" class="micro">SOURCE</text><text x="1240" y="216" class="small">MainServer · production.jobs / units</text><text x="1868" y="215" class="small" text-anchor="end">마지막 갱신 09:42:18</text>
+  <rect x="112" y="264" width="1120" height="792" fill="#0a0f14" stroke="#ffffff" stroke-opacity=".12"/>
+  <rect x="112" y="264" width="3" height="792" fill="#facc33"/><text x="136" y="302" class="panelTitle">JOB QUEUE · RECENT</text><text x="1204" y="302" class="micro" text-anchor="end">12 JOBS</text>
+  <line x1="136" y1="326" x2="1204" y2="326" stroke="#ffffff" stroke-opacity=".12"/>
+  <text x="148" y="354" class="micro">STATUS</text><text x="272" y="354" class="micro">JOB ID</text><text x="486" y="354" class="micro">PRODUCT</text><text x="774" y="354" class="micro">PASS / GOAL</text><text x="916" y="354" class="micro">ATTEMPTS</text><text x="1042" y="354" class="micro">RESULT</text><text x="1184" y="354" class="micro" text-anchor="end">REQUESTED</text>
+  <rect x="136" y="370" width="1068" height="84" fill="#facc33" fill-opacity=".07"/><rect x="136" y="370" width="3" height="84" fill="#facc33"/>
+  <circle cx="160" cy="412" r="5" fill="#facc33"/><text x="176" y="417" class="small accent">RUNNING</text><text x="272" y="405" class="body mono">JOB-…-0142</text><text x="272" y="428" class="micro">CURRENT</text><text x="486" y="405" class="body">HBM ACCELERATOR BOARD</text><text x="486" y="428" class="small">hbm-pkg-r1 · assembly-r1</text><text x="820" y="417" class="num">3 / 5</text><text x="948" y="417" class="num">4</text><text x="1042" y="407" class="small bad">1 INSPECT FAIL</text><text x="1042" y="429" class="micro">0 EXEC FAILED</text><text x="1184" y="417" class="small" text-anchor="end">09:31</text>
+  <g><line x1="136" y1="470" x2="1204" y2="470" stroke="#ffffff" stroke-opacity=".07"/><circle cx="160" cy="510" r="5" fill="#64707a"/><text x="176" y="515" class="small">PENDING</text><text x="272" y="515" class="body mono">JOB-…-0143</text><text x="486" y="515" class="body">HBM ACCELERATOR BOARD</text><text x="820" y="515" class="num">0 / 2</text><text x="948" y="515" class="num">0</text><text x="1042" y="515" class="small">대기 중</text><text x="1184" y="515" class="small" text-anchor="end">09:38</text></g>
+  <g><line x1="136" y1="554" x2="1204" y2="554" stroke="#ffffff" stroke-opacity=".07"/><circle cx="160" cy="594" r="5" fill="#8fa6b4"/><text x="176" y="599" class="small">COMPLETED</text><text x="272" y="599" class="body mono">JOB-…-0141</text><text x="486" y="599" class="body">HBM ACCELERATOR BOARD</text><text x="820" y="599" class="num">5 / 5</text><text x="948" y="599" class="num">6</text><text x="1042" y="589" class="small bad">1 INSPECT FAIL</text><text x="1042" y="611" class="micro">TARGET ACHIEVED</text><text x="1184" y="599" class="small" text-anchor="end">09:12</text></g>
+  <g><line x1="136" y1="638" x2="1204" y2="638" stroke="#ffffff" stroke-opacity=".07"/><circle cx="160" cy="678" r="5" fill="#f0475a"/><text x="176" y="683" class="small bad">FAILED</text><text x="272" y="683" class="body mono">JOB-…-0140</text><text x="486" y="683" class="body">HBM ACCELERATOR BOARD</text><text x="820" y="683" class="num">1 / 3</text><text x="948" y="683" class="num">3</text><text x="1042" y="673" class="small bad">2 EXEC FAILED</text><text x="1042" y="695" class="micro">RESET REQUIRED</text><text x="1184" y="683" class="small" text-anchor="end">08:44</text></g>
+  <text x="136" y="1024" class="small">최근 Job 12건 · 오래된 이력 검색은 MVP 이후</text>
+  <rect x="1256" y="264" width="640" height="792" fill="#0a0f14" stroke="#ffffff" stroke-opacity=".12"/><text x="1280" y="302" class="panelTitle">SELECTED JOB</text><rect x="1768" y="282" width="100" height="26" fill="#facc33" fill-opacity=".14"/><text x="1783" y="300" class="micro accent">RUNNING</text>
+  <text x="1280" y="350" class="micro">JOB ID</text><text x="1280" y="383" class="body mono">b482…0142</text><text x="1280" y="427" class="micro">PRODUCT</text><text x="1280" y="458" class="body">HBM ACCELERATOR BOARD</text><text x="1280" y="482" class="small">hbm-pkg-r1 · assembly-r1</text>
+  <line x1="1280" y1="512" x2="1870" y2="512" stroke="#ffffff" stroke-opacity=".12"/>
+  <text x="1280" y="548" class="micro">PASS / GOAL</text><text x="1280" y="598" class="value">3 / 5</text><rect x="1280" y="618" width="566" height="8" fill="#ffffff" fill-opacity=".08"/><rect x="1280" y="618" width="340" height="8" fill="#facc33"/>
+  <text x="1280" y="674" class="micro">TOTAL ATTEMPTS</text><text x="1280" y="710" class="num">4</text><text x="1430" y="674" class="micro">INSPECT FAIL</text><text x="1430" y="710" class="num bad">1</text><text x="1600" y="674" class="micro">EXEC FAILED</text><text x="1600" y="710" class="num">0</text>
+  <line x1="1280" y1="742" x2="1870" y2="742" stroke="#ffffff" stroke-opacity=".12"/>
+  <text x="1280" y="778" class="micro">CURRENT UNIT</text><text x="1280" y="817" class="value">UNIT #10428</text><text x="1280" y="847" class="small accent">ASSEMBLING · SLOT HBM-03</text><text x="1870" y="817" class="small" text-anchor="end">STEP 7 / 25</text>
+  <rect x="1280" y="892" width="566" height="92" fill="#ffffff" fill-opacity=".035"/><text x="1300" y="922" class="micro">LATEST EVENT</text><text x="1300" y="951" class="body">CAP-02 검사 FAIL 후 새 Unit 재시도 중</text><text x="1300" y="973" class="small">대책서 QA-D238-CAP-CRACK · SENT</text>
+  <rect x="1664" y="1004" width="182" height="36" fill="#facc33" fill-opacity=".14" stroke="#facc33"/><text x="1702" y="1028" class="panelTitle accent">INSPECT UNIT</text>
+</svg>
