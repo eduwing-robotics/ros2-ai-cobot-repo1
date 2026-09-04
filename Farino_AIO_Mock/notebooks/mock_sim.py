@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""MoveIt mock control plus the minimal Unity assembly callback contract."""
+"""MoveIt Mock equipment backend for one semantic robot operation at a time."""
 
 import argparse
 import copy
@@ -8,7 +8,6 @@ import math
 import sys
 import time
 import uuid
-from collections import Counter
 
 import rclpy
 from controller_manager_msgs.srv import ListHardwareComponents
@@ -45,28 +44,12 @@ DEFAULT_TOOL_OFFSET = (0.0, 0.0, 274.073, 0.0, 0.0, 0.0)
 FUTURE_TIMEOUT_SECONDS = 60.0
 FAULT_RESTART_MESSAGE = "execution state is unknown after a timeout; restart the mock node"
 ASSEMBLY_STATES = {
-    "STARTED", "PICKED", "PLACED", "ASSEMBLY_COMPLETED",
+    "STARTED", "PICKED", "PLACED",
     "PCB_PICKED", "PCB_PLACED", "PAUSED", "COMPLETED", "FAILED",
 }
 STEP_STATES = {"PICKED", "PLACED"}
-WORKFLOW_ACTIONS = {
-    "before_all": (
-        ("conveyor.move_to", "ASSEMBLY"),
-        ("vision.resolve_targets", "recipe_steps"),
-    ),
-    "per_step": (
-        ("robot.move_joint", "home"),
-        ("robot.move_joint", "item_ready"),
-        ("robot.pick", "current_part"),
-        ("robot.move_joint", "home"),
-        ("robot.move_joint", "assembly_ready"),
-        ("robot.place", "current_slot"),
-    ),
-    "after_all": (
-        ("conveyor.move_to", "INSPECTION"),
-        ("inspection.run", "assembled_pcb"),
-        ("robot.transfer", "assembled_pcb"),
-    ),
+ROBOT_ACTIONS = {
+    "robot.move_joint", "robot.pick", "robot.place", "robot.transfer",
 }
 
 
@@ -141,55 +124,57 @@ def arm_joint_positions(message):
     return joints if all(math.isfinite(value) for value in joints) else None
 
 
+def _uuid(value, label):
+    if not isinstance(value, str) or len(value) > 64:
+        raise ValueError(f"{label} must be a UUID string")
+    try:
+        return str(uuid.UUID(value))
+    except (ValueError, AttributeError) as error:
+        raise ValueError(f"{label} must be a UUID string") from error
+
+
 def parse_start_command(raw):
     try:
         command = json.loads(raw)
     except (TypeError, json.JSONDecodeError) as error:
         raise ValueError("cmd_str must be a JSON object") from error
-    required_fields = {
-        "command", "job_id", "recipe_version", "execution_plan",
-    }
-    if not isinstance(command, dict) or set(command) != required_fields:
+    required = {"command", "job_id", "recipe_version", "expected_step_count"}
+    if not isinstance(command, dict) or set(command) != required:
         raise ValueError(
-            "command, job_id, recipe_version and execution_plan are required"
+            "command, job_id, recipe_version and expected_step_count are required"
         )
     if command["command"] != "start":
         raise ValueError("command must be start")
-    job_id = command["job_id"]
-    if not isinstance(job_id, str) or len(job_id) > 64:
-        raise ValueError("job_id must be a UUID string")
-    try:
-        uuid.UUID(job_id)
-    except (ValueError, AttributeError) as error:
-        raise ValueError("job_id must be a UUID string") from error
     recipe_version = command["recipe_version"]
     if not isinstance(recipe_version, str) or not recipe_version.strip():
         raise ValueError("recipe_version must be a non-empty string")
-    execution_plan = validate_execution_plan(command["execution_plan"])
-    return job_id, recipe_version, execution_plan
+    expected = command["expected_step_count"]
+    if isinstance(expected, bool) or not isinstance(expected, int) or expected <= 0:
+        raise ValueError("expected_step_count must be a positive integer")
+    return _uuid(command["job_id"], "job_id"), recipe_version, expected
 
 
-def parse_transfer_command(raw):
+def parse_execute_command(raw):
     try:
         command = json.loads(raw)
     except (TypeError, json.JSONDecodeError) as error:
         raise ValueError("cmd_str must be a JSON object") from error
-    if not isinstance(command, dict) or set(command) != {
-        "command", "job_id", "assembled_pcb",
-    }:
+    required = {"command", "job_id", "operation_id", "action", "arguments"}
+    if not isinstance(command, dict) or set(command) != required:
         raise ValueError(
-            "command, job_id and assembled_pcb are required"
+            "command, job_id, operation_id, action and arguments are required"
         )
-    if command["command"] != "transfer_assembled_pcb":
-        raise ValueError("command must be transfer_assembled_pcb")
-    job_id = command["job_id"]
-    if not isinstance(job_id, str) or len(job_id) > 64:
-        raise ValueError("job_id must be a UUID string")
-    try:
-        uuid.UUID(job_id)
-    except (ValueError, AttributeError) as error:
-        raise ValueError("job_id must be a UUID string") from error
-    return job_id, validate_assembled_pcb(command["assembled_pcb"])
+    if command["command"] != "execute":
+        raise ValueError("command must be execute")
+    action = command["action"]
+    if action not in ROBOT_ACTIONS:
+        raise ValueError(f"unsupported robot action: {action}")
+    return {
+        "job_id": _uuid(command["job_id"], "job_id"),
+        "operation_id": _uuid(command["operation_id"], "operation_id"),
+        "action": action,
+        "arguments": validate_operation_arguments(action, command["arguments"]),
+    }
 
 
 def parse_pause_command(raw):
@@ -201,14 +186,7 @@ def parse_pause_command(raw):
         raise ValueError("command and job_id are required")
     if command["command"] not in {"pause", "resume"}:
         raise ValueError("command must be pause or resume")
-    job_id = command["job_id"]
-    if not isinstance(job_id, str) or len(job_id) > 64:
-        raise ValueError("job_id must be a UUID string")
-    try:
-        uuid.UUID(job_id)
-    except (ValueError, AttributeError) as error:
-        raise ValueError("job_id must be a UUID string") from error
-    return command["command"], job_id
+    return command["command"], _uuid(command["job_id"], "job_id")
 
 
 def _finite_number(value, label):
@@ -217,6 +195,13 @@ def _finite_number(value, label):
     value = float(value)
     if not math.isfinite(value):
         raise ValueError(f"{label} must be finite")
+    return value
+
+
+def _positive_number(value, label):
+    value = _finite_number(value, label)
+    if value <= 0.0:
+        raise ValueError(f"{label} must be greater than zero")
     return value
 
 
@@ -246,162 +231,99 @@ def validate_ros_pose(value, label):
     }
 
 
-def validate_assembled_pcb(value):
-    pose_fields = {"source", "target"}
-    if not isinstance(value, dict) or set(value) != pose_fields:
-        raise ValueError("assembled_pcb must contain source and target")
-    return {
-        "source": validate_ros_pose(value["source"], "assembled_pcb.source"),
-        "target": validate_ros_pose(value["target"], "assembled_pcb.target"),
-    }
-
-
 def validate_joint_point(value, label):
     if not isinstance(value, list) or len(value) != len(JOINTS):
         raise ValueError(f"{label} must contain six numbers")
-    for index, number in enumerate(value):
+    return [
         _finite_number(number, f"{label}[{index}]")
-
-
-def validate_workflow(workflow):
-    if not isinstance(workflow, dict) or set(workflow) != set(WORKFLOW_ACTIONS):
-        raise ValueError("workflow must contain before_all, per_step and after_all")
-    for section, allowed in WORKFLOW_ACTIONS.items():
-        commands = workflow[section]
-        if not isinstance(commands, list) or not commands:
-            raise ValueError(f"workflow.{section} must be a non-empty list")
-        actions = []
-        for index, command in enumerate(commands):
-            if not isinstance(command, dict) or len(command) != 1:
-                raise ValueError(
-                    f"workflow.{section}[{index}] must contain one action"
-                )
-            action = next(iter(command.items()))
-            actions.append(action)
-            if action not in allowed:
-                raise ValueError(
-                    f"unsupported workflow.{section} action: {command}"
-                )
-        if Counter(actions) != Counter(allowed):
-            raise ValueError(
-                f"workflow.{section} must contain each required action"
-            )
-
-
-def validate_execution_plan(value):
-    required = {
-        "frame", "joint_points", "motion", "workflow", "resolved_steps",
-        "assembled_pcb_gripper",
-    }
-    if not isinstance(value, dict) or set(value) != required:
-        raise ValueError(
-            "execution_plan must contain frame, joint_points, motion, workflow, "
-            "resolved_steps and assembled_pcb_gripper"
-        )
-    if value["frame"] != "base_link":
-        raise ValueError("execution_plan frame must be base_link")
-
-    joint_points = value["joint_points"]
-    if not isinstance(joint_points, dict) or set(joint_points) != {
-        "home", "item_ready", "assembly_ready"
-    }:
-        raise ValueError(
-            "execution_plan joint_points must contain home, item_ready and "
-            "assembly_ready"
-        )
-    for name in ("home", "item_ready", "assembly_ready"):
-        validate_joint_point(joint_points[name], f"joint_points.{name}")
-
-    motion = value["motion"]
-    if not isinstance(motion, dict) or set(motion) != {
-        "approach_dz_mm", "retract_dz_mm",
-        "assembled_pcb_drop_approach_dz_mm",
-    }:
-        raise ValueError("execution_plan motion fields are invalid")
-    for name, number in motion.items():
-        if _finite_number(number, f"motion.{name}") <= 0.0:
-            raise ValueError(f"motion.{name} must be greater than zero")
-
-    validate_workflow(value["workflow"])
-    assembled_profile = value["assembled_pcb_gripper"]
-    validate_gripper_profile(assembled_profile, "assembled_pcb_gripper")
-
-    resolved_steps = value["resolved_steps"]
-    if not isinstance(resolved_steps, list) or not resolved_steps:
-        raise ValueError("execution_plan resolved_steps must be a non-empty list")
-    normalized = []
-    slot_codes = set()
-    required_step_fields = {
-        "step", "gripper_grasp_opening_percent",
-        "gripper_release_opening_percent", "source", "target",
-    }
-    for expected_order, resolved in enumerate(resolved_steps, 1):
-        if not isinstance(resolved, dict) or set(resolved) != required_step_fields:
-            raise ValueError(
-                f"resolved step {expected_order} has invalid fields"
-            )
-        step = resolved["step"]
-        if not isinstance(step, dict) or set(step) != {
-            "order", "part_id", "slot_code"
-        }:
-            raise ValueError(
-                f"resolved step {expected_order} identity is invalid"
-            )
-        if isinstance(step["order"], bool) \
-                or not isinstance(step["order"], int) \
-                or step["order"] != expected_order:
-            raise ValueError("resolved step order must be consecutive from 1")
-        if not isinstance(step["part_id"], str) or not step["part_id"].strip():
-            raise ValueError(f"resolved step {expected_order} part_id is invalid")
-        if not isinstance(step["slot_code"], str) or not step["slot_code"].strip():
-            raise ValueError(f"resolved step {expected_order} slot_code is invalid")
-        if step["slot_code"] in slot_codes:
-            raise ValueError(f"duplicate resolved slot_code: {step['slot_code']}")
-        slot_codes.add(step["slot_code"])
-        grasp = _finite_number(
-            resolved["gripper_grasp_opening_percent"],
-            f"resolved step {expected_order} grasp opening",
-        )
-        release = _finite_number(
-            resolved["gripper_release_opening_percent"],
-            f"resolved step {expected_order} release opening",
-        )
-        if not 0.0 <= grasp <= 100.0 or not 0.0 <= release <= 100.0:
-            raise ValueError("resolved gripper openings must be between 0 and 100")
-        normalized.append({
-            "step": dict(step),
-            "gripper_grasp_opening_percent": grasp,
-            "gripper_release_opening_percent": release,
-            "source": validate_ros_pose(
-                resolved["source"], f"resolved step {expected_order}.source"
-            ),
-            "target": validate_ros_pose(
-                resolved["target"], f"resolved step {expected_order}.target"
-            ),
-        })
-    return {
-        "frame": value["frame"],
-        "joint_points": joint_points,
-        "motion": motion,
-        "workflow": value["workflow"],
-        "resolved_steps": normalized,
-        "assembled_pcb_gripper": assembled_profile,
-    }
+        for index, number in enumerate(value)
+    ]
 
 
 def validate_gripper_profile(profile, label):
-    if not isinstance(profile, dict) or set(profile) != {
-        "grasp_opening_percent", "release_opening_percent"
-    }:
+    required = {"grasp_opening_percent", "release_opening_percent"}
+    if not isinstance(profile, dict) or set(profile) != required:
         raise ValueError(
             f"{label} must contain grasp_opening_percent and "
             "release_opening_percent"
         )
+    normalized = {}
     for field, value in profile.items():
         value = _finite_number(value, f"{label}.{field}")
         if not 0.0 <= value <= 100.0:
             raise ValueError(f"{label}.{field} must be between 0 and 100")
+        normalized[field] = value
+    return normalized
 
+
+def validate_step(step):
+    if not isinstance(step, dict) or set(step) != {"order", "part_id", "slot_code"}:
+        raise ValueError("step must contain order, part_id and slot_code")
+    order = step["order"]
+    if isinstance(order, bool) or not isinstance(order, int) or order <= 0:
+        raise ValueError("step order must be a positive integer")
+    for field in ("part_id", "slot_code"):
+        if not isinstance(step[field], str) or not step[field].strip():
+            raise ValueError(f"step {field} must be a non-empty string")
+    return dict(step)
+
+
+def validate_operation_arguments(action, value):
+    if not isinstance(value, dict):
+        raise ValueError("operation arguments must be an object")
+    if action == "robot.move_joint":
+        if set(value) != {"joint_point"}:
+            raise ValueError("robot.move_joint requires joint_point")
+        return {"joint_point": validate_joint_point(
+            value["joint_point"], "joint_point"
+        )}
+
+    if action in {"robot.pick", "robot.place"}:
+        pose_name = "source" if action == "robot.pick" else "target"
+        required = {
+            "step", "frame", pose_name, "approach_dz_mm", "retract_dz_mm",
+            "gripper",
+        }
+        if set(value) != required:
+            raise ValueError(f"{action} arguments are invalid")
+        if value["frame"] != "base_link":
+            raise ValueError(f"{action} frame must be base_link")
+        return {
+            "step": validate_step(value["step"]),
+            "frame": value["frame"],
+            pose_name: validate_ros_pose(value[pose_name], pose_name),
+            "approach_dz_mm": _positive_number(
+                value["approach_dz_mm"], "approach_dz_mm"
+            ),
+            "retract_dz_mm": _positive_number(
+                value["retract_dz_mm"], "retract_dz_mm"
+            ),
+            "gripper": validate_gripper_profile(value["gripper"], "gripper"),
+        }
+
+    required = {
+        "frame", "source", "target", "approach_dz_mm", "retract_dz_mm",
+        "drop_approach_dz_mm", "gripper",
+    }
+    if set(value) != required:
+        raise ValueError("robot.transfer arguments are invalid")
+    if value["frame"] != "base_link":
+        raise ValueError("robot.transfer frame must be base_link")
+    return {
+        "frame": value["frame"],
+        "source": validate_ros_pose(value["source"], "source"),
+        "target": validate_ros_pose(value["target"], "target"),
+        "approach_dz_mm": _positive_number(
+            value["approach_dz_mm"], "approach_dz_mm"
+        ),
+        "retract_dz_mm": _positive_number(
+            value["retract_dz_mm"], "retract_dz_mm"
+        ),
+        "drop_approach_dz_mm": _positive_number(
+            value["drop_approach_dz_mm"], "drop_approach_dz_mm"
+        ),
+        "gripper": validate_gripper_profile(value["gripper"], "gripper"),
+    }
 
 def vertical_offset(value, dz_mm):
     return {
@@ -508,139 +430,88 @@ def self_check():
     assert arm_joint_positions(JointState(
         name=list(JOINTS), position=[0.0] * len(JOINTS)
     )) == (0.0,) * len(JOINTS)
-    assert arm_joint_positions(JointState(
-        name=list(JOINTS[1:]), position=[0.0] * (len(JOINTS) - 1)
-    )) is None
+
     job_id = "12345678-1234-5678-1234-567812345678"
+    operation_id = "87654321-4321-8765-4321-876543218765"
     source = {"xyz_mm": [350, -150, 250], "xyzw": [0, 0, 0, 1]}
     target = {"xyz_mm": [350, 150, 250], "xyzw": [0, 0, 0, 1]}
-    assembled_pcb = {
-        "source": {"xyz_mm": [450, 0, 200], "xyzw": [0, 0, 0, 1]},
-        "target": {"xyz_mm": [350, 350, 200], "xyzw": [0, 0, 0, 1]},
+    step = {"order": 1, "part_id": "part", "slot_code": "slot-01"}
+    gripper = {
+        "grasp_opening_percent": 20,
+        "release_opening_percent": 30,
     }
-    transfer = parse_transfer_command(json.dumps({
-        "command": "transfer_assembled_pcb",
-        "job_id": job_id,
-        "assembled_pcb": assembled_pcb,
-    }))
-    assert transfer[0] == job_id
-    assert parse_pause_command(json.dumps({
-        "command": "pause", "job_id": job_id,
-    })) == ("pause", job_id)
-    assert assembly_feedback(job_id, "PAUSED")["state"] == "PAUSED"
-    sample_workflow = {
-        "before_all": [
-            {"conveyor.move_to": "ASSEMBLY"},
-            {"vision.resolve_targets": "recipe_steps"},
-        ],
-        "per_step": [
-            {"robot.move_joint": "home"},
-            {"robot.move_joint": "item_ready"},
-            {"robot.pick": "current_part"},
-            {"robot.move_joint": "home"},
-            {"robot.move_joint": "assembly_ready"},
-            {"robot.place": "current_slot"},
-        ],
-        "after_all": [
-            {"conveyor.move_to": "INSPECTION"},
-            {"inspection.run": "assembled_pcb"},
-            {"robot.transfer": "assembled_pcb"},
-        ],
-    }
-    plan = validate_execution_plan({
-        "frame": "base_link",
-        "joint_points": {
-            "home": [-4.689, -86.951, 84.467, -87.516, -90.000, -4.688],
-            "item_ready": [-4.689, -86.951, 84.467, -87.516, -90.000, -4.688],
-            "assembly_ready": [-4.689, -86.951, 84.467, -87.516, -90.000, -4.688],
-        },
-        "motion": {
-            "approach_dz_mm": 100,
-            "retract_dz_mm": 120,
-            "assembled_pcb_drop_approach_dz_mm": 150,
-        },
-        "workflow": sample_workflow,
-        "resolved_steps": [{
-            "step": {
-                "order": 1,
-                "part_id": "part",
-                "slot_code": "slot-01",
-            },
-            "gripper_grasp_opening_percent": 20,
-            "gripper_release_opening_percent": 30,
-            "source": source,
-            "target": target,
-        }],
-        "assembled_pcb_gripper": {
-            "grasp_opening_percent": 0,
-            "release_opening_percent": 100,
-        },
-    })
-    parsed = parse_start_command(json.dumps({
+
+    assert parse_start_command(json.dumps({
         "command": "start",
         "job_id": job_id,
         "recipe_version": "assembly-r1",
-        "execution_plan": plan,
-    }))
-    assert parsed[:2] == (job_id, "assembly-r1")
-    assert len(parsed[2]["resolved_steps"]) == 1
-    resolved = parsed[2]["resolved_steps"]
-    assert transfer[1]["target"]["xyz_mm"] == [350.0, 350.0, 200.0]
-    assert (
-        resolved[0]["gripper_grasp_opening_percent"],
-        resolved[0]["gripper_release_opening_percent"],
-    ) == (20, 30)
-    assert resolved[0]["source"]["xyz_mm"] == [350.0, -150.0, 250.0]
-    approach = vertical_offset(
-        resolved[0]["source"], plan["motion"]["approach_dz_mm"]
-    )
-    assert approach["xyz_mm"] == [350.0, -150.0, 350.0]
-    assert resolved[0]["source"]["xyz_mm"] == [350.0, -150.0, 250.0]
-    pcb_drop_approach = vertical_offset(
-        transfer[1]["target"],
-        plan["motion"]["assembled_pcb_drop_approach_dz_mm"],
-    )
-    assert pcb_drop_approach["xyz_mm"] == [350.0, 350.0, 350.0]
-    feedback = assembly_feedback(job_id, "PICKED", resolved[0]["step"])
+        "expected_step_count": 1,
+    })) == (job_id, "assembly-r1", 1)
+    assert parse_pause_command(json.dumps({
+        "command": "pause", "job_id": job_id,
+    })) == ("pause", job_id)
+
+    def parse_operation(action, arguments):
+        return parse_execute_command(json.dumps({
+            "command": "execute",
+            "job_id": job_id,
+            "operation_id": operation_id,
+            "action": action,
+            "arguments": arguments,
+        }))
+
+    joint = parse_operation("robot.move_joint", {
+        "joint_point": list(INITIAL_JOINTS_DEG),
+    })
+    assert joint["arguments"]["joint_point"] == list(INITIAL_JOINTS_DEG)
+    pick = parse_operation("robot.pick", {
+        "step": step,
+        "frame": "base_link",
+        "source": source,
+        "approach_dz_mm": 100,
+        "retract_dz_mm": 120,
+        "gripper": gripper,
+    })
+    assert pick["arguments"]["source"]["xyz_mm"] == [350.0, -150.0, 250.0]
+    place = parse_operation("robot.place", {
+        "step": step,
+        "frame": "base_link",
+        "target": target,
+        "approach_dz_mm": 100,
+        "retract_dz_mm": 120,
+        "gripper": gripper,
+    })
+    assert place["arguments"]["step"] == step
+    transfer = parse_operation("robot.transfer", {
+        "frame": "base_link",
+        "source": source,
+        "target": target,
+        "approach_dz_mm": 100,
+        "retract_dz_mm": 120,
+        "drop_approach_dz_mm": 150,
+        "gripper": gripper,
+    })
+    assert transfer["operation_id"] == operation_id
+    assert vertical_offset(source, 100)["xyz_mm"] == [350, -150, 350]
+
+    feedback = assembly_feedback(job_id, "PICKED", step)
     assert feedback["step_order"] == 1 and feedback["part_id"] == "part"
-    terminal = assembly_feedback(job_id, "COMPLETED")
-    assert terminal["step_order"] == 0 and terminal["slot_code"] == ""
     snapshot = advance_assembly_snapshot(
-        empty_assembly_snapshot(),
-        assembly_feedback(job_id, "STARTED"),
-        "assembly-r1",
-        1,
+        empty_assembly_snapshot(), assembly_feedback(job_id, "STARTED"),
+        "assembly-r1", 1,
     )
     snapshot = advance_assembly_snapshot(snapshot, feedback, "assembly-r1", 1)
     assert snapshot["active"] and snapshot["held_step_order"] == 1
     snapshot = advance_assembly_snapshot(
-        snapshot,
-        assembly_feedback(job_id, "PLACED", resolved[0]["step"]),
-        "assembly-r1",
-        1,
+        snapshot, assembly_feedback(job_id, "PLACED", step), "assembly-r1", 1
     )
     assert snapshot["placed_count"] == 1 and snapshot["held_step_order"] == 0
-    snapshot = advance_assembly_snapshot(
-        snapshot, assembly_feedback(job_id, "ASSEMBLY_COMPLETED"), "assembly-r1", 1
-    )
-    assert snapshot["active"] and snapshot["placed_count"] == 1
-    snapshot = advance_assembly_snapshot(
-        snapshot, assembly_feedback(job_id, "PCB_PICKED"), "assembly-r1", 1
-    )
-    assert snapshot["active"] and snapshot["placed_count"] == 1
-    snapshot = advance_assembly_snapshot(
-        snapshot, assembly_feedback(job_id, "PCB_PLACED"), "assembly-r1", 1
-    )
-    assert snapshot["active"] and snapshot["placed_count"] == 1
-    snapshot = advance_assembly_snapshot(snapshot, terminal, "assembly-r1", 1)
-    assert not snapshot["active"] and snapshot["state"] == "COMPLETED"
+
     tcp_target = Pose()
     tcp_target.orientation.w = 1.0
     wrist_target = MockMoveJ.tool_target_to_wrist_target(
         tcp_target, DEFAULT_TOOL_OFFSET
     )
-    assert wrist_target.position.x == 0.0
-    assert wrist_target.position.y == 0.0
     assert math.isclose(wrist_target.position.z, -0.274073)
     assert wrist_target.orientation.w == 1.0
     try:
@@ -836,14 +707,14 @@ class MockMoveJ(Node):
                 self.cancel_active_motion()
             return self.start_response(response, True, job_id)
 
-        if isinstance(command, dict) \
-                and command.get("command") == "transfer_assembled_pcb":
+        if isinstance(command, dict) and command.get("command") == "execute":
             try:
-                job_id, assembled_pcb = parse_transfer_command(request.cmd_str)
+                operation = parse_execute_command(request.cmd_str)
             except ValueError as error:
                 return self.start_response(
                     response, False, error_code="INVALID_REQUEST", message=str(error)
                 )
+            job_id = operation["job_id"]
             if self.execution_faulted:
                 return self.start_response(
                     response, False, job_id, "FAULTED", FAULT_RESTART_MESSAGE
@@ -856,25 +727,22 @@ class MockMoveJ(Node):
                 )
             if job["pause_requested"] or job["paused"]:
                 return self.start_response(
-                    response, False, job_id, "BUSY",
-                    "assembly is paused",
+                    response, False, job_id, "BUSY", "assembly is paused"
                 )
-            if job["phase"] != "awaiting_transfer":
+            if job["operation"] is not None:
                 return self.start_response(
-                    response, False, job_id, "BUSY",
-                    "assembly is not ready for PCB transfer",
+                    response, False, job_id, "BUSY", "robot is already executing"
                 )
             if self.args.plan_only:
                 return self.start_response(
                     response, False, job_id, "PLAN_ONLY",
-                    "PCB transfer requires execution mode",
+                    "assembly requires execution mode",
                 )
-            job["assembled_pcb"] = assembled_pcb
-            job["phase"] = "transferring"
+            job["operation"] = operation
             return self.start_response(response, True, job_id)
 
         try:
-            job_id, recipe_version, execution_plan = parse_start_command(
+            job_id, recipe_version, expected_step_count = parse_start_command(
                 request.cmd_str
             )
         except ValueError as error:
@@ -897,8 +765,8 @@ class MockMoveJ(Node):
         self.active_assembly = {
             "job_id": job_id,
             "recipe_version": recipe_version,
-            "execution_plan": execution_plan,
-            "phase": "assembling",
+            "expected_step_count": expected_step_count,
+            "operation": None,
             "pause_requested": False,
             "paused": False,
             "resume_feedback": assembly_feedback(job_id, "STARTED"),
@@ -907,7 +775,7 @@ class MockMoveJ(Node):
             self.latest_assembly_snapshot,
             assembly_feedback(job_id, "STARTED"),
             recipe_version,
-            len(execution_plan["resolved_steps"]),
+            expected_step_count,
         )
         return self.start_response(response, True, job_id)
 
@@ -922,12 +790,34 @@ class MockMoveJ(Node):
             self.latest_assembly_snapshot,
             payload,
             job["recipe_version"],
-            len(job["execution_plan"]["resolved_steps"]),
+            job["expected_step_count"],
         )
         self.assembly_feedback_publisher.publish(
             String(data=json.dumps(payload, separators=(",", ":")))
         )
         self.get_logger().info(f"assembly {state}: job_id={job_id}")
+
+    def publish_operation_result(self, job, operation, error=None):
+        state = "COMPLETED" if error is None else "FAILED"
+        payload = assembly_feedback(
+            job["job_id"], state,
+            error_code="" if error is None else "EXECUTION_FAILED",
+            message="" if error is None else str(error)[:512],
+        )
+        payload["operation_id"] = operation["operation_id"]
+        if error is not None or operation["action"] == "robot.transfer":
+            self.latest_assembly_snapshot = advance_assembly_snapshot(
+                self.latest_assembly_snapshot,
+                payload,
+                job["recipe_version"],
+                job["expected_step_count"],
+            )
+        self.assembly_feedback_publisher.publish(
+            String(data=json.dumps(payload, separators=(",", ":")))
+        )
+        self.get_logger().info(
+            f"{operation['action']} {state}: job_id={job['job_id']}"
+        )
 
     def wait_if_paused(self, job):
         if not job["pause_requested"]:
@@ -944,7 +834,7 @@ class MockMoveJ(Node):
             self.latest_assembly_snapshot,
             payload,
             job["recipe_version"],
-            len(job["execution_plan"]["resolved_steps"]),
+            job["expected_step_count"],
         )
         self.assembly_feedback_publisher.publish(
             String(data=json.dumps(payload, separators=(",", ":")))
@@ -1393,184 +1283,141 @@ class MockMoveJ(Node):
         target.pose.orientation.w = xyzw[3]
         return target
 
-    def request_pose(self, recipe, value):
-        return self.pose_stamped(recipe["frame"], value["xyz_mm"], value["xyzw"])
+    def request_pose(self, frame, value):
+        return self.pose_stamped(frame, value["xyz_mm"], value["xyzw"])
 
-    def run_assembly(self, job):
-        job_id = job["job_id"]
-        execution_plan = job["execution_plan"]
+    def run_operation(self, job):
+        operation = job["operation"]
+        action = operation["action"]
+        arguments = operation["arguments"]
+        failure = None
         try:
             self.require_mock_hardware()
-            self.publish_assembly_feedback(job_id, "STARTED")
-            joint_points = execution_plan["joint_points"]
-            motion = execution_plan["motion"]
-            for command in execution_plan["workflow"]["before_all"]:
-                self.wait_if_paused(job)
-                action, argument = next(iter(command.items()))
-                if (action, argument) == ("conveyor.move_to", "ASSEMBLY"):
-                    self.publish_status("conveyor at assembly: confirmed by Unity")
-                elif (action, argument) == (
-                    "vision.resolve_targets", "recipe_steps"
-                ):
-                    self.publish_status("vision targets: simulated valid (Mock)")
-                else:
-                    raise RuntimeError(f"unknown preflight action: {command}")
-                self.wait_if_paused(job)
-            for resolved in execution_plan["resolved_steps"]:
-                step = resolved["step"]
-                grasp_opening_percent = resolved[
-                    "gripper_grasp_opening_percent"
-                ]
-                release_opening_percent = resolved[
-                    "gripper_release_opening_percent"
-                ]
-                source = self.request_pose(execution_plan, resolved["source"])
-                target = self.request_pose(execution_plan, resolved["target"])
-                source_approach = self.request_pose(
-                    execution_plan,
-                    vertical_offset(
-                        resolved["source"], motion["approach_dz_mm"]
-                    ),
-                )
-                source_retract = self.request_pose(
-                    execution_plan,
-                    vertical_offset(
-                        resolved["source"], motion["retract_dz_mm"]
-                    ),
-                )
-                target_approach = self.request_pose(
-                    execution_plan,
-                    vertical_offset(
-                        resolved["target"], motion["approach_dz_mm"]
-                    ),
-                )
-                target_retract = self.request_pose(
-                    execution_plan,
-                    vertical_offset(
-                        resolved["target"], motion["retract_dz_mm"]
-                    ),
-                )
-
-                for command in execution_plan["workflow"]["per_step"]:
-                    self.wait_if_paused(job)
-                    action, argument = next(iter(command.items()))
-                    if action == "robot.move_joint":
-                        self.run_pauseable(job, lambda: self.run_joint_target(joint_points[argument]))
-                    elif (action, argument) == ("robot.pick", "current_part"):
-                        self.run_pauseable(job, lambda: self.run_gripper(release_opening_percent))
-                        self.run_pauseable(job, lambda: self.run_ptp_pose(source_approach))
-                        self.run_pauseable(job, lambda: self.run_linear(source, True))
-                        self.run_pauseable(job, lambda: self.run_gripper(grasp_opening_percent))
-                        self.publish_assembly_feedback(job_id, "PICKED", step)
-                        self.run_pauseable(job, lambda: self.run_linear(source_retract, True))
-                    elif (action, argument) == ("robot.place", "current_slot"):
-                        self.run_pauseable(job, lambda: self.run_ptp_pose(target_approach))
-                        self.run_pauseable(job, lambda: self.run_linear(target, True))
-                        self.run_pauseable(job, lambda: self.run_gripper(release_opening_percent))
-                        self.publish_assembly_feedback(job_id, "PLACED", step)
-                        self.run_pauseable(job, lambda: self.run_linear(target_retract, True))
-                    else:
-                        raise RuntimeError(f"unknown assembly action: {command}")
-                    self.wait_if_paused(job)
-
-            self.publish_assembly_feedback(job_id, "ASSEMBLY_COMPLETED")
-            job["phase"] = "awaiting_transfer"
-        except Exception as error:
-            self.preview_publisher.publish(JointTrajectory())
-            message = str(error)[:512]
-            self.publish_status(f"error: assembly failed: {message}")
-            try:
-                self.publish_assembly_feedback(
-                    job_id, "FAILED", error_code="EXECUTION_FAILED",
-                    message=message,
-                )
-            finally:
-                self.active_assembly = None
-
-    def run_assembled_pcb_transfer(self, job):
-        job_id = job["job_id"]
-        execution_plan = job["execution_plan"]
-        terminal_state = "FAILED"
-        error_code = "INTERRUPTED"
-        message = "assembled PCB transfer interrupted"
-        try:
-            self.require_mock_hardware()
-            motion = execution_plan["motion"]
-            gripper = execution_plan["assembled_pcb_gripper"]
-            for command in execution_plan["workflow"]["after_all"]:
-                self.wait_if_paused(job)
-                action, argument = next(iter(command.items()))
-                if (action, argument) in {
-                    ("conveyor.move_to", "INSPECTION"),
-                    ("inspection.run", "assembled_pcb"),
-                }:
-                    self.publish_status(f"{action}: confirmed externally")
-                    continue
-                if (action, argument) != ("robot.transfer", "assembled_pcb"):
-                    raise RuntimeError(
-                        f"unknown final assembly action: {command}"
-                    )
-                transfer = job["assembled_pcb"]
-                source = self.request_pose(execution_plan, transfer["source"])
-                target = self.request_pose(execution_plan, transfer["target"])
-                source_approach = self.request_pose(
-                    execution_plan,
-                    vertical_offset(
-                        transfer["source"], motion["approach_dz_mm"]
-                    ),
-                )
-                source_retract = self.request_pose(
-                    execution_plan,
-                    vertical_offset(
-                        transfer["source"], motion["retract_dz_mm"]
-                    ),
-                )
-                target_approach = self.request_pose(
-                    execution_plan,
-                    vertical_offset(
-                        transfer["target"],
-                        motion["assembled_pcb_drop_approach_dz_mm"],
-                    ),
-                )
-                target_retract = self.request_pose(
-                    execution_plan,
-                    vertical_offset(
-                        transfer["target"], motion["retract_dz_mm"]
-                    ),
-                )
+            self.wait_if_paused(job)
+            if action == "robot.move_joint":
                 self.run_pauseable(
-                    job, lambda: self.run_gripper(gripper["release_opening_percent"])
+                    job,
+                    lambda: self.run_joint_target(arguments["joint_point"]),
+                )
+            elif action == "robot.pick":
+                source = self.request_pose(arguments["frame"], arguments["source"])
+                approach = self.request_pose(
+                    arguments["frame"],
+                    vertical_offset(
+                        arguments["source"], arguments["approach_dz_mm"]
+                    ),
+                )
+                retract = self.request_pose(
+                    arguments["frame"],
+                    vertical_offset(
+                        arguments["source"], arguments["retract_dz_mm"]
+                    ),
+                )
+                gripper = arguments["gripper"]
+                self.run_pauseable(
+                    job,
+                    lambda: self.run_gripper(gripper["release_opening_percent"]),
+                )
+                self.run_pauseable(job, lambda: self.run_ptp_pose(approach))
+                self.run_pauseable(job, lambda: self.run_linear(source, True))
+                self.run_pauseable(
+                    job,
+                    lambda: self.run_gripper(gripper["grasp_opening_percent"]),
+                )
+                self.publish_assembly_feedback(
+                    job["job_id"], "PICKED", arguments["step"]
+                )
+                self.run_pauseable(job, lambda: self.run_linear(retract, True))
+            elif action == "robot.place":
+                target = self.request_pose(arguments["frame"], arguments["target"])
+                approach = self.request_pose(
+                    arguments["frame"],
+                    vertical_offset(
+                        arguments["target"], arguments["approach_dz_mm"]
+                    ),
+                )
+                retract = self.request_pose(
+                    arguments["frame"],
+                    vertical_offset(
+                        arguments["target"], arguments["retract_dz_mm"]
+                    ),
+                )
+                self.run_pauseable(job, lambda: self.run_ptp_pose(approach))
+                self.run_pauseable(job, lambda: self.run_linear(target, True))
+                self.run_pauseable(
+                    job,
+                    lambda: self.run_gripper(
+                        arguments["gripper"]["release_opening_percent"]
+                    ),
+                )
+                self.publish_assembly_feedback(
+                    job["job_id"], "PLACED", arguments["step"]
+                )
+                self.run_pauseable(job, lambda: self.run_linear(retract, True))
+            elif action == "robot.transfer":
+                source = self.request_pose(arguments["frame"], arguments["source"])
+                target = self.request_pose(arguments["frame"], arguments["target"])
+                source_approach = self.request_pose(
+                    arguments["frame"],
+                    vertical_offset(
+                        arguments["source"], arguments["approach_dz_mm"]
+                    ),
+                )
+                source_retract = self.request_pose(
+                    arguments["frame"],
+                    vertical_offset(
+                        arguments["source"], arguments["retract_dz_mm"]
+                    ),
+                )
+                target_approach = self.request_pose(
+                    arguments["frame"],
+                    vertical_offset(
+                        arguments["target"], arguments["drop_approach_dz_mm"]
+                    ),
+                )
+                target_retract = self.request_pose(
+                    arguments["frame"],
+                    vertical_offset(
+                        arguments["target"], arguments["retract_dz_mm"]
+                    ),
+                )
+                gripper = arguments["gripper"]
+                self.run_pauseable(
+                    job,
+                    lambda: self.run_gripper(gripper["release_opening_percent"]),
                 )
                 self.run_pauseable(job, lambda: self.run_ptp_pose(source_approach))
                 self.run_pauseable(job, lambda: self.run_linear(source, True))
                 self.run_pauseable(
-                    job, lambda: self.run_gripper(gripper["grasp_opening_percent"])
+                    job,
+                    lambda: self.run_gripper(gripper["grasp_opening_percent"]),
                 )
-                self.publish_assembly_feedback(job_id, "PCB_PICKED")
+                self.publish_assembly_feedback(job["job_id"], "PCB_PICKED")
                 self.run_pauseable(job, lambda: self.run_linear(source_retract, True))
                 self.run_pauseable(job, lambda: self.run_ptp_pose(target_approach))
                 self.run_pauseable(job, lambda: self.run_linear(target, True))
                 self.run_pauseable(
-                    job, lambda: self.run_gripper(gripper["release_opening_percent"])
+                    job,
+                    lambda: self.run_gripper(gripper["release_opening_percent"]),
                 )
-                self.publish_assembly_feedback(job_id, "PCB_PLACED")
+                self.publish_assembly_feedback(job["job_id"], "PCB_PLACED")
                 self.run_pauseable(job, lambda: self.run_linear(target_retract, True))
-                self.wait_if_paused(job)
-            terminal_state = "COMPLETED"
-            error_code = ""
-            message = ""
+            else:
+                raise RuntimeError(f"unsupported robot action: {action}")
+            self.wait_if_paused(job)
         except Exception as error:
+            failure = error
             self.preview_publisher.publish(JointTrajectory())
-            error_code = "EXECUTION_FAILED"
-            message = str(error)[:512]
-            self.publish_status(f"error: assembled PCB transfer failed: {message}")
+            self.publish_status(f"error: {action} failed: {str(error)[:512]}")
         finally:
             try:
-                self.publish_assembly_feedback(
-                    job_id, terminal_state, error_code=error_code, message=message
-                )
+                self.publish_operation_result(job, operation, failure)
             finally:
-                self.active_assembly = None
+                if self.active_assembly is job:
+                    if failure is not None or action == "robot.transfer":
+                        self.active_assembly = None
+                    else:
+                        job["operation"] = None
 
     def listen(self):
         self.args.joints = INITIAL_JOINTS_DEG
@@ -1581,15 +1428,12 @@ class MockMoveJ(Node):
         while rclpy.ok():
             rclpy.spin_once(self, timeout_sec=0.1)
             job = self.active_assembly
-            phase = job["phase"] if job is not None else None
             if job is not None and job["pause_requested"]:
                 self.wait_if_paused(job)
                 continue
-            is_assembly = phase in {"assembling", "transferring"}
-            if phase == "assembling":
-                operation = lambda: self.run_assembly(job)
-            elif phase == "transferring":
-                operation = lambda: self.run_assembled_pcb_transfer(job)
+            is_assembly = job is not None and job["operation"] is not None
+            if is_assembly:
+                operation = lambda: self.run_operation(job)
             elif self.pending_joint_target is not None:
                 self.args.joints = self.pending_joint_target
                 self.pending_joint_target = None

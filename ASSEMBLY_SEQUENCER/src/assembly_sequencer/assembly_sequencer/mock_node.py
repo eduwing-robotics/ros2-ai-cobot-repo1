@@ -19,7 +19,7 @@ from .mock_contract import (
     RELAY_STATES,
     apply_relay_feedback,
     assembly_snapshot,
-    build_execution_command,
+    resolve_observations,
     choose_inspection,
     failed_feedback,
     load_recipe,
@@ -190,31 +190,7 @@ class MockAssemblySequencer(Node):
             self.conveyor_deadline = None
             active["transfer_requested"] = True
             active["assembled_pcb"] = command["assembled_pcb"]
-            try:
-                result, defects = choose_inspection(
-                    self.rng, self.fail_probability, active["slot_codes"]
-                )
-                self.db_writer.assembly_completed(active["unit_id"])
-                image_path = PASS_IMAGE_PATH if result == "PASS" else FAIL_IMAGE_PATH
-                self.db_writer.inspection_recorded(
-                    active["unit_id"], result, defects, image_path
-                )
-                active["inspection_result"] = result
-            except Exception as error:
-                self.fail_active("DB_ERROR", error)
-                return self.set_response(
-                    response, False, job_id, "DB_ERROR", str(error)
-                )
-
-            try:
-                await self.backend.transfer_assembled_pcb(
-                    job_id, active["assembled_pcb"]
-                )
-            except Exception as error:
-                self.fail_active("INTERNAL_ERROR", error)
-                return self.set_response(
-                    response, False, job_id, "INTERNAL_ERROR", str(error)
-                )
+            self.executor.create_task(self.run_transfer_workflow(active))
             return self.set_response(response, True, job_id)
 
         job_id = command["job_id"]
@@ -247,14 +223,27 @@ class MockAssemblySequencer(Node):
             )
 
         self.conveyor_deadline = None
-        active["state"] = "STARTED"
         try:
-            await self.backend.start(active["backend_command"])
+            await self.backend.start(
+                job_id, self.recipe_version, active["expected_step_count"]
+            )
         except Exception as error:
             self.fail_active("INTERNAL_ERROR", error, immediate=True)
             return self.set_response(
                 response, False, job_id, "INTERNAL_ERROR", str(error)
             )
+        active["state"] = "STARTED"
+        self.publish({
+            "job_id": job_id,
+            "state": "STARTED",
+            "step_order": 0,
+            "part_id": "",
+            "slot_code": "",
+            "error_code": "",
+            "message": "",
+            "db_sync_state": self.db_writer.sync_state,
+        })
+        self.executor.create_task(self.run_assembly_workflow(active))
         return self.set_response(response, True, job_id)
 
     def conveyor_failed(self, command, response):
@@ -314,7 +303,9 @@ class MockAssemblySequencer(Node):
                 response, False, job_id, "BUSY", "another Job is active"
             )
         try:
-            backend_command = build_execution_command(self.recipe, command)
+            resolved_steps = resolve_observations(
+                self.recipe, command["observations"]
+            )
         except ValueError as error:
             return self.set_response(
                 response, False, job_id, "INVALID_RECIPE", str(error)
@@ -337,7 +328,7 @@ class MockAssemblySequencer(Node):
                 "job_id": work["job_id"],
                 "unit_id": work["unit_id"],
                 "recipe_version": self.recipe_version,
-                "backend_command": backend_command,
+                "resolved_steps": resolved_steps,
                 "state": "CONVEYOR_MOVING",
                 "placed_count": 0,
                 "expected_step_count": len(self.recipe["steps"]),
@@ -367,6 +358,163 @@ class MockAssemblySequencer(Node):
             return self.set_response(
                 response, False, job_id, "INTERNAL_ERROR", str(error)
             )
+
+    async def run_assembly_workflow(self, active):
+        try:
+            for command in self.recipe["workflow"]["before_all"]:
+                action = next(iter(command.items()))
+                if action not in {
+                    ("conveyor.move_to", "ASSEMBLY"),
+                    ("vision.resolve_targets", "recipe_steps"),
+                }:
+                    raise RuntimeError(f"unknown preflight action: {command}")
+
+            motion = self.recipe["motion"]
+            frame = self.recipe["frame"]
+            joint_points = self.recipe["joint_points"]
+            for resolved in active["resolved_steps"]:
+                step = resolved["step"]
+                gripper = {
+                    "grasp_opening_percent": resolved[
+                        "gripper_grasp_opening_percent"
+                    ],
+                    "release_opening_percent": resolved[
+                        "gripper_release_opening_percent"
+                    ],
+                }
+                for command in self.recipe["workflow"]["per_step"]:
+                    action, argument = next(iter(command.items()))
+                    if action == "robot.move_joint":
+                        await self.backend.move_joint(
+                            active["job_id"], joint_points[argument]
+                        )
+                    elif (action, argument) == ("robot.pick", "current_part"):
+                        await self.backend.pick(
+                            active["job_id"], step, frame, resolved["source"],
+                            motion, gripper,
+                        )
+                    elif (action, argument) == ("robot.place", "current_slot"):
+                        await self.backend.place(
+                            active["job_id"], step, frame, resolved["target"],
+                            motion, gripper,
+                        )
+                    else:
+                        raise RuntimeError(f"unknown assembly action: {command}")
+
+            if self.active is not active:
+                return
+            active["state"] = "ASSEMBLY_COMPLETED"
+            self.arm_conveyor_timeout()
+            self.publish({
+                "job_id": active["job_id"],
+                "state": "ASSEMBLY_COMPLETED",
+                "step_order": 0,
+                "part_id": "",
+                "slot_code": "",
+                "error_code": "",
+                "message": "",
+                "db_sync_state": self.db_writer.sync_state,
+            })
+        except Exception as error:
+            if self.active is active:
+                self.fail_active("INTERNAL_ERROR", error)
+
+    async def run_transfer_workflow(self, active):
+        error_code = "INTERNAL_ERROR"
+        try:
+            for command in self.recipe["workflow"]["after_all"]:
+                action, argument = next(iter(command.items()))
+                if (action, argument) == ("conveyor.move_to", "INSPECTION"):
+                    continue
+                if (action, argument) == ("inspection.run", "assembled_pcb"):
+                    error_code = "DB_ERROR"
+                    result, defects = choose_inspection(
+                        self.rng, self.fail_probability, active["slot_codes"]
+                    )
+                    self.db_writer.assembly_completed(active["unit_id"])
+                    image_path = (
+                        PASS_IMAGE_PATH if result == "PASS" else FAIL_IMAGE_PATH
+                    )
+                    self.db_writer.inspection_recorded(
+                        active["unit_id"], result, defects, image_path
+                    )
+                    active["inspection_result"] = result
+                    error_code = "INTERNAL_ERROR"
+                    continue
+                if (action, argument) == ("robot.transfer", "assembled_pcb"):
+                    await self.backend.transfer_assembled_pcb(
+                        active["job_id"], self.recipe["frame"],
+                        active["assembled_pcb"], self.recipe["motion"],
+                        self.recipe["gripper"]["assembled_pcb"],
+                    )
+                    continue
+                raise RuntimeError(f"unknown final assembly action: {command}")
+
+            error_code = "DB_ERROR"
+            self.finish_active_unit(active)
+        except Exception as error:
+            if self.active is active:
+                self.fail_active(error_code, error)
+
+    def finish_active_unit(self, active):
+        if not self.db_writer.flush(5.0):
+            raise RuntimeError(
+                self.db_writer.last_error or "DB updates did not finish in time"
+            )
+        state = self.db_writer.get_job(active["job_id"])
+        if state["completed_quantity"] < state["requested_quantity"]:
+            work = self.db_writer.claim(
+                active["job_id"], PRODUCT_CODE, PRODUCT_VERSION,
+                self.recipe_version,
+            )
+            active.update({
+                "unit_id": work["unit_id"],
+                "state": "CONVEYOR_MOVING",
+                "placed_count": 0,
+                "held_step_order": 0,
+                "held_part_id": "",
+                "held_slot_code": "",
+                "transfer_requested": False,
+                "inspection_result": "",
+            })
+            self.arm_conveyor_timeout()
+            self.publish({
+                "job_id": active["job_id"],
+                "state": "CONVEYOR_MOVING",
+                "step_order": 0,
+                "part_id": "",
+                "slot_code": "",
+                "error_code": "",
+                "message": "",
+                "db_sync_state": self.db_writer.sync_state,
+            })
+            return
+
+        self.db_writer.finish(active["job_id"], "COMPLETED")
+        if not self.db_writer.flush(5.0):
+            raise RuntimeError(
+                self.db_writer.last_error or "Job completion did not finish in time"
+            )
+        payload = {
+            "job_id": active["job_id"],
+            "state": "COMPLETED",
+            "step_order": 0,
+            "part_id": "",
+            "slot_code": "",
+            "error_code": "",
+            "message": "",
+            "db_sync_state": self.db_writer.sync_state,
+        }
+        self.terminal_snapshot = assembly_snapshot(
+            active, "COMPLETED", db_sync_state=self.db_writer.sync_state
+        )
+        self.conveyor_deadline = None
+        self.active = None
+        self.publish(payload)
+        self.get_logger().info(
+            f"job {active['job_id']} completed with inspection "
+            f"{active['inspection_result']}"
+        )
 
     def fail_job(self, job_id, immediate=False):
         try:
@@ -433,11 +581,12 @@ class MockAssemblySequencer(Node):
             )
             return
 
+        if self.backend.accept_operation_feedback(payload):
+            return
+
         state = payload["state"]
-        if state in RELAY_STATES:
+        if state in RELAY_STATES and state != "ASSEMBLY_COMPLETED":
             apply_relay_feedback(active, payload)
-            if state == "ASSEMBLY_COMPLETED":
-                self.arm_conveyor_timeout()
             payload["db_sync_state"] = self.db_writer.sync_state
             self.publish(payload)
             return
@@ -449,67 +598,9 @@ class MockAssemblySequencer(Node):
             )
             return
 
-        if not active["transfer_requested"] or not active["inspection_result"]:
-            self.fail_active(
-                "INTERNAL_ERROR",
-                "backend completed before conveyor inspection and transfer request",
-            )
-            return
-
-        try:
-            if not self.db_writer.flush(5.0):
-                raise RuntimeError(
-                    self.db_writer.last_error or "DB updates did not finish in time"
-                )
-            state = self.db_writer.get_job(active["job_id"])
-            if state["completed_quantity"] < state["requested_quantity"]:
-                work = self.db_writer.claim(
-                    active["job_id"], PRODUCT_CODE, PRODUCT_VERSION,
-                    self.recipe_version,
-                )
-                active.update({
-                    "unit_id": work["unit_id"],
-                    "state": "CONVEYOR_MOVING",
-                    "placed_count": 0,
-                    "held_step_order": 0,
-                    "held_part_id": "",
-                    "held_slot_code": "",
-                    "transfer_requested": False,
-                    "inspection_result": "",
-                })
-                self.arm_conveyor_timeout()
-                self.publish({
-                    "job_id": active["job_id"],
-                    "state": "CONVEYOR_MOVING",
-                    "step_order": 0,
-                    "part_id": "",
-                    "slot_code": "",
-                    "error_code": "",
-                    "message": "",
-                    "db_sync_state": self.db_writer.sync_state,
-                })
-                return
-            self.db_writer.finish(active["job_id"], "COMPLETED")
-            if not self.db_writer.flush(5.0):
-                raise RuntimeError(
-                    self.db_writer.last_error or "Job completion did not finish in time"
-                )
-        except Exception as error:
-            self.fail_active("DB_ERROR", error)
-            return
-
-        payload["db_sync_state"] = self.db_writer.sync_state
-        self.terminal_snapshot = assembly_snapshot(
-            active,
-            "COMPLETED",
-            db_sync_state=self.db_writer.sync_state,
-        )
-        self.conveyor_deadline = None
-        self.active = None
-        self.publish(payload)
-        self.get_logger().info(
-            f"job {active['job_id']} completed with inspection "
-            f"{active['inspection_result']}"
+        self.fail_active(
+            "INTERNAL_ERROR",
+            "backend reported completion without a matching operation",
         )
 
     def arm_conveyor_timeout(self):

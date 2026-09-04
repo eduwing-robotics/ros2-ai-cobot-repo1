@@ -271,24 +271,6 @@ def resolve_observations(recipe, observations):
     return resolved
 
 
-def build_execution_command(recipe, command):
-    return {
-        "command": "start",
-        "job_id": command["job_id"],
-        "recipe_version": recipe["recipe_version"],
-        "execution_plan": {
-            "frame": recipe["frame"],
-            "joint_points": recipe["joint_points"],
-            "motion": recipe["motion"],
-            "workflow": recipe["workflow"],
-            "resolved_steps": resolve_observations(
-                recipe, command["observations"]
-            ),
-            "assembled_pcb_gripper": recipe["gripper"]["assembled_pcb"],
-        },
-    }
-
-
 def parse_command(raw, expected_recipe_version):
     try:
         command = json.loads(raw)
@@ -313,8 +295,19 @@ def parse_command(raw, expected_recipe_version):
     elif command_name == "transfer_assembled_pcb":
         if set(command) != {"command", "job_id", "assembled_pcb"}:
             raise ValueError("command, job_id and assembled_pcb are required")
-        if not isinstance(command["assembled_pcb"], dict):
-            raise ValueError("assembled_pcb must be an object")
+        assembled_pcb = command["assembled_pcb"]
+        if not isinstance(assembled_pcb, dict) or set(assembled_pcb) != {
+            "source", "target"
+        }:
+            raise ValueError("assembled_pcb must contain source and target")
+        command["assembled_pcb"] = {
+            "source": validate_ros_pose(
+                assembled_pcb["source"], "assembled_pcb.source"
+            ),
+            "target": validate_ros_pose(
+                assembled_pcb["target"], "assembled_pcb.target"
+            ),
+        }
         command_type = "transfer_assembled_pcb"
     else:
         if set(command) != {
@@ -374,6 +367,11 @@ def parse_feedback(raw):
         raise ValueError("feedback job_id must be a UUID string") from error
     if payload["state"] not in FEEDBACK_STATES:
         raise ValueError(f"unknown feedback state: {payload['state']}")
+    if "operation_id" in payload:
+        try:
+            payload["operation_id"] = str(uuid.UUID(payload["operation_id"]))
+        except (TypeError, ValueError, AttributeError) as error:
+            raise ValueError("feedback operation_id must be a UUID string") from error
     if (isinstance(payload["step_order"], bool)
             or not isinstance(payload["step_order"], int)
             or payload["step_order"] < 0):
@@ -504,8 +502,8 @@ def self_check(recipe=None):
     parsed = parse_command(command, recipe_version)
     assert parsed[0] == "observations" and parsed[1]["job_id"] == job_id
     if recipe is not None:
-        execution = build_execution_command(recipe, parsed[1])
-        assert len(execution["execution_plan"]["resolved_steps"]) == len(steps)
+        resolved = resolve_observations(recipe, parsed[1]["observations"])
+        assert len(resolved) == len(steps)
     assert parse_command(json.dumps({
         "command": "conveyor_arrived", "job_id": job_id,
     }), recipe_version)[0] == "conveyor_arrived"
@@ -515,7 +513,7 @@ def self_check(recipe=None):
     assert parse_command(json.dumps({
         "command": "transfer_assembled_pcb",
         "job_id": job_id,
-        "assembled_pcb": {},
+        "assembled_pcb": {"source": pose, "target": pose},
     }), recipe_version)[0] == "transfer_assembled_pcb"
     assert parse_command('{"command":"status"}', recipe_version)[0] == "status"
     assert parse_command(json.dumps({
