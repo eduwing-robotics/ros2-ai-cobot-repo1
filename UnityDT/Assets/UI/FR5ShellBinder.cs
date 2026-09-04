@@ -40,6 +40,7 @@ namespace MainUnity.UI
             linkApiDot, linkSequencerDot, alarmBanner;
         VisualElement pageRoot;
         Button modeMockButton, modeRealButton, stopAllButton, viewFocusButton;
+        VisualElement viewFocusRule;
         Label robotText, linkJointAge, linkImageAge, linkApiLabel, linkSequencerLabel,
             alarmLabel, alarmDetail;
         Coroutine servicePolling;
@@ -100,6 +101,7 @@ namespace MainUnity.UI
             alarmLabel = root.Q<Label>("alarm-label");
             alarmDetail = root.Q<Label>("alarm-detail");
             viewFocusButton = root.Q<Button>("view-focus");
+            viewFocusRule = root.Q<VisualElement>("view-focus-rule");
             pageRoot = root.Q<VisualElement>(className: "page");
             hasAuxPanels = pageRoot != null && pageRoot.Q<VisualElement>(className: "panel--aux") != null;
 
@@ -142,8 +144,12 @@ namespace MainUnity.UI
         {
             // 접을 것이 없는 화면(검사 · 품질 · 요청)에서는 버튼 자체를 숨긴다.
             // 눌러도 아무 일도 없는 버튼은 고장으로 보인다.
-            if (viewFocusButton != null)
-                viewFocusButton.style.display = hasAuxPanels ? DisplayStyle.Flex : DisplayStyle.None;
+            // 위의 구분선도 같이 숨긴다. 그 선은 이 버튼을 페이지 탭 무리에서 떼어
+            // 놓으려고 긋는 것이라, 버튼이 없으면 뗄 것이 없다. 남겨 두면 레일 맨
+            // 아래에 아무것도 나누지 않는 선 하나가 화면 끝에 붙어 떠 있다.
+            DisplayStyle focusDisplay = hasAuxPanels ? DisplayStyle.Flex : DisplayStyle.None;
+            if (viewFocusButton != null) viewFocusButton.style.display = focusDisplay;
+            if (viewFocusRule != null) viewFocusRule.style.display = focusDisplay;
 
             bool on = focusMode && hasAuxPanels;
             pageRoot?.EnableInClassList("page--focus", on);

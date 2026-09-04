@@ -133,7 +133,12 @@
               눌러도 아무 일도 없는 버튼은 고장으로 보인다.
             -->
             <ui:VisualElement class="spacer" />
-            <ui:VisualElement style="width:44px; height:1px; background-color:rgba(255,255,255,0.09);" />
+            <!--
+              이 선은 아래 TWIN 버튼을 떼어 놓으려고 긋는다. 그래서 버튼이 숨는
+              화면(검사 · 작업)에서는 같이 숨어야 한다. 이름이 없어 바인더가 잡지
+              못하던 동안, 뗄 것이 없는 선 하나가 레일 맨 아래에 홀로 남아 있었다.
+            -->
+            <ui:VisualElement name="view-focus-rule" style="width:44px; height:1px; background-color:rgba(255,255,255,0.09);" />
             <ui:Button name="view-focus" class="tab" style="width:88px; height:96px; align-items:center; margin:0; margin-top:14px; margin-bottom:22px;">
                 <ui:VisualElement class="tab__icon" style="background-image:url(&quot;project://database/Assets/UI/Icons/view-twin.png&quot;);" />
                 <ui:Label text="TWIN" class="tab__text" /><ui:Label text="집중" class="micro" />

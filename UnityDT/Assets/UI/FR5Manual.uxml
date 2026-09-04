@@ -65,8 +65,9 @@
 
         <!-- 중앙은 투명하게 남겨 실제 Twin과 Ghost target을 가리지 않는다. -->
         <ui:VisualElement picking-mode="Ignore" style="position:absolute; left:588px; top:226px; width:524px; height:806px; border-width:1px; border-color:rgba(255,255,255,0.16);">
-            <ui:Label text="ROBOT VIEW · TWIN" class="panel__title" style="position:absolute; left:18px; top:14px;" />
-            <ui:Label text="ACTUAL / GHOST TARGET" class="page-heading__meta" style="position:absolute; right:18px; bottom:14px;" />
+            <!-- 여기는 창 안이 통째로 3D 다. 두 이름표는 on-twin 으로 자기 바탕을 갖는다. -->
+            <ui:Label text="ROBOT VIEW · TWIN" class="panel__title on-twin" style="position:absolute; left:18px; top:14px;" />
+            <ui:Label text="ACTUAL / GHOST TARGET" class="page-heading__meta on-twin" style="position:absolute; right:18px; bottom:14px;" />
         </ui:VisualElement>
 
         <!-- 우 : 관절 조그 -->

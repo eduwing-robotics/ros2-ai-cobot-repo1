@@ -88,16 +88,104 @@
     font-size: var(--fs-body);
 }
 
-/* 공통 알람 띠(64..108) 아래의 페이지 제목. 콘텐츠는 164부터 시작한다. */
+/*
+  기본 런타임 테마가 라벨에 씌운 상자를 지운다.
+
+  UnityDefaultRuntimeTheme 의 .unity-label 은 margin L2/T4/R4/B2 · padding
+  L1/T4/R2/B4 를 갖는다. 네 값이 축마다 다르다 — 글자 왼쪽에 3px, 오른쪽에 6px,
+  위에 8px, 아래에 6px 이 붙는다. align-items:center 는 글자가 아니라 이 여백까지
+  포함한 상자를 가운데 놓으므로, 화면의 모든 라벨이 오른쪽 아래로 밀려 있었다.
+  실측으로 가운데 정렬을 선언한 컨테이너 97곳이 어긋나 있었고, 그중 페이지 제목은
+  국문이 영문보다 6px 아래에 놓여 36px 띠 밖으로 4px 삐져나갔다.
+
+  이 파일 머리의 "px 가 목업과 1:1 이다" 는 이 상자가 남아 있는 한 성립하지 않는다.
+
+  타입 선택자(Label)가 아니라 클래스 선택자여야 한다 — 기본 테마의 규칙이 (0,1,0)
+  이라 (0,0,1)인 타입 선택자로는 이기지 못한다. 같은 특이성일 때는 뒤에 적용된
+  시트가 이기고, 이 시트는 페이지가 <ui:Style> 로 직접 붙이므로 항상 뒤에 온다.
+
+  이 규칙은 반드시 다른 클래스 규칙보다 "앞"에 있어야 한다.
+  라벨에 거는 클래스 규칙도 특이성이 똑같은 (0,1,0) 이라, 이것이 뒤에 있으면 같은
+  시트 안에서 순서로 이겨 버린다. 실제로 파일 중간에 있던 동안 이 아래에 적힌
+  .page-heading__divider 의 margin-left/right:10px 이 통째로 0 이 되어, 페이지 제목의
+  구분선 "/" 가 영문과 국문 사이에 여백 없이 끼어 "INSPECT/검사" 로 붙어 있었다.
+  (font-size · color 는 .unity-label 이 건드리지 않아 살아남았고, 그래서 여백만
+  조용히 사라져 원인이 보이지 않았다.)
+
+  글자 크기·색은 건드리지 않는다. 그래서 위 주석이 경계하는 특이성 충돌이 없다.
+*/
+.unity-label { margin: 0; padding: 0; }
+
+/*
+  스크롤 막대도 기본 런타임 테마를 덮는다.
+
+  기본값은 손잡이가 rgb(231,231,231) 이다. 이 화면에서 가장 밝게 쓰는 글자색이
+  rgb(226,236,241) 이므로, 아무 뜻도 없는 막대가 화면에서 가장 밝은 것이 된다.
+  액센트를 "지금 여기" 하나에만 쓰기로 한 규칙과 같은 이유로 밝기도 아껴야 한다.
+  위아래 화살표 단추는 지운다 — 끌거나 굴려서 움직이는 것이고, 한 칸씩 누르는
+  단추는 4K 에서 손가락보다 작다.
+*/
+.unity-scroller { background-color: rgba(0, 0, 0, 0); border-width: 0; }
+.unity-scroller__low-button, .unity-scroller__high-button { display: none; }
+/* background-image 도 같이 지운다. 기본 테마는 손잡이를 스프라이트로 그리므로,
+   background-color 만 바꾸면 그 그림이 위에 얹혀 색이 그대로 밝게 남는다. */
+.unity-scroller .unity-base-slider__tracker {
+    background-image: none;
+    background-color: rgb(22, 28, 34);
+    border-width: 0;
+    border-radius: 0;
+}
+.unity-scroller .unity-base-slider__dragger,
+.unity-scroller .unity-base-slider__dragger-border {
+    background-image: none;
+    background-color: rgb(58, 68, 78);
+    border-width: 0;
+    border-radius: 3px;
+}
+.unity-scroller .unity-base-slider__dragger:hover { background-color: rgb(84, 96, 108); }
+
+/*
+  공통 알람 띠(64..108) 아래의 페이지 제목. 콘텐츠는 164부터 시작한다.
+
+  제목 띠는 자기 바탕을 갖는다.
+
+  이 띠는 패널이 아니라 3D 트윈 위에 바로 얹힌다. 배경이 변수라 대비가 상수가 되지
+  않는다 — 실측으로 JOBS 의 "작업 현황"이 밝은 작업대 띠(222,215,212) 위에 놓여
+  1.18:1 이었고 MANUAL 의 "PREVIEW ONLY · DB 비기록 · 실동작 차단"이 2.05:1 이었다.
+  둘 다 이 파일 머리의 첫 번째 원칙(대비를 배경에 맡기지 않는다)을 어긴 자리다.
+  page--dim 으로는 못 고친다. MANUAL 은 가운데 창으로 트윈을 봐야 하는 화면이라
+  화면 전체를 눌러 버리면 화면의 목적이 사라진다.
+
+  바탕은 패널과 같은 --c-panel 이다. 새 색을 들이지 않으므로 새 층으로 읽히지 않고
+  아래 패널들과 같은 계기 표면으로 읽힌다. 좌우로 16px 씩 흘려 내고 그만큼 안쪽
+  여백을 주어, 글자는 아래 패널과 같은 112 · 1896 격자에 그대로 선다.
+*/
 .page-heading {
     position: absolute;
-    left: 112px; top: 116px; right: 24px; height: 36px;
+    left: 96px; top: 112px; right: 8px; height: 44px;
     flex-direction: row;
     align-items: center;
+    background-color: var(--c-panel);
+    padding-left: 16px; padding-right: 16px;
 }
 .page-heading__title { color: var(--c-ink); font-size: 22px; letter-spacing: 0.8px; -unity-font-style: bold; }
 .page-heading__divider { color: var(--c-ink-4); font-size: 18px; margin-left: 10px; margin-right: 10px; }
 .page-heading__meta { color: var(--c-ink-3); font-size: 12px; letter-spacing: 1.2px; }
+
+/*
+  트윈 위에 바로 얹히는 글자.
+
+  칸 이름표(.run-cam-tile__title)와 같은 처리를 3D 위 라벨에도 준다. 패널 밖에 있는
+  글자는 배경이 셀 렌더라 프레임마다 밝기가 바뀐다 — RUN 의 "SIM · joint_states" 와
+  MANUAL 의 "ACTUAL / GHOST TARGET" 이 밝은 바닥 위에서 실제로 씻겨 나갔다.
+  알파 0.85 는 셀에서 가장 밝은 면(222,215,212) 위에 합성해도 ink-3 기준 4.9:1 이
+  남는 값이다. 완전 불투명으로 두지 않는 이유는 이 글자들이 트윈을 가리는 자리라서다.
+*/
+.on-twin {
+    background-color: rgba(3, 6, 9, 0.85);
+    padding-left: 8px; padding-right: 8px;
+    padding-top: 3px; padding-bottom: 3px;
+}
 
 /*
   조회 화면(INSPECT · QUALITY)의 배경 스크림.
@@ -195,27 +283,6 @@
   기본값은 상속되는 .page 에 걸어 클래스 규칙이 항상 이기게 한다.
 */
 
-/*
-  기본 런타임 테마가 라벨에 씌운 상자를 지운다.
-
-  UnityDefaultRuntimeTheme 의 .unity-label 은 margin L2/T4/R4/B2 · padding
-  L1/T4/R2/B4 를 갖는다. 네 값이 축마다 다르다 — 글자 왼쪽에 3px, 오른쪽에 6px,
-  위에 8px, 아래에 6px 이 붙는다. align-items:center 는 글자가 아니라 이 여백까지
-  포함한 상자를 가운데 놓으므로, 화면의 모든 라벨이 오른쪽 아래로 밀려 있었다.
-  실측으로 가운데 정렬을 선언한 컨테이너 97곳이 어긋나 있었고, 그중 페이지 제목은
-  국문이 영문보다 6px 아래에 놓여 36px 띠 밖으로 4px 삐져나갔다.
-
-  이 파일 머리의 "px 가 목업과 1:1 이다" 는 이 상자가 남아 있는 한 성립하지 않는다.
-  여백이 필요한 자리는 이미 전부 명시 margin 을 적고 있으므로 여기서는 0 으로 둔다.
-
-  타입 선택자(Label)가 아니라 클래스 선택자여야 한다 — 기본 테마의 규칙이 (0,1,0)
-  이라 (0,0,1)인 타입 선택자로는 이기지 못한다. 같은 특이성일 때는 뒤에 적용된
-  시트가 이기고, 이 시트는 페이지가 <ui:Style> 로 직접 붙이므로 항상 뒤에 온다.
-
-  글자 크기·색은 건드리지 않는다. 그래서 위 주석이 경계하는 특이성 충돌이 없다.
-*/
-.unity-label { margin: 0; padding: 0; }
-
 .micro { color: var(--c-ink-3); font-size: var(--fs-micro); letter-spacing: 1.2px; -unity-font-style: bold; }
 .muted { color: var(--c-ink-3); font-size: 13px; }
 .value { color: var(--c-ink); font-size: var(--fs-value); -unity-font-style: bold; }
@@ -298,7 +365,17 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
 
 /* 밑줄 탭 */
 /* margin-right 는 지웠다 — 가로 탭 시절 값이라 세로 레일에서는 탭을 14px 왼쪽으로 밀 뿐이다. */
-.tab { background-color: rgba(0, 0, 0, 0); border-width: 0; padding: 0; margin: 0; align-items: flex-start; transition-property: background-color; transition-duration: 120ms; }
+/*
+  align-items · justify-content 를 둘 다 center 로 둔다.
+
+  이 탭은 세로 레일 항목이라 주축이 세로다. 그래서 align-items(가로)만 맞추면
+  가로만 가운데로 가고, 아이콘 · 영문 · 국문 세 줄(합 56px)이 96px 상자의 위쪽에
+  붙은 채 아래로 40px 이 빈다. 활성 탭은 테두리가 그려지므로 그 빈 곳이 그대로
+  보였다 — 아이콘과 글자가 상자 위쪽으로 쏠린 것으로 읽힌다.
+  높이 96 은 그대로 둔다. 남는 40px 을 위아래 20px 씩 나눠 가지면 그게 항목 사이
+  간격이 된다 (레일에는 따로 margin 이 없다).
+*/
+.tab { background-color: rgba(0, 0, 0, 0); border-width: 0; padding: 0; margin: 0; align-items: center; justify-content: center; transition-property: background-color; transition-duration: 120ms; }
 #navrail .tab:hover { background-color: rgba(255, 255, 255, 0.05); }
 #navrail .tab:active { background-color: rgba(255, 255, 255, 0.09); }
 #navrail .tab--on { border-width: 1px; border-color: var(--c-accent); border-radius: 6px; background-color: var(--c-accent-wash); }
@@ -455,10 +532,17 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
   칸은 넘치면 잘린다. 기본값이면 Label 이 제 너비를 넘어 옆 칸 위로 그려져서 두 칸의
   글자가 겹친다 (PART DEFECT RATE 의 부품명 · 유형이 실제로 이 상태였다).
   겹친 글자는 둘 다 못 읽지만, 잘린 글자는 잘렸다는 것이 보인다.
+
+  칸 폭에는 홈통이 들어 있다. 칸 사이에 세로줄을 두지 않기로 했으므로 칸을 가르는
+  것은 여백뿐인데, 그 여백이 0 이면 앞 칸의 끝과 뒷 칸의 시작이 그대로 맞닿는다.
+  실제로 머리줄이 "PASS / TARGETRESULT" 로, 본문이 "0 / 1실행 실패 1" 로 붙어
+  한 낱말처럼 읽혔다 — 오른쪽 맞춤(.tcell--num)이라 더 심했다.
+  폭은 UI Toolkit 의 border-box 라 padding 을 넣어도 격자가 밀리지 않는다.
 */
 .tcell {
     color: var(--c-ink-2);
     font-size: 14px;
+    padding-right: 14px;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -662,12 +746,23 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
     padding: 12px;
 }
 .run-cam-panel .run-cam { flex-grow: 1; height: auto; }
-/* 소스 전환과 확대는 영상 위에 얹힌다. 자기 바탕을 갖는 칩이라 밝은 프레임에서도 읽힌다. */
+/*
+  소스 전환과 확대는 영상 위에 얹힌다.
+
+  칩 하나하나가 자기 바탕을 갖는다고 봤지만 그 바탕은 rgba(255,255,255,0.04) 라
+  사실상 투명이다. 컨베이어처럼 밝은 프레임이 들어오면 칩 글자(BOARD)도, 바탕이
+  아예 없는 띠 제목(관측)과 수신 배지(1 / 1 · SIM)도 같이 씻겨 나갔다.
+  칸 이름표(.run-cam-tile__title)가 이미 쓰는 방법을 띠 전체에 그대로 쓴다 —
+  글자마다가 아니라 띠가 자기 바탕을 갖는다. 대비가 영상 밝기에 의존하지 않는다.
+*/
 .run-cam__bar {
     position: absolute;
     left: 8px; right: 8px; bottom: 8px;
     flex-direction: row;
     align-items: center;
+    background-color: rgba(3, 6, 9, 0.82);
+    padding-left: 10px; padding-right: 10px;
+    padding-top: 6px; padding-bottom: 6px;
 }
 
 /*
@@ -722,10 +817,17 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
 }
 
 /* 계기 띠의 열. 절대 배치라 열 하나가 접혀도 나머지가 밀리지 않는다. */
+/*
+  overflow 는 hidden 이다. 열은 폭이 고정인데 안에 들어가는 것은 실측값이라
+  자릿수가 늘어난다. 기본값(visible)이면 넘친 글자가 옆 열의 규칙선을 넘어가
+  이웃 값 위에 겹쳐 그려진다 — 두 열의 값이 한 덩어리로 읽혀 어느 쪽 수인지
+  알 수 없게 된다. 잘리면 잘린 것이 보이므로 고칠 수 있다.
+*/
 .run-col {
     position: absolute;
     top: 22px; bottom: 20px;
     padding-left: 22px; padding-right: 22px;
+    overflow: hidden;
 }
 .run-col--rule { border-left-width: 1px; border-left-color: rgba(255, 255, 255, 0.09); }
 

@@ -35,8 +35,9 @@
           이름표만 얹고 아무것도 덮지 않는다.
         -->
         <ui:VisualElement name="twin-pane" class="run-pane run-pane--twin" picking-mode="Ignore">
-            <ui:Label text="기준 — 트윈이 계산한 제자리" class="run-pane__title" />
-            <ui:Label name="twin-source" text="—" class="run-pane__source" />
+            <!-- 패널이 아니라 3D 위에 바로 얹히는 글자다. on-twin 이 바탕을 준다. -->
+            <ui:Label text="기준 — 트윈이 계산한 제자리" class="run-pane__title on-twin" />
+            <ui:Label name="twin-source" text="—" class="run-pane__source on-twin" />
         </ui:VisualElement>
 
         <!-- ==================== 우 · 관측 (카메라) ====================
@@ -139,7 +140,12 @@
                 <ui:VisualElement class="run-sect">
                     <ui:Label text="GRIPPER" class="run-sect__title" />
                     <ui:VisualElement class="spacer" />
-                    <ui:Label text="mm · 30초" class="run-sect__unit" />
+                    <!--
+                      단위는 mm 가 아니라 % 다. 바인더가 넣는 값도, 아래 추세선이 그리는
+                      값도 TryGetOpeningPercent 의 열림 백분율이다. mm 라고 적어 두면
+                      "40" 을 40mm 로 읽는다 — 없는 값이 아니라 틀린 단위라 더 나쁘다.
+                    -->
+                    <ui:Label text="열림 % · 30초" class="run-sect__unit" />
                 </ui:VisualElement>
                 <ui:VisualElement class="row">
                     <ui:VisualElement name="gripper-state-chip" class="chip"><ui:Label name="gripper-state-text" text="—" class="chip__text" /></ui:VisualElement>

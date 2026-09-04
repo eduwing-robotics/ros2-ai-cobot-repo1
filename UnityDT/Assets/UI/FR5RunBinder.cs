@@ -27,7 +27,10 @@ namespace MainUnity.UI
         const int JointCount = 6;
 
         // 진행 칸 치수 — FR5Theme.uss 의 .cell 과 맞춘다
-        const int CellWidth = 15, CellGap = 4, MinHeadWidth = 96;
+        // MinHeadWidth 는 이름과 개수가 맞닿지 않을 만큼만이다. 이름(최대 4자 · 11px 굵게)
+        // 34 + 홈통 10 + 개수 두 자리 14 = 58. 96 이던 동안, 칸이 한둘뿐인 묶음(GPU 1 ·
+        // IND 2)에서 개수가 제 칸에서 80px 떨어진 허공에 떠 어느 묶음의 수인지 흐려졌다.
+        const int CellWidth = 15, CellGap = 4, MinHeadWidth = 60;
         static readonly float[] LimitLow  = { -175f, -265f, -162f, -265f, -175f, -175f };
         static readonly float[] LimitHigh = {  175f,   85f,  162f,   85f,  175f,  175f };
 
@@ -37,7 +40,7 @@ namespace MainUnity.UI
         [SerializeField] GripperSubscriber gripper;
         [SerializeField] CamVisionReceiver vision;
 
-        [SerializeField] float gripperStrokeMillimeters = 40f;
+        // 그리퍼 스트로크(mm)는 여기 없다. RUN 은 열림 백분율만 적는다 — 위 RefreshGripper 참고.
         [SerializeField] float watchdogLimitMilliseconds = 50f;
 
         [Header("카메라")]
@@ -478,8 +481,13 @@ namespace MainUnity.UI
             v.style.color = new Color(0.886f, 0.925f, 0.945f);
             v.style.fontSize = 17;
             v.style.unityFontStyleAndWeight = FontStyle.Bold;
-            // 계기 띠의 TCP 열은 245px 다. 키 22 + 값 95 를 두 벌 놓으면 234 로 들어간다.
-            v.style.width = 95;
+            // 계기 띠의 TCP 열은 246px 다. (키 22 + 값 88 + 홈통 10) 두 벌이면 240 으로 들어간다.
+            //
+            // 홈통이 있어야 한다. 값은 오른쪽 맞춤이라 제 상자의 오른쪽 끝까지 차는데,
+            // 그 바로 옆이 다음 벌의 키다. 0 이면 "-528.0" 과 "R" 이 맞닿아 "-528.0R" 로
+            // 읽힌다 — R 이 값의 단위처럼 보인다. 실제로 그 상태였다.
+            v.style.width = 88;
+            v.style.marginRight = 10;
             v.style.unityTextAlign = TextAnchor.MiddleRight;
             return v;
         }
@@ -928,7 +936,11 @@ namespace MainUnity.UI
                 gripperChip?.EnableInClassList("chip--accent", false);
                 return;
             }
-            if (gripperValue != null) gripperValue.text = $"{percent:0.0} / 100 %";
+            // "100.0 / 100 %" 는 22px 굵은 글자로 145px 이다. 칩(HOLDING · 79px)과 나란히
+            // 놓이면 열의 내용 폭 166px 을 60px 넘겨 옆 열(SLOT MAP) 위로 흘렀다.
+            // 소수점도 지운다 — Real 은 폭 피드백이 없어 이 값 자체가 추정치다(위 TODO).
+            // 단위와 눈금(%)은 섹션 머리의 "열림 % · 30초" 가 이미 말한다.
+            if (gripperValue != null) gripperValue.text = $"{percent:0} %";
             if (gripperFill != null) gripperFill.style.width = Length.Percent(percent);
             bool holding = percent < 95f;
             if (gripperText != null) gripperText.text = holding ? "HOLDING" : "OPEN";
