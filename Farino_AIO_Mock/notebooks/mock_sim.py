@@ -1637,8 +1637,8 @@ def parse_args(argv=None):
         metavar=("X", "Y", "Z", "RX", "RY", "RZ"),
         help="target pose in mm/degrees (AIO CARTPoint-like; MoveIt solves IK)",
     )
-    parser.add_argument("--velocity", type=float, default=10.0, choices=range(1, 101))
-    parser.add_argument("--acceleration", type=float, default=10.0, choices=range(1, 101))
+    parser.add_argument("--velocity", type=float, default=100.0, choices=range(1, 101))
+    parser.add_argument("--acceleration", type=float, default=100.0, choices=range(1, 101))
     parser.add_argument("--frame", default="base_link")
     parser.add_argument("--tip", default="wrist3_link")
     parser.add_argument(

@@ -82,6 +82,8 @@ namespace MainUnity.Runtime.Camera
         readonly Dictionary<string, GameObject> instancesById =
             new Dictionary<string, GameObject>(StringComparer.Ordinal);
 
+        List<PartPose> latestPoses;
+
         ROSConnection connection;
         bool hasSequence;
         long lastSequence;
@@ -125,6 +127,8 @@ namespace MainUnity.Runtime.Camera
                 Reject(error);
                 return;
             }
+
+            latestPoses = poses;
 
             Apply(poses);
             lastRejectedReason = null;
@@ -241,6 +245,23 @@ namespace MainUnity.Runtime.Camera
                 instancesById.Remove(id);
             }
         }
+
+        [ContextMenu("Recreate Parts From Latest Calibration")]
+        void RecreatePartsFromLatestCalibration()
+        {
+            if (!Application.isPlaying || latestPoses == null)
+            {
+                Debug.LogWarning("[TrayPartCalibrator] Enter Play Mode and wait for a valid tray state first.", this);
+                return;
+            }
+
+            foreach (GameObject instance in instancesById.Values)
+                if (instance != null) Destroy(instance);
+
+            instancesById.Clear();
+            Apply(latestPoses);
+        }
+
 
         void Reject(string reason)
         {

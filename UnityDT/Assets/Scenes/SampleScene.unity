@@ -6506,7 +6506,6 @@ MonoBehaviour:
   statusManager: {fileID: 0}
   gripper: {fileID: 0}
   vision: {fileID: 0}
-  gripperStrokeMillimeters: 40
   watchdogLimitMilliseconds: 50
   robotCamTexture: {fileID: 8400000, guid: a26f561b26137c9c5b3c8519dcab2141, type: 2}
   boardCamTexture: {fileID: 8400000, guid: 1ce422e539c2cd341aaba5e8f875f4e1, type: 2}
@@ -11803,6 +11802,7 @@ GameObject:
   - component: {fileID: 2494761539128691211}
   - component: {fileID: 2494761539128691212}
   - component: {fileID: 2494761539128691214}
+  - component: {fileID: 2494761539128691215}
   m_Layer: 0
   m_Name: RealMaster
   m_TagString: Untagged
@@ -16777,6 +16777,45 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Robot.Real.RealFairinoSdkGhostSolver
   targetTopic: /real/ghost/target
   expectedFrame: base_link
+--- !u!114 &2494761539128691215
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1511203712}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a9a11d3266e66b2c0bb68744006e7feb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Camera.TrayPartCalibrator
+  baseLink: {fileID: 826296742}
+  spawnRoot: {fileID: 1750376582}
+  prefabBindings:
+  - partType: black_block
+    prefab: {fileID: 880013710708550524, guid: d1ad54ab2114e0537a87ac37a3b53986, type: 3}
+    positionOffsetMeters: {x: 0, y: 0, z: 0}
+    rotationOffsetDegrees: {x: 0, y: 0, z: 0}
+  - partType: long_orange
+    prefab: {fileID: 2481118467719779576, guid: 5fb53a25790e667ffb3006a48c892b77, type: 3}
+    positionOffsetMeters: {x: 0, y: 0, z: 0}
+    rotationOffsetDegrees: {x: 0, y: 0, z: 0}
+  - partType: marked_white
+    prefab: {fileID: 8593175927546987370, guid: f08c37a31d450c8bd9f9b2b0c3143bdc, type: 3}
+    positionOffsetMeters: {x: 0, y: 0, z: 0}
+    rotationOffsetDegrees: {x: 0, y: 0, z: 0}
+  - partType: right_white_brown
+    prefab: {fileID: 4248144562027315125, guid: 328c70df77feb320f8505817f78f8762, type: 3}
+    positionOffsetMeters: {x: 0, y: 0, z: 0}
+    rotationOffsetDegrees: {x: 0, y: 0, z: 0}
+  - partType: gpu
+    prefab: {fileID: 6881181155537550428, guid: e6ebcc59cf48a223ea7239c194c3df1b, type: 3}
+    positionOffsetMeters: {x: 0, y: 0, z: 0}
+    rotationOffsetDegrees: {x: 0, y: 0, z: 0}
+  - partType: hbm
+    prefab: {fileID: 6478608505498874412, guid: f371a37106546ef7c835ca26ec25ddd2, type: 3}
+    positionOffsetMeters: {x: 0, y: 0, z: 0}
+    rotationOffsetDegrees: {x: 0, y: 0, z: 0}
 --- !u!114 &3495106124279137601
 MonoBehaviour:
   m_ObjectHideFlags: 0
