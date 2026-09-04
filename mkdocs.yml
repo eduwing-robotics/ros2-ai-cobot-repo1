@@ -7,7 +7,7 @@ site_dir: /tmp/main-unity-mkdocs-site
 nav:
   - 프로젝트 개요: index.md
   - 시스템 아키텍처: architecture/index.md
-  - 계층 간 통합 계약: API.md
+  - 공개 API 목록: API.md
 
 theme:
   name: material

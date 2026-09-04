@@ -1,66 +1,54 @@
-# MainServer API Contract
+# MainServer HTTP API
 
-This document is the **single API registry** for MainServer. Update it in the
-same change as `server.py`. `test_server.py` compares this registry, route
-order, and duplicate `(Method, Path)` pairs; do not create a route until its
-method/path is absent from the table.
-
-```bash
-MAIN_SERVER_MODE=mock MAIN_SERVER_DB_DSN='dbname=main_unity_mock_test' python3 MAIN_SERVER/test_server.py
-```
+이 문서는 `server.py`가 구현한 public HTTP API의 단일 registry입니다. Route를 변경할 때 코드와 이 문서를 같은 변경에서 갱신합니다. `test_server.py`는 method·path 순서와 중복을 검사합니다.
 
 ## Registry
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| `GET` | `/api/v1/health` | Check DB connectivity and server time |
-| `GET` | `/api/v1/products` | List products and buildable quantity |
-| `GET` | `/api/v1/products/{product_id}` | Get product and slot/part composition |
-| `GET` | `/api/v1/products/{product_id}/requirements?quantity={quantity}` | Get required parts, stock, and shortage |
-| `GET` | `/api/v1/parts/{part_id}` | Get part information and stock |
-| `GET` | `/api/v1/jobs?status={status}&limit={limit}` | List the active queue and recent Jobs |
-| `GET` | `/api/v1/jobs/{job_id}` | Get assembly job progress |
-| `GET` | `/api/v1/jobs/{job_id}/units` | Get assembled units, inspections, and defects |
-| `DELETE` | `/api/v1/jobs/{job_id}` | Cancel a Job that is still PENDING |
-| `GET` | `/api/v1/products/{product_id}/quality/slot-rates` | Get accumulated slot inspection/defect rates |
-| `POST` | `/api/v1/assemblies` | Create one durable production Job |
-| `GET` | `/api/v1/assemblies/current` | Return the ROS bridge's current/last assembly snapshot |
+| `GET` | `/api/v1/health` | DB 연결과 서버 상태 조회 |
+| `GET` | `/api/v1/products` | 제품과 생산 가능 수량 조회 |
+| `GET` | `/api/v1/products/{product_id}` | 제품과 슬롯·부품 구성 조회 |
+| `GET` | `/api/v1/products/{product_id}/requirements?quantity={quantity}` | 목표 수량의 필요 부품·재고·부족량 조회 |
+| `GET` | `/api/v1/parts/{part_id}` | 부품 정보와 재고 조회 |
+| `GET` | `/api/v1/jobs?status={status}&limit={limit}` | 실행 queue와 최근 Job 조회 |
+| `GET` | `/api/v1/jobs/{job_id}` | Job 진행 상태 조회 |
+| `GET` | `/api/v1/jobs/{job_id}/units` | Unit·검사·불량 조회 |
+| `DELETE` | `/api/v1/jobs/{job_id}` | `PENDING` Job 취소 |
+| `GET` | `/api/v1/products/{product_id}/quality/slot-rates` | 슬롯별 누적 검사·불량률 조회 |
+| `POST` | `/api/v1/assemblies` | 영속 production Job 등록 |
+| `GET` | `/api/v1/assemblies/current` | Assembly Sequencer의 현재 또는 최근 실행 snapshot 조회 |
 
-## Common response
+## 공통 응답
 
-Success:
-
-```json
-{ "data": {} }
-```
-
-Failure:
+성공:
 
 ```json
-{ "error": { "code": "invalid_request", "message": "..." } }
+{"data": {}}
 ```
 
-All query routes return `200`. Query invalid input is `400`, missing
-resources are `404`, and unavailable DB or inconsistent part datasheet is
-`503`.
+실패:
 
-`GET /api/v1/jobs` accepts an optional production Job `status` and a `limit`
-from 1 to 50 (default 12). Without a status filter, `RUNNING` and `PENDING`
-Jobs are returned before recent terminal Jobs.
-`DELETE /api/v1/jobs/{job_id}` cancels only a `PENDING` Job. A Job already
-claimed by the Sequencer is rejected with `409 job_not_cancellable`.
+```json
+{"error": {"code": "invalid_request", "message": "..."}}
+```
 
+입력 형식이 잘못되면 `400`, 리소스가 없으면 `404`, 현재 상태와 충돌하면 `409`, DB나 조립 상태 제공자가 응답할 수 없으면 `503`, 분류되지 않은 서버 오류는 `500`을 반환합니다.
 
-## Assembly execution
+## 조회
 
-`POST /api/v1/assemblies` creates a `PENDING` row in `production.jobs`; it does
-not call ROS2 and never stores robot poses. `GET /api/v1/assemblies/current`
-queries the AssemblySequencer status service.
+`GET /api/v1/jobs`의 `limit`은 1~50이며 기본값은 12입니다. `status`를 생략하면 `RUNNING`, `PENDING`, 최근 terminal Job 순으로 반환합니다.
+
+조회 endpoint는 production 상태를 전이하지 않습니다. `GET /api/v1/assemblies/current`만 Assembly Sequencer 상태 service를 조회하며 저장된 Job을 변경하지 않습니다.
+
+## Job 등록
+
+`POST /api/v1/assemblies` 요청:
 
 ```json
 {
   "command": "start",
-  "job_id": "UUID",
+  "job_id": "12345678-1234-5678-1234-567812345678",
   "product_code": "HBM-ACCELERATOR-PACKAGE-BOARD",
   "product_version": "hbm-pkg-r1",
   "requested_quantity": 1,
@@ -68,45 +56,41 @@ queries the AssemblySequencer status service.
 }
 ```
 
-`job_id` is the HTTP idempotency key. Repeating the same Job request returns
-its current status; reusing the UUID with different product, quantity or recipe
-returns `409 duplicate_request`.
+- `job_id`는 호출자가 만든 UUID이며 멱등성 key입니다.
+- `requested_quantity`는 검사 PASS 목표 수량인 양의 정수입니다.
+- 같은 `job_id`와 같은 내용은 기존 Job 상태를 반환합니다.
+- 같은 `job_id`에 다른 내용을 사용하면 `409 duplicate_request`입니다.
+- 좌표와 레시피 본문은 이 API가 받거나 저장하지 않습니다.
+
+성공 응답은 `202`입니다.
 
 ```json
 {
   "data": {
     "accepted": true,
-    "job_id": "UUID",
+    "job_id": "12345678-1234-5678-1234-567812345678",
     "status": "PENDING"
   }
 }
 ```
 
-`accepted=true` means that PostgreSQL durably contains the Job. It does not
-mean that the Sequencer or robot accepted or completed execution. Unity sends
-Mock-only runtime coordinates directly to the Sequencer ROS boundary with the
-same `job_id`; MainServer does not receive or persist them.
+`accepted=true`는 PostgreSQL에 Job이 영속화됐다는 뜻이며 Sequencer나 로봇의 실행 수락·완료가 아닙니다.
 
-| HTTP | Error code | Meaning |
-| --- | --- | --- |
-| `400` | `invalid_request` | Invalid query or Job request |
-| `409` | `duplicate_request` | The Job UUID belongs to different content |
-| `503` | `database_unavailable` | PostgreSQL is unavailable |
-| `503` | `datasheet_inconsistent` | DB part data and datasheet disagree |
-| `503` | `assembly_unavailable` | Status ROS2 service is unavailable or invalid |
+Mock에서 필요한 runtime 좌표는 이 HTTP API가 아니라 [Assembly Sequencer ROS API](../ASSEMBLY_SEQUENCER/API.md)로 같은 `job_id`와 함께 전달합니다.
 
-## Runtime
+## Job 취소
 
-`MAIN_SERVER_MODE` must be exactly `mock` or `real`; it reports deployment
-configuration only and is not stored in the DB. `MAIN_SERVER_DB_DSN` must allow
-the documented production reads and Job insert. The defect-report worker also
-updates only `production.defect_report_deliveries`. MainServer does not
-transition Jobs or write Units and defects.
+`DELETE /api/v1/jobs/{job_id}`는 아직 claim되지 않은 `PENDING` Job만 취소합니다. 이미 Sequencer가 claim한 Job은 `409 job_not_cancellable`을 반환합니다.
 
-Product, Job and POST assembly routes need PostgreSQL only. The current-status
-route additionally requires a shell where ROS2 and the included
-`Farino_AIO_Mock` overlay have been sourced, plus a running AssemblySequencer
-service. For Mock, follow the [AIO launch instructions](../Farino_AIO_Mock/README.md#mock-올인원-실행).
+## 오류 코드
 
-Real Job submission must remain disabled operationally until the Real
-AssemblySequencer consumer is connected.
+| HTTP | Code | Meaning |
+|---|---|---|
+| `400` | `invalid_request` | 요청·경로·query 형식 오류 |
+| `404` | `not_found` | 요청한 production 리소스 없음 |
+| `409` | `duplicate_request` | 같은 Job UUID에 다른 요청 내용 사용 |
+| `409` | `job_not_cancellable` | 취소할 수 없는 Job 상태 |
+| `503` | `database_unavailable` | PostgreSQL 조회·기록 불가 |
+| `503` | `datasheet_inconsistent` | DB 부품과 데이터시트 계약 불일치 |
+| `503` | `assembly_unavailable` | Assembly Sequencer 상태 응답 불가 |
+| `500` | `internal_error` | 분류되지 않은 서버 오류 |

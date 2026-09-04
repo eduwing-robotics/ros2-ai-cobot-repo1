@@ -105,5 +105,5 @@ backend는 timeout, 통신 실패와 로봇 fault를 호출자에게 전달합�
 ## 문서
 
 - [시스템 아키텍처](../docs/architecture/index.md)
-- [계층 간 통합 계약](../docs/API.md)
+- [공개 API 목록](../docs/API.md)
 - [Assembly Sequencer](../ASSEMBLY_SEQUENCER/README.md)

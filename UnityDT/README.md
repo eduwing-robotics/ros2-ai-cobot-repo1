@@ -25,4 +25,4 @@ Scenario는 주입된 자동 조립 계약만 사용합니다. UI와 Scenario는
 - [Unity UI 책임](Docs/UI.md)
 - [HMI 설계 원칙](Docs/ui-design.md)
 - [전체 시스템 아키텍처](../docs/architecture/index.md)
-- [계층 간 통합 계약](../docs/API.md)
+- [공개 API 목록](../docs/API.md)
