@@ -281,12 +281,14 @@ namespace MainUnity.UI
             if (job.job_status == "PENDING")
             {
                 bool actionPending = actionJobId == job.job_id;
+                string blockedReason = StartBlockedReason(job);
                 var start = new Button(() => StartJob(job))
                 {
-                    text = actionPending ? "STARTING…" : "START"
+                    text = actionPending ? "STARTING…" : "START",
+                    tooltip = blockedReason ?? "등록된 Job 실행"
                 };
                 start.AddToClassList("job-link");
-                start.SetEnabled(!actionPending && string.IsNullOrEmpty(actionJobId) && uiMaster?.Scenario != null);
+                start.SetEnabled(blockedReason == null);
                 links.Add(start);
 
                 var cancel = new Button(() => StartCoroutine(CancelJob(job.job_id))) { text = "CANCEL" };
@@ -372,12 +374,27 @@ namespace MainUnity.UI
                 ? job.product_code + " · " + job.product_version
                 : job.product_name + " · " + job.product_version;
 
-        static string ResultText(Job job)
+        string ResultText(Job job)
         {
             if (job.inspection_failed_quantity > 0) return "검사 FAIL " + job.inspection_failed_quantity;
             if (job.failed_quantity > 0) return "실행 실패 " + job.failed_quantity;
+            if (job.job_status == "FAILED") return "Job 실패 · 사유 미제공";
+            if (job.job_status == "CANCELLED") return "사용자 취소";
             if (job.job_status == "COMPLETED") return "완료";
+            if (job.job_status == "PENDING") return StartBlockedReason(job) ?? "시작 가능";
             return "시도 " + job.attempted_quantity;
+        }
+
+        string StartBlockedReason(Job job)
+        {
+            if (!string.IsNullOrEmpty(actionJobId))
+                return actionJobId == job.job_id ? "요청 처리 중" : "다른 요청 처리 중";
+            Job runningJob = Array.Find(jobs, item => item.job_status == "RUNNING");
+            if (runningJob != null)
+                return "JOB " + ShortJobId(runningJob.job_id) + " 실행 중";
+            if (uiMaster?.Scenario == null) return "실행 경로 없음";
+            if (uiMaster.Scenario.IsRunning) return "다른 작업 실행 중";
+            return null;
         }
 
         static string FormatTime(string value)
