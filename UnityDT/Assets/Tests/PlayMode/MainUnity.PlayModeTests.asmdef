@@ -1,0 +1,6 @@
+{
+    "name": "MainUnity.PlayModeTests",
+    "includePlatforms": [],
+    "optionalUnityReferences": ["TestAssemblies"],
+    "defineConstraints": ["UNITY_INCLUDE_TESTS"]
+}
