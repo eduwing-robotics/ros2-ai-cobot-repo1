@@ -457,4 +457,4 @@ ROS 2는 상태 전달, 신규 명령 차단과 작업 실패 전환을 담당�
 
 ## Mock 컨베이어 시작 게이트
 
-Mock의 `/unity/assembly/start` 서비스는 기존 `start` 요청을 수락하면 `CONVEYOR_MOVING` feedback을 발행하고, Unity의 `conveyor_arrived` 요청을 받을 때까지 내부 Robot Runner를 시작하지 않는다. Unity는 컨베이어 이동 실패·취소·timeout 시 같은 `job_id`와 `message`를 포함한 `conveyor_failed`를 보내며, Sequencer는 해당 Unit과 Job을 `FAILED`로 마감한다. Unity 프로세스 중단처럼 완료 신호 자체가 사라진 경우에도 Sequencer는 60초 뒤 `CONVEYOR_FAILED`로 마감한다. `conveyor_arrived`는 `{command, job_id}`를 사용한다. `conveyor_failed`는 비어 있지 않은 `message`를 추가로 요구한다.
+Mock의 `/unity/assembly/start` 서비스에서 Unity는 `observations` 요청으로 현재 Scene 좌표만 제공한다. Sequencer는 이 요청만으로 실행하지 않고 PostgreSQL의 가장 오래된 실행 가능한 Job을 확인·claim한 뒤 `CONVEYOR_MOVING` feedback을 발행한다. 이후 Unity의 `conveyor_arrived` 요청을 받을 때까지 내부 Robot Runner를 시작하지 않는다. Unity는 컨베이어 이동 실패·취소·timeout 시 같은 `job_id`와 `message`를 포함한 `conveyor_failed`를 보내며, Sequencer는 해당 Unit과 Job을 `FAILED`로 마감한다. Unity 프로세스 중단처럼 완료 신호 자체가 사라진 경우에도 Sequencer는 60초 뒤 `CONVEYOR_FAILED`로 마감한다. `conveyor_arrived`는 `{command, job_id}`를 사용한다. `conveyor_failed`는 비어 있지 않은 `message`를 추가로 요구한다.

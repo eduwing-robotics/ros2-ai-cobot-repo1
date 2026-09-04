@@ -97,7 +97,7 @@ namespace MainUnity.Runtime.Robot.Mock
         }
 
         [Serializable]
-        sealed class StartRequest
+        sealed class ObservationRequest
         {
             public string command;
             public string job_id;
@@ -287,9 +287,9 @@ namespace MainUnity.Runtime.Robot.Mock
             bool accepted = false;
             try
             {
-                string startJson = JsonUtility.ToJson(new StartRequest
+                string observationsJson = JsonUtility.ToJson(new ObservationRequest
                 {
-                    command = "start",
+                    command = "observations",
                     job_id = activeJobId,
                     recipe_version = recipeVersion,
                     observations = observations
@@ -307,7 +307,7 @@ namespace MainUnity.Runtime.Robot.Mock
                     });
                     await PostJobAsync(jobJson);
                 }
-                await SendMockAsync(startJson, "start");
+                await SendMockAsync(observationsJson, "observations");
                 accepted = true;
 
                 if (await Task.WhenAny(current.Task, timeout) != current.Task)

@@ -175,6 +175,42 @@ def claim_job(job_id, product_code, product_version, recipe_version):
             }
 
 
+def get_next_runnable_job(product_code, product_version, recipe_version):
+    """Return the compatible interrupted or oldest pending Job without claiming it."""
+    _required_text(product_code, "product_code")
+    _required_text(product_version, "product_version")
+    _required_text(recipe_version, "recipe_version")
+    with _connect() as connection, connection.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT j.job_id::text AS job_id
+            FROM production.jobs j
+            JOIN production.products p ON p.product_id = j.product_id
+            WHERE (
+                    j.job_status = 'RUNNING'
+                    AND NOT EXISTS (
+                        SELECT 1 FROM production.units u
+                        WHERE u.job_id = j.job_id
+                          AND u.unit_status = 'RUNNING'
+                    )
+                  OR j.job_status = 'PENDING'
+                    AND NOT EXISTS (
+                        SELECT 1 FROM production.jobs active
+                        WHERE active.job_status = 'RUNNING'
+                    )
+              )
+              AND j.recipe_version = %s
+              AND p.product_code = %s
+              AND p.product_version = %s
+              AND p.is_selectable
+            ORDER BY (j.job_status = 'RUNNING') DESC, j.requested_at, j.job_id
+            LIMIT 1
+            """,
+            (recipe_version, product_code, product_version),
+        )
+        return cursor.fetchone()
+
+
 def recover_interrupted_units():
     """Fail interrupted Unit attempts while leaving their Jobs resumable."""
     with _connect() as connection, connection.transaction():

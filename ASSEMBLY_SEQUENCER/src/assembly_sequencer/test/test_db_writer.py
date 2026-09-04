@@ -86,6 +86,39 @@ class DbWriterTest(unittest.TestCase):
         self.assertEqual(writer.sync_state, "FAILED")
 
 
+class PendingJobTest(unittest.IsolatedAsyncioTestCase):
+    async def test_db_job_starts_only_after_matching_observations(self):
+        starts = []
+
+        class Writer:
+            def get_next_runnable_job(self, product_code, product_version, recipe_version):
+                return {"job_id": JOB_ID}
+
+        class Backend:
+            def is_available(self):
+                return True
+
+        async def start_job(command, response):
+            starts.append(command["job_id"])
+            return MockAssemblySequencer.set_response(response, True, JOB_ID)
+
+        sequencer = SimpleNamespace(
+            active=None,
+            recipe_version="assembly-r1",
+            db_writer=Writer(),
+            backend=Backend(),
+            pending_observations={},
+            start_job=start_job,
+        )
+        await MockAssemblySequencer.on_pending_job(sequencer)
+        self.assertEqual(starts, [])
+
+        sequencer.pending_observations[JOB_ID] = {"job_id": JOB_ID}
+        await MockAssemblySequencer.on_pending_job(sequencer)
+        self.assertEqual(starts, [JOB_ID])
+        self.assertEqual(sequencer.pending_observations, {})
+
+
 class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
     async def test_inspection_precedes_assembled_pcb_transfer(self):
         calls = []

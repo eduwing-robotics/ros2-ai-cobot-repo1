@@ -323,9 +323,9 @@ def parse_command(raw, expected_recipe_version):
             raise ValueError(
                 "command, job_id, recipe_version and observations are required"
             )
-        if command_name != "start":
+        if command_name != "observations":
             raise ValueError(
-                "command must be start, conveyor_arrived, conveyor_failed, "
+                "command must be observations, conveyor_arrived, conveyor_failed, "
                 "pause, resume, transfer_assembled_pcb or status"
             )
         if command["recipe_version"] != expected_recipe_version:
@@ -335,7 +335,7 @@ def parse_command(raw, expected_recipe_version):
         command["observations"] = validate_observations(
             command["observations"]
         )
-        command_type = "start"
+        command_type = "observations"
 
     try:
         command["job_id"] = str(uuid.UUID(command["job_id"]))
@@ -491,7 +491,7 @@ def self_check(recipe=None):
     }]
     pose = {"xyz_mm": [100.0, 200.0, 300.0], "xyzw": [0.0, 0.0, 0.0, 1.0]}
     command = json.dumps({
-        "command": "start",
+        "command": "observations",
         "job_id": job_id,
         "recipe_version": recipe_version,
         "observations": [{
@@ -502,7 +502,7 @@ def self_check(recipe=None):
         } for step in steps],
     })
     parsed = parse_command(command, recipe_version)
-    assert parsed[0] == "start" and parsed[1]["job_id"] == job_id
+    assert parsed[0] == "observations" and parsed[1]["job_id"] == job_id
     if recipe is not None:
         execution = build_execution_command(recipe, parsed[1])
         assert len(execution["execution_plan"]["resolved_steps"]) == len(steps)

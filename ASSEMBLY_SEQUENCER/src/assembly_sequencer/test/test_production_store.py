@@ -194,6 +194,35 @@ class ProductionStoreIntegrationTest(unittest.TestCase):
             2,
         )
 
+    def test_runnable_job_respects_queue_and_active_job(self):
+        first_job_id = self.create_job()
+        second_job_id = self.create_job()
+        with psycopg.connect(TEST_DSN) as connection:
+            connection.execute(
+                "UPDATE production.jobs SET requested_at = now() - interval '1 minute' WHERE job_id = %s",
+                (first_job_id,),
+            )
+
+        self.assertEqual(
+            store.get_next_runnable_job(
+                self.product_code, self.product_version, "assembly-r1"
+            )["job_id"],
+            first_job_id,
+        )
+        self.claim(first_job_id)
+        self.assertIsNone(store.get_next_runnable_job(
+            self.product_code, self.product_version, "assembly-r1"
+        ))
+        store.recover_interrupted_units()
+        self.assertEqual(
+            store.get_next_runnable_job(
+                self.product_code, self.product_version, "assembly-r1"
+            )["job_id"],
+            first_job_id,
+        )
+        store.finish_job(first_job_id, "FAILED")
+        store.finish_job(second_job_id, "CANCELLED")
+
     def test_restart_fails_only_running_unit(self):
         job_id = self.create_job()
         first = self.claim(job_id)

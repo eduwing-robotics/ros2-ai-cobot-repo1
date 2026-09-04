@@ -77,6 +77,7 @@ class MockAssemblySequencer(Node):
         self.fail_probability = float(probability)
         self.rng = random.Random(None if seed == -1 else seed)
         self.active = None
+        self.pending_observations = {}
         self.terminal_snapshot = None
         self.conveyor_deadline = None
 
@@ -95,6 +96,9 @@ class MockAssemblySequencer(Node):
         )
         self.create_timer(
             1.0, self.on_conveyor_timeout, callback_group=service_group
+        )
+        self.create_timer(
+            0.5, self.on_pending_job, callback_group=service_group
         )
         self.external_publisher = self.create_publisher(
             String, EXTERNAL_FEEDBACK, 10
@@ -213,7 +217,20 @@ class MockAssemblySequencer(Node):
                 )
             return self.set_response(response, True, job_id)
 
-        return await self.start_job(command, response)
+        job_id = command["job_id"]
+        try:
+            job = self.db_writer.get_job(job_id)
+        except Exception as error:
+            return self.set_response(
+                response, False, job_id, "DB_ERROR", str(error)
+            )
+        if job["job_status"] not in {"PENDING", "RUNNING"}:
+            return self.set_response(
+                response, False, job_id, "NOT_ACTIVE", "Job is already finalized"
+            )
+        if self.active is None or self.active["job_id"] != job_id:
+            self.pending_observations[job_id] = command
+        return self.set_response(response, True, job_id)
 
     async def conveyor_arrived(self, command, response):
         active = self.active
@@ -257,6 +274,37 @@ class MockAssemblySequencer(Node):
                          immediate=active["state"] == "CONVEYOR_MOVING")
         return self.set_response(response, True, job_id)
 
+    async def on_pending_job(self):
+        if self.active is not None:
+            return
+        try:
+            pending = self.db_writer.get_next_runnable_job(
+                PRODUCT_CODE, PRODUCT_VERSION, self.recipe_version
+            )
+        except Exception as error:
+            self.get_logger().error(f"failed to read pending Job: {error}")
+            return
+        if pending is None or not self.backend.is_available():
+            return
+        job_id = pending["job_id"]
+        command = self.pending_observations.get(job_id)
+        if command is None:
+            return
+        result = await self.start_job(command, RemoteCmdInterface.Response())
+        outcome = json.loads(result.cmd_res)
+        self.pending_observations.pop(job_id, None)
+        if outcome["accepted"]:
+            return
+        try:
+            self.db_writer.abort(job_id)
+        except Exception as error:
+            outcome["error_code"] = "DB_ERROR"
+            outcome["message"] = f"{outcome['message']}; cleanup failed: {error}"
+        self.publish(failed_feedback(
+            job_id, outcome["error_code"], outcome["message"],
+            self.db_writer.sync_state,
+        ))
+
     async def start_job(self, command, response):
         job_id = command["job_id"]
         if self.active is not None:
@@ -265,12 +313,6 @@ class MockAssemblySequencer(Node):
             return self.set_response(
                 response, False, job_id, "BUSY", "another Job is active"
             )
-        if not self.backend.is_available():
-            return self.set_response(
-                response, False, job_id, "INTERNAL_ERROR",
-                "internal Mock assembly service is unavailable",
-            )
-
         try:
             backend_command = build_execution_command(self.recipe, command)
         except ValueError as error:

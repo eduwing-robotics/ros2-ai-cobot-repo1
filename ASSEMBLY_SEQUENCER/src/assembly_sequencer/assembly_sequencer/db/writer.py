@@ -107,6 +107,11 @@ class DbWriter:
     def get_product_slots(self, job_id):
         return self._store.get_product_slots(self._job_id(job_id))
 
+    def get_next_runnable_job(self, product_code, product_version, recipe_version):
+        return self._store.get_next_runnable_job(
+            product_code, product_version, recipe_version
+        )
+
     def assembly_completed(self, unit_id):
         self._positive_id(unit_id, "unit_id")
         return self._submit(DbUpdateEvent(
