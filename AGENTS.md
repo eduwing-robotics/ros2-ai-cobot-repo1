@@ -44,14 +44,14 @@
 - 기본 실행 구조는 `Orchestrator → Components`로 유지한다. 실제 복잡성이 발생하고 사용자가 승인한 경우에만 Task나 StateMachine 계층을 추가한다.
 - Scenario와 GUI는 주입된 인터페이스만 사용하며 구체 Mock·Real 구현 참조, 캐스팅과 반복 lookup을 하지 않는다.
 - RobotMaster만 Mock/Real backend를 선택하고 `IRobotScenarioControl`을 Scenario에, `IRobotControl`을 수동 조작자에 주입한다. 변환, ROS와 실행 로직은 넣지 않는다.
-- 자동 조립은 `IRobotScenarioControl.ExecuteAsync()`로만 요청하고 수동·저수준 조작은 `IRobotControl`만 사용한다. 기존 계약으로 표현할 수 없을 때만 사용자 승인 후 새 계약을 추가한다.
-- `ExecuteAsync()` 성공은 실제 작업 완료를 뜻한다. 요청 수락을 완료로 반환하지 않으며 실패와 timeout을 호출자에게 전달한다.
+- 자동 조립은 `IRobotScenarioControl.ExecuteAsync()` 또는 기존 `PENDING` Job을 실행하는 `ExecuteQueuedAsync(jobId)`로 요청하고 수동·저수준 조작은 `IRobotControl`만 사용한다. 기존 계약으로 표현할 수 없을 때만 사용자 승인 후 새 계약을 추가한다.
+- 두 실행 메서드의 성공은 실제 작업 완료를 뜻한다. 요청 수락을 완료로 반환하지 않으며 실패와 timeout을 호출자에게 전달한다.
 - Orchestrator는 위에서 아래로 읽히는 업무 흐름과 단계별 중단·건너뛰기·재시도 여부만 표현한다. 기존 공개 진입점을 호출하며 일회성 래퍼로 흐름을 분산하지 않는다.
 - 하위 공개 진입점이 입력 검증, 변환, ROS·통신, 통신 재시도, timeout, 실제 완료 감지, 정리와 실패 전달을 완결한다. 공유 검증과 상태 판정은 공통 경계에서 한 번만 처리한다.
 
 ## Unity와 ROS 경계
 
-- Inspector에 연결된 참조를 코드 검색이나 자동 생성으로 몰래 대체하지 않는다.
+- Inspector에 연결된 참조를 전역 검색이나 자동 생성으로 몰래 대체하지 않는다. 비어 있는 참조의 fallback은 같은 GameObject나 자식 범위로 제한한다.
 - Unity 생명주기 메서드는 생명주기 책임만 담당하며 `Update()`에 네트워크·DB 작업, 무거운 검색과 반복 할당을 추가하지 않는다.
 - Unity와 ROS 좌표 변환은 하나의 기존 경계에서만 처리하며 좌표계와 단위를 명시한다.
 

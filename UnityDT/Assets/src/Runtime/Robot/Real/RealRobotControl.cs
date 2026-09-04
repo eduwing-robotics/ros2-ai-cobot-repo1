@@ -265,24 +265,6 @@ namespace MainUnity.Runtime.Robot.Real
             throw new CommandRejectedException(detail);
         }
 
-        internal async Task<string> QueryInverseKinRefAsync(string command)
-        {
-            if (!Application.isPlaying)
-                throw new InvalidOperationException("FAIRINO Ghost requests require Play Mode.");
-            if (requestInFlight)
-                throw new InvalidOperationException(
-                    "FAIRINO Ghost query is unavailable during a local move request.");
-            if (string.IsNullOrWhiteSpace(serviceName))
-                throw new InvalidOperationException("FAIRINO service name must not be empty.");
-            if (string.IsNullOrWhiteSpace(command) ||
-                !command.StartsWith("GetInverseKinRef(", StringComparison.Ordinal) ||
-                !command.EndsWith(")", StringComparison.Ordinal))
-                throw new InvalidOperationException(
-                    "Only GetInverseKinRef is allowed through the FAIRINO Ghost query.");
-
-            return await SendRawCommandAsync(command);
-        }
-
         async Task<string> SendRawCommandAsync(string command)
         {
             Debug.Log("[FAIRINO] TX " + serviceName + ": " + command, this);
