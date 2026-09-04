@@ -13,6 +13,8 @@ namespace MainUnity.Runtime.Robot.Real
             Task.FromException(new NotSupportedException(
                 "REAL assembly requires a configured ROS assembly node."));
 
+        public Task ExecuteQueuedAsync(string jobId) => ExecuteAsync();
+
         public Task PauseAsync() =>
             Task.FromException(new NotSupportedException(
                 "REAL pause requires the approved FAIRINO state feedback contract."));

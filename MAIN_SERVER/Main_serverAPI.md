@@ -21,6 +21,7 @@ MAIN_SERVER_MODE=mock MAIN_SERVER_DB_DSN='dbname=main_unity_mock_test' python3 M
 | `GET` | `/api/v1/jobs?status={status}&limit={limit}` | List the active queue and recent Jobs |
 | `GET` | `/api/v1/jobs/{job_id}` | Get assembly job progress |
 | `GET` | `/api/v1/jobs/{job_id}/units` | Get assembled units, inspections, and defects |
+| `DELETE` | `/api/v1/jobs/{job_id}` | Cancel a Job that is still PENDING |
 | `GET` | `/api/v1/products/{product_id}/quality/slot-rates` | Get accumulated slot inspection/defect rates |
 | `POST` | `/api/v1/assemblies` | Create one durable production Job |
 | `GET` | `/api/v1/assemblies/current` | Return the ROS bridge's current/last assembly snapshot |
@@ -46,6 +47,9 @@ resources are `404`, and unavailable DB or inconsistent part datasheet is
 `GET /api/v1/jobs` accepts an optional production Job `status` and a `limit`
 from 1 to 50 (default 12). Without a status filter, `RUNNING` and `PENDING`
 Jobs are returned before recent terminal Jobs.
+`DELETE /api/v1/jobs/{job_id}` cancels only a `PENDING` Job. A Job already
+claimed by the Sequencer is rejected with `409 job_not_cancellable`.
+
 
 ## Assembly execution
 

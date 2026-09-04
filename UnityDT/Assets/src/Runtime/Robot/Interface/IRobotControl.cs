@@ -17,6 +17,8 @@ namespace MainUnity.Runtime.Robot.Interface
     {
         /// <summary>조립 작업이 실제로 완료되거나 실패할 때까지 기다린다.</summary>
         Task ExecuteAsync();
+        /// <summary>이미 등록된 PENDING Job을 같은 ID로 실행한다.</summary>
+        Task ExecuteQueuedAsync(string jobId);
         /// <summary>현재 자동 조립을 실제 정지 확인 뒤 일시정지한다.</summary>
         Task PauseAsync();
         /// <summary>일시정지된 자동 조립을 재개한다.</summary>

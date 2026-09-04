@@ -114,7 +114,7 @@ namespace MainUnity.UI
         Job[] jobs = Array.Empty<Job>();
 
         bool cached, requirementsLoaded, jobsLoading, registerInFlight;
-        string productError, selectedFilter = "ALL", interlockSignature, pendingJobId;
+        string productError, selectedFilter = "ALL", interlockSignature, pendingJobId, actionJobId;
 
         void OnEnable()
         {
@@ -126,6 +126,7 @@ namespace MainUnity.UI
             requirementsLoaded = false;
             jobsLoading = false;
             registerInFlight = false;
+            actionJobId = null;
             productError = null;
             interlockSignature = null;
         }
@@ -214,6 +215,9 @@ namespace MainUnity.UI
                     {
                         jobs = JsonUtility.FromJson<JobListResponse>(request.downloadHandler.text)?.data
                             ?? Array.Empty<Job>();
+                        if (!string.IsNullOrEmpty(actionJobId) &&
+                            Array.Exists(jobs, job => job.job_id == actionJobId && job.job_status != "PENDING"))
+                            actionJobId = null;
                         if (jobError != null) jobError.text = "";
                         BuildJobs();
                     }
@@ -274,18 +278,70 @@ namespace MainUnity.UI
             links.AddToClassList("row");
             links.style.width = 132;
 
-            if (job.job_status == "RUNNING")
+            if (job.job_status == "PENDING")
+            {
+                bool actionPending = actionJobId == job.job_id;
+                var start = new Button(() => StartJob(job))
+                {
+                    text = actionPending ? "STARTING…" : "START"
+                };
+                start.AddToClassList("job-link");
+                start.SetEnabled(!actionPending && string.IsNullOrEmpty(actionJobId) && uiMaster?.Scenario != null);
+                links.Add(start);
+
+                var cancel = new Button(() => StartCoroutine(CancelJob(job.job_id))) { text = "CANCEL" };
+                cancel.AddToClassList("job-link");
+                cancel.SetEnabled(!actionPending && string.IsNullOrEmpty(actionJobId));
+                links.Add(cancel);
+            }
+            else if (job.job_status == "RUNNING")
             {
                 var run = new Button(() => pageRouter?.OpenMonitor()) { text = "RUN" };
                 run.AddToClassList("job-link");
                 links.Add(run);
             }
-
-            var inspect = new Button(() => pageRouter?.OpenInspect(job.job_id)) { text = "검사" };
-            inspect.AddToClassList("job-link");
-            links.Add(inspect);
+            else
+            {
+                var inspect = new Button(() => pageRouter?.OpenInspect(job.job_id)) { text = "검사" };
+                inspect.AddToClassList("job-link");
+                links.Add(inspect);
+            }
             row.Add(links);
             return row;
+        }
+
+        async void StartJob(Job job)
+        {
+            if (!string.IsNullOrEmpty(actionJobId) || uiMaster?.Scenario == null) return;
+            actionJobId = job.job_id;
+            BuildJobs();
+            try
+            {
+                await uiMaster.Scenario.RunQueuedAsync(job.job_id);
+            }
+            catch (Exception exception)
+            {
+                SetJobError("Job 시작 실패 · " + exception.Message);
+            }
+            finally
+            {
+                actionJobId = null;
+                if (isActiveAndEnabled) StartCoroutine(LoadJobs());
+            }
+        }
+
+        IEnumerator CancelJob(string jobId)
+        {
+            if (!string.IsNullOrEmpty(actionJobId)) yield break;
+            actionJobId = jobId;
+            BuildJobs();
+            using var request = UnityWebRequest.Delete(ApiUrl("/api/v1/jobs/" + Uri.EscapeDataString(jobId)));
+            request.timeout = 5;
+            yield return request.SendWebRequest();
+            if (isActiveAndEnabled && request.result != UnityWebRequest.Result.Success)
+                SetJobError("Job 취소 실패 · HTTP " + request.responseCode);
+            actionJobId = null;
+            if (isActiveAndEnabled) yield return LoadJobs();
         }
 
         static void AddCell(VisualElement row, string text, float width, bool numeric = false)

@@ -36,6 +36,27 @@ namespace MainUnity.Runtime.Scenario
             }
         }
 
+        /// <summary>큐에 등록된 Job ID를 유지한 채 Mock 실행을 시작한다.</summary>
+        public async Task RunQueuedAsync(string jobId)
+        {
+            if (string.IsNullOrEmpty(jobId))
+                throw new ArgumentException("Job ID is required.", nameof(jobId));
+            if (robot == null)
+                throw new InvalidOperationException("Scenario dependencies are not initialized.");
+            if (running)
+                throw new InvalidOperationException("Scenario is already running.");
+
+            running = true;
+            try
+            {
+                await robot.ExecuteQueuedAsync(jobId);
+            }
+            finally
+            {
+                running = false;
+            }
+        }
+
         public Task PauseAsync()
         {
             if (!running || robot == null)

@@ -23,6 +23,7 @@ ROUTES = (
     ("GET", "/api/v1/jobs", "jobs"),
     ("GET", "/api/v1/jobs/{job_id}", "job"),
     ("GET", "/api/v1/jobs/{job_id}/units", "units"),
+    ("DELETE", "/api/v1/jobs/{job_id}", "job_cancel"),
     ("GET", "/api/v1/products/{product_id}/quality/slot-rates", "slot_rates"),
     ("POST", "/api/v1/assemblies", "assembly_start"),
     ("GET", "/api/v1/assemblies/current", "assembly_current"),
@@ -97,6 +98,9 @@ class ApiHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         self._serve("POST")
+
+    def do_DELETE(self):
+        self._serve("DELETE")
 
     def _serve(self, method):
         try:
@@ -234,6 +238,13 @@ class ApiHandler(BaseHTTPRequestHandler):
     def units(self, values, parameters):
         self._no_query(parameters)
         return queries.units(uuid_value(values["job_id"], "job_id"))
+
+    def job_cancel(self, values, parameters):
+        self._no_query(parameters)
+        try:
+            return queries.cancel_pending_job(uuid_value(values["job_id"], "job_id"))
+        except queries.JobNotCancellable as error:
+            raise AssemblyRejected(409, "job_not_cancellable", str(error)) from error
 
     def slot_rates(self, values, parameters):
         self._no_query(parameters)

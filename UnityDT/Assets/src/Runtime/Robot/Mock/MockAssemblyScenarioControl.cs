@@ -245,7 +245,16 @@ namespace MainUnity.Runtime.Robot.Mock
             RefreshReferences();
         }
 
-        public async Task ExecuteAsync()
+        public Task ExecuteAsync() => ExecuteCoreAsync(null);
+
+        public Task ExecuteQueuedAsync(string jobId)
+        {
+            if (!Guid.TryParse(jobId, out _))
+                return Task.FromException(new ArgumentException("Job ID must be a UUID.", nameof(jobId)));
+            return ExecuteCoreAsync(jobId);
+        }
+
+        async Task ExecuteCoreAsync(string queuedJobId)
         {
             await recoveryTask;
             ValidateExecution();
@@ -260,7 +269,10 @@ namespace MainUnity.Runtime.Robot.Mock
             var current = new TaskCompletionSource<string>();
             terminal = current;
             sceneNeedsReset = true;
-            if (string.IsNullOrEmpty(activeJobId))
+            bool queuedJob = !string.IsNullOrEmpty(queuedJobId);
+            if (queuedJob)
+                activeJobId = queuedJobId;
+            else if (string.IsNullOrEmpty(activeJobId))
                 activeJobId = Guid.NewGuid().ToString();
             processedCallbacks.Clear();
             expectedStepCount = observations.Length;
@@ -275,15 +287,6 @@ namespace MainUnity.Runtime.Robot.Mock
             bool accepted = false;
             try
             {
-                string jobJson = JsonUtility.ToJson(new JobRequest
-                {
-                    command = "start",
-                    job_id = activeJobId,
-                    product_code = productCode,
-                    product_version = productVersion,
-                    requested_quantity = requestedQuantity,
-                    recipe_version = recipeVersion
-                });
                 string startJson = JsonUtility.ToJson(new StartRequest
                 {
                     command = "start",
@@ -291,7 +294,19 @@ namespace MainUnity.Runtime.Robot.Mock
                     recipe_version = recipeVersion,
                     observations = observations
                 });
-                await PostJobAsync(jobJson);
+                if (!queuedJob)
+                {
+                    string jobJson = JsonUtility.ToJson(new JobRequest
+                    {
+                        command = "start",
+                        job_id = activeJobId,
+                        product_code = productCode,
+                        product_version = productVersion,
+                        requested_quantity = requestedQuantity,
+                        recipe_version = recipeVersion
+                    });
+                    await PostJobAsync(jobJson);
+                }
                 await SendMockAsync(startJson, "start");
                 accepted = true;
 

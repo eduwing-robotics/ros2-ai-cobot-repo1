@@ -214,6 +214,28 @@ class MainServerApiTest(unittest.TestCase):
                     "DELETE FROM production.jobs WHERE job_id = %s", (job_id,)
                 )
 
+    def test_pending_job_can_be_cancelled(self):
+        job_id = str(uuid.uuid4())
+        command = {
+            "command": "start",
+            "job_id": job_id,
+            "product_code": "HBM-ACCELERATOR-PACKAGE-BOARD",
+            "product_version": "hbm-pkg-r1",
+            "requested_quantity": 1,
+            "recipe_version": "assembly-r1",
+        }
+        try:
+            server.queries.create_job(command)
+            status, body = self.request(f"/api/v1/jobs/{job_id}", "DELETE")
+            self.assertEqual((status, body["data"]["job_status"]), (200, "CANCELLED"))
+            status, body = self.request(f"/api/v1/jobs/{job_id}", "DELETE")
+            self.assertEqual((status, body["error"]["code"]), (409, "job_not_cancellable"))
+        finally:
+            with psycopg.connect(os.environ["MAIN_SERVER_DB_DSN"]) as connection:
+                connection.execute(
+                    "DELETE FROM production.jobs WHERE job_id = %s", (job_id,)
+                )
+
     def test_validation_and_missing_resource(self):
         status, body = self.request("/api/v1/jobs?status=UNKNOWN")
         self.assertEqual((status, body["error"]["code"]), (400, "invalid_request"))

@@ -16,6 +16,10 @@ class DuplicateRequest(RuntimeError):
     pass
 
 
+class JobNotCancellable(RuntimeError):
+    pass
+
+
 def _connect():
     dsn = os.environ.get("MAIN_SERVER_DB_DSN", "").strip()
     if not dsn:
@@ -106,6 +110,39 @@ def create_job(command):
             "status": status,
         }
     except (DatabaseUnavailable, DuplicateRequest):
+        raise
+    except psycopg.Error as error:
+        raise DatabaseUnavailable("database query failed") from error
+
+
+def cancel_pending_job(job_id):
+    """Cancel only a durable Job that the Sequencer has not claimed."""
+    try:
+        with _connect() as connection, connection.transaction():
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT job_status FROM production.jobs
+                    WHERE job_id = %s FOR UPDATE
+                    """,
+                    (job_id,),
+                )
+                job = cursor.fetchone()
+                if job is None:
+                    raise ResourceNotFound("job was not found")
+                if job["job_status"] != "PENDING":
+                    raise JobNotCancellable("only PENDING jobs can be cancelled")
+                cursor.execute(
+                    """
+                    UPDATE production.jobs
+                    SET job_status = 'CANCELLED', job_finished_at = now()
+                    WHERE job_id = %s
+                    RETURNING job_id, job_status
+                    """,
+                    (job_id,),
+                )
+                return dict(cursor.fetchone())
+    except (DatabaseUnavailable, ResourceNotFound, JobNotCancellable):
         raise
     except psycopg.Error as error:
         raise DatabaseUnavailable("database query failed") from error
