@@ -1,4 +1,4 @@
-"""Checks for DB retry and the conveyor-inspection-transfer gate."""
+"""Checks for DB retry and YAML-driven Mock workflow gates."""
 
 import json
 import random
@@ -7,6 +7,7 @@ import threading
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -149,8 +150,15 @@ class PendingJobTest(unittest.IsolatedAsyncioTestCase):
 
 
 class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
-    async def test_recipe_workflow_dispatches_semantic_operations_in_order(self):
+    async def test_recipe_workflow_waits_for_conveyor_then_follows_yaml(self):
         calls = []
+        resolved_steps = [{
+            "step": {"order": 1, "part_id": "PART", "slot_code": "SLOT"},
+            "source": {},
+            "target": {},
+            "gripper_grasp_opening_percent": 20,
+            "gripper_release_opening_percent": 30,
+        }]
         recipe = {
             "frame": "base_link",
             "joint_points": {
@@ -176,6 +184,9 @@ class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
         }
 
         class Backend:
+            async def start(self, job_id, recipe_version, expected_step_count):
+                calls.append(("start", expected_step_count))
+
             async def move_joint(self, job_id, joint_point):
                 calls.append(("move_joint", joint_point[0]))
 
@@ -185,45 +196,109 @@ class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
             async def place(self, job_id, step, frame, target, motion, gripper):
                 calls.append(("place", step["order"]))
 
+        async def after_all(active):
+            calls.append(("after_all",))
+
         active = {
             "job_id": JOB_ID,
             "state": "STARTED",
-            "resolved_steps": [{
-                "step": {"order": 1, "part_id": "PART", "slot_code": "SLOT"},
-                "source": {},
-                "target": {},
-                "gripper_grasp_opening_percent": 20,
-                "gripper_release_opening_percent": 30,
-            }],
+            "observations": [{"order": 1}],
+            "resolved_steps": [],
+            "before_action_index": 0,
+            "backend_started": False,
+            "conveyor_confirmed": False,
+            "expected_step_count": 1,
         }
         sequencer = SimpleNamespace(
             active=active,
             recipe=recipe,
+            recipe_version="assembly-r1",
             backend=Backend(),
             db_writer=SimpleNamespace(sync_state="SYNCED"),
             arm_conveyor_timeout=lambda: calls.append(("arm",)),
             publish=lambda payload: calls.append(("publish", payload["state"])),
-            fail_active=lambda *args: self.fail(str(args)),
+            run_transfer_workflow=after_all,
+            fail_active=lambda *args, **kwargs: self.fail(str((args, kwargs))),
         )
 
-        await MockAssemblySequencer.run_assembly_workflow(sequencer, active)
+        def resolve(recipe_value, observations):
+            calls.append(("vision",))
+            return resolved_steps
+
+        with patch(
+            "assembly_sequencer.mock_node.resolve_observations",
+            side_effect=resolve,
+        ):
+            await MockAssemblySequencer.run_assembly_workflow(sequencer, active)
+            self.assertEqual(calls, [
+                ("arm",),
+                ("publish", "CONVEYOR_MOVING"),
+            ])
+            active["conveyor_confirmed"] = True
+            await MockAssemblySequencer.run_assembly_workflow(sequencer, active)
 
         self.assertEqual(calls, [
+            ("arm",),
+            ("publish", "CONVEYOR_MOVING"),
+            ("vision",),
+            ("start", 1),
+            ("publish", "STARTED"),
             ("move_joint", 0),
             ("move_joint", 1),
             ("pick", 1),
             ("move_joint", 0),
             ("move_joint", 2),
             ("place", 1),
-            ("arm",),
-            ("publish", "ASSEMBLY_COMPLETED"),
+            ("after_all",),
         ])
-        self.assertEqual(active["state"], "ASSEMBLY_COMPLETED")
+        self.assertEqual(active["state"], "STARTED")
+
+    async def test_before_all_action_order_comes_from_recipe(self):
+        calls = []
+        active = {
+            "job_id": JOB_ID,
+            "state": "STARTED",
+            "observations": [{"order": 1}],
+            "resolved_steps": [],
+            "before_action_index": 0,
+            "backend_started": False,
+            "conveyor_confirmed": False,
+        }
+        sequencer = SimpleNamespace(
+            active=active,
+            recipe={"workflow": {"before_all": [
+                {"vision.resolve_targets": "recipe_steps"},
+                {"conveyor.move_to": "ASSEMBLY"},
+            ]}},
+            db_writer=SimpleNamespace(sync_state="SYNCED"),
+            arm_conveyor_timeout=lambda: calls.append(("arm",)),
+            publish=lambda payload: calls.append(("publish", payload["state"])),
+            fail_active=lambda *args, **kwargs: self.fail(str((args, kwargs))),
+        )
+
+        def resolve(recipe_value, observations):
+            calls.append(("vision",))
+            return [{}]
+
+        with patch(
+            "assembly_sequencer.mock_node.resolve_observations",
+            side_effect=resolve,
+        ):
+            await MockAssemblySequencer.run_assembly_workflow(sequencer, active)
+
+        self.assertEqual(calls, [
+            ("vision",),
+            ("arm",),
+            ("publish", "CONVEYOR_MOVING"),
+        ])
+        self.assertEqual(active["before_action_index"], 2)
 
     async def test_inspection_precedes_assembled_pcb_transfer(self):
         calls = []
 
         class Writer:
+            sync_state = "SYNCED"
+
             def assembly_completed(self, unit_id):
                 calls.append(("assembly", unit_id))
 
@@ -239,6 +314,8 @@ class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
         active = {
             "job_id": JOB_ID,
             "unit_id": 22,
+            "state": "STARTED",
+            "after_action_index": 0,
             "slot_codes": ["SLOT-01"],
             "inspection_result": "",
             "assembled_pcb": {
@@ -262,15 +339,22 @@ class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
             fail_probability=0.0,
             db_writer=Writer(),
             backend=Backend(),
+            arm_conveyor_timeout=lambda: calls.append(("arm",)),
+            publish=lambda payload: calls.append(("publish", payload["state"])),
             finish_active_unit=lambda current: calls.append(("finish",)),
             fail_active=lambda *args: self.fail(str(args)),
         )
 
         await MockAssemblySequencer.run_transfer_workflow(sequencer, active)
+        self.assertEqual(calls, [
+            ("arm",),
+            ("publish", "ASSEMBLY_COMPLETED"),
+        ])
 
+        await MockAssemblySequencer.run_transfer_workflow(sequencer, active)
         self.assertEqual(
             [call[0] for call in calls],
-            ["assembly", "inspection", "transfer", "finish"],
+            ["arm", "publish", "assembly", "inspection", "transfer", "finish"],
         )
         self.assertEqual(active["inspection_result"], "PASS")
 
@@ -325,12 +409,8 @@ class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(sequencer.active["state"], "STARTED")
             self.assertEqual(calls[-1], (JOB_ID, paused))
 
-    async def test_backend_waits_for_conveyor_arrival(self):
+    async def test_conveyor_arrival_resumes_yaml_worker_once(self):
         calls = []
-
-        class Backend:
-            async def start(self, job_id, recipe_version, expected_step_count):
-                calls.append(("start", job_id, recipe_version, expected_step_count))
 
         async def workflow(active):
             return None
@@ -343,30 +423,26 @@ class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
         active = {
             "job_id": JOB_ID,
             "state": "CONVEYOR_MOVING",
-            "expected_step_count": 1,
+            "conveyor_confirmed": False,
         }
         sequencer = SimpleNamespace(
             active=active,
-            recipe_version="assembly-r1",
-            backend=Backend(),
-            db_writer=SimpleNamespace(sync_state="SYNCED"),
             set_response=MockAssemblySequencer.set_response,
             conveyor_deadline=1.0,
-            publish=lambda payload: calls.append(("publish", payload["state"])),
             executor=Executor(),
             run_assembly_workflow=workflow,
         )
-        response = await MockAssemblySequencer.conveyor_arrived(
+        first = await MockAssemblySequencer.conveyor_arrived(
+            sequencer, {"job_id": JOB_ID}, SimpleNamespace(cmd_res="")
+        )
+        second = await MockAssemblySequencer.conveyor_arrived(
             sequencer, {"job_id": JOB_ID}, SimpleNamespace(cmd_res="")
         )
 
-        self.assertTrue(json.loads(response.cmd_res)["accepted"])
-        self.assertEqual(active["state"], "STARTED")
-        self.assertEqual(calls, [
-            ("start", JOB_ID, "assembly-r1", 1),
-            ("publish", "STARTED"),
-            ("workflow",),
-        ])
+        self.assertTrue(json.loads(first.cmd_res)["accepted"])
+        self.assertTrue(json.loads(second.cmd_res)["accepted"])
+        self.assertTrue(active["conveyor_confirmed"])
+        self.assertEqual(calls, [("workflow",)])
 
     async def test_conveyor_failure_finalizes_the_active_job(self):
         failures = []
@@ -386,7 +462,7 @@ class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
             ("CONVEYOR_FAILED", "belt timeout"), {"immediate": True}
         )])
 
-    async def test_incomplete_pass_target_reuses_job_for_next_unit(self):
+    async def test_incomplete_pass_target_restarts_recipe_for_next_unit(self):
         calls = []
 
         class Writer:
@@ -404,6 +480,14 @@ class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
                 calls.append(("claim", job_id))
                 return {"job_id": job_id, "unit_id": 23}
 
+        async def workflow(active):
+            return None
+
+        class Executor:
+            def create_task(self, coroutine):
+                calls.append(("workflow",))
+                coroutine.close()
+
         active = {
             "job_id": JOB_ID,
             "unit_id": 22,
@@ -416,23 +500,27 @@ class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
             "held_slot_code": "",
             "transfer_requested": True,
             "inspection_result": "PASS",
+            "assembled_pcb": {},
         }
         sequencer = SimpleNamespace(
             active=active,
             recipe_version="assembly-r1",
             db_writer=Writer(),
             conveyor_deadline=None,
-            arm_conveyor_timeout=lambda: calls.append(("arm",)),
-            publish=lambda payload: calls.append(("publish", payload["state"])),
+            executor=Executor(),
+            run_assembly_workflow=workflow,
         )
 
         MockAssemblySequencer.finish_active_unit(sequencer, active)
 
         self.assertEqual(active["unit_id"], 23)
-        self.assertEqual(active["state"], "CONVEYOR_MOVING")
+        self.assertEqual(active["state"], "STARTED")
+        self.assertEqual(active["before_action_index"], 0)
+        self.assertEqual(active["after_action_index"], 0)
         self.assertFalse(active["transfer_requested"])
+        self.assertNotIn("assembled_pcb", active)
         self.assertEqual(
-            [call[0] for call in calls], ["flush", "claim", "arm", "publish"]
+            [call[0] for call in calls], ["flush", "claim", "workflow"]
         )
 
     def test_missing_conveyor_signal_fails_the_active_job(self):

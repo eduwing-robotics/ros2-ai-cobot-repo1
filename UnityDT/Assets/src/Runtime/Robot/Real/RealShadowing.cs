@@ -32,12 +32,13 @@ namespace MainUnity.Runtime.Robot.Real
             RefreshJoints();
         }
 
-        /// <summary>마지막 그리퍼 열림 요청값(0~100%)을 Unity 모델에 반영한다.</summary>
+        /// <summary>FAIRINO 피드백(0~100%)을 Unity 그리퍼 모델에 반영한다.</summary>
         public void ApplyGripperOpeningPercent(float openingPercent)
         {
             GripperAttacher gripper = articulationRoot != null
                 ? articulationRoot.GetComponentInChildren<GripperAttacher>(true) : null;
-            gripper?.SetOpeningPercent(openingPercent);
+            // FAIRINO 피드백의 개도 방향은 Unity URDF 관절 범위와 반대다.
+            gripper?.SetOpeningPercent(100f - openingPercent);
         }
 
         public void ApplyState(RobotStatusFrame frame)

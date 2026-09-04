@@ -221,28 +221,11 @@ class MockAssemblySequencer(Node):
                 response, False, job_id, "BUSY",
                 "conveyor arrival is not expected",
             )
+        if active["conveyor_confirmed"]:
+            return self.set_response(response, True, job_id)
 
         self.conveyor_deadline = None
-        try:
-            await self.backend.start(
-                job_id, self.recipe_version, active["expected_step_count"]
-            )
-        except Exception as error:
-            self.fail_active("INTERNAL_ERROR", error, immediate=True)
-            return self.set_response(
-                response, False, job_id, "INTERNAL_ERROR", str(error)
-            )
-        active["state"] = "STARTED"
-        self.publish({
-            "job_id": job_id,
-            "state": "STARTED",
-            "step_order": 0,
-            "part_id": "",
-            "slot_code": "",
-            "error_code": "",
-            "message": "",
-            "db_sync_state": self.db_writer.sync_state,
-        })
+        active["conveyor_confirmed"] = True
         self.executor.create_task(self.run_assembly_workflow(active))
         return self.set_response(response, True, job_id)
 
@@ -302,14 +285,6 @@ class MockAssemblySequencer(Node):
             return self.set_response(
                 response, False, job_id, "BUSY", "another Job is active"
             )
-        try:
-            resolved_steps = resolve_observations(
-                self.recipe, command["observations"]
-            )
-        except ValueError as error:
-            return self.set_response(
-                response, False, job_id, "INVALID_RECIPE", str(error)
-            )
 
         try:
             product_slots = self.db_writer.get_product_slots(job_id)
@@ -328,8 +303,13 @@ class MockAssemblySequencer(Node):
                 "job_id": work["job_id"],
                 "unit_id": work["unit_id"],
                 "recipe_version": self.recipe_version,
-                "resolved_steps": resolved_steps,
-                "state": "CONVEYOR_MOVING",
+                "observations": command["observations"],
+                "resolved_steps": [],
+                "before_action_index": 0,
+                "after_action_index": 0,
+                "backend_started": False,
+                "conveyor_confirmed": False,
+                "state": "STARTED",
                 "placed_count": 0,
                 "expected_step_count": len(self.recipe["steps"]),
                 "held_step_order": 0,
@@ -339,18 +319,8 @@ class MockAssemblySequencer(Node):
                 "transfer_requested": False,
                 "inspection_result": "",
             }
-            self.arm_conveyor_timeout()
             self.terminal_snapshot = None
-            self.publish({
-                "job_id": job_id,
-                "state": "CONVEYOR_MOVING",
-                "step_order": 0,
-                "part_id": "",
-                "slot_code": "",
-                "error_code": "",
-                "message": "",
-                "db_sync_state": self.db_writer.sync_state,
-            })
+            self.executor.create_task(self.run_assembly_workflow(self.active))
             return self.set_response(response, True, job_id)
         except Exception as error:
             if self.active is not None:
@@ -360,14 +330,58 @@ class MockAssemblySequencer(Node):
             )
 
     async def run_assembly_workflow(self, active):
+        if self.active is not active:
+            return
         try:
-            for command in self.recipe["workflow"]["before_all"]:
-                action = next(iter(command.items()))
-                if action not in {
-                    ("conveyor.move_to", "ASSEMBLY"),
-                    ("vision.resolve_targets", "recipe_steps"),
-                }:
-                    raise RuntimeError(f"unknown preflight action: {command}")
+            before_all = self.recipe["workflow"]["before_all"]
+            # Unity confirms conveyor completion, then schedules this loop again
+            # at the next YAML action.
+            while active["before_action_index"] < len(before_all):
+                command = before_all[active["before_action_index"]]
+                active["before_action_index"] += 1
+                action, argument = next(iter(command.items()))
+                if (action, argument) == ("conveyor.move_to", "ASSEMBLY"):
+                    active["conveyor_confirmed"] = False
+                    active["state"] = "CONVEYOR_MOVING"
+                    self.arm_conveyor_timeout()
+                    self.publish({
+                        "job_id": active["job_id"],
+                        "state": "CONVEYOR_MOVING",
+                        "step_order": 0,
+                        "part_id": "",
+                        "slot_code": "",
+                        "error_code": "",
+                        "message": "",
+                        "db_sync_state": self.db_writer.sync_state,
+                    })
+                    return
+                if (action, argument) == (
+                    "vision.resolve_targets", "recipe_steps"
+                ):
+                    active["resolved_steps"] = resolve_observations(
+                        self.recipe, active["observations"]
+                    )
+                    continue
+                raise RuntimeError(f"unknown preflight action: {command}")
+
+            if self.active is not active:
+                return
+            await self.backend.start(
+                active["job_id"], self.recipe_version,
+                active["expected_step_count"],
+            )
+            active["backend_started"] = True
+            active["state"] = "STARTED"
+            self.publish({
+                "job_id": active["job_id"],
+                "state": "STARTED",
+                "step_order": 0,
+                "part_id": "",
+                "slot_code": "",
+                "error_code": "",
+                "message": "",
+                "db_sync_state": self.db_writer.sync_state,
+            })
 
             motion = self.recipe["motion"]
             frame = self.recipe["frame"]
@@ -403,29 +417,42 @@ class MockAssemblySequencer(Node):
 
             if self.active is not active:
                 return
-            active["state"] = "ASSEMBLY_COMPLETED"
-            self.arm_conveyor_timeout()
-            self.publish({
-                "job_id": active["job_id"],
-                "state": "ASSEMBLY_COMPLETED",
-                "step_order": 0,
-                "part_id": "",
-                "slot_code": "",
-                "error_code": "",
-                "message": "",
-                "db_sync_state": self.db_writer.sync_state,
-            })
+            await self.run_transfer_workflow(active)
         except Exception as error:
             if self.active is active:
-                self.fail_active("INTERNAL_ERROR", error)
+                self.fail_active(
+                    "INVALID_RECIPE" if isinstance(error, ValueError)
+                    else "INTERNAL_ERROR",
+                    error,
+                    immediate=not active["backend_started"],
+                )
 
     async def run_transfer_workflow(self, active):
+        if self.active is not active:
+            return
         error_code = "INTERNAL_ERROR"
         try:
-            for command in self.recipe["workflow"]["after_all"]:
+            after_all = self.recipe["workflow"]["after_all"]
+            # Unity's transfer request confirms the inspection conveyor action
+            # and resumes the remaining YAML actions.
+            while active["after_action_index"] < len(after_all):
+                command = after_all[active["after_action_index"]]
+                active["after_action_index"] += 1
                 action, argument = next(iter(command.items()))
                 if (action, argument) == ("conveyor.move_to", "INSPECTION"):
-                    continue
+                    active["state"] = "ASSEMBLY_COMPLETED"
+                    self.arm_conveyor_timeout()
+                    self.publish({
+                        "job_id": active["job_id"],
+                        "state": "ASSEMBLY_COMPLETED",
+                        "step_order": 0,
+                        "part_id": "",
+                        "slot_code": "",
+                        "error_code": "",
+                        "message": "",
+                        "db_sync_state": self.db_writer.sync_state,
+                    })
+                    return
                 if (action, argument) == ("inspection.run", "assembled_pcb"):
                     error_code = "DB_ERROR"
                     result, defects = choose_inspection(
@@ -442,9 +469,15 @@ class MockAssemblySequencer(Node):
                     error_code = "INTERNAL_ERROR"
                     continue
                 if (action, argument) == ("robot.transfer", "assembled_pcb"):
+                    assembled_pcb = active.get("assembled_pcb")
+                    if assembled_pcb is None:
+                        raise RuntimeError(
+                            "assembled PCB coordinates are not available before "
+                            "robot.transfer"
+                        )
                     await self.backend.transfer_assembled_pcb(
                         active["job_id"], self.recipe["frame"],
-                        active["assembled_pcb"], self.recipe["motion"],
+                        assembled_pcb, self.recipe["motion"],
                         self.recipe["gripper"]["assembled_pcb"],
                     )
                     continue
@@ -469,7 +502,12 @@ class MockAssemblySequencer(Node):
             )
             active.update({
                 "unit_id": work["unit_id"],
-                "state": "CONVEYOR_MOVING",
+                "resolved_steps": [],
+                "before_action_index": 0,
+                "after_action_index": 0,
+                "backend_started": False,
+                "conveyor_confirmed": False,
+                "state": "STARTED",
                 "placed_count": 0,
                 "held_step_order": 0,
                 "held_part_id": "",
@@ -477,17 +515,8 @@ class MockAssemblySequencer(Node):
                 "transfer_requested": False,
                 "inspection_result": "",
             })
-            self.arm_conveyor_timeout()
-            self.publish({
-                "job_id": active["job_id"],
-                "state": "CONVEYOR_MOVING",
-                "step_order": 0,
-                "part_id": "",
-                "slot_code": "",
-                "error_code": "",
-                "message": "",
-                "db_sync_state": self.db_writer.sync_state,
-            })
+            active.pop("assembled_pcb", None)
+            self.executor.create_task(self.run_assembly_workflow(active))
             return
 
         self.db_writer.finish(active["job_id"], "COMPLETED")

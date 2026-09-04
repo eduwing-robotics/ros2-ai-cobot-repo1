@@ -1,14 +1,13 @@
 using System;
-using System.Globalization;
-using System.Threading.Tasks;
-using MainUnity.Runtime.Robot.Status;
 using MainUnity.Runtime.RobotGhost;
-using RosMessageTypes.Geometry;
+using RosMessageTypes.Sensor;
+using RosMessageTypes.Std;
 using Unity.Robotics.ROSTCPConnector;
 using UnityEngine;
 
 namespace MainUnity.Runtime.Robot.Real
 {
+    // Scene 직렬화 참조를 보존하기 위해 클래스명은 유지하지만 IK는 Robot Backend가 소유한다.
     [DisallowMultipleComponent]
     public sealed class RealFairinoSdkGhostSolver : MonoBehaviour
     {
@@ -19,31 +18,19 @@ namespace MainUnity.Runtime.Robot.Real
 
         ROSConnection connection;
         GhostMaster ghostMaster;
-        RobotStatusManager statusManager;
-        RealRobotControl robotControl;
-        RealGhostToolPose toolPose;
-        RealGhostTarget pendingTarget;
         bool active;
         bool subscribed;
-        bool solving;
-        bool hasPendingTarget;
-        int targetVersion;
-        int activationVersion;
 
         void OnDisable() => Deactivate();
 
-        internal bool Initialize(GhostMaster destination,
-            RobotStatusManager injectedStatusManager, RealRobotControl injectedRobotControl,
-            Vector3 toolPositionMillimeters, Vector3 toolRotationDegrees)
+        internal bool Initialize(GhostMaster destination)
         {
             ghostMaster = destination;
-            statusManager = injectedStatusManager;
-            robotControl = injectedRobotControl;
-            toolPose = new RealGhostToolPose(toolPositionMillimeters, toolRotationDegrees);
             if (active)
                 Subscribe();
-            return ghostMaster != null && statusManager != null && robotControl != null &&
-                !string.IsNullOrWhiteSpace(targetTopic) && !string.IsNullOrWhiteSpace(expectedFrame);
+            return ghostMaster != null &&
+                !string.IsNullOrWhiteSpace(targetTopic) &&
+                !string.IsNullOrWhiteSpace(expectedFrame);
         }
 
         internal void SetActive(bool value)
@@ -56,184 +43,125 @@ namespace MainUnity.Runtime.Robot.Real
             }
 
             active = true;
-            activationVersion++;
             enabled = true;
             Subscribe();
         }
 
         void Subscribe()
         {
-            if (subscribed || !active || ghostMaster == null || statusManager == null ||
-                robotControl == null)
+            if (subscribed || !active || ghostMaster == null)
                 return;
-            if (string.IsNullOrWhiteSpace(targetTopic) || string.IsNullOrWhiteSpace(expectedFrame))
+            if (string.IsNullOrWhiteSpace(targetTopic) ||
+                string.IsNullOrWhiteSpace(expectedFrame))
             {
-                Debug.LogError("Real FAIRINO SDK Ghost target topic and frame are required.", this);
+                Debug.LogError("Real Ghost target topic and frame are required.", this);
                 return;
             }
 
             connection ??= ROSConnection.GetOrCreateInstance();
-            connection.Subscribe<PoseStampedMsg>(targetTopic, ReceiveTarget);
+            connection.Subscribe<JointStateMsg>(targetTopic, ReceiveTarget);
             subscribed = true;
         }
 
         void Deactivate()
         {
-            if (active)
-                activationVersion++;
             active = false;
-            hasPendingTarget = false;
             if (!subscribed)
                 return;
             connection?.Unsubscribe(targetTopic);
             subscribed = false;
         }
 
-        void ReceiveTarget(PoseStampedMsg message)
+        void ReceiveTarget(JointStateMsg message)
         {
-            if (!RealGhostPose.TryGetFlangeTarget(message, expectedFrame, toolPose,
-                    out pendingTarget, out string error))
+            if (!TryGetJointDegrees(message, expectedFrame,
+                    out float[] jointDegrees, out string error))
             {
                 Debug.LogWarning(error, this);
                 return;
             }
 
-            hasPendingTarget = true;
-            targetVersion++;
-            _ = SolvePendingAsync();
+            if (!ghostMaster.PreviewJoints(jointDegrees))
+                Debug.LogWarning("Real Ghost rejected the joint target.", this);
         }
 
-        async Task SolvePendingAsync()
-        {
-            if (solving)
-                return;
-
-            solving = true;
-            try
-            {
-                while (active && hasPendingTarget)
-                {
-                    RealGhostTarget target = pendingTarget;
-                    hasPendingTarget = false;
-                    int requestedTargetVersion = targetVersion;
-                    int requestedActivationVersion = activationVersion;
-                    float[] referenceJoints = statusManager.Latest?.JointDegrees;
-                    if (!TryBuildCommand(target, referenceJoints, out string command,
-                            out string error))
-                    {
-                        Debug.LogWarning(error, this);
-                        continue;
-                    }
-
-                    double startedAt = Time.realtimeSinceStartupAsDouble;
-                    string response;
-                    try
-                    {
-                        response = await robotControl.QueryInverseKinRefAsync(command);
-                    }
-                    catch (Exception exception)
-                    {
-                        Debug.LogWarning("Real FAIRINO SDK Ghost query failed: " + exception.Message,
-                            this);
-                        continue;
-                    }
-
-                    if (!active || requestedActivationVersion != activationVersion)
-                        return;
-                    if (requestedTargetVersion != targetVersion)
-                        continue;
-                    if (!TryParseResponse(response, out float[] jointDegrees, out error))
-                    {
-                        Debug.LogWarning(error, this);
-                        continue;
-                    }
-                    if (!ghostMaster.PreviewJoints(jointDegrees))
-                    {
-                        Debug.LogWarning("Real FAIRINO SDK Ghost rejected the solved joints.", this);
-                        continue;
-                    }
-
-                    double elapsed = Time.realtimeSinceStartupAsDouble - startedAt;
-                    Debug.Log($"Real FAIRINO SDK Ghost solved in {elapsed * 1000d:0} ms.", this);
-                }
-            }
-            finally
-            {
-                solving = false;
-                if (active && hasPendingTarget)
-                    _ = SolvePendingAsync();
-            }
-        }
-
-        static bool TryBuildCommand(RealGhostTarget target, float[] referenceJoints,
-            out string command, out string error)
-        {
-            command = string.Empty;
-            if (referenceJoints == null || referenceJoints.Length != JointCount)
-            {
-                error = "Real FAIRINO SDK Ghost requires the latest six robot joints.";
-                return false;
-            }
-            for (int i = 0; i < referenceJoints.Length; i++)
-            {
-                if (float.IsFinite(referenceJoints[i]))
-                    continue;
-                error = "Real FAIRINO SDK Ghost rejected non-finite robot joints.";
-                return false;
-            }
-
-            Vector3 position = target.PositionMeters * 1000f;
-            Vector3 rotation = RealGhostPose.QuaternionToRpyDegrees(target.Rotation);
-            command = string.Format(CultureInfo.InvariantCulture,
-                "GetInverseKinRef(0,{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11})",
-                position.x, position.y, position.z, rotation.x, rotation.y, rotation.z,
-                referenceJoints[0], referenceJoints[1], referenceJoints[2],
-                referenceJoints[3], referenceJoints[4], referenceJoints[5]);
-            error = string.Empty;
-            return true;
-        }
-
-        static bool TryParseResponse(string response, out float[] jointDegrees, out string error)
+        static bool TryGetJointDegrees(JointStateMsg message, string expectedFrame,
+            out float[] jointDegrees, out string error)
         {
             jointDegrees = Array.Empty<float>();
-            string[] values = (response ?? string.Empty).Split(',');
-            if (values.Length != JointCount + 1 ||
-                !int.TryParse(values[0].Trim(), NumberStyles.Integer,
-                    CultureInfo.InvariantCulture, out int resultCode))
+            if (message?.name == null || message.position == null ||
+                message.name.Length != JointCount ||
+                message.position.Length != JointCount)
             {
-                error = "FAIRINO GetInverseKinRef returned an invalid response: " + response;
-                return false;
-            }
-            if (resultCode != 0)
-            {
-                error = $"FAIRINO GetInverseKinRef failed with code {resultCode}.";
+                error = "Real Ghost requires exactly six joint names and positions.";
                 return false;
             }
 
-            jointDegrees = new float[JointCount];
-            for (int i = 0; i < jointDegrees.Length; i++)
+            string frame = message.header?.frame_id ?? string.Empty;
+            if (frame.Length > 0 &&
+                !string.Equals(frame, expectedFrame, StringComparison.Ordinal))
             {
-                if (float.TryParse(values[i + 1].Trim(), NumberStyles.Float,
-                        CultureInfo.InvariantCulture, out jointDegrees[i]) &&
-                    float.IsFinite(jointDegrees[i]))
-                    continue;
-                jointDegrees = Array.Empty<float>();
-                error = "FAIRINO GetInverseKinRef returned invalid joint values: " + response;
+                error = $"Real Ghost target frame must be '{expectedFrame}' when provided.";
                 return false;
             }
 
+            var mappedDegrees = new float[JointCount];
+            var seen = new bool[JointCount];
+            for (int i = 0; i < JointCount; i++)
+            {
+                int jointIndex = GetJointIndex(message.name[i]);
+                if (jointIndex < 0 || seen[jointIndex])
+                {
+                    error = "Real Ghost joint names must contain j1 through j6 exactly once.";
+                    return false;
+                }
+
+                double radians = message.position[i];
+                float degrees = (float)(radians * Mathf.Rad2Deg);
+                if (double.IsNaN(radians) || double.IsInfinity(radians) ||
+                    !float.IsFinite(degrees))
+                {
+                    error = $"Real Ghost joint {message.name[i]} is not finite.";
+                    return false;
+                }
+
+                seen[jointIndex] = true;
+                mappedDegrees[jointIndex] = degrees;
+            }
+
+            jointDegrees = mappedDegrees;
             error = string.Empty;
             return true;
+        }
+
+        static int GetJointIndex(string jointName)
+        {
+            if (jointName == null || jointName.Length != 2 ||
+                jointName[0] != 'j' || jointName[1] < '1' || jointName[1] > '6')
+                return -1;
+            return jointName[1] - '1';
         }
 
 #if UNITY_EDITOR
-        [ContextMenu("Self Check FAIRINO Ghost Response")]
-        void SelfCheckResponse()
+        [ContextMenu("Self Check Real Ghost Joint Target")]
+        void SelfCheckJointTarget()
         {
-            Debug.Assert(TryParseResponse("0,1,2,3,4,5,6", out float[] joints,
-                out string error) && joints.Length == JointCount, error, this);
-            Debug.Assert(!TryParseResponse("1,1,2,3,4,5,6", out _, out _),
-                "A non-zero FAIRINO result must be rejected.", this);
+            var message = new JointStateMsg(
+                new HeaderMsg { frame_id = "base_link" },
+                new[] { "j6", "j1", "j2", "j3", "j4", "j5" },
+                new[] { Math.PI, 0d, Math.PI / 2d, -Math.PI / 2d, 0.25d, -0.25d },
+                Array.Empty<double>(),
+                Array.Empty<double>());
+
+            Debug.Assert(TryGetJointDegrees(message, "base_link",
+                    out float[] joints, out string error) &&
+                Mathf.Approximately(joints[0], 0f) &&
+                Mathf.Approximately(joints[1], 90f) &&
+                Mathf.Approximately(joints[5], 180f), error, this);
+
+            message.name[0] = "j1";
+            Debug.Assert(!TryGetJointDegrees(message, "base_link", out _, out _),
+                "Duplicate Real Ghost joint names must be rejected.", this);
         }
 #endif
     }
