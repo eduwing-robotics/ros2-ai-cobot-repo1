@@ -14,6 +14,8 @@
 
 ## 전체 구조
 
+편집 가능한 전체 책임도: [SW Architecture (draw.io)](sw-architecture.drawio)
+
 ```mermaid
 flowchart LR
     O[운영자·외부 클라이언트]

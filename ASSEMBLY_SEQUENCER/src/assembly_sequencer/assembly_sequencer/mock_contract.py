@@ -217,11 +217,11 @@ def validate_observations(observations):
     validated = []
     for expected_order, observation in enumerate(observations, 1):
         if not isinstance(observation, dict) or set(observation) != {
-            "order", "part_id", "source", "target"
+            "order", "part_id", "slot_code", "source", "target"
         }:
             raise ValueError(
                 f"observation {expected_order} must contain order, part_id, "
-                "source and target"
+                "slot_code, source and target"
             )
         if isinstance(observation["order"], bool) \
                 or not isinstance(observation["order"], int) \
@@ -230,9 +230,13 @@ def validate_observations(observations):
         part_id = observation["part_id"]
         if not isinstance(part_id, str) or not part_id.strip():
             raise ValueError(f"observation {expected_order} part_id must be non-empty")
+        slot_code = observation["slot_code"]
+        if not isinstance(slot_code, str) or not slot_code.strip():
+            raise ValueError(f"observation {expected_order} slot_code must be non-empty")
         validated.append({
             "order": expected_order,
             "part_id": part_id,
+            "slot_code": slot_code,
             "source": validate_ros_pose(
                 observation["source"], f"observation {expected_order}.source"
             ),
@@ -247,10 +251,14 @@ def resolve_observations(recipe, observations):
     recipe_steps = recipe["steps"]
     if len(recipe_steps) != len(observations):
         raise ValueError("Unity observation count does not match the recipe")
+    by_slot = {observation["slot_code"]: observation for observation in observations}
+    if len(by_slot) != len(observations):
+        raise ValueError("Unity observations contain duplicate slot_code")
+    if set(by_slot) != {step["slot_code"] for step in recipe_steps}:
+        raise ValueError("Unity observation slot_codes do not match the recipe")
     resolved = []
-    for recipe_step, observation in zip(recipe_steps, observations):
-        if recipe_step["order"] != observation["order"]:
-            raise ValueError("Unity observation order does not match the recipe")
+    for recipe_step in recipe_steps:
+        observation = by_slot[recipe_step["slot_code"]]
         if recipe_step["part_id"] != observation["part_id"]:
             raise ValueError(
                 f"Unity observation part_id does not match recipe step "
@@ -411,6 +419,7 @@ def unavailable_snapshot(message):
         "recipe_version": "",
         "state": "IDLE",
         "placed_count": 0,
+        "placed_slot_codes": [],
         "expected_step_count": 0,
         "held_step_order": 0,
         "held_part_id": "",
@@ -425,6 +434,7 @@ def assembly_snapshot(
     active, state, error_code="", message="", db_sync_state="NOT_STARTED"
 ):
     completed = state == "COMPLETED"
+    placed_count = active["expected_step_count"] if completed else active["placed_count"]
     return {
         "available": True,
         "active": state in RELAY_STATES,
@@ -432,9 +442,9 @@ def assembly_snapshot(
         "unit_id": active["unit_id"],
         "recipe_version": active["recipe_version"],
         "state": state,
-        "placed_count": (
-            active["expected_step_count"] if completed else active["placed_count"]
-        ),
+        "placed_count": placed_count,
+        # Sequential YAML execution makes this prefix the confirmed placed slots.
+        "placed_slot_codes": active["slot_codes"][:placed_count],
         "expected_step_count": active["expected_step_count"],
         "held_step_order": active["held_step_order"],
         "held_part_id": active["held_part_id"],
@@ -495,6 +505,7 @@ def self_check(recipe=None):
         "observations": [{
             "order": step["order"],
             "part_id": step["part_id"],
+            "slot_code": step["slot_code"],
             "source": pose,
             "target": pose,
         } for step in steps],
@@ -533,6 +544,7 @@ def self_check(recipe=None):
         "recipe_version": recipe_version,
         "placed_count": 0,
         "expected_step_count": 2,
+        "slot_codes": ["SLOT-01", "SLOT-02"],
         "held_step_order": 0,
         "held_part_id": "",
         "held_slot_code": "",

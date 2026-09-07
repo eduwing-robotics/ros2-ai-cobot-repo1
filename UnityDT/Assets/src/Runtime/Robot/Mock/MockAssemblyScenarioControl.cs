@@ -54,8 +54,8 @@ namespace MainUnity.Runtime.Robot.Mock
         [SerializeField] Transform assembledPcbPicker;
         [SerializeField] Transform assembledPcbDropPoint;
 
-        readonly Dictionary<string, int> nextItemIndices = new(StringComparer.Ordinal);
-        readonly Dictionary<string, int> nextSlotIndices = new(StringComparer.Ordinal);
+        readonly Dictionary<string, (string PartId, Transform Item, Transform Slot)> slotTargets =
+            new(StringComparer.Ordinal);
         readonly HashSet<string> processedCallbacks = new(StringComparer.Ordinal);
         readonly List<AssemblyFeedback> bufferedFeedback = new();
         readonly List<(Transform Target, Transform Parent, Vector3 LocalPosition,
@@ -133,6 +133,7 @@ namespace MainUnity.Runtime.Robot.Mock
         {
             public int order;
             public string part_id;
+            public string slot_code;
             public RosPoseRequest source;
             public RosPoseRequest target;
         }
@@ -195,6 +196,7 @@ namespace MainUnity.Runtime.Robot.Mock
             public string recipe_version;
             public string state;
             public int placed_count;
+            public string[] placed_slot_codes;
             public int expected_step_count;
             public int held_step_order;
             public string held_part_id;
@@ -435,8 +437,6 @@ namespace MainUnity.Runtime.Robot.Mock
             ValidateSnapshot(snapshot, observations);
 
             gripperCatcher.Release();
-            nextItemIndices.Clear();
-            nextSlotIndices.Clear();
             processedCallbacks.Clear();
             heldItem = null;
             heldPartId = string.Empty;
@@ -449,48 +449,37 @@ namespace MainUnity.Runtime.Robot.Mock
             inspectionTransferStarted = false;
             expectedStepCount = snapshot.expected_step_count;
 
+            // Rebuild only confirmed placements; scene array order is not recipe order.
+            for (int index = 0; index < snapshot.placed_slot_codes.Length; index++)
+            {
+                string slotCode = snapshot.placed_slot_codes[index];
+                var target = slotTargets[slotCode];
+                ApplyPicked(new AssemblyFeedback
+                {
+                    job_id = snapshot.job_id,
+                    state = Picked,
+                    step_order = index + 1,
+                    part_id = target.PartId,
+                    slot_code = slotCode
+                }, true);
+                ApplyPlaced(new AssemblyFeedback
+                {
+                    job_id = snapshot.job_id,
+                    state = Placed,
+                    step_order = index + 1,
+                    part_id = target.PartId,
+                    slot_code = slotCode
+                }, true);
+            }
             if (snapshot.active)
             {
-                for (int index = 0; index < snapshot.placed_count; index++)
-                {
-                    MockObservation observation = observations[index];
-                    if (!itemManager.TryGetSlotGroup(observation.part_id,
-                            out ItemManager.AssemblySlot group))
-                        throw new InvalidOperationException(
-                            "No Mock slot group for: " + observation.part_id);
-                    int slotIndex = nextSlotIndices.TryGetValue(observation.part_id,
-                        out int next) ? next : 0;
-                    Transform[] slots = group.Slots;
-                    if (slots == null || slotIndex >= slots.Length || slots[slotIndex] == null)
-                        throw new InvalidOperationException(
-                            "No remaining Mock slot for: " + observation.part_id);
-                    string recoveredSlot = slots[slotIndex].name;
-                    ApplyPicked(new AssemblyFeedback
-                    {
-                        job_id = snapshot.job_id,
-                        state = Picked,
-                        step_order = observation.order,
-                        part_id = observation.part_id,
-                        slot_code = recoveredSlot
-                    }, true);
-                    ApplyPlaced(new AssemblyFeedback
-                    {
-                        job_id = snapshot.job_id,
-                        state = Placed,
-                        step_order = observation.order,
-                        part_id = observation.part_id,
-                        slot_code = recoveredSlot
-                    }, true);
-                }
-
                 if (snapshot.held_step_order > 0)
                 {
-                    MockObservation observation = observations[snapshot.held_step_order - 1];
                     ApplyPicked(new AssemblyFeedback
                     {
                         job_id = snapshot.job_id,
                         state = Picked,
-                        step_order = observation.order,
+                        step_order = snapshot.held_step_order,
                         part_id = snapshot.held_part_id,
                         slot_code = snapshot.held_slot_code
                     }, true);
@@ -552,6 +541,18 @@ namespace MainUnity.Runtime.Robot.Mock
                 snapshot.placed_count > snapshot.expected_step_count)
                 throw new InvalidOperationException(
                     "Mock assembly status placed_count is out of range.");
+            if (snapshot.placed_slot_codes == null ||
+                snapshot.placed_slot_codes.Length != snapshot.placed_count)
+                throw new InvalidOperationException(
+                    "Mock assembly status must identify every placed slot.");
+            var placedSlots = new HashSet<string>(StringComparer.Ordinal);
+            foreach (string slotCode in snapshot.placed_slot_codes)
+            {
+                if (string.IsNullOrWhiteSpace(slotCode) || !placedSlots.Add(slotCode) ||
+                    !slotTargets.ContainsKey(slotCode))
+                    throw new InvalidOperationException(
+                        "Mock assembly status contains a duplicate or unknown placed slot.");
+            }
             if (snapshot.held_step_order < 0 ||
                 snapshot.held_step_order > snapshot.expected_step_count ||
                 snapshot.held_step_order != 0 &&
@@ -560,9 +561,10 @@ namespace MainUnity.Runtime.Robot.Mock
                     "Mock assembly status held_step_order is out of sequence.");
             if (snapshot.held_step_order > 0)
             {
-                MockObservation held = observations[snapshot.held_step_order - 1];
-                if (snapshot.held_part_id != held.part_id ||
-                    string.IsNullOrWhiteSpace(snapshot.held_slot_code))
+                if (string.IsNullOrWhiteSpace(snapshot.held_slot_code) ||
+                    placedSlots.Contains(snapshot.held_slot_code) ||
+                    !slotTargets.TryGetValue(snapshot.held_slot_code, out var held) ||
+                    snapshot.held_part_id != held.PartId)
                     throw new InvalidOperationException(
                         "Mock assembly status held item did not match the scene.");
             }
@@ -1033,8 +1035,6 @@ namespace MainUnity.Runtime.Robot.Mock
             if (boardAtAssembly)
                 RestoreAssembledPcbAtAssembly();
 
-            nextItemIndices.Clear();
-            nextSlotIndices.Clear();
             processedCallbacks.Clear();
             heldItem = null;
             heldPartId = string.Empty;
@@ -1066,18 +1066,17 @@ namespace MainUnity.Runtime.Robot.Mock
         {
             if (heldItem != null || feedback.step_order != lastPlacedStepOrder + 1)
                 throw new InvalidOperationException("PICKED feedback arrived out of order.");
-            if (!itemManager.TryGetItemGroup(feedback.part_id, out ItemManager.ItemGroup group))
-                throw new InvalidOperationException("Unknown Mock part_id: " + feedback.part_id);
+            if (!slotTargets.TryGetValue(feedback.slot_code, out var target) ||
+                target.PartId != feedback.part_id || target.Item == null || target.Slot == null)
+                throw new InvalidOperationException("Unknown Mock part or slot: " + feedback.slot_code);
 
-            int index = nextItemIndices.TryGetValue(feedback.part_id, out int next) ? next : 0;
-            if (group.Items == null || index >= group.Items.Length || group.Items[index] == null)
-                throw new InvalidOperationException("No remaining Mock item for: " + feedback.part_id);
-
-            Transform item = group.Items[index];
+            // Keep the item paired with the source pose sent for this slot, even
+            // when YAML executes slots in a different order than the Inspector.
+            Transform item = target.Item;
             if (!gripperCatcher.TryCatch(item))
                 throw new InvalidOperationException("Mock gripper could not catch: " + feedback.part_id);
 
-            // ponytail: Remove this snap when assembly-r1 recipe poses and frames are calibrated.
+            // This snap represents confirmed pickup, not a measured part pose.
             item.position = gripperCatcher.transform.position;
             if (restoreRotation)
                 item.rotation = gripperCatcher.transform.rotation *
@@ -1086,7 +1085,6 @@ namespace MainUnity.Runtime.Robot.Mock
             heldPartId = feedback.part_id;
             heldSlotCode = feedback.slot_code;
             heldStepOrder = feedback.step_order;
-            nextItemIndices[feedback.part_id] = index + 1;
         }
 
         void ApplyPlaced(AssemblyFeedback feedback, bool restoreRotation = false)
@@ -1094,23 +1092,11 @@ namespace MainUnity.Runtime.Robot.Mock
             if (heldItem == null || feedback.step_order != heldStepOrder ||
                 feedback.part_id != heldPartId || feedback.slot_code != heldSlotCode)
                 throw new InvalidOperationException("PLACED did not match the held Mock item.");
-            if (!itemManager.TryGetSlotGroup(feedback.part_id, out ItemManager.AssemblySlot group))
-                throw new InvalidOperationException("No Mock slot group for: " + feedback.part_id);
+            if (!slotTargets.TryGetValue(feedback.slot_code, out var target) ||
+                target.PartId != feedback.part_id || target.Slot == null || target.Item != heldItem)
+                throw new InvalidOperationException("Unknown Mock part or slot: " + feedback.slot_code);
 
-            int index = nextSlotIndices.TryGetValue(feedback.part_id, out int next) ? next : 0;
-            Transform[] slots = group.Slots;
-            if (index >= slots.Length || slots[index] == null)
-                throw new InvalidOperationException("No remaining Mock slot for: " + feedback.part_id);
-
-            Transform slot = slots[index];
-            // 씬 슬롯 이름이 곧 slot_code 다. ROS 는 실행 전에 part_id 만 대조하므로
-            // (mock_sim.resolve_observations) 같은 타입 안의 순서가 어긋나도 조립은 통과하고
-            // 기록만 틀어진다. 로봇은 Unity 가 준 좌표로 가므로 동작은 옳고 이름만 틀리며,
-            // 그 결과 unit_defects 가 엉뚱한 물리 슬롯을 가리킨다. 이 비교가 유일한 방어선이다.
-            if (!string.Equals(slot.name, feedback.slot_code, StringComparison.Ordinal))
-                Debug.LogError(
-                    $"Slot code mismatch at step {feedback.step_order}: recipe '{feedback.slot_code}' " +
-                    $"vs scene '{slot.name}'. Inspection records will name the wrong slot.", this);
+            Transform slot = target.Slot;
 
             Transform board = slot.parent;
             if (board == null)
@@ -1124,7 +1110,6 @@ namespace MainUnity.Runtime.Robot.Mock
             if (restoreRotation)
                 item.rotation = slot.rotation *
                     Quaternion.Euler(0f, resumeRotationOffsetDegrees, 0f);
-            nextSlotIndices[feedback.part_id] = index + 1;
             lastPlacedStepOrder = feedback.step_order;
             heldItem = null;
             heldPartId = string.Empty;
@@ -1229,6 +1214,7 @@ namespace MainUnity.Runtime.Robot.Mock
 
             var itemIndices = new Dictionary<string, int>(StringComparer.Ordinal);
             var observations = new List<MockObservation>();
+            slotTargets.Clear();
             foreach (ItemManager.AssemblySlot slotGroup in slotGroups)
             {
                 if (slotGroup == null || string.IsNullOrWhiteSpace(slotGroup.RequiredItemType))
@@ -1259,6 +1245,10 @@ namespace MainUnity.Runtime.Robot.Mock
                     if (item == null || slot == null)
                         throw new InvalidOperationException(
                             "Mock observation part and slot Transforms are required.");
+                    if (string.IsNullOrWhiteSpace(slot.name) ||
+                        !slotTargets.TryAdd(slot.name, (slotGroup.RequiredItemType, item, slot)))
+                        throw new InvalidOperationException(
+                            "Mock slot names must be non-empty and unique: " + slot.name);
                     ValidateFiniteTransform(item, "part", slotGroup.RequiredItemType);
                     ValidateFiniteTransform(slot, "slot", slotGroup.RequiredItemType);
                     if (!float.IsFinite(itemGroup.PickupOffsetXZ.x) ||
@@ -1278,9 +1268,10 @@ namespace MainUnity.Runtime.Robot.Mock
 
                     observations.Add(new MockObservation
                     {
-                        // Correlation only; the loaded recipe owns execution order validation.
+                        // Observation numbering only; YAML owns execution order.
                         order = observations.Count + 1,
                         part_id = slotGroup.RequiredItemType,
+                        slot_code = slot.name,
                         source = ToRosPoseRequest(pickup, "source"),
                         target = ToRosPoseRequest(placement, "target")
                     });

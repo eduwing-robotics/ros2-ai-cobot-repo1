@@ -14,6 +14,7 @@ from rclpy.node import Node
 from std_msgs.msg import String
 
 from .db import DbWriter
+from .db.writer import DB_SYNC_TIMEOUT_SECONDS
 from .mock_backend import MockBackend
 from .mock_contract import (
     RELAY_STATES,
@@ -122,13 +123,20 @@ class MockAssemblySequencer(Node):
         return response
 
     async def on_external_request(self, request, response):
+        command = None
         try:
             command_type, command = parse_command(
                 request.cmd_str, self.recipe_version
             )
+            if command_type == "observations":
+                command["resolved_steps"] = resolve_observations(
+                    self.recipe, command["observations"]
+                )
         except ValueError as error:
             return self.set_response(
-                response, False, error_code="INVALID_REQUEST", message=str(error)
+                response, False,
+                job_id=command["job_id"] if command else "",
+                error_code="INVALID_REQUEST", message=str(error)
             )
 
         # While active, status uses only feedback already committed by this bridge.
@@ -144,6 +152,11 @@ class MockAssemblySequencer(Node):
             else:
                 try:
                     snapshot = await self.backend.status()
+                    snapshot["placed_slot_codes"] = (
+                        [step["slot_code"] for step in self.recipe["steps"]]
+                        [:snapshot["placed_count"]]
+                        if snapshot.get("recipe_version") == self.recipe_version else []
+                    )
                     snapshot["db_sync_state"] = self.db_writer.sync_state
                 except Exception as error:
                     snapshot = unavailable_snapshot(str(error))
@@ -247,7 +260,7 @@ class MockAssemblySequencer(Node):
         return self.set_response(response, True, job_id)
 
     async def on_pending_job(self):
-        if self.active is not None:
+        if self.active is not None or self.db_writer.sync_state in {"PENDING", "FAILED"}:
             return
         try:
             pending = self.db_writer.get_next_runnable_job(
@@ -303,8 +316,7 @@ class MockAssemblySequencer(Node):
                 "job_id": work["job_id"],
                 "unit_id": work["unit_id"],
                 "recipe_version": self.recipe_version,
-                "observations": command["observations"],
-                "resolved_steps": [],
+                "resolved_steps": command["resolved_steps"],
                 "before_action_index": 0,
                 "after_action_index": 0,
                 "backend_started": False,
@@ -358,9 +370,8 @@ class MockAssemblySequencer(Node):
                 if (action, argument) == (
                     "vision.resolve_targets", "recipe_steps"
                 ):
-                    active["resolved_steps"] = resolve_observations(
-                        self.recipe, active["observations"]
-                    )
+                    # Scene observations were resolved before accepting the request,
+                    # so an invalid slot cannot claim a Job or start the conveyor.
                     continue
                 raise RuntimeError(f"unknown preflight action: {command}")
 
@@ -466,6 +477,8 @@ class MockAssemblySequencer(Node):
                         active["unit_id"], result, defects, image_path
                     )
                     active["inspection_result"] = result
+                    # Do not move equipment past an unconfirmed production write.
+                    self.db_writer.flush(DB_SYNC_TIMEOUT_SECONDS)
                     error_code = "INTERNAL_ERROR"
                     continue
                 if (action, argument) == ("robot.transfer", "assembled_pcb"):
@@ -490,10 +503,7 @@ class MockAssemblySequencer(Node):
                 self.fail_active(error_code, error)
 
     def finish_active_unit(self, active):
-        if not self.db_writer.flush(5.0):
-            raise RuntimeError(
-                self.db_writer.last_error or "DB updates did not finish in time"
-            )
+        self.db_writer.flush(DB_SYNC_TIMEOUT_SECONDS)
         state = self.db_writer.get_job(active["job_id"])
         if state["completed_quantity"] < state["requested_quantity"]:
             work = self.db_writer.claim(
@@ -502,7 +512,6 @@ class MockAssemblySequencer(Node):
             )
             active.update({
                 "unit_id": work["unit_id"],
-                "resolved_steps": [],
                 "before_action_index": 0,
                 "after_action_index": 0,
                 "backend_started": False,
@@ -520,10 +529,7 @@ class MockAssemblySequencer(Node):
             return
 
         self.db_writer.finish(active["job_id"], "COMPLETED")
-        if not self.db_writer.flush(5.0):
-            raise RuntimeError(
-                self.db_writer.last_error or "Job completion did not finish in time"
-            )
+        self.db_writer.flush(DB_SYNC_TIMEOUT_SECONDS)
         payload = {
             "job_id": active["job_id"],
             "state": "COMPLETED",
@@ -547,10 +553,16 @@ class MockAssemblySequencer(Node):
 
     def fail_job(self, job_id, immediate=False):
         try:
+            if self.db_writer.sync_state == "FAILED":
+                raise RuntimeError(
+                    "DB finalization is unconfirmed; restart recovery required: "
+                    + self.db_writer.last_error
+                )
             if immediate:
                 self.db_writer.abort(job_id)
             else:
                 self.db_writer.finish(job_id, "FAILED")
+                self.db_writer.flush(DB_SYNC_TIMEOUT_SECONDS)
         except Exception as error:
             self.get_logger().error(f"failed to finalize job {job_id}: {error}")
             return error

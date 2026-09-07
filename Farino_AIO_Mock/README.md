@@ -55,6 +55,9 @@ ros2 launch mock_db_mvp launch_mock.launch.py
 
 실행 전에 `PRODUCTION_DB_DSN`은 `production_writer`, `MAIN_SERVER_DB_DSN`은
 `job_submitter` 권한을 상속한 배포 계정으로 export해야 합니다.
+두 DSN은 서로 다른 비슈퍼유저 계정을 사용하고, 각 계정에는 해당 역할만 부여합니다.
+두 역할 모두 production 테이블을 조회할 수 있지만 쓰기 권한은 분리됩니다.
+계정에 반대 역할, 테이블 소유권 또는 별도 쓰기 권한을 부여하면 이 제한을 우회할 수 있습니다.
 
 대책서 이메일은 기본 비활성입니다. 활성화할 때 아래 변수를 launch 프로세스에 전달합니다.
 SMTP 비밀번호 파일은 배포 secret으로 만들고 소유자 읽기만 허용하며 저장소에 두지 않습니다.

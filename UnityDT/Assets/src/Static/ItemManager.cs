@@ -17,7 +17,7 @@ namespace MainUnity.Static
             Transform legacyTarget;
 
             [SerializeField, FormerlySerializedAs("targets"),
-             Tooltip("이 타입의 부품을 배치할 조립 슬롯 Transform을 순서대로 등록합니다.")]
+             Tooltip("이 타입의 조립 슬롯 Transform을 등록합니다. 이름은 YAML slot_code와 일치해야 합니다.")]
             Transform[] slots = Array.Empty<Transform>();
 
             [SerializeField, FormerlySerializedAs("legacyRequiredItemType"),
@@ -65,8 +65,8 @@ namespace MainUnity.Static
             public Vector2 PickupOffsetXZ => pickupOffsetXZ;
         }
 
-        // 배열 순서대로 실행할 PCB 조립 위치와 필요 부품 타입 데이터다.
-        [SerializeField, Tooltip("배열 순서대로 실행할 PCB 조립 위치와 필요 부품 타입입니다.")]
+        // 실행 순서는 YAML이 소유하고, 이 배열은 슬롯 위치와 필요 부품을 연결한다.
+        [SerializeField, Tooltip("PCB 조립 슬롯과 필요 부품 타입입니다. 실행 순서는 YAML을 따릅니다.")]
         AssemblySlot[] assemblySlots = Array.Empty<AssemblySlot>();
 
         // 타입별 공급 부품 배열과 픽업 설정 데이터다.
@@ -74,7 +74,7 @@ namespace MainUnity.Static
         [SerializeField, Tooltip("타입별 공급 부품 배열과 픽업 설정입니다.")]
         ItemGroup[] itemGroups = Array.Empty<ItemGroup>();
 
-        /// <summary>조립 순서대로 등록된 슬롯 배열을 반환한다.</summary>
+        /// <summary>부품 타입별로 등록된 슬롯 배열을 반환한다.</summary>
         public AssemblySlot[] AssemblySlots => assemblySlots;
 
         /// <summary>타입별로 등록된 공급 부품 그룹 배열을 반환한다.</summary>

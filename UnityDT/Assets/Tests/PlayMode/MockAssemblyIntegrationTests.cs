@@ -26,6 +26,104 @@ namespace MainUnity.Tests.PlayMode
             public string job_status;
         }
 
+        [Test]
+        public void SlotIdentityControlsPickupSnapAndRecovery()
+        {
+            // Inactive fixtures avoid lifecycle ROS connections and leave the live scene alone.
+            var root = new GameObject("Slot identity test");
+            root.SetActive(false);
+            try
+            {
+                Transform Child(string name, Transform parent)
+                {
+                    var child = new GameObject(name).transform;
+                    child.SetParent(parent, false);
+                    return child;
+                }
+                Component Add(string name) => root.AddComponent(RuntimeType(name));
+                var control = Add("MainUnity.Runtime.Robot.Mock.MockAssemblyScenarioControl");
+                var robot = Add("MainUnity.Runtime.Robot.Mock.MockRobotControl");
+                var manager = Add("MainUnity.Static.ItemManager");
+                var status = Add("MainUnity.Runtime.Robot.Status.RobotStatusManager");
+                var catcher = Child("Catcher", root.transform).gameObject.AddComponent(
+                    RuntimeType("MainUnity.Runtime.Robot.Mock.SimGripperCatcher"));
+                Transform board = Child("Board", root.transform);
+                Transform slot1 = Child("HBM-01", board);
+                Transform slot2 = Child("HBM-02", board);
+                slot1.localPosition = new Vector3(0.1f, 0, 0);
+                slot2.localPosition = new Vector3(0.2f, 0, 0);
+                Transform item1 = Child("Item1", root.transform);
+                Transform item2 = Child("Item2", root.transform);
+                item1.localPosition = new Vector3(0, 0, 0.1f);
+                item2.localPosition = new Vector3(0, 0, 0.2f);
+
+                void SetGroup(string fieldName, params (string Name, object Value)[] values)
+                {
+                    FieldInfo field = Field(manager, fieldName);
+                    Type type = field.FieldType.GetElementType();
+                    object group = Activator.CreateInstance(type);
+                    foreach (var value in values)
+                        Field(group, value.Name).SetValue(group, value.Value);
+                    Array groups = Array.CreateInstance(type, 1);
+                    groups.SetValue(group, 0);
+                    field.SetValue(manager, groups);
+                }
+                SetGroup("assemblySlots", ("requiredItemType", "HBM"),
+                    ("slots", new[] { slot2, slot1 }));
+                SetGroup("itemGroups", ("itemType", "HBM"),
+                    ("items", new[] { item2, item1 }));
+                Field(robot, "robotBase").SetValue(robot, root.transform);
+                Field(robot, "statusManager").SetValue(robot, status);
+                Field(control, "control").SetValue(control, robot);
+                Field(control, "itemManager").SetValue(control, manager);
+                Field(control, "gripperCatcher").SetValue(control, catcher);
+                Field(control, "assembledPcb").SetValue(control, board);
+                Field(control, "assembledPcbAssemblyStopPoint").SetValue(control, board);
+                Invoke(control, "CaptureInitialSceneState");
+
+                slot2.name = "HBM-01";
+                Assert.That(Assert.Throws<TargetInvocationException>(() =>
+                    Invoke(control, "BuildObservations")).InnerException,
+                    Is.TypeOf<InvalidOperationException>());
+                slot2.name = "HBM-02";
+                Array observations = (Array)Invoke(control, "BuildObservations");
+                Assert.That(Field(observations.GetValue(0), "slot_code").GetValue(
+                    observations.GetValue(0)), Is.EqualTo("HBM-02"));
+                Field(control, "lastPlacedStepOrder").SetValue(control, 0);
+
+                object Packet(string type, string json) => JsonUtility.FromJson(json,
+                    control.GetType().GetNestedType(type, BindingFlags.NonPublic));
+                object feedback = Packet("AssemblyFeedback",
+                    "{\"step_order\":1,\"part_id\":\"HBM\",\"slot_code\":\"HBM-01\"}");
+                Invoke(control, "ApplyPicked", feedback, false);
+                Assert.That(Field(control, "heldItem").GetValue(control), Is.SameAs(item1));
+                Invoke(control, "ApplyPlaced", feedback, false);
+                Assert.That(item1.position, Is.EqualTo(slot1.position));
+                Assert.That(item1.parent, Is.SameAs(board));
+                Assert.That(item2.parent, Is.SameAs(root.transform));
+
+                Invoke(control, "ResetVisualization", true);
+                object snapshot = Packet("AssemblySnapshot",
+                    "{\"available\":true,\"active\":true," +
+                    "\"job_id\":\"12345678-1234-5678-1234-567812345678\"," +
+                    "\"recipe_version\":\"assembly-r1\",\"state\":\"PAUSED\"," +
+                    "\"placed_count\":1,\"placed_slot_codes\":[\"HBM-01\"]," +
+                    "\"expected_step_count\":2,\"held_step_order\":2," +
+                    "\"held_part_id\":\"HBM\",\"held_slot_code\":\"HBM-02\"}");
+                Invoke(control, "RestoreSnapshot", snapshot, observations);
+                Assert.That(item1.position, Is.EqualTo(slot1.position));
+                Assert.That(Field(control, "heldItem").GetValue(control), Is.SameAs(item2));
+                Field(snapshot, "placed_slot_codes").SetValue(snapshot, new[] { "UNKNOWN" });
+                Assert.That(Assert.Throws<TargetInvocationException>(() =>
+                    Invoke(control, "ValidateSnapshot", snapshot, observations)).InnerException,
+                    Is.TypeOf<InvalidOperationException>());
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(root);
+            }
+        }
+
         [UnityTest]
         [Category("ExternalIntegration")]
         public IEnumerator JobsUiStartRunsTheFullMockStack()

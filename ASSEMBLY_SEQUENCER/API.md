@@ -50,6 +50,7 @@ Service는 요청 JSON을 `cmd_str`, 응답 JSON을 `cmd_res`에 넣습니다. F
   "recipe_version": "assembly-r1",
   "state": "PLACED",
   "placed_count": 1,
+  "placed_slot_codes": ["SLOT-01"],
   "expected_step_count": 28,
   "held_step_order": 0,
   "held_part_id": "",
@@ -62,6 +63,11 @@ Service는 요청 JSON을 `cmd_str`, 응답 JSON을 `cmd_res`에 넣습니다. F
 
 `available=false`면 backend 상태를 조회할 수 없음을 뜻합니다. `active=false`는 실행 중인 작업이 없거나 snapshot이 terminal 상태임을 뜻합니다.
 
+`placed_slot_codes`는 현재 Unit에서 배치가 확인된 슬롯을 실행 순서대로 나열하며 길이는
+`placed_count`와 같습니다. 다음 Unit에서는 빈 목록으로 시작합니다. Unity는 이 목록과
+`held_slot_code`로 화면을 복구하며 Scene 배열 순서로 배치 위치를 추정하지 않습니다.
+전체 레시피나 DB checkpoint는 전달·저장하지 않습니다.
+
 ### observations
 
 ```json
@@ -73,6 +79,7 @@ Service는 요청 JSON을 `cmd_str`, 응답 JSON을 `cmd_res`에 넣습니다. F
     {
       "order": 1,
       "part_id": "PART-01",
+      "slot_code": "SLOT-01",
       "source": {
         "xyz_mm": [100.0, 200.0, 300.0],
         "xyzw": [0.0, 0.0, 0.0, 1.0]
@@ -86,11 +93,17 @@ Service는 요청 JSON을 `cmd_str`, 응답 JSON을 `cmd_res`에 넣습니다. F
 }
 ```
 
-- `order`는 1부터 연속되어야 합니다.
-- `part_id`와 순서는 고정된 레시피 step과 일치해야 합니다.
+- `order`는 관측 배열 안에서 1부터 연속되는 번호이며 조립 실행 순서가 아닙니다.
+- `slot_code`는 연결된 Scene 슬롯 Transform의 이름이며 대소문자를 포함해 YAML과 정확히 일치해야 합니다.
+- 슬롯 누락·중복·추가와 슬롯별 `part_id` 불일치는 `INVALID_REQUEST`입니다.
+- Sequencer는 `slot_code`로 좌표를 연결하고 고정된 YAML step 순서대로 실행합니다.
+- Unity는 각 슬롯에 보낸 source의 공급 부품을 집고, 배치 완료 feedback의 `slot_code`로 snap 대상을 찾습니다.
 - `xyz_mm`는 유한한 숫자 3개, `xyzw`는 0이 아닌 유한한 숫자 4개입니다.
 - Sequencer는 quaternion을 정규화합니다.
 - 좌표 등록만으로 Job을 실행하지 않습니다. 같은 `job_id`의 실행 가능한 DB Job과 backend 준비가 확인돼야 claim합니다.
+- 관측과 레시피 대조는 요청 수락·Job claim·첫 설비 동작 전에 완료합니다.
+- `slot_code`가 없는 이전 요청은 거절합니다. Unity와 Sequencer를 함께 갱신해야 하며,
+  `placed_slot_codes`가 없는 이전 status로는 Unity가 화면을 복구하지 않습니다.
 
 ### conveyor 명령
 
@@ -181,6 +194,12 @@ status 이외의 명령은 다음 형식을 반환합니다.
 | `part_id`, `slot_code` | Pick·Place 대상, 해당 없으면 빈 문자열 |
 | `error_code`, `message` | 실패 원인, 정상 상태면 빈 문자열 |
 | `db_sync_state` | 생산 기록 동기화 상태 |
+
+생산 기록의 영구 오류 또는 동기화 대기 한도(5초) 초과 시
+`db_sync_state=FAILED`를 유지하고 후속 생산을 차단한다.
+이때 실행 실패 피드백은 DB의 Job·Unit 상태까지 `FAILED`로 저장됐다는 뜻이 아니다.
+이미 전달된 트랜잭션의 늦은 반영 가능성이 있으므로 DB 복구 후 Sequencer를
+재시작하고 기존 Unit 복구 및 설비 준비·reset 확인 절차를 따른다.
 
 실행 상태:
 

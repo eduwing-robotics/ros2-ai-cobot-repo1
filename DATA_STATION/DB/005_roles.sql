@@ -53,16 +53,10 @@ REVOKE ALL ON ALL FUNCTIONS IN SCHEMA production
 
 -- MainServer may submit and read Jobs, but cannot transition them.
 GRANT USAGE ON SCHEMA production TO job_submitter;
-GRANT SELECT ON
-    production.jobs,
-    production.units,
-    production.unit_defects,
-    production.product_slots,
-    production.parts
-    TO job_submitter;
+-- Both application roles can read all production facts; writes remain separated.
+GRANT SELECT ON ALL TABLES IN SCHEMA production TO job_submitter;
 GRANT INSERT (job_id, product_id, requested_quantity, recipe_version)
     ON production.jobs TO job_submitter;
-GRANT SELECT ON production.defect_report_deliveries TO job_submitter;
 GRANT UPDATE (
     delivery_status,
     attempt_count,

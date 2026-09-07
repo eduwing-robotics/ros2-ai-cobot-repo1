@@ -1,7 +1,32 @@
--- Run after production_schema.sql and 002_query_samples.sql in the same psql session.
+-- Run after production_schema.sql, 005_roles.sql and 002_query_samples.sql in the same psql session.
 -- All test rows are rolled back.
 
 BEGIN;
+
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM pg_tables
+        WHERE schemaname = 'production'
+          AND (NOT has_table_privilege('job_submitter',
+                   format('%I.%I', schemaname, tablename), 'SELECT')
+               OR NOT has_table_privilege('production_writer',
+                   format('%I.%I', schemaname, tablename), 'SELECT'))
+    ) THEN
+        RAISE EXCEPTION 'both application roles must read all production tables';
+    END IF;
+
+    IF NOT has_column_privilege('job_submitter', 'production.jobs', 'job_id', 'INSERT')
+       OR has_column_privilege('job_submitter', 'production.jobs', 'job_status', 'INSERT')
+       OR has_any_column_privilege('job_submitter', 'production.jobs', 'UPDATE')
+       OR has_table_privilege('job_submitter', 'production.jobs', 'DELETE')
+       OR has_table_privilege('job_submitter', 'production.jobs', 'TRUNCATE')
+       OR NOT has_column_privilege('production_writer', 'production.jobs', 'job_status', 'UPDATE')
+       OR has_any_column_privilege('production_writer', 'production.jobs', 'INSERT') THEN
+        RAISE EXCEPTION 'Job submission and execution write privileges must remain separate';
+    END IF;
+END
+$$;
 
 INSERT INTO production.parts (
     part_id, part_name, part_category, stock_quantity
