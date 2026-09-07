@@ -1,6 +1,12 @@
 """Integration checks for the UUID Job and Unit-attempt lifecycle."""
 
 import os
+import copy
+import hashlib
+import json
+import tempfile
+from datetime import datetime, timezone
+from unittest.mock import patch
 import sys
 import unittest
 import uuid
@@ -129,6 +135,78 @@ class ProductionStoreIntegrationTest(unittest.TestCase):
     def complete(self, unit_id, result="PASS", defects=()):
         store.complete_assembly_and_consume_stock(unit_id)
         store.record_inspection(unit_id, result, defects)
+
+    def test_vision_slot_storage_replay_and_evidence_integrity(self):
+        with psycopg.connect(TEST_DSN) as connection:
+            connection.execute("UPDATE production.parts SET stock_quantity=100 WHERE part_id=%s", (self.part_id,))
+            for number in range(3, 26):
+                connection.execute("""INSERT INTO production.product_slots (product_id, slot_code, part_id)
+                    VALUES (%s, %s, %s)""", (self.product_id, f"SLOT-{number:02}", self.part_id))
+        job_id = self.create_job()
+        unit_id = self.claim(job_id)["unit_id"]
+        store.complete_assembly_and_consume_stock(unit_id)
+        with psycopg.connect(TEST_DSN) as connection:
+            rows = connection.execute("SELECT slot_code FROM production.product_slots WHERE product_id=%s",
+                                      (self.product_id,)).fetchall()
+        png = b"\x89PNG\r\n\x1a\nfixture"
+        data = {
+            "inspection_id": str(uuid.uuid4()), "job_id": job_id, "unit_id": unit_id,
+            "status": "COMPLETED",
+            "result": {"decision": "UNKNOWN", "inspected_at": datetime.now(timezone.utc).isoformat(),
+                       "slots": [{"slot_code": row[0], "part_id": self.part_id, "decision": "UNKNOWN"} for row in rows],
+                       "findings": [], "defects": []},
+            "image": {"ready": True, "size_bytes": len(png), "sha256": hashlib.sha256(png).hexdigest()},
+        }
+        connect = store._connect
+        with tempfile.TemporaryDirectory() as root, patch.dict(os.environ, {"DEFECT_IMAGE_ROOT": root}), \
+                patch.object(store, "_connect", lambda **kwargs: connect()):
+            def save(payload=data, image=png):
+                return store.record_inspection(unit_id, payload["result"]["decision"], None,
+                                               inspection=payload, image_bytes=image)
+            with self.assertRaisesRegex(ValueError, "SHA256"):
+                save(image=png + b"corrupt")
+            bad = copy.deepcopy(data)
+            bad["result"]["slots"].pop()
+            with self.assertRaisesRegex(ValueError, "exactly match"):
+                save(bad)
+            replace = os.replace
+            def fail_mapping(source, target):
+                if str(target).endswith("result.json"):
+                    raise OSError("simulated disk failure")
+                return replace(source, target)
+            with patch.object(os, "replace", fail_mapping), self.assertRaisesRegex(OSError, "disk failure"):
+                save()
+            self.assertEqual(self.scalar("SELECT COUNT(*) FROM production.unit_defects WHERE unit_id=%s", (unit_id,)), 0)
+            links = save()
+            self.assertEqual(len(links), 25)
+            self.assertEqual(save(), links)
+            archived = Path(root) / "inspections" / str(unit_id) / "result.json"
+            self.assertEqual(json.loads(archived.read_text())["unit_defects"], links)
+            self.assertEqual(self.scalar("SELECT unit_status FROM production.units WHERE unit_id=%s", (unit_id,)), "RUNNING")
+            self.assertEqual(self.scalar("SELECT COUNT(*) FROM production.unit_defects WHERE unit_id=%s AND defect_type IS NOT NULL", (unit_id,)), 0)
+            self.assertEqual(self.scalar("SELECT COUNT(*) FROM production.defect_report_deliveries d JOIN production.unit_defects u USING(unit_defect_id) WHERE u.unit_id=%s", (unit_id,)), 0)
+            changed = copy.deepcopy(data)
+            changed["inspection_id"] = str(uuid.uuid4())
+            with self.assertRaisesRegex(RuntimeError, "different Vision data"):
+                save(changed)
+            archived.unlink()
+            self.assertEqual(save(), links)
+            sys.path.insert(0, str(Path(__file__).resolve().parents[4] / "MAIN_SERVER"))
+            import queries
+            with patch.dict(os.environ, {"MAIN_SERVER_MODE": "mock", "MAIN_SERVER_DB_DSN": TEST_DSN}):
+                fetched = queries.units(job_id)[0]
+                self.assertEqual(len(fetched["inspection"]["result"]["slots"]), 25)
+                self.assertEqual(fetched["defects"], [])
+                self.assertEqual(queries.inspection_image(unit_id), png)
+                self.assertTrue(all(r["defective_quantity"] == 0 and r["inspected_quantity"] == 0
+                                    for r in queries.slot_rates(self.product_id)))
+                archived.write_text(json.dumps({"data": data, "unit_defects": []}))
+                self.assertIsNotNone(queries.units(job_id)[0]["inspection_error"])
+                save()
+                (archived.parent / "02_annotated_report.png").write_bytes(png + b"corrupt")
+                with self.assertRaises(queries.InspectionUnavailable):
+                    queries.inspection_image(unit_id)
+                save()
 
     def test_requested_quantity_pass_target_finishes_job(self):
         job_id = self.create_job(quantity=2)

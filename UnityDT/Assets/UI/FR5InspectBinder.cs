@@ -1,7 +1,7 @@
 // 역할: INSPECT 페이지(FR5Inspect.uxml)의 카메라 상태와 판정 표시를 담당한다.
 //
 //   실연결 : 모드 · 비전 스트리밍 상태 · 프레임 경과 · 유닛 판정·불량·증거
-//   미연결 : 항목별 검사 결과와 검출 좌표 — 계약이 생기기 전까지 지어내지 않는다.
+//   항목별 결과는 MainServer의 보관 JSON을 읽으며 의심 항목은 확정 불량과 구분한다.
 //
 // 카메라 텍스처 자체는 CamVisionReceiver 가 `camera-image` Image 요소에 직접 넣는다.
 // 이 바인더는 "지금 영상이 살아 있는가"와 판정 표시만 맡는다.
@@ -37,8 +37,22 @@ namespace MainUnity.UI
             public string inspection_image_path;
             public string inspected_at;
             public Defect[] defects;
+            public Inspection inspection;
+            public string inspection_error;
+            public string inspection_image_url;
         }
         [Serializable] sealed class Defect { public string slot_code; public string defect_type; }
+        [Serializable] sealed class Inspection { public InspectionResult result; }
+        [Serializable] sealed class InspectionResult { public Slot[] slots; public Finding[] findings; }
+        [Serializable] sealed class Slot { public string slot_code; public string part_name; public string decision; }
+        [Serializable] sealed class Finding
+        {
+            public string slot_code;
+            public string primary_defect_name_ko;
+            public string[] details;
+            public string authority;
+            public bool confirmed_defect;
+        }
 
         [Header("데이터 소스")]
         [SerializeField] UIMaster uiMaster;
@@ -234,13 +248,14 @@ namespace MainUnity.UI
             string result = string.IsNullOrEmpty(selected.inspection_result) ? "PENDING" : selected.inspection_result;
             bool pending = result == "PENDING";
             string verdict = pending ? (selected.unit_status == "FAILED" ? "검사 미완료" : "검사 대기") : result;
-            SetVerdict(verdict, result == "FAIL", pending);
+            SetVerdict(result == "UNKNOWN" ? "판정 보류" : verdict, result == "FAIL", pending || result == "UNKNOWN");
             if (inspectionMessage != null)
             {
                 inspectionMessage.text = result switch
                 {
                     "PASS" => "검사 합격 · 기록된 판정입니다.",
                     "FAIL" => "검사 불합격 · 아래 불량 위치를 확인하세요.",
+                    "UNKNOWN" => "검사 완료 · 판정 보류. 의심 항목은 확정 불량이 아닙니다.",
                     _ => selected.unit_status == "FAILED" ? "실행이 실패하여 검사 판정이 기록되지 않았습니다." :
                         "아직 검사 판정이 기록되지 않았습니다. 완료 후 새로고침하세요."
                 };
@@ -272,7 +287,33 @@ namespace MainUnity.UI
                 item.AddToClassList("slotchip--bad");
                 defectGrid?.Add(item);
             }
-            FR5EmptyState.Detail(defectSql, defects.Length + "건 기록");
+            InspectionResult detail = selected.inspection?.result;
+            if (detail?.slots != null)
+            {
+                checkList?.Clear();
+                checkList?.Add(CheckLine("생산 시도 상태 · " + execution, selected.unit_status == "FAILED"));
+                foreach (Slot slot in detail.slots)
+                {
+                    if (slot == null) continue;
+                    checkList?.Add(CheckLine(slot.slot_code + " · " + slot.part_name + " · " + slot.decision, false));
+                }
+            }
+            if (detail?.findings != null)
+            {
+                foreach (Finding finding in detail.findings)
+                {
+                    if (finding == null) continue;
+                    var item = new Label(finding.slot_code + " · " + finding.primary_defect_name_ko
+                        + (finding.confirmed_defect ? " · 확정" : " · 의심")) { enableRichText = false };
+                    item.tooltip = finding.authority + "\n" + string.Join("\n", finding.details ?? Array.Empty<string>());
+                    item.AddToClassList("slotchip");
+                    if (finding.confirmed_defect) item.AddToClassList("slotchip--bad");
+                    defectGrid?.Add(item);
+                }
+            }
+            if (!string.IsNullOrEmpty(selected.inspection_error))
+                checkList?.Add(CheckLine("상세 검사 자료를 읽지 못했습니다. 새로고침하세요.", true));
+            FR5EmptyState.Detail(defectSql, "확정 불량 " + defects.Length + "건");
 
             unitStrip?.Clear();
             foreach (Unit unit in units)
@@ -289,7 +330,7 @@ namespace MainUnity.UI
                 if (unit.inspection_result == "FAIL") item.AddToClassList("chip--bad");
                 unitStrip?.Add(item);
             }
-            ShowEvidence(selected.inspection_image_path);
+            ShowEvidence(selected.inspection_image_path, selected.inspection_image_url, selected.unit_id);
             RefreshVision();
         }
 
@@ -327,13 +368,20 @@ namespace MainUnity.UI
 
         string ApiUrl(string path) => mainServerBaseUrl.TrimEnd('/') + path;
 
-        void ShowEvidence(string path)
+        void ShowEvidence(string path, string imageUrl, int unitId)
         {
             StopEvidenceLoad();
             ClearEvidence();
             if (evidenceButton != null) evidenceButton.tooltip = "";
             evidenceMessage = "이 생산 시도에 저장된 검사 이미지가 없습니다.";
-            if (evidenceImage == null || string.IsNullOrEmpty(path)) return;
+            if (evidenceImage == null) return;
+            if (imageUrl == "/api/v1/units/" + unitId + "/inspection/image")
+            {
+                evidenceMessage = "검사 기록 이미지를 불러오고 있습니다.";
+                evidenceRoutine = StartCoroutine(LoadEvidence(imageUrl, true));
+                return;
+            }
+            if (string.IsNullOrEmpty(path)) return;
             if (path != MockPassImagePath && path != MockInspectPassImagePath && path != MockFailImagePath)
             {
                 evidenceMessage = "현재 화면에서 열 수 없는 검사 이미지입니다.";
@@ -346,10 +394,12 @@ namespace MainUnity.UI
             evidenceRoutine = StartCoroutine(LoadEvidence(path));
         }
 
-        IEnumerator LoadEvidence(string path)
+        IEnumerator LoadEvidence(string path, bool remote = false)
         {
             string filePath = Path.Combine(Application.streamingAssetsPath, path);
-            using var request = UnityWebRequestTexture.GetTexture(new Uri(filePath).AbsoluteUri, true);
+            using var request = UnityWebRequestTexture.GetTexture(remote ? ApiUrl(path) : new Uri(filePath).AbsoluteUri, true);
+            if (remote)
+                request.SetRequestHeader("X-Runtime-Mode", uiMaster == null ? "" : uiMaster.OperatingMode.ToString().ToLowerInvariant());
             request.timeout = 5;
             yield return request.SendWebRequest();
             if (!isActiveAndEnabled) yield break;
@@ -359,7 +409,7 @@ namespace MainUnity.UI
                 evidenceImage.image = evidenceTexture;
                 evidenceImage.scaleMode = ScaleMode.ScaleToFit;
                 evidenceImage.style.display = showLiveVideo ? DisplayStyle.None : DisplayStyle.Flex;
-                evidenceStats = "기록에 연결된 샘플 이미지 · 실제 촬영 이미지 아님";
+                evidenceStats = remote ? "보관된 검사 결과 이미지" : "기록에 연결된 샘플 이미지 · 실제 촬영 이미지 아님";
                 hasEvidence = true;
             }
             else

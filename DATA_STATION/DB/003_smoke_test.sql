@@ -168,9 +168,9 @@ DECLARE
     shortage bigint;
 BEGIN
     SELECT COUNT(u.unit_id),
-           COUNT(ud.unit_defect_id),
+           COUNT(ud.defect_type),
            ROUND(
-               100.0 * COUNT(ud.unit_defect_id)
+               100.0 * COUNT(ud.defect_type)
                / NULLIF(COUNT(u.unit_id), 0),
                2
            )

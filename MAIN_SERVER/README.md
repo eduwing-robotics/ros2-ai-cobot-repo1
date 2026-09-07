@@ -28,3 +28,12 @@ HTTP endpoint, payload와 오류는 [MainServer HTTP API](Main_serverAPI.md)가 
 - [시스템 아키텍처](../docs/architecture/index.md)
 - [production 데이터 설계](../DATA_STATION/DB/README.md)
 - [불량대책서 필드 계약](templates/불량대책서_필드매핑.md)
+
+
+## 검사 자료 보관 조회
+
+MainServer는 `DEFECT_IMAGE_ROOT`의 Unit별 `result.json`을 DB UID와 대조하고
+검사 조회 응답에 슬롯·findings를 제공합니다. PNG는 같은 보관 루트의 파일을
+크기·SHA256 검증 후 HTTP로 제공합니다. SQL에는 파일 본문을 저장하지 않습니다.
+대책서 생성기는 동일 자료를 읽고 확정 불량의 UID·이미지를 검증합니다.
+자료 누락·불일치는 생산 판정이나 파일을 수정하지 않고 조회·생성 실패로 전달합니다.

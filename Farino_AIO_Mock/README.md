@@ -92,7 +92,7 @@ SMTP 비밀번호 파일은 배포 secret으로 만들고 소유자 읽기만 �
 | `DEFECT_MAIL_ALLOWED_DOMAINS` | 활성 시 필수 | 수신 허용 도메인 목록 |
 | `DEFECT_MAIL_USERNAME` | 선택 | SMTP 인증 사용자 |
 | `DEFECT_MAIL_SECRET_FILE` | 인증 시 필수 | 권한 `0600`인 비밀번호 파일 |
-| `DEFECT_IMAGE_ROOT` | `UnityDT/Assets/StreamingAssets` | 검사 이미지 허용 루트 |
+| `DEFECT_IMAGE_ROOT` | `UnityDT/Assets/StreamingAssets` | 검사 JSON·이미지 허용 루트. Vision 저장 호출 시 명시 필수 |
 | `DEFECT_IMAGE_MAX_BYTES` | `10485760` | 문서에 포함할 이미지 상한 |
 | `DEFECT_MAIL_MAX_ATTACHMENT_BYTES` | `10485760` | XLSX 첨부 상한 |
 | `DEFECT_MAIL_TIMEOUT_SECONDS` | `10` | SMTP timeout |
@@ -147,3 +147,10 @@ Mock 수동 명령은 Unity가 상태 service의 모드를 확인한 뒤 발행�
 Mock 실행기는 arm·gripper trajectory 전송 전에 활성 FakeSystem 구성을 확인합니다.
 동일 도메인에 별도 controller manager나 동일 이름의 실행 서버를 중복 배치하지 않습니다.
 검증 실패·timeout은 자동 명령 재시도 없이 로그와 호출자 오류로 전달합니다.
+
+
+검사 자료를 공유할 때 Sequencer와 MainServer·대책서 worker의 `DEFECT_IMAGE_ROOT`는
+동일한 파일을 가리키는 보관 루트여야 합니다. 서로 다른 PC에서는 공유 마운트를 사용합니다.
+배포 시 보관 루트를 먼저 만들고 두 계정이 공유하는 그룹과 디렉터리 setgid를 설정합니다.
+Sequencer는 파일을 `0640`으로 저장하므로 조회 계정에는 그룹 읽기와 경로 탐색 권한이 필요합니다.
+기존 Mock 샘플을 유지하려면 같은 루트에서 `InspectionSamples`도 읽을 수 있어야 합니다.

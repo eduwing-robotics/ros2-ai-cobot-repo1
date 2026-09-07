@@ -14,6 +14,7 @@
 | `GET` | `/api/v1/jobs?status={status}&limit={limit}` | 실행 queue와 최근 Job 조회 |
 | `GET` | `/api/v1/jobs/{job_id}` | Job 진행 상태 조회 |
 | `GET` | `/api/v1/jobs/{job_id}/units` | Unit·검사·불량 조회 |
+| `GET` | `/api/v1/units/{unit_id}/inspection/image` | 보관된 검사 PNG 조회 |
 | `DELETE` | `/api/v1/jobs/{job_id}` | `PENDING` Job 취소 |
 | `GET` | `/api/v1/products/{product_id}/quality/slot-rates` | 슬롯별 누적 검사·불량률 조회 |
 | `POST` | `/api/v1/assemblies` | 영속 production Job 등록 |
@@ -30,7 +31,7 @@ Sequencer 모드 불일치·누락은 `503 assembly_unavailable`, DB 환경 불�
 
 ## 공통 응답
 
-성공:
+JSON 성공:
 
 ```json
 {"data": {}}
@@ -103,3 +104,21 @@ Mock에서 필요한 runtime 좌표는 이 HTTP API가 아니라 [Assembly Seque
 | `503` | `datasheet_inconsistent` | DB 부품과 데이터시트 계약 불일치 |
 | `503` | `assembly_unavailable` | Assembly Sequencer 상태 응답 불가 |
 | `500` | `internal_error` | 분류되지 않은 서버 오류 |
+
+
+## 보관 검사 결과
+
+`GET /api/v1/jobs/{job_id}/units`는 기존 Unit 필드와 확정 `defects`를 유지합니다.
+검사 전체 슬롯 행 중 `defect_type IS NOT NULL`만 확정 불량으로 반환하고 집계합니다.
+`UNKNOWN`은 검사 완료·판정 보류이며 PASS 수량과 불량률 분모에서 제외합니다.
+
+추가 응답 필드:
+- `inspection`: 보관된 Vision `data` 객체. `result.slots`의 각 항목에 DB `unit_defect_id`가 포함됩니다.
+  `result.findings`의 의심 항목과 확정 여부·authority는 원래 의미를 유지합니다.
+- `inspection_error`: 자료 누락·UID 불일치 시 오류 설명. 정상 또는 기존 샘플 기록은 null입니다.
+- `inspection_image_url`: 같은 MainServer의 `/api/v1/units/{unit_id}/inspection/image` 상대경로 또는 null입니다.
+
+이미지 endpoint는 기존 `X-Runtime-Mode` 검증을 적용하며 `image/png` 바이너리를 반환합니다.
+`Content-Length`, `X-Content-SHA256`, `Content-Disposition: inline; filename="02_annotated_report.png"`를 제공합니다.
+검사 기록이 없으면 404, 파일 미준비·크기·해시·UID 불일치면 `409 inspection_unavailable`입니다.
+클라이언트에서 임의 파일 경로나 Vision 인증 토큰을 전달받지 않습니다.

@@ -1,6 +1,7 @@
 """One-line production writes backed by a bounded in-process FIFO worker."""
 
 import queue
+import copy
 import threading
 import time
 import uuid
@@ -125,10 +126,17 @@ class DbWriter:
             unit_id=unit_id,
         ))
 
-    def inspection_recorded(self, unit_id, result, defects, image_path=None):
+    def inspection_recorded(self, unit_id, result, defects, image_path=None, *, inspection=None, image_bytes=None):
         self._positive_id(unit_id, "unit_id")
         if image_path is not None and not isinstance(image_path, str):
             raise ValueError("image_path must be a string or None")
+        if inspection is not None:
+            return self._submit(DbUpdateEvent(
+                event_type=INSPECTION_RECORDED,
+                unit_id=unit_id,
+                payload={"result": result, "defects": defects, "image_path": image_path,
+                         "inspection": copy.deepcopy(inspection), "image_bytes": image_bytes},
+            ))
         normalized = production_store.normalize_defects(result, defects)
         snapshot = [
             {"slot_code": slot_code, "defect_type": defect_type}

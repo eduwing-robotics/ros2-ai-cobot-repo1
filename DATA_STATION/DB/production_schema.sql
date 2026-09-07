@@ -85,13 +85,18 @@ CREATE TABLE IF NOT EXISTS production.units (
         unit_status IN ('RUNNING', 'COMPLETED', 'FAILED')
     ),
     CONSTRAINT ck_units_inspection CHECK (
-        inspection_result IN ('PENDING', 'PASS', 'FAIL')
+        inspection_result IN ('PENDING', 'PASS', 'FAIL', 'UNKNOWN')
     ),
     CONSTRAINT ck_units_inspected CHECK (
         (inspection_result = 'PENDING' AND inspected_at IS NULL)
         OR
         (inspection_result IN ('PASS', 'FAIL')
          AND unit_status = 'COMPLETED'
+         AND assembly_completed_at IS NOT NULL
+         AND inspected_at IS NOT NULL)
+        OR
+        (inspection_result = 'UNKNOWN'
+         AND unit_status IN ('RUNNING', 'FAILED')
          AND assembly_completed_at IS NOT NULL
          AND inspected_at IS NOT NULL)
     ),
@@ -154,10 +159,12 @@ CREATE TABLE IF NOT EXISTS production.unit_defects (
     unit_id bigint NOT NULL REFERENCES production.units(unit_id),
     product_slot_id bigint NOT NULL
         REFERENCES production.product_slots(product_slot_id),
-    defect_type text NOT NULL,
+    -- NULL denotes a slot without a confirmed defect; details live in result.json.
+    defect_type text,
     CONSTRAINT uq_unit_defects_unit_slot UNIQUE (unit_id, product_slot_id),
     CONSTRAINT ck_unit_defects_type CHECK (
-        defect_type IN ('MISSING', 'POSITION_ERROR', 'ORIENTATION_ERROR', 'CRACK')
+        defect_type IN ('MISSING', 'POSITION_ERROR', 'ORIENTATION_ERROR', 'CRACK',
+                        'SEATING_ERROR', 'UNCLASSIFIED_ANOMALY')
     )
 );
 

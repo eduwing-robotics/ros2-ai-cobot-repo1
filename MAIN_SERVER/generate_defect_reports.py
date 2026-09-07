@@ -58,6 +58,7 @@ def load_defect_context(dsn: str, unit_defect_id: int) -> list[dict[str, object]
             WHERE ud.unit_defect_id = %s
               AND u.unit_status = 'COMPLETED'
               AND u.inspection_result = 'FAIL'
+              AND ud.defect_type IS NOT NULL
         )
         SELECT target.unit_defect_id, target.target_unit_id,
                target.target_slot_code, target.target_inspected_at,
@@ -576,7 +577,24 @@ def create_report(dsn: str, unit_defect_id: int, path: Path, template: Path,
         raise RuntimeError("confirmed defect was not found")
     image = load_inspection_image(
         rows[0]["target_image_path"], image_root, max_image_bytes)
+    # Vision records must not produce an immutable report before evidence is complete.
+    if str(rows[0]["target_image_path"] or "").startswith("inspections/"):
+        inspection = queries.inspection(int(rows[0]["target_unit_id"]), root=image_root, dsn=dsn)
+        if (inspection["result"]["decision"] != "FAIL" or not image.get("bytes")
+                or image["sha256"] != inspection["image"].get("sha256")):
+            raise RuntimeError("confirmed inspection evidence is not ready")
+        findings = [finding for finding in inspection["result"]["findings"]
+                    if finding["slot_code"] == rows[0]["target_slot_code"]
+                    and finding.get("confirmed_defect") is True]
+        if not findings:
+            raise RuntimeError("confirmed defect has no matching inspection finding")
+    else:
+        findings = []
     tokens = build_tokens(rows, path, image)
+    if findings:
+        tokens["auto_analysis"] += "\n" + "\n".join(
+            str(finding.get("primary_defect_name_ko", "")) + ": "
+            + "; ".join(finding.get("details", [])) for finding in findings)
     output = report_path(output_dir, rows)
     if not output.exists():
         write_report(template, output, tokens, image)

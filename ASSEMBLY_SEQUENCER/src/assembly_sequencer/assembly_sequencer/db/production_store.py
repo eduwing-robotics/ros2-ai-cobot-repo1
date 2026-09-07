@@ -1,6 +1,12 @@
 """Transactional PostgreSQL operations owned by the ROS2 assembly process."""
 
 import os
+import copy
+import hashlib
+import json
+import tempfile
+from datetime import datetime
+from pathlib import Path
 from collections.abc import Mapping
 import uuid
 
@@ -10,10 +16,11 @@ from psycopg.rows import dict_row
 
 ACTIVE_JOB_STATUSES = ("PENDING", "RUNNING")
 FINAL_JOB_STATUSES = ("COMPLETED", "FAILED", "CANCELLED")
-DEFECT_TYPES = {"MISSING", "POSITION_ERROR", "ORIENTATION_ERROR", "CRACK"}
+DEFECT_TYPES = {"MISSING", "POSITION_ERROR", "ORIENTATION_ERROR", "CRACK",
+                "SEATING_ERROR", "UNCLASSIFIED_ANOMALY"}
 
 
-def _connect():
+def _connect(expected_mode="mock"):
     dsn = os.environ.get("PRODUCTION_DB_DSN", "").strip()
     if not dsn:
         raise RuntimeError("PRODUCTION_DB_DSN is required")
@@ -31,7 +38,7 @@ def _connect():
               AND split_part(setting, '=', 1) = 'app.runtime_mode'
         """).fetchone()
         actual = row["runtime_mode"] if row else None
-        expected = "mock"
+        expected = expected_mode
         if expected not in {"mock", "real"} or actual != expected:
             raise RuntimeError(
                 f"MODE_REJECTED stage=db_connect expected={expected!r} actual={actual!r} "
@@ -352,7 +359,16 @@ def normalize_defects(result, defects):
     return sorted(normalized)
 
 
-def record_inspection(unit_id, result, defects, image_path=None):
+def record_inspection(unit_id, result, defects, image_path=None, *, inspection=None, image_bytes=None):
+    """Record a final inspection; Vision data also persists immutable files and slot UID links.
+
+    Vision callers pass the backend's data/image_bytes with result and defects=None.
+    UNKNOWN holds the Unit RUNNING. Reinspection and different-content retries are rejected.
+    """
+    if inspection is not None:
+        if defects is not None or image_path is not None or result != inspection.get("result", {}).get("decision"):
+            raise ValueError("Vision result must be passed without separate defects or image_path")
+        return _record_vision_inspection(unit_id, inspection, image_bytes)
     _positive_id(unit_id, "unit_id")
     if image_path is not None and not isinstance(image_path, str):
         raise ValueError("image_path must be a string or None")
@@ -450,6 +466,172 @@ def record_inspection(unit_id, result, defects, image_path=None):
                 """,
                 ("COMPLETED", result, image_path, unit_id),
             )
+
+
+def _record_vision_inspection(unit_id, inspection, image_bytes):
+    _positive_id(unit_id, "unit_id")
+    data = copy.deepcopy(inspection)
+    if (data.get("unit_id") != unit_id or type(data.get("unit_id")) is not int
+            or data.get("status") != "COMPLETED"):
+        raise ValueError("Vision must return COMPLETED for the requested Unit")
+    job_id = _job_id(data.get("job_id"))
+    _job_id(data.get("inspection_id"), "inspection_id")
+    result = data.get("result", {})
+    decision = result.get("decision")
+    if decision not in {"PASS", "FAIL", "UNKNOWN"}:
+        raise ValueError("Vision decision must be PASS, FAIL or UNKNOWN")
+    inspected_at = datetime.fromisoformat(result["inspected_at"])
+    if inspected_at.tzinfo is None:
+        raise ValueError("Vision inspected_at must include a timezone")
+    slots, findings, defects = (result.get(k) for k in ("slots", "findings", "defects"))
+    if not all(isinstance(items, list) for items in (slots, findings, defects)):
+        raise ValueError("Vision slots, findings and defects must be arrays")
+    slot_map = {}
+    for slot in slots:
+        code = slot.get("slot_code")
+        _required_text(code, "slot_code")
+        if code in slot_map or slot.get("decision") not in {"PASS", "FAIL", "UNKNOWN"}:
+            raise ValueError("duplicate slot or invalid slot decision")
+        slot_map[code] = slot
+    for finding in findings:
+        if (finding.get("slot_code") not in slot_map
+                or type(finding.get("confirmed_defect")) is not bool):
+            raise ValueError("finding must identify a known slot and confirmation flag")
+    # Preserve the raw codes in JSON; only established synonyms are normalized for SQL.
+    aliases = {"COMPONENT_MISSING": "MISSING", "DIRECTION_ERROR": "ORIENTATION_ERROR"}
+    confirmed = {}
+    for defect in defects:
+        code = defect.get("slot_code")
+        candidates = [f for f in findings if f["slot_code"] == code and f["confirmed_defect"]]
+        if (code not in slot_map or not candidates
+                or any(f.get("authority") in (None, "ADVISORY", "ADVISORY_ONLY", "DISABLED") for f in candidates)):
+            raise ValueError("defect lacks a confirmed authoritative finding")
+        kinds = {aliases.get(f.get("primary_defect_code"), f.get("primary_defect_code")) for f in candidates}
+        if len(kinds) != 1 or not kinds.issubset(DEFECT_TYPES) or code in confirmed:
+            raise ValueError("unsupported or multiple confirmed defect types in one slot")
+        confirmed[code] = kinds.pop()
+    if {f["slot_code"] for f in findings if f["confirmed_defect"]} != set(confirmed):
+        raise ValueError("confirmed findings and defects disagree")
+    if (decision == "FAIL") != bool(confirmed):
+        raise ValueError("only a confirmed FAIL may contain production defects")
+    if decision == "PASS" and any(slot["decision"] != "PASS" for slot in slots):
+        raise ValueError("PASS requires all slots to pass")
+    image = data.get("image", {})
+    if type(image.get("ready")) is not bool:
+        raise ValueError("Vision image.ready must be boolean")
+    if image["ready"]:
+        if (not isinstance(image_bytes, bytes) or not image_bytes.startswith(b"\x89PNG\r\n\x1a\n")
+                or len(image_bytes) != image.get("size_bytes")
+                or hashlib.sha256(image_bytes).hexdigest() != image.get("sha256")):
+            raise ValueError("Vision PNG size or SHA256 mismatch")
+    elif image_bytes is not None:
+        raise ValueError("unexpected PNG for an unready image")
+    root_value = os.environ.get("DEFECT_IMAGE_ROOT", "").strip()
+    if not root_value:
+        raise ValueError("DEFECT_IMAGE_ROOT must identify the shared inspection storage")
+    root = Path(root_value).resolve(strict=True)
+    relative = Path("inspections") / str(unit_id)
+    folder = (root / relative).resolve()
+    if not folder.is_relative_to(root):
+        raise ValueError("inspection storage is outside the shared root")
+    image_path = (relative / "02_annotated_report.png").as_posix() if image["ready"] else None
+
+    def write_file(path, content):
+        if path.exists() and path.read_bytes() == content:
+            return
+        # Replace only the derived UID map; the source response is checked before writing.
+        with tempfile.NamedTemporaryFile(dir=folder, delete=False) as temporary:
+            temporary_name = temporary.name
+            try:
+                temporary.write(content)
+                temporary.flush()
+                os.fchmod(temporary.fileno(), 0o640)
+                os.fsync(temporary.fileno())
+            except BaseException:
+                os.unlink(temporary_name)
+                raise
+        try:
+            os.replace(temporary_name, path)
+        finally:
+            if os.path.exists(temporary_name):
+                os.unlink(temporary_name)
+
+    with _connect(expected_mode="real") as connection, connection.transaction():
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT u.unit_status, u.inspection_result, u.inspected_at,
+                       u.inspection_image_path, u.assembly_completed_at,
+                       j.job_id::text AS job_id, j.product_id, j.job_status
+                FROM production.units u JOIN production.jobs j USING (job_id)
+                WHERE u.unit_id = %s FOR UPDATE OF u, j
+            """, (unit_id,))
+            unit = cursor.fetchone()
+            if unit is None or unit["job_id"] != job_id:
+                raise ValueError("Vision Job/Unit does not match production")
+            cursor.execute("""
+                SELECT product_slot_id, slot_code, part_id FROM production.product_slots
+                WHERE product_id = %s ORDER BY slot_code
+            """, (unit["product_id"],))
+            product_slots = cursor.fetchall()
+            if (not product_slots or {r["slot_code"] for r in product_slots} != set(slot_map)
+                    or any(slot_map[r["slot_code"]].get("part_id") != r["part_id"] for r in product_slots)):
+                raise ValueError("Vision slots/parts must exactly match the product")
+            source = folder / "response.json"
+            prior = json.loads(source.read_bytes()) if source.exists() else None
+            if prior is not None and prior != {"data": data}:
+                raise RuntimeError("Unit already has different Vision data; reinspection is disabled")
+            replay = unit["inspection_result"] != "PENDING"
+            if replay:
+                if (prior is None or unit["inspection_result"] != decision
+                        or unit["inspection_image_path"] != image_path or unit["inspected_at"] != inspected_at):
+                    raise RuntimeError("inspection is already finalized with different data")
+            elif (unit["job_status"] != "RUNNING" or unit["unit_status"] != "RUNNING"
+                    or unit["assembly_completed_at"] is None):
+                raise RuntimeError("Job/Unit must be running with completed assembly")
+            folder.mkdir(parents=True, exist_ok=True)
+            write_file(source, json.dumps({"data": data}, ensure_ascii=False, sort_keys=True).encode())
+            if image["ready"]:
+                write_file(folder / "02_annotated_report.png", image_bytes)
+            links = []
+            for slot in product_slots:
+                kind = confirmed.get(slot["slot_code"])
+                if not replay:
+                    cursor.execute("""
+                        INSERT INTO production.unit_defects (unit_id, product_slot_id, defect_type)
+                        VALUES (%s, %s, %s)
+                    """, (unit_id, slot["product_slot_id"], kind))
+                cursor.execute("""
+                    SELECT unit_defect_id, defect_type FROM production.unit_defects
+                    WHERE unit_id = %s AND product_slot_id = %s
+                """, (unit_id, slot["product_slot_id"]))
+                row = cursor.fetchone()
+                if row is None or row["defect_type"] != kind:
+                    raise RuntimeError("stored slot result does not match Vision")
+                links.append({"slot_code": slot["slot_code"], "unit_defect_id": row["unit_defect_id"]})
+                # No image means no immutable report yet; UNKNOWN never creates a delivery.
+                if kind is not None and image["ready"]:
+                    cursor.execute("""
+                        INSERT INTO production.defect_report_deliveries (unit_defect_id)
+                        VALUES (%s) ON CONFLICT (unit_defect_id) DO NOTHING
+                    """, (row["unit_defect_id"],))
+            # Files precede commit. Readers verify these UID links against committed rows;
+            # a rollback leaves recoverable files, never a visible fabricated inspection.
+            write_file(folder / "result.json", json.dumps(
+                {"data": data, "unit_defects": links}, ensure_ascii=False, sort_keys=True).encode())
+            # Persist directory entries before committing DB references to these files.
+            for directory in (folder, folder.parent, root):
+                descriptor = os.open(directory, os.O_RDONLY | os.O_DIRECTORY)
+                try:
+                    os.fsync(descriptor)
+                finally:
+                    os.close(descriptor)
+            if not replay:
+                cursor.execute("""
+                    UPDATE production.units SET unit_status = %s, inspection_result = %s,
+                        inspection_image_path = %s, inspected_at = %s WHERE unit_id = %s
+                """, ("RUNNING" if decision == "UNKNOWN" else "COMPLETED",
+                      decision, image_path, inspected_at, unit_id))
+    return links
 
 
 def finish_job(job_id, final_status):

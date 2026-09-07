@@ -1,5 +1,6 @@
 """Runnable integration and API-registry check for MainServer."""
 import json
+import hashlib
 import os
 import re
 import sys
@@ -58,6 +59,22 @@ class MainServerApiTest(unittest.TestCase):
                 return response.status, json.load(response)
         except HTTPError as error:
             return error.code, json.load(error)
+
+    def test_inspection_image_returns_png_and_integrity_headers(self):
+        png = b"\x89PNG\r\n\x1a\nfixture"
+        request = Request(self.base_url + "/api/v1/units/42/inspection/image",
+                          headers={"X-Runtime-Mode": "mock"})
+        with patch.object(server.queries, "inspection_image", return_value=png) as load:
+            with urlopen(request) as response:
+                self.assertEqual(response.status, 200)
+                self.assertEqual(response.read(), png)
+                self.assertEqual(response.headers["Content-Type"], "image/png")
+                self.assertEqual(response.headers["Content-Length"], str(len(png)))
+                self.assertEqual(response.headers["X-Content-SHA256"], hashlib.sha256(png).hexdigest())
+            load.assert_called_once_with(42)
+        with patch.object(server.queries, "inspection_image", side_effect=server.queries.InspectionUnavailable("hash mismatch")):
+            status, body = self.request("/api/v1/units/42/inspection/image")
+            self.assertEqual((status, body["error"]["code"]), (409, "inspection_unavailable"))
 
     def test_documented_routes_are_registered_once(self):
         document = (Path(__file__).parent / "Main_serverAPI.md").read_text(encoding="utf-8")

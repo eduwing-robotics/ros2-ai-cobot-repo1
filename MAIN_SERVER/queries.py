@@ -1,10 +1,17 @@
 """Production reads and durable Job creation used by MainServer."""
 import os
+import json
+import hashlib
+from pathlib import Path
 import psycopg
 from psycopg.rows import dict_row
 
 
 class DatabaseUnavailable(RuntimeError):
+    pass
+
+
+class InspectionUnavailable(RuntimeError):
     pass
 
 
@@ -305,7 +312,7 @@ def units(job_id):
         FROM production.units WHERE job_id = %s ORDER BY unit_sequence_in_job
     """, (job_id,))
     defects = _all("""
-        SELECT ud.unit_id, ps.slot_code, ud.defect_type
+        SELECT ud.unit_id, ud.unit_defect_id, ps.slot_code, ud.defect_type
         FROM production.unit_defects ud
         JOIN production.product_slots ps ON ps.product_slot_id = ud.product_slot_id
         JOIN production.units u ON u.unit_id = ud.unit_id
@@ -315,7 +322,18 @@ def units(job_id):
     for defect in defects:
         by_unit.setdefault(defect.pop("unit_id"), []).append(defect)
     for row in rows:
-        row["defects"] = by_unit.get(row["unit_id"], [])
+        slot_rows = by_unit.get(row["unit_id"], [])
+        row["defects"] = [item for item in slot_rows if item["defect_type"] is not None]
+        row["inspection"] = None
+        row["inspection_error"] = None
+        try:
+            row["inspection"] = _load_inspection(row, job_id, slot_rows)
+        except InspectionUnavailable as error:
+            row["inspection_error"] = str(error)
+        row["inspection_image_url"] = (
+            f"/api/v1/units/{row['unit_id']}/inspection/image"
+            if row["inspection"] and row["inspection"]["image"]["ready"] else None
+        )
     return rows
 
 
@@ -334,7 +352,90 @@ def slot_rates(product_id):
                               AND u.inspection_result IN ('PASS', 'FAIL')
         LEFT JOIN production.unit_defects ud ON ud.unit_id = u.unit_id
                                              AND ud.product_slot_id = ps.product_slot_id
+                                             AND ud.defect_type IS NOT NULL
         WHERE ps.product_id = %s
         GROUP BY ps.product_slot_id, ps.slot_code, p.part_id, p.part_name
         ORDER BY ps.slot_code
     """, (product_id,))
+
+
+def _inspection_root(root=None):
+    return Path(root if root is not None else os.environ.get(
+        "DEFECT_IMAGE_ROOT", str(Path(__file__).resolve().parent.parent / "UnityDT/Assets/StreamingAssets")
+    )).resolve()
+
+
+def _load_inspection(unit, job_id, slot_rows, root=None):
+    if unit["inspection_result"] == "PENDING":
+        return None
+    root = _inspection_root(root)
+    path = (root / "inspections" / str(unit["unit_id"]) / "result.json").resolve()
+    if not path.is_relative_to(root):
+        raise InspectionUnavailable("inspection path is outside storage")
+    if not path.exists():
+        if any(row["defect_type"] is None for row in slot_rows) or unit["inspection_result"] == "UNKNOWN":
+            raise InspectionUnavailable("inspection JSON is not available")
+        return None  # Legacy PASS/FAIL records have no Vision JSON.
+    try:
+        with path.open("rb") as source:
+            raw = source.read(4 * 1024 * 1024 + 1)
+        if len(raw) > 4 * 1024 * 1024:
+            raise ValueError("inspection JSON exceeds 4 MiB")
+        stored = json.loads(raw)
+        data = stored["data"]
+        if (data["unit_id"] != unit["unit_id"] or data["job_id"] != str(job_id)
+                or data["status"] != "COMPLETED"
+                or data["result"]["decision"] != unit["inspection_result"]):
+            raise ValueError("inspection identity or decision mismatch")
+        links = {row["slot_code"]: row["unit_defect_id"] for row in slot_rows}
+        stored_links = stored["unit_defects"]
+        if (len(stored_links) != len(links)
+                or {row["slot_code"]: row["unit_defect_id"] for row in stored_links} != links
+                or len(data["result"]["slots"]) != len(links)
+                or {slot["slot_code"] for slot in data["result"]["slots"]} != set(links)):
+            raise ValueError("inspection UID links do not match the database")
+        for slot in data["result"]["slots"]:
+            slot["unit_defect_id"] = links[slot["slot_code"]]
+        return data
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        raise InspectionUnavailable("inspection JSON is incomplete or inconsistent") from error
+
+
+def inspection(unit_id, *, root=None, dsn=None):
+    """Read one archived inspection and verify its slot UID links against production."""
+    with _connect(dsn) as connection, connection.cursor() as cursor:
+        cursor.execute("SELECT * FROM production.units WHERE unit_id = %s", (unit_id,))
+        unit = cursor.fetchone()
+        if unit is None:
+            raise ResourceNotFound("unit was not found")
+        cursor.execute("""
+            SELECT ud.unit_defect_id, ud.defect_type, ps.slot_code
+            FROM production.unit_defects ud JOIN production.product_slots ps USING (product_slot_id)
+            WHERE ud.unit_id = %s
+        """, (unit_id,))
+        data = _load_inspection(unit, unit["job_id"], cursor.fetchall(), root)
+    if data is None:
+        raise ResourceNotFound("archived inspection was not found")
+    return data
+
+
+def inspection_image(unit_id):
+    data = inspection(unit_id)
+    image = data["image"]
+    if not image.get("ready"):
+        raise InspectionUnavailable("inspection image is not ready")
+    root = _inspection_root()
+    path = (root / "inspections" / str(unit_id) / "02_annotated_report.png").resolve()
+    if not path.is_relative_to(root):
+        raise InspectionUnavailable("inspection image path is outside storage")
+    limit = int(os.environ.get("DEFECT_IMAGE_MAX_BYTES", "10485760"))
+    try:
+        with path.open("rb") as source:
+            png = source.read(limit + 1)
+    except OSError as error:
+        raise InspectionUnavailable("inspection image is not available") from error
+    if (len(png) > limit or len(png) != image.get("size_bytes")
+            or not png.startswith(b"\x89PNG\r\n\x1a\n")
+            or hashlib.sha256(png).hexdigest() != image.get("sha256")):
+        raise InspectionUnavailable("inspection image size or SHA256 mismatch")
+    return png

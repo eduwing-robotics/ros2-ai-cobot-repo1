@@ -1,5 +1,6 @@
 """HTTP API for MainServer production queries and assembly requests."""
 import argparse
+import hashlib
 import json
 import logging
 import os
@@ -23,6 +24,7 @@ ROUTES = (
     ("GET", "/api/v1/jobs", "jobs"),
     ("GET", "/api/v1/jobs/{job_id}", "job"),
     ("GET", "/api/v1/jobs/{job_id}/units", "units"),
+    ("GET", "/api/v1/units/{unit_id}/inspection/image", "inspection_image"),
     ("DELETE", "/api/v1/jobs/{job_id}", "job_cancel"),
     ("GET", "/api/v1/products/{product_id}/quality/slot-rates", "slot_rates"),
     ("POST", "/api/v1/assemblies", "assembly_start"),
@@ -123,7 +125,16 @@ class ApiHandler(BaseHTTPRequestHandler):
             data = getattr(self, handler)(
                 route_values, parse_qs(request.query, keep_blank_values=True)
             )
-            self._respond(202 if handler == "assembly_start" else 200, {"data": data})
+            if handler == "inspection_image":
+                self.send_response(200)
+                self.send_header("Content-Type", "image/png")
+                self.send_header("Content-Length", str(len(data)))
+                self.send_header("X-Content-SHA256", hashlib.sha256(data).hexdigest())
+                self.send_header("Content-Disposition", 'inline; filename="02_annotated_report.png"')
+                self.end_headers()
+                self.wfile.write(data)
+            else:
+                self._respond(202 if handler == "assembly_start" else 200, {"data": data})
         except ValidationError as error:
             self._error(400, "invalid_request", str(error))
         except AssemblyRejected as error:
@@ -133,6 +144,8 @@ class ApiHandler(BaseHTTPRequestHandler):
             self._error(503, "assembly_unavailable", "assembly bridge is unavailable")
         except queries.ResourceNotFound as error:
             self._error(404, "not_found", str(error))
+        except queries.InspectionUnavailable as error:
+            self._error(409, "inspection_unavailable", str(error))
         except queries.DatabaseUnavailable as error:
             logging.error("DATABASE_UNAVAILABLE stage=request result=blocked reason=%s", error)
             self._error(503, "database_unavailable", "database is unavailable")
@@ -250,6 +263,10 @@ class ApiHandler(BaseHTTPRequestHandler):
         if limit > 50:
             raise ValidationError("limit must be at most 50")
         return queries.jobs(status, limit)
+
+    def inspection_image(self, values, parameters):
+        self._no_query(parameters)
+        return queries.inspection_image(positive(values["unit_id"], "unit_id"))
 
     def units(self, values, parameters):
         self._no_query(parameters)

@@ -128,7 +128,7 @@ JOIN production.products pr ON pr.product_id = j.product_id
 JOIN production.product_slots ps
   ON ps.product_slot_id = ud.product_slot_id
 JOIN production.parts p ON p.part_id = ps.part_id
-WHERE j.product_id = $1
+WHERE j.product_id = $1 AND ud.defect_type IS NOT NULL
 ORDER BY u.inspected_at DESC, u.unit_id DESC, ps.slot_code;
 
 -- GET /quality/slot-rates?product_id={product_id}
@@ -139,9 +139,9 @@ SELECT ps.product_slot_id,
        p.part_id,
        p.part_name,
        COUNT(u.unit_id) AS inspected_quantity,
-       COUNT(ud.unit_defect_id) AS defective_quantity,
+       COUNT(ud.defect_type) AS defective_quantity,
        ROUND(
-           100.0 * COUNT(ud.unit_defect_id)
+           100.0 * COUNT(ud.defect_type)
            / NULLIF(COUNT(u.unit_id), 0),
            2
        ) AS defect_rate_percent
@@ -173,7 +173,7 @@ WITH inspected AS (
     GROUP BY ps.part_id
 ),
 defective AS (
-    SELECT ps.part_id, COUNT(*) AS defective_quantity
+    SELECT ps.part_id, COUNT(ud.defect_type) AS defective_quantity
     FROM production.unit_defects ud
     JOIN production.units u ON u.unit_id = ud.unit_id
     JOIN production.product_slots ps
