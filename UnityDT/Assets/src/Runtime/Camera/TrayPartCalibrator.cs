@@ -63,7 +63,7 @@ namespace MainUnity.Runtime.Camera
             public Quaternion Rotation;
         }
 
-        [Tooltip("비전 좌표의 기준이 되는 ROS base_link Transform입니다.")]
+        [Tooltip("로봇 제어와 동일한 ROS 기준 Transform(최상위 ArticulationBody)을 연결합니다. 시각 모델의 회전된 base_link를 연결하지 않습니다.")]
         [SerializeField] Transform baseLink;
         [Tooltip("생성한 부품의 부모입니다. 비워두면 이 GameObject 아래에 생성합니다.")]
         [SerializeField] Transform spawnRoot;
@@ -99,6 +99,16 @@ namespace MainUnity.Runtime.Camera
                 enabled = false;
                 return;
             }
+
+            // Real Backend가 이 컴포넌트를 활성화한 경우에만 Start가 실행된다.
+            // Items의 초기 공급 부품만 제거한다. motherBoard와 다른 설비 자식은 보존한다.
+            if (spawnRoot != null)
+                foreach (Transform child in spawnRoot)
+                {
+                    if (!IsInitialSupplyPart(child.name)) continue;
+                    child.gameObject.SetActive(false);
+                    Destroy(child.gameObject);
+                }
 
             connection = ROSConnection.GetOrCreateInstance();
             connection.Subscribe<StringMsg>(TopicName, ReceiveState);
@@ -141,7 +151,7 @@ namespace MainUnity.Runtime.Camera
             bindingsByType.Clear();
             if (baseLink == null)
             {
-                error = "Assign the ROS base_link Transform.";
+                error = "Assign the robot control ROS reference Transform (root ArticulationBody).";
                 return false;
             }
 
@@ -270,6 +280,10 @@ namespace MainUnity.Runtime.Camera
             Debug.LogWarning($"[TrayPartCalibrator] {reason} Last valid placement was preserved.", this);
         }
 
+        // 현재 Scene의 ItemManager에 등록된 공급 부품 이름이다.
+        static bool IsInitialSupplyPart(string name) =>
+            name is "VRM" or "PM" or "GPU" or "HBM" or "CAP" or "IND";
+
         static bool IsFinite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
 
         void OnDestroy()
@@ -289,6 +303,15 @@ namespace MainUnity.Runtime.Camera
             if (state?.parts?.Length != 1 || state.parts[0].id != "gpu:01" ||
                 (converted - new Vector3(-2f, 3f, 1f)).sqrMagnitude > 0.000001f)
                 throw new InvalidOperationException("TrayPartCalibrator self-check failed.");
+
+            if (!IsInitialSupplyPart("VRM") || !IsInitialSupplyPart("HBM") ||
+                IsInitialSupplyPart("motherBoard") || IsInitialSupplyPart("gpu:01") ||
+                IsInitialSupplyPart("Fixture"))
+                throw new InvalidOperationException("Initial supply part filtering failed.");
+            if (Application.isPlaying && spawnRoot != null)
+                foreach (Transform child in spawnRoot)
+                    if (IsInitialSupplyPart(child.name) && child.gameObject.activeSelf)
+                        throw new InvalidOperationException("An initial supply part remains active.");
 
             Debug.Log("[TrayPartCalibrator] Self-check passed: parsed one part and converted " +
                 "ROS FLU (1, 2, 3) m to Unity RUF (-2, 3, 1) m.", this);

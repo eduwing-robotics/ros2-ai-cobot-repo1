@@ -27,11 +27,10 @@ namespace MainUnity.UrdfImport
             set => target = Mathf.Clamp(value, driverLower, driverUpper);
         }
 
-        /// <summary>지정한 열림 비율(0~100%)을 그리퍼 이동 범위에 반영한다.</summary>
+        /// <summary>열림 비율(0~100%)로 목표를 설정하고 FixedUpdate에서 설정된 속도로 반영한다.</summary>
         public void SetOpeningPercent(float openingPercent)
         {
             Target = Mathf.Lerp(driverLower, driverUpper, Mathf.Clamp01(openingPercent / 100f));
-            ApplyTargets(target);
         }
 
 #if UNITY_EDITOR

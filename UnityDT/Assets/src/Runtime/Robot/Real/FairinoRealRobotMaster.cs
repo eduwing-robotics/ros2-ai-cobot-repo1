@@ -47,6 +47,9 @@ namespace MainUnity.Runtime.Robot.Real
                 Bind();
             else
                 Unbind();
+            var trayCalibrator = GetComponentInChildren<MainUnity.Runtime.Camera.TrayPartCalibrator>(true);
+            if (trayCalibrator != null)
+                trayCalibrator.enabled = active;
             if (stateSource != null)
                 stateSource.enabled = active;
             if (shadowing != null)
