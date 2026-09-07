@@ -988,3 +988,29 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
 .session-events .unity-foldout__text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .session-events #event-list { height: 240px; }
 .run-calibration-state.bad, .run-operation-detail.bad { color: var(--c-bad); }
+
+/* INSPECT: 판정이 대표 정보이며 시각·원인은 보조 크기로 고정한다. */
+.page--inspect .inspect-camera-body { flex-grow: 1; min-height: 0; padding: 16px; }
+.page--inspect .inspect-video-tabs { height: 40px; margin-bottom: 12px; flex-shrink: 0; }
+.page--inspect .inspect-video-tabs .btn { height: 38px; min-width: 150px; margin-right: 8px; font-size: 15px; }
+.page--inspect .inspect-video-tabs .inspect-tab--on { color: var(--c-accent); border-bottom-width: 2px; border-bottom-color: var(--c-accent); }
+.page--inspect .inspect-camera-frame { flex-grow: 1; min-height: 0; background-color: rgb(20,28,36); }
+.page--inspect .inspect-image { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.page--inspect .inspect-support { color: var(--c-ink-3); font-size: 14px; white-space: normal; flex-shrink: 0; }
+.page--inspect .inspect-camera-body > .inspect-support { margin-top: 8px; }
+.page--inspect .inspect-refresh { width: 112px; height: 34px; font-size: 14px; }
+.page--inspect .inspect-verdict { color: var(--c-ink); font-size: 64px; -unity-font-style: bold; height: 88px; flex-shrink: 0; }
+.page--inspect .inspect-verdict--status { font-size: 36px; }
+.page--inspect .inspect-verdict.bad { color: var(--c-bad-ink); }
+.page--inspect .inspect-verdict.warn { color: var(--c-warn); }
+.page--inspect .inspect-message { font-size: 16px; color: var(--c-ink-2); white-space: normal; min-height: 48px; flex-shrink: 0; }
+.page--inspect .inspect-checks { margin-top: 8px; }
+.page--inspect .inspect-checks Label { font-size: 14px; white-space: normal; }
+.page--inspect .inspect-time-row { border-top-width: 1px; border-top-color: var(--c-edge); padding-top: 12px; margin-top: 12px; flex-shrink: 0; }
+.page--inspect .inspect-time { font-size: 16px; color: var(--c-ink); }
+.page--inspect .inspect-defects-scroll { flex-grow: 1; min-height: 0; }
+.page--inspect #defect-grid > Label { font-size: 15px; white-space: normal; }
+.page--inspect .inspect-units-scroll { height: 78px; padding: 10px 18px; }
+.page--inspect #unit-strip { align-items: center; }
+.page--inspect #unit-strip .chip { min-width: 120px; height: 36px; margin-right: 8px; flex-shrink: 0; }
+.page--inspect #unit-strip .chip__text { font-size: 14px; }

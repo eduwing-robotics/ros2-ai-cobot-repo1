@@ -9,6 +9,7 @@
 using System;
 using System.Collections;
 using System.IO;
+using System.Globalization;
 using MainUnity.Runtime.Camera;
 using MainUnity.Runtime.Robot;
 using UnityEngine;
@@ -48,13 +49,18 @@ namespace MainUnity.UI
         [Tooltip("이 시간을 넘겨 프레임이 없으면 영상 없음으로 봅니다.")]
         [SerializeField] float staleSeconds = 2f;
 
-        VisualElement cameraEmpty, detectBox, checkList, defectGrid, unitStrip;
-        Image evidenceImage;
-        Label cameraStats, cameraEmptyDesc, verdictTitle, verdictValue, verdictScore, defectSql, unitsSummary, jobSummary;
-        bool cached, hasEvidence;
+        VisualElement cameraEmpty, checkList, defectGrid, unitStrip;
+        Image evidenceImage, liveImage;
+        Label cameraStats, cameraEmptyDesc, cameraEmptyTitle, cameraSource, cameraNote;
+        Label verdictValue, verdictScore, defectSql, unitsSummary, jobSummary, inspectionContext, inspectionMessage;
+        Button refreshButton, liveButton, evidenceButton;
+        bool cached, hasEvidence, queryFailed, hasSelection;
+        bool showLiveVideo = true;
+        double nextVisionRefresh;
         Coroutine loadRoutine, evidenceRoutine;
         Texture2D evidenceTexture;
         string evidenceStats;
+        string evidenceMessage;
         string requestedJobId;
 
         void OnEnable() => cached = false;
@@ -65,6 +71,9 @@ namespace MainUnity.UI
             loadRoutine = null;
             StopEvidenceLoad();
             ClearEvidence();
+            if (refreshButton != null) refreshButton.clicked -= BeginLoad;
+            if (liveButton != null) liveButton.clicked -= SelectLive;
+            if (evidenceButton != null) evidenceButton.clicked -= SelectEvidence;
         }
 
         void Update()
@@ -72,6 +81,8 @@ namespace MainUnity.UI
             // UIDocument 는 활성화된 뒤에야 rootVisualElement 를 만든다.
             if (!cached) { Build(); if (!cached) return; }
             ResolveReferences();
+            if (Time.realtimeSinceStartupAsDouble < nextVisionRefresh) return;
+            nextVisionRefresh = Time.realtimeSinceStartupAsDouble + 0.25d;
             RefreshVision();
         }
 
@@ -79,6 +90,8 @@ namespace MainUnity.UI
         {
             if (uiMaster == null) uiMaster = GetComponentInParent<UIMaster>();
             if (vision == null && uiMaster != null) vision = uiMaster.VisionImage;
+            // 페이지 재진입으로 재생성된 Image에 기존 수신기를 다시 연결한다.
+            vision?.SetTargetImage(liveImage);
         }
 
         void Build()
@@ -89,48 +102,34 @@ namespace MainUnity.UI
             cameraEmpty = root.Q<VisualElement>("camera-empty");
             evidenceImage = root.Q<Image>("evidence-image");
             cameraEmptyDesc = root.Q<Label>("camera-empty-desc");
-            detectBox = root.Q<VisualElement>("detect-box");
+            liveImage = root.Q<Image>("camera-image");
+            cameraEmptyTitle = root.Q<Label>("camera-empty-title");
+            cameraSource = root.Q<Label>("camera-source");
+            cameraNote = root.Q<Label>("camera-note");
+            inspectionContext = root.Q<Label>("inspection-context");
+            inspectionMessage = root.Q<Label>("inspection-message");
+            refreshButton = root.Q<Button>("inspect-refresh");
+            liveButton = root.Q<Button>("camera-live");
+            evidenceButton = root.Q<Button>("camera-evidence");
+            if (refreshButton != null) refreshButton.clicked += BeginLoad;
+            if (liveButton != null) liveButton.clicked += SelectLive;
+            if (evidenceButton != null) evidenceButton.clicked += SelectEvidence;
             cameraStats = root.Q<Label>("camera-stats");
             checkList = root.Q<VisualElement>("check-list");
             defectGrid = root.Q<VisualElement>("defect-grid");
             unitStrip = root.Q<VisualElement>("unit-strip");
-            verdictTitle = root.Q<Label>("verdict-title");
             verdictValue = root.Q<Label>("verdict-value");
             verdictScore = root.Q<Label>("verdict-score");
             defectSql = root.Q<Label>("defect-sql");
             unitsSummary = root.Q<Label>("units-summary");
             jobSummary = root.Q<Label>("job-id");
 
-            BuildVerdict();
-            BuildDefects();
-            BuildUnits();
+            if (inspectionContext != null) inspectionContext.enableRichText = false;
+            if (inspectionMessage != null) inspectionMessage.enableRichText = false;
             cached = true;
+            nextVisionRefresh = 0d;
             BeginLoad();
         }
-
-        /// <summary>판정은 검사 노드가 내린다. 화면이 PASS/FAIL 을 지어내면 그게 가장 위험하다.</summary>
-        void BuildVerdict()
-        {
-            if (verdictTitle != null) verdictTitle.text = "INSPECTION RESULT";
-            FR5EmptyState.Missing(verdictValue);
-            FR5EmptyState.Dash(verdictScore);
-            FR5EmptyState.Fill(checkList, "units.inspection_result 조회 필요 — 항목별 판정");
-        }
-
-        /// <summary>정상 슬롯은 행을 만들지 않는다는 DB 규칙을 화면도 따른다 — 불량만 색을 얻는다.</summary>
-        void BuildDefects()
-        {
-            FR5EmptyState.Fill(defectGrid, "unit_defects 조회 필요 — 슬롯별 불량", 200f);
-            FR5EmptyState.Detail(defectSql, "unit_defects(unit_id, slot_code, defect_type) 조회 경로 없음");
-        }
-
-        void BuildUnits()
-        {
-            FR5EmptyState.Fill(unitStrip, "units 조회 필요 — 대별 판정");
-            FR5EmptyState.Dash(unitsSummary);
-            FR5EmptyState.Missing(jobSummary);
-        }
-
 
         void BeginLoad()
         {
@@ -148,33 +147,43 @@ namespace MainUnity.UI
 
         IEnumerator Load()
         {
-            string jobId = requestedJobId;
-            int unitId = 0;
-            if (string.IsNullOrEmpty(jobId))
+            queryFailed = false;
+            ShowState("조회 중", "검사 기록을 불러오고 있습니다.");
+            refreshButton?.SetEnabled(false);
+            try
             {
-                AssemblySnapshot snapshot = null;
-                yield return Get("/api/v1/assemblies/current", json => snapshot = JsonUtility.FromJson<AssemblyResponse>(json)?.data);
-                if (!isActiveAndEnabled) yield break;
-                if (snapshot == null || string.IsNullOrEmpty(snapshot.job_id))
+                string jobId = requestedJobId;
+                int unitId = 0;
+                if (string.IsNullOrEmpty(jobId))
                 {
-                    ShowEmpty("활성 또는 최근 작업 없음");
-                    loadRoutine = null;
-                    yield break;
+                    AssemblySnapshot snapshot = null;
+                    yield return Get("/api/v1/assemblies/current", json => snapshot = JsonUtility.FromJson<AssemblyResponse>(json)?.data);
+                    // 실패는 Get 경계에서 표시했다. 빈 성공 응답으로 덮어쓰지 않는다.
+                    if (!isActiveAndEnabled || queryFailed) yield break;
+                    if (snapshot == null || string.IsNullOrEmpty(snapshot.job_id))
+                    {
+                        ShowState("작업 없음", "현재 조회할 작업이 없습니다. 작업 화면에서 검사할 작업을 선택하세요.");
+                        yield break;
+                    }
+                    jobId = snapshot.job_id;
+                    unitId = snapshot.unit_id;
                 }
-                jobId = snapshot.job_id;
-                unitId = snapshot.unit_id;
-            }
 
-            Unit[] units = null;
-            yield return Get("/api/v1/jobs/" + jobId + "/units", json => units = JsonUtility.FromJson<UnitsResponse>(json)?.data ?? Array.Empty<Unit>());
-            if (isActiveAndEnabled && units != null)
-            {
+                Unit[] units = null;
+                yield return Get("/api/v1/jobs/" + Uri.EscapeDataString(jobId) + "/units",
+                    json => units = JsonUtility.FromJson<UnitsResponse>(json)?.data ?? Array.Empty<Unit>());
+                if (!isActiveAndEnabled || queryFailed) yield break;
                 Unit selected = Array.Find(units, unit => unit.unit_id == unitId);
                 if (selected == null && units.Length > 0) selected = units[units.Length - 1];
-                if (selected == null) ShowEmpty("JOB #" + jobId + " 유닛 결과 없음");
+                if (selected == null)
+                    ShowState("생산 기록 없음", "선택한 작업에 아직 생산 시도가 없습니다. 실행 후 새로고침하세요.");
                 else ShowUnits(jobId, units, selected);
             }
-            loadRoutine = null;
+            finally
+            {
+                loadRoutine = null;
+                refreshButton?.SetEnabled(true);
+            }
         }
 
         IEnumerator Get(string path, Action<string> onSuccess)
@@ -186,81 +195,128 @@ namespace MainUnity.UI
             if (request.result == UnityWebRequest.Result.Success)
             {
                 try { onSuccess(request.downloadHandler.text); }
-                catch (Exception) { ShowEmpty("MainServer 응답 형식 오류"); }
+                catch (Exception)
+                {
+                    queryFailed = true;
+                    ShowState("조회 실패", "검사 기록의 응답 형식을 확인할 수 없습니다. 새로고침 후에도 반복되면 서버를 확인하세요.", true);
+                }
             }
-            else ShowEmpty("MainServer 조회 실패 · " + request.responseCode);
+            else
+            {
+                queryFailed = true;
+                ShowState("조회 실패", request.responseCode == 0
+                    ? "서버에 연결할 수 없습니다. 연결 상태를 확인한 뒤 새로고침하세요."
+                    : "검사 기록을 불러오지 못했습니다. 잠시 후 새로고침하세요.", true);
+                if (inspectionMessage != null)
+                    inspectionMessage.tooltip = "HTTP " + request.responseCode + " · " + request.error;
+            }
         }
 
         void ShowUnits(string jobId, Unit[] units, Unit selected)
         {
-            FR5EmptyState.Present(jobSummary, "JOB #" + jobId + " · UNIT #" + selected.unit_id);
-            if (unitsSummary != null) unitsSummary.text = units.Length + " UNIT";
-            string result = string.IsNullOrEmpty(selected.inspection_result) ? "PENDING" : selected.inspection_result;
-            if (verdictValue != null)
+            hasSelection = true;
+            showLiveVideo = false;
+            FR5EmptyState.Present(jobSummary, "생산 시도 #" + selected.unit_sequence_in_job);
+            if (jobSummary != null) jobSummary.tooltip = "Job " + jobId + " · Unit " + selected.unit_id;
+            if (inspectionContext != null)
             {
-                FR5EmptyState.Present(verdictValue, result);
-                verdictValue.EnableInClassList("bad", result == "FAIL");
-                verdictValue.EnableInClassList("warn", result == "PENDING");
+                inspectionContext.text = "선택한 생산 시도 #" + selected.unit_sequence_in_job;
+                inspectionContext.tooltip = "Job " + jobId + " · Unit " + selected.unit_id;
             }
-            FR5EmptyState.Detail(verdictScore, string.IsNullOrEmpty(selected.inspected_at) ? "검사 완료 대기" : selected.inspected_at);
+            if (unitsSummary != null)
+                unitsSummary.text = "총 " + units.Length + "회 · 선택 #" + selected.unit_sequence_in_job + " · 좌우로 이동해 선택";
+            string result = string.IsNullOrEmpty(selected.inspection_result) ? "PENDING" : selected.inspection_result;
+            bool pending = result == "PENDING";
+            string verdict = pending ? (selected.unit_status == "FAILED" ? "검사 미완료" : "검사 대기") : result;
+            SetVerdict(verdict, result == "FAIL", pending);
+            if (inspectionMessage != null)
+            {
+                inspectionMessage.text = result switch
+                {
+                    "PASS" => "검사 합격 · 기록된 판정입니다.",
+                    "FAIL" => "검사 불합격 · 아래 불량 위치를 확인하세요.",
+                    _ => selected.unit_status == "FAILED" ? "실행이 실패하여 검사 판정이 기록되지 않았습니다." :
+                        "아직 검사 판정이 기록되지 않았습니다. 완료 후 새로고침하세요."
+                };
+                inspectionMessage.tooltip = "";
+            }
+            string inspectedAt = "—";
+            if (DateTimeOffset.TryParse(selected.inspected_at, CultureInfo.InvariantCulture,
+                DateTimeStyles.AssumeUniversal, out var time))
+                inspectedAt = time.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
+            FR5EmptyState.Detail(verdictScore, inspectedAt);
+            if (verdictScore != null) verdictScore.tooltip = selected.inspected_at ?? "검사 시각 기록 없음";
             checkList?.Clear();
-            // 실행 실패와 검사 불량은 다른 사실이지만, 둘 다 이상이므로 둘 다 색을 얻는다.
-            // 색 없이 적으면 FAILED 가 정상 항목과 같은 무게로 보인다(Docs/ui-design.md의 색 역할).
-            checkList?.Add(CheckLine("UNIT STATUS · " + selected.unit_status,
-                selected.unit_status == "FAILED"));
-            checkList?.Add(CheckLine("INSPECTION · " + result, result == "FAIL"));
+            string execution = selected.unit_status switch
+            {
+                "RUNNING" => "실행 중", "COMPLETED" => "실행 완료", "FAILED" => "실행 실패", _ => "상태 확인 필요"
+            };
+            checkList?.Add(CheckLine("생산 시도 상태 · " + execution, selected.unit_status == "FAILED"));
 
             Defect[] defects = selected.defects ?? Array.Empty<Defect>();
             defectGrid?.Clear();
-            if (defects.Length == 0) defectGrid?.Add(new Label("기록된 불량 없음"));
+            if (defects.Length == 0)
+                defectGrid?.Add(CheckLine(pending ? "검사 완료 후 불량 내역을 확인할 수 있습니다." :
+                    result == "FAIL" ? "불합격 판정이지만 상세 불량 내역은 없습니다." : "기록된 불량이 없습니다.", false));
             foreach (Defect defect in defects)
             {
-                var item = new Label(defect.slot_code + " · " + defect.defect_type);
+                var item = new Label(defect.slot_code + " · " + defect.defect_type) { enableRichText = false };
+                item.tooltip = item.text;
                 item.AddToClassList("slotchip");
                 item.AddToClassList("slotchip--bad");
                 defectGrid?.Add(item);
             }
-            FR5EmptyState.Detail(defectSql, "unit_defects(unit_id=" + selected.unit_id + ") · " + defects.Length + " rows");
+            FR5EmptyState.Detail(defectSql, defects.Length + "건 기록");
 
             unitStrip?.Clear();
             foreach (Unit unit in units)
             {
-                string unitResult = string.IsNullOrEmpty(unit.inspection_result) ? "PENDING" : unit.inspection_result;
+                string unitResult = string.IsNullOrEmpty(unit.inspection_result) || unit.inspection_result == "PENDING"
+                    ? (unit.unit_status == "FAILED" ? "미완료" : "검사 대기") : unit.inspection_result;
                 Unit target = unit;
-                var item = new Button();
-                item.clicked += () => ShowUnits(jobId, units, target);
+                var item = new Button(() => ShowUnits(jobId, units, target));
                 item.AddToClassList("chip");
-                // 글자는 .chip__text 자식이 맡는다. Button.text 로 직접 적으면 .chip 은
-                // 상자만 꾸미고 글자는 기본값(15px · Normal · 자간 0 · 회색)으로 남아
-                // 화면의 다른 칩과 규격이 어긋난다. 무엇보다 .chip--bad .chip__text 와
-                // .chip--accent .chip__text 가 겨냥할 자식이 없어, FAIL 유닛의 글자가
-                // 판정 색을 얻지 못하고 고른 유닛도 액센트를 얻지 못한다.
-                var itemText = new Label("#" + unit.unit_sequence_in_job + "  " + unitResult);
+                var itemText = new Label("#" + unit.unit_sequence_in_job + "  " + unitResult) { enableRichText = false };
                 itemText.AddToClassList("chip__text");
                 item.Add(itemText);
-                // 선택은 "지금 여기"이므로 액센트다. 이전에는 chip--good(초록)이었는데,
-                // 초록은 이 화면에서 합격을 뜻하므로 PENDING·FAIL 인 대를 골라도 합격처럼
-                // 보였다. 판정은 판정 색으로만 말한다.
                 if (unit.unit_id == selected.unit_id) item.AddToClassList("chip--accent");
                 if (unit.inspection_result == "FAIL") item.AddToClassList("chip--bad");
                 unitStrip?.Add(item);
             }
-
             ShowEvidence(selected.inspection_image_path);
+            RefreshVision();
         }
 
-        void ShowEmpty(string message)
+        void SetVerdict(string text, bool error, bool pending = false)
+        {
+            if (verdictValue == null) return;
+            FR5EmptyState.Present(verdictValue, text);
+            verdictValue.EnableInClassList("inspect-verdict--status", text != "PASS" && text != "FAIL");
+            verdictValue.EnableInClassList("bad", error);
+            verdictValue.EnableInClassList("warn", pending);
+        }
+
+        void ShowState(string title, string message, bool error = false)
         {
             StopEvidenceLoad();
             ClearEvidence();
-            FR5EmptyState.Missing(verdictValue);
-            FR5EmptyState.Detail(verdictScore, message);
-            FR5EmptyState.Fill(checkList, message);
-            FR5EmptyState.Fill(defectGrid, message, 200f);
-            FR5EmptyState.Fill(unitStrip, message);
-            FR5EmptyState.Detail(defectSql, message);
-            FR5EmptyState.Dash(unitsSummary);
-            FR5EmptyState.Detail(jobSummary, message);
+            hasSelection = false;
+            showLiveVideo = true;
+            SetVerdict(title, error);
+            if (inspectionContext != null) { inspectionContext.text = "검사 기록"; inspectionContext.tooltip = ""; }
+            if (inspectionMessage != null) { inspectionMessage.text = message; inspectionMessage.tooltip = ""; }
+            FR5EmptyState.Dash(verdictScore);
+            if (verdictScore != null) verdictScore.tooltip = "검사 시각 기록 없음";
+            checkList?.Clear();
+            defectGrid?.Clear();
+            defectGrid?.Add(CheckLine("검사 기록을 선택하면 불량 위치가 표시됩니다.", false));
+            unitStrip?.Clear();
+            unitStrip?.Add(CheckLine("표시할 생산 시도 이력이 없습니다.", false));
+            FR5EmptyState.Dash(defectSql);
+            FR5EmptyState.Detail(unitsSummary, "기록 선택 전");
+            FR5EmptyState.Dash(jobSummary);
+            if (jobSummary != null) jobSummary.tooltip = "";
+            RefreshVision();
         }
 
         string ApiUrl(string path) => mainServerBaseUrl.TrimEnd('/') + path;
@@ -269,12 +325,17 @@ namespace MainUnity.UI
         {
             StopEvidenceLoad();
             ClearEvidence();
+            evidenceMessage = "이 생산 시도에 저장된 검사 이미지가 없습니다.";
             if (evidenceImage == null || string.IsNullOrEmpty(path)) return;
             if (path != MockPassImagePath && path != MockInspectPassImagePath && path != MockFailImagePath)
             {
+                evidenceMessage = "현재 화면에서 열 수 없는 검사 이미지입니다.";
+                if (evidenceButton != null) evidenceButton.tooltip = path;
                 Debug.LogWarning("거부된 검사 이미지 경로: " + path, this);
                 return;
             }
+            evidenceMessage = "검사 기록 이미지를 불러오고 있습니다.";
+            if (evidenceButton != null) evidenceButton.tooltip = path;
             evidenceRoutine = StartCoroutine(LoadEvidence(path));
         }
 
@@ -291,10 +352,14 @@ namespace MainUnity.UI
                 evidenceImage.image = evidenceTexture;
                 evidenceImage.scaleMode = ScaleMode.ScaleToFit;
                 evidenceImage.style.display = DisplayStyle.Flex;
-                evidenceStats = "저장 캡처 · " + path;
+                evidenceStats = "기록에 연결된 샘플 이미지 · 실제 촬영 이미지 아님";
                 hasEvidence = true;
             }
-            else Debug.LogWarning("검사 이미지 로드 실패: " + request.error, this);
+            else
+            {
+                evidenceMessage = "검사 이미지를 불러오지 못했습니다. 새로고침으로 다시 시도하세요.";
+                Debug.LogWarning("검사 이미지 로드 실패: " + request.error, this);
+            }
             evidenceRoutine = null;
         }
 
@@ -315,41 +380,42 @@ namespace MainUnity.UI
             evidenceTexture = null;
             evidenceStats = null;
             hasEvidence = false;
+            evidenceMessage = null;
         }
+
+        void SelectLive() { showLiveVideo = true; RefreshVision(); }
+        void SelectEvidence() { showLiveVideo = false; RefreshVision(); }
 
         void RefreshVision()
         {
             bool received = vision != null && vision.HasReceivedImage;
-            double age = vision != null ? Time.realtimeSinceStartupAsDouble - vision.LastReceiveTimeSeconds : -1;
-            bool fresh = received && age >= 0 && age < staleSeconds;
-
-            cameraEmpty?.EnableInClassList("empty", true);
-            if (cameraEmpty != null)
-                cameraEmpty.style.display = fresh || hasEvidence ? DisplayStyle.None : DisplayStyle.Flex;
-            // 검출 박스는 좌표를 주는 계약이 없다. 영상이 있다고 해서 고정 사각형을
-            // 띄우면 "무엇을 인식했다"는 거짓말이 된다. 계약이 생길 때까지 그리지 않는다.
-            // TODO(API): 비전 노드의 검출 결과(bbox · score)가 생기면 여기에 싣는다.
-            if (detectBox != null)
-                detectBox.style.display = DisplayStyle.None;
-
+            double age = received ? Math.Max(0d, Time.realtimeSinceStartupAsDouble - vision.LastReceiveTimeSeconds) : -1d;
+            bool fresh = received && vision.isActiveAndEnabled && age < staleSeconds;
+            bool visible = showLiveVideo ? fresh : hasEvidence;
+            if (liveImage != null) liveImage.style.display = showLiveVideo ? DisplayStyle.Flex : DisplayStyle.None;
+            if (evidenceImage != null) evidenceImage.style.display = !showLiveVideo && hasEvidence ? DisplayStyle.Flex : DisplayStyle.None;
+            if (cameraEmpty != null) cameraEmpty.style.display = visible ? DisplayStyle.None : DisplayStyle.Flex;
+            liveButton?.EnableInClassList("inspect-tab--on", showLiveVideo);
+            evidenceButton?.EnableInClassList("inspect-tab--on", !showLiveVideo);
+            evidenceButton?.SetEnabled(hasSelection);
+            if (cameraSource != null)
+                cameraSource.text = showLiveVideo ? "현재 영상 · LIVE" : hasEvidence ? "검사 기록 · SAMPLE" : "검사 기록 이미지";
+            if (cameraEmptyTitle != null)
+                cameraEmptyTitle.text = showLiveVideo ? (received ? "영상 수신 중단" : "영상 수신 대기") : "검사 기록 이미지";
             if (cameraEmptyDesc != null)
-                cameraEmptyDesc.text = vision == null
-                    ? "CamVisionReceiver 미연결"
-                    : "/vision/board/image 수신 대기";
-
-            // TODO(API): 해상도·FPS 는 수신 메시지 헤더에서 읽는다. 지금은 경과만 실측이다.
+                cameraEmptyDesc.text = showLiveVideo ? "카메라 연결과 영상 수신 상태를 확인하세요." : evidenceMessage;
             if (cameraStats != null)
-                cameraStats.text = hasEvidence
-                    ? evidenceStats
-                    : fresh
-                    ? $"수신 중 · 마지막 프레임 {age * 1000:0} ms 전"
-                    : "수신 없음";
+                cameraStats.text = showLiveVideo ? (received ? $"마지막 프레임 {age:0.0}초 전" : "수신 기록 없음") :
+                    hasEvidence ? evidenceStats : "기록 이미지 표시 안 됨";
+            if (cameraNote != null)
+                cameraNote.text = showLiveVideo ? "현재 영상은 선택한 생산 시도의 검사 기록과 다를 수 있습니다." :
+                    "선택한 생산 시도에 연결된 이미지입니다. 판정은 오른쪽 기록을 기준으로 확인하세요.";
         }
 
         /// <summary>판정 목록의 한 줄이다. 이상일 때만 색을 얻는다.</summary>
         static Label CheckLine(string text, bool bad)
         {
-            var line = new Label(text);
+            var line = new Label(text) { enableRichText = false };
             if (bad) line.AddToClassList("bad");
             return line;
         }
