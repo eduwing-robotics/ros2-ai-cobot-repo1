@@ -110,7 +110,7 @@ namespace MainUnity.UI
         FR5PageRouter pageRouter;
         Label queryState, selectedStatus, selectedName, selectedId, selectedProgress, selectedAttempts, selectedResults, selectedReason;
         Button refreshJobs, selectedStart, selectedCancel, selectedMonitor, selectedInspect;
-        string selectedJobId;
+        string selectedJobId, lastJobsResponse;
 
         Product[] products = Array.Empty<Product>();
         ProductDetail selectedProduct;
@@ -133,6 +133,7 @@ namespace MainUnity.UI
             registerInFlight = false;
             actionJobId = null;
             selectedJobId = null;
+            lastJobsResponse = null;
             jobQueryError = null;
             productError = null;
             interlockSignature = null;
@@ -251,18 +252,7 @@ namespace MainUnity.UI
                 {
                     try
                     {
-                        Job[] response = JsonUtility.FromJson<JobListResponse>(request.downloadHandler.text)?.data;
-                        if (response == null || Array.Exists(response, job => job == null || string.IsNullOrEmpty(job.job_id)
-                            || string.IsNullOrEmpty(job.job_status)))
-                            throw new FormatException("Invalid jobs response.");
-                        jobs = response;
-                        if (!string.IsNullOrEmpty(actionJobId) &&
-                            Array.Exists(jobs, job => job.job_id == actionJobId && job.job_status != "PENDING"))
-                            actionJobId = null;
-                        jobsLoaded = true;
-                        jobQueryError = null;
-                        RefreshJobError();
-                        BuildJobs();
+                        ApplyJobsResponse(request.downloadHandler.text);
                     }
                     catch (Exception)
                     {
@@ -273,6 +263,29 @@ namespace MainUnity.UI
             }
             jobsLoading = false;
             refreshJobs?.SetEnabled(true);
+        }
+
+        void ApplyJobsResponse(string json)
+        {
+            // 같은 응답의 행을 2초마다 재생성하면 글꼴 렌더링과 키보드 포커스가 초기화된다.
+            if (json == lastJobsResponse && string.IsNullOrEmpty(jobQueryError))
+            {
+                RefreshSelectedActions();
+                return;
+            }
+            Job[] response = JsonUtility.FromJson<JobListResponse>(json)?.data;
+            if (response == null || Array.Exists(response, job => job == null || string.IsNullOrEmpty(job.job_id)
+                || string.IsNullOrEmpty(job.job_status)))
+                throw new FormatException("Invalid jobs response.");
+            jobs = response;
+            if (!string.IsNullOrEmpty(actionJobId) &&
+                Array.Exists(jobs, job => job.job_id == actionJobId && job.job_status != "PENDING"))
+                actionJobId = null;
+            jobsLoaded = true;
+            jobQueryError = null;
+            RefreshJobError();
+            BuildJobs();
+            lastJobsResponse = json;
         }
 
         void SetJobError(string message)
@@ -446,6 +459,8 @@ namespace MainUnity.UI
             cell.AddToClassList("tcell");
             if (numeric) cell.AddToClassList("tcell--num");
             cell.style.width = width;
+            // 동적으로 추가된 셀은 최초 레이아웃 이후 위치에 맞춰 텍스트 메시를 다시 그린다.
+            cell.RegisterCallback<GeometryChangedEvent>(_ => cell.MarkDirtyRepaint());
             row.Add(cell);
         }
 

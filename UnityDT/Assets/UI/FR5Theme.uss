@@ -1023,13 +1023,13 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
 .page--jobs .jobs-list-scroll { flex-grow: 1; min-height: 80px; }
 .page--jobs .jobs-columns { flex-shrink: 0; }
 .page--jobs .jobs-product-cell { flex-grow: 1; flex-shrink: 1; min-width: 0; width: 220px; }
-.page--jobs .jobs-row { flex-direction: row; justify-content: flex-start; height: 66px; flex-shrink: 0; margin: 0; padding: 0; border-width: 0; border-bottom-width: 1px; border-bottom-color: var(--c-edge); background-color: transparent; }
+.page--jobs .jobs-row { flex-direction: row; align-items: center; justify-content: flex-start; -unity-text-align: middle-left; height: 66px; flex-shrink: 0; margin: 0; padding: 0; border-width: 0; border-bottom-width: 1px; border-bottom-color: var(--c-edge); border-left-width: 3px; border-left-color: transparent; background-color: transparent; }
 .page--jobs .jobs-row:hover { background-color: var(--c-sunk-2); }
 .page--jobs .jobs-row--selected { background-color: var(--c-accent-wash); border-left-width: 3px; border-left-color: var(--c-accent); }
 .page--jobs .jobs-row:focus { border-top-width: 1px; border-top-color: var(--c-accent); border-bottom-color: var(--c-accent); }
-.page--jobs .jobs-row .tcell { font-size: 14px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.page--jobs .jobs-row .tcell { height: 28px; -unity-text-align: middle-left; font-size: 14px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .page--jobs .job-status { font-size: 14px; flex-shrink: 0; }
-.page--jobs .jobs-row-id { font-size: 12px; color: var(--c-ink-3); margin-top: 4px; }
+.page--jobs .jobs-row-id { -unity-text-align: middle-left; font-size: 12px; color: var(--c-ink-3); margin-top: 4px; }
 .page--jobs .jobs-detail { border-top-width: 1px; border-top-color: var(--c-edge); margin-top: 12px; padding-top: 14px; flex-shrink: 0; }
 .page--jobs .jobs-detail-title { font-size: 23px; color: var(--c-ink); -unity-font-style: bold; margin-top: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .page--jobs .jobs-metrics { margin-top: 14px; margin-bottom: 12px; }
@@ -1042,3 +1042,9 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
 .page--jobs .jobs-register-scroll { flex-grow: 1; min-height: 0; margin-bottom: 12px; }
 .page--jobs #product-name { font-size: 28px; }
 .page--jobs #start-button, .page--jobs #start-reason { flex-shrink: 0; }
+
+.page--jobs .jobs-row .tcell--num { -unity-text-align: middle-right; }
+.page--jobs .jobs-row .job-status { -unity-text-align: middle-left; padding-left: 8px; }
+
+.page--jobs .jobs-columns .tcell--head { font-size: 12px; }
+

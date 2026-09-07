@@ -33,8 +33,8 @@
                 <ui:VisualElement class="trow trow--head jobs-columns">
                     <ui:Label text="상태" class="tcell tcell--head" style="width:110px;" />
                     <ui:Label text="제품 · 작업 ID" class="tcell tcell--head jobs-product-cell" />
-                    <ui:Label text="PASS / 목표" class="tcell tcell--head" style="width:130px;" />
-                    <ui:Label text="시도" class="tcell tcell--head" style="width:88px;" />
+                    <ui:Label text="PASS / 목표" class="tcell tcell--head tcell--num" style="width:130px;" />
+                    <ui:Label text="시도" class="tcell tcell--head tcell--num" style="width:88px;" />
                     <ui:Label text="결과 요약" class="tcell tcell--head" style="width:160px;" />
                     <ui:Label text="등록 · 로컬" class="tcell tcell--head" style="width:132px;" />
                 </ui:VisualElement>

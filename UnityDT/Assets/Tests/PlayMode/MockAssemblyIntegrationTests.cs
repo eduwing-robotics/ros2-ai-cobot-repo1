@@ -81,6 +81,15 @@ namespace MainUnity.Tests.PlayMode
                 Invoke(binder, "SetFilter", "QUEUE");
                 Assert.That(Field(binder, "selectedJobId").GetValue(binder), Is.Null);
                 Assert.That(Text("selectedProgress"), Is.EqualTo("—"));
+                Invoke(binder, "SetFilter", "ALL");
+                string response = "{\"data\":[" + JsonUtility.ToJson(job) + "]}";
+                Invoke(binder, "ApplyJobsResponse", response);
+                var existingRow = list[0];
+                Invoke(binder, "ApplyJobsResponse", response);
+                Assert.That(list[0], Is.SameAs(existingRow), "Unchanged polling must retain rendered rows.");
+                Invoke(binder, "SetJobError", "조회 실패");
+                Invoke(binder, "ApplyJobsResponse", response);
+                Assert.That(Text("queryState"), Does.Not.Contain("실패"));
             }
             finally { UnityEngine.Object.DestroyImmediate(root); }
         }
