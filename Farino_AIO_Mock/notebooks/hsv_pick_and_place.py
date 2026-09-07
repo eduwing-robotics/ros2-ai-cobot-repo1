@@ -219,7 +219,7 @@ def main():
 
     def send_cmd(cmd_str, timeout_sec=20.0):
         request = RemoteCmdInterface.Request()
-        request.cmd_str = cmd_str
+        request.cmd_str = "real\n" + cmd_str
         future = client.call_async(request)
         rclpy.spin_until_future_complete(node, future, timeout_sec=timeout_sec)
         if future.result() is None:

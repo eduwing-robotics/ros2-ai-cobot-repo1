@@ -50,6 +50,7 @@ class MainServerApiTest(unittest.TestCase):
 
     def request(self, path, method="GET", body=None):
         request = Request(self.base_url + path, data=body, method=method)
+        request.add_header("X-Runtime-Mode", "mock")
         if body is not None:
             request.add_header("Content-Type", "application/json")
         try:
@@ -264,7 +265,7 @@ class MainServerApiTest(unittest.TestCase):
         )
 
     def test_runtime_mode_validation(self):
-        with patch.dict(os.environ, {"MAIN_SERVER_MODE": "real"}):
+        with patch.object(server, "_started_mode", None), patch.dict(os.environ, {"MAIN_SERVER_MODE": "real"}):
             self.assertEqual(server.validate_startup_configuration(), "real")
         for value in ("", "Mock", "simulation"):
             with self.subTest(value=value), patch.dict(os.environ, {"MAIN_SERVER_MODE": value}):
@@ -278,6 +279,66 @@ class MainServerApiTest(unittest.TestCase):
                 server.RuntimeConfigurationError, "MAIN_SERVER_DB_DSN is required"
             ):
                 server.validate_startup_configuration()
+
+
+class ModeIsolationTest(unittest.TestCase):
+    def test_http_mode_rejects_before_database(self):
+        with patch.dict(os.environ, {"MAIN_SERVER_MODE": "mock"}), patch.object(server, "_started_mode", "mock"):
+            httpd = server.ThreadingHTTPServer(("127.0.0.1", 0), server.ApiHandler)
+            worker = threading.Thread(target=httpd.serve_forever, daemon=True)
+            worker.start()
+            try:
+                with patch.object(server.queries, "products", return_value=[]) as read:
+                    for mode in (None, "real", "Mock", "mock"):
+                        request = Request(f"http://127.0.0.1:{httpd.server_port}/api/v1/products")
+                        if mode is not None:
+                            request.add_header("X-Runtime-Mode", mode)
+                        if mode == "mock":
+                            with urlopen(request) as response:
+                                self.assertEqual(response.status, 200)
+                        else:
+                            with self.assertRaises(HTTPError) as error:
+                                urlopen(request)
+                            self.assertEqual(error.exception.code, 409)
+                            read.assert_not_called()
+                    read.assert_called_once()
+            finally:
+                httpd.shutdown()
+                httpd.server_close()
+                worker.join()
+
+    def test_database_identity_and_connection_cleanup(self):
+        from unittest.mock import MagicMock
+        for actual in (None, "real", "mock"):
+            connection = MagicMock()
+            connection.execute.return_value.fetchone.return_value = (
+                {"runtime_mode": actual} if actual else None)
+            with patch.dict(os.environ, {"MAIN_SERVER_MODE": "mock", "MAIN_SERVER_DB_DSN": "test"}), \
+                    patch.object(server.queries.psycopg, "connect", return_value=connection):
+                if actual == "mock":
+                    self.assertIs(server.queries._connect(), connection)
+                    connection.commit.assert_called_once()
+                    connection.close.assert_not_called()
+                else:
+                    with self.assertRaisesRegex(server.queries.DatabaseUnavailable, "MODE_REJECTED"):
+                        server.queries._connect()
+                    connection.close.assert_called_once()
+                    connection.commit.assert_not_called()
+
+    def test_mode_cannot_change_after_startup(self):
+        with patch.object(server, "_started_mode", "mock"), patch.dict(os.environ, {"MAIN_SERVER_MODE": "real"}):
+            with self.assertRaisesRegex(server.RuntimeConfigurationError, "cannot change"):
+                server.runtime_mode()
+
+    def test_sequencer_mode_is_required(self):
+        from assembly_gateway import AssemblyGateway
+        with patch.dict(os.environ, {"MAIN_SERVER_MODE": "mock"}):
+            for response in ({}, {"runtime_mode": "real"}, {"runtime_mode": "mock"}):
+                if response.get("runtime_mode") == "mock":
+                    self.assertEqual(AssemblyGateway._parse_response(json.dumps(response)), response)
+                else:
+                    with self.assertRaisesRegex(GatewayUnavailable, "MODE_REJECTED"):
+                        AssemblyGateway._parse_response(json.dumps(response))
 
 
 if __name__ == "__main__":

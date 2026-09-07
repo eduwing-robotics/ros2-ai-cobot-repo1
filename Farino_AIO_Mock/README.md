@@ -39,6 +39,25 @@ psql "$DB_ADMIN_DSN" -f DATA_STATION/DB/004_mock_seed.sql
 psql "$DB_ADMIN_DSN" -f DATA_STATION/DB/005_roles.sql
 ```
 
+DB 관리자는 접속 대상이 **Mock 전용 DB인지 먼저 확인**하고 환경을 지정합니다.
+다음 명령은 접속한 DB에 적용되므로 Real DB에 실행하지 않습니다.
+
+```bash
+psql "$DB_ADMIN_DSN" <<'SQL'
+SELECT format('ALTER DATABASE %I SET app.runtime_mode = %L', current_database(), 'mock') \gexec
+SQL
+```
+
+MainServer·Sequencer는 `pg_db_role_setting`의 DB 전체 설정을 검사합니다.
+세션 옵션으로 환경 식별값을 대신할 수 없으며, 미설정·불일치면 쓰기 전에 연결을 닫습니다.
+애플리케이션 계정에는 DB 소유자·관리자 권한을 부여하지 않습니다.
+Mock 계정의 Real DB 접근 및 실제 설비망 접근은 배포 관리자가 별도로 차단해야 합니다.
+
+Mock 올인원 launch는 자식 프로세스에 `ROS_DOMAIN_ID=42`를 지정합니다.
+외부 ROS CLI도 `export ROS_DOMAIN_ID=42`를 사용합니다.
+불량 보고 프로세스를 개별 실행할 때도 `export MAIN_SERVER_MODE=mock`을 지정합니다.
+HTTP health 외 요청에는 `X-Runtime-Mode: mock` 헤더가 필요합니다.
+
 공통 빌드와 실행:
 
 ```bash
@@ -110,3 +129,21 @@ backend는 timeout, 통신 실패와 로봇 fault를 호출자에게 전달합�
 - [시스템 아키텍처](../docs/architecture/index.md)
 - [공개 API 목록](../docs/API.md)
 - [Assembly Sequencer](../ASSEMBLY_SEQUENCER/README.md)
+
+## Real 실행 환경과 명령 계약
+
+Real 통신 프로세스와 외부 ROS CLI는 `ROS_DOMAIN_ID=43`을 사용합니다.
+`real_robot.launch.py`는 자식 프로세스에 43을 지정하며 command server는 다른 도메인에서
+SDK 연결 전에 종료합니다. MainServer는 `MAIN_SERVER_MODE=real`과 관리자 설정
+`app.runtime_mode=real`인 전용 DB를 사용합니다. 위 SQL은 확인한 Real DB에 한해서
+환경 값을 `real`로 지정하여 사용합니다.
+
+`/fairino_remote_command_service`의 `cmd_str`는 실제 LF를 포함한 `real\n` 접두사 뒤에
+기존 `Function(arguments)`를 전달합니다. 누락·다른 접두사는 `MODE_MISMATCH`를 반환하고
+SDK를 호출하지 않습니다. 읽기 전용 `GetRuntimeMode()`는 접두사 없이 `real`을 반환합니다.
+외부 호출자도 갱신해야 하며 접두사는 인증·설비망 접근 통제를 대체하지 않습니다.
+
+Mock 수동 명령은 Unity가 상태 service의 모드를 확인한 뒤 발행합니다.
+Mock 실행기는 arm·gripper trajectory 전송 전에 활성 FakeSystem 구성을 확인합니다.
+동일 도메인에 별도 controller manager나 동일 이름의 실행 서버를 중복 배치하지 않습니다.
+검증 실패·timeout은 자동 명령 재시도 없이 로그와 호출자 오류로 전달합니다.

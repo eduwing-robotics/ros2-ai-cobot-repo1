@@ -3,6 +3,7 @@
 
 using System;
 using System.Globalization;
+using System.Threading.Tasks;
 using MainUnity.Runtime.Robot.Status;
 using RosMessageTypes.Fairino;
 using Unity.Robotics.ROSTCPConnector;
@@ -105,18 +106,25 @@ namespace MainUnity.Runtime.Robot.Real
         {
             try
             {
-                RemoteCmdInterfaceResponse response = await ROSConnection.GetOrCreateInstance()
+                var pending = ROSConnection.GetOrCreateInstance()
                     .SendServiceMessage<RemoteCmdInterfaceResponse>(serviceName,
-                        new RemoteCmdInterfaceRequest(command));
+                        new RemoteCmdInterfaceRequest("real\n" + command));
+                if (await Task.WhenAny(pending, Task.Delay(5000)) != pending)
+                    throw new TimeoutException("Gripper response timed out; command outcome unknown; no automatic retry.");
+                RemoteCmdInterfaceResponse response = await pending;
                 string value = response?.cmd_res ?? string.Empty;
                 Debug.Log("[FAIRINO] RX " + serviceName + ": " + value, this);
 
                 if (value != "0")
-                    Debug.LogWarning("[FAIRINO] Gripper command returned: " + value, this);
+                {
+                    statusManager?.ReportError(RobotErrorLabel.CommandRejected, "Gripper rejected: " + value);
+                    Debug.LogError($"[FAIRINO] stage=gripper_response expected=real target={serviceName} result={value}", this);
+                }
             }
             catch (Exception exception)
             {
-                Debug.LogError("[FAIRINO] Gripper request failed: " + exception.Message, this);
+                statusManager?.ReportError(RobotErrorLabel.Connection, exception.Message);
+                Debug.LogError($"[FAIRINO] stage=gripper_response expected=real target={serviceName} result=failed reason={exception.Message}", this);
             }
             finally
             {

@@ -219,6 +219,15 @@ class BackendFeedbackTest(unittest.TestCase):
 
 
 class PendingJobTest(unittest.IsolatedAsyncioTestCase):
+    async def test_mode_rejection_precedes_recipe_database_and_backend(self):
+        sequencer = SimpleNamespace(get_logger=lambda: Mock(),
+                                    set_response=MockAssemblySequencer.set_response)
+        for payload in ('real\n{}', '{}', ''):
+            response = await MockAssemblySequencer.on_external_request(
+                sequencer, SimpleNamespace(cmd_str=payload), SimpleNamespace())
+            self.assertEqual(json.loads(response.cmd_res)["error_code"], "MODE_MISMATCH")
+
+
     async def test_failed_writer_blocks_polling_and_failure_finalization(self):
         writer = Mock(sync_state="FAILED", last_error="permission denied")
         sequencer = SimpleNamespace(
@@ -258,7 +267,7 @@ class PendingJobTest(unittest.IsolatedAsyncioTestCase):
         )
         sequencer.db_writer.get_job.return_value = {"job_status": "PENDING"}
         response = await MockAssemblySequencer.on_external_request(
-            sequencer, SimpleNamespace(cmd_str=json.dumps(command)), SimpleNamespace())
+            sequencer, SimpleNamespace(cmd_str="mock\n" + json.dumps(command)), SimpleNamespace())
         self.assertTrue(json.loads(response.cmd_res)["accepted"])
         resolved = sequencer.pending_observations[JOB_ID]["resolved_steps"]
         self.assertEqual([row["step"] for row in resolved], recipe["steps"])
@@ -288,7 +297,7 @@ class PendingJobTest(unittest.IsolatedAsyncioTestCase):
                 sequencer.pending_observations.clear()
                 sequencer.db_writer.reset_mock()
                 response = await MockAssemblySequencer.on_external_request(
-                    sequencer, SimpleNamespace(cmd_str=json.dumps(bad)), SimpleNamespace())
+                    sequencer, SimpleNamespace(cmd_str="mock\n" + json.dumps(bad)), SimpleNamespace())
                 outcome = json.loads(response.cmd_res)
                 self.assertFalse(outcome["accepted"])
                 self.assertEqual(outcome["error_code"], "INVALID_REQUEST")
@@ -573,7 +582,7 @@ class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
             recipe_version="assembly-r1",
             set_response=MockAssemblySequencer.set_response,
         )
-        request = SimpleNamespace(cmd_str=json.dumps({
+        request = SimpleNamespace(cmd_str="mock\n" + json.dumps({
             "command": "transfer_assembled_pcb",
             "job_id": JOB_ID,
             "assembled_pcb": {
@@ -604,7 +613,7 @@ class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
         for command, paused in (("pause", True), ("resume", False)):
             response = await MockAssemblySequencer.on_external_request(
                 sequencer,
-                SimpleNamespace(cmd_str=json.dumps({
+                SimpleNamespace(cmd_str="mock\n" + json.dumps({
                     "command": command, "job_id": JOB_ID,
                 })),
                 SimpleNamespace(cmd_res=""),

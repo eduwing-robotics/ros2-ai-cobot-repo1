@@ -19,8 +19,7 @@ from email.message import EmailMessage
 from email.utils import parseaddr
 from pathlib import Path
 
-import psycopg
-from psycopg.rows import dict_row
+import queries
 
 import datasheet
 from datasheet import DATASHEET
@@ -39,7 +38,7 @@ IMAGE_MEDIA = {
 
 
 def _connect(dsn: str):
-    return psycopg.connect(dsn, row_factory=dict_row)
+    return queries._connect(dsn)
 
 
 def load_defect_context(dsn: str, unit_defect_id: int) -> list[dict[str, object]]:

@@ -14,13 +14,40 @@ DEFECT_TYPES = {"MISSING", "POSITION_ERROR", "ORIENTATION_ERROR", "CRACK"}
 
 
 def _connect():
-    dsn = os.environ.get("PRODUCTION_DB_DSN")
-    if not dsn or not dsn.strip():
+    dsn = os.environ.get("PRODUCTION_DB_DSN", "").strip()
+    if not dsn:
         raise RuntimeError("PRODUCTION_DB_DSN is required")
-    return psycopg.connect(
-        dsn,
-        row_factory=dict_row,
-    )
+    connection = None
+    try:
+        connection = psycopg.connect(dsn, row_factory=dict_row, connect_timeout=5)
+        # Read the administrator-owned database setting, not the session setting:
+        # libpq options may override current_setting(), but must not spoof identity.
+        row = connection.execute("""
+            SELECT split_part(setting, '=', 2) AS runtime_mode
+            FROM pg_db_role_setting s
+            JOIN pg_database d ON d.oid = s.setdatabase,
+                 unnest(s.setconfig) AS setting
+            WHERE d.datname = current_database() AND s.setrole = 0
+              AND split_part(setting, '=', 1) = 'app.runtime_mode'
+        """).fetchone()
+        actual = row["runtime_mode"] if row else None
+        expected = "mock"
+        if expected not in {"mock", "real"} or actual != expected:
+            raise RuntimeError(
+                f"MODE_REJECTED stage=db_connect expected={expected!r} actual={actual!r} "
+                f"database={connection.info.dbname!r} result=blocked_before_write")
+        connection.commit()
+        return connection
+    except Exception as error:
+        if connection is not None:
+            connection.close()
+        if isinstance(error, RuntimeError):
+            raise
+        # Preserve the driver's exception category for the existing DB retry policy,
+        # but do not forward connection strings in its message.
+        if isinstance(error, psycopg.Error):
+            raise type(error)("database connection/identity check failed") from None
+        raise RuntimeError(f"database connection/identity check failed: {type(error).__name__}") from None
 
 
 def _positive_id(value, label):

@@ -1,5 +1,6 @@
 """Thin ROS2 client for MainServer AssemblySequencer status route."""
 import json
+import os
 import threading
 
 
@@ -67,4 +68,9 @@ class AssemblyGateway:
             raise GatewayUnavailable("assembly bridge response is not valid JSON") from error
         if not isinstance(response, dict):
             raise GatewayUnavailable("assembly bridge response must be a JSON object")
+        expected = os.environ.get("MAIN_SERVER_MODE")
+        actual = response.get("runtime_mode")
+        if expected not in {"mock", "real"} or actual != expected:
+            raise GatewayUnavailable(
+                f"MODE_REJECTED stage=sequencer_status expected={expected!r} actual={actual!r} result=blocked")
         return response

@@ -250,6 +250,7 @@ namespace MainUnity.UI
         IEnumerator Get(string path, Action<string> onSuccess, Action<string> onFailure = null)
         {
             using var request = UnityWebRequest.Get(ApiUrl(path));
+            request.SetRequestHeader("X-Runtime-Mode", uiMaster == null ? "" : uiMaster.OperatingMode.ToString().ToLowerInvariant());
             request.timeout = 5;
             yield return request.SendWebRequest();
             if (!isActiveAndEnabled) yield break;

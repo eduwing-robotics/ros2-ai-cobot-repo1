@@ -20,14 +20,38 @@ class JobNotCancellable(RuntimeError):
     pass
 
 
-def _connect():
-    dsn = os.environ.get("MAIN_SERVER_DB_DSN", "").strip()
+def _connect(dsn=None):
+    dsn = (os.environ.get("MAIN_SERVER_DB_DSN", "") if dsn is None else dsn).strip()
     if not dsn:
         raise DatabaseUnavailable("MAIN_SERVER_DB_DSN is required")
+    connection = None
     try:
-        return psycopg.connect(dsn, row_factory=dict_row)
-    except psycopg.Error as error:
-        raise DatabaseUnavailable("database connection failed") from error
+        connection = psycopg.connect(dsn, row_factory=dict_row, connect_timeout=5)
+        # Read the administrator-owned database setting, not the session setting:
+        # libpq options may override current_setting(), but must not spoof identity.
+        row = connection.execute("""
+            SELECT split_part(setting, '=', 2) AS runtime_mode
+            FROM pg_db_role_setting s
+            JOIN pg_database d ON d.oid = s.setdatabase,
+                 unnest(s.setconfig) AS setting
+            WHERE d.datname = current_database() AND s.setrole = 0
+              AND split_part(setting, '=', 1) = 'app.runtime_mode'
+        """).fetchone()
+        actual = row["runtime_mode"] if row else None
+        expected = os.environ.get("MAIN_SERVER_MODE")
+        if expected not in {"mock", "real"} or actual != expected:
+            raise DatabaseUnavailable(
+                f"MODE_REJECTED stage=db_connect expected={expected!r} actual={actual!r} "
+                f"database={connection.info.dbname!r} result=blocked_before_write")
+        connection.commit()
+        return connection
+    except Exception as error:
+        if connection is not None:
+            connection.close()
+        if isinstance(error, DatabaseUnavailable):
+            raise
+        # Driver text may contain connection credentials; retain only its type.
+        raise DatabaseUnavailable(f"database connection/identity check failed: {type(error).__name__}") from None
 
 
 def _all(sql, values=()):

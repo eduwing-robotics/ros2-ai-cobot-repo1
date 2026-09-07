@@ -19,6 +19,15 @@
 | `POST` | `/api/v1/assemblies` | 영속 production Job 등록 |
 | `GET` | `/api/v1/assemblies/current` | Assembly Sequencer의 현재 또는 최근 실행 snapshot 조회 |
 
+## 환경 일치 계약
+
+health 외 모든 요청은 `X-Runtime-Mode: mock` 또는 `X-Runtime-Mode: real` 헤더 하나를
+포함합니다. 시작 모드와 다르거나 누락·중복되면 DB 작업 전에
+`409 runtime_mode_mismatch`로 거부합니다. health의 `data.runtime_mode`는 서버 모드이며
+DB 환경 검증도 통과해야 정상 응답합니다. 시작 후 모드 변경은 금지합니다.
+Sequencer 모드 불일치·누락은 `503 assembly_unavailable`, DB 환경 불일치·누락은
+`503 database_unavailable`입니다. 시작 시 DB 검증 실패는 HTTP 수신 전에 종료합니다.
+
 ## 공통 응답
 
 성공:

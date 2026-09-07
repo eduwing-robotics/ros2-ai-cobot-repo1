@@ -69,3 +69,10 @@ Sequencer는 불량과 품질 문서 전송 대기를 같은 transaction에 기�
 - smoke test
 
 DDL, migration, 역할, 조회 예제와 검증 SQL은 이 폴더의 실행 가능한 원본을 따릅니다.
+
+## 배포 환경 식별
+
+DB 관리자 설정 `app.runtime_mode`가 DB 환경을 식별합니다. Job·Unit 필드는 변경하지 않습니다.
+MainServer와 Sequencer는 DB 전체 설정을 카탈로그에서 읽고 연결마다 기대 모드와 비교합니다.
+미설정·불일치는 생산 데이터 작업 전에 차단합니다. 배포 절차는
+[Mock 올인원 실행](../../Farino_AIO_Mock/README.md#mock-올인원-실행)을 따릅니다.

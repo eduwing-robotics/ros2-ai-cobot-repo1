@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using MainUnity.Runtime.Robot.Interface;
 using MainUnity.Runtime.Robot.Status;
 using RosMessageTypes.Geometry;
+using RosMessageTypes.Fairino;
 using RosMessageTypes.Sensor;
 using RosMessageTypes.Std;
 using Unity.Robotics.ROSTCPConnector;
@@ -420,17 +421,50 @@ namespace MainUnity.Runtime.Robot.Mock
             return true;
         }
 
+        [Serializable]
+        sealed class ModeResponse { public string runtime_mode; }
+
+        bool modeCheckPending;
+
         bool TryPublish(string topic, Message message)
         {
+            if (modeCheckPending)
+                return Reject(RobotErrorLabel.CommandRejected, "Mock mode verification is pending.");
+            modeCheckPending = true;
+            PublishVerifiedAsync(topic, message);
+            return true;
+        }
+
+        async void PublishVerifiedAsync(string topic, Message message)
+        {
+            const string service = "/unity/assembly/start";
+            string host = connection.RosIPAddress;
+            int port = connection.RosPort;
             try
             {
+                connection.RegisterRosService<RemoteCmdInterfaceRequest, RemoteCmdInterfaceResponse>(service);
+                var check = connection.SendServiceMessage<RemoteCmdInterfaceResponse>(service,
+                    new RemoteCmdInterfaceRequest("{\"command\":\"status\"}"));
+                if (await Task.WhenAny(check, Task.Delay(5000)) != check)
+                    throw new TimeoutException("mode query timed out");
+                var response = await check;
+                string actual = JsonUtility.FromJson<ModeResponse>(response?.cmd_res ?? "{}")?.runtime_mode;
+                if (actual != "mock")
+                    throw new InvalidOperationException($"expected=mock actual={actual ?? "missing"}");
+                if (!isActiveAndEnabled || connection.HasConnectionError ||
+                    connection.RosIPAddress != host || connection.RosPort != port)
+                    throw new InvalidOperationException("connection changed or control disabled during verification");
+                if (statusManager == null || !statusManager.CanAcceptCommand(out _))
+                    throw new InvalidOperationException("robot safety state changed during verification");
                 connection.Publish(topic, message);
-                return true;
             }
-            catch (Exception exception)
+            catch (Exception error)
             {
-                return Reject(RobotErrorLabel.Connection, exception.Message);
+                completionError = "MODE_REJECTED stage=manual_publish result=not_sent " + error.Message;
+                Debug.LogError($"{completionError} target={host}:{port} topic={topic}", this);
+                Reject(RobotErrorLabel.Connection, completionError);
             }
+            finally { modeCheckPending = false; }
         }
 
         bool Reject(RobotErrorLabel label, string detail)

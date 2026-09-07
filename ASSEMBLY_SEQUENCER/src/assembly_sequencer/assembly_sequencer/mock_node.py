@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """AssemblySequencer orchestration for the existing Mock robot runner."""
 
+import os
 import json
 import random
 import sys
@@ -123,6 +124,11 @@ class MockAssemblySequencer(Node):
         return response
 
     async def on_external_request(self, request, response):
+        if request.cmd_str != '{"command":"status"}':
+            if not request.cmd_str.startswith("mock\n"):
+                self.get_logger().error("MODE_REJECTED stage=assembly_request expected=mock result=blocked_before_execution")
+                return self.set_response(response, False, error_code="MODE_MISMATCH", message="Mock mode prefix is required")
+            request.cmd_str = request.cmd_str[5:]
         command = None
         try:
             command_type, command = parse_command(
@@ -160,6 +166,7 @@ class MockAssemblySequencer(Node):
                     snapshot["db_sync_state"] = self.db_writer.sync_state
                 except Exception as error:
                     snapshot = unavailable_snapshot(str(error))
+            snapshot["runtime_mode"] = "mock"
             response.cmd_res = json.dumps(snapshot, separators=(",", ":"))
             return response
 
@@ -681,6 +688,8 @@ def main(args=None):
         self_check()
         print("assembly_sequencer mock self-check passed")
         return
+    if os.environ.get("ROS_DOMAIN_ID") != "42":
+        raise SystemExit("MODE_REJECTED stage=startup expected=mock ROS_DOMAIN_ID=42 required; DB recovery not started")
     rclpy.init(args=args)
     node = MockAssemblySequencer()
     executor = MultiThreadedExecutor(num_threads=2)

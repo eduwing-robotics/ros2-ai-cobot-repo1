@@ -35,6 +35,7 @@ VALID_RUNTIME_MODES = ("mock", "real")
 VALID_JOB_STATUSES = ("PENDING", "RUNNING", "COMPLETED", "FAILED", "CANCELLED")
 MAX_REQUEST_BODY_BYTES = 1_000_000
 assembly_gateway = AssemblyGateway()
+_started_mode = None
 
 
 class RuntimeConfigurationError(RuntimeError):
@@ -57,6 +58,8 @@ def runtime_mode():
     mode = os.environ.get("MAIN_SERVER_MODE")
     if mode not in VALID_RUNTIME_MODES:
         raise RuntimeConfigurationError("MAIN_SERVER_MODE must be exactly 'mock' or 'real'")
+    if _started_mode is not None and mode != _started_mode:
+        raise RuntimeConfigurationError("runtime mode cannot change after startup")
     return mode
 
 
@@ -64,6 +67,10 @@ def validate_startup_configuration():
     mode = runtime_mode()
     if not os.environ.get("MAIN_SERVER_DB_DSN", "").strip():
         raise RuntimeConfigurationError("MAIN_SERVER_DB_DSN is required")
+    global _started_mode
+    if _started_mode is not None and _started_mode != mode:
+        raise RuntimeConfigurationError("runtime mode cannot change after startup")
+    _started_mode = mode
     return mode
 
 
@@ -106,6 +113,13 @@ class ApiHandler(BaseHTTPRequestHandler):
         try:
             request = urlsplit(self.path)
             handler, route_values = self._route(method, request.path)
+            expected = self.headers.get_all("X-Runtime-Mode", [])
+            if handler != "health" and expected != [runtime_mode()]:
+                logging.error(
+                    "MODE_REJECTED stage=http_request method=%s expected=%r actual=%s "
+                    "result=blocked_before_handler", method, [value[:64] for value in expected[:2]], runtime_mode())
+                self._error(409, "runtime_mode_mismatch", "X-Runtime-Mode must match the server mode")
+                return
             data = getattr(self, handler)(
                 route_values, parse_qs(request.query, keep_blank_values=True)
             )
@@ -114,11 +128,13 @@ class ApiHandler(BaseHTTPRequestHandler):
             self._error(400, "invalid_request", str(error))
         except AssemblyRejected as error:
             self._error(error.status, error.code, error.message)
-        except GatewayUnavailable:
+        except GatewayUnavailable as error:
+            logging.error("ASSEMBLY_UNAVAILABLE stage=status result=failed reason=%s", error)
             self._error(503, "assembly_unavailable", "assembly bridge is unavailable")
         except queries.ResourceNotFound as error:
             self._error(404, "not_found", str(error))
-        except queries.DatabaseUnavailable:
+        except queries.DatabaseUnavailable as error:
+            logging.error("DATABASE_UNAVAILABLE stage=request result=blocked reason=%s", error)
             self._error(503, "database_unavailable", "database is unavailable")
         except datasheet.DatasheetIntegrityError as error:
             logging.error("datasheet integrity error: %s", error)
@@ -332,11 +348,15 @@ class ApiHandler(BaseHTTPRequestHandler):
 
 def run(host="127.0.0.1", port=8000):
     validate_startup_configuration()
+    with queries._connect():
+        pass
+    logging.info("SERVER_READY runtime_mode=%s", runtime_mode())
     with ThreadingHTTPServer((host, port), ApiHandler) as httpd:
         httpd.serve_forever()
 
 
 def main():
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     parser = argparse.ArgumentParser(description="Run the MainServer HTTP API")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", default=8000, type=int)

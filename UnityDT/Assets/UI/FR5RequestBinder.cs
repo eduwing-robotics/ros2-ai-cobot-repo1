@@ -243,6 +243,7 @@ namespace MainUnity.UI
             refreshJobs?.SetEnabled(false);
             if (!jobsLoaded && string.IsNullOrEmpty(jobQueryError)) BuildJobs();
             using var request = UnityWebRequest.Get(ApiUrl("/api/v1/jobs?limit=20"));
+            request.SetRequestHeader("X-Runtime-Mode", uiMaster == null ? "" : uiMaster.OperatingMode.ToString().ToLowerInvariant());
             request.timeout = 5;
             yield return request.SendWebRequest();
 
@@ -441,6 +442,7 @@ namespace MainUnity.UI
             RefreshJobError();
             BuildJobs();
             using var request = UnityWebRequest.Delete(ApiUrl("/api/v1/jobs/" + Uri.EscapeDataString(jobId)));
+            request.SetRequestHeader("X-Runtime-Mode", uiMaster == null ? "" : uiMaster.OperatingMode.ToString().ToLowerInvariant());
             request.timeout = 5;
             yield return request.SendWebRequest();
             if (request.result != UnityWebRequest.Result.Success)
@@ -570,6 +572,7 @@ namespace MainUnity.UI
         IEnumerator Get(string path, Action<string> onSuccess, Action<string> onError)
         {
             using var request = UnityWebRequest.Get(ApiUrl(path));
+            request.SetRequestHeader("X-Runtime-Mode", uiMaster == null ? "" : uiMaster.OperatingMode.ToString().ToLowerInvariant());
             request.timeout = 5;
             yield return request.SendWebRequest();
             if (!isActiveAndEnabled) yield break;
@@ -787,6 +790,7 @@ namespace MainUnity.UI
             };
 
             using var request = new UnityWebRequest(ApiUrl("/api/v1/assemblies"), "POST");
+            request.SetRequestHeader("X-Runtime-Mode", uiMaster == null ? "" : uiMaster.OperatingMode.ToString().ToLowerInvariant());
             request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(JsonUtility.ToJson(command)));
             request.downloadHandler = new DownloadHandlerBuffer();
             request.SetRequestHeader("Content-Type", "application/json");

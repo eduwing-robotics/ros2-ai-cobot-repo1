@@ -401,6 +401,17 @@ robot_command_thread::~robot_command_thread()
 void robot_command_thread::_parseROSCommandData_callback(
         const std::shared_ptr<remote_cmd_server_srv_msg::Request> req,\ 
         std::shared_ptr<remote_cmd_server_srv_msg::Response> res){
+    if (req->cmd_str == "GetRuntimeMode()") {
+        res->cmd_res = "real";
+        return;
+    }
+    if (req->cmd_str.rfind("real\n", 0) != 0) {
+        RCLCPP_ERROR(rclcpp::get_logger(LOGGER_NAME),
+            "MODE_REJECTED stage=command expected=real result=blocked_before_sdk");
+        res->cmd_res = "MODE_MISMATCH";
+        return;
+    }
+    req->cmd_str.erase(0, 5);
     //指令格式为movj(1,10)
     std::regex func_reg("([A-Z|a-z|_|0-9]+)[(](.*)[)]");//函数名的输入模式应该是字母或者数字函数名后跟(),圆括号中有所有输入参数
     std::smatch func_match;

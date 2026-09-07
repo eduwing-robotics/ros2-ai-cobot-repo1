@@ -15,7 +15,7 @@
 | Mock | Service | `/unity/assembly/start` | `fairino_msgs/srv/RemoteCmdInterface` | UnityDT·MainServer → Sequencer |
 | Mock | Topic | `/unity/assembly/feedback` | `std_msgs/msg/String` | Sequencer → UnityDT |
 
-Service는 요청 JSON을 `cmd_str`, 응답 JSON을 `cmd_res`에 넣습니다. Feedback topic은 JSON을 `data`에 넣으며 queue depth는 10입니다.
+Service는 모드 접두사와 요청 JSON을 `cmd_str`, 응답 JSON을 `cmd_res`에 넣습니다. 접두사 규칙은 실행 모드 검증 절을 따릅니다. Feedback topic은 JSON을 `data`에 넣으며 queue depth는 10입니다.
 
 ## Service 명령
 
@@ -223,3 +223,11 @@ status 이외의 명령은 다음 형식을 반환합니다.
 `PICKED`와 `PLACED`는 양의 `step_order`, 비어 있지 않은 `part_id`와 `slot_code`를 요구합니다.
 
 DB 동기화 상태는 `NOT_STARTED`, `PENDING`, `SYNCED`, `FAILED` 중 하나입니다. `FAILED` feedback의 오류 코드는 하위 backend 또는 Sequencer가 확정한 원인을 전달하며 호출자는 문자열을 그대로 보존해야 합니다.
+
+## 실행 모드 검증
+
+Mock service의 `cmd_str`는 실제 LF를 포함한 `mock\n` 접두사 뒤에 기존 JSON payload를
+전달합니다. 접두사 누락·불일치는 `accepted=false`, `error_code=MODE_MISMATCH`이며
+DB·실행 함수를 호출하지 않습니다. 읽기 요청 `{"command":"status"}`는 접두사 없이도
+허용하며 상태 응답의 `runtime_mode`는 `mock`입니다. 내부 backend도 같은 접두사를
+검사합니다. 프로세스는 ROS domain 42에서만 시작합니다. 도메인은 인증 수단이 아닙니다.

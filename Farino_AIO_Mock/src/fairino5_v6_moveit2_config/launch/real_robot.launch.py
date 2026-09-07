@@ -1,5 +1,5 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
+from launch.actions import DeclareLaunchArgument, SetEnvironmentVariable
 from moveit_configs_utils import MoveItConfigsBuilder
 from moveit_configs_utils.launches import generate_demo_launch
 
@@ -19,6 +19,7 @@ def generate_launch_description():
     ).to_moveit_configs()
 
     ld = LaunchDescription()
+    ld.add_action(SetEnvironmentVariable("ROS_DOMAIN_ID", "43"))
     ld.add_action(declare_use_fake_hardware)
     for action in generate_demo_launch(moveit_config).entities:
         ld.add_action(action)

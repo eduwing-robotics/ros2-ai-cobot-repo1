@@ -196,6 +196,7 @@ namespace MainUnity.Runtime.Robot.Mock
             public string recipe_version;
             public string state;
             public int placed_count;
+            public string runtime_mode;
             public string[] placed_slot_codes;
             public int expected_step_count;
             public int held_step_order;
@@ -369,6 +370,8 @@ namespace MainUnity.Runtime.Robot.Mock
                 try
                 {
                     snapshot = JsonUtility.FromJson<AssemblySnapshot>(message.cmd_res);
+                    if (snapshot?.runtime_mode != "mock")
+                        throw new InvalidOperationException("MODE_REJECTED expected=mock stage=assembly_status");
                 }
                 catch (Exception exception)
                 {
@@ -626,7 +629,7 @@ namespace MainUnity.Runtime.Robot.Mock
         {
             Task<RemoteCmdInterfaceResponse> request = connection
                 .SendServiceMessage<RemoteCmdInterfaceResponse>(startService,
-                    new RemoteCmdInterfaceRequest(json));
+                    new RemoteCmdInterfaceRequest("mock\n" + json));
             if (await Task.WhenAny(request, Task.Delay(TimeSpan.FromSeconds(5))) != request)
                 throw new TimeoutException($"Mock assembly {operation} service timed out.");
 
@@ -700,6 +703,7 @@ namespace MainUnity.Runtime.Robot.Mock
             request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
             request.downloadHandler = new DownloadHandlerBuffer();
             request.SetRequestHeader("Content-Type", "application/json");
+            request.SetRequestHeader("X-Runtime-Mode", "mock");
             request.timeout = 5;
             UnityWebRequestAsyncOperation operation = request.SendWebRequest();
             while (!operation.isDone)
@@ -829,7 +833,7 @@ namespace MainUnity.Runtime.Robot.Mock
                 });
                 Task<RemoteCmdInterfaceResponse> request = connection
                     .SendServiceMessage<RemoteCmdInterfaceResponse>(startService,
-                        new RemoteCmdInterfaceRequest(json));
+                        new RemoteCmdInterfaceRequest("mock\n" + json));
                 if (await Task.WhenAny(request, Task.Delay(TimeSpan.FromSeconds(5))) != request)
                     throw new TimeoutException("Mock PCB transfer request timed out.");
 

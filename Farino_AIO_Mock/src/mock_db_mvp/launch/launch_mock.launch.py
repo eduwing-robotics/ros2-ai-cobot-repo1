@@ -19,6 +19,7 @@ def generate_launch_description():
     production_dsn = LaunchConfiguration("production_db_dsn")
 
     return LaunchDescription([
+        SetEnvironmentVariable("ROS_DOMAIN_ID", "42"),
         DeclareLaunchArgument("endpoint_ip", default_value="0.0.0.0"),
         DeclareLaunchArgument("endpoint_port", default_value="10000"),
         DeclareLaunchArgument("start_delay", default_value="5"),
@@ -83,6 +84,7 @@ def generate_launch_description():
                 "--watch",
             ],
             additional_env={
+                "MAIN_SERVER_MODE": "mock",
                 "MAIN_SERVER_DB_DSN": LaunchConfiguration("main_server_db_dsn"),
             },
             condition=IfCondition(LaunchConfiguration("defect_mail_enabled")),

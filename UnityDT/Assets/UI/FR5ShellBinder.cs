@@ -294,6 +294,11 @@ namespace MainUnity.UI
             }
         }
 
+        [Serializable]
+        sealed class HealthMode { public string runtime_mode; }
+        [Serializable]
+        sealed class HealthEnvelope { public HealthMode data; }
+
         IEnumerator RefreshServiceLinks()
         {
             string baseUrl = mainServerBaseUrl?.TrimEnd('/');
@@ -318,11 +323,23 @@ namespace MainUnity.UI
                         "MainServer에 연결할 수 없어 확인하지 못했습니다.");
                     yield break;
                 }
+                string actual = null;
+                try { actual = JsonUtility.FromJson<HealthEnvelope>(health.downloadHandler.text)?.data?.runtime_mode; }
+                catch (ArgumentException) { }
+                string expected = uiMaster == null ? null : uiMaster.OperatingMode.ToString().ToLowerInvariant();
+                if (expected == null || actual != expected)
+                {
+                    string detail = $"환경 불일치 · 기대 {expected ?? "미설정"} / 서버 {actual ?? "미확인"}";
+                    SetLinkState(linkApiDot, linkApiLabel, false, detail);
+                    SetLinkState(linkSequencerDot, linkSequencerLabel, false, "환경 검증 실패로 조회 차단");
+                    yield break;
+                }
             }
 
             SetLinkState(linkApiDot, linkApiLabel, true, "MainServer API·DB 정상");
             using UnityWebRequest sequencer = UnityWebRequest.Get(
                 baseUrl + "/api/v1/assemblies/current");
+            sequencer.SetRequestHeader("X-Runtime-Mode", uiMaster == null ? "" : uiMaster.OperatingMode.ToString().ToLowerInvariant());
             sequencer.timeout = 3;
             yield return sequencer.SendWebRequest();
             SetLinkState(linkSequencerDot, linkSequencerLabel,

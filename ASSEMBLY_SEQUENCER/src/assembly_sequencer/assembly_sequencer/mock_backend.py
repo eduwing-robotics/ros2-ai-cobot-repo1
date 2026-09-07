@@ -32,6 +32,8 @@ class MockBackend:
             raise RuntimeError("Mock status response is not valid JSON") from error
         if not isinstance(snapshot, dict):
             raise RuntimeError("Mock status response must be an object")
+        if snapshot.get("runtime_mode") != "mock":
+            raise RuntimeError("MODE_REJECTED stage=backend_status expected=mock result=blocked")
         return snapshot
 
     async def start(self, job_id, recipe_version, expected_step_count):
@@ -154,7 +156,7 @@ class MockBackend:
         if not self._client.wait_for_service(timeout_sec=SERVICE_TIMEOUT_SECONDS):
             raise RuntimeError("internal Mock assembly service is unavailable")
         request = RemoteCmdInterface.Request()
-        request.cmd_str = json.dumps(payload, separators=(",", ":"))
+        request.cmd_str = "mock\n" + json.dumps(payload, separators=(",", ":"))
         response_future = self._client.call_async(request)
         timeout_timer = self._node.create_timer(
             SERVICE_TIMEOUT_SECONDS, response_future.cancel

@@ -5,6 +5,7 @@ import argparse
 import copy
 import json
 import math
+import os
 import sys
 import time
 import uuid
@@ -416,6 +417,29 @@ def advance_assembly_snapshot(current, feedback, recipe_version, expected_step_c
 
 
 def self_check():
+    from types import SimpleNamespace
+    # No ROS node or equipment is created: reject a foreign command before parsing.
+    logger = SimpleNamespace(error=lambda message: None)
+    node = SimpleNamespace(get_logger=lambda: logger)
+    rejected = MockMoveJ.on_start_assembly(node, SimpleNamespace(cmd_str="real\nMoveJ()"), SimpleNamespace())
+    assert json.loads(rejected.cmd_res)["error_code"] == "MODE_MISMATCH"
+    mock_component = SimpleNamespace(name="FakeSystem", plugin_name="mock_components/GenericSystem",
+                                     state=SimpleNamespace(id=State.PRIMARY_STATE_ACTIVE))
+    gripper_component = SimpleNamespace(name="FakeSystem_gripper", plugin_name="mock_components/GenericSystem",
+                                        state=SimpleNamespace(id=State.PRIMARY_STATE_ACTIVE))
+    response = SimpleNamespace(component=[mock_component, gripper_component])
+    node.hardware_components_client = SimpleNamespace(wait_for_service=lambda **kwargs: True,
+                                                       call_async=lambda request: None)
+    node.wait_for_future = lambda *args: response
+    MockMoveJ.require_mock_hardware(node)
+    response.component.append(SimpleNamespace(name="RealSystem", plugin_name="real_driver",
+                                              state=SimpleNamespace(id=State.PRIMARY_STATE_ACTIVE)))
+    try:
+        MockMoveJ.require_mock_hardware(node)
+    except RuntimeError:
+        pass
+    else:
+        raise AssertionError("mixed hardware must be rejected")
     assert gripper_position(100.0) == 0.0
     assert gripper_position(0.0) == GRIPPER_CLOSED_METERS
     home_radians = [math.radians(value) for value in INITIAL_JOINTS_DEG]
@@ -673,13 +697,19 @@ class MockMoveJ(Node):
         return response
 
     def on_start_assembly(self, request, response):
+        if request.cmd_str != '{"command":"status"}':
+            if not request.cmd_str.startswith("mock\n"):
+                self.get_logger().error("MODE_REJECTED stage=backend_request expected=mock result=blocked_before_execution")
+                response.cmd_res = json.dumps({"accepted": False, "error_code": "MODE_MISMATCH", "message": "Mock mode prefix is required"})
+                return response
+            request.cmd_str = request.cmd_str[5:]
         try:
             command = json.loads(request.cmd_str)
         except (TypeError, json.JSONDecodeError):
             command = None
         if command == {"command": "status"}:
             response.cmd_res = json.dumps(
-                self.latest_assembly_snapshot, separators=(",", ":")
+                {**self.latest_assembly_snapshot, "runtime_mode": "mock"}, separators=(",", ":")
             )
             return response
 
@@ -1140,9 +1170,9 @@ class MockMoveJ(Node):
             ListHardwareComponents.Request()
         )
         response = self.wait_for_future(future, "mock hardware inspection")
-        active_mock = any(
-            component.name == "FakeSystem"
-            and component.plugin_name == "mock_components/GenericSystem"
+        expected_components = {"FakeSystem", "FakeSystem_gripper"}
+        active_mock = {component.name for component in response.component} == expected_components and all(
+            component.plugin_name == "mock_components/GenericSystem"
             and component.state.id == State.PRIMARY_STATE_ACTIVE
             for component in response.component
         )
@@ -1235,6 +1265,7 @@ class MockMoveJ(Node):
         self.log_joint_state("finish")
 
     def run_gripper(self, opening_percent):
+        self.require_mock_hardware()
         if not self.gripper_client.wait_for_server(timeout_sec=5.0):
             raise RuntimeError("gripper controller is unavailable")
         if self.pause_requested():
@@ -1517,6 +1548,8 @@ def main():
         self_check()
     except (ValueError, AssertionError) as error:
         raise SystemExit(f"mock startup validation failed: {error}") from error
+    if os.environ.get("ROS_DOMAIN_ID") != "42":
+        raise SystemExit("MODE_REJECTED stage=startup expected=mock ROS_DOMAIN_ID=42 required; no equipment connection")
     rclpy.init()
     node = MockMoveJ(args)
     try:

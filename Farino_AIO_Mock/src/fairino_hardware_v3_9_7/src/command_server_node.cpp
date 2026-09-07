@@ -1,9 +1,17 @@
 #include "fairino_hardware/command_server.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include <cstdlib>
+#include <cstring>
+#include <cstdio>
 #include "fairino_hardware/CNDE_thread.hpp"
 
 int main(int argc, char *argv[]){
     //该main函数用于创建简化指令客户端的app
+    const char* domain = std::getenv("ROS_DOMAIN_ID");
+    if (!domain || std::strcmp(domain, "43") != 0) {
+        std::fprintf(stderr, "MODE_REJECTED stage=startup expected=real ROS_DOMAIN_ID=43 required; SDK not connected\n");
+        return 1;
+    }
     rclcpp::init(argc,argv);
     rclcpp::executors::MultiThreadedExecutor mulexecutor;
 

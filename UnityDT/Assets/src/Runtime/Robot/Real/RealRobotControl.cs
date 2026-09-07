@@ -270,7 +270,7 @@ namespace MainUnity.Runtime.Robot.Real
             Debug.Log("[FAIRINO] TX " + serviceName + ": " + command, this);
             RemoteCmdInterfaceResponse response = await ROSConnection.GetOrCreateInstance()
                 .SendServiceMessage<RemoteCmdInterfaceResponse>(serviceName,
-                    new RemoteCmdInterfaceRequest(command));
+                    new RemoteCmdInterfaceRequest("real\n" + command));
             string value = response?.cmd_res ?? string.Empty;
             Debug.Log("[FAIRINO] RX " + serviceName + ": " + value, this);
             return value;
