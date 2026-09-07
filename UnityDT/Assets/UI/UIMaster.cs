@@ -47,6 +47,8 @@ namespace MainUnity.UI
         RobotStatusManager observedStatus;
         AssemblyProgressManager observedProgress;
         TrayPartCalibrator observedCalibration;
+        BoardPartCalibrator observedBoardCalibration;
+        internal BoardPartCalibrator BoardCalibration => RobotMaster != null ? RobotMaster.BoardCalibration : null;
         internal TrayPartCalibrator Calibration => RobotMaster != null ? RobotMaster.Calibration : null;
         RobotRunState? lastRobotState;
         AssemblyProgressFrame lastProgress;
@@ -59,6 +61,8 @@ namespace MainUnity.UI
             if (observedStatus != null) observedStatus.StatusChanged -= OnStatusChanged;
             if (observedProgress != null) observedProgress.ProgressChanged -= OnProgressChanged;
             if (observedCalibration != null) observedCalibration.ProgressChanged -= OnCalibrationChanged;
+            if (observedBoardCalibration != null) observedBoardCalibration.ProgressChanged -= OnBoardCalibrationChanged;
+            observedBoardCalibration = null;
             observedCalibration = null;
             observedStatus = null;
             observedProgress = null;
@@ -109,6 +113,17 @@ namespace MainUnity.UI
                         OnCalibrationChanged();
                     }
                 }
+                var boardCalibration = IsSimulated ? null : BoardCalibration;
+                if (observedBoardCalibration != boardCalibration)
+                {
+                    if (observedBoardCalibration != null) observedBoardCalibration.ProgressChanged -= OnBoardCalibrationChanged;
+                    observedBoardCalibration = boardCalibration;
+                    if (observedBoardCalibration != null)
+                    {
+                        observedBoardCalibration.ProgressChanged += OnBoardCalibrationChanged;
+                        OnBoardCalibrationChanged();
+                    }
+                }
                 yield return interval;
             }
         }
@@ -119,6 +134,14 @@ namespace MainUnity.UI
             RecordEvent("Calibration", observedCalibration.ProgressDetail,
                 observedCalibration.Progress == TrayPartCalibrator.ProgressState.Rejected ||
                 observedCalibration.Progress == TrayPartCalibrator.ProgressState.ConfigurationError);
+        }
+
+        void OnBoardCalibrationChanged()
+        {
+            if (observedBoardCalibration == null) return;
+            RecordEvent("기판 Calibration", observedBoardCalibration.ProgressDetail,
+                observedBoardCalibration.Progress == BoardPartCalibrator.ProgressState.Rejected ||
+                observedBoardCalibration.Progress == BoardPartCalibrator.ProgressState.ConfigurationError);
         }
 
         void OnStatusChanged(RobotRunState state, RobotErrorLabel error, string detail)

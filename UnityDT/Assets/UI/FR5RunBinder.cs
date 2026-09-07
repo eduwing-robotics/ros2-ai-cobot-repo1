@@ -867,6 +867,29 @@ namespace MainUnity.UI
             calibrationDetail.tooltip = !mock && source != null ? source.ProgressDetail : detail;
             calibrationAge.text = mock || source == null ? "수신 기록 없음" :
                 "수신 " + Age(source.LastReceiveTime) + " · 반영 " + Age(source.LastAppliedTime);
+            if (mock) return;
+            var board = uiMaster != null ? uiMaster.BoardCalibration : null;
+            string boardState = board == null ? "연결 없음" : board.Progress switch
+            {
+                BoardPartCalibrator.ProgressState.Preparing => "추적 준비 중",
+                BoardPartCalibrator.ProgressState.Applied => "배치 반영 완료",
+                BoardPartCalibrator.ProgressState.Rejected => "결과 거부",
+                BoardPartCalibrator.ProgressState.ConfigurationError => "설정 확인 필요",
+                _ => "관측 대기"
+            };
+            bool boardError = board != null && (board.Progress == BoardPartCalibrator.ProgressState.Rejected ||
+                board.Progress == BoardPartCalibrator.ProgressState.ConfigurationError);
+            if (board != null && !board.isActiveAndEnabled && !boardError) boardState = "수신 비활성";
+            calibrationState.text = "트레이 " + state + "\n기판 " + boardState;
+            calibrationState.style.whiteSpace = WhiteSpace.Normal;
+            if (calibrationState.parent?.parent != null)
+                calibrationState.parent.parent.style.height = StyleKeyword.Auto;
+            SetTone(calibrationState, error || boardError ? "bad" : "none");
+            calibrationDetail.text = "트레이: " + detail + "\n기판: " + (board != null ? board.ProgressDetail : "수신기 연결 필요");
+            calibrationDetail.style.whiteSpace = WhiteSpace.Normal;
+            calibrationDetail.tooltip = calibrationDetail.text;
+            calibrationAge.text = "트레이 " + calibrationAge.text + "\n기판 " + (board == null ? "수신 기록 없음" :
+                "수신 " + Age(board.LastReceiveTime) + " · 반영 " + Age(board.LastAppliedTime));
         }
 
         void RefreshEvents()

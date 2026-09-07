@@ -281,6 +281,7 @@ namespace MainUnity.UI
                     result == "FAIL" ? "불합격 판정이지만 상세 불량 내역은 없습니다." : "기록된 불량이 없습니다.", false));
             foreach (Defect defect in defects)
             {
+                if (selected.inspection?.result?.findings != null) continue;
                 var item = new Label(defect.slot_code + " · " + defect.defect_type) { enableRichText = false };
                 item.tooltip = item.text;
                 item.AddToClassList("slotchip");
@@ -290,8 +291,6 @@ namespace MainUnity.UI
             InspectionResult detail = selected.inspection?.result;
             if (detail?.slots != null)
             {
-                checkList?.Clear();
-                checkList?.Add(CheckLine("생산 시도 상태 · " + execution, selected.unit_status == "FAILED"));
                 foreach (Slot slot in detail.slots)
                 {
                     if (slot == null) continue;

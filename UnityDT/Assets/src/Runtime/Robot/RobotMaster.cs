@@ -66,6 +66,7 @@ namespace MainUnity.Runtime.Robot
 
         public IRobotControl Control { get; private set; }
         internal MainUnity.Runtime.Camera.TrayPartCalibrator Calibration { get; private set; }
+        internal MainUnity.Runtime.Camera.BoardPartCalibrator BoardCalibration { get; private set; }
         public IRobotGhostControl GhostControl { get; private set; }
         public Transform Tcp => tcp;
 
@@ -152,6 +153,9 @@ void OnValidate()
                 real = GetComponentInChildren<FairinoRealRobotMaster>(true);
             Calibration = real != null
                 ? real.GetComponentInChildren<MainUnity.Runtime.Camera.TrayPartCalibrator>(true)
+                : null;
+            BoardCalibration = real != null
+                ? real.GetComponentInChildren<MainUnity.Runtime.Camera.BoardPartCalibrator>(true)
                 : null;
             if (ghost == null)
                 ghost = FindAnyObjectByType<GhostMaster>(FindObjectsInactive.Include);

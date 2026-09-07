@@ -301,6 +301,179 @@ namespace MainUnity.Tests.PlayMode
         }
 
         [Test]
+        public void BoardCalibrationPreservesUnitOwnershipAndRejectsPartialObservations()
+        {
+            var root = new GameObject("Board calibration regression");
+            root.SetActive(false);
+            var uiRoot = new GameObject("Board calibration UI regression");
+            uiRoot.SetActive(false);
+            try
+            {
+                Transform Child(string name)
+                {
+                    var child = new GameObject(name).transform;
+                    child.SetParent(root.transform, false);
+                    return child;
+                }
+                var owner = root.AddComponent(RuntimeType("MainUnity.Static.ItemManager"));
+                Transform prefab = Child("Board prefab");
+                prefab.localScale = Vector3.one * 0.01f;
+                var picker = new GameObject("Picker").transform;
+                picker.SetParent(prefab, false);
+                Transform[] targets = Enumerable.Range(1, 25).Select(i =>
+                {
+                    var slot = new GameObject("SLOT-" + i).transform;
+                    slot.SetParent(prefab, false);
+                    slot.localPosition = new Vector3(i, 0f, 0f);
+                    return slot;
+                }).ToArray();
+                Type groupType = owner.GetType().GetNestedType("AssemblySlot");
+                object group = Activator.CreateInstance(groupType);
+                Field(group, "slots").SetValue(group, targets);
+                Field(group, "requiredItemType").SetValue(group, "GPU");
+                Array groups = Array.CreateInstance(groupType, 1);
+                groups.SetValue(group, 0);
+                Field(owner, "assemblySlots").SetValue(owner, groups);
+                Field(owner, "motherboardPrefab").SetValue(owner, prefab.gameObject);
+                Transform spawn = Child("Spawn");
+                spawn.position = new Vector3(5f, 6f, 7f);
+                Field(owner, "spawnPoint").SetValue(owner, spawn);
+                Field(owner, "spawnRoot").SetValue(owner, Child("Current boards"));
+                Field(owner, "completedRoot").SetValue(owner, Child("Completed boards"));
+                Transform origin = Child("ROS origin");
+                origin.SetPositionAndRotation(new Vector3(1f, 2f, 3f), Quaternion.Euler(0f, 30f, 0f));
+                var calibration = root.AddComponent(RuntimeType("MainUnity.Runtime.Camera.BoardPartCalibrator"));
+                Field(calibration, "baseLink").SetValue(calibration, origin);
+                Field(calibration, "itemManager").SetValue(calibration, owner);
+                Vector3 offset = new Vector3(0.01f, 0.02f, 0.03f);
+                Field(calibration, "modelPositionOffsetMeters").SetValue(calibration, offset);
+                Field(calibration, "modelRotationOffsetDegrees").SetValue(calibration, new Vector3(0f, -90f, 0f));
+                string rows = string.Join(",", Enumerable.Range(1, 25).Select(i =>
+                    "{\"slot_code\":\"SLOT-" + i + "\",\"board_position_m\":[0.1,0.2,0.3]," +
+                    "\"board_orientation_xyzw\":[0,0,0,2],\"nominal_board_position_m\":[9,9,9]}"));
+                string Payload(long sequence, long frame, string content = null, string publisher = "camera-a") =>
+                    "{\"schema\":\"fr5.board.unity_state/v1\",\"valid\":true,\"stable\":true," +
+                    "\"publisher_id\":\"" + publisher + "\",\"sequence\":" + sequence +
+                    ",\"timestamp_ros_ns\":" + frame + ",\"published_ros_ns\":" + (frame + 100000000) +
+                    ",\"coordinate_frame\":\"base_link\",\"position_units\":\"m\"," +
+                    "\"product_code\":\"printed_semiconductor_package_board\",\"product_version\":\"assembly-r1\"," +
+                    "\"calibration_id\":\"calibration-" + frame + "\",\"board_pose\":{\"position_m\":[1,2,3]," +
+                    "\"orientation_xyzw\":[0,0,0.7071067811865475,0.7071067811865476]},\"slots\":[" + (content ?? rows) + "]}";
+                MethodInfo receive = calibration.GetType().GetMethod("ReceiveState", BindingFlags.Instance | BindingFlags.NonPublic);
+                void Receive(string json)
+                {
+                    object message = Activator.CreateInstance(receive.GetParameters()[0].ParameterType);
+                    Field(message, "data").SetValue(message, json);
+                    receive.Invoke(calibration, new[] { message });
+                }
+                string State() => GetProperty(calibration, "Progress").ToString();
+                // Synchronous test: destroy before Start can subscribe to the live ROS network.
+                root.SetActive(true);
+                Receive(Payload(1, 10000000000));
+                Assert.That(State(), Is.EqualTo("Waiting"));
+                Assert.That(prefab.position, Is.EqualTo(Vector3.zero), "No Unit must never modify the prefab.");
+                string jobId = Guid.NewGuid().ToString();
+                Transform first = (Transform)Invoke(owner, "BeginUnit", jobId, 1L);
+                Transform firstSlot = first.Find("SLOT-1");
+                Transform parent = first.parent;
+                Receive(Payload(2, 11000000000));
+                Assert.That(first.position, Is.EqualTo(spawn.position), "First Unit observation is a freshness boundary.");
+                Receive(Payload(3, 12000000000));
+                Assert.That(State(), Is.EqualTo("Applied"));
+                Quaternion boardRotation = origin.rotation * Quaternion.Euler(0f, -90f, 0f);
+                Vector3 boardPosition = origin.TransformPoint(new Vector3(-2f, 3f, 1f));
+                Assert.That(Vector3.Distance(first.position, boardPosition + boardRotation * offset), Is.LessThan(1e-5f));
+                Assert.That(Quaternion.Angle(first.rotation, boardRotation * Quaternion.Euler(0f, -90f, 0f)), Is.LessThan(0.01f));
+                Assert.That(Vector3.Distance(firstSlot.position, boardPosition + boardRotation * new Vector3(-0.2f, 0.3f, 0.1f)), Is.LessThan(1e-5f));
+                Assert.That(Quaternion.Angle(firstSlot.rotation, boardRotation), Is.LessThan(0.01f));
+                Assert.That(first.localScale, Is.EqualTo(Vector3.one * 0.01f));
+                Assert.That(first.parent, Is.SameAs(parent));
+                Assert.That(first.childCount, Is.EqualTo(26), "Reuse the existing 25 slots; do not generate anchors.");
+                Vector3 retainedBoard = first.position, retainedSlot = firstSlot.position;
+                double appliedAt = (double)GetProperty(calibration, "LastAppliedTime");
+                Receive(Payload(3, 13000000000));
+                Receive(Payload(4, 12000000000));
+                Assert.That((double)GetProperty(calibration, "LastAppliedTime"), Is.EqualTo(appliedAt));
+                long sequence = 5;
+                foreach (string invalid in new[]
+                {
+                    Payload(sequence++, 14000000000).Replace("[1,2,3]", "[1,2]"),
+                    Payload(sequence++, 14000000000).Replace("[1,2,3]", "[1e100,2,3]"),
+                    Payload(sequence++, 14000000000).Replace("[0,0,0,2]", "[0,0,0,0]"),
+                    Payload(sequence++, 14000000000, rows.Replace("SLOT-25", "SLOT-1")),
+                    Payload(sequence++, 14000000000, rows.Replace("SLOT-25", "UNKNOWN")),
+                    Payload(sequence++, 14000000000).Replace("14100000000", "18000000000"),
+                    Payload(sequence++, 14000000000).Replace("\"m\"", "\"mm\""),
+                    Payload(sequence++, 14000000000).Replace("assembly-r1", "wrong-product"),
+                    "{}"
+                })
+                {
+                    Receive(invalid);
+                    Assert.That(State(), Is.EqualTo("Rejected"));
+                    Assert.That(first.position, Is.EqualTo(retainedBoard));
+                    Assert.That(firstSlot.position, Is.EqualTo(retainedSlot));
+                    Assert.That((double)GetProperty(calibration, "LastAppliedTime"), Is.EqualTo(appliedAt));
+                }
+                Receive(Payload(sequence++, 15000000000).Replace("\"valid\":true", "\"valid\":false"));
+                Assert.That(State(), Is.EqualTo("Preparing"));
+                Receive(Payload(sequence++, 16000000000));
+                Assert.That(State(), Is.EqualTo("Applied"));
+                Field(calibration, "<LastAppliedTime>k__BackingField").SetValue(calibration, Time.realtimeSinceStartupAsDouble - 4d);
+                Invoke(calibration, "Update");
+                Assert.That(State(), Is.EqualTo("Preparing"));
+                Assert.That(StringProperty(calibration, "ProgressDetail"), Does.Contain("이전 배치 유지"));
+                Receive(Payload(sequence++, 17000000000));
+                Assert.That(State(), Is.EqualTo("Applied"));
+                ((Behaviour)calibration).enabled = false;
+                Receive(Payload(sequence++, 18000000000));
+                Assert.That(State(), Is.EqualTo("Waiting"));
+                ((Behaviour)calibration).enabled = true;
+                Receive(Payload(sequence++, 19000000000));
+                Assert.That(State(), Is.EqualTo("Waiting"));
+                Receive(Payload(sequence++, 20000000000));
+                Assert.That(State(), Is.EqualTo("Applied"));
+                Receive(Payload(0, 1000000000, publisher: "camera-b"));
+                Assert.That(State(), Is.EqualTo("Waiting"));
+                Receive(Payload(1, 2000000000, publisher: "camera-b"));
+                Assert.That(State(), Is.EqualTo("Applied"), "Publisher restart must accept new sequences and frames.");
+                retainedBoard = first.position;
+                retainedSlot = firstSlot.position;
+                Invoke(owner, "CompleteUnit", jobId, 1L);
+                Transform second = (Transform)Invoke(owner, "BeginUnit", jobId, 2L);
+                Receive(Payload(2, 3000000000, publisher: "camera-b"));
+                Assert.That(State(), Is.EqualTo("Waiting"));
+                Assert.That(second.position, Is.EqualTo(spawn.position));
+                Assert.That(GetProperty(calibration, "CalibrationId"), Is.Null);
+                Receive(Payload(3, 3000000000, publisher: "camera-b"));
+                Assert.That(second.position, Is.EqualTo(spawn.position));
+                Receive(Payload(4, 4000000000, publisher: "camera-b"));
+                Assert.That(State(), Is.EqualTo("Applied"));
+                Assert.That(first.position, Is.EqualTo(retainedBoard), "Completed boards must remain untouched.");
+                Assert.That(firstSlot.position, Is.EqualTo(retainedSlot));
+                Assert.That(IntProperty(owner, "CompletedCount"), Is.EqualTo(1));
+                Invoke(owner, "DiscardCurrentUnit");
+                Invoke(calibration, "Update");
+                Assert.That(State(), Is.EqualTo("Waiting"));
+                Assert.That((double)GetProperty(calibration, "LastAppliedTime"), Is.EqualTo(-1d));
+
+                var master = uiRoot.AddComponent(RuntimeType("MainUnity.UI.UIMaster"));
+                Field(master, "observedBoardCalibration").SetValue(master, calibration);
+                Invoke(master, "OnBoardCalibrationChanged");
+                Assert.That(((IList)Field(master, "Events").GetValue(master)).Count, Is.EqualTo(1));
+                var binder = uiRoot.AddComponent(RuntimeType("MainUnity.UI.FR5RunBinder"));
+                foreach (string field in new[] { "calibrationState", "calibrationDetail", "calibrationAge" })
+                    Field(binder, field).SetValue(binder, new UnityEngine.UIElements.Label());
+                Invoke(binder, "RefreshCalibration");
+                Assert.That(((UnityEngine.UIElements.Label)Field(binder, "calibrationState").GetValue(binder)).text, Does.Contain("기판"));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(uiRoot);
+                UnityEngine.Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
         public void SlotIdentityControlsPickupSnapAndRecovery()
         {
             // Inactive fixtures avoid lifecycle ROS connections and leave the live scene alone.

@@ -387,6 +387,10 @@ def _load_inspection(unit, job_id, slot_rows, root=None):
                 or data["status"] != "COMPLETED"
                 or data["result"]["decision"] != unit["inspection_result"]):
             raise ValueError("inspection identity or decision mismatch")
+        expected_image = (f"inspections/{unit['unit_id']}/02_annotated_report.png"
+                          if data["image"]["ready"] else None)
+        if unit["inspection_image_path"] != expected_image:
+            raise ValueError("inspection image path does not match the database")
         links = {row["slot_code"]: row["unit_defect_id"] for row in slot_rows}
         stored_links = stored["unit_defects"]
         if (len(stored_links) != len(links)
@@ -403,17 +407,20 @@ def _load_inspection(unit, job_id, slot_rows, root=None):
 
 def inspection(unit_id, *, root=None, dsn=None):
     """Read one archived inspection and verify its slot UID links against production."""
-    with _connect(dsn) as connection, connection.cursor() as cursor:
-        cursor.execute("SELECT * FROM production.units WHERE unit_id = %s", (unit_id,))
-        unit = cursor.fetchone()
-        if unit is None:
-            raise ResourceNotFound("unit was not found")
-        cursor.execute("""
-            SELECT ud.unit_defect_id, ud.defect_type, ps.slot_code
-            FROM production.unit_defects ud JOIN production.product_slots ps USING (product_slot_id)
-            WHERE ud.unit_id = %s
-        """, (unit_id,))
-        data = _load_inspection(unit, unit["job_id"], cursor.fetchall(), root)
+    try:
+        with _connect(dsn) as connection, connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM production.units WHERE unit_id = %s", (unit_id,))
+            unit = cursor.fetchone()
+            if unit is None:
+                raise ResourceNotFound("unit was not found")
+            cursor.execute("""
+                SELECT ud.unit_defect_id, ud.defect_type, ps.slot_code
+                FROM production.unit_defects ud JOIN production.product_slots ps USING (product_slot_id)
+                WHERE ud.unit_id = %s
+            """, (unit_id,))
+            data = _load_inspection(unit, unit["job_id"], cursor.fetchall(), root)
+    except psycopg.Error as error:
+        raise DatabaseUnavailable("inspection database query failed") from error
     if data is None:
         raise ResourceNotFound("archived inspection was not found")
     return data

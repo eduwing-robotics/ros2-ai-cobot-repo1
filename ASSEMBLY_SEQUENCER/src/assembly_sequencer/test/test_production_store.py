@@ -207,6 +207,32 @@ class ProductionStoreIntegrationTest(unittest.TestCase):
                 with self.assertRaises(queries.InspectionUnavailable):
                     queries.inspection_image(unit_id)
                 save()
+            store.finish_job(job_id, "FAILED")
+            for verdict, ready in (("PASS", True), ("FAIL", True), ("UNKNOWN", False)):
+                new_job = self.create_job()
+                new_unit = self.claim(new_job)["unit_id"]
+                store.complete_assembly_and_consume_stock(new_unit)
+                payload = copy.deepcopy(data)
+                payload.update(inspection_id=str(uuid.uuid4()), job_id=new_job, unit_id=new_unit)
+                payload["result"].update(decision=verdict, inspected_at=datetime.now(timezone.utc).isoformat())
+                for slot in payload["result"]["slots"]:
+                    slot["decision"] = "PASS" if verdict == "PASS" else "UNKNOWN"
+                if verdict == "FAIL":
+                    slot_code = payload["result"]["slots"][0]["slot_code"]
+                    payload["result"]["slots"][0]["decision"] = "FAIL"
+                    payload["result"]["defects"] = [{"slot_code": slot_code}]
+                    payload["result"]["findings"] = [{"slot_code": slot_code, "confirmed_defect": True,
+                        "authority": "AUTHORITATIVE", "primary_defect_code": "SEATING_ERROR"}]
+                if not ready:
+                    payload["image"] = {"ready": False}
+                def persist():
+                    return store.record_inspection(new_unit, verdict, None, inspection=payload,
+                                                   image_bytes=png if ready else None)
+                self.assertEqual(len(persist()), 25)
+                self.assertEqual(len(persist()), 25)
+                self.assertEqual(self.scalar("SELECT COUNT(*) FROM production.unit_defects WHERE unit_id=%s AND defect_type IS NOT NULL", (new_unit,)), int(verdict == "FAIL"))
+                self.assertEqual(self.scalar("SELECT COUNT(*) FROM production.defect_report_deliveries d JOIN production.unit_defects u USING(unit_defect_id) WHERE u.unit_id=%s", (new_unit,)), int(verdict == "FAIL"))
+                store.finish_job(new_job, "FAILED")
 
     def test_requested_quantity_pass_target_finishes_job(self):
         job_id = self.create_job(quantity=2)

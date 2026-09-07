@@ -11401,6 +11401,7 @@ GameObject:
   - component: {fileID: 2494761539128691212}
   - component: {fileID: 2494761539128691214}
   - component: {fileID: 2494761539128691215}
+  - component: {fileID: 2494761539128691216}
   m_Layer: 0
   m_Name: RealMaster
   m_TagString: Untagged
@@ -15864,6 +15865,22 @@ MonoBehaviour:
     prefab: {fileID: 6478608505498874412, guid: f371a37106546ef7c835ca26ec25ddd2, type: 3}
     positionOffsetMeters: {x: 0, y: 0, z: 0}
     rotationOffsetDegrees: {x: 0, y: 0, z: 0}
+--- !u!114 &2494761539128691216
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1511203712}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a02657c65a604fb8813fbb51884335b8, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Camera.BoardPartCalibrator
+  baseLink: {fileID: 1528568434}
+  itemManager: {fileID: 1917364535}
+  modelPositionOffsetMeters: {x: 0, y: 0, z: 0}
+  modelRotationOffsetDegrees: {x: 0, y: -90, z: 0}
 --- !u!114 &3495106124279137601
 MonoBehaviour:
   m_ObjectHideFlags: 0
