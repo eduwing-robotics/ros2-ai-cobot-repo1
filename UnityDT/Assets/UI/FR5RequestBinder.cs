@@ -108,6 +108,9 @@ namespace MainUnity.UI
         string jobQueryError, jobActionError, registrationResult;
         Button start, filterAll, filterQueue, filterAttention, filterDone;
         FR5PageRouter pageRouter;
+        Label queryState, selectedStatus, selectedName, selectedId, selectedProgress, selectedAttempts, selectedResults, selectedReason;
+        Button refreshJobs, selectedStart, selectedCancel, selectedMonitor, selectedInspect;
+        string selectedJobId;
 
         Product[] products = Array.Empty<Product>();
         ProductDetail selectedProduct;
@@ -129,6 +132,8 @@ namespace MainUnity.UI
             jobsLoaded = false;
             registerInFlight = false;
             actionJobId = null;
+            selectedJobId = null;
+            jobQueryError = null;
             productError = null;
             interlockSignature = null;
         }
@@ -174,8 +179,36 @@ namespace MainUnity.UI
             filterAttention = root.Q<Button>("filter-attention");
             filterDone = root.Q<Button>("filter-done");
 
+            queryState = root.Q<Label>("job-query-state");
+            selectedStatus = root.Q<Label>("selected-job-status");
+            selectedName = root.Q<Label>("selected-job-product");
+            selectedId = root.Q<Label>("selected-job-id");
+            selectedProgress = root.Q<Label>("selected-job-progress");
+            selectedAttempts = root.Q<Label>("selected-job-attempts");
+            selectedResults = root.Q<Label>("selected-job-results");
+            selectedReason = root.Q<Label>("selected-job-reason");
+            refreshJobs = root.Q<Button>("job-refresh");
+            selectedStart = root.Q<Button>("selected-job-start");
+            selectedCancel = root.Q<Button>("selected-job-cancel");
+            selectedMonitor = root.Q<Button>("selected-job-monitor");
+            selectedInspect = root.Q<Button>("selected-job-inspect");
+            foreach (Label label in new[] { jobError, selectedName, selectedId, selectedReason, productName, productMeta })
+                if (label != null) label.enableRichText = false;
+
             if (start != null) start.clicked += OnRegister;
-            root.Q<Button>("job-refresh").clicked += () => StartCoroutine(LoadJobs());
+            if (refreshJobs != null) refreshJobs.clicked += () =>
+            {
+                StartCoroutine(LoadJobs());
+                if (selectedProduct == null) StartCoroutine(LoadProducts());
+                else if (!requirementsLoaded) StartCoroutine(LoadRequirements(selectedProduct.product_id));
+            };
+            if (selectedStart != null) selectedStart.clicked += () => { var job = SelectedJob(); if (job != null) StartJob(job); };
+            if (selectedCancel != null) selectedCancel.clicked += () =>
+            {
+                if (selectedJobId != null) StartCoroutine(CancelJob(selectedJobId));
+            };
+            if (selectedMonitor != null) selectedMonitor.clicked += () => pageRouter?.OpenMonitor();
+            if (selectedInspect != null) selectedInspect.clicked += () => pageRouter?.OpenInspect(selectedJobId);
             if (filterAll != null) filterAll.clicked += () => SetFilter("ALL");
             if (filterQueue != null) filterQueue.clicked += () => SetFilter("QUEUE");
             if (filterAttention != null) filterAttention.clicked += () => SetFilter("ATTENTION");
@@ -206,6 +239,8 @@ namespace MainUnity.UI
         {
             if (jobsLoading) yield break;
             jobsLoading = true;
+            refreshJobs?.SetEnabled(false);
+            if (!jobsLoaded && string.IsNullOrEmpty(jobQueryError)) BuildJobs();
             using var request = UnityWebRequest.Get(ApiUrl("/api/v1/jobs?limit=20"));
             request.timeout = 5;
             yield return request.SendWebRequest();
@@ -216,8 +251,11 @@ namespace MainUnity.UI
                 {
                     try
                     {
-                        jobs = JsonUtility.FromJson<JobListResponse>(request.downloadHandler.text)?.data
-                            ?? Array.Empty<Job>();
+                        Job[] response = JsonUtility.FromJson<JobListResponse>(request.downloadHandler.text)?.data;
+                        if (response == null || Array.Exists(response, job => job == null || string.IsNullOrEmpty(job.job_id)
+                            || string.IsNullOrEmpty(job.job_status)))
+                            throw new FormatException("Invalid jobs response.");
+                        jobs = response;
                         if (!string.IsNullOrEmpty(actionJobId) &&
                             Array.Exists(jobs, job => job.job_id == actionJobId && job.job_status != "PENDING"))
                             actionJobId = null;
@@ -228,114 +266,137 @@ namespace MainUnity.UI
                     }
                     catch (Exception)
                     {
-                        SetJobError("MainServer 응답 형식 오류");
+                        SetJobError("조회 실패 · 서버 응답을 확인할 수 없습니다.");
                     }
                 }
-                else SetJobError("MainServer 조회 실패 · " + request.responseCode);
+                else SetJobError("조회 실패 · 서버 연결을 확인하세요. (HTTP " + request.responseCode + ")");
             }
             jobsLoading = false;
+            refreshJobs?.SetEnabled(true);
         }
 
         void SetJobError(string message)
         {
             jobQueryError = message;
             RefreshJobError();
-            if (jobs.Length == 0 && jobList != null)
-            {
-                jobList.Clear();
-                var label = new Label("작업 목록 조회 실패 · 위 오류를 확인하세요");
-                label.AddToClassList("wrap");
-                jobList.Add(label);
-            }
+            BuildJobs();
         }
 
         void RefreshJobError()
         {
-            if (jobError != null)
-                jobError.text = string.IsNullOrEmpty(jobActionError) ? jobQueryError ?? ""
-                    : jobActionError + (string.IsNullOrEmpty(jobQueryError) ? "" : "\n" + jobQueryError);
+            if (jobError == null) return;
+            jobError.text = string.IsNullOrEmpty(jobActionError) ? jobQueryError ?? ""
+                : jobActionError + (string.IsNullOrEmpty(jobQueryError) ? "" : "\n" + jobQueryError);
+            jobError.style.display = string.IsNullOrEmpty(jobError.text) ? DisplayStyle.None : DisplayStyle.Flex;
+            jobError.tooltip = jobError.text;
         }
 
         void BuildJobs()
         {
             if (jobList == null) return;
+            string focusedJobId = (jobList.panel?.focusController?.focusedElement as VisualElement)?.userData as string;
             jobList.Clear();
+            if (!Array.Exists(jobs, job => job.job_id == selectedJobId && MatchesJob(job, selectedFilter)))
+                selectedJobId = null;
             int visible = 0;
             foreach (Job job in jobs)
             {
                 if (!MatchesJob(job, selectedFilter)) continue;
                 visible++;
-                jobList.Add(JobRow(job));
+                VisualElement row = JobRow(job);
+                jobList.Add(row);
+                if (job.job_id == focusedJobId) row.Focus();
             }
 
             if (visible == 0)
-                jobList.Add(new Label(!string.IsNullOrEmpty(jobQueryError) ? "작업 목록 조회 실패 · 위 오류를 확인하세요"
+                jobList.Add(new Label(!string.IsNullOrEmpty(jobQueryError) ? "조회가 복구되면 작업 목록이 표시됩니다."
                     : !jobsLoaded ? "작업 목록 조회 중…"
                     : jobs.Length == 0 ? "등록된 작업이 없습니다." : "해당 조건의 작업이 없습니다."));
-            if (jobCount != null) jobCount.text = visible + " / " + jobs.Length;
+            if (jobCount != null) jobCount.text = !jobsLoaded ? "—" : visible + "건 표시 / 최근 " + jobs.Length + "건";
+            if (queryState != null) queryState.text = !string.IsNullOrEmpty(jobQueryError)
+                ? (jobsLoaded ? "갱신 실패 · 마지막 조회 기록 표시 · 실행과 취소가 제한됩니다." : "조회 실패 · 새로고침으로 다시 시도하세요.")
+                : !jobsLoaded ? "작업 목록 조회 중…" : jobs.Length == 0 ? "작업 없음 · 오른쪽에서 새 작업을 등록하세요."
+                : "최근 20건 범위 · 2초마다 갱신 · 행을 선택하면 아래에 상세 표시";
             RefreshFilters();
+            RefreshSelectedJob();
         }
 
         VisualElement JobRow(Job job)
         {
-            var row = new VisualElement();
-            row.AddToClassList("trow");
-            if (job.job_status == "RUNNING") row.AddToClassList("trow--sel");
-            if (IsAttention(job)) row.AddToClassList("trow--bad");
+            var row = new Button(() => { selectedJobId = job.job_id; BuildJobs(); });
+            row.userData = job.job_id;
+            row.AddToClassList("jobs-row");
+            row.EnableInClassList("jobs-row--selected", job.job_id == selectedJobId);
+            row.tooltip = ProductText(job) + " · " + job.job_id;
 
-            var status = new Label(job.job_status);
+            var status = new Label(StatusText(job.job_status)) { enableRichText = false };
             status.AddToClassList("job-status");
             status.AddToClassList("job-status--" + job.job_status.ToLowerInvariant());
-            status.style.width = 104;
+            status.style.width = 110;
             row.Add(status);
-
-            AddCell(row, ShortJobId(job.job_id), 150);
-            AddCell(row, ProductText(job), 260);
-            AddCell(row, job.completed_quantity + " / " + job.requested_quantity, 112, true);
-            AddCell(row, ResultText(job), 148);
-            AddCell(row, FormatTime(job.requested_at), 126);
-
-            var links = new VisualElement();
-            links.AddToClassList("row");
-            links.style.width = 132;
-
-            if (job.job_status == "PENDING")
-            {
-                bool actionPending = actionJobId == job.job_id;
-                string blockedReason = StartBlockedReason(job);
-                var start = new Button(() => StartJob(job))
-                {
-                    text = actionPending ? "STARTING…" : "START",
-                    tooltip = blockedReason ?? "등록된 Job 실행"
-                };
-                start.AddToClassList("job-link");
-                start.SetEnabled(blockedReason == null);
-                links.Add(start);
-
-                var cancel = new Button(() => StartCoroutine(CancelJob(job.job_id))) { text = "CANCEL" };
-                cancel.AddToClassList("job-link");
-                cancel.SetEnabled(!actionPending && string.IsNullOrEmpty(actionJobId));
-                links.Add(cancel);
-            }
-            else if (job.job_status == "RUNNING")
-            {
-                var run = new Button(() => pageRouter?.OpenMonitor()) { text = "RUN" };
-                run.AddToClassList("job-link");
-                links.Add(run);
-            }
-            else
-            {
-                var inspect = new Button(() => pageRouter?.OpenInspect(job.job_id)) { text = "검사" };
-                inspect.AddToClassList("job-link");
-                links.Add(inspect);
-            }
-            row.Add(links);
+            var product = new VisualElement();
+            product.AddToClassList("jobs-product-cell");
+            var name = new Label(ProductText(job)) { enableRichText = false, tooltip = ProductText(job) };
+            name.AddToClassList("tcell");
+            product.Add(name);
+            var id = new Label(ShortJobId(job.job_id)) { enableRichText = false };
+            id.AddToClassList("jobs-row-id");
+            product.Add(id);
+            row.Add(product);
+            AddCell(row, job.completed_quantity + " / " + job.requested_quantity, 130, true);
+            AddCell(row, job.attempted_quantity + "회", 88, true);
+            AddCell(row, ResultText(job), 160);
+            AddCell(row, FormatTime(job.requested_at), 132);
             return row;
         }
 
+        Job SelectedJob() => Array.Find(jobs, job => job.job_id == selectedJobId);
+
+        void RefreshSelectedJob()
+        {
+            Job job = SelectedJob();
+            if (selectedStatus != null)
+            {
+                selectedStatus.text = job == null ? "선택 전" : StatusText(job.job_status);
+                foreach (string state in new[] { "running", "pending", "failed", "completed", "cancelled" })
+                    selectedStatus.EnableInClassList("job-status--" + state,
+                        job != null && string.Equals(job.job_status, state, StringComparison.OrdinalIgnoreCase));
+            }
+            if (selectedName != null) { selectedName.text = job == null ? "목록에서 작업을 선택하세요" : ProductText(job); selectedName.tooltip = selectedName.text; }
+            if (selectedId != null) { selectedId.text = job == null ? "—" : "작업 " + ShortJobId(job.job_id) + " · 등록 " + FormatTime(job.requested_at); selectedId.tooltip = job?.job_id ?? ""; }
+            if (selectedProgress != null) selectedProgress.text = job == null ? "—" : job.completed_quantity + " / " + job.requested_quantity;
+            if (selectedAttempts != null) selectedAttempts.text = job == null ? "—" : job.attempted_quantity + "회";
+            if (selectedResults != null) selectedResults.text = job == null ? "—" : job.inspection_failed_quantity + "건 · " + job.failed_quantity + "건";
+            RefreshSelectedActions();
+        }
+
+        void RefreshSelectedActions()
+        {
+            Job job = SelectedJob();
+            bool pending = job?.job_status == "PENDING";
+            string blocked = job == null ? "작업을 선택하세요." : StartBlockedReason(job);
+            selectedStart?.SetEnabled(pending && blocked == null);
+            selectedCancel?.SetEnabled(pending && string.IsNullOrEmpty(actionJobId) && string.IsNullOrEmpty(jobQueryError));
+            selectedMonitor?.SetEnabled(job?.job_status == "RUNNING" && pageRouter != null);
+            selectedInspect?.SetEnabled(job != null && job.attempted_quantity > 0 && pageRouter != null);
+            if (selectedStart != null) { selectedStart.text = job != null && actionJobId == job.job_id ? "요청 처리 중…" : "작업 실행"; selectedStart.tooltip = blocked ?? "선택한 대기 작업을 실행합니다."; }
+            if (selectedInspect != null) selectedInspect.tooltip = job != null && job.attempted_quantity > 0 ? "선택한 작업의 검사 기록을 엽니다." : "생산 시도가 있는 작업에서 확인할 수 있습니다.";
+            if (selectedReason != null) selectedReason.text = job == null ? "선택한 작업의 진행과 가능한 동작을 확인합니다."
+                : !string.IsNullOrEmpty(jobQueryError) ? "갱신 실패 · 마지막 조회 기록입니다. 새로고침 후 상태를 확인하세요."
+                : pending ? blocked ?? "실행 가능한 대기 작업입니다."
+                : job.job_status == "RUNNING" ? "현재 실행 중입니다. 운전 현황에서 진행을 확인하세요."
+                : "PASS만 목표 달성에 포함됩니다. 불합격과 실행 실패도 생산 시도 횟수에 포함됩니다.";
+        }
+
+        static string StatusText(string status) => status switch
+        {
+            "PENDING" => "실행 대기", "RUNNING" => "실행 중", "COMPLETED" => "완료",
+            "FAILED" => "실행 실패", "CANCELLED" => "취소", _ => "상태 확인 필요"
+        };
+
         async void StartJob(Job job)
         {
-            if (!string.IsNullOrEmpty(actionJobId) || uiMaster?.Scenario == null) return;
+            if (job == null || StartBlockedReason(job) != null) return;
             actionJobId = job.job_id;
             jobActionError = null;
             RefreshJobError();
@@ -359,7 +420,9 @@ namespace MainUnity.UI
 
         IEnumerator CancelJob(string jobId)
         {
-            if (!string.IsNullOrEmpty(actionJobId)) yield break;
+            Job job = Array.Find(jobs, item => item.job_id == jobId);
+            if (job?.job_status != "PENDING" || !string.IsNullOrEmpty(actionJobId)
+                || !string.IsNullOrEmpty(jobQueryError)) yield break;
             actionJobId = jobId;
             jobActionError = null;
             RefreshJobError();
@@ -379,7 +442,7 @@ namespace MainUnity.UI
 
         static void AddCell(VisualElement row, string text, float width, bool numeric = false)
         {
-            var cell = new Label(text);
+            var cell = new Label(text) { enableRichText = false, tooltip = text };
             cell.AddToClassList("tcell");
             if (numeric) cell.AddToClassList("tcell--num");
             cell.style.width = width;
@@ -407,7 +470,7 @@ namespace MainUnity.UI
 
         string ResultText(Job job)
         {
-            if (job.inspection_failed_quantity > 0) return "검사 FAIL " + job.inspection_failed_quantity;
+            if (job.inspection_failed_quantity > 0) return "불합격 " + job.inspection_failed_quantity + (job.failed_quantity > 0 ? " · 실행 실패 " + job.failed_quantity : "");
             if (job.failed_quantity > 0) return "실행 실패 " + job.failed_quantity;
             if (job.job_status == "FAILED") return "Job 실패 · 사유 미제공";
             if (job.job_status == "CANCELLED") return "사용자 취소";
@@ -418,6 +481,8 @@ namespace MainUnity.UI
 
         string StartBlockedReason(Job job)
         {
+            if (job.job_status != "PENDING") return "실행 대기 작업만 시작할 수 있습니다.";
+            if (!string.IsNullOrEmpty(jobQueryError)) return "작업 상태를 다시 조회한 뒤 실행하세요.";
             if (!string.IsNullOrEmpty(actionJobId))
                 return actionJobId == job.job_id ? "요청 처리 중" : "다른 요청 처리 중";
             Job runningJob = Array.Find(jobs, item => item.job_status == "RUNNING");
@@ -455,7 +520,7 @@ namespace MainUnity.UI
                 products = JsonUtility.FromJson<ProductListResponse>(json)?.data ?? Array.Empty<Product>();
                 if (products.Length == 0)
                 {
-                    SetProductError("products 조회 결과 없음");
+                    SetProductError("등록 가능한 제품이 없습니다.");
                     return;
                 }
                 StartCoroutine(LoadProduct(products[0].product_id));
@@ -496,12 +561,12 @@ namespace MainUnity.UI
 
             if (request.result != UnityWebRequest.Result.Success)
             {
-                onError("MainServer 조회 실패 · " + request.responseCode);
+                onError("조회 실패 · 서버 연결을 확인하세요. (HTTP " + request.responseCode + ")");
                 yield break;
             }
 
             try { onSuccess(request.downloadHandler.text); }
-            catch (Exception) { onError("MainServer 응답 형식 오류"); }
+            catch (Exception) { onError("조회 실패 · 서버 응답을 확인할 수 없습니다."); }
         }
 
         void SetProductError(string message)
@@ -521,7 +586,7 @@ namespace MainUnity.UI
             {
                 FR5EmptyState.Present(productName, string.IsNullOrEmpty(productError) ? "제품 조회 중…" : "제품 조회 실패");
                 FR5EmptyState.Detail(productMeta, productError ?? "제품 조회 중");
-                FR5EmptyState.Detail(productSlotCount, "product_slots 조회 대기");
+                FR5EmptyState.Detail(productSlotCount, "제품 구성 확인 전");
                 return;
             }
 
@@ -623,8 +688,8 @@ namespace MainUnity.UI
             if (previewEmpty != null)
                 previewEmpty.style.display = ready ? DisplayStyle.None : DisplayStyle.Flex;
             FR5EmptyState.Detail(previewSource,
-                ready ? productPreview.width + "×" + productPreview.height : "카메라 미지정");
-            if (!ready) FR5EmptyState.Detail(previewDesc, "기판 RenderTexture를 연결하세요");
+                ready ? productPreview.width + "×" + productPreview.height : "미리보기 없음");
+            if (!ready) FR5EmptyState.Detail(previewDesc, "조립체 미리보기가 연결되지 않았습니다.");
         }
 
         void RefreshInterlocks()
@@ -643,9 +708,9 @@ namespace MainUnity.UI
 
             interlockSignature = signature;
             interlockList.Clear();
-            AddCheck("제품 · recipe 조회", productReady);
+            AddCheck("제품 · 레시피 확인", productReady);
             AddCheck("목표 수량분 재고", stockReady);
-            AddCheck("모드 = MOCK", mock);
+            AddCheck("시뮬레이션 등록 모드", mock);
             ApplyRegisterState(productReady, stockReady, mock);
         }
 
@@ -669,14 +734,14 @@ namespace MainUnity.UI
         {
             bool ready = productReady && stockReady && mock && !registerInFlight;
             start?.SetEnabled(ready);
-            if (start != null) start.text = registerInFlight ? "REGISTERING…" : "REGISTER JOB";
+            if (start != null) start.text = registerInFlight ? "등록 중…" : "작업 등록";
             if (startReason == null || registerInFlight) return;
             startReason.text = !productReady
                 ? productError ?? "제품과 재고를 조회하고 있습니다."
                 : !stockReady
                 ? "목표 수량에 필요한 재고가 부족합니다."
                 : !mock
-                ? "Real Sequencer 연결 전에는 Job 등록이 비활성화됩니다."
+                ? "현재 실제 설비 모드에서는 작업 등록을 지원하지 않습니다."
                 : "등록한 작업은 실행 대기 상태로 추가됩니다.";
             if (!string.IsNullOrEmpty(registrationResult))
                 startReason.text = registrationResult + "\n" + startReason.text;

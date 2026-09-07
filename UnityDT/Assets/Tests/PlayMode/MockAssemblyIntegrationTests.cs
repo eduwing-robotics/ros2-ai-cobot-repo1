@@ -26,6 +26,65 @@ namespace MainUnity.Tests.PlayMode
             public string job_status;
         }
 
+        [Test]
+        public void JobsSelectionSeparatesPassAttemptsAndStaleActions()
+        {
+            var root = new GameObject("Jobs UI regression");
+            root.SetActive(false);
+            try
+            {
+                var binder = root.AddComponent(RuntimeType("MainUnity.UI.FR5RequestBinder"));
+                var list = new UnityEngine.UIElements.VisualElement();
+                Field(binder, "jobList").SetValue(binder, list);
+                foreach (string field in new[] { "selectedStatus", "selectedName", "selectedId", "selectedProgress",
+                    "selectedAttempts", "selectedResults", "selectedReason", "queryState", "jobError" })
+                    Field(binder, field).SetValue(binder, new UnityEngine.UIElements.Label());
+                foreach (string field in new[] { "selectedStart", "selectedCancel", "selectedInspect", "selectedMonitor" })
+                    Field(binder, field).SetValue(binder, new UnityEngine.UIElements.Button());
+                string Text(string field) => ((UnityEngine.UIElements.Label)Field(binder, field).GetValue(binder)).text;
+                bool Enabled(string field) => ((UnityEngine.UIElements.Button)Field(binder, field).GetValue(binder)).enabledSelf;
+                Invoke(binder, "BuildJobs");
+                Assert.That(Text("queryState"), Does.Contain("조회 중"));
+                Field(binder, "jobsLoaded").SetValue(binder, true);
+                Invoke(binder, "BuildJobs");
+                Assert.That(Text("queryState"), Does.Contain("작업 없음"));
+
+                Type jobType = binder.GetType().GetNestedType("Job", BindingFlags.NonPublic);
+                object job = JsonUtility.FromJson(
+                    "{\"job_id\":\"test-job\",\"job_status\":\"PENDING\",\"requested_quantity\":3," +
+                    "\"completed_quantity\":1,\"attempted_quantity\":5,\"inspection_failed_quantity\":2,\"failed_quantity\":1}", jobType);
+                Array jobs = Array.CreateInstance(jobType, 1);
+                jobs.SetValue(job, 0);
+                Field(binder, "jobs").SetValue(binder, jobs);
+                Field(binder, "selectedJobId").SetValue(binder, "test-job");
+                Invoke(binder, "BuildJobs");
+                Assert.That(Text("selectedProgress"), Is.EqualTo("1 / 3"));
+                Assert.That(Text("selectedAttempts"), Is.EqualTo("5회"));
+                Assert.That(Text("selectedResults"), Is.EqualTo("2건 · 1건"));
+                Assert.That(list[0].ClassListContains("jobs-row--selected"), Is.True);
+                Assert.That(Enabled("selectedCancel"), Is.True);
+                Invoke(binder, "SetJobError", "조회 실패");
+                Assert.That(Text("queryState"), Does.Contain("마지막 조회 기록"));
+                Assert.That(Enabled("selectedCancel"), Is.False);
+                Assert.That(Enabled("selectedStart"), Is.False);
+                Assert.That(Text("selectedProgress"), Is.EqualTo("1 / 3"));
+                Field(binder, "jobQueryError").SetValue(binder, null);
+                Invoke(binder, "BuildJobs");
+                Assert.That(Enabled("selectedCancel"), Is.True);
+                foreach (string state in new[] { "RUNNING", "COMPLETED", "FAILED" })
+                {
+                    Field(job, "job_status").SetValue(job, state);
+                    Invoke(binder, "BuildJobs");
+                    Assert.That(Enabled("selectedStart"), Is.False);
+                    Assert.That(Enabled("selectedCancel"), Is.False);
+                }
+                Invoke(binder, "SetFilter", "QUEUE");
+                Assert.That(Field(binder, "selectedJobId").GetValue(binder), Is.Null);
+                Assert.That(Text("selectedProgress"), Is.EqualTo("—"));
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
         [UnityTest]
         public IEnumerator InspectFailureAndResultTransitionsRemainDistinct()
         {
