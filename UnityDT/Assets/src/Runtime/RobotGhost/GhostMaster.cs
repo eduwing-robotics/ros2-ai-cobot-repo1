@@ -51,8 +51,29 @@ namespace MainUnity.Runtime.RobotGhost
 
         public bool ResetPreview() => movePreview != null && movePreview.ResetPreview();
 
-        public bool SetVisible(bool visible) =>
-            maker != null && maker.SetGhostVisible(visible);
+        public bool SetVisible(bool visible)
+        {
+            // An inactive owner keeps the child articulation inactive even after SetActive(true).
+            // Activate the owner first so Awake completes before showing the requested pose.
+            if (visible && !gameObject.activeSelf)
+                gameObject.SetActive(true);
+            return maker != null && maker.SetGhostVisible(visible);
+        }
+
+#if UNITY_EDITOR
+        [ContextMenu("Self Check Inactive Ghost Visibility")]
+        void SelfCheckInactiveVisibility()
+        {
+            if (!Application.isPlaying)
+                return;
+            gameObject.SetActive(false);
+            bool shown = SetVisible(true);
+            Debug.Assert(shown && gameObject.activeInHierarchy &&
+                maker.GetOrCreateGhost().activeInHierarchy,
+                "Showing a Ghost must also activate its owner.", this);
+            SetVisible(false);
+        }
+#endif
 
         void RefreshReferences()
         {

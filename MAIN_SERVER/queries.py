@@ -258,6 +258,17 @@ def job(job_id):
 def jobs(status=None, limit=12):
     """List the active queue first, followed by recent production Jobs."""
     return _all("""
+        WITH selected_jobs AS (
+            SELECT * FROM production.jobs
+            WHERE (%s::text IS NULL OR job_status::text = %s)
+            ORDER BY CASE job_status
+                         WHEN 'RUNNING' THEN 0
+                         WHEN 'PENDING' THEN 1
+                         ELSE 2
+                     END,
+                     requested_at DESC, job_id
+            LIMIT %s
+        )
         SELECT j.job_id, j.product_id, pr.product_code, pr.product_name,
                pr.product_version, j.recipe_version, j.job_status,
                j.requested_quantity,
@@ -269,10 +280,9 @@ def jobs(status=None, limit=12):
                ROUND(100.0 * COUNT(u.unit_id) FILTER (WHERE u.inspection_result = 'PASS')
                      / j.requested_quantity, 2) AS progress_percent,
                j.requested_at, j.job_started_at, j.job_finished_at
-        FROM production.jobs j
+        FROM selected_jobs j
         JOIN production.products pr ON pr.product_id = j.product_id
         LEFT JOIN production.units u ON u.job_id = j.job_id
-        WHERE (%s::text IS NULL OR j.job_status::text = %s)
         GROUP BY j.job_id, j.product_id, pr.product_code, pr.product_name,
                  pr.product_version, j.recipe_version, j.job_status,
                  j.requested_quantity, j.requested_at, j.job_started_at,
@@ -283,7 +293,6 @@ def jobs(status=None, limit=12):
                      ELSE 2
                  END,
                  j.requested_at DESC, j.job_id
-        LIMIT %s
     """, (status, status, limit))
 
 

@@ -463,6 +463,95 @@ namespace MainUnity.Tests.PlayMode
             }
         }
 
+        [UnityTest]
+        public IEnumerator RealMoveDoesNotSendAfterTimeoutOrStatusFailure()
+        {
+            var rosType = AppDomain.CurrentDomain.GetAssemblies()
+                .Select(assembly => assembly.GetType("Unity.Robotics.ROSTCPConnector.ROSConnection"))
+                .First(type => type != null);
+            var singleton = rosType.GetField("_instance", BindingFlags.Static | BindingFlags.NonPublic);
+            object previousConnection = singleton.GetValue(null);
+            foreach (string outcome in new[] { "timeout", "status", "success" })
+            {
+                var root = new GameObject("Real move regression " + outcome);
+                root.SetActive(false);
+                try
+                {
+                    // 비활성 연결은 소켓을 열지 않는다. 응답은 이 테스트의 대기 요청에만 주입한다.
+                    var ros = root.AddComponent(rosType);
+                    singleton.SetValue(null, ros);
+                    const string service = "/test/real_move";
+                    rosType.GetMethod("RegisterRosService", new[] {
+                        typeof(string), typeof(string), typeof(string), typeof(int?)
+                    }).Invoke(ros, new object[] {
+                        service, "fairino_msgs/RemoteCmdInterface", "fairino_msgs/RemoteCmdInterface", null
+                    });
+                    var control = root.AddComponent(RuntimeType("MainUnity.Runtime.Robot.Real.RealRobotControl"));
+                    var status = root.AddComponent(RuntimeType("MainUnity.Runtime.Robot.Status.RobotStatusManager"));
+                    Field(control, "statusManager").SetValue(control, status);
+                    Field(control, "serviceName").SetValue(control, service);
+                    Field(control, "completionTimeoutSeconds").SetValue(control, outcome == "timeout" ? 0.1f : 5f);
+                    void State(string state, string error) => Invoke(status, "SetStatus",
+                        Enum.Parse(RuntimeType("MainUnity.Runtime.Robot.Status.RobotRunState"), state),
+                        Enum.Parse(RuntimeType("MainUnity.Runtime.Robot.Status.RobotErrorLabel"), error), "test status");
+                    State("Idle", "None");
+                    int firstServiceId = (int)Field(ros, "m_NextSrvID").GetValue(ros);
+                    var waiting = (IDictionary)Field(ros, "m_ServicesWaiting").GetValue(ros);
+                    void Reply()
+                    {
+                        Assert.That(waiting.Count, Is.EqualTo(1));
+                        object id = waiting.Keys.Cast<object>().Single();
+                        object pauser = waiting[id];
+                        waiting.Remove(id);
+                        object response = Activator.CreateInstance(RuntimeType("RosMessageTypes.Fairino.RemoteCmdInterfaceResponse"));
+                        Field(response, "cmd_res").SetValue(response, "0");
+                        object serializer = Field(ros, "m_MessageSerializer").GetValue(ros);
+                        Invoke(serializer, "Clear");
+                        Invoke(serializer, "SerializeMessage", response);
+                        Invoke(pauser, "Resume", Invoke(serializer, "GetBytes"));
+                    }
+                    var request = (System.Threading.Tasks.Task)Invoke(control, "RequestMoveAsync",
+                        true, Vector3.zero, Vector3.zero);
+                    Assert.That(waiting.Count, Is.EqualTo(1), "CARTPoint must precede MoveJ.");
+                    if (outcome == "status") State("Error", "EmergencyStop");
+                    if (outcome != "success")
+                    {
+                        float deadline = Time.realtimeSinceStartup + 2f;
+                        while (!request.IsCompleted && Time.realtimeSinceStartup < deadline) yield return null;
+                        Assert.That(request.IsFaulted, Is.True);
+                        Assert.That(request.Exception.InnerException, outcome == "timeout"
+                            ? Is.TypeOf<TimeoutException>() : Is.TypeOf<InvalidOperationException>());
+                        Assert.That(Field(control, "requestInFlight").GetValue(control), Is.False);
+                        State("Idle", "None");
+                        Reply();
+                        yield return new WaitForSecondsRealtime(0.1f);
+                        Assert.That(Field(ros, "m_NextSrvID").GetValue(ros), Is.EqualTo(firstServiceId + 1),
+                            "Late CARTPoint success must not send MoveJ, even after status recovery.");
+                        Assert.That(waiting.Count, Is.Zero);
+                    }
+                    else
+                    {
+                        Reply();
+                        float deadline = Time.realtimeSinceStartup + 2f;
+                        while (waiting.Count == 0 && Time.realtimeSinceStartup < deadline) yield return null;
+                        Assert.That(Field(ros, "m_NextSrvID").GetValue(ros), Is.EqualTo(firstServiceId + 2));
+                        Reply();
+                        yield return null;
+                        Assert.That(request.IsCompleted, Is.False, "Acceptance alone is not motion completion.");
+                        State("Running", "None");
+                        State("Idle", "None");
+                        while (!request.IsCompleted && Time.realtimeSinceStartup < deadline) yield return null;
+                        Assert.That(request.IsCompletedSuccessfully, Is.True);
+                    }
+                }
+                finally
+                {
+                    singleton.SetValue(null, previousConnection);
+                    UnityEngine.Object.DestroyImmediate(root);
+                }
+            }
+        }
+
         [TestCase(false)]
         [TestCase(true)]
         public void UnitLifecycleRetainsTenBoardsUntilNextJob(bool real)

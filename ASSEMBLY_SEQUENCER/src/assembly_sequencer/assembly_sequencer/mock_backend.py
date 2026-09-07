@@ -1,6 +1,8 @@
 """Semantic assembly client for the existing Mock ROS service."""
 
 import json
+import threading
+import time
 import uuid
 
 from fairino_msgs.srv import RemoteCmdInterface
@@ -20,6 +22,10 @@ class MockBackend:
         self._operation_id = None
         self._operation_job_id = None
         self._operation_future = None
+        self._timeout_lock = threading.Lock()
+        self._paused_job_id = None
+        self._operation_remaining_seconds = 0.0
+        self._operation_running_since = None
 
     def is_available(self):
         return self._client.wait_for_service(timeout_sec=0.0)
@@ -43,6 +49,8 @@ class MockBackend:
             "recipe_version": recipe_version,
             "expected_step_count": expected_step_count,
         }, "internal Mock assembly rejected the request")
+        with self._timeout_lock:
+            self._paused_job_id = None
 
     async def move_joint(self, job_id, joint_point):
         await self._execute(job_id, "robot.move_joint", {
@@ -89,6 +97,16 @@ class MockBackend:
             "command": "pause" if paused else "resume",
             "job_id": job_id,
         }, "internal Mock pause request was rejected")
+        with self._timeout_lock:
+            if paused and self._paused_job_id != job_id:
+                self._paused_job_id = job_id
+                if self._operation_job_id == job_id and self._operation_running_since is not None:
+                    self._operation_remaining_seconds -= time.monotonic() - self._operation_running_since
+                    self._operation_running_since = None
+            elif not paused and self._paused_job_id == job_id:
+                self._paused_job_id = None
+                if self._operation_job_id == job_id and self._operation_future is not None:
+                    self._operation_running_since = time.monotonic()
 
     def accept_operation_feedback(self, payload):
         operation_id = payload.get("operation_id")
@@ -133,19 +151,35 @@ class MockBackend:
                 "action": action,
                 "arguments": arguments,
             }, f"internal Mock {action} request was rejected")
-            timeout_timer = self._node.create_timer(
-                OPERATION_TIMEOUT_SECONDS, future.cancel
-            )
+            with self._timeout_lock:
+                self._operation_remaining_seconds = OPERATION_TIMEOUT_SECONDS
+                self._operation_running_since = (
+                    None if self._paused_job_id == job_id else time.monotonic()
+                )
+
+            def check_timeout():
+                # Pause/resume and timer callbacks can run on different executor threads.
+                # Count only running time; repeated pauses must not renew the 600s budget.
+                with self._timeout_lock:
+                    running_since = self._operation_running_since
+                    if (self._operation_future is future and running_since is not None
+                            and time.monotonic() - running_since >= self._operation_remaining_seconds):
+                        future.cancel()
+
+            # Expire within one timer tick after the remaining running-time budget is spent.
+            timeout_timer = self._node.create_timer(1.0, check_timeout)
             await future
             if future.cancelled():
                 raise RuntimeError(f"internal Mock {action} operation timed out")
         finally:
             if timeout_timer is not None:
                 self._node.destroy_timer(timeout_timer)
-            if self._operation_id == operation_id:
-                self._operation_id = None
-                self._operation_job_id = None
-                self._operation_future = None
+            with self._timeout_lock:
+                if self._operation_id == operation_id:
+                    self._operation_id = None
+                    self._operation_job_id = None
+                    self._operation_future = None
+                    self._operation_running_since = None
 
     async def _require_accepted(self, payload, fallback_message):
         result = parse_internal_response((await self._call(payload)).cmd_res)

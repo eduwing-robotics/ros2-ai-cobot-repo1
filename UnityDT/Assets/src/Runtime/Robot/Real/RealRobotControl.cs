@@ -175,7 +175,7 @@ namespace MainUnity.Runtime.Robot.Real
             {
                 Task timeoutTask = Task.Delay(TimeSpan.FromSeconds(completionTimeoutSeconds));
                 Task commandTask = moveJ
-                    ? SendMoveJAsync(position, rotation)
+                    ? SendMoveJAsync(position, rotation, completion.Task, timeoutTask)
                     : SendMoveCartAsync(position, rotation);
                 _ = commandTask.ContinueWith(task => _ = task.Exception,
                     TaskContinuationOptions.OnlyOnFaulted);
@@ -209,13 +209,20 @@ namespace MainUnity.Runtime.Robot.Real
             }
         }
 
-        async Task SendMoveJAsync(Vector3 position, Vector3 rotation)
+        async Task SendMoveJAsync(Vector3 position, Vector3 rotation, Task completionTask, Task timeoutTask)
         {
             string pointCommand = string.Format(CultureInfo.InvariantCulture,
                 "CARTPoint({0},{1},{2},{3},{4},{5},{6})",
                 pointIndex, position.x, position.y, position.z,
                 rotation.x, rotation.y, rotation.z);
             await SendCommandAsync(pointCommand);
+
+            // CARTPoint 응답이 늦어도 이미 실패한 요청의 후속 이동을 전송하지 않는다.
+            // 현재 로봇 상태가 복구됐더라도 이 요청의 실패와 원래 deadline을 유지한다.
+            if (completionTask.IsFaulted)
+                await completionTask;
+            if (timeoutTask.IsCompleted)
+                throw new TimeoutException("FAIRINO command or motion did not complete before the timeout.");
 
             string moveJCommand = string.Format(CultureInfo.InvariantCulture,
                 "MoveJ(CART{0},{1},{2},{3})", pointIndex, speedPercent, tool, user);

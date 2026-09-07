@@ -1,5 +1,6 @@
 """Checks for DB retry and YAML-driven Mock workflow gates."""
 
+import asyncio
 import json
 import random
 import sys
@@ -7,7 +8,7 @@ import threading
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import psycopg
 
@@ -191,6 +192,78 @@ class DbWriterTest(unittest.TestCase):
 
 
 class BackendFeedbackTest(unittest.TestCase):
+    def test_pause_preserves_remaining_operation_timeout(self):
+        node = Mock(executor=None)
+        backend = MockBackend(node, Mock())
+        backend._require_accepted = AsyncMock()
+        with patch("assembly_sequencer.mock_backend.time.monotonic", return_value=100.0) as clock:
+            operation = backend.move_joint(JOB_ID, [0] * 6)
+            try:
+                future = operation.send(None)
+                check_timeout = node.create_timer.call_args.args[1]
+                clock.return_value = 200.0
+                asyncio.run(backend.set_paused(JOB_ID, True))
+                clock.return_value = 1500.0
+                asyncio.run(backend.set_paused(JOB_ID, True))
+                check_timeout()
+                self.assertFalse(future.cancelled(), "Pause must outlast the original 600-second deadline.")
+                asyncio.run(backend.set_paused(JOB_ID, False))
+                clock.return_value = 1600.0
+                asyncio.run(backend.set_paused(JOB_ID, False))
+                asyncio.run(backend.set_paused(JOB_ID, True))
+                clock.return_value = 3000.0
+                check_timeout()
+                self.assertFalse(future.cancelled())
+                asyncio.run(backend.set_paused(JOB_ID, False))
+                clock.return_value = 3399.0
+                check_timeout()
+                self.assertFalse(future.cancelled())
+                clock.return_value = 3400.0
+                check_timeout()
+                self.assertTrue(future.cancelled(), "Resume must retain only the unspent running time.")
+                with self.assertRaisesRegex(RuntimeError, "operation timed out"):
+                    operation.send(None)
+                self.assertIsNone(backend._operation_future)
+                node.destroy_timer.assert_called_once()
+            finally:
+                operation.close()
+
+    def test_rejected_pause_keeps_timeout_and_completed_operation_cleans_up(self):
+        for complete in (False, True):
+            with self.subTest(complete=complete), patch(
+                "assembly_sequencer.mock_backend.time.monotonic", return_value=100.0
+            ) as clock:
+                node = Mock(executor=None)
+                backend = MockBackend(node, Mock())
+                backend._require_accepted = AsyncMock()
+                operation = backend.move_joint(JOB_ID, [0] * 6)
+                try:
+                    future = operation.send(None)
+                    check_timeout = node.create_timer.call_args.args[1]
+                    backend._require_accepted.side_effect = RuntimeError("pause rejected")
+                    with self.assertRaisesRegex(RuntimeError, "pause rejected"):
+                        asyncio.run(backend.set_paused(JOB_ID, True))
+                    if complete:
+                        backend.accept_operation_feedback({
+                            "job_id": JOB_ID, "operation_id": backend._operation_id,
+                            "state": "COMPLETED", "message": "",
+                        })
+                        with self.assertRaises(StopIteration):
+                            operation.send(None)
+                        clock.return_value = 1000.0
+                        check_timeout()
+                        self.assertTrue(future.done())
+                        self.assertFalse(future.cancelled())
+                    else:
+                        clock.return_value = 700.0
+                        check_timeout()
+                        with self.assertRaisesRegex(RuntimeError, "operation timed out"):
+                            operation.send(None)
+                    self.assertIsNone(backend._operation_future)
+                    node.destroy_timer.assert_called_once()
+                finally:
+                    operation.close()
+
     def test_matching_operation_feedback_completes_the_pending_call(self):
         completed = []
 
