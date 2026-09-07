@@ -61,9 +61,9 @@ def _connect(dsn=None):
         raise DatabaseUnavailable(f"database connection/identity check failed: {type(error).__name__}") from None
 
 
-def _all(sql, values=()):
+def _all(sql, values=(), dsn=None):
     try:
-        with _connect() as connection, connection.cursor() as cursor:
+        with _connect(dsn) as connection, connection.cursor() as cursor:
             cursor.execute(sql, values)
             return cursor.fetchall()
     except DatabaseUnavailable:
@@ -446,3 +446,26 @@ def inspection_image(unit_id):
             or hashlib.sha256(png).hexdigest() != image.get("sha256")):
         raise InspectionUnavailable("inspection image size or SHA256 mismatch")
     return png
+
+
+def defect_reports(product_id=None, slot_code=None, unit_defect_id=None, *, dsn=None):
+    """Read confirmed defects for local report generation and product/slot browsing."""
+    if product_id is not None and not _all(
+            "SELECT 1 FROM production.products WHERE product_id = %s", (product_id,), dsn=dsn):
+        raise ResourceNotFound("product was not found")
+    return _all("""
+        SELECT ud.unit_defect_id, u.unit_id, u.job_id, u.inspected_at,
+               ps.slot_code, ps.part_id, ud.defect_type,
+               delivery.delivery_status, delivery.sent_at
+        FROM production.unit_defects ud
+        JOIN production.units u USING (unit_id)
+        JOIN production.jobs j USING (job_id)
+        JOIN production.product_slots ps USING (product_slot_id)
+        LEFT JOIN production.defect_report_deliveries delivery USING (unit_defect_id)
+        WHERE u.unit_status = 'COMPLETED' AND u.inspection_result = 'FAIL'
+          AND ud.defect_type IS NOT NULL
+          AND (%s::bigint IS NULL OR j.product_id = %s)
+          AND (%s::text IS NULL OR ps.slot_code = %s)
+          AND (%s::bigint IS NULL OR ud.unit_defect_id = %s)
+        ORDER BY u.inspected_at DESC, ud.unit_defect_id DESC
+    """, (product_id, product_id, slot_code, slot_code, unit_defect_id, unit_defect_id), dsn=dsn)

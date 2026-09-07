@@ -1,4 +1,4 @@
-"""Generate and email immutable XLSX countermeasure reports for confirmed defects."""
+"""Generate immutable local XLSX countermeasure reports; email is an explicit mode."""
 
 from __future__ import annotations
 
@@ -263,6 +263,19 @@ def report_path(output_dir: Path, rows: list[dict[str, object]]) -> Path:
     )
 
 
+def report_output_dir() -> Path:
+    return Path(os.environ.get("DEFECT_REPORT_OUTPUT_DIR", str(OUTPUT_DIR))).resolve()
+
+
+def archived_report(row: dict[str, object], output_dir: Path | None = None) -> Path:
+    """Resolve only the server-generated filename inside the report root."""
+    root = (report_output_dir() if output_dir is None else output_dir).resolve()
+    candidate = report_path(root, [row])
+    if candidate.is_symlink() or not candidate.resolve().is_relative_to(root):
+        raise ValueError("report file is outside the report root")
+    return candidate
+
+
 def load_inspection_image(value: object, root: Path,
                           max_bytes: int) -> dict[str, object]:
     unavailable = {
@@ -348,7 +361,11 @@ def write_report(template: Path, output: Path, tokens: dict[str, str],
             ).decode("utf-8")
             if TOKEN_RE.search(remaining):
                 raise RuntimeError("generated workbook contains unresolved tokens")
-        os.replace(temp_path, output)
+        # Publishing without replacement also protects edits from a concurrent generator.
+        try:
+            os.link(temp_path, output)
+        except FileExistsError:
+            pass
     finally:
         temp_path.unlink(missing_ok=True)
 
@@ -577,10 +594,16 @@ def create_report(dsn: str, unit_defect_id: int, path: Path, template: Path,
         raise RuntimeError("confirmed defect was not found")
     image = load_inspection_image(
         rows[0]["target_image_path"], image_root, max_image_bytes)
-    # Vision records must not produce an immutable report before evidence is complete.
-    if str(rows[0]["target_image_path"] or "").startswith("inspections/"):
+    # Image-unready Vision records have no image path; inspect their JSON before any fallback.
+    try:
         inspection = queries.inspection(int(rows[0]["target_unit_id"]), root=image_root, dsn=dsn)
-        if (inspection["result"]["decision"] != "FAIL" or not image.get("bytes")
+    except queries.ResourceNotFound:
+        if str(rows[0]["target_image_path"] or "").startswith("inspections/"):
+            raise RuntimeError("inspection JSON is not available") from None
+        inspection = None
+    if inspection is not None:
+        if (inspection["result"]["decision"] != "FAIL" or not inspection["image"].get("ready")
+                or not image.get("bytes")
                 or image["sha256"] != inspection["image"].get("sha256")):
             raise RuntimeError("confirmed inspection evidence is not ready")
         findings = [finding for finding in inspection["result"]["findings"]
@@ -613,6 +636,38 @@ def process_delivery(dsn: str, delivery: dict[str, object], path: Path,
     send_message(message, config)
     mark_sent(dsn, unit_defect_id, message_id)
     print(f"sent {tokens['alert_code']}")
+
+
+def run_local_worker(dsn: str, path: Path, template: Path, output_dir: Path,
+                     once: bool = False, unit_defect_id: int | None = None) -> None:
+    image_root = Path(os.environ.get("DEFECT_IMAGE_ROOT", str(DEFAULT_IMAGE_ROOT)))
+    max_image_bytes = _positive_setting(os.environ, "DEFECT_IMAGE_MAX_BYTES", 10 * 1024 * 1024)
+    while True:
+        # ponytail: scans confirmed history; add persisted generation progress if scan cost becomes material.
+        try:
+            candidates = queries.defect_reports(unit_defect_id=unit_defect_id, dsn=dsn)
+        except queries.DatabaseUnavailable as error:
+            if once or unit_defect_id is not None:
+                raise
+            print(f"local report database unavailable: {error}", flush=True)
+            time.sleep(2)
+            continue
+        if unit_defect_id is not None and not candidates:
+            raise RuntimeError("confirmed defect was not found")
+        errors = []
+        for row in candidates:
+            try:
+                if not archived_report(row, output_dir).is_file():
+                    create_report(dsn, int(row["unit_defect_id"]), path, template,
+                                  output_dir, image_root, max_image_bytes)
+            except Exception as error:
+                errors.append(int(row["unit_defect_id"]))
+                print(f"local report failed unit_defect_id={row['unit_defect_id']}: {error}", flush=True)
+        if once or unit_defect_id is not None:
+            if errors:
+                raise RuntimeError(f"local report generation failed for {errors}")
+            return
+        time.sleep(2)
 
 
 def run_worker(dsn: str, path: Path, template: Path, output_dir: Path,
@@ -702,6 +757,9 @@ def self_check() -> None:
         report_tokens.update(tokens)
         write_report(TEMPLATE, output, report_tokens, mock_image)
         assert output.is_file()
+        original = output.read_bytes()
+        write_report(TEMPLATE, output, report_tokens, png_image)
+        assert output.read_bytes() == original
         assert stat.S_IMODE(output.stat().st_mode) == 0o600
         with zipfile.ZipFile(output) as report:
             assert report.read(IMAGE_MEDIA["jpeg"]) == mock_image["bytes"]
@@ -734,7 +792,8 @@ def main() -> None:
     parser.add_argument("--dsn", default=os.environ.get("MAIN_SERVER_DB_DSN", ""))
     parser.add_argument("--datasheet", type=Path, default=DATASHEET)
     parser.add_argument("--template", type=Path, default=TEMPLATE)
-    parser.add_argument("--output-dir", type=Path, default=OUTPUT_DIR)
+    parser.add_argument("--output-dir", type=Path, default=report_output_dir())
+    parser.add_argument("--mode", choices=("local", "email"), default="local")
     parser.add_argument("--unit-defect-id", type=int)
     parser.add_argument("--watch", action="store_true")
     parser.add_argument("--once", action="store_true")
@@ -745,6 +804,14 @@ def main() -> None:
         return
     if not args.dsn.strip():
         parser.error("--dsn or MAIN_SERVER_DB_DSN is required")
+    if args.unit_defect_id is not None and args.unit_defect_id <= 0:
+        parser.error("--unit-defect-id must be positive")
+    if args.unit_defect_id is None and not args.watch and not args.once:
+        parser.error("--unit-defect-id, --watch or --once is required")
+    if args.mode == "local":
+        run_local_worker(args.dsn, args.datasheet, args.template, args.output_dir,
+                         once=args.once, unit_defect_id=args.unit_defect_id)
+        return
     if args.unit_defect_id is not None:
         config = load_mail_config()
         delivery = claim_delivery(args.dsn, args.unit_defect_id)
@@ -764,8 +831,6 @@ def main() -> None:
             )
             raise
         return
-    if not args.watch and not args.once:
-        parser.error("--unit-defect-id, --watch or --once is required")
     run_worker(
         args.dsn, args.datasheet, args.template, args.output_dir,
         once=args.once)

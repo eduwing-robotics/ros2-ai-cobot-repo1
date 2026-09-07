@@ -13,7 +13,7 @@
       그런데 슬롯마다 검사 수가 같아도 부품마다 슬롯 수가 달라서, 건수 순위와 불량률
       순위는 어긋난다. 그래서 순서는 왼쪽이 정하고 분모는 오른쪽이 말한다.
 
-      비어 있는 자리. 임계(defect_report.thresholds) · 불량 유형별 집계 · 대책서는
+      비어 있는 자리. 임계(defect_report.thresholds) · 불량 유형별 집계는
       조회 계약이 없다. 막대에 상태색을 주지 않는 것도 그래서다 — 넘었는지 아닌지를
       판정할 근거가 없는데 색을 칠하면 화면이 실측을 지어내는 것이 된다.
     -->
@@ -113,12 +113,13 @@
 
                 <ui:VisualElement class="spacer" />
 
-                <!-- TODO(API): GET /alerts — 대책서 발행 목록 -->
+                <!-- 선택 슬롯의 확정 불량 대책서 로컬 파일 목록 -->
                 <ui:VisualElement class="sect" style="margin-top:12px;">
                     <ui:VisualElement class="sect__tick" />
                     <ui:Label text="COUNTERMEASURE" class="sect__title" />
                 </ui:VisualElement>
-                <ui:Label name="detail-alert" text="—" class="muted" style="font-size:13px;" />
+                <ui:Label name="detail-alert" text="—" class="muted" style="font-size:13px; white-space:normal;" />
+                <ui:ScrollView name="detail-reports" style="height:120px; margin-top:8px;" />
             </ui:VisualElement>
 
             <ui:VisualElement name="detail-empty" style="position:absolute; left:24px; top:64px; right:24px; bottom:20px;" />

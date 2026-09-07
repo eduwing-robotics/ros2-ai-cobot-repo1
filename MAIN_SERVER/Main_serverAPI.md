@@ -17,6 +17,8 @@
 | `GET` | `/api/v1/units/{unit_id}/inspection/image` | 보관된 검사 PNG 조회 |
 | `DELETE` | `/api/v1/jobs/{job_id}` | `PENDING` Job 취소 |
 | `GET` | `/api/v1/products/{product_id}/quality/slot-rates` | 슬롯별 누적 검사·불량률 조회 |
+| `GET` | `/api/v1/products/{product_id}/quality/defect-reports?slot_code={slot_code}` | 확정 불량의 로컬 대책서 목록 |
+| `GET` | `/api/v1/defect-reports/{unit_defect_id}/file` | 생성된 XLSX 다운로드 |
 | `POST` | `/api/v1/assemblies` | 영속 production Job 등록 |
 | `GET` | `/api/v1/assemblies/current` | Assembly Sequencer의 현재 또는 최근 실행 snapshot 조회 |
 
@@ -122,3 +124,18 @@ Mock에서 필요한 runtime 좌표는 이 HTTP API가 아니라 [Assembly Seque
 `Content-Length`, `X-Content-SHA256`, `Content-Disposition: inline; filename="02_annotated_report.png"`를 제공합니다.
 검사 기록이 없으면 404, 파일 미준비·크기·해시·UID 불일치면 `409 inspection_unavailable`입니다.
 클라이언트에서 임의 파일 경로나 Vision 인증 토큰을 전달받지 않습니다.
+
+
+## 로컬 대책서 조회
+
+대책서 목록은 제품의 확정 FAIL·`defect_type IS NOT NULL` 기록만 반환합니다.
+선택적 `slot_code`는 한 번만 지정할 수 있으며 빈 값은 허용하지 않습니다.
+각 항목은 `unit_defect_id`, `unit_id`, `job_id`, `inspected_at`, `slot_code`, `part_id`,
+`defect_type`, `delivery_status`, `sent_at`, `report_ready`, `filename`, `file_url`을 포함합니다.
+`report_ready`는 로컬 XLSX 존재 여부이며 이메일 상태와 독립적입니다.
+로컬 생성은 이메일 발송 상태를 변경하지 않습니다. `file_url`은 준비된 문서에만 제공됩니다.
+
+파일 endpoint는 `X-Runtime-Mode` 검증 후 XLSX 바이너리를 attachment로 반환합니다.
+`Content-Length`와 `X-Content-SHA256`을 제공하며 최대 25 MiB입니다.
+확정 불량이 없으면 404, 문서 미준비·허용 루트 이탈·잘못된 파일이면
+`409 report_unavailable`입니다. 조회와 다운로드는 문서 생성·이메일 발송을 하지 않습니다.

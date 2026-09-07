@@ -12,6 +12,7 @@ from urllib.parse import parse_qs, urlsplit
 
 import datasheet
 import queries
+import generate_defect_reports as reports
 from assembly_gateway import AssemblyGateway, GatewayUnavailable
 
 
@@ -27,6 +28,8 @@ ROUTES = (
     ("GET", "/api/v1/units/{unit_id}/inspection/image", "inspection_image"),
     ("DELETE", "/api/v1/jobs/{job_id}", "job_cancel"),
     ("GET", "/api/v1/products/{product_id}/quality/slot-rates", "slot_rates"),
+    ("GET", "/api/v1/products/{product_id}/quality/defect-reports", "defect_reports"),
+    ("GET", "/api/v1/defect-reports/{unit_defect_id}/file", "defect_report_file"),
     ("POST", "/api/v1/assemblies", "assembly_start"),
     ("GET", "/api/v1/assemblies/current", "assembly_current"),
 )
@@ -125,12 +128,18 @@ class ApiHandler(BaseHTTPRequestHandler):
             data = getattr(self, handler)(
                 route_values, parse_qs(request.query, keep_blank_values=True)
             )
-            if handler == "inspection_image":
+            if handler in ("inspection_image", "defect_report_file"):
+                if handler == "inspection_image":
+                    mime, disposition = "image/png", 'inline; filename="02_annotated_report.png"'
+                else:
+                    filename, data = data
+                    mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    disposition = f'attachment; filename="{filename}"'
                 self.send_response(200)
-                self.send_header("Content-Type", "image/png")
+                self.send_header("Content-Type", mime)
                 self.send_header("Content-Length", str(len(data)))
                 self.send_header("X-Content-SHA256", hashlib.sha256(data).hexdigest())
-                self.send_header("Content-Disposition", 'inline; filename="02_annotated_report.png"')
+                self.send_header("Content-Disposition", disposition)
                 self.end_headers()
                 self.wfile.write(data)
             else:
@@ -263,6 +272,40 @@ class ApiHandler(BaseHTTPRequestHandler):
         if limit > 50:
             raise ValidationError("limit must be at most 50")
         return queries.jobs(status, limit)
+
+    def defect_reports(self, values, parameters):
+        if set(parameters) - {"slot_code"} or any(len(v) != 1 for v in parameters.values()):
+            raise ValidationError("only one slot_code query parameter is accepted")
+        slot = parameters.get("slot_code", [None])[0]
+        if slot is not None and (not slot.strip() or len(slot) > 128):
+            raise ValidationError("slot_code must contain 1 to 128 characters")
+        rows = queries.defect_reports(positive(values["product_id"], "product_id"), slot)
+        for row in rows:
+            try:
+                path = reports.archived_report(row)
+                row["report_ready"] = path.is_file()
+                row["filename"] = path.name
+            except (OSError, ValueError):
+                row["report_ready"] = False
+                row["filename"] = None
+            row["file_url"] = (f"/api/v1/defect-reports/{row['unit_defect_id']}/file"
+                               if row["report_ready"] else None)
+        return rows
+
+    def defect_report_file(self, values, parameters):
+        self._no_query(parameters)
+        rows = queries.defect_reports(unit_defect_id=positive(values["unit_defect_id"], "unit_defect_id"))
+        if not rows:
+            raise queries.ResourceNotFound("confirmed defect was not found")
+        try:
+            path = reports.archived_report(rows[0])
+            with path.open("rb") as source:
+                content = source.read(25 * 1024 * 1024 + 1)
+        except (OSError, ValueError):
+            raise AssemblyRejected(409, "report_unavailable", "local report is not ready") from None
+        if len(content) > 25 * 1024 * 1024 or not content.startswith(b"PK\x03\x04"):
+            raise AssemblyRejected(409, "report_unavailable", "local report is invalid or exceeds 25 MiB")
+        return path.name, content
 
     def inspection_image(self, values, parameters):
         self._no_query(parameters)

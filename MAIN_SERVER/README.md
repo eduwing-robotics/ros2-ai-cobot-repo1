@@ -37,3 +37,13 @@ MainServer는 `DEFECT_IMAGE_ROOT`의 Unit별 `result.json`을 DB UID와 대조�
 크기·SHA256 검증 후 HTTP로 제공합니다. SQL에는 파일 본문을 저장하지 않습니다.
 대책서 생성기는 동일 자료를 읽고 확정 불량의 UID·이미지를 검증합니다.
 자료 누락·불일치는 생산 판정이나 파일을 수정하지 않고 조회·생성 실패로 전달합니다.
+
+
+## 로컬 대책서
+
+기존 `generate_defect_reports.py`는 기본 `local` 모드로 확정 불량 XLSX를 생성합니다.
+같은 문서가 있으면 보존하며 로컬 생성은 발송 대기 기록을 claim하거나 SENT로 바꾸지 않습니다.
+품질 화면은 MainServer에서 제품·슬롯별 문서 준비 여부를 조회하고 XLSX를 내려받습니다.
+Unity 다운로드는 `Application.persistentDataPath/DefectReports`에 저장하며 기존 파일을 덮어쓰지 않습니다.
+이메일 전송은 생성기의 명시적 `email` 모드에서만 수행합니다.
+실행·보관 경로 설정은 [Mock 올인원 실행](../Farino_AIO_Mock/README.md#mock-올인원-실행)을 따릅니다.

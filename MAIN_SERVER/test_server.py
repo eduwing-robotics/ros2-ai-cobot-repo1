@@ -5,6 +5,7 @@ import os
 import re
 import sys
 import threading
+import tempfile
 import uuid
 import unittest
 from pathlib import Path
@@ -75,6 +76,63 @@ class MainServerApiTest(unittest.TestCase):
         with patch.object(server.queries, "inspection_image", side_effect=server.queries.InspectionUnavailable("hash mismatch")):
             status, body = self.request("/api/v1/units/42/inspection/image")
             self.assertEqual((status, body["error"]["code"]), (409, "inspection_unavailable"))
+
+    def test_local_reports_generate_without_email_and_download(self):
+        reports = server.reports
+        candidates = server.queries.defect_reports()
+        self.assertTrue(candidates)
+        row = candidates[0]
+        identity = row["unit_defect_id"]
+        product = server.queries._one("""SELECT j.product_id FROM production.units u
+            JOIN production.jobs j USING(job_id) WHERE u.unit_id=%s""", (row["unit_id"],))["product_id"]
+        url = f"/api/v1/products/{product}/quality/defect-reports?slot_code={row['slot_code']}"
+        with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, {"DEFECT_REPORT_OUTPUT_DIR": directory}):
+            status, body = self.request(url)
+            self.assertEqual(status, 200)
+            self.assertTrue(all(r["slot_code"] == row["slot_code"] for r in body["data"]))
+            self.assertFalse(any(r["report_ready"] for r in body["data"]))
+            status, body = self.request(f"/api/v1/defect-reports/{identity}/file")
+            self.assertEqual((status, body["error"]["code"]), (409, "report_unavailable"))
+            before = server.queries._all("SELECT * FROM production.defect_report_deliveries ORDER BY unit_defect_id")
+            with patch.object(reports, "send_message") as send, patch.object(reports, "load_mail_config") as config, \
+                    patch.object(reports, "claim_delivery") as claim, \
+                    patch.object(sys, "argv", ["generate_defect_reports.py", "--unit-defect-id", str(identity)]):
+                reports.main()
+                send.assert_not_called()
+                config.assert_not_called()
+                claim.assert_not_called()
+            self.assertEqual(before, server.queries._all("SELECT * FROM production.defect_report_deliveries ORDER BY unit_defect_id"))
+            target = reports.archived_report(row)
+            original = target.read_bytes()
+            with patch.object(reports, "create_report", side_effect=AssertionError("existing report must be preserved")):
+                reports.run_local_worker(os.environ["MAIN_SERVER_DB_DSN"], reports.DATASHEET,
+                                         reports.TEMPLATE, Path(directory), once=True, unit_defect_id=identity)
+            self.assertEqual(target.read_bytes(), original)
+            status, body = self.request(url)
+            item = next(r for r in body["data"] if r["unit_defect_id"] == identity)
+            self.assertTrue(item["report_ready"])
+            with urlopen(Request(self.base_url + item["file_url"], headers={"X-Runtime-Mode": "mock"})) as response:
+                self.assertEqual(response.read(), original)
+                self.assertEqual(response.headers["X-Content-SHA256"], hashlib.sha256(original).hexdigest())
+                self.assertIn(item["filename"], response.headers["Content-Disposition"])
+            target.unlink()
+            target.symlink_to(reports.TEMPLATE)
+            status, body = self.request(f"/api/v1/defect-reports/{identity}/file")
+            self.assertEqual((status, body["error"]["code"]), (409, "report_unavailable"))
+            status, body = self.request(url + "&slot_code=other")
+            self.assertEqual(status, 400)
+
+    def test_local_report_rejects_image_unready_vision(self):
+        reports = server.reports
+        rows = [{"target_unit_id": 42, "target_image_path": None}]
+        inspection = {"result": {"decision": "FAIL"}, "image": {"ready": False}}
+        with patch.object(reports, "load_defect_context", return_value=rows), \
+                patch.object(server.queries, "inspection", return_value=inspection), \
+                patch.object(reports, "write_report") as write:
+            with self.assertRaisesRegex(RuntimeError, "not ready"):
+                reports.create_report("unused", 42, reports.DATASHEET, reports.TEMPLATE,
+                                      reports.OUTPUT_DIR, reports.DEFAULT_IMAGE_ROOT, 10485760)
+            write.assert_not_called()
 
     def test_documented_routes_are_registered_once(self):
         document = (Path(__file__).parent / "Main_serverAPI.md").read_text(encoding="utf-8")

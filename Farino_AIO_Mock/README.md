@@ -78,12 +78,18 @@ ros2 launch mock_db_mvp launch_mock.launch.py
 두 역할 모두 production 테이블을 조회할 수 있지만 쓰기 권한은 분리됩니다.
 계정에 반대 역할, 테이블 소유권 또는 별도 쓰기 권한을 부여하면 이 제한을 우회할 수 있습니다.
 
-대책서 이메일은 기본 비활성입니다. 활성화할 때 아래 변수를 launch 프로세스에 전달합니다.
+올인원 실행은 대책서를 기본 로컬 모드로 생성합니다. 기본 저장 위치는
+`MAIN_SERVER/reports/defects`이며 SMTP 설정 없이 동작합니다.
+`DEFECT_REPORT_OUTPUT_DIR`을 변경하면 MainServer와 생성기에 같은 경로를 전달해야 합니다.
+두 프로세스는 문서 파일을 읽을 수 있는 같은 운영 계정으로 실행합니다.
+
+이메일은 기본 비활성입니다. 이후 명시적으로 활성화할 때 아래 변수를 launch 프로세스에 전달합니다.
 SMTP 비밀번호 파일은 배포 secret으로 만들고 소유자 읽기만 허용하며 저장소에 두지 않습니다.
 
 | 변수 | 필수/기본값 | 의미 |
 |---|---|---|
-| `DEFECT_MAIL_ENABLED` | `false` | `true`일 때 전송 worker 시작 |
+| `DEFECT_MAIL_ENABLED` | `false` | 기본 로컬 생성, `true`일 때 이메일 모드로 실행 |
+| `DEFECT_REPORT_OUTPUT_DIR` | `MAIN_SERVER/reports/defects` | 생성기·MainServer 공통 문서 보관 경로 |
 | `DEFECT_MAIL_HOST` | 활성 시 필수 | SMTP 서버 |
 | `DEFECT_MAIL_SECURITY` | `ssl` | `ssl` 또는 `starttls` |
 | `DEFECT_MAIL_PORT` | SSL `465`, STARTTLS `587` | SMTP 포트 |
@@ -112,6 +118,18 @@ export DEFECT_MAIL_SECRET_FILE=/run/secrets/defect_smtp_password
 
 ros2 launch mock_db_mvp launch_mock.launch.py
 ```
+
+확정 불량 한 건 또는 전체를 로컬 생성하는 기존 진입점:
+
+```bash
+# MAIN_SERVER_MODE와 MAIN_SERVER_DB_DSN은 대상 DB에 맞게 설정한 상태
+python3 MAIN_SERVER/generate_defect_reports.py --unit-defect-id 42
+python3 MAIN_SERVER/generate_defect_reports.py --once
+```
+
+`--watch`는 2초 간격으로 확인하며 이미 존재하는 파일은 건너뜁니다.
+`--mode email`을 명시할 때만 기존 SMTP 설정을 읽고 발송합니다.
+로컬 생성 실패는 로그로 남고 watch에서 재시도합니다. 단일 실행 실패는 비정상 종료합니다.
 
 검증은 메일 서버 없이 다음 self-check로 수행합니다. 실제 SMTP 전송은 승인된 테스트
 수신 주소로 별도 확인합니다.

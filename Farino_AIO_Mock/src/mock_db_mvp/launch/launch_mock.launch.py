@@ -9,9 +9,8 @@ from launch.actions import (
     IncludeLaunchDescription,
     SetEnvironmentVariable,
 )
-from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import EnvironmentVariable, FindExecutable, LaunchConfiguration
+from launch.substitutions import EnvironmentVariable, FindExecutable, LaunchConfiguration, PythonExpression
 
 
 def generate_launch_description():
@@ -82,12 +81,14 @@ def generate_launch_description():
                 FindExecutable(name="python3"),
                 LaunchConfiguration("defect_report_script"),
                 "--watch",
+                "--mode",
+                PythonExpression(["'email' if '", LaunchConfiguration("defect_mail_enabled"),
+                                  "'.lower() in ('true', '1') else 'local'"]),
             ],
             additional_env={
                 "MAIN_SERVER_MODE": "mock",
                 "MAIN_SERVER_DB_DSN": LaunchConfiguration("main_server_db_dsn"),
             },
-            condition=IfCondition(LaunchConfiguration("defect_mail_enabled")),
             output="screen",
         ),
     ])

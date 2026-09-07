@@ -2,7 +2,7 @@
 //
 //   실연결 : assemblies/current → jobs/{job_id} → products/{product_id}/quality/slot-rates
 //            (슬롯 집계는 제품 전체 누적이며 현재 Job은 화면의 기준정보다.)
-//   미연결 : 임계(defect_report.thresholds) · 불량 유형별 집계 · 대책서
+//   미연결 : 임계(defect_report.thresholds) · 불량 유형별 집계
 //
 // Unity 는 DB 에 직접 접속하지 않고 MainServer HTTP 조회만 쓴다.
 //
@@ -18,6 +18,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using System.Security.Cryptography;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UIElements;
@@ -32,6 +34,17 @@ namespace MainUnity.UI
         [Serializable] sealed class JobResponse { public Job data; }
         [Serializable] sealed class SlotRatesResponse { public SlotRate[] data; }
         [Serializable] sealed class ProductsResponse { public Product[] data; }
+        [Serializable] sealed class ReportsResponse { public DefectReport[] data; }
+        [Serializable] sealed class DefectReport
+        {
+            public long unit_defect_id;
+            public long unit_id;
+            public string defect_type;
+            public string inspected_at;
+            public bool report_ready;
+            public string filename;
+            public string file_url;
+        }
         [Serializable] sealed class Product
         {
             public int product_id;
@@ -95,7 +108,8 @@ namespace MainUnity.UI
         bool built;
         VisualElement root;
         Button refresh;
-        Coroutine loadRoutine;
+        Coroutine loadRoutine, reportsRoutine, downloadRoutine;
+        int currentProductId;
         ParetoCurve curve;
 
         SlotRate[] rates = Array.Empty<SlotRate>();
@@ -109,6 +123,7 @@ namespace MainUnity.UI
 
         void OnDisable()
         {
+            StopReportRequests();
             if (loadRoutine != null) StopCoroutine(loadRoutine);
             loadRoutine = null;
             if (refresh != null) refresh.clicked -= Reload;
@@ -152,7 +167,7 @@ namespace MainUnity.UI
 
             FR5EmptyState.Detail(root.Q<Label>("source-note"),
                 "출처: MainServer HTTP · 제품 전체 누적 · production units / unit_defects / product_slots      ·      "
-                + "임계 · 불량 유형별 집계 · 대책서는 조회 계약이 생길 때까지 빈 상태로 존재한다.");
+                + "대책서: 로컬 생성 파일 조회 · 임계와 불량 유형별 집계 미연결");
 
             Reload();
             built = true;
@@ -161,6 +176,7 @@ namespace MainUnity.UI
         void Reload()
         {
             if (loadRoutine != null || !isActiveAndEnabled) return;
+            StopReportRequests();
             Label source = root.Q<Label>("source-text");
             VisualElement chip = root.Q<VisualElement>("source-chip");
             if (source != null) source.text = "조회 중";
@@ -239,7 +255,11 @@ namespace MainUnity.UI
             SlotRate[] loaded = null;
             yield return Get($"/api/v1/products/{productId}/quality/slot-rates", json =>
                 loaded = JsonUtility.FromJson<SlotRatesResponse>(json)?.data ?? Array.Empty<SlotRate>());
-            if (isActiveAndEnabled && loaded != null) ShowRates(loaded);
+            if (isActiveAndEnabled && loaded != null)
+            {
+                currentProductId = productId;
+                ShowRates(loaded);
+            }
             loadRoutine = null;
         }
 
@@ -385,6 +405,7 @@ namespace MainUnity.UI
         /// <summary>필터가 바뀌거나 자료가 새로 오면 순위 · 막대 · 상세를 통째로 다시 만든다.</summary>
         void Rebuild()
         {
+            StopReportRequests();
             foreach (VisualElement el in root.Q<VisualElement>("part-chips")?.Children() ?? Array.Empty<VisualElement>())
                 el.EnableInClassList("pchip--on", partFilter != null && (string)el.userData == partFilter);
 
@@ -725,9 +746,104 @@ namespace MainUnity.UI
                     : $"{rate.part_id} 은 슬롯 {part.slots}개로 나뉘어 있어 부품 불량률({(part.inspected == 0 ? 0f : 100f * part.defective / part.inspected):0.00}%)과 "
                       + $"슬롯 불량률({rate.defect_rate_percent:0.00}%)의 분모가 다르다. 왼쪽 순서는 건수가, 이 칸은 분모가 말한다.");
 
-            // TODO(API): GET /alerts — 이 슬롯에 걸린 대책서
-            FR5EmptyState.Detail(root.Q<Label>("detail-alert"),
-                $"{FR5EmptyState.Title} — GET /alerts · 대책서 발행 목록");
+            StopReportRequests();
+            reportsRoutine = StartCoroutine(LoadReports(currentProductId, rate.slot_code));
+        }
+
+        void StopReportRequests()
+        {
+            if (reportsRoutine != null) StopCoroutine(reportsRoutine);
+            if (downloadRoutine != null) StopCoroutine(downloadRoutine);
+            reportsRoutine = downloadRoutine = null;
+        }
+
+        IEnumerator LoadReports(int productId, string slotCode)
+        {
+            VisualElement list = root.Q<ScrollView>("detail-reports");
+            Label status = root.Q<Label>("detail-alert");
+            list?.Clear();
+            FR5EmptyState.Detail(status, "대책서 조회 중");
+            yield return Get($"/api/v1/products/{productId}/quality/defect-reports?slot_code={Uri.EscapeDataString(slotCode)}", json =>
+            {
+                DefectReport[] reports = JsonUtility.FromJson<ReportsResponse>(json)?.data;
+                if (reports == null) throw new FormatException("Missing report list");
+                FR5EmptyState.Detail(status, reports.Length == 0 ? "확정 불량 대책서 없음" : $"{reports.Length}건 · 로컬 파일");
+                foreach (DefectReport report in reports)
+                {
+                    if (report == null || report.unit_defect_id <= 0) throw new FormatException("Invalid report identity");
+                    var row = new VisualElement();
+                    var title = new Label($"Unit {report.unit_id} · {report.defect_type} · {Day(report.inspected_at)}")
+                        { enableRichText = false };
+                    title.style.whiteSpace = WhiteSpace.Normal;
+                    row.Add(title);
+                    var button = new Button(() =>
+                    {
+                        if (downloadRoutine == null)
+                            downloadRoutine = StartCoroutine(DownloadReport(report, status));
+                    }) { text = report.report_ready ? "XLSX 다운로드" : "문서 미준비 · 새로고침으로 확인" };
+                    button.SetEnabled(report.report_ready);
+                    row.Add(button);
+                    list?.Add(row);
+                }
+            }, reason => FR5EmptyState.Detail(status, reason));
+            reportsRoutine = null;
+        }
+
+        IEnumerator DownloadReport(DefectReport report, Label status)
+        {
+            yield return null;
+            string expected = $"/api/v1/defect-reports/{report.unit_defect_id}/file";
+            if (report.file_url != expected || string.IsNullOrEmpty(report.filename)
+                || report.filename.IndexOfAny(new[] { '/', '\\' }) >= 0
+                || report.filename.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0
+                || !report.filename.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
+            {
+                FR5EmptyState.Detail(status, "대책서 다운로드 경로 오류");
+                downloadRoutine = null;
+                yield break;
+            }
+            FR5EmptyState.Detail(status, "대책서 다운로드 중");
+            using var request = UnityWebRequest.Get(ApiUrl(expected));
+            request.SetRequestHeader("X-Runtime-Mode", uiMaster == null ? "" : uiMaster.OperatingMode.ToString().ToLowerInvariant());
+            request.redirectLimit = 0;
+            request.timeout = 15;
+            yield return request.SendWebRequest();
+            if (!isActiveAndEnabled) yield break;
+            try
+            {
+                if (request.result != UnityWebRequest.Result.Success)
+                    throw new IOException("서버 응답 " + request.responseCode);
+                byte[] bytes = request.downloadHandler.data;
+                using var sha = SHA256.Create();
+                string digest = BitConverter.ToString(sha.ComputeHash(bytes)).Replace("-", "").ToLowerInvariant();
+                if (bytes.Length > 25 * 1024 * 1024
+                    || !string.Equals(digest, request.GetResponseHeader("X-Content-SHA256"), StringComparison.OrdinalIgnoreCase))
+                    throw new IOException("파일 크기 또는 SHA256 불일치");
+                string directory = Path.Combine(Application.persistentDataPath, "DefectReports");
+                Directory.CreateDirectory(directory);
+                string destination = Path.Combine(directory, report.filename);
+                bool existing = File.Exists(destination);
+                if (!existing)
+                {
+                    string temporary = destination + ".tmp";
+                    try
+                    {
+                        File.WriteAllBytes(temporary, bytes);
+                        File.Move(temporary, destination);
+                    }
+                    finally
+                    {
+                        if (File.Exists(temporary)) File.Delete(temporary);
+                    }
+                }
+                FR5EmptyState.Detail(status, (existing ? "기존 로컬 파일 유지 · " : "로컬 저장 완료 · ") + report.filename);
+                if (status != null) status.tooltip = destination;
+            }
+            catch (Exception error)
+            {
+                FR5EmptyState.Detail(status, "대책서 저장 실패 · " + error.Message);
+            }
+            downloadRoutine = null;
         }
 
         static void AddRow(VisualElement host, string key, string value, string miss = null)
