@@ -20,6 +20,23 @@ Scenario는 주입된 자동 조립 계약만 사용합니다. UI와 Scenario는
 
 요청 수락은 완료가 아닙니다. Unity는 backend가 실제 완료를 반환한 뒤에만 성공을 표시하고 실패와 timeout을 사용자에게 전달합니다.
 
+## 조립체 씬 객체
+
+`ItemManager`가 프리팹 슬롯·공급 위치와 현재 Job의 기판 인스턴스를 소유합니다.
+`BeginUnit(jobId, unitId)`는 투입 직전에 기판을 한 번 생성하고,
+`CompleteUnit(jobId, unitId)`는 기판과 장착 부품을 현재 위치에 보존합니다.
+다른 Job의 첫 Unit을 생성할 때 이전 완료품을 정리하며, 적재 위치 이동은 수행하지 않습니다.
+보존 범위는 현재 Unity 실행 세션이며 앱 재시작 후 과거 완료품 전체 복원은 제공하지 않습니다.
+
+Scene의 `ItemManager`에는 기존 motherboard 프리팹, `TransSpots/BoardSpawnPoint`,
+`Items`, `Items/CompletedBoards`를 연결합니다. 슬롯은 프리팹 내부 Transform을,
+공급 위치는 `Items/SupplyPoints`의 고정 Transform을 참조합니다.
+Mock은 Unit별 공급 부품을 새로 생성하므로 완료품의 장착 부품을 회수하지 않습니다.
+
+Mock 피드백의 `unit_id`로 투입·완료를 연결합니다. Real의 `BeginUnit`·`CompleteUnit`도
+동일한 ItemManager를 사용하지만 Real 자동 조립 ROS 계약은 아직 미연결입니다.
+Real `ExecuteAsync`·`ExecuteQueuedAsync`는 이 상태에서 성공을 반환하지 않습니다.
+
 ## 문서
 
 - [Unity UI 책임](Docs/UI.md)

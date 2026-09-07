@@ -27,6 +27,60 @@ namespace MainUnity.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator InspectFailureAndResultTransitionsRemainDistinct()
+        {
+            var root = new GameObject("Inspect regression");
+            root.SetActive(false);
+            try
+            {
+                var binder = (MonoBehaviour)root.AddComponent(RuntimeType("MainUnity.UI.FR5InspectBinder"));
+                var verdict = new UnityEngine.UIElements.Label();
+                var timestamp = new UnityEngine.UIElements.Label();
+                var source = new UnityEngine.UIElements.Label();
+                var live = new UnityEngine.UIElements.Image();
+                var evidence = new UnityEngine.UIElements.Image();
+                Field(binder, "verdictValue").SetValue(binder, verdict);
+                Field(binder, "verdictScore").SetValue(binder, timestamp);
+                Field(binder, "cameraSource").SetValue(binder, source);
+                Field(binder, "liveImage").SetValue(binder, live);
+                Field(binder, "evidenceImage").SetValue(binder, evidence);
+                Field(binder, "mainServerBaseUrl").SetValue(binder, "http://127.0.0.1:1");
+                root.SetActive(true);
+                Field(binder, "cached").SetValue(binder, true);
+                // 닫힌 로컬 포트로 조회 실패 경로만 검사하며 실제 서버나 설비를 호출하지 않는다.
+                yield return binder.StartCoroutine((IEnumerator)Invoke(binder, "Load"));
+                Assert.That(verdict.text, Is.EqualTo("조회 실패"));
+                Assert.That(timestamp.text, Is.EqualTo("—"));
+                Assert.That(verdict.ClassListContains("bad"), Is.True);
+
+                Type unitType = binder.GetType().GetNestedType("Unit", BindingFlags.NonPublic);
+                object unit = JsonUtility.FromJson(
+                    "{\"unit_id\":1,\"unit_sequence_in_job\":1,\"unit_status\":\"COMPLETED\",\"inspection_result\":\"FAIL\",\"inspected_at\":\"invalid\"}", unitType);
+                Array units = Array.CreateInstance(unitType, 1);
+                units.SetValue(unit, 0);
+                Invoke(binder, "ShowUnits", "review-job", units, unit);
+                Assert.That(verdict.text, Is.EqualTo("FAIL"));
+                Assert.That(timestamp.text, Is.EqualTo("—"));
+                Assert.That(live.style.display.value, Is.EqualTo(UnityEngine.UIElements.DisplayStyle.None));
+                Assert.That(source.text, Is.EqualTo("검사 기록 이미지"));
+
+                Field(unit, "inspection_result").SetValue(unit, "PASS");
+                Invoke(binder, "ShowUnits", "review-job", units, unit);
+                Assert.That(verdict.text, Is.EqualTo("PASS"));
+                Assert.That(verdict.ClassListContains("bad"), Is.False);
+                Field(unit, "inspection_result").SetValue(unit, "PENDING");
+                Field(unit, "unit_status").SetValue(unit, "FAILED");
+                Invoke(binder, "ShowUnits", "review-job", units, unit);
+                Assert.That(verdict.text, Is.EqualTo("검사 미완료"));
+                Assert.That(verdict.ClassListContains("warn"), Is.True);
+                Invoke(binder, "ShowState", "작업 없음", "현재 조회할 작업이 없습니다.", false);
+                Assert.That(verdict.ClassListContains("warn"), Is.False);
+                Assert.That(source.text, Is.EqualTo("현재 영상 · LIVE"));
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        [UnityTest]
         public IEnumerator UiStatusRecoveryAndSessionEventsRemainConsistent()
         {
             // alarmSinceTime의 음수는 미시작 표식이다. 시작 직후 now - 1이 음수가 되지 않게 한다.
@@ -200,6 +254,7 @@ namespace MainUnity.Tests.PlayMode
                 var catcher = Child("Catcher", root.transform).gameObject.AddComponent(
                     RuntimeType("MainUnity.Runtime.Robot.Mock.SimGripperCatcher"));
                 Transform board = Child("Board", root.transform);
+                board.localScale = Vector3.one * 0.01f;
                 Transform slot1 = Child("HBM-01", board);
                 Transform slot2 = Child("HBM-02", board);
                 slot1.localPosition = new Vector3(0.1f, 0, 0);
@@ -231,14 +286,46 @@ namespace MainUnity.Tests.PlayMode
                 Field(control, "gripperCatcher").SetValue(control, catcher);
                 Field(control, "assembledPcb").SetValue(control, board);
                 Field(control, "assembledPcbAssemblyStopPoint").SetValue(control, board);
-                Invoke(control, "CaptureInitialSceneState");
+                Child("Picker", board);
+                Field(manager, "motherboardPrefab").SetValue(manager, board.gameObject);
+                var spawnPoint = Child("Spawn", root.transform);
+                spawnPoint.SetPositionAndRotation(new Vector3(0.4972f, 0.09826766f, -0.242f), Quaternion.Euler(0, 90, 0));
+                Field(manager, "spawnPoint").SetValue(manager, spawnPoint);
+                Field(manager, "spawnRoot").SetValue(manager, root.transform);
+                Field(manager, "completedRoot").SetValue(manager, Child("Completed", root.transform));
+                object supplyGroup = ((Array)Field(manager, "itemGroups").GetValue(manager)).GetValue(0);
+                Field(supplyGroup, "prefab").SetValue(supplyGroup, item1.gameObject);
+                var conveyor = Add("MainUnity.Runtime.ConveyBelt.MockConveyor");
+                Field(control, "conveyor").SetValue(control, conveyor);
+                Field(control, "activeJobId").SetValue(control, "12345678-1234-5678-1234-567812345678");
+                Field(control, "activeUnitId").SetValue(control, 1L);
 
                 slot2.name = "HBM-01";
                 Assert.That(Assert.Throws<TargetInvocationException>(() =>
-                    Invoke(control, "BuildObservations")).InnerException,
+                    Invoke(control, "BuildObservations", true)).InnerException,
                     Is.TypeOf<InvalidOperationException>());
                 slot2.name = "HBM-02";
-                Array observations = (Array)Invoke(control, "BuildObservations");
+                Array preview = (Array)Invoke(control, "BuildObservations", true);
+                Assert.That(GetProperty(manager, "CurrentBoard"), Is.Null, "Preview must not create a board.");
+                Invoke(control, "ResetVisualization", false);
+                board = (Transform)GetProperty(manager, "CurrentBoard");
+                slot1 = board.Find("HBM-01");
+                slot2 = board.Find("HBM-02");
+                var runtime = (Transform[])Field(supplyGroup, "RuntimeItems").GetValue(supplyGroup);
+                item1 = runtime[1];
+                item2 = runtime[0];
+                Array observations = (Array)Invoke(control, "BuildObservations", false);
+                for (int i = 0; i < observations.Length; i++)
+                    foreach (string poseName in new[] { "source", "target" })
+                    {
+                        var actual = Field(observations.GetValue(i), poseName).GetValue(observations.GetValue(i));
+                        var expected = Field(preview.GetValue(i), poseName).GetValue(preview.GetValue(i));
+                        var a = (float[])Field(actual, "xyz_mm").GetValue(actual);
+                        var b = (float[])Field(expected, "xyz_mm").GetValue(expected);
+                        for (int axis = 0; axis < 3; axis++)
+                            Assert.That(a[axis], Is.EqualTo(b[axis]).Within(0.001f),
+                                "Preview and runtime coordinates must agree to 0.001 mm.");
+                    }
                 Assert.That(Field(observations.GetValue(0), "slot_code").GetValue(
                     observations.GetValue(0)), Is.EqualTo("HBM-02"));
                 Field(control, "lastPlacedStepOrder").SetValue(control, 0);
@@ -250,30 +337,136 @@ namespace MainUnity.Tests.PlayMode
                 Invoke(control, "ApplyPicked", feedback, false);
                 Assert.That(Field(control, "heldItem").GetValue(control), Is.SameAs(item1));
                 Invoke(control, "ApplyPlaced", feedback, false);
-                Assert.That(item1.position, Is.EqualTo(slot1.position));
+                Assert.That(Vector3.Distance(item1.position, slot1.position), Is.LessThan(0.000001f));
                 Assert.That(item1.parent, Is.SameAs(board));
                 Assert.That(item2.parent, Is.SameAs(root.transform));
 
                 Invoke(control, "ResetVisualization", true);
+                board = (Transform)GetProperty(manager, "CurrentBoard");
+                slot1 = board.Find("HBM-01");
+                runtime = (Transform[])Field(supplyGroup, "RuntimeItems").GetValue(supplyGroup);
+                item1 = runtime[1];
+                item2 = runtime[0];
+                observations = (Array)Invoke(control, "BuildObservations", false);
                 object snapshot = Packet("AssemblySnapshot",
-                    "{\"available\":true,\"active\":true," +
+                    "{\"available\":true,\"active\":true,\"unit_id\":1," +
                     "\"job_id\":\"12345678-1234-5678-1234-567812345678\"," +
                     "\"recipe_version\":\"assembly-r1\",\"state\":\"PAUSED\"," +
                     "\"placed_count\":1,\"placed_slot_codes\":[\"HBM-01\"]," +
                     "\"expected_step_count\":2,\"held_step_order\":2," +
                     "\"held_part_id\":\"HBM\",\"held_slot_code\":\"HBM-02\"}");
                 Invoke(control, "RestoreSnapshot", snapshot, observations);
-                Assert.That(item1.position, Is.EqualTo(slot1.position));
+                Assert.That(Vector3.Distance(item1.position, slot1.position), Is.LessThan(0.000001f));
                 Assert.That(Field(control, "heldItem").GetValue(control), Is.SameAs(item2));
                 Field(snapshot, "placed_slot_codes").SetValue(snapshot, new[] { "UNKNOWN" });
                 Assert.That(Assert.Throws<TargetInvocationException>(() =>
                     Invoke(control, "ValidateSnapshot", snapshot, observations)).InnerException,
                     Is.TypeOf<InvalidOperationException>());
+
+                var second = Packet("AssemblyFeedback", "{\"step_order\":2,\"part_id\":\"HBM\",\"slot_code\":\"HBM-02\"}");
+                Invoke(control, "ApplyPlaced", second, false);
+                Field(control, "assembledPcbDropPoint").SetValue(control, Child("Drop", root.transform));
+                Invoke(control, "BuildAssembledPcbTransfer");
+                Invoke(control, "ApplyAssembledPcbPicked");
+                Invoke(control, "ApplyAssembledPcbPlaced");
+                Assert.That(IntProperty(manager, "CompletedCount"), Is.EqualTo(1));
+                Assert.That(item1.IsChildOf(board) && item2.IsChildOf(board), Is.True);
+                var terminal = new System.Threading.Tasks.TaskCompletionSource<string>();
+                Field(control, "terminal").SetValue(control, terminal);
+                string id = "12345678-1234-5678-1234-567812345678";
+                Invoke(control, "HandleFeedback", Packet("AssemblyFeedback",
+                    "{\"job_id\":\"" + id + "\",\"unit_id\":1,\"state\":\"PCB_PLACED\"}"));
+                Assert.That(IntProperty(manager, "CompletedCount"), Is.EqualTo(1), "Duplicate placement must retain one board.");
+                Invoke(control, "HandleFeedback", Packet("AssemblyFeedback",
+                    "{\"job_id\":\"" + id + "\",\"unit_id\":99,\"state\":\"FAILED\"}"));
+                Assert.That(terminal.Task.IsCompleted, Is.False, "Failure from another Unit must not end this request.");
+                Invoke(control, "HandleFeedback", Packet("AssemblyFeedback",
+                    "{\"job_id\":\"" + id + "\",\"unit_id\":1,\"state\":\"COMPLETED\"}"));
+                Assert.That(terminal.Task.IsCompletedSuccessfully, Is.True);
+                Assert.That(terminal.Task.Result, Is.Empty);
+                Assert.That(IntProperty(manager, "CompletedCount"), Is.EqualTo(1), "Job completion must retain the board.");
+                var nextPreview = (Array)Invoke(control, "BuildObservations", true);
+                Assert.That(JsonUtility.ToJson(nextPreview.GetValue(0)), Is.EqualTo(JsonUtility.ToJson(preview.GetValue(0))),
+                    "Next Job coordinates must not use completed board or attached parts.");
             }
             finally
             {
                 UnityEngine.Object.DestroyImmediate(root);
             }
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void UnitLifecycleRetainsTenBoardsUntilNextJob(bool real)
+        {
+            var root = new GameObject("Unit lifecycle regression");
+            root.SetActive(false);
+            try
+            {
+                Transform Child(string name, Transform parent)
+                {
+                    var child = new GameObject(name).transform;
+                    child.SetParent(parent, false);
+                    return child;
+                }
+                var manager = root.AddComponent(RuntimeType("MainUnity.Static.ItemManager"));
+                var realControl = root.AddComponent(RuntimeType("MainUnity.Runtime.Robot.Real.RealAssemblyScenarioControl"));
+                Field(realControl, "itemManager").SetValue(realControl, manager);
+                var prefab = Child("Prefab", root.transform);
+                Child("Picker", prefab);
+                var slot = Child("HBM-01", prefab);
+                var point = Child("Supply", root.transform);
+                var part = Child("PartPrefab", root.transform);
+                var completed = Child("Completed", root.transform);
+                Field(manager, "motherboardPrefab").SetValue(manager, prefab.gameObject);
+                Field(manager, "spawnPoint").SetValue(manager, Child("Spawn", root.transform));
+                Field(manager, "spawnRoot").SetValue(manager, root.transform);
+                Field(manager, "completedRoot").SetValue(manager, completed);
+                void Group(string fieldName, params (string Name, object Value)[] values)
+                {
+                    var field = Field(manager, fieldName);
+                    var type = field.FieldType.GetElementType();
+                    var group = Activator.CreateInstance(type);
+                    foreach (var value in values) Field(group, value.Name).SetValue(group, value.Value);
+                    var array = Array.CreateInstance(type, 1);
+                    array.SetValue(group, 0);
+                    field.SetValue(manager, array);
+                }
+                Group("assemblySlots", ("requiredItemType", "HBM"), ("slots", new[] { slot }));
+                Group("itemGroups", ("itemType", "HBM"), ("items", new[] { point }), ("prefab", part.gameObject));
+                string job = Guid.NewGuid().ToString();
+                object entry = real ? realControl : manager;
+                var boards = new List<Transform>();
+                var parts = new List<Transform>();
+                for (long unit = 1; unit <= 10; unit++)
+                {
+                    var board = (Transform)Invoke(entry, "BeginUnit", job, unit);
+                    Assert.That(Invoke(entry, "BeginUnit", job, unit), Is.SameAs(board), "Duplicate start must be idempotent.");
+                    Invoke(manager, "PrepareSupply");
+                    var group = ((Array)Field(manager, "itemGroups").GetValue(manager)).GetValue(0);
+                    var supplied = ((Transform[])Field(group, "RuntimeItems").GetValue(group))[0];
+                    supplied.SetParent(board, true);
+                    boards.Add(board);
+                    parts.Add(supplied);
+                    Invoke(entry, "CompleteUnit", job, unit);
+                    Invoke(entry, "CompleteUnit", job, unit);
+                    Assert.That(IntProperty(manager, "CompletedCount"), Is.EqualTo(unit));
+                    for (int i = 0; i < boards.Count; i++)
+                    {
+                        Assert.That(boards[i].parent, Is.SameAs(completed));
+                        Assert.That(parts[i].parent, Is.SameAs(boards[i]), "Later supply must not steal completed parts.");
+                    }
+                }
+                Assert.That(completed.childCount, Is.EqualTo(10));
+                Assert.That(Assert.Throws<TargetInvocationException>(() =>
+                    Invoke(entry, "BeginUnit", "invalid", 11L)).InnerException, Is.TypeOf<InvalidOperationException>());
+                Assert.That(completed.childCount, Is.EqualTo(10), "Rejected Job must preserve all completed boards.");
+                Invoke(entry, "BeginUnit", Guid.NewGuid().ToString(), 11L);
+                Assert.That(IntProperty(manager, "CompletedCount"), Is.Zero);
+                Assert.That(boards.All(board => !board.gameObject.activeSelf), Is.True,
+                    "Old boards must be hidden immediately while deferred Destroy is pending.");
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root); }
         }
 
         [UnityTest]

@@ -10,7 +10,7 @@ namespace MainUnity.Runtime.ConveyBelt
         const float MovementFrameAllowanceSeconds = 1f;
         [Header("Objects")]
         [SerializeField] GameObject beltPlane;
-        [SerializeField] GameObject pcb;
+        GameObject pcb;
         [SerializeField] Transform assemblyStopPoint;
         [SerializeField] Transform inspectionStopPoint;
 
@@ -41,6 +41,12 @@ namespace MainUnity.Runtime.ConveyBelt
             if (!moving)
                 return;
 
+            if (pcb == null || destination == null)
+            {
+                FailMovement(new InvalidOperationException("Conveyor board or destination was removed."));
+                return;
+            }
+
             if (Time.time >= timeoutAt)
             {
                 FailMovement(new TimeoutException(
@@ -62,6 +68,14 @@ namespace MainUnity.Runtime.ConveyBelt
 
             if (distance == remaining)
                 CompleteMovement();
+        }
+
+        /// <summary>정지 상태에서 이번 이동의 실제 기판을 연결한다.</summary>
+        public void SetBoard(Transform board)
+        {
+            if (moving) throw new InvalidOperationException("Cannot replace a moving conveyor board.");
+            if (board == null) throw new ArgumentNullException(nameof(board));
+            pcb = board.gameObject;
         }
 
         /// <summary>PCB를 조립 정지점까지 이동한다.</summary>

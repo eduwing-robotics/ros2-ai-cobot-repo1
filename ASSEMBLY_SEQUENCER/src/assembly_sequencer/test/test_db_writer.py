@@ -297,6 +297,21 @@ class PendingJobTest(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(sequencer.executor.mock_calls, [])
                 self.assertEqual(sequencer.pending_observations, {})
 
+    def test_public_feedback_keeps_unit_identity_after_terminal_cleanup(self):
+        publisher = Mock()
+        sequencer = SimpleNamespace(active=dict(job_id=JOB_ID, unit_id=22),
+                                    terminal_snapshot=None, external_publisher=publisher)
+        payload = dict(job_id=JOB_ID, state="CONVEYOR_MOVING")
+        MockAssemblySequencer.publish(sequencer, payload)
+        self.assertEqual(json.loads(publisher.publish.call_args.args[0].data)["unit_id"], 22)
+        self.assertNotIn("unit_id", payload)
+        sequencer.terminal_snapshot = sequencer.active
+        sequencer.active = None
+        MockAssemblySequencer.publish(sequencer, dict(job_id=JOB_ID, state="COMPLETED"))
+        self.assertEqual(json.loads(publisher.publish.call_args.args[0].data)["unit_id"], 22)
+        MockAssemblySequencer.publish(sequencer, dict(job_id="different", state="FAILED"))
+        self.assertEqual(json.loads(publisher.publish.call_args.args[0].data)["unit_id"], 0)
+
     def test_snapshot_contains_only_current_unit_placed_slots(self):
         active = dict(job_id=JOB_ID, unit_id=22, recipe_version="assembly-r1",
                       placed_count=1, expected_step_count=2,

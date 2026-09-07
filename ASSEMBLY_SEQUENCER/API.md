@@ -171,11 +171,14 @@ status 이외의 명령은 다음 형식을 반환합니다.
 
 ## Feedback topic
 
+모든 feedback은 Sequencer가 부여한 `unit_id`를 포함합니다. Unit 생성 전 실패는 `0`입니다. Unity는 `(job_id, unit_id)`로 기판 인스턴스와 중복 수신을 구분합니다.
+
 메시지 형식:
 
 ```json
 {
   "job_id": "12345678-1234-5678-1234-567812345678",
+  "unit_id": 42,
   "state": "PLACED",
   "step_order": 1,
   "part_id": "PART-01",
@@ -189,6 +192,7 @@ status 이외의 명령은 다음 형식을 반환합니다.
 | 필드 | 의미 |
 |---|---|
 | `job_id` | 진행·결과를 대조하는 UUID |
+| `unit_id` | 현재 생산 시도의 ID, Unit 생성 전 실패는 0 |
 | `state` | 실행 상태 |
 | `step_order` | 해당 step 순서, step이 없으면 0 |
 | `part_id`, `slot_code` | Pick·Place 대상, 해당 없으면 빈 문자열 |

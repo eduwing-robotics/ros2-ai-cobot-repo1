@@ -11,7 +11,6 @@ using System.Collections;
 using System.IO;
 using System.Globalization;
 using MainUnity.Runtime.Camera;
-using MainUnity.Runtime.Robot;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UIElements;
@@ -171,7 +170,13 @@ namespace MainUnity.UI
 
                 Unit[] units = null;
                 yield return Get("/api/v1/jobs/" + Uri.EscapeDataString(jobId) + "/units",
-                    json => units = JsonUtility.FromJson<UnitsResponse>(json)?.data ?? Array.Empty<Unit>());
+                    json =>
+                    {
+                        units = JsonUtility.FromJson<UnitsResponse>(json)?.data;
+                        if (units == null || Array.Exists(units, unit => unit == null ||
+                            (unit.defects != null && Array.Exists(unit.defects, defect => defect == null))))
+                            throw new FormatException("Invalid inspection units.");
+                    });
                 if (!isActiveAndEnabled || queryFailed) yield break;
                 Unit selected = Array.Find(units, unit => unit.unit_id == unitId);
                 if (selected == null && units.Length > 0) selected = units[units.Length - 1];
@@ -325,6 +330,7 @@ namespace MainUnity.UI
         {
             StopEvidenceLoad();
             ClearEvidence();
+            if (evidenceButton != null) evidenceButton.tooltip = "";
             evidenceMessage = "이 생산 시도에 저장된 검사 이미지가 없습니다.";
             if (evidenceImage == null || string.IsNullOrEmpty(path)) return;
             if (path != MockPassImagePath && path != MockInspectPassImagePath && path != MockFailImagePath)
@@ -351,7 +357,7 @@ namespace MainUnity.UI
                 evidenceTexture = DownloadHandlerTexture.GetContent(request);
                 evidenceImage.image = evidenceTexture;
                 evidenceImage.scaleMode = ScaleMode.ScaleToFit;
-                evidenceImage.style.display = DisplayStyle.Flex;
+                evidenceImage.style.display = showLiveVideo ? DisplayStyle.None : DisplayStyle.Flex;
                 evidenceStats = "기록에 연결된 샘플 이미지 · 실제 촬영 이미지 아님";
                 hasEvidence = true;
             }
@@ -361,6 +367,7 @@ namespace MainUnity.UI
                 Debug.LogWarning("검사 이미지 로드 실패: " + request.error, this);
             }
             evidenceRoutine = null;
+            RefreshVision();
         }
 
         void StopEvidenceLoad()

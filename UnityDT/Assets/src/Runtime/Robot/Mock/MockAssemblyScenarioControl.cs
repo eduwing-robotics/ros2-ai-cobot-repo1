@@ -49,17 +49,15 @@ namespace MainUnity.Runtime.Robot.Mock
         [SerializeField] float resumeRotationOffsetDegrees = 90f;
 
         [Header("Assembled PCB Transfer")]
-        [SerializeField] Transform assembledPcb;
+        Transform assembledPcb;
         [SerializeField] Transform assembledPcbAssemblyStopPoint;
-        [SerializeField] Transform assembledPcbPicker;
+        Transform assembledPcbPicker;
         [SerializeField] Transform assembledPcbDropPoint;
 
         readonly Dictionary<string, (string PartId, Transform Item, Transform Slot)> slotTargets =
             new(StringComparer.Ordinal);
         readonly HashSet<string> processedCallbacks = new(StringComparer.Ordinal);
         readonly List<AssemblyFeedback> bufferedFeedback = new();
-        readonly List<(Transform Target, Transform Parent, Vector3 LocalPosition,
-            Quaternion LocalRotation)> initialSceneStates = new();
 
         MockRobotControl control;
         AssemblyProgressManager progress;
@@ -68,6 +66,7 @@ namespace MainUnity.Runtime.Robot.Mock
         Task recoveryTask = Task.CompletedTask;
         Transform heldItem;
         string activeJobId;
+        long activeUnitId;
         string heldPartId;
         string heldSlotCode;
         int expectedStepCount;
@@ -79,7 +78,6 @@ namespace MainUnity.Runtime.Robot.Mock
         bool assembledPcbHeld;
         bool assembledPcbTransferred;
         bool feedbackSubscribed;
-        bool sceneNeedsReset;
         bool inspectionTransferStarted;
         bool assemblyConveyorStarted;
         bool recovering;
@@ -179,6 +177,7 @@ namespace MainUnity.Runtime.Robot.Mock
         sealed class AssemblyFeedback
         {
             public string job_id;
+            public long unit_id;
             public string state;
             public int step_order;
             public string part_id;
@@ -193,6 +192,7 @@ namespace MainUnity.Runtime.Robot.Mock
             public bool available;
             public bool active;
             public string job_id;
+            public long unit_id;
             public string recipe_version;
             public string state;
             public int placed_count;
@@ -208,14 +208,12 @@ namespace MainUnity.Runtime.Robot.Mock
         void Awake()
         {
             RefreshReferences();
-            CaptureInitialSceneState();
             EnsureRosConnection();
         }
 
         void OnEnable()
         {
             RefreshReferences();
-            CaptureInitialSceneState();
             EnsureRosConnection();
             recoveryTask = RecoverAsync(++recoveryGeneration);
         }
@@ -260,22 +258,17 @@ namespace MainUnity.Runtime.Robot.Mock
         {
             await recoveryTask;
             ValidateExecution();
-            if (sceneNeedsReset)
-            {
-                ResetVisualization(false);
-                sceneNeedsReset = false;
-            }
             EnsureRosConnection();
-            MockObservation[] observations = BuildObservations();
+            MockObservation[] observations = BuildObservations(true);
 
             var current = new TaskCompletionSource<string>();
             terminal = current;
-            sceneNeedsReset = true;
             bool queuedJob = !string.IsNullOrEmpty(queuedJobId);
             if (queuedJob)
                 activeJobId = queuedJobId;
             else if (string.IsNullOrEmpty(activeJobId))
                 activeJobId = Guid.NewGuid().ToString();
+            activeUnitId = 0;
             processedCallbacks.Clear();
             expectedStepCount = observations.Length;
             heldStepOrder = -1;
@@ -324,9 +317,7 @@ namespace MainUnity.Runtime.Robot.Mock
             {
                 if (ReferenceEquals(terminal, current))
                     terminal = null;
-                if (!accepted)
-                    sceneNeedsReset = false;
-                else
+                if (accepted)
                     activeJobId = string.Empty;
                 processedCallbacks.Clear();
             }
@@ -388,6 +379,22 @@ namespace MainUnity.Runtime.Robot.Mock
                 if (snapshot == null || !snapshot.available)
                     return;
 
+                MockObservation[] preview = BuildObservations(true);
+                ValidateSnapshot(snapshot, preview);
+                activeJobId = snapshot.job_id;
+                activeUnitId = snapshot.unit_id;
+                if (itemManager.IsUnitCompleted(activeJobId, activeUnitId))
+                {
+                    expectedStepCount = snapshot.expected_step_count;
+                    lastPlacedStepOrder = snapshot.placed_count;
+                    assembledPcbTransferred = true;
+                    terminal = snapshot.active ? new TaskCompletionSource<string>() : null;
+                    Report(snapshot.active ? AssemblyState.Placed : AssemblyState.Completed, null);
+                    recovering = false;
+                    foreach (AssemblyFeedback feedback in bufferedFeedback.ToArray())
+                        HandleFeedback(feedback);
+                    return;
+                }
                 ResetVisualization(snapshot.state != ConveyorMoving);
                 MockObservation[] observations = BuildObservations();
                 _ = BuildAssembledPcbTransfer();
@@ -444,6 +451,7 @@ namespace MainUnity.Runtime.Robot.Mock
             heldStepOrder = -1;
             lastPlacedStepOrder = 0;
             activeJobId = snapshot.job_id;
+            activeUnitId = snapshot.unit_id;
             assembledPcbHeld = false;
             assembledPcbTransferred = false;
             inspectionTransferStarted = false;
@@ -502,7 +510,6 @@ namespace MainUnity.Runtime.Robot.Mock
                 }
             }
 
-            sceneNeedsReset = true;
             terminal = snapshot.active ? new TaskCompletionSource<string>() : null;
             string summary = $"Mock assembly restored: {snapshot.state}, " +
                 $"{snapshot.placed_count}/{snapshot.expected_step_count} placed.";
@@ -525,7 +532,7 @@ namespace MainUnity.Runtime.Robot.Mock
             if (snapshot.active != activeState)
                 throw new InvalidOperationException(
                     "Mock assembly status active flag does not match its state.");
-            if (!Guid.TryParse(snapshot.job_id, out _))
+            if (!Guid.TryParse(snapshot.job_id, out _) || snapshot.unit_id <= 0)
                 throw new InvalidOperationException(
                     "Mock assembly status job_id must be a UUID.");
             if (snapshot.recipe_version != recipeVersion)
@@ -589,6 +596,7 @@ namespace MainUnity.Runtime.Robot.Mock
         void ValidateExecution()
         {
             RefreshReferences();
+            itemManager?.ValidateConfiguration();
             if (!Application.isPlaying || !isActiveAndEnabled)
                 throw new InvalidOperationException("Mock assembly requires an active component in Play Mode.");
             if (terminal != null)
@@ -741,10 +749,21 @@ namespace MainUnity.Runtime.Robot.Mock
                 return;
 
             assemblyConveyorStarted = true;
+            string jobId = activeJobId;
+            long unitId = activeUnitId;
             try
             {
+                if (itemManager.CurrentBoard == null)
+                {
+                    assembledPcb = itemManager.BeginUnit(jobId, unitId);
+                    assembledPcbPicker = itemManager.CurrentPicker;
+                    itemManager.PrepareSupply();
+                    _ = BuildObservations();
+                }
+                conveyor.SetBoard(assembledPcb);
                 await conveyor.MoveBoardToAssemblyAsync();
-                if (!isActiveAndEnabled || terminal == null || terminal.Task.IsCompleted)
+                if (!isActiveAndEnabled || terminal == null || terminal.Task.IsCompleted ||
+                    jobId != activeJobId || unitId != activeUnitId)
                     return;
 
                 await SendMockAsync(JsonUtility.ToJson(new ControlRequest
@@ -755,9 +774,11 @@ namespace MainUnity.Runtime.Robot.Mock
             }
             catch (Exception exception)
             {
+                if (jobId != activeJobId || unitId != activeUnitId) return;
                 if (isActiveAndEnabled)
                     await ReportConveyorFailureAsync(exception.Message);
-                FailActive(exception.Message);
+                if (jobId == activeJobId && unitId == activeUnitId)
+                    FailActive(exception.Message);
             }
         }
 
@@ -885,6 +906,25 @@ namespace MainUnity.Runtime.Robot.Mock
             try
             {
                 ValidateFeedback(feedback);
+                if (feedback.state == Failed && feedback.unit_id > 0 && activeUnitId > 0 &&
+                    feedback.unit_id != activeUnitId)
+                    return;
+                if (feedback.state != Failed && feedback.unit_id <= 0)
+                    throw new InvalidOperationException("Assembly feedback requires a positive Unit ID.");
+                if (feedback.state != Completed && itemManager.IsUnitCompleted(feedback.job_id, feedback.unit_id))
+                    return;
+                if (feedback.unit_id != activeUnitId && feedback.state != Failed)
+                {
+                    if (feedback.state != ConveyorMoving || feedback.unit_id < activeUnitId)
+                        return;
+                    if (activeUnitId != 0 && !assembledPcbTransferred)
+                        throw new InvalidOperationException("The previous Unit has not finished PCB transfer.");
+                    gripperCatcher.Release();
+                    itemManager.DiscardCurrentUnit();
+                    assembledPcb = null;
+                    activeUnitId = feedback.unit_id;
+                    ResetProgress();
+                }
                 bool wasPaused = progress?.Latest?.State == AssemblyState.Paused;
                 if (feedback.state == Paused)
                 {
@@ -917,11 +957,7 @@ namespace MainUnity.Runtime.Robot.Mock
                     feedback.slot_code == heldSlotCode)
                     return;
 
-                if (feedback.state == ConveyorMoving &&
-                    lastPlacedStepOrder == expectedStepCount)
-                    ResetVisualization(false);
-
-                string key = string.Concat(feedback.state, "|", feedback.step_order, "|",
+                string key = string.Concat(feedback.unit_id, "|", feedback.state, "|", feedback.step_order, "|",
                     feedback.part_id, "|", feedback.slot_code);
                 if (!processedCallbacks.Add(key))
                     return;
@@ -993,56 +1029,31 @@ namespace MainUnity.Runtime.Robot.Mock
             }
         }
 
-        void CaptureInitialSceneState()
-        {
-            if (initialSceneStates.Count > 0 || itemManager == null || assembledPcb == null)
-                return;
-
-            void Capture(Transform target)
-            {
-                if (target != null)
-                    initialSceneStates.Add((target, target.parent,
-                        target.localPosition, target.localRotation));
-            }
-
-            foreach (ItemManager.ItemGroup group in itemManager.ItemGroups)
-            {
-                if (group?.Items == null)
-                    continue;
-                foreach (Transform item in group.Items)
-                    Capture(item);
-            }
-            Capture(assembledPcb);
-        }
-
         void ResetVisualization(bool boardAtAssembly)
         {
-            if (initialSceneStates.Count == 0)
-                CaptureInitialSceneState();
-            if (initialSceneStates.Count == 0)
-                throw new InvalidOperationException(
-                    "Mock initial PCB and part state is unavailable.");
-
             gripperCatcher.Release();
-            foreach (var state in initialSceneStates)
-            {
-                if (state.Target == null)
-                    continue;
-                state.Target.SetParent(state.Parent, false);
-                state.Target.localPosition = state.LocalPosition;
-                state.Target.localRotation = state.LocalRotation;
-            }
+            itemManager.DiscardCurrentUnit();
+            assembledPcb = itemManager.BeginUnit(activeJobId, activeUnitId);
+            assembledPcbPicker = itemManager.CurrentPicker;
+            itemManager.PrepareSupply();
+            conveyor.SetBoard(assembledPcb);
             if (boardAtAssembly)
                 RestoreAssembledPcbAtAssembly();
+            ResetProgress();
+        }
 
+        void ResetProgress()
+        {
             processedCallbacks.Clear();
             heldItem = null;
             heldPartId = string.Empty;
             heldSlotCode = string.Empty;
             heldStepOrder = -1;
             lastPlacedStepOrder = 0;
+            assembledPcbHeld = false;
             assembledPcbTransferred = false;
             inspectionTransferStarted = false;
+            assemblyConveyorStarted = false;
         }
 
         static void ValidateFeedback(AssemblyFeedback feedback)
@@ -1190,6 +1201,7 @@ namespace MainUnity.Runtime.Robot.Mock
                 DownwardTcpRotation(assembledPcbDropPoint.rotation));
             assembledPcbHeld = false;
             assembledPcbTransferred = true;
+            itemManager.CompleteUnit(activeJobId, activeUnitId);
         }
 
         void MoveAssembledPcbToTcp(Vector3 tcpPosition, Quaternion tcpRotation)
@@ -1199,16 +1211,15 @@ namespace MainUnity.Runtime.Robot.Mock
             assembledPcb.rotation = tcpRotation * assembledPcbRotationFromTcp;
         }
 
-        MockObservation[] BuildObservations()
+        MockObservation[] BuildObservations(bool preview = false)
         {
-            if (assembledPcb == null || assembledPcbAssemblyStopPoint == null)
-                throw new InvalidOperationException(
-                    "Assign assembled PCB and its assembly stop point.");
-            // The Job is claimed before motion, so target slots must be resolved at
-            // the assembly stop rather than at the PCB's incoming position.
+            if (assembledPcbAssemblyStopPoint == null)
+                throw new InvalidOperationException("Assign the PCB assembly stop point.");
+            // Unit 생성 전 좌표 등록은 프리팹·고정 공급점으로 계산해 이전 완료품을 참조하지 않는다.
+            Vector3 boardPosition = preview ? itemManager.IncomingBoardPosition : assembledPcb.position;
             Vector3 assemblyOffset = Vector3.forward *
-                (assembledPcbAssemblyStopPoint.position.z - assembledPcb.position.z);
-            ItemManager.AssemblySlot[] slotGroups = itemManager.AssemblySlots;
+                (assembledPcbAssemblyStopPoint.position.z - boardPosition.z);
+            ItemManager.AssemblySlot[] slotGroups = preview ? itemManager.PrefabSlots : itemManager.AssemblySlots;
             if (slotGroups == null || slotGroups.Length == 0)
                 throw new InvalidOperationException("Mock assembly requires at least one slot group.");
 
@@ -1232,7 +1243,7 @@ namespace MainUnity.Runtime.Robot.Mock
                 int itemIndex = itemIndices.TryGetValue(slotGroup.RequiredItemType, out int next)
                     ? next
                     : 0;
-                Transform[] items = itemGroup.Items;
+                Transform[] items = preview ? itemGroup.SupplyPoints : itemGroup.Items;
                 if (items == null || items.Length - itemIndex < slots.Length)
                     throw new InvalidOperationException(
                         $"Mock part count for {slotGroup.RequiredItemType} must cover " +
@@ -1262,9 +1273,10 @@ namespace MainUnity.Runtime.Robot.Mock
                         0f, itemGroup.PickupOffsetXZ.y), pickupRotation);
                     Vector3 gripOffset = Quaternion.Inverse(item.rotation) *
                         (pickup.position - item.position);
-                    Pose placement = new(slot.position + assemblyOffset +
-                        slot.rotation * gripOffset,
-                        slot.rotation);
+                    Pose slotPose = itemManager.GetSlotPose(slot);
+                    Pose placement = new(slotPose.position + assemblyOffset +
+                        slotPose.rotation * gripOffset,
+                        slotPose.rotation);
 
                     observations.Add(new MockObservation
                     {
@@ -1395,10 +1407,7 @@ namespace MainUnity.Runtime.Robot.Mock
         {
             if (control == null)
                 control = GetComponentInChildren<MockRobotControl>(true);
-            if (itemManager == null)
-                itemManager = FindAnyObjectByType<ItemManager>();
-            if (gripperCatcher == null)
-                gripperCatcher = FindAnyObjectByType<SimGripperCatcher>();
+
         }
     }
 }

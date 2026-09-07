@@ -1,11 +1,6 @@
 # Published repository scope
 /*
 !/.gitignore
-!/AGENTS.md
-!/README.md
-!/docs/
-!/mkdocs.yml
-!/requirements-docs.txt
 !/ASSEMBLY_SEQUENCER/
 !/DATA_STATION/
 !/Farino_AIO_Mock/
@@ -24,13 +19,8 @@ UnityDT/[Bb]uild/
 UnityDT/[Bb]uilds/
 UnityDT/[Ll]ogs/
 UnityDT/[Uu]ser[Ss]ettings/
-UnityDT/.vs/
-UnityDT/.vscode/
-UnityDT/.idea/
 UnityDT/MemoryCaptures/
 UnityDT/Recordings/
-UnityDT/.claude/
-UnityDT/.codex/
 UnityDT/*.csproj
 UnityDT/*.sln
 UnityDT/*.slnx
@@ -73,6 +63,17 @@ env/
 **/log/
 **/build_current/
 **/log_current/
+
+# Local agent and editor configuration
+[Aa][Gg][Ee][Nn][Tt].[Mm][Dd]
+[Aa][Gg][Ee][Nn][Tt][Ss].[Mm][Dd]
+.agents/
+.codex/
+.claude/
+.cursor/
+.vscode/
+.idea/
+.vs/
 
 # Editor and diagnostic files
 .DS_Store

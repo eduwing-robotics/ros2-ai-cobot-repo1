@@ -603,6 +603,12 @@ class MockAssemblySequencer(Node):
         return snapshot
 
     def publish(self, payload):
+        # Unit identity belongs to the Sequencer, including relayed backend events.
+        # Terminal publication happens after self.active has been cleared.
+        state = self.active or self.terminal_snapshot
+        unit_id = (state["unit_id"] if state is not None
+                   and state["job_id"] == payload["job_id"] else 0)
+        payload = dict(payload, unit_id=unit_id)
         self.external_publisher.publish(
             String(data=json.dumps(payload, separators=(",", ":")))
         )
