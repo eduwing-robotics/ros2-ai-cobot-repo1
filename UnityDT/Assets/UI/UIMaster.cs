@@ -46,6 +46,8 @@ namespace MainUnity.UI
         internal int EventVersion { get; private set; }
         RobotStatusManager observedStatus;
         AssemblyProgressManager observedProgress;
+        TrayPartCalibrator observedCalibration;
+        internal TrayPartCalibrator Calibration => RobotMaster != null ? RobotMaster.Calibration : null;
         RobotRunState? lastRobotState;
         AssemblyProgressFrame lastProgress;
 
@@ -56,6 +58,8 @@ namespace MainUnity.UI
             StopAllCoroutines();
             if (observedStatus != null) observedStatus.StatusChanged -= OnStatusChanged;
             if (observedProgress != null) observedProgress.ProgressChanged -= OnProgressChanged;
+            if (observedCalibration != null) observedCalibration.ProgressChanged -= OnCalibrationChanged;
+            observedCalibration = null;
             observedStatus = null;
             observedProgress = null;
             lastRobotState = null;
@@ -94,8 +98,27 @@ namespace MainUnity.UI
                         }
                     }
                 }
+                var calibration = IsSimulated ? null : Calibration;
+                if (observedCalibration != calibration)
+                {
+                    if (observedCalibration != null) observedCalibration.ProgressChanged -= OnCalibrationChanged;
+                    observedCalibration = calibration;
+                    if (observedCalibration != null)
+                    {
+                        observedCalibration.ProgressChanged += OnCalibrationChanged;
+                        OnCalibrationChanged();
+                    }
+                }
                 yield return interval;
             }
+        }
+
+        void OnCalibrationChanged()
+        {
+            if (observedCalibration == null) return;
+            RecordEvent("Calibration", observedCalibration.ProgressDetail,
+                observedCalibration.Progress == TrayPartCalibrator.ProgressState.Rejected ||
+                observedCalibration.Progress == TrayPartCalibrator.ProgressState.ConfigurationError);
         }
 
         void OnStatusChanged(RobotRunState state, RobotErrorLabel error, string detail)

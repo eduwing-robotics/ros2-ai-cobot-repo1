@@ -65,6 +65,7 @@ namespace MainUnity.Runtime.Robot
         void UseRealInEditMode() => TrySetOperatingMode(RobotOperatingMode.Real);
 
         public IRobotControl Control { get; private set; }
+        internal MainUnity.Runtime.Camera.TrayPartCalibrator Calibration { get; private set; }
         public IRobotGhostControl GhostControl { get; private set; }
         public Transform Tcp => tcp;
 
@@ -149,6 +150,9 @@ void OnValidate()
                 mock = GetComponentInChildren<MockRobotMaster>(true);
             if (real == null)
                 real = GetComponentInChildren<FairinoRealRobotMaster>(true);
+            Calibration = real != null
+                ? real.GetComponentInChildren<MainUnity.Runtime.Camera.TrayPartCalibrator>(true)
+                : null;
             if (ghost == null)
                 ghost = FindAnyObjectByType<GhostMaster>(FindObjectsInactive.Include);
             if (mockGhost == null && mock != null)

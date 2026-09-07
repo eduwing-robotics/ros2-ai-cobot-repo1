@@ -973,3 +973,18 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
 .session-events { position: absolute; left: 112px; right: 24px; bottom: 12px; background-color: var(--c-panel); padding: 10px; border-width: 1px; border-color: var(--c-edge); }
 .session-events .unity-foldout__text { font-size: 15px; color: var(--c-ink); }
 .event-row { white-space: normal; font-size: 14px; padding: 6px; border-bottom-width: 1px; border-bottom-color: var(--c-edge); }
+
+/* 접힌 이벤트 띠의 높이를 비워 계기와 겹치지 않게 한다. 펼친 이력은 하단 전체를 사용한다. */
+.page--run .run-col { top: 14px; bottom: 64px; }
+.run-operation-detail { font-size: 14px; color: var(--c-ink-2); white-space: normal; height: 42px; flex-shrink: 0; margin-top: 8px; overflow: hidden; }
+.run-calibration { height: 76px; flex-shrink: 0; border-bottom-width: 1px; border-bottom-color: var(--c-edge); margin-bottom: 8px; }
+.run-calibration-state { font-size: 16px; color: var(--c-ink); -unity-font-style: bold; }
+.run-calibration-detail { font-size: 14px; color: var(--c-ink-2); margin-top: 4px; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.run-slot-content { flex-grow: 1; min-height: 0; overflow: hidden; }
+.run-slot-content .run-sect { margin-bottom: 4px; }
+.run-slot-content #progress-now { display: none; }
+.run-slot-content .grp { margin-bottom: 4px; }
+.run-slot-content .grp__head { margin-bottom: 3px; }
+.session-events .unity-foldout__text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.session-events #event-list { height: 240px; }
+.run-calibration-state.bad, .run-operation-detail.bad { color: var(--c-bad); }

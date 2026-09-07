@@ -26,9 +26,11 @@ namespace MainUnity.Tests.PlayMode
             public string job_status;
         }
 
-        [Test]
-        public void UiStatusRecoveryAndSessionEventsRemainConsistent()
+        [UnityTest]
+        public IEnumerator UiStatusRecoveryAndSessionEventsRemainConsistent()
         {
+            // alarmSinceTime의 음수는 미시작 표식이다. 시작 직후 now - 1이 음수가 되지 않게 한다.
+            yield return new WaitForSecondsRealtime(1.1f);
             // 비활성 객체에서 표시 로직만 검증한다. ROS 연결과 실제 Scene의 상태는 변경하지 않는다.
             var root = new GameObject("UI status regression");
             root.SetActive(false);
@@ -101,6 +103,79 @@ namespace MainUnity.Tests.PlayMode
                 Assert.That(events.Count, Is.EqualTo(200), "UI deactivation must retain session history.");
             }
             finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        [Test]
+        public void CalibrationProgressPreservesPlacementAndReportsRecovery()
+        {
+            var root = new GameObject("Calibration progress regression");
+            root.SetActive(false);
+            var uiRoot = new GameObject("Calibration UI regression");
+            uiRoot.SetActive(false);
+            try
+            {
+                var calibration = root.AddComponent(RuntimeType("MainUnity.Runtime.Camera.TrayPartCalibrator"));
+                var master = uiRoot.AddComponent(RuntimeType("MainUnity.UI.UIMaster"));
+                Field(master, "observedCalibration").SetValue(master, calibration);
+                Action record = () => Invoke(master, "OnCalibrationChanged");
+                var changed = calibration.GetType().GetEvent("ProgressChanged", BindingFlags.Instance | BindingFlags.NonPublic);
+                changed.GetAddMethod(true).Invoke(calibration, new object[] { record });
+                string State() => GetProperty(calibration, "Progress").ToString();
+                var receive = calibration.GetType().GetMethod("ReceiveState", BindingFlags.Instance | BindingFlags.NonPublic);
+                void Receive(string json)
+                {
+                    var message = Activator.CreateInstance(receive.GetParameters()[0].ParameterType);
+                    Field(message, "data").SetValue(message, json);
+                    receive.Invoke(calibration, new[] { message });
+                }
+                const string preparing = "{\"schema\":\"fr5.tray.unity_state/v1\",\"valid\":false}";
+                const string applied = "{\"schema\":\"fr5.tray.unity_state/v1\",\"valid\":true," +
+                    "\"sequence\":7,\"registration_state\":\"TRACKING\",\"coordinate_frame\":\"base_link\"," +
+                    "\"position_units\":\"mm\",\"parts\":[]}";
+                Assert.That(State(), Is.EqualTo("Waiting"));
+                Assert.That((double)GetProperty(calibration, "LastReceiveTime"), Is.EqualTo(-1d));
+                // 동기 테스트 동안만 활성화한다. Start의 ROS 구독이 실행될 다음 프레임 전에 제거한다.
+                root.SetActive(true);
+                Receive(preparing);
+                Assert.That(State(), Is.EqualTo("Preparing"));
+                Assert.That((double)GetProperty(calibration, "LastAppliedTime"), Is.EqualTo(-1d));
+                var events = (IList)Field(master, "Events").GetValue(master);
+                Receive(preparing);
+                Assert.That(events.Count, Is.EqualTo(1), "Repeated preparation frames must not flood the event list.");
+                Receive(applied);
+                Assert.That(State(), Is.EqualTo("Applied"));
+                double appliedAt = (double)GetProperty(calibration, "LastAppliedTime");
+                var part = new GameObject("Retained placement");
+                part.transform.SetParent(root.transform);
+                ((IDictionary)Field(calibration, "instancesById").GetValue(calibration)).Add("retained", part);
+                Receive(applied);
+                Assert.That(events.Count, Is.EqualTo(2));
+                Assert.That(part != null, Is.True, "Duplicate results must not apply the placement again.");
+                LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex(".*unsupported schema.*"));
+                Receive("{}");
+                Assert.That(State(), Is.EqualTo("Rejected"));
+                Assert.That(part != null, Is.True);
+                Assert.That((double)GetProperty(calibration, "LastAppliedTime"), Is.EqualTo(appliedAt));
+                Assert.That(StringProperty(calibration, "ProgressDetail"), Does.Contain("이전 배치 유지"));
+                Receive(preparing);
+                Assert.That(State(), Is.EqualTo("Preparing"));
+                Receive(applied);
+                Assert.That(State(), Is.EqualTo("Applied"), "A valid duplicate after preparation must recover the display.");
+                Assert.That(part != null, Is.True);
+                Assert.That((double)GetProperty(calibration, "LastAppliedTime"), Is.EqualTo(appliedAt));
+                Assert.That(events.Count, Is.EqualTo(5));
+
+                var binder = uiRoot.AddComponent(RuntimeType("MainUnity.UI.FR5RunBinder"));
+                var detail = new UnityEngine.UIElements.Label();
+                Field(binder, "operationDetail").SetValue(binder, detail);
+                Invoke(binder, "RefreshAssembly");
+                Assert.That(detail.text, Does.Contain("피드백 대기"), "Missing slot geometry must not hide operation status.");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(uiRoot);
+                UnityEngine.Object.DestroyImmediate(root);
+            }
         }
 
         [Test]

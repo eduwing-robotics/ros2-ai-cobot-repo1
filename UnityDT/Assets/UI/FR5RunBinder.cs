@@ -6,8 +6,7 @@
 //   미연결 : 작업(jobs) · 수량 · 사이클 — 값을 지어내지 않고
 //            FR5EmptyState 로 "연결 없음 + 필요한 조회"를 적는다  [TODO(API)]
 //
-// 이 화면의 가운데(500..1560 × 68..1080)는 비워 둔다. 로봇이 움직이는 영역이고,
-// 계기는 화면 양 가장자리에 얹힌다 (Docs/ui-design.md 2절).
+// 트윈과 카메라는 좌우에 같은 크기로 두고, 진행 상태와 계기는 하단 띠에 표시한다.
 
 using System.Collections.Generic;
 using MainUnity.Runtime.Camera;
@@ -123,6 +122,8 @@ namespace MainUnity.UI
         Foldout eventFoldout;
         ScrollView eventList;
         int eventVersion = -1;
+        Label operationDetail, operationAge, calibrationState, calibrationDetail, calibrationAge;
+        double nextProgressRefreshTime;
 
         void OnEnable()
         {
@@ -145,8 +146,13 @@ namespace MainUnity.UI
             RefreshCamera();
             SampleTrends();
             RefreshRealStatus();
-            RefreshAssembly();
-            RefreshEvents();
+            if (Time.realtimeSinceStartupAsDouble >= nextProgressRefreshTime)
+            {
+                nextProgressRefreshTime = Time.realtimeSinceStartupAsDouble + 0.25d;
+                RefreshAssembly();
+                RefreshCalibration();
+                RefreshEvents();
+            }
         }
 
         void ResolveReferences()
@@ -174,7 +180,17 @@ namespace MainUnity.UI
             unitStep = root.Q<Label>("unit-step");
             eventFoldout = root.Q<Foldout>("session-events");
             eventList = root.Q<ScrollView>("event-list");
+            var eventTitle = eventFoldout?.Q<Label>(className: "unity-foldout__text");
+            if (eventTitle != null) eventTitle.enableRichText = false;
             eventVersion = -1;
+            operationDetail = root.Q<Label>("operation-detail");
+            operationAge = root.Q<Label>("operation-age");
+            calibrationState = root.Q<Label>("calibration-state");
+            calibrationDetail = root.Q<Label>("calibration-detail");
+            calibrationAge = root.Q<Label>("calibration-age");
+            if (operationDetail != null) operationDetail.enableRichText = false;
+            if (calibrationDetail != null) calibrationDetail.enableRichText = false;
+            nextProgressRefreshTime = 0d;
 
             gripperChip = root.Q<VisualElement>("gripper-state-chip");
             gripperText = root.Q<Label>("gripper-state-text");
@@ -638,7 +654,7 @@ namespace MainUnity.UI
         {
             AssemblyProgressManager manager = uiMaster != null ? uiMaster.AssemblyProgress : null;
             AssemblyProgressFrame frame = manager != null ? manager.Latest : null;
-            if (!EnsureSlotGroups()) return;
+            EnsureSlotGroups();
 
             int placed = frame != null ? frame.PlacedCount : 0;
 
@@ -729,6 +745,28 @@ namespace MainUnity.UI
             }
 
             RefreshNow(frame);
+            if (operationDetail != null)
+            {
+                string detail = frame == null ? "조립 진행 피드백 대기" : frame.State switch
+                {
+                    AssemblyState.Idle => "실행 요청 대기",
+                    AssemblyState.Completed => "목표 PASS 달성 여부는 작업 화면에서 확인",
+                    AssemblyState.Failed => string.IsNullOrEmpty(frame.Message) ? "실패 원인은 최근 이벤트에서 확인" : frame.Message,
+                    AssemblyState.Paused => "일시정지 중 · 재개 확인 필요",
+                    _ => string.IsNullOrEmpty(frame.Message) ? "다음 진행 피드백 대기" : frame.Message
+                };
+                if (statusManager != null && statusManager.State == RobotRunState.Error)
+                    detail = "로봇 오류 · 상단 알람 확인";
+                else if (statusManager != null && statusManager.State == RobotRunState.Disconnected)
+                    detail = "로봇 상태 수신 중단 · 운전 상태 확인 필요";
+                operationDetail.text = detail;
+                operationDetail.tooltip = detail;
+                SetTone(operationDetail, frame?.State == AssemblyState.Failed ||
+                    statusManager?.State == RobotRunState.Error ? "bad" : "none");
+            }
+            if (operationAge != null)
+                operationAge.text = frame == null ? "조립 수신 기록 없음" :
+                    "조립 수신 " + Age(frame.ReceiveTimeSeconds);
 
             if (unitStep == null) return;
             if (frame == null)
@@ -796,10 +834,48 @@ namespace MainUnity.UI
             label.EnableInClassList("bad", tone == "bad");
         }
 
+        static string Age(double receiveTime) => receiveTime < 0d ? "기록 없음" :
+            $"{System.Math.Max(0d, Time.realtimeSinceStartupAsDouble - receiveTime):0}초 전";
+
+        void RefreshCalibration()
+        {
+            if (calibrationState == null || calibrationDetail == null || calibrationAge == null) return;
+            var source = uiMaster != null ? uiMaster.Calibration : null;
+            bool mock = uiMaster != null && uiMaster.IsSimulated;
+            string state = mock ? "사용 안 함" : source == null ? "연결 없음" : source.Progress switch
+            {
+                TrayPartCalibrator.ProgressState.Preparing => "추적 준비 중",
+                TrayPartCalibrator.ProgressState.Applied => "배치 반영 완료",
+                TrayPartCalibrator.ProgressState.Rejected => "결과 거부",
+                TrayPartCalibrator.ProgressState.ConfigurationError => "설정 확인 필요",
+                _ => "미수신"
+            };
+            bool error = !mock && source != null &&
+                (source.Progress == TrayPartCalibrator.ProgressState.Rejected ||
+                 source.Progress == TrayPartCalibrator.ProgressState.ConfigurationError);
+            string detail = mock ? "시뮬레이션 배치 사용" : source == null ? "트레이 좌표 수신기 연결 필요" :
+                source.Progress == TrayPartCalibrator.ProgressState.Rejected ?
+                    (source.LastAppliedTime >= 0d ? "결과 검증 실패 · 이전 배치 유지" : "결과 검증 실패 · 유효한 배치 없음") : source.ProgressDetail;
+            if (!mock && source != null && !source.isActiveAndEnabled && !error)
+            {
+                state = "수신 비활성";
+                detail = "현재 좌표 수신 및 배치 반영 중지";
+            }
+            calibrationState.text = state;
+            SetTone(calibrationState, error ? "bad" : "none");
+            calibrationDetail.text = detail;
+            calibrationDetail.tooltip = !mock && source != null ? source.ProgressDetail : detail;
+            calibrationAge.text = mock || source == null ? "수신 기록 없음" :
+                "수신 " + Age(source.LastReceiveTime) + " · 반영 " + Age(source.LastAppliedTime);
+        }
+
         void RefreshEvents()
         {
             if (uiMaster == null || eventFoldout == null || eventList == null) return;
-            eventFoldout.text = $"최근 이벤트 · {uiMaster.Events.Count}건 · 현재 세션 / 최근 200건";
+            string latest = uiMaster.Events.Count > 0 ? uiMaster.Events[uiMaster.Events.Count - 1].Source + " · " +
+                uiMaster.Events[uiMaster.Events.Count - 1].Message : "기록 없음";
+            eventFoldout.text = "최근 이벤트 · " + latest;
+            eventFoldout.tooltip = $"현재 세션 / 최근 200건 · {uiMaster.Events.Count}건 · " + latest;
             if (!eventFoldout.value || eventVersion == uiMaster.EventVersion) return;
             // 사용자가 과거 내용을 읽는 동안 현재 목록을 고정한다. 맨 아래로 돌아오면 갱신한다.
             bool atBottom = eventList.verticalScroller.value >= eventList.verticalScroller.highValue - 2f;
@@ -817,7 +893,9 @@ namespace MainUnity.UI
             }
             if (uiMaster.Events.Count == 0)
                 eventList.Add(new Label("이번 세션에서 기록된 이벤트가 없습니다."));
-            eventList.schedule.Execute(() => eventList.verticalScroller.value = eventList.verticalScroller.highValue);
+            // 새 행의 레이아웃 이후 이동해야 첫 펼침에서도 최신 이벤트가 보인다.
+            eventList.schedule.Execute(() => eventList.ScrollTo(eventList.contentContainer[eventList.contentContainer.childCount - 1]))
+                .ExecuteLater(1);
         }
 
         /// <summary>

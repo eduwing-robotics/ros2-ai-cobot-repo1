@@ -89,12 +89,29 @@ namespace MainUnity.Runtime.Camera
         long lastSequence;
         string lastRejectedReason;
 
+        internal enum ProgressState { Waiting, Preparing, Applied, Rejected, ConfigurationError }
+        internal ProgressState Progress { get; private set; }
+        internal string ProgressDetail { get; private set; } = "트레이 좌표 수신 대기";
+        // 수신 시각과 배치 반영 시각은 다르다. 준비/거부 메시지도 수신은 계속될 수 있다.
+        internal double LastReceiveTime { get; private set; } = -1d;
+        internal double LastAppliedTime { get; private set; } = -1d;
+        internal event Action ProgressChanged;
+
+        void SetProgress(ProgressState state, string detail)
+        {
+            if (Progress == state && ProgressDetail == detail) return;
+            Progress = state;
+            ProgressDetail = detail;
+            ProgressChanged?.Invoke();
+        }
+
         Transform SpawnRoot => spawnRoot != null ? spawnRoot : transform;
 
         void Start()
         {
             if (!TryBuildBindingLookup(out string error))
             {
+                SetProgress(ProgressState.ConfigurationError, error);
                 Debug.LogError($"[TrayPartCalibrator] {error}", this);
                 enabled = false;
                 return;
@@ -116,7 +133,13 @@ namespace MainUnity.Runtime.Camera
 
         void ReceiveState(StringMsg message)
         {
-            if (!isActiveAndEnabled || string.IsNullOrWhiteSpace(message?.data)) return;
+            if (!isActiveAndEnabled) return;
+            LastReceiveTime = Time.realtimeSinceStartupAsDouble;
+            if (string.IsNullOrWhiteSpace(message?.data))
+            {
+                Reject("Empty tray state received.");
+                return;
+            }
 
             TrayState state;
             try
@@ -130,20 +153,35 @@ namespace MainUnity.Runtime.Camera
             }
 
             // valid=false는 추적 준비 중의 정상 상태다. 마지막 정상 배치를 유지한다.
-            if (state == null || !state.valid) return;
-            if (hasSequence && state.sequence == lastSequence) return;
+            if (state == null || state.schema != SchemaName)
+            {
+                Reject("Rejected a tray state with an unsupported schema.");
+                return;
+            }
+            if (!state.valid)
+            {
+                lastRejectedReason = null;
+                SetProgress(ProgressState.Preparing, hasSequence ? "추적 준비 중 · 이전 배치 유지" : "유효한 트레이 좌표 대기");
+                return;
+            }
+            // 정상 상태의 동일 결과는 재배치/재할당하지 않는다. 준비나 거부 뒤에는 재검증한다.
+            if (hasSequence && state.sequence == lastSequence && Progress == ProgressState.Applied) return;
             if (!TryCreatePoses(state, out List<PartPose> poses, out string error))
             {
                 Reject(error);
                 return;
             }
 
-            latestPoses = poses;
-
-            Apply(poses);
+            if (!hasSequence || state.sequence != lastSequence)
+            {
+                Apply(poses);
+                latestPoses = poses;
+                LastAppliedTime = Time.realtimeSinceStartupAsDouble;
+            }
             lastRejectedReason = null;
             lastSequence = state.sequence;
             hasSequence = true;
+            SetProgress(ProgressState.Applied, "트레이 좌표 검증 및 Unity 배치 반영됨");
         }
 
         bool TryBuildBindingLookup(out string error)
@@ -275,6 +313,8 @@ namespace MainUnity.Runtime.Camera
 
         void Reject(string reason)
         {
+            SetProgress(ProgressState.Rejected, reason +
+                (hasSequence ? " · 이전 배치 유지" : " · 유효한 배치 없음"));
             if (reason == lastRejectedReason) return;
             lastRejectedReason = reason;
             Debug.LogWarning($"[TrayPartCalibrator] {reason} Last valid placement was preserved.", this);

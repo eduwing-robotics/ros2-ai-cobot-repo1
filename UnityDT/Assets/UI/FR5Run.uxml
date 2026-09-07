@@ -99,6 +99,8 @@
                     <ui:Label name="now-part" text="" class="run-now__part" />
                 </ui:VisualElement>
                 <ui:Label name="unit-step" text="—" class="run-sub" style="margin-top:6px;" />
+                <ui:Label name="operation-detail" text="진행 정보 대기" class="run-operation-detail" />
+                <ui:Label name="operation-age" text="수신 기록 없음" class="run-sub" />
                 <ui:VisualElement class="spacer" />
                 <ui:Label name="recipe-version" text="—" class="run-sect__unit" />
                 <ui:Label name="request-id" text="—" class="run-sect__unit" style="margin-top:2px;" />
@@ -163,15 +165,26 @@
                 <ui:VisualElement name="watchdog-spark" class="spark" style="margin-top:4px;" />
             </ui:VisualElement>
 
-            <!-- 5. 슬롯 맵 -->
-            <ui:VisualElement class="run-col run-col--rule" style="left:1250px; right:32px;">
-                <ui:VisualElement class="run-sect">
-                    <ui:Label text="SLOT MAP" class="run-sect__title" />
-                    <ui:VisualElement class="spacer" />
-                    <ui:Label name="progress-now" text="—" class="run-sub" />
-                    <ui:Label name="progress-count" text="—" class="run-val" style="margin-left:16px;" />
+            <!-- 5. 좌표 반영 상태 · 슬롯 맵 -->
+            <ui:VisualElement name="run-detail-column" class="run-col run-col--rule" style="left:1250px; right:32px;">
+                <ui:VisualElement name="calibration-panel" class="run-calibration">
+                    <ui:VisualElement class="row">
+                        <ui:Label text="CALIBRATION" class="run-sect__title" />
+                        <ui:VisualElement class="spacer" />
+                        <ui:Label name="calibration-state" text="미수신" class="run-calibration-state" />
+                    </ui:VisualElement>
+                    <ui:Label name="calibration-detail" text="트레이 좌표 수신 대기" class="run-calibration-detail" />
+                    <ui:Label name="calibration-age" text="수신 기록 없음" class="run-sub" />
                 </ui:VisualElement>
-                <ui:VisualElement name="progress-groups" class="row vlist" style="flex-grow:1; flex-wrap:wrap; align-items:flex-start;" />
+                <ui:VisualElement name="slot-map-content" class="run-slot-content">
+                    <ui:VisualElement class="run-sect">
+                        <ui:Label text="SLOT MAP" class="run-sect__title" />
+                        <ui:VisualElement class="spacer" />
+                        <ui:Label name="progress-now" text="—" class="run-sub" />
+                        <ui:Label name="progress-count" text="—" class="run-val" style="margin-left:16px;" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="progress-groups" class="row vlist" style="flex-grow:1; flex-wrap:wrap; align-items:flex-start;" />
+                </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
 
@@ -180,7 +193,7 @@
           맨 마지막에 둔다. 알람 띠가 페이지 요소 위로 그려져야 하기 때문이다.
         -->
         <ui:Foldout name="session-events" text="최근 이벤트" value="false" class="session-events">
-            <ui:ScrollView name="event-list" mode="Vertical" style="height:240px;" />
+            <ui:ScrollView name="event-list" mode="Vertical" />
         </ui:Foldout>
         <ui:Instance template="FR5Shell" name="shell" class="shell-host" picking-mode="Ignore" />
     </ui:VisualElement>
