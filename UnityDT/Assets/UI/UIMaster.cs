@@ -1,4 +1,4 @@
-// 역할: Inspector로 주입된 런타임 참조를 HUD 컴포넌트에 중계한다.
+// 역할: 주입된 런타임 참조와 페이지 전환 중 유지할 UI 세션 이력을 소유한다.
 //
 // UI 컴포넌트(FR5RunBinder, ManualJointPanel 등)는 씬을 직접 뒤지지 않는다.
 // RobotMaster가 주입한 경로를 따라간다.
@@ -8,6 +8,9 @@
 // 기판 슬롯 구성(ItemManager)은 로봇이 아니라 트윈 쪽 데이터라 여기서 따로 들고 있는다.
 // Ghost는 RobotMaster 계층 밖의 시각화 전용이라 여기서만 별도로 들고 있는다.
 
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using MainUnity.Runtime.Camera;
 using MainUnity.Runtime.Robot.Assembly;
 using MainUnity.Runtime.Robot;
@@ -37,6 +40,120 @@ namespace MainUnity.UI
 
         [Tooltip("기판 슬롯 구성을 들고 있는 트윈 쪽 데이터입니다.")]
         [SerializeField] ItemManager board;
+
+        // 화면 전환으로 사라지지 않는 현재 세션의 관측 이력이다. 생산 DB 기록이 아니다.
+        internal readonly List<(DateTime Time, string Source, string Message, bool Error, int Count)> Events = new();
+        internal int EventVersion { get; private set; }
+        RobotStatusManager observedStatus;
+        AssemblyProgressManager observedProgress;
+        RobotRunState? lastRobotState;
+        AssemblyProgressFrame lastProgress;
+
+        void OnEnable() => StartCoroutine(ObserveSources());
+
+        void OnDisable()
+        {
+            StopAllCoroutines();
+            if (observedStatus != null) observedStatus.StatusChanged -= OnStatusChanged;
+            if (observedProgress != null) observedProgress.ProgressChanged -= OnProgressChanged;
+            observedStatus = null;
+            observedProgress = null;
+            lastRobotState = null;
+            lastProgress = null;
+        }
+
+        IEnumerator ObserveSources()
+        {
+            var interval = new WaitForSecondsRealtime(0.25f);
+            while (true)
+            {
+                // RobotMaster의 주입이 끝난 뒤 구독한다. 페이지나 전역 객체를 검색하지 않는다.
+                if (observedStatus != StatusManager)
+                {
+                    if (observedStatus != null) observedStatus.StatusChanged -= OnStatusChanged;
+                    observedStatus = StatusManager;
+                    lastRobotState = null;
+                    if (observedStatus != null)
+                    {
+                        observedStatus.StatusChanged += OnStatusChanged;
+                        OnStatusChanged(observedStatus.State, observedStatus.ErrorLabel, observedStatus.ErrorDetail);
+                    }
+                }
+                if (observedProgress != AssemblyProgress)
+                {
+                    if (observedProgress != null) observedProgress.ProgressChanged -= OnProgressChanged;
+                    observedProgress = AssemblyProgress;
+                    lastProgress = null;
+                    if (observedProgress != null)
+                    {
+                        observedProgress.ProgressChanged += OnProgressChanged;
+                        if (observedProgress.Latest != null)
+                        {
+                            lastProgress = observedProgress.Latest;
+                            RecordEvent("조립", "현재 상태 확인 · " + lastProgress.State + " · Job " + lastProgress.JobId, false);
+                        }
+                    }
+                }
+                yield return interval;
+            }
+        }
+
+        void OnStatusChanged(RobotRunState state, RobotErrorLabel error, string detail)
+        {
+            if (state == RobotRunState.Disconnected)
+                RecordEvent("로봇", "상태 수신 없음 · " + detail, true);
+            else if (state == RobotRunState.Error)
+                RecordEvent("로봇", "오류 · " + error + " · " + detail, true);
+            else if (lastRobotState == RobotRunState.Disconnected || lastRobotState == RobotRunState.Error)
+                RecordEvent("로봇", "상태 복구 · 현재 오류 없음", false);
+            lastRobotState = state;
+        }
+
+        void OnProgressChanged(AssemblyProgressFrame frame)
+        {
+            if (frame == null)
+            {
+                if (lastProgress != null) RecordEvent("조립", "진행 추적 초기화 · 완료 판정 아님", false);
+                lastProgress = null;
+                return;
+            }
+            var previous = lastProgress;
+            lastProgress = frame;
+            if (previous != null && previous.JobId == frame.JobId && previous.State == frame.State &&
+                previous.StepOrder == frame.StepOrder && previous.SlotCode == frame.SlotCode &&
+                previous.ErrorCode == frame.ErrorCode && previous.Message == frame.Message) return;
+            string description = frame.State switch
+            {
+                AssemblyState.Started => "조립 시작",
+                AssemblyState.ConveyorMoving => "컨베이어 이동",
+                AssemblyState.Paused => "일시정지",
+                AssemblyState.Completed => "조립 완료 · 목표 PASS 달성 여부는 작업 화면에서 확인",
+                AssemblyState.Failed => "조립 실패 · " + frame.ErrorCode + " · " + frame.Message,
+                _ => null
+            };
+            if (previous?.State == AssemblyState.Paused && !frame.IsTerminal && frame.State != AssemblyState.Paused)
+                description = "조립 재개";
+            if (description != null)
+                RecordEvent("조립", description + " · Job " + frame.JobId +
+                    (string.IsNullOrEmpty(frame.SlotCode) ? "" : " · " + frame.SlotCode), frame.State == AssemblyState.Failed);
+        }
+
+        internal void RecordEvent(string source, string message, bool error)
+        {
+            int last = Events.Count - 1;
+            if (last >= 0 && Events[last].Source == source && Events[last].Message == message && Events[last].Error == error)
+            {
+                var entry = Events[last];
+                Events[last] = (DateTime.Now, source, message, error, entry.Count + 1);
+            }
+            else
+            {
+                // ponytail: 최근 200건만 메모리에 보관한다. 세션 간 추적은 영속 조회 계약이 생길 때 연결한다.
+                if (Events.Count == 200) Events.RemoveAt(0);
+                Events.Add((DateTime.Now, source, message, error, 1));
+            }
+            EventVersion++;
+        }
 
         /// <summary>Mock/Real Backend를 선택해 주입하는 로봇 진입점이다.</summary>
         public RobotMaster RobotMaster => robotMaster;

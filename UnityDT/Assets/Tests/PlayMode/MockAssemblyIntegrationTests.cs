@@ -27,6 +27,83 @@ namespace MainUnity.Tests.PlayMode
         }
 
         [Test]
+        public void UiStatusRecoveryAndSessionEventsRemainConsistent()
+        {
+            // 비활성 객체에서 표시 로직만 검증한다. ROS 연결과 실제 Scene의 상태는 변경하지 않는다.
+            var root = new GameObject("UI status regression");
+            root.SetActive(false);
+            try
+            {
+                var status = root.AddComponent(RuntimeType("MainUnity.Runtime.Robot.Status.RobotStatusManager"));
+                var shell = root.AddComponent(RuntimeType("MainUnity.UI.FR5ShellBinder"));
+                var master = root.AddComponent(RuntimeType("MainUnity.UI.UIMaster"));
+                var request = root.AddComponent(RuntimeType("MainUnity.UI.FR5RequestBinder"));
+                var banner = new UnityEngine.UIElements.VisualElement();
+                var label = new UnityEngine.UIElements.Label();
+                var detail = new UnityEngine.UIElements.Label();
+                var dot = new UnityEngine.UIElements.VisualElement();
+                Field(shell, "statusManager").SetValue(shell, status);
+                Field(shell, "alarmBanner").SetValue(shell, banner);
+                Field(shell, "alarmLabel").SetValue(shell, label);
+                Field(shell, "alarmDetail").SetValue(shell, detail);
+                Field(shell, "linkJointDot").SetValue(shell, dot);
+                var stateType = RuntimeType("MainUnity.Runtime.Robot.Status.RobotRunState");
+                var errorType = RuntimeType("MainUnity.Runtime.Robot.Status.RobotErrorLabel");
+                void State(string state, string error) => Invoke(status, "SetStatus",
+                    Enum.Parse(stateType, state), Enum.Parse(errorType, error), "test detail");
+                var frameType = RuntimeType("MainUnity.Runtime.Robot.Status.RobotStatusFrame");
+                var constructor = frameType.GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic).Single();
+                object[] args = constructor.GetParameters().Select(parameter =>
+                    parameter.ParameterType.IsValueType ? Activator.CreateInstance(parameter.ParameterType) : null).ToArray();
+                args[0] = new float[6];
+                object frame = constructor.Invoke(args);
+                status.GetType().GetProperty("Latest").SetValue(status, frame);
+                State("Disconnected", "Timeout");
+                Invoke(shell, "RefreshLinks");
+                Assert.That(dot.ClassListContains("dot--bad"), Is.True, "Retained frames must not imply a live link.");
+                Field(shell, "alarmSinceTime").SetValue(shell, Time.realtimeSinceStartupAsDouble - 1d);
+                Invoke(shell, "RefreshAlarm");
+                Assert.That(label.text, Does.Contain("수신 중단"));
+                State("Idle", "None");
+                Field(status, "lastReceiveTimeSeconds").SetValue(status, Time.realtimeSinceStartupAsDouble);
+                Invoke(shell, "RefreshAlarm");
+                Assert.That(label.text, Is.EqualTo("상태 복구"));
+                Assert.That(banner.ClassListContains("alarm-banner--recovered"), Is.True);
+                Assert.That(detail.text, Does.Contain("수신 중단"));
+                Invoke(shell, "RefreshLinks");
+                Assert.That(dot.ClassListContains("dot--ok"), Is.True);
+
+                var jobError = new UnityEngine.UIElements.Label();
+                Field(request, "jobError").SetValue(request, jobError);
+                Field(request, "jobActionError").SetValue(request, "작업 실행 실패");
+                Field(request, "jobQueryError").SetValue(request, "조회 실패");
+                Invoke(request, "RefreshJobError");
+                Assert.That(jobError.text, Does.Contain("조회 실패"));
+                Field(request, "jobQueryError").SetValue(request, null);
+                Invoke(request, "RefreshJobError");
+                Assert.That(jobError.text, Is.EqualTo("작업 실행 실패"));
+
+                var reason = new UnityEngine.UIElements.Label();
+                Field(request, "startReason").SetValue(request, reason);
+                Field(request, "registrationResult").SetValue(request, "등록 응답 확인 실패");
+                Invoke(request, "ApplyRegisterState", true, false, true);
+                Assert.That(reason.text, Does.Contain("등록 응답 확인 실패"));
+                Assert.That(reason.text, Does.Contain("재고가 부족"));
+
+                Invoke(master, "RecordEvent", "로봇", "연결 중단", true);
+                Invoke(master, "RecordEvent", "로봇", "연결 중단", true);
+                var events = (IList)Field(master, "Events").GetValue(master);
+                Assert.That(events.Count, Is.EqualTo(1));
+                Assert.That(events[0].GetType().GetField("Item5").GetValue(events[0]), Is.EqualTo(2));
+                for (int i = 0; i < 205; i++) Invoke(master, "RecordEvent", "작업", "event " + i, false);
+                Assert.That(events.Count, Is.EqualTo(200));
+                Invoke(master, "OnDisable");
+                Assert.That(events.Count, Is.EqualTo(200), "UI deactivation must retain session history.");
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        [Test]
         public void SlotIdentityControlsPickupSnapAndRecovery()
         {
             // Inactive fixtures avoid lifecycle ROS connections and leave the live scene alone.

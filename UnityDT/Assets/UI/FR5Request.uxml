@@ -26,14 +26,14 @@
                     <ui:Button name="filter-attention" text="ATTENTION" class="btn job-filter" />
                     <ui:Button name="filter-done" text="DONE" class="btn job-filter" />
                     <ui:VisualElement class="spacer" />
-                    <ui:Label name="job-error" text="" class="bad" />
                 </ui:VisualElement>
 
+                <ui:Label name="job-error" text="" class="bad wrap" style="font-size:15px; flex-shrink:0;" />
                 <ui:VisualElement class="trow trow--head">
                     <ui:Label text="STATUS" class="tcell tcell--head" style="width:104px;" />
                     <ui:Label text="JOB" class="tcell tcell--head" style="width:150px;" />
                     <ui:Label text="PRODUCT" class="tcell tcell--head" style="width:260px;" />
-                    <ui:Label text="PASS / TARGET" class="tcell tcell--head tcell--num" style="width:112px;" />
+                    <ui:Label text="PASS / 목표" class="tcell tcell--head tcell--num" style="width:112px;" />
                     <ui:Label text="RESULT" class="tcell tcell--head" style="width:148px;" />
                     <ui:Label text="REQUESTED" class="tcell tcell--head" style="width:126px;" />
                     <ui:Label text="LINK" class="tcell tcell--head" style="width:132px;" />
@@ -49,7 +49,7 @@
             <ui:VisualElement class="panel__head">
                 <ui:Label text="NEW JOB" class="panel__title" />
                 <ui:VisualElement class="spacer" />
-                <ui:Label text="production.jobs" class="panel__badge" />
+                <ui:Label text="작업 등록" class="panel__badge" />
             </ui:VisualElement>
             <ui:VisualElement class="panel__body">
                 <ui:Label name="product-name" text="—" class="value value--lg wrap" />

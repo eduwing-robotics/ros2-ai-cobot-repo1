@@ -98,12 +98,14 @@ namespace MainUnity.Runtime.Robot.Status
         public string ErrorDetail { get; private set; } = "Robot state has not been received.";
         public RobotStatusFrame Latest { get; private set; }
 
+        internal bool HasFreshState => lastReceiveTimeSeconds >= 0d &&
+            Time.realtimeSinceStartupAsDouble - lastReceiveTimeSeconds <= staleAfterSeconds;
+
         public event Action<RobotRunState, RobotErrorLabel, string> StatusChanged;
 
         void Update()
         {
-            if (lastReceiveTimeSeconds < 0d ||
-                Time.realtimeSinceStartupAsDouble - lastReceiveTimeSeconds <= staleAfterSeconds)
+            if (lastReceiveTimeSeconds < 0d || HasFreshState)
                 return;
 
             if (State != RobotRunState.Disconnected || ErrorLabel != RobotErrorLabel.Timeout)

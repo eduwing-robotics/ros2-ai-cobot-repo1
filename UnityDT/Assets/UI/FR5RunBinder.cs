@@ -3,7 +3,7 @@
 //   실연결 : 모드 · 로봇 상태 · 링크 2개 · 관절 6개 · TCP · RPY · 그리퍼 · 워치독
 //            (TCP · RPY · SAFETY 는 Real 전용이라 Mock 에서는 접는다)
 //            조립 진행 — 하단 패널과 JOB 패널의 phase · 슬롯 줄
-//   미연결 : 작업(jobs) · 수량 · 사이클 · 이벤트 로그 — 값을 지어내지 않고
+//   미연결 : 작업(jobs) · 수량 · 사이클 — 값을 지어내지 않고
 //            FR5EmptyState 로 "연결 없음 + 필요한 조회"를 적는다  [TODO(API)]
 //
 // 이 화면의 가운데(500..1560 × 68..1080)는 비워 둔다. 로봇이 움직이는 영역이고,
@@ -120,6 +120,9 @@ namespace MainUnity.UI
 
         readonly System.Collections.Generic.List<(Label Value, System.Func<RobotStatusFrame, string> Read)> realRows = new();
         bool cached;
+        Foldout eventFoldout;
+        ScrollView eventList;
+        int eventVersion = -1;
 
         void OnEnable()
         {
@@ -143,6 +146,7 @@ namespace MainUnity.UI
             SampleTrends();
             RefreshRealStatus();
             RefreshAssembly();
+            RefreshEvents();
         }
 
         void ResolveReferences()
@@ -168,7 +172,9 @@ namespace MainUnity.UI
             progressCount = root.Q<Label>("progress-count");
             unitPhase = root.Q<Label>("unit-phase");
             unitStep = root.Q<Label>("unit-step");
-            BuildEvents(root.Q<VisualElement>("event-list"), root.Q<Label>("events-summary"));
+            eventFoldout = root.Q<Foldout>("session-events");
+            eventList = root.Q<ScrollView>("event-list");
+            eventVersion = -1;
 
             gripperChip = root.Q<VisualElement>("gripper-state-chip");
             gripperText = root.Q<Label>("gripper-state-text");
@@ -538,7 +544,7 @@ namespace MainUnity.UI
         /// </summary>
         void BuildJob(VisualElement root)
         {
-            FR5EmptyState.Missing(root.Q<Label>("job-id"));
+            FR5EmptyState.Present(root.Q<Label>("job-id"), "조회 미연결");
             FR5EmptyState.Missing(root.Q<Label>("job-product"));
             FR5EmptyState.Detail(root.Q<Label>("job-recipe"), "jobs · products 조회 필요");
             FR5EmptyState.Dash(root.Q<Label>("job-progress-text"));
@@ -693,7 +699,7 @@ namespace MainUnity.UI
                     planTotal > 0 ? Mathf.Clamp01((float)placed / planTotal) * 100f : 0f);
 
             if (progressNow == null) return;
-            progressNow.text = frame == null ? "작업 없음" : Describe(frame);
+            progressNow.text = frame == null ? "진행 피드백 없음" : Describe(frame);
             SetTone(progressNow, frame == null || frame.State == AssemblyState.Completed ||
                 frame.State == AssemblyState.Paused
                 ? "muted"
@@ -705,7 +711,18 @@ namespace MainUnity.UI
         {
             if (unitPhase != null)
             {
-                unitPhase.text = frame != null ? frame.State.ToString().ToUpperInvariant() : "IDLE";
+                unitPhase.text = "조립 · " + (frame == null ? "피드백 없음" : frame.State switch
+                {
+                    AssemblyState.Idle => "대기",
+                    AssemblyState.Started => "시작",
+                    AssemblyState.Picked => "부품 이동 중",
+                    AssemblyState.Placed => "장착",
+                    AssemblyState.ConveyorMoving => "컨베이어 이동",
+                    AssemblyState.Paused => "일시정지",
+                    AssemblyState.Completed => "완료",
+                    AssemblyState.Failed => "실패",
+                    _ => "확인 필요"
+                });
                 // FAILED 가 RUNNING·IDLE 과 같은 무게로 보이면 실패를 못 알아본다.
                 // 진행 중은 색을 얻지 않는다 — 이상만 색을 얻는다(Docs/ui-design.md 1절).
                 SetTone(unitPhase, frame != null && frame.State == AssemblyState.Failed ? "bad" : "none");
@@ -716,11 +733,11 @@ namespace MainUnity.UI
             if (unitStep == null) return;
             if (frame == null)
             {
-                unitStep.text = $"슬롯 {planTotal}개 · 대기";
+                unitStep.text = $"계획 슬롯 {planTotal}개 · 진행 미확인";
                 return;
             }
 
-            unitStep.text = $"step {Mathf.Clamp(frame.StepOrder, 0, planTotal)} / {planTotal}";
+            unitStep.text = $"현재 조립 단계 {Mathf.Clamp(frame.StepOrder, 0, planTotal)} / {planTotal}";
         }
 
         /// <summary>
@@ -779,13 +796,29 @@ namespace MainUnity.UI
             label.EnableInClassList("bad", tone == "bad");
         }
 
-        /// <summary>이벤트 로그를 받을 경로가 없다. 지난 일을 지어내면 사고 조사가 틀어진다.</summary>
-        static void BuildEvents(VisualElement host, Label summary)
+        void RefreshEvents()
         {
-            FR5EmptyState.Fill(host, "이벤트 로그 경로 없음");
-            FR5EmptyState.Dash(summary);
+            if (uiMaster == null || eventFoldout == null || eventList == null) return;
+            eventFoldout.text = $"최근 이벤트 · {uiMaster.Events.Count}건 · 현재 세션 / 최근 200건";
+            if (!eventFoldout.value || eventVersion == uiMaster.EventVersion) return;
+            // 사용자가 과거 내용을 읽는 동안 현재 목록을 고정한다. 맨 아래로 돌아오면 갱신한다.
+            bool atBottom = eventList.verticalScroller.value >= eventList.verticalScroller.highValue - 2f;
+            if (eventVersion >= 0 && !atBottom) return;
+            eventVersion = uiMaster.EventVersion;
+            eventList.Clear();
+            foreach (var entry in uiMaster.Events)
+            {
+                var row = new Label($"{entry.Time:HH:mm:ss} · {entry.Source} · {entry.Message}" +
+                    (entry.Count > 1 ? $" · 반복 {entry.Count}회" : ""));
+                row.enableRichText = false;
+                row.AddToClassList("event-row");
+                if (entry.Error) row.AddToClassList("bad");
+                eventList.Add(row);
+            }
+            if (uiMaster.Events.Count == 0)
+                eventList.Add(new Label("이번 세션에서 기록된 이벤트가 없습니다."));
+            eventList.schedule.Execute(() => eventList.verticalScroller.value = eventList.verticalScroller.highValue);
         }
-
 
         /// <summary>
         /// Real 백엔드만 채우는 안전·상태 값이다 (/nonrt_state_data).
@@ -864,7 +897,7 @@ namespace MainUnity.UI
 
             foreach ((Label value, System.Func<RobotStatusFrame, string> read) in realRows)
             {
-                if (mock || frame == null)
+                if (mock || frame == null || !statusManager.HasFreshState)
                 {
                     value.text = "—";
                     value.style.color = new Color(0.29f, 0.33f, 0.37f);
@@ -950,7 +983,7 @@ namespace MainUnity.UI
         /// <summary>모드·로봇상태·링크는 FR5ShellBinder 가 맡는다. 여기서는 페이지 고유값만 본다.</summary>
         void RefreshLink()
         {
-            bool live = statusManager != null && statusManager.Latest != null;
+            bool live = statusManager != null && statusManager.HasFreshState;
             // 워치독이 살아 있는 것은 정상이다. 초록을 주면 화면에서 가장 눈에 띄는 것이
             // "정상"이 된다. 늦어지는 것은 아래 스파크라인이 알람 전에 보여 준다.
             watchdogDot?.EnableInClassList("dot--ok", live);

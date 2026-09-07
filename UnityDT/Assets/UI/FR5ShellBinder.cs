@@ -1,10 +1,9 @@
 // 역할: 공통 셸(FR5Shell.uxml)의 상단 바 값을 채운다. 모든 페이지에 하나씩 붙는다.
 //
 // 페이지마다 같은 코드를 복사하면 항목과 판정 기준이 갈라진다. 실제로 갈라져 있었다.
-// 모드 · 로봇 상태 · 링크 · 속도는 페이지와 무관하므로 여기 한 곳에서만 다룬다.
+// 모드 · 로봇 상태 · 링크 · 알람은 페이지와 무관하므로 여기 한 곳에서만 다룬다.
 //
 //   실연결 : 모드 · RobotRunState · joint_states · board/image · MainServer · Sequencer 링크
-//   샘플   : 속도 오버라이드  [TODO(API): 속도 지령 경로가 없다]
 //
 // 작업(JOB)·사이클은 페이지가 아는 값이라 각 페이지 바인더가 채운다.
 
@@ -42,7 +41,7 @@ namespace MainUnity.UI
         Button modeMockButton, modeRealButton, stopAllButton, viewFocusButton;
         VisualElement viewFocusRule;
         Label robotText, linkJointAge, linkImageAge, linkApiLabel, linkSequencerLabel,
-            alarmLabel, alarmDetail;
+            alarmLabel, alarmDetail, commandResult;
         Coroutine servicePolling;
         bool cached;
         bool stopRequestInFlight;
@@ -75,6 +74,8 @@ namespace MainUnity.UI
             RefreshLinks();
             RefreshAlarm();
             RefreshFocus();
+            if (commandResult != null)
+                commandResult.style.display = string.IsNullOrEmpty(commandResult.text) ? DisplayStyle.None : DisplayStyle.Flex;
         }
 
         void Build()
@@ -100,6 +101,7 @@ namespace MainUnity.UI
             alarmBanner = root.Q<VisualElement>("alarm-banner");
             alarmLabel = root.Q<Label>("alarm-label");
             alarmDetail = root.Q<Label>("alarm-detail");
+            commandResult = root.Q<Label>("command-result");
             viewFocusButton = root.Q<Button>("view-focus");
             viewFocusRule = root.Q<VisualElement>("view-focus-rule");
             pageRoot = root.Q<VisualElement>(className: "page");
@@ -180,7 +182,7 @@ namespace MainUnity.UI
             bool pauseSupported = uiMaster?.IsSimulated == true;
             if (stopAllButton != null)
             {
-                stopAllButton.text = paused ? "▶  RESUME" : "Ⅱ  PAUSE";
+                stopAllButton.text = !pauseSupported ? "일시정지 미지원" : stopRequestInFlight ? "처리 중…" : paused ? "▶ 재개" : "Ⅱ 일시정지";
                 stopAllButton.SetEnabled(pauseSupported && !stopRequestInFlight && frame != null &&
                     !frame.IsTerminal && !conveyorMoving && uiMaster?.Scenario?.IsRunning == true);
                 stopAllButton.tooltip = !pauseSupported
@@ -197,15 +199,20 @@ namespace MainUnity.UI
         {
             if (stopRequestInFlight || uiMaster?.Scenario == null) return;
             stopRequestInFlight = true;
+            bool resume = uiMaster.AssemblyProgress?.Latest?.State == AssemblyState.Paused;
+            if (commandResult != null) commandResult.text = "";
             try
             {
-                if (uiMaster.AssemblyProgress?.Latest?.State == AssemblyState.Paused)
+                if (resume)
                     await uiMaster.Scenario.ResumeAsync();
                 else
                     await uiMaster.Scenario.PauseAsync();
             }
             catch (System.Exception exception)
             {
+                string message = (resume ? "재개 실패" : "일시정지 실패") + " · " + exception.Message;
+                if (commandResult != null) commandResult.text = message;
+                uiMaster?.RecordEvent("조작", message, true);
                 Debug.LogException(exception, this);
             }
             finally
@@ -230,7 +237,13 @@ namespace MainUnity.UI
         void RefreshState()
         {
             RobotRunState state = statusManager != null ? statusManager.State : RobotRunState.Disconnected;
-            if (robotText != null) robotText.text = state.ToString().ToUpperInvariant();
+            if (robotText != null) robotText.text = state switch
+            {
+                RobotRunState.Running => "이동 중",
+                RobotRunState.Idle => "정지",
+                RobotRunState.Error => "오류",
+                _ => statusManager?.Latest == null ? "수신 대기" : "수신 중단"
+            };
 
             // 정상에는 색을 주지 않는다 (Docs/ui-design.md 1절).
             // RUNNING 에 초록을 주면 "정상이라는 신호"가 화면에서 가장 눈에 띄는 것이 되고,
@@ -243,7 +256,7 @@ namespace MainUnity.UI
 
         void RefreshLinks()
         {
-            bool jointLive = statusManager != null && statusManager.Latest != null;
+            bool jointLive = statusManager != null && statusManager.HasFreshState;
             // 링크가 살아 있는 것은 정상이므로 무채색(dot--ok)이다. 끊긴 것만 색을 얻는다.
             linkJointDot?.EnableInClassList("dot--ok", jointLive);
             linkJointDot?.EnableInClassList("dot--good", false);
@@ -327,24 +340,14 @@ namespace MainUnity.UI
             if (label != null) label.tooltip = detail;
         }
 
-        /// <summary>
-        /// 알람 띠. 평상시에는 높이 0 이고 Error / Disconnected 일 때만 나타난다.
-        /// Real 백엔드는 비상정지·알람·에러코드를 프레임에 실어 보내므로 그 값을 우선한다.
-        /// </summary>
-        /// <summary>
-        /// 알람은 채터링하면 안 된다 (EEMUA 191 · IEC 62682).
-        /// 링크 지터나 메인 스레드 정체로 상태가 한두 프레임 뒤집히는 것까지 띠로 알리면
-        /// 화면이 깜빡이고, 그러면 진짜 알람도 같은 깜빡임으로 보여 무시하게 된다.
-        ///
-        /// 그래서 두 방향에 각각 시간을 건다.
-        ///   켤 때  조건이 ShowDelay 만큼 이어져야 켠다.
-        ///   끌 때  한 번 켜지면 HoldSeconds 동안은 조건이 사라져도 유지한다.
-        /// 비상정지 · 알람 · 이상정지는 지연 없이 즉시 켠다. 늦으면 안 되는 것들이다.
-        /// </summary>
+        // 통신 흔들림은 0.6초 지속 후 표시하고 설비 알람은 즉시 표시한다.
+        // 조건 해제 뒤 3초는 복구 안내로 전환한다. 현재 오류가 없다는 뜻이며
+        // 설비 reset이나 작업 재개 완료를 뜻하지 않는다.
         const float AlarmShowDelaySeconds = 0.6f;
         const float AlarmHoldSeconds = 3f;
         double alarmSinceTime = -1d;
         double alarmShownUntil = -1d;
+        string lastAlarmLabel;
 
         void RefreshAlarm()
         {
@@ -371,14 +374,28 @@ namespace MainUnity.UI
             alarmBanner.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
             if (!show) return;
 
+            alarmBanner.EnableInClassList("alarm-banner--recovered", !condition);
+            if (!condition)
+            {
+                if (alarmLabel != null) alarmLabel.text = "상태 복구";
+                if (alarmDetail != null) alarmDetail.text = lastAlarmLabel + " · 현재 오류 없음 · 작업 재개 여부는 별도 확인";
+                return;
+            }
+
             string label =
-                emergency ? "EMERGENCY STOP" :
-                alarm ? "ROBOT ALARM" :
-                abnormal ? "ABNORMAL STOP" :
-                statusManager != null ? statusManager.ErrorLabel.ToString().ToUpperInvariant() : "DISCONNECTED";
+                emergency ? "비상정지 작동" :
+                alarm ? "로봇 알람 발생" :
+                abnormal ? "이상 정지" :
+                state == RobotRunState.Disconnected
+                    ? frame == null ? "로봇 상태 수신 대기" : "로봇 상태 수신 중단"
+                    : "로봇 오류";
+            lastAlarmLabel = label;
             if (alarmLabel != null) alarmLabel.text = label;
 
-            string detail = statusManager != null ? statusManager.ErrorDetail : "상태 수신 없음";
+            string detail = state == RobotRunState.Disconnected
+                ? "현재 자세를 확인할 수 없습니다 · 로봇 연결을 확인하세요"
+                : "로봇 상태와 오류 코드를 확인하세요";
+            if (alarmDetail != null) alarmDetail.tooltip = statusManager?.ErrorDetail ?? "상태 수신 없음";
             if (frame != null && (frame.MainErrorCode != 0 || frame.SubErrorCode != 0))
                 detail = $"error {frame.MainErrorCode}:{frame.SubErrorCode}   ·   {detail}";
             if (alarmDetail != null) alarmDetail.text = detail;

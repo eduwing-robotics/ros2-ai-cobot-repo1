@@ -105,6 +105,7 @@ namespace MainUnity.UI
         Image previewImage;
         Label jobCount, jobError, productName, productMeta, productSlotCount,
               previewSource, previewDesc, qtyValue, startReason;
+        string jobQueryError, jobActionError, registrationResult;
         Button start, filterAll, filterQueue, filterAttention, filterDone;
         FR5PageRouter pageRouter;
 
@@ -113,7 +114,7 @@ namespace MainUnity.UI
         Requirement[] requirements = Array.Empty<Requirement>();
         Job[] jobs = Array.Empty<Job>();
 
-        bool cached, requirementsLoaded, jobsLoading, registerInFlight;
+        bool cached, requirementsLoaded, jobsLoading, jobsLoaded, registerInFlight;
         string productError, selectedFilter = "ALL", interlockSignature, pendingJobId, actionJobId;
 
         void OnEnable()
@@ -125,6 +126,7 @@ namespace MainUnity.UI
             jobs = Array.Empty<Job>();
             requirementsLoaded = false;
             jobsLoading = false;
+            jobsLoaded = false;
             registerInFlight = false;
             actionJobId = null;
             productError = null;
@@ -185,6 +187,7 @@ namespace MainUnity.UI
             RefreshProduct();
             BuildSlots();
             BuildJobs();
+            RefreshJobError();
             cached = true;
             StartCoroutine(LoadProducts());
             StartCoroutine(PollJobs());
@@ -218,7 +221,9 @@ namespace MainUnity.UI
                         if (!string.IsNullOrEmpty(actionJobId) &&
                             Array.Exists(jobs, job => job.job_id == actionJobId && job.job_status != "PENDING"))
                             actionJobId = null;
-                        if (jobError != null) jobError.text = "";
+                        jobsLoaded = true;
+                        jobQueryError = null;
+                        RefreshJobError();
                         BuildJobs();
                     }
                     catch (Exception)
@@ -233,8 +238,22 @@ namespace MainUnity.UI
 
         void SetJobError(string message)
         {
-            if (jobError != null) jobError.text = message;
-            if (jobs.Length == 0) FR5EmptyState.Fill(jobList, message, 120f);
+            jobQueryError = message;
+            RefreshJobError();
+            if (jobs.Length == 0 && jobList != null)
+            {
+                jobList.Clear();
+                var label = new Label("작업 목록 조회 실패 · 위 오류를 확인하세요");
+                label.AddToClassList("wrap");
+                jobList.Add(label);
+            }
+        }
+
+        void RefreshJobError()
+        {
+            if (jobError != null)
+                jobError.text = string.IsNullOrEmpty(jobActionError) ? jobQueryError ?? ""
+                    : jobActionError + (string.IsNullOrEmpty(jobQueryError) ? "" : "\n" + jobQueryError);
         }
 
         void BuildJobs()
@@ -250,7 +269,9 @@ namespace MainUnity.UI
             }
 
             if (visible == 0)
-                FR5EmptyState.Fill(jobList, jobs.Length == 0 ? "등록된 Job 없음" : "해당 조건의 Job 없음", 120f);
+                jobList.Add(new Label(!string.IsNullOrEmpty(jobQueryError) ? "작업 목록 조회 실패 · 위 오류를 확인하세요"
+                    : !jobsLoaded ? "작업 목록 조회 중…"
+                    : jobs.Length == 0 ? "등록된 작업이 없습니다." : "해당 조건의 작업이 없습니다."));
             if (jobCount != null) jobCount.text = visible + " / " + jobs.Length;
             RefreshFilters();
         }
@@ -316,6 +337,8 @@ namespace MainUnity.UI
         {
             if (!string.IsNullOrEmpty(actionJobId) || uiMaster?.Scenario == null) return;
             actionJobId = job.job_id;
+            jobActionError = null;
+            RefreshJobError();
             BuildJobs();
             try
             {
@@ -323,7 +346,9 @@ namespace MainUnity.UI
             }
             catch (Exception exception)
             {
-                SetJobError("Job 시작 실패 · " + exception.Message);
+                jobActionError = "작업 실행 실패 · " + ShortJobId(job.job_id) + " · " + exception.Message;
+                RefreshJobError();
+                uiMaster?.RecordEvent("작업", jobActionError, true);
             }
             finally
             {
@@ -336,12 +361,18 @@ namespace MainUnity.UI
         {
             if (!string.IsNullOrEmpty(actionJobId)) yield break;
             actionJobId = jobId;
+            jobActionError = null;
+            RefreshJobError();
             BuildJobs();
             using var request = UnityWebRequest.Delete(ApiUrl("/api/v1/jobs/" + Uri.EscapeDataString(jobId)));
             request.timeout = 5;
             yield return request.SendWebRequest();
-            if (isActiveAndEnabled && request.result != UnityWebRequest.Result.Success)
-                SetJobError("Job 취소 실패 · HTTP " + request.responseCode);
+            if (request.result != UnityWebRequest.Result.Success)
+            {
+                jobActionError = "작업 취소 실패 · " + ShortJobId(jobId) + " · HTTP " + request.responseCode;
+                RefreshJobError();
+                uiMaster?.RecordEvent("작업", jobActionError, true);
+            }
             actionJobId = null;
             if (isActiveAndEnabled) yield return LoadJobs();
         }
@@ -488,7 +519,7 @@ namespace MainUnity.UI
         {
             if (selectedProduct == null)
             {
-                FR5EmptyState.Missing(productName);
+                FR5EmptyState.Present(productName, string.IsNullOrEmpty(productError) ? "제품 조회 중…" : "제품 조회 실패");
                 FR5EmptyState.Detail(productMeta, productError ?? "제품 조회 중");
                 FR5EmptyState.Detail(productSlotCount, "product_slots 조회 대기");
                 return;
@@ -646,7 +677,9 @@ namespace MainUnity.UI
                 ? "목표 수량에 필요한 재고가 부족합니다."
                 : !mock
                 ? "Real Sequencer 연결 전에는 Job 등록이 비활성화됩니다."
-                : "DB에 PENDING Job으로 등록됩니다.";
+                : "등록한 작업은 실행 대기 상태로 추가됩니다.";
+            if (!string.IsNullOrEmpty(registrationResult))
+                startReason.text = registrationResult + "\n" + startReason.text;
         }
 
         void OnRegister()
@@ -658,6 +691,8 @@ namespace MainUnity.UI
         IEnumerator RegisterJob()
         {
             registerInFlight = true;
+            registrationResult = null;
+            if (startReason != null) startReason.text = "작업 등록 중…";
             interlockSignature = null;
             pendingJobId ??= Guid.NewGuid().ToString();
 
@@ -687,19 +722,18 @@ namespace MainUnity.UI
                         AssemblyResult result = JsonUtility.FromJson<AssemblyResponse>(
                             request.downloadHandler.text)?.data;
                         if (result == null || !result.accepted) throw new InvalidOperationException();
-                        if (startReason != null)
-                            startReason.text = "JOB " + ShortJobId(result.job_id) + " · " + result.status;
+                        registrationResult = "작업 등록 완료 · " + ShortJobId(result.job_id) + " · " + result.status;
+                        uiMaster?.RecordEvent("작업", registrationResult, false);
                         pendingJobId = null;
                         StartCoroutine(LoadJobs());
                     }
                     catch (Exception)
                     {
-                        if (startReason != null)
-                            startReason.text = "등록 응답을 확인하지 못했습니다. 같은 Job ID로 재시도합니다.";
+                        registrationResult = "등록 응답을 확인하지 못했습니다. 같은 Job ID로 재시도합니다.";
                     }
                 }
-                else if (startReason != null)
-                    startReason.text = "Job 등록 실패 · HTTP " + request.responseCode;
+                else
+                    registrationResult = "작업 등록 실패 · HTTP " + request.responseCode + " · 같은 Job ID로 재시도합니다.";
             }
 
             registerInFlight = false;

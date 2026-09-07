@@ -38,7 +38,7 @@
               거짓 값이라 가장 나빴다. 경로가 생기면 되돌린다.
             -->
             <ui:VisualElement class="row" style="margin-left:36px;">
-                <ui:Label text="ROBOT" class="micro" style="margin-right:12px;" />
+                <ui:Label text="로봇" class="micro" style="margin-right:12px;" />
                 <ui:VisualElement name="robot-state-chip" class="chip" style="height:28px;"><ui:Label name="robot-state-text" text="—" class="chip__text" style="font-size:12px;" /></ui:VisualElement>
             </ui:VisualElement>
 
@@ -67,7 +67,7 @@
             </ui:VisualElement>
 
             <ui:VisualElement class="spacer" />
-            <ui:Button name="stop-all-button" text="Ⅱ  PAUSE" class="btn" style="width:160px; height:40px; font-size:17px; letter-spacing:2.4px;" />
+            <ui:Button name="stop-all-button" text="Ⅱ  PAUSE" class="btn" style="width:160px; height:40px; font-size:14px;" />
         </ui:VisualElement>
 
         <!--
@@ -79,11 +79,13 @@
           rgba(240,71,90,0.16) 을 패널색 위에 미리 합성한 것이다 — 보이는 색은 같고
           배경에만 의존하지 않는다.
         -->
-        <ui:VisualElement name="alarm-banner" style="position:absolute; left:88px; top:64px; right:0; height:44px; display:none; background-color:rgb(47,24,31); border-top-width:2px; border-top-color:rgb(240,71,90); flex-direction:row; align-items:center; padding-left:24px; padding-right:24px;">
+        <ui:VisualElement name="alarm-banner" class="alarm-banner" style="position:absolute; left:88px; top:64px; right:0; height:44px; display:none; border-top-width:2px; flex-direction:row; align-items:center; padding-left:24px; padding-right:24px;">
             <ui:VisualElement name="alarm-dot" class="dot dot--bad" />
             <ui:Label name="alarm-label" text="—" class="bad" style="margin-left:12px; font-size:14px; letter-spacing:1.2px;" />
-            <ui:Label name="alarm-detail" text="" style="color:rgb(214,160,168); font-size:13px; margin-left:16px;" />
+            <ui:Label name="alarm-detail" text="" class="wrap" style="color:rgb(214,160,168); font-size:13px; margin-left:16px;" />
         </ui:VisualElement>
+
+        <ui:Label name="command-result" text="" class="command-result bad wrap" />
 
         <!-- ===================== 페이지 레일 ===================== -->
         <ui:VisualElement name="navrail" class="panel" style="position:absolute; left:0; top:64px; bottom:0; width:88px; border-left-width:0; border-bottom-width:0; align-items:center; padding-top:44px;">

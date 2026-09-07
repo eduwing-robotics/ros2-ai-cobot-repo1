@@ -963,3 +963,13 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
 .prow__key { color: var(--c-ink-3); font-size: 11px; letter-spacing: 1.2px; -unity-font-style: bold; }
 .prow__val { color: var(--c-ink); font-size: 16px; -unity-text-align: middle-right; flex-grow: 1; }
 .prow__val--miss { color: var(--c-ink-4); font-size: 13px; }
+
+/* 복구 안내는 활성 설비 알람과 구분한다. */
+.alarm-banner { background-color: rgb(47,24,31); border-top-color: rgb(240,71,90); }
+.alarm-banner--recovered { background-color: rgb(22, 35, 41); border-top-color: rgb(143, 166, 180); }
+.alarm-banner--recovered #alarm-label { color: rgb(226, 236, 241); }
+.alarm-banner--recovered #alarm-dot { background-color: rgb(143, 166, 180); }
+.command-result { position: absolute; right: 24px; top: 112px; max-width: 560px; font-size: 15px; background-color: rgb(47, 24, 31); }
+.session-events { position: absolute; left: 112px; right: 24px; bottom: 12px; background-color: var(--c-panel); padding: 10px; border-width: 1px; border-color: var(--c-edge); }
+.session-events .unity-foldout__text { font-size: 15px; color: var(--c-ink); }
+.event-row { white-space: normal; font-size: 14px; padding: 6px; border-bottom-width: 1px; border-bottom-color: var(--c-edge); }
