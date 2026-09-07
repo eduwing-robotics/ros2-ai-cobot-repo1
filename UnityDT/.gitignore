@@ -17,3 +17,7 @@
 *.pdb
 *.mdb
 sysinfo.txt
+
+# Locally archived Vision inspection results
+/Assets/StreamingAssets/inspections/
+/Assets/StreamingAssets/inspections.meta
