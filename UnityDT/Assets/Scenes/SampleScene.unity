@@ -15880,7 +15880,7 @@ MonoBehaviour:
   baseLink: {fileID: 1528568434}
   itemManager: {fileID: 1917364535}
   modelPositionOffsetMeters: {x: 0, y: 0, z: 0}
-  modelRotationOffsetDegrees: {x: 0, y: -90, z: 0}
+  modelRotationOffsetDegrees: {x: 180, y: -90, z: 0}
 --- !u!114 &3495106124279137601
 MonoBehaviour:
   m_ObjectHideFlags: 0
