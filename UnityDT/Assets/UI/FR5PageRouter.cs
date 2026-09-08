@@ -1,4 +1,4 @@
-// 역할: 페이지 4개를 UIDocument 단위로 전환한다.
+// 역할: 페이지를 UIDocument 단위로 전환한다.
 //
 // 페이지는 최상위 계층이므로 어느 패널에도 종속되지 않는다(Docs/UI.md).
 // 각 페이지는 자기 GameObject 에 UIDocument 하나 + 바인더를 갖고, 라우터는
@@ -45,8 +45,7 @@ namespace MainUnity.UI
             new PageEntry { page = FR5Page.Run },
             new PageEntry { page = FR5Page.Inspect },
             new PageEntry { page = FR5Page.Manual },
-            // SETUP 은 아직 UXML 이 없다. 화면이 생기면 available 을 켠다.
-            new PageEntry { page = FR5Page.Setup, available = false },
+            new PageEntry { page = FR5Page.Setup },
         };
 
         static readonly (FR5Page Page, string Button)[] NavButtons =

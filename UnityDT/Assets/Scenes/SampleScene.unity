@@ -1227,6 +1227,94 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.015, y: 0.018, z: 0.015}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &137993229
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 137993233}
+  - component: {fileID: 137993230}
+  - component: {fileID: 137993232}
+  - component: {fileID: 137993231}
+  m_Layer: 0
+  m_Name: Page - SETUP
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!114 &137993230
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 137993229}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.UIElements.UIDocument
+  m_PanelSettings: {fileID: 11400000, guid: f1ee55bb0d4f2730cb78344cbb1c951c, type: 2}
+  m_ParentUI: {fileID: 0}
+  sourceAsset: {fileID: 9197481963319205126, guid: cad26717b1374deaaab105aac6ed6226, type: 3}
+  m_SortingOrder: 0
+  m_Position: 0
+  m_WorldSpaceSizeMode: 1
+  m_WorldSpaceWidth: 1920
+  m_WorldSpaceHeight: 1080
+  m_PivotReferenceSize: 0
+  m_Pivot: 0
+  m_WorldSpaceCollider: {fileID: 0}
+--- !u!114 &137993231
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 137993229}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0c05c86bd8e5926998d455f160be17c5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MainUnity.UI.FR5ShellBinder
+  uiMaster: {fileID: 1010564057}
+  statusManager: {fileID: 0}
+  vision: {fileID: 0}
+  visionStaleSeconds: 2
+  mainServerBaseUrl: http://127.0.0.1:8000
+  servicePollSeconds: 5
+--- !u!114 &137993232
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 137993229}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d15a280857d845418934f3a8edf5075c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MainUnity.UI.FR5SetupBinder
+  uiMaster: {fileID: 1010564057}
+--- !u!4 &137993233
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 137993229}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1010564058}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &142102221
 GameObject:
   m_ObjectHideFlags: 0
@@ -7544,8 +7632,8 @@ MonoBehaviour:
     document: {fileID: 419577640}
     available: 1
   - page: 4
-    document: {fileID: 0}
-    available: 0
+    document: {fileID: 137993230}
+    available: 1
 --- !u!114 &1010564057
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7579,6 +7667,7 @@ Transform:
   - {fileID: 1428069491}
   - {fileID: 915942459}
   - {fileID: 419577643}
+  - {fileID: 137993233}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1014340591
@@ -15875,7 +15964,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a02657c65a604fb8813fbb51884335b8, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Camera.BoardPartCalibrator
   baseLink: {fileID: 1528568434}
   itemManager: {fileID: 1917364535}

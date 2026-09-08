@@ -1,0 +1,66 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <ui:Style src="project://database/Assets/UI/FR5Theme.uss" />
+    <ui:Template src="project://database/Assets/UI/FR5Shell.uxml" name="FR5Shell" />
+    <ui:VisualElement name="fr5-setup" class="page page--dim fr5--mock">
+        <ui:VisualElement class="page-heading">
+            <ui:Label text="SETUP" class="page-heading__title" />
+            <ui:Label text="/" class="page-heading__divider" />
+            <ui:Label text="운전 준비" class="page-heading__title" />
+            <ui:VisualElement class="spacer" />
+            <ui:Label text="읽기 전용 · 상태 자동 갱신" class="page-heading__meta" />
+        </ui:VisualElement>
+        <ui:ScrollView class="setup-content" mode="Vertical">
+            <ui:VisualElement class="panel setup-summary">
+                <ui:Label text="운전 전 확인" class="micro" />
+                <ui:Label name="setup-summary" text="확인 불가 · 상태 확인 중" class="setup-summary-title" />
+                <ui:Label name="setup-reasons" text="설비 준비 상태를 확인하고 있습니다." class="setup-detail" />
+            </ui:VisualElement>
+            <ui:VisualElement class="setup-grid">
+                <ui:VisualElement class="panel setup-card">
+                    <ui:Label text="01   모드 · 시스템 연결" class="panel__title" />
+                    <ui:Label text="운전 모드" class="setup-caption" />
+                    <ui:Label name="setup-mode" text="미확인" class="setup-detail" />
+                    <ui:Label text="MainServer · DB" class="setup-caption" />
+                    <ui:Label name="setup-api" text="조회 대기" class="setup-detail" />
+                    <ui:Label text="Sequencer" class="setup-caption" />
+                    <ui:Label name="setup-sequencer" text="조회 대기" class="setup-detail" />
+                    <ui:Label text="서비스 상태는 공통 상단 바와 함께 주기적으로 갱신됩니다." class="setup-footnote" />
+                </ui:VisualElement>
+                <ui:VisualElement class="panel setup-card">
+                    <ui:Label text="02   설비 관측 상태" class="panel__title" />
+                    <ui:Label text="로봇" class="setup-caption" />
+                    <ui:Label name="setup-robot" text="미확인" class="setup-detail" />
+                    <ui:Label text="그리퍼" class="setup-caption" />
+                    <ui:Label name="setup-gripper" text="미확인" class="setup-detail" />
+                    <ui:Label text="검사 카메라" class="setup-caption" />
+                    <ui:Label name="setup-camera" text="미확인" class="setup-detail" />
+                    <ui:Label text="컨베이어 준비 · 설비 reset 완료: 미확인. 개별 상태 조회가 제공되지 않습니다." class="setup-footnote" />
+                </ui:VisualElement>
+                <ui:VisualElement class="panel setup-card">
+                    <ui:Label text="03   좌표 보정" class="panel__title" />
+                    <ui:Label text="트레이" class="setup-caption" />
+                    <ui:Label name="setup-tray" text="미확인" class="setup-detail" />
+                    <ui:Label text="기판" class="setup-caption" />
+                    <ui:Label name="setup-board" text="미확인" class="setup-detail" />
+                    <ui:Label text="표시값은 트윈 배치 반영 상태입니다. 과거 반영 이력이 현재 설비 보정의 유효성을 보장하지 않습니다." class="setup-footnote" />
+                </ui:VisualElement>
+                <ui:VisualElement class="panel setup-card">
+                    <ui:VisualElement class="row">
+                        <ui:Label text="04   작업 · 구성 근거" class="panel__title" />
+                        <ui:VisualElement class="spacer" />
+                        <ui:Button name="setup-refresh" text="작업 다시 조회" class="btn" style="width:150px; height:44px;" />
+                    </ui:VisualElement>
+                    <ui:Label name="setup-job" text="관측 Job 없음" class="setup-footnote" />
+                    <ui:Label text="제품" class="setup-caption" />
+                    <ui:Label name="setup-product" text="미확인" class="setup-detail" />
+                    <ui:Label text="레시피" class="setup-caption" />
+                    <ui:Label name="setup-recipe" text="미확인" class="setup-detail" />
+                    <ui:Label name="setup-slots" text="트윈 구성 확인 중" class="setup-detail" />
+                    <ui:Label name="setup-job-note" text="마지막 관측 Job 기준" class="setup-footnote" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:Label text="설정 변경 · reset · 재보정은 이 화면에서 실행하지 않습니다. 통신 설정·안전 상한·현장 보정값은 설비 설정에서 관리하며, 현재 적용값 조회는 미지원입니다." class="setup-footnote" />
+        </ui:ScrollView>
+        <ui:Instance template="FR5Shell" name="shell" class="shell-host" picking-mode="Ignore" />
+    </ui:VisualElement>
+</ui:UXML>

@@ -43,6 +43,10 @@ namespace MainUnity.UI
         Label robotText, linkJointAge, linkImageAge, linkApiLabel, linkSequencerLabel,
             alarmLabel, alarmDetail, commandResult;
         Coroutine servicePolling;
+        Label setupApi, setupSequencer;
+        internal bool? ApiConnected { get; private set; }
+        internal bool? SequencerConnected { get; private set; }
+        internal string MainServerBaseUrl => mainServerBaseUrl;
         bool cached;
         bool stopRequestInFlight;
         bool hasAuxPanels;
@@ -54,6 +58,8 @@ namespace MainUnity.UI
         void OnEnable()
         {
             cached = false;
+            ApiConnected = null;
+            SequencerConnected = null;
             servicePolling = StartCoroutine(PollServiceLinks());
         }
 
@@ -96,6 +102,8 @@ namespace MainUnity.UI
             linkImageAge = root.Q<Label>("link-image-age");
             linkApiDot = root.Q<VisualElement>("link-api-dot");
             linkApiLabel = root.Q<Label>("link-api-label");
+            setupApi = root.Q<Label>("setup-api");
+            setupSequencer = root.Q<Label>("setup-sequencer");
             linkSequencerDot = root.Q<VisualElement>("link-sequencer-dot");
             linkSequencerLabel = root.Q<Label>("link-sequencer-label");
             alarmBanner = root.Q<VisualElement>("alarm-banner");
@@ -287,6 +295,9 @@ namespace MainUnity.UI
 
         IEnumerator PollServiceLinks()
         {
+            // UIDocument의 새 트리에 바인딩한 뒤에만 결과를 표시한다.
+            while (!cached) yield return null;
+            Resolve();
             while (true)
             {
                 yield return RefreshServiceLinks();
@@ -349,12 +360,29 @@ namespace MainUnity.UI
                     : "AssemblySequencer 응답 실패 · HTTP " + sequencer.responseCode);
         }
 
-        static void SetLinkState(VisualElement dot, Label label, bool? connected, string detail)
+        void SetLinkState(VisualElement dot, Label label, bool? connected, string detail)
         {
             dot?.EnableInClassList("dot--ok", connected == true);
             dot?.EnableInClassList("dot--bad", connected == false);
             if (dot != null) dot.tooltip = detail;
             if (label != null) label.tooltip = detail;
+            Label setup = null;
+            if (label == linkApiLabel)
+            {
+                ApiConnected = connected;
+                setup = setupApi;
+            }
+            else if (label == linkSequencerLabel)
+            {
+                SequencerConnected = connected;
+                setup = setupSequencer;
+            }
+            if (setup != null)
+            {
+                setup.enableRichText = false;
+                setup.text = detail + " · 확인 " + DateTime.Now.ToString("HH:mm:ss");
+                setup.EnableInClassList("bad", connected == false);
+            }
         }
 
         // 통신 흔들림은 0.6초 지속 후 표시하고 설비 알람은 즉시 표시한다.
