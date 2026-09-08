@@ -173,16 +173,21 @@ def claim_job(job_id, product_code, product_version, recipe_version):
             if job["job_status"] not in ACTIVE_JOB_STATUSES:
                 raise RuntimeError("job is already finalized")
 
+            requirements = _lock_requirements(cursor, job["product_id"])
+            # A failed inspection consumes stock too. Every replacement or
+            # recovered attempt needs enough parts before creating its Unit.
+            required_units = (
+                job["requested_quantity"] if job["job_status"] == "PENDING" else 1
+            )
+            shortages = [
+                row["part_id"]
+                for row in requirements
+                if row["stock_quantity"] < row["quantity_per_product"] * required_units
+            ]
+            if shortages:
+                raise RuntimeError("insufficient stock: " + ", ".join(shortages))
+
             if job["job_status"] == "PENDING":
-                requirements = _lock_requirements(cursor, job["product_id"])
-                shortages = [
-                    row["part_id"]
-                    for row in requirements
-                    if row["stock_quantity"]
-                    < row["quantity_per_product"] * job["requested_quantity"]
-                ]
-                if shortages:
-                    raise RuntimeError("insufficient stock: " + ", ".join(shortages))
                 cursor.execute(
                     """
                     UPDATE production.products

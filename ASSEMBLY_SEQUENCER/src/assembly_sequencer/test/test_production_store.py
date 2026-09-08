@@ -354,6 +354,37 @@ class ProductionStoreIntegrationTest(unittest.TestCase):
             self.claim(job_id)
         self.assertEqual(store.get_job_state(job_id)["job_status"], "PENDING")
 
+    def test_replacement_attempt_checks_stock_before_creating_unit(self):
+        job_id = self.create_job()
+        first = self.claim(job_id)
+        self.complete(first["unit_id"], "FAIL", ({
+            "slot_code": "SLOT-A-01", "defect_type": "MISSING"
+        },))
+        with psycopg.connect(TEST_DSN) as connection:
+            connection.execute(
+                "UPDATE production.parts SET stock_quantity = 1 WHERE part_id = %s",
+                (self.part_id,),
+            )
+        with self.assertRaisesRegex(RuntimeError, "insufficient stock"):
+            self.claim(job_id)
+        self.assertEqual(store.get_job_state(job_id)["job_status"], "RUNNING")
+        self.assertEqual(self.scalar(
+            "SELECT COUNT(*) FROM production.units WHERE job_id = %s", (job_id,)
+        ), 1)
+
+    def test_running_job_requires_stock_for_only_the_next_attempt(self):
+        job_id = self.create_job(quantity=3)
+        first = self.claim(job_id)
+        self.complete(first["unit_id"])
+        with psycopg.connect(TEST_DSN) as connection:
+            connection.execute(
+                "UPDATE production.parts SET stock_quantity = 2 WHERE part_id = %s",
+                (self.part_id,),
+            )
+        second = self.claim(job_id)
+        self.assertNotEqual(first["unit_id"], second["unit_id"])
+        store.finish_job(job_id, "FAILED")
+
     def test_db_writer_end_to_end(self):
         job_id = self.create_job()
         writer = DbWriter(retry_initial_seconds=0.001, retry_max_seconds=0.002)
