@@ -103,8 +103,8 @@ namespace MainUnity.UI
         {
             new CamTile { Index = 1, Title = "TRAY",     Topic = "/vision/tray/detections_image/compressed", On = true },
             new CamTile { Index = 2, Title = "PCB",      Topic = "/vision/board/image/compressed" },
-            new CamTile { Index = 3, Title = "CONVEYOR", Topic = "/vision/conveyor/stop_image/compressed" },
-            new CamTile { Index = 4, Title = "ASSEMBLY", Topic = "/vision/assembly/image/compressed" },
+            new CamTile { Index = 3, Title = "컨베이어", Topic = "/vision/conveyor/stop_image/compressed", On = true },
+            new CamTile { Index = 4, Title = "조립", Topic = "/vision/assembly/image/compressed", On = true },
         };
 
         // 이 시간을 넘겨 프레임이 없으면 그 칸만 늦은 것으로 표시한다.
@@ -222,14 +222,26 @@ namespace MainUnity.UI
             UnbindCamera();
             bool mock = uiMaster == null || uiMaster.IsSimulated;
             SetMockCameras(false, false);
+            // 모드 전환으로 선택이 모두 해제됐으면 해당 모드의 기본 영상을 표시한다.
+            if (mock && !camTiles[0].On && !camTiles[1].On)
+                camTiles[0].On = true;
+            if (!mock && !camTiles[2].On && !camTiles[3].On)
+                camTiles[2].On = camTiles[3].On = true;
             foreach (CamTile tile in camTiles)
             {
                 tile.Root = root.Q<VisualElement>("cam-tile-" + tile.Index);
                 tile.Age = root.Q<Label>("cam-age-" + tile.Index);
                 tile.Chip = root.Q<Button>("cam-chip-" + tile.Index);
                 tile.Image = root.Q<Image>("cam-image-" + tile.Index);
-                bool supported = !mock || tile.Index <= 2;
-                if (mock && !supported) tile.On = false;
+                bool supported = mock ? tile.Index <= 2 : tile.Index > 2;
+                if (!supported)
+                {
+                    tile.On = false;
+                    // 도메인 리로드 전에 생성된 중복 영상 수신기도 비활성화한다.
+                    tile.Receiver ??= transform.Find("CamReceiver " + tile.Index)?.GetComponent<CamVisionReceiver>();
+                    if (tile.Receiver != null) tile.Receiver.enabled = false;
+                    if (tile.Root != null) tile.Root.style.display = DisplayStyle.None;
+                }
 
                 Label title = root.Q<Label>("cam-title-" + tile.Index);
                 if (title != null)
@@ -237,12 +249,10 @@ namespace MainUnity.UI
                 if (tile.Chip != null)
                 {
                     tile.Chip.style.display = supported ? DisplayStyle.Flex : DisplayStyle.None;
-                    if (mock && supported)
-                    {
-                        Label chipText = tile.Chip.Q<Label>();
-                        if (chipText != null)
-                            chipText.text = tile.Index == 1 ? "ROBOT" : "BOARD";
-                    }
+                    Label chipText = tile.Chip.Q<Label>();
+                    if (chipText != null)
+                        chipText.text = mock && supported
+                            ? (tile.Index == 1 ? "ROBOT" : "BOARD") : tile.Title;
                 }
                 if (!supported) continue;
 
@@ -311,7 +321,8 @@ namespace MainUnity.UI
         /// </summary>
         void ToggleCamTile(CamTile tile)
         {
-            if ((uiMaster == null || uiMaster.IsSimulated) && tile.Index > 2)
+            bool mock = uiMaster == null || uiMaster.IsSimulated;
+            if (mock ? tile.Index > 2 : tile.Index <= 2)
                 return;
             if (tile.On)
             {

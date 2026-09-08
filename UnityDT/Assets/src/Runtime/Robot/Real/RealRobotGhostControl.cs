@@ -11,6 +11,7 @@ namespace MainUnity.Runtime.Robot.Real
         [SerializeField] RealFairinoSdkGhostSolver fairinoSdkSolver;
 
         GhostMaster ghostMaster;
+        RobotStatusManager statusManager;
 
         void OnDisable() => fairinoSdkSolver?.SetActive(false);
         void OnValidate() => RefreshReferences();
@@ -25,9 +26,10 @@ namespace MainUnity.Runtime.Robot.Real
             return false;
         }
 
-        // 기존 Real Backend 초기화 호출 계약은 유지한다. Ghost에는 로봇이 계산한 관절값만 필요하다.
-        internal void InitializeReal(RobotStatusManager _, RealRobotControl __)
+        // 실제 상태는 기존 Real Backend 주입 경로를 사용한다.
+        internal void InitializeReal(RobotStatusManager injectedStatusManager, RealRobotControl _)
         {
+            statusManager = injectedStatusManager;
             RefreshReferences();
             InitializeSolver();
         }
@@ -40,7 +42,7 @@ namespace MainUnity.Runtime.Robot.Real
 
         bool InitializeSolver() =>
             ghostMaster != null && fairinoSdkSolver != null &&
-            fairinoSdkSolver.Initialize(ghostMaster);
+            fairinoSdkSolver.Initialize(ghostMaster, statusManager);
 
         void RefreshReferences()
         {

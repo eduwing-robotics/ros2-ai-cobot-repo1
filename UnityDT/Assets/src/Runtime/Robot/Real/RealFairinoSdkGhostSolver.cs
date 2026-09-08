@@ -1,4 +1,6 @@
 using System;
+using System.Collections;
+using MainUnity.Runtime.Robot.Status;
 using MainUnity.Runtime.RobotGhost;
 using RosMessageTypes.Sensor;
 using RosMessageTypes.Std;
@@ -12,20 +14,25 @@ namespace MainUnity.Runtime.Robot.Real
     public sealed class RealFairinoSdkGhostSolver : MonoBehaviour
     {
         const int JointCount = 6;
+        // 시각화 종료용 관절 오차(deg)이며 설비의 동작 완료 판정을 변경하지 않는다.
+        const float ArrivalToleranceDegrees = 0.5f;
 
         [SerializeField] string targetTopic = "/real/ghost/target";
         [SerializeField] string expectedFrame = "base_link";
 
         ROSConnection connection;
         GhostMaster ghostMaster;
+        RobotStatusManager statusManager;
+        Coroutine arrivalRoutine;
         bool active;
         bool subscribed;
 
         void OnDisable() => Deactivate();
 
-        internal bool Initialize(GhostMaster destination)
+        internal bool Initialize(GhostMaster destination, RobotStatusManager injectedStatusManager)
         {
             ghostMaster = destination;
+            statusManager = injectedStatusManager;
             if (active)
                 Subscribe();
             return ghostMaster != null &&
@@ -66,6 +73,12 @@ namespace MainUnity.Runtime.Robot.Real
         void Deactivate()
         {
             active = false;
+            if (arrivalRoutine != null)
+            {
+                StopCoroutine(arrivalRoutine);
+                arrivalRoutine = null;
+                ghostMaster?.SetVisible(false);
+            }
             if (!subscribed)
                 return;
             connection?.Unsubscribe(targetTopic);
@@ -74,6 +87,8 @@ namespace MainUnity.Runtime.Robot.Real
 
         void ReceiveTarget(JointStateMsg message)
         {
+            if (!active)
+                return;
             if (!TryGetJointDegrees(message, expectedFrame,
                     out float[] jointDegrees, out string error))
             {
@@ -82,7 +97,50 @@ namespace MainUnity.Runtime.Robot.Real
             }
 
             if (!ghostMaster.PreviewJoints(jointDegrees))
+            {
                 Debug.LogWarning("Real Ghost rejected the joint target.", this);
+                return;
+            }
+
+            if (arrivalRoutine != null)
+                StopCoroutine(arrivalRoutine);
+            arrivalRoutine = StartCoroutine(HideWhenArrived(jointDegrees, Time.realtimeSinceStartupAsDouble));
+        }
+
+        IEnumerator HideWhenArrived(float[] targetDegrees, double targetReceiveTime)
+        {
+            // 첫 yield로 코루틴 핸들 저장을 보장한다. 목표 교체 시 이전 감시는 중단한다.
+            do
+            {
+                yield return null;
+            }
+            while (active && !HasArrived(targetDegrees, targetReceiveTime));
+
+            if (active)
+                ghostMaster.SetVisible(false);
+            arrivalRoutine = null;
+        }
+
+        bool HasArrived(float[] targetDegrees, double targetReceiveTime)
+        {
+            if (statusManager == null || !statusManager.HasFreshState ||
+                statusManager.State != RobotRunState.Idle)
+                return false;
+
+            var frame = statusManager.Latest;
+            // 목표 수신 이전의 캐시된 상태로 새 목표의 도달을 판정하지 않는다.
+            if (frame == null || frame.ReceiveTimeSeconds <= targetReceiveTime ||
+                frame.RobotMotionDone == 0)
+                return false;
+
+            for (int i = 0; i < JointCount; i++)
+            {
+                // 실제 관절의 회전수도 목표의 일부이므로 360도 차이를 같은 도달로 취급하지 않는다.
+                float difference = frame.JointDegrees[i] - targetDegrees[i];
+                if (!float.IsFinite(difference) || Mathf.Abs(difference) > ArrivalToleranceDegrees)
+                    return false;
+            }
+            return true;
         }
 
         static bool TryGetJointDegrees(JointStateMsg message, string expectedFrame,
