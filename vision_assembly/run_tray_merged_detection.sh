@@ -13,7 +13,12 @@ esac
 section_pid=""
 renderer_pid=""
 smd_pid=""
+detector_pid=""
 cleanup() {
+  if [[ -n "${detector_pid}" ]] && kill -0 "${detector_pid}" 2>/dev/null; then
+    kill -INT "${detector_pid}" 2>/dev/null || true
+    wait "${detector_pid}" 2>/dev/null || true
+  fi
   if [[ -n "${smd_pid}" ]] && kill -0 "${smd_pid}" 2>/dev/null; then
     kill -INT "${smd_pid}" 2>/dev/null || true
     wait "${smd_pid}" 2>/dev/null || true
@@ -39,5 +44,7 @@ renderer_pid=$!
   --set-index "${smd_set_index}" &
 smd_pid=$!
 
-exec "${script_dir}/../.venv-vision/bin/python" -u \
-  "${script_dir}/scripts/detect_tray_parts.py" --process-hz 2.0 --display-hz 0 --output-topic /vision/tray/detector_debug_image/compressed --overlay-hold-frames 5 --count-smoothing-frames 7 "$@"
+"${script_dir}/../.venv-vision/bin/python" -u \
+  "${script_dir}/scripts/detect_tray_parts.py" --process-hz 2.0 --display-hz 0 --output-topic /vision/tray/detector_debug_image/compressed --overlay-hold-frames 5 --count-smoothing-frames 7 "$@" &
+detector_pid=$!
+wait "${detector_pid}"

@@ -1,3 +1,4 @@
+#include <cmath>
 #include "fairino_hardware/command_server.hpp"
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -177,6 +178,7 @@ robot_command_thread::robot_command_thread(const std::string node_name):rclcpp::
     this->declare_parameter<double>("MoveJLC_eaxis2",0);
     this->declare_parameter<double>("MoveJLC_eaxis3",0);
     this->declare_parameter<double>("MoveJLC_eaxis4",0);
+    this->declare_parameter<std::string>("continuous_movej_revision","per-command-blend-v1");
     this->declare_parameter<float>("MoveJ_blendT",500);
     this->declare_parameter<float>("MoveL_blendR",500);
     this->declare_parameter<float>("MoveC_blendR",500);
@@ -1648,6 +1650,12 @@ std::string robot_command_thread::MoveJ(std::string para){
         eaxis2 = std::stod(iter_data->str());iter_data++;
         eaxis3 = std::stod(iter_data->str());iter_data++;
         eaxis4 = std::stod(iter_data->str());iter_data++;
+    }
+    // Optional ninth argument: per-command blending, without global mutation.
+    if (iter_data != end) {
+        blendT = std::stod(iter_data->str()); iter_data++;
+        if (!std::isfinite(blendT) || blendT < 0 || blendT > 500 || iter_data != end)
+            return "-1";
     }
     ExaxisPos extpos{eaxis1,eaxis2,eaxis3,eaxis4};
     DescPose offsetpos{offset_pos_x,offset_pos_y,offset_pos_z,offset_pos_rx,offset_pos_ry,offset_pos_rz};
@@ -11865,7 +11873,8 @@ void robot_command_thread::_state_recv_callback(){
         msg.aliveslavenumerror = ctrl_state.aliveSlaveNumError;
         msg.gripperfaultnum = ctrl_state.gripper_fault_id;
         msg.gripper_position = ctrl_state.gripper_position;
-        msg.gripper_feedback_valid = ctrl_state.gripper_position <= 100;
+        msg.gripper_feedback_valid = ctrl_state.gripper_active != 0 &&
+                                     ctrl_state.gripper_position <= 100;
         msg.slavecomerror[0] = ctrl_state.slaveComError[0];
         msg.slavecomerror[1] = ctrl_state.slaveComError[1];
         msg.slavecomerror[2] = ctrl_state.slaveComError[2];

@@ -62,13 +62,31 @@ class Renderer(Node):
    image=live;cv2.putText(image,'ROBOT MOVING - OVERLAY HIDDEN',(25,42),cv2.FONT_HERSHEY_SIMPLEX,.65,(0,165,255),2,cv2.LINE_AA)
   elif not self.at_trayhome:
    image=live;close=self.close_overlay;color=COLORS['right_white_brown']
-   if close and close.get('valid') and time.time()-float(close.get('timestamp_unix',0))<2.0:
-    section=np.rint(np.asarray(close['section_polygon_source_pixel'],np.float32)).astype(np.int32);cv2.polylines(image,[section],True,color,2,cv2.LINE_AA)
+   if (close and close.get('at_smd_view') and 0<=time.time()-float(close.get('timestamp_unix',0))<2.0
+       and close.get('section_polygon_source_pixel')):
+    section=np.rint(np.asarray(close['section_polygon_source_pixel'],np.float32)).astype(np.int32)
+    section_color=color if close.get('valid') else (0,165,255)
+    cv2.polylines(image,[section],True,section_color,2,cv2.LINE_AA)
     for item in close.get('detections',[]):
-     poly=np.rint(np.asarray(item['polygon_source_pixel'],np.float32)).astype(np.int32);cv2.polylines(image,[poly],True,color,2,cv2.LINE_AA);center=np.rint(poly.mean(axis=0)).astype(int);self.marker(image,tuple(center));cv2.putText(image,str(item['instance_index']),tuple(center+np.array([8,-8])),cv2.FONT_HERSHEY_SIMPLEX,.48,color,1,cv2.LINE_AA)
-    required=int(close.get('required_count',5))
-    cv2.putText(image,f"SMD Capacitor {int(close.get('count',0))}/{required}",(int(section[:,0].min())+10,int(section[:,1].max())-14),cv2.FONT_HERSHEY_SIMPLEX,.55,color,2,cv2.LINE_AA)
-   else:cv2.putText(image,'LIVE CLOSE VIEW - TRAY OVERLAY DISABLED',(25,42),cv2.FONT_HERSHEY_SIMPLEX,.65,(0,255,255),2,cv2.LINE_AA)
+     axis_valid=item.get('axis_valid',bool(close.get('valid')))
+     item_color=color if axis_valid else (0,0,255)
+     poly=np.rint(np.asarray(item['polygon_source_pixel'],np.float32)).astype(np.int32)
+     cv2.polylines(image,[poly],True,item_color,2,cv2.LINE_AA)
+     center=np.rint(poly.mean(axis=0)).astype(int)
+     axis=np.rint(np.asarray(item.get('terminal_axis_source_pixel',[]),np.float32)).astype(np.int32)
+     if axis_valid and axis.shape==(2,2):cv2.arrowedLine(image,tuple(axis[0]),tuple(axis[1]),(255,255,255),2,cv2.LINE_AA,tipLength=.18)
+     self.marker(image,tuple(center))
+     label=str(item['instance_index'])+('' if axis_valid else ' AXIS?')
+     cv2.putText(image,label,tuple(center+np.array([8,-8])),cv2.FONT_HERSHEY_SIMPLEX,.42,item_color,1,cv2.LINE_AA)
+    required=int(close.get('required_count',5));count=int(close.get('count',0))
+    accepted=int(close.get('axis_valid_count',count if close.get('valid') else 0))
+    cv2.putText(image,f"SMD {count}/{required} DETECTED | AXIS {accepted}/{required}",(25,35),cv2.FONT_HERSHEY_SIMPLEX,.6,section_color,2,cv2.LINE_AA)
+    if not close.get('valid'):
+     cv2.putText(image,str(close.get('reason','Detection invalid'))[:115],(25,63),cv2.FONT_HERSHEY_SIMPLEX,.45,(0,165,255),1,cv2.LINE_AA)
+   elif close and close.get('manual_axis_required'):
+    cv2.putText(image,'MANUAL SMD AXIS REQUIRED - ROBOT TARGET BLOCKED',(25,42),cv2.FONT_HERSHEY_SIMPLEX,.62,(0,0,255),2,cv2.LINE_AA)
+   else:
+    cv2.putText(image,'LIVE CLOSE VIEW - TRAY OVERLAY DISABLED',(25,42),cv2.FONT_HERSHEY_SIMPLEX,.65,(0,255,255),2,cv2.LINE_AA)
   elif H is None:cv2.putText(image,'TRAY NOT REGISTERED',(25,50),cv2.FONT_HERSHEY_SIMPLEX,.65,(0,0,255),2,cv2.LINE_AA)
   else:
    if self.registration_state=='DISPLAY_ONLY':

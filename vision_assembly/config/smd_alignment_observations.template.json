@@ -1,0 +1,9 @@
+{
+  "schema": "fr5.smd_alignment_observations/v1",
+  "frame": "base",
+  "units": "mm",
+  "calibration_id": null,
+  "view_id": null,
+  "tool_id": 1,
+  "samples": []
+}

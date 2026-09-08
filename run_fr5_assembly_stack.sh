@@ -12,7 +12,7 @@ camera_profile="${KSMC_ASSEMBLY_CAMERA_PROFILE:-standard}"
 smd_set_index="${KSMC_SMD_SET_INDEX:-1}"
 mkdir -p "${pid_dir}" "${log_dir}"
 
-components=(unity_fairino camera tray_vision board_view board_pose_3d image_mux vision_api)
+components=(unity_fairino camera tray_vision board_view board_pose_3d image_mux vision_api robot_api unity_calibration)
 duplicate_patterns=(
   "run_with_fairino.sh"
   "ros2_cmd_server"
@@ -28,6 +28,8 @@ duplicate_patterns=(
   "track_board_pose_3d.py"
   "assembly_image_mux.py"
   "orchestration_action_server"
+  "lib/fr5_process_sequences/real_robot_api"
+  "lib/vision_server/unity_calibration_api"
 )
 cleanup_failed_start=false
 on_exit() {
@@ -50,11 +52,14 @@ Commands:
   stop              Stop processes started by this supervisor
   restart           Stop/clean, then start the stack
   clean             Stop managed and matching stale/duplicate processes
+  preflight         Check installed launchers/packages without starting services
+  calibration-start Connect Unity board/tray calibration API without restarting other services
+  api-start         Connect the robot API using this PC hardware-execution setting
   status            Show managed processes, ROS nodes/topics, and TCP port 10000
   check             Read one robot-state sample and show essential topics
   logs [NAME]       Show recent logs for all components or one component
   follow [NAME]     Follow logs for all components or one component
-  view              Open RQT on the compressed assembly operator view
+  view              Open the assembly RQT view and the USB phone camera viewer
 
 Options:
   --camera standard  1280x720 RGB-D (default; TrayHome + SMD close view)
@@ -130,6 +135,7 @@ stop_component() {
 stop_managed() {
   local index
   for ((index=${#components[@]}-1; index>=0; index--)); do
+    [[ "${camera_profile}" == none && "${components[index]}" == camera ]] && continue
     stop_component "${components[index]}"
   done
 }
@@ -137,6 +143,9 @@ stop_managed() {
 matching_duplicate_pids() {
   local pattern pid
   for pattern in "${duplicate_patterns[@]}"; do
+    if [[ "${camera_profile}" == none && ( "${pattern}" == realsense2_camera_node || "${pattern}" == rs_launch.py ) ]]; then
+      continue
+    fi
     while read -r pid; do
       [[ -n "${pid}" && "${pid}" != "$$" && "${pid}" != "${PPID}" ]] || continue
       printf '%s\n' "${pid}"
@@ -148,8 +157,13 @@ assert_safe_to_stop_driver() {
   local duplicates state
   duplicates="$(matching_duplicate_pids)"
   [[ -n "${duplicates}" ]] || return 0
-  state="$(timeout 3 ros2 topic echo --once /nonrt_state_data 2>/dev/null || true)"
-  if [[ -n "${state}" ]] && ! grep -Eq '^robot_motion_done:[[:space:]]*1([[:space:]]*)$' <<<"${state}"; then
+  state="$(timeout 6 ros2 topic echo --once /nonrt_state_data 2>/dev/null || true)"
+  if pgrep -f '[r]os2_cmd_server' >/dev/null && ! grep -Eq '^robot_motion_done:[[:space:]]*1[[:space:]]*$' <<<"${state}"; then
+    echo "Refusing cleanup: FAIRINO driver exists but a stopped robot state could not be confirmed." >&2
+    echo "Check /nonrt_state_data and stop the robot safely before retrying." >&2
+    return 1
+  fi
+  if [[ -n "${state}" ]] && grep -q '^robot_motion_done:' <<<"${state}" && ! grep -Eq '^robot_motion_done:[[:space:]]*1([[:space:]]*)$' <<<"${state}"; then
     echo "Refusing cleanup: robot state is available but robot_motion_done is not 1." >&2
     echo "Stop the robot safely and retry. No matching process was killed." >&2
     return 1
@@ -205,7 +219,7 @@ wait_for_node() {
   local seconds="$2"
   local count
   for count in $(seq 1 "$((seconds * 2))"); do
-    if ros2 node list 2>/dev/null | grep -Fxq -- "${node}"; then
+    if ros2 node list 2>/dev/null | grep -Fx -- "${node}" >/dev/null; then
       echo "Ready: ROS node ${node}"
       return 0
     fi
@@ -221,7 +235,7 @@ wait_for_node_absent() {
   local count
   local absent_count=0
   for count in $(seq 1 "$((seconds * 2))"); do
-    if ros2 node list 2>/dev/null | grep -Fxq -- "${node}"; then
+    if ros2 node list 2>/dev/null | grep -Fx -- "${node}" >/dev/null; then
       absent_count=0
     else
       absent_count=$((absent_count + 1))
@@ -240,7 +254,7 @@ wait_for_port() {
   local seconds="$2"
   local count
   for count in $(seq 1 "$((seconds * 2))"); do
-    if ss -ltn 2>/dev/null | grep -Eq "[:.]${port}[[:space:]]"; then
+    if ss -ltn 2>/dev/null | grep -E "[:.]${port}[[:space:]]" >/dev/null; then
       echo "Ready: TCP port ${port}"
       return 0
     fi
@@ -280,20 +294,43 @@ parse_start_options() {
   esac
 }
 
+start_robot_api() {
+  if ros2 node list --no-daemon --spin-time 2 2>/dev/null | grep -Fx /real_robot_api >/dev/null; then
+    echo "Robot API already running; existing mode is unchanged."
+    return 0
+  fi
+  start_component robot_api "${root}/scripts/run_real_robot_api.sh"
+  wait_for_node /real_robot_api 15
+  local api_mode=DISARMED
+  [[ "${KSMC_REAL_HARDWARE_EXECUTION:-false}" == true ]] && api_mode=ARMED
+  echo "Robot API connected in ${api_mode} mode; no motion sent."
+}
+
+start_unity_calibration() {
+  if ros2 node list --no-daemon --spin-time 2 2>/dev/null | grep -Fx /unity_calibration_api >/dev/null; then
+    echo "Unity calibration API already running."
+    return 0
+  fi
+  start_component unity_calibration "${root}/scripts/run_unity_calibration_api.sh"
+  wait_for_node /unity_calibration_api 15
+  echo "Unity calibration API connected; no motion sent."
+}
+
 start_stack() {
   [[ -x "${endpoint_root}/run_with_fairino.sh" ]] || {
     echo "Unity Endpoint launcher not found: ${endpoint_root}/run_with_fairino.sh" >&2
     echo "Set KSMC_UNITY_ENDPOINT_ROOT in config/ksmc.env." >&2
     return 1
   }
-  cleanup_failed_start=true
+  preflight_stack
 
   assert_safe_to_stop_driver
   stop_managed
   clean_duplicates
   wait_for_node_absent /fr_command_server 20
 
-  start_component unity_fairino "${endpoint_root}/run_with_fairino.sh"
+  cleanup_failed_start=true
+  start_component unity_fairino "${root}/scripts/run_fairino_endpoint.sh"
   wait_for_topic /nonrt_state_data 30 "FAIRINO state"
   wait_for_port 10000 20
 
@@ -325,6 +362,8 @@ start_stack() {
   wait_for_topic /vision/board/pose_3d/status 25 "board 3D pose"
   wait_for_topic /vision/assembly/image/compressed 25 "assembly operator view"
   wait_for_node /vision_orchestration_action_server 15
+  start_robot_api
+  start_unity_calibration
 
   cleanup_failed_start=false
   echo
@@ -350,23 +389,34 @@ show_status() {
   ss -ltn 2>/dev/null | grep -E '[:.]10000[[:space:]]' || echo "  port 10000 not listening"
   echo
   echo "Relevant ROS nodes:"
-  ros2 node list 2>/dev/null | grep -E 'fr_command_server|camera|tray|smd|board|assembly_image_mux|vision_orchestration' || echo "  none"
+  ros2 node list --no-daemon --spin-time 2 2>/dev/null | grep -E 'unity_calibration_api|real_robot_api|fr_command_server|camera|tray|smd|board|assembly_image_mux|vision_orchestration' || echo "  none"
   echo
   echo "Essential topics:"
-  ros2 topic list 2>/dev/null | grep -E '^/nonrt_state_data$|^/camera/camera/(color|aligned_depth)|^/vision/(tray|board|assembly)' || echo "  none"
+  ros2 topic list 2>/dev/null | grep -E '^/real/|^/nonrt_state_data$|^/camera/camera/(color|aligned_depth)|^/vision/(tray|board|assembly)' || echo "  none"
 }
 
 check_stack() {
   show_status
   echo
   echo "Robot state summary (one sample):"
-  local state
+  local state name pid unhealthy=0
+  for name in "${components[@]}"; do
+    [[ "${camera_profile}" == none && "${name}" == camera ]] && continue
+    if ! pid="$(managed_pid "${name}")" || ! is_alive "${pid}"; then
+      unhealthy=1
+    fi
+  done
   state="$(timeout 5 ros2 topic echo --once /nonrt_state_data 2>/dev/null || true)"
-  if [[ -z "${state}" ]]; then
-    echo "  no /nonrt_state_data sample" >&2
+  if ! grep -q '^robot_motion_done:' <<<"${state}"; then
+    echo "  No valid /nonrt_state_data sample within 5 seconds (driver stopped, controller disconnected, or ROS domain mismatch)." >&2
+    echo "  Run: $0 preflight; $0 logs unity_fairino" >&2
     return 1
   fi
   grep -E '^(robot_mode|tool_num|work_num|abnormal_stop|emg|robot_motion_done|grip_motion_done|gripper_position|gripper_feedback_valid|gripperfaultnum|main_error_code|sub_error_code|collision_err|cart_[xyzabc]_cur_pos):' <<<"${state}" | sed 's/^/  /'
+  if (( unhealthy )); then
+    echo "  One or more managed components are stopped. Inspect status/logs." >&2
+    return 1
+  fi
 }
 
 show_logs() {
@@ -392,9 +442,120 @@ show_logs() {
   done
 }
 
+preflight_stack() {
+  local failed=0 item
+  echo "Preflight: ROS_DOMAIN_ID=${ROS_DOMAIN_ID}; camera=${camera_profile}; SMD set=${smd_set_index}"
+  for item in ros2 python3 timeout setsid pgrep ss; do
+    if ! command -v "${item}" >/dev/null; then
+      echo "MISSING command: ${item}" >&2
+      failed=1
+    fi
+  done
+  for item in "${endpoint_root}/run_with_fairino.sh" \
+    "${root}/vision_assembly/run_tray_merged_detection.sh" \
+    "${root}/vision_assembly/run_board_view.sh" \
+    "${root}/vision_assembly/run_assembly_image_mux.sh" \
+    "${root}/vision_assembly/run_orchestration_api.sh" \
+    "${root}/scripts/run_real_robot_api.sh" \
+    "${root}/scripts/run_unity_calibration_api.sh" \
+    "${root}/.venv-vision/bin/python"; do
+    if [[ ! -x "${item}" ]]; then
+      echo "MISSING executable: ${item}" >&2
+      failed=1
+    fi
+  done
+  if [[ "${camera_profile}" != none ]]; then
+    for item in realsense2_camera; do
+      if ! ros2 pkg prefix "${item}" >/dev/null 2>&1; then
+        echo "MISSING ROS package: ${item}" >&2
+        failed=1
+      fi
+    done
+  fi
+  for item in fairino_hardware_v3_9_7 fairino_msgs vision_server fr5_process_sequences; do
+    if ! ros2 pkg prefix "${item}" >/dev/null 2>&1; then
+      echo "MISSING ROS package: ${item}" >&2
+      failed=1
+    fi
+  done
+  if (( failed )); then
+    echo "Preflight failed. Check paths/builds before starting; existing services were not changed." >&2
+    return 1
+  fi
+  echo "Preflight passed (installation only; hardware and image freshness not verified)."
+}
+
+start_phone_view() (
+  local launcher="/home/juchan-yoon/.local/bin/fr5-phone-view"
+  local existing_pids pid tool
+  if [[ ! -x "${launcher}" ]]; then
+    echo "Phone viewer launcher is missing: ${launcher}" >&2
+    return 1
+  fi
+  for tool in flock pgrep setsid; do
+    if ! command -v "${tool}" >/dev/null; then
+      echo "Phone viewer needs command: ${tool}" >&2
+      return 1
+    fi
+  done
+  # Serialize repeated view commands; also reuse a manually opened phone viewer.
+  exec 9>"${pid_dir}/phone_view.lock" || return 1
+  if ! flock -n 9; then
+    echo "Phone viewer startup is already in progress."
+    return 0
+  fi
+  existing_pids="$(pgrep -u "${UID}" -f -- '^/home/juchan-yoon/[.]local/opt/fr5-phone-venv/bin/python /home/juchan-yoon/[.]local/share/fr5-phone/viewer[.]py([[:space:]]|$)|^(/bin/(ba)?sh[[:space:]]+)?/home/juchan-yoon/[.]local/bin/fr5-phone-view([[:space:]]|$)' || true)"
+  if [[ -n "${existing_pids}" ]]; then
+    echo "Phone viewer is already running (PID ${existing_pids//$'\n'/, })."
+    return 0
+  fi
+  # The phone may need time to connect. Keep RQT independent of that connection.
+  setsid "${launcher}" </dev/null >>"${log_dir}/phone_view.log" 2>&1 9>&- &
+  pid=$!
+  sleep 0.3
+  if ! is_alive "${pid}"; then
+    return 1
+  fi
+  echo "Phone viewer launched (PID ${pid}). Log: ${log_dir}/phone_view.log"
+)
+
+show_view() {
+  if [[ -z "${DISPLAY:-}" && -z "${WAYLAND_DISPLAY:-}" ]]; then
+    echo "RQT needs a desktop session. Run this command in the robot PC desktop terminal." >&2
+    return 1
+  fi
+  if ! ros2 pkg prefix rqt_image_view >/dev/null 2>&1; then
+    echo "Missing ROS package: rqt_image_view" >&2
+    return 1
+  fi
+  # Consume the complete CLI output before matching: grep -q in a pipe can
+  # close stdout early, making Python/ros2 exit 120 under pipefail.
+  local topic_info
+  topic_info="$(ros2 topic info /vision/assembly/image/compressed 2>/dev/null)" || {
+    echo "Could not query assembly image publisher. Check ROS discovery and retry view." >&2
+    return 1
+  }
+  if ! grep -Eq '^Publisher count: [1-9][0-9]*[[:space:]]*$' <<<"${topic_info}"; then
+    echo "No assembly image publisher. Start the stack and check image_mux logs first." >&2
+    return 1
+  fi
+  if ! start_phone_view; then
+    echo "Phone viewer did not start; continuing with RQT. See ${log_dir}/phone_view.log" >&2
+  fi
+  exec ros2 run rqt_image_view rqt_image_view /vision/assembly/image --ros-args -p image_transport:=compressed
+}
+
 command="${1:-}"
 shift || true
 case "${command}" in
+  calibration-start)
+    [[ $# -eq 0 ]] || { usage; exit 2; }
+    start_unity_calibration
+    ;;
+  api-start)
+    [[ $# -eq 0 ]] || { usage; exit 2; }
+    start_robot_api
+    ;;
   start)
     parse_start_options "$@"
     start_stack
@@ -413,6 +574,10 @@ case "${command}" in
     stop_managed
     clean_duplicates
     ;;
+  preflight)
+    parse_start_options "$@"
+    preflight_stack
+    ;;
   status)
     [[ $# -eq 0 ]] || { usage; exit 2; }
     show_status
@@ -427,7 +592,7 @@ case "${command}" in
     ;;
   view)
     [[ $# -eq 0 ]] || { usage; exit 2; }
-    exec ros2 run rqt_image_view rqt_image_view /vision/assembly/image --ros-args -p image_transport:=compressed
+    show_view
     ;;
   -h|--help|help|"")
     usage

@@ -12,6 +12,9 @@ from fairino_msgs.srv import RemoteCmdInterface
 from rclpy.node import Node
 from scipy.spatial.transform import Rotation
 
+J6_OPERATIONAL_MIN_DEG = -178.0
+J6_OPERATIONAL_MAX_DEG = 178.0
+
 
 class ReturnMover(Node):
     def __init__(self):
@@ -73,10 +76,20 @@ class ReturnMover(Node):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--point-name', default='TrayHome')
-    parser.add_argument('--speed-percent', type=int, default=40)
-    parser.add_argument('--vertical-speed-percent', type=int, default=20)
+    parser.add_argument('--controller-global-speed-percent', type=int, default=40)
+    parser.add_argument('--speed-percent', type=int, default=25)
+    parser.add_argument('--vertical-speed-percent', type=int, default=25)
     parser.add_argument('--safe-clearance-mm', type=float, default=100.0)
     parser.add_argument('--horizontal-z-mm', type=float, help='explicit safe horizontal travel Z; must be at least current Z and 100 mm')
+    parser.add_argument(
+        '--empty-gripper-intermediate-c-deg',
+        type=float,
+        help='at safe Z, recover the empty-gripper wrist branch at current XY before returning',
+    )
+    parser.add_argument('--empty-gripper-intermediate-x-mm', type=float)
+    parser.add_argument('--empty-gripper-intermediate-y-mm', type=float)
+    parser.add_argument('--stop-after-empty-gripper-intermediate', action='store_true')
+    parser.add_argument('--confirm-empty-gripper', action='store_true')
     parser.add_argument('--max-distance-mm', type=float, default=500.0)
     parser.add_argument('--dry-run', action='store_true')
     parser.add_argument('--execute', action='store_true')
@@ -87,6 +100,18 @@ def main():
         parser.error('actual return requires --execute and --confirm-return')
     if args.dry_run and args.execute:
         parser.error('--dry-run and --execute cannot be combined')
+    if args.execute and args.empty_gripper_intermediate_c_deg is not None and not args.confirm_empty_gripper:
+        parser.error('empty-gripper orientation recovery requires --confirm-empty-gripper')
+    if args.confirm_empty_gripper and args.empty_gripper_intermediate_c_deg is None:
+        parser.error('--confirm-empty-gripper requires --empty-gripper-intermediate-c-deg')
+    if (args.empty_gripper_intermediate_x_mm is None) != (args.empty_gripper_intermediate_y_mm is None):
+        parser.error('empty-gripper intermediate XY requires both X and Y')
+    if args.empty_gripper_intermediate_x_mm is not None and args.empty_gripper_intermediate_c_deg is None:
+        parser.error('empty-gripper intermediate XY requires intermediate C')
+    if args.stop_after_empty_gripper_intermediate and args.empty_gripper_intermediate_c_deg is None:
+        parser.error('stop-after-intermediate requires an empty-gripper intermediate')
+    if not 1 <= args.controller_global_speed_percent <= 50:
+        parser.error('controller global speed must be between 1 and 50')
     if not 1 <= args.speed_percent <= 50 or not 1 <= args.vertical_speed_percent <= 50:
         parser.error('speed values must be between 1 and 50')
     if args.safe_clearance_mm < 50.0:
@@ -131,26 +156,41 @@ def main():
         waypoints = []
         if safe_z - current[2] > 1.0:
             waypoints.append((current[:2] + [safe_z] + current[3:], args.vertical_speed_percent, 'vertical raise'))
-        waypoints.append(([target[0], target[1], safe_z] + target[3:], args.speed_percent, 'horizontal return'))
-        if abs(safe_z - target[2]) > 1.0:
-            final_label = 'final ascent' if target[2] > safe_z else 'final descent'
-            waypoints.append((target, args.vertical_speed_percent, final_label))
+        if args.empty_gripper_intermediate_c_deg is not None:
+            intermediate_c = float(args.empty_gripper_intermediate_c_deg)
+            if not math.isfinite(intermediate_c) or not -180.0 <= intermediate_c <= 180.0:
+                raise RuntimeError('empty-gripper intermediate C must be in [-180, 180] deg')
+            intermediate_xy = current[:2]
+            if args.empty_gripper_intermediate_x_mm is not None:
+                intermediate_xy = [
+                    float(args.empty_gripper_intermediate_x_mm),
+                    float(args.empty_gripper_intermediate_y_mm),
+                ]
+                if not all(math.isfinite(value) for value in intermediate_xy):
+                    raise RuntimeError('empty-gripper intermediate XY must be finite')
+            waypoints.append((
+                intermediate_xy + [safe_z] + current[3:5] + [intermediate_c],
+                args.vertical_speed_percent,
+                'empty-gripper orientation recovery',
+            ))
+        if not args.stop_after_empty_gripper_intermediate:
+            waypoints.append(([target[0], target[1], safe_z] + target[3:], args.speed_percent, 'horizontal return'))
+            if abs(safe_z - target[2]) > 1.0:
+                final_label = 'final ascent' if target[2] > safe_z else 'final descent'
+                waypoints.append((target, args.vertical_speed_percent, final_label))
 
-        print(f"RETURN TO TEACHING POINT: {args.point_name}")
-        print(f"Target TCP/Base: {[round(value, 3) for value in target]}, tool={tool_id}, user={user_id}")
-        for index, (pose, speed, label) in enumerate(waypoints, 1):
-            print(f"Stage {index}/{len(waypoints)} {label}: {[round(value, 3) for value in pose]}, speed={speed}%")
-        if not args.execute:
-            print('DRY RUN - ROBOT DID NOT MOVE')
-            return
-        node.command(f'SetSpeed({args.speed_percent})')
-        print(f'Controller global speed set to {args.speed_percent}%')
         reference=np.asarray([
             state.j1_cur_pos,state.j2_cur_pos,state.j3_cur_pos,
             state.j4_cur_pos,state.j5_cur_pos,state.j6_cur_pos,
         ],dtype=float)
+        if not J6_OPERATIONAL_MIN_DEG <= reference[5] <= J6_OPERATIONAL_MAX_DEG:
+            raise RuntimeError(
+                f'current J6={reference[5]:.3f} deg is outside operational '
+                f'envelope [{J6_OPERATIONAL_MIN_DEG:.1f}, {J6_OPERATIONAL_MAX_DEG:.1f}]'
+            )
         soft=np.asarray([float(value) for value in node.command('GetJointSoftLimitDeg(1)').split(',')[1:13]])
         negative,positive=soft[:6],soft[6:]
+        planned=[]
         for index, (pose, speed, label) in enumerate(waypoints, 1):
             safety=np.asarray([float(value) for value in node.command('GetSafetyStopState()').split(',')[1:3]])
             if np.any(safety!=0.0):
@@ -159,9 +199,34 @@ def main():
                 f'{value:.6f}' for value in [0.0,*pose,*reference.tolist()]
             )+')'
             joints=np.asarray([float(value) for value in node.command(ik_command).split(',')[1:7]])
+            if not J6_OPERATIONAL_MIN_DEG <= joints[5] <= J6_OPERATIONAL_MAX_DEG:
+                raise RuntimeError(
+                    f'{label}: target J6={joints[5]:.3f} deg is outside operational '
+                    f'envelope [{J6_OPERATIONAL_MIN_DEG:.1f}, {J6_OPERATIONAL_MAX_DEG:.1f}]'
+                )
             margins=np.minimum(joints-negative,positive-joints)
             if np.any(margins<10.0) or np.any(np.abs(joints-reference)>95.0):
                 raise RuntimeError(f'{label} IK violates joint margin or branch-change limit')
+            planned.append((pose, speed, label, joints))
+            reference=joints
+
+        print(f"RETURN TO TEACHING POINT: {args.point_name}")
+        print(f"Target TCP/Base: {[round(value, 3) for value in target]}, tool={tool_id}, user={user_id}")
+        for index, (pose, speed, label, joints) in enumerate(planned, 1):
+            print(
+                f"Stage {index}/{len(planned)} {label}: "
+                f"{[round(value, 3) for value in pose]}, speed={speed}%, "
+                f"joints={np.round(joints, 3).tolist()}"
+            )
+        if not args.execute:
+            print('DRY RUN - ROBOT DID NOT MOVE')
+            return
+        node.command(f'SetSpeed({args.controller_global_speed_percent})')
+        print(f'Controller global speed set to {args.controller_global_speed_percent}%')
+        for index, (pose, speed, label, joints) in enumerate(planned, 1):
+            safety=np.asarray([float(value) for value in node.command('GetSafetyStopState()').split(',')[1:3]])
+            if np.any(safety!=0.0):
+                raise RuntimeError(f'safety stop active: {safety.astype(int).tolist()}')
             define='JNTPoint(1,'+','.join(f'{value:.6f}' for value in joints)+')'
             linear=label in ('vertical raise','final ascent','final descent')
             motion='MoveL' if linear else 'MoveJ'
@@ -170,7 +235,6 @@ def main():
             node.command(define)
             node.command(command)
             node.wait_pose(pose,joints)
-            reference=joints
         print(f'Returned to teaching point {args.point_name}')
     finally:
         node.destroy_node()

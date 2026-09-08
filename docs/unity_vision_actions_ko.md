@@ -152,3 +152,6 @@ PCB:
 | 안정 검출·Base 변환·Pose 품질 판정 | Vision Action 서버 |
 | 부품 수량을 Recipe와 비교해 시작 허용/거부 | Real Orchestrator |
 | 부품 오브젝트 생성·PCB 루트 Transform 갱신 | Unity |
+
+
+기판 자세와 25개 보정 슬롯의 Unity 동기화 및 요청 API는 [Unity 기판 캘리브레이션 연결 안내](UNITY_BOARD_CALIBRATION_API_KO.md)를 참고한다. 기존 Vision Action 계약은 유지된다.

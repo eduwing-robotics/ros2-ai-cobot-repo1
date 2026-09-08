@@ -71,7 +71,7 @@ QUALITY_METRIC_FIELDS = {
 }
 
 
-def validate_tray_detection_quality(detection: dict, quality_config: dict) -> dict:
+def validate_tray_detection_quality(detection: dict, quality_config: dict, *, defer_smd_to_close_view=False) -> dict:
     part = str(detection.get("part_type", ""))
     instance = detection.get("instance_index", "?")
     part_config = quality_config.get("parts", {}).get(part)
@@ -99,7 +99,7 @@ def validate_tray_detection_quality(detection: dict, quality_config: dict) -> di
             continue
         minimum = float(part_config[threshold_name])
         metrics[field_name] = round(value, 6)
-        if value < minimum:
+        if value < minimum and not (defer_smd_to_close_view and part == 'right_white_brown' and threshold_name == 'minimum_detection_confidence'):
             reasons.append(f"{field_name}={value:.3f} < {minimum:.3f}")
 
     if reasons:
@@ -107,6 +107,9 @@ def validate_tray_detection_quality(detection: dict, quality_config: dict) -> di
             f"tray quality gate failed for {part}:{instance}: "
             + "; ".join(reasons)
         )
+    if defer_smd_to_close_view and part == 'right_white_brown':
+        metrics['deferred_to_smd_close'] = True
+        metrics['pick_coordinates_authorized'] = False
     return metrics
 
 
@@ -135,7 +138,7 @@ def base_payload() -> dict:
         "created_unix": time.time(),
         "mode": "fixed_board_and_tray_one_capture_per_cycle",
         "robot_motion_authorized": False,
-        "capture_sequence": ["PlaceCamera board", "TrayHome full tray", "SMDView CAP angles"],
+        "capture_sequence": ["PlaceCamera board", "TrayHome full tray", "assemble non-SMD", "SMDView CAP position and angles", "assemble SMD"],
         "invalidation_rules": [
             "invalidate if the PCB, fixture, or tray is touched or moved",
             "invalidate after collision, emergency stop, or unexpected contact",
@@ -144,11 +147,17 @@ def base_payload() -> dict:
             "recapture both TrayHome and SMDView after any CAP moves in the tray",
         ],
         "motion_invariants": {
-            "travel_speed_percent": 40,
+            "controller_global_speed_percent": 40,
+            "travel_speed_percent": 25,
+            "combined_rotation_speed_percent": 25,
             "vertical_clearance_mm": 100.0,
-            "vertical_speed_percent": 20,
+            "close_slow_zone_mm": 50.0,
+            "vertical_speed_percent": 10,
+            "board_place_common_plan_z_raise_mm": 0.3,
             "forbid_simultaneous_xy_z_change": True,
             "require_vertical_retract_before_rotation_or_horizontal_motion": True,
+            "combine_xy_and_abc_in_one_movej_at_safe_z": True,
+            "forbid_standalone_rotation_waypoints": True,
         },
         "board_captured": False,
         "tray_captured": False,
@@ -187,9 +196,16 @@ def resolve_placement(
         legacy_abc = None
 
     policy = recipe.get("placement_orientation_policy")
-    if not isinstance(policy, dict) or policy.get("mode") != "align_actual_carried_axis_to_current_slot_axis":
+    mode = policy.get("mode") if isinstance(policy, dict) else None
+    if mode == "preserve_pick_tcp_orientation":
+        orientation = {
+            "mode": mode,
+            "maximum_intentional_rotation_deg": 0.0,
+            "source": str(policy.get("source", "")),
+        }
+    elif mode != "align_actual_carried_axis_to_current_slot_axis":
         orientation = None
-        reasons.append("missing carried-axis-to-slot-axis placement policy")
+        reasons.append("missing supported placement orientation policy")
     else:
         try:
             gripper_axis = str(policy["gripper_axis"])
@@ -208,7 +224,7 @@ def resolve_placement(
                 symmetry, maximum_rotation, long_axis_board, target_axis_base
             )):
                 raise ValueError("non-finite orientation policy")
-            if not 0.0 < symmetry <= 360.0 or not 0.0 < maximum_rotation <= 180.0:
+            if not 0.0 < symmetry <= 360.0 or not 0.0 < maximum_rotation <= (185.0 if code.startswith("IND-") else 180.0):
                 raise ValueError("orientation policy outside safe range")
             orientation = {
                 "mode": policy["mode"],
@@ -389,7 +405,11 @@ def load_smd_close_angles(args: argparse.Namespace) -> tuple[dict[int, dict], di
             )
         if not math.isfinite(angle):
             raise RuntimeError(f"SMD close instance {instance} angle is invalid")
+        if part.get("center_correction_applied") is not False:
+            raise RuntimeError("SMD close coordinates must be uncorrected")
+        center = finite_vector(part.get("part_center_base_mm"), 3, "SMD close center")
         resolved[instance] = {
+            "base_xyz_mm": center.tolist(),
             "long_axis_angle_base_deg": angle,
             "confidence_median": confidence,
             "frame_count": frame_count,
@@ -410,7 +430,8 @@ def load_smd_close_angles(args: argparse.Namespace) -> tuple[dict[int, dict], di
         "set_index": set_index,
         "physical_instance_indices": [resolved[index]["physical_instance_index"] for index in sorted(resolved)],
         "part_count": len(resolved),
-        "angle_source": "SMD close-view robust OBB only",
+        "angle_source": "SMD close-view three-batch two-white-terminal axis",
+        "axis_geometry_version": payload.get("axis_geometry_version", "canonical_legacy"),
     }
     return resolved, metadata
 
@@ -432,19 +453,92 @@ def capture_tray(args: argparse.Namespace, payload: dict) -> dict:
     ):
         raise RuntimeError("tray detection has no valid hand-eye calibration hash")
     detections = tray.get("stable_detections", [])
-    if len(detections) != sum(EXPECTED_TRAY_COUNTS.values()):
+    if not isinstance(detections, list):
+        raise RuntimeError("tray stable detections must be an array")
+    only_part_type = getattr(args, "only_part_type", None)
+    only_instance_index = getattr(args, "only_instance_index", None)
+    group = getattr(args, "part_group", None)
+    if group is not None and (group not in EXPECTED_TRAY_COUNTS or only_part_type is not None or only_instance_index is not None):
+        raise RuntimeError("invalid or conflicting whole-part-group capture")
+    if only_part_type not in (None, "gpu", "hbm", "right_white_brown"):
         raise RuntimeError(
-            f"expected 25 stable tray detections, received {len(detections)}"
+            "partial tray capture is restricted to gpu, HBM-01, or all five SMDs"
         )
+    if group is not None:
+        selected_detections = [d for d in detections if isinstance(d, dict) and d.get('part_type') == group]
+        expected_counts = {group: EXPECTED_TRAY_COUNTS[group]}
+        capture_scope = {'mode': 'smd_only' if group == 'right_white_brown' else 'part_group', 'selected_part_types': [group]}
+        if len(selected_detections) != expected_counts[group]:
+            raise RuntimeError('whole group requires every physical instance exactly once')
+    elif only_part_type is None:
+        if only_instance_index is not None:
+            raise RuntimeError("--only-instance-index requires --only-part-type")
+        selected_detections = detections
+        expected_counts = EXPECTED_TRAY_COUNTS
+        capture_scope = {
+            "mode": "full_cycle",
+            "selected_part_types": list(EXPECTED_TRAY_COUNTS),
+        }
+        if len(detections) != sum(EXPECTED_TRAY_COUNTS.values()):
+            raise RuntimeError(
+                f"expected 25 stable tray detections, received {len(detections)}"
+            )
+    elif only_part_type == "right_white_brown":
+        if only_instance_index is not None:
+            raise RuntimeError("SMD capture requires all five instances")
+        selected_detections = [d for d in detections if isinstance(d, dict)
+                               and d.get("part_type") == only_part_type]
+        expected_counts = {only_part_type: 5}
+        capture_scope = {"mode": "smd_only", "selected_part_types": [only_part_type]}
+        if len(selected_detections) != 5:
+            raise RuntimeError("SMD capture requires exactly five detections")
+    else:
+        if only_part_type == "hbm":
+            if only_instance_index != 1:
+                raise RuntimeError(
+                    "HBM partial capture requires --only-instance-index 1"
+                )
+        elif only_instance_index not in (None, 1):
+            raise RuntimeError("GPU partial capture can only select instance 1")
+        selected_instance_index = 1
+        # Ignore every non-selected detection, including same-class HBM
+        # overcounts. The selected physical instance remains exact and gated.
+        selected_detections = [
+            detection
+            for detection in detections
+            if isinstance(detection, dict)
+            and detection.get("part_type") == only_part_type
+            and detection.get("instance_index") == selected_instance_index
+        ]
+        expected_counts = {only_part_type: 1}
+        if only_part_type == "hbm":
+            capture_scope = {
+                "mode": "part_instance_subset",
+                "selected_part_types": [only_part_type],
+                "selected_instance_index": selected_instance_index,
+            }
+        else:
+            capture_scope = {
+                "mode": "part_type_subset",
+                "selected_part_types": [only_part_type],
+            }
+        if len(selected_detections) != 1:
+            raise RuntimeError(
+                f"expected exactly one stable {only_part_type} instance "
+                f"{selected_instance_index} detection, received "
+                f"{len(selected_detections)}"
+            )
     quality_config = load(args.recipe_file).get("tray_snapshot_quality")
     if not isinstance(quality_config, dict):
         raise RuntimeError("missing tray_snapshot_quality recipe")
     if set(quality_config.get("parts", {})) != set(EXPECTED_TRAY_COUNTS):
         raise RuntimeError("tray quality-gate part set does not match cycle parts")
 
-    counts = {key: 0 for key in EXPECTED_TRAY_COUNTS}
+    counts = {key: 0 for key in expected_counts}
     frozen = []
-    for detection in detections:
+    for detection in selected_detections:
+        if not isinstance(detection, dict):
+            raise RuntimeError("tray detections must be objects")
         part = str(detection.get("part_type", ""))
         if part not in counts:
             raise RuntimeError(f"unexpected tray part type {part!r}")
@@ -453,7 +547,8 @@ def capture_tray(args: argparse.Namespace, payload: dict) -> dict:
         angle = float(detection.get("long_axis_angle_base_deg"))
         if not math.isfinite(angle):
             raise RuntimeError("invalid tray part angle")
-        quality = validate_tray_detection_quality(detection, quality_config)
+        quality = validate_tray_detection_quality(detection, quality_config,
+            defer_smd_to_close_view=getattr(args, 'defer_smd_to_close_view', False))
         frozen.append(
             {
                 "part_type": part,
@@ -462,13 +557,32 @@ def capture_tray(args: argparse.Namespace, payload: dict) -> dict:
                 "long_axis_angle_base_deg": round(angle, 6),
                 "observation_frames": int(detection.get("observation_frames", 0)),
                 "quality": quality,
+                "deferred_to_smd_close": bool(quality.get("deferred_to_smd_close", False)),
+                "reference_center_pixel": (finite_vector(detection["reference_center_pixel"], 2, "tray reference pixel").tolist()
+                    if "reference_center_pixel" in detection else None),
                 "consumed": False,
+                "source_id": detection.get("id"),
+                "tray_registration_id": detection.get("tray_registration_id"),
+                "source_observation_id": detection.get("source_observation_id"),
             }
         )
-    if counts != EXPECTED_TRAY_COUNTS:
+    if counts != expected_counts:
         raise RuntimeError(
-            f"tray counts mismatch; expected={EXPECTED_TRAY_COUNTS}, actual={counts}"
+            f"tray counts mismatch; expected={expected_counts}, actual={counts}"
         )
+    indices = {
+        part: sorted(
+            int(item["instance_index"])
+            for item in frozen
+            if item["part_type"] == part
+        )
+        for part in expected_counts
+    }
+    for part, expected_count in expected_counts.items():
+        if indices[part] != list(range(1, expected_count + 1)):
+            raise RuntimeError(
+                f"{part} tray instance indices must be 1..{expected_count}"
+            )
     frozen.sort(key=lambda item: (item["part_type"], item["instance_index"]))
     payload.pop("smd_close_capture", None)
     payload["tray_captured"] = True
@@ -481,6 +595,7 @@ def capture_tray(args: argparse.Namespace, payload: dict) -> dict:
         "counts": counts,
         "part_count": len(frozen),
         "quality_gate": quality_config,
+        "capture_scope": capture_scope,
         "parts": frozen,
     }
     update_readiness(payload)
@@ -512,16 +627,19 @@ def merge_smd_close_angles(
         close = angles[instance]
         coarse_angle = float(cap["long_axis_angle_base_deg"])
         close_angle = float(close["long_axis_angle_base_deg"])
+        # TrayHome SMD orientation is a section-level coarse placeholder (all
+        # five parts can carry the same value), so it cannot validate each
+        # physical part's axis. The close capture is independently gated by
+        # two white terminals and three temporal median batches. Keep the
+        # coarse difference as a diagnostic only; never rotate from it.
         angle_error = abs((close_angle - coarse_angle + 90.0) % 180.0 - 90.0)
-        if angle_error > max_angle_error_deg:
-            raise RuntimeError(
-                f"CAP-{instance:02d} coarse/close angle contradiction: "
-                f"coarse={coarse_angle:.3f}deg, close={close_angle:.3f}deg, "
-                f"error={angle_error:.3f}deg exceeds {max_angle_error_deg:.3f}deg"
-            )
         cap["coarse_long_axis_angle_base_deg"] = round(coarse_angle, 6)
         cap["long_axis_angle_base_deg"] = round(close_angle, 6)
-        cap["position_source"] = "TrayHome full-tray detection"
+        cap["coarse_base_xyz_mm"] = list(cap["base_xyz_mm"])
+        cap["base_xyz_mm"] = finite_vector(close.get("base_xyz_mm"), 3, "SMD close center").tolist()
+        cap["position_source"] = "SMDView close capture"
+        cap["deferred_to_smd_close"] = False
+        cap["center_correction_applied"] = False
         cap["angle_source"] = metadata["angle_source"]
         cap["smd_set_index"] = int(metadata["set_index"])
         cap["smd_physical_instance_index"] = int(close["physical_instance_index"])
@@ -529,13 +647,14 @@ def merge_smd_close_angles(
             "confidence_median": round(float(close["confidence_median"]), 6),
             "frame_count": int(close["frame_count"]),
             "coarse_close_angle_error_deg": round(angle_error, 6),
+            "coarse_angle_is_diagnostic_only": True,
         }
 
     payload["smd_close_captured"] = True
     payload["smd_close_capture"] = {
         **metadata,
         "merged_unix": time.time(),
-        "position_source": "TrayHome full-tray detection",
+        "position_source": "SMDView close capture",
     }
     update_readiness(payload)
     return payload
@@ -566,7 +685,14 @@ def update_readiness(payload: dict) -> None:
     ]
     payload["placement_ready_count"] = len(placements) - len(blocked)
     payload["placement_blocked_slots"] = blocked
+    smd_only = payload.get("tray_capture", {}).get("capture_scope", {}).get("mode") == "smd_only"
+    payload["ready_for_non_smd_execution"] = bool(
+        not smd_only and
+        payload.get("board_captured") and payload.get("tray_captured")
+        and all(placements.get(code, {}).get("placement_ready", False)
+                for code in SLOT_SEQUENCE if not code.startswith("CAP-")))
     payload["ready_for_continuous_execution"] = bool(
+        not smd_only and
         payload.get("board_captured")
         and payload.get("tray_captured")
         and payload.get("smd_close_captured")
@@ -601,6 +727,15 @@ def main() -> None:
     parser.add_argument("--smd-close-input", type=Path, default=DEFAULT_SMD_CLOSE)
     parser.add_argument("--slot-file", type=Path, default=DEFAULT_SLOTS)
     parser.add_argument("--recipe-file", type=Path, default=DEFAULT_RECIPES)
+    parser.add_argument(
+        "--only-part-type",
+        choices=("gpu", "hbm", "right_white_brown"),
+        help=(
+            "capture one GPU/HBM or all five SMD targets; ignore unrelated detector "
+            "overcounts; HBM requires --only-instance-index 1"
+        ),
+    )
+    parser.add_argument("--only-instance-index", type=int)
     parser.add_argument("--max-source-age-sec", type=float, default=10.0)
     parser.add_argument("--max-smd-close-age-sec", type=float, default=120.0)
     parser.add_argument("--min-smd-close-frames", type=int, default=8)

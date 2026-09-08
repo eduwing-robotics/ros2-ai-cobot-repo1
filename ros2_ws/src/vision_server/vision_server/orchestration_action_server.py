@@ -23,6 +23,7 @@ from std_msgs.msg import Bool, String
 from vision_interfaces.action import CalibratePcbPose, DetectTrayParts
 
 from .config_utils import default_path, load_yaml
+from .conveyor_stop_lease import ConveyorStopLease
 from .orchestration_contract import (
     ContractFailure,
     PcbSnapshot,
@@ -55,7 +56,8 @@ class OrchestrationActionServer(Node):
         self._pcb_payload: dict[str, Any] | None = None
         self._tray_parse_error: str | None = None
         self._pcb_parse_error: str | None = None
-        self._conveyor_stopped: bool | None = None
+        self._conveyor_lease = ConveyorStopLease(
+            self.pcb_config.get("conveyor_heartbeat_max_age_sec", 1.0))
 
         callback_group = ReentrantCallbackGroup()
         self.create_subscription(
@@ -75,7 +77,7 @@ class OrchestrationActionServer(Node):
         stopped_qos = QoSProfile(
             depth=1,
             reliability=ReliabilityPolicy.RELIABLE,
-            durability=DurabilityPolicy.TRANSIENT_LOCAL,
+            durability=DurabilityPolicy.VOLATILE,
         )
         self.create_subscription(
             Bool,
@@ -144,9 +146,22 @@ class OrchestrationActionServer(Node):
     def _pcb_callback(self, message: String) -> None:
         self._json_callback(message, "pcb")
 
-    def _conveyor_callback(self, message: Bool) -> None:
+    def _conveyor_callback(self, message: Bool, message_info) -> None:
         with self._lock:
-            self._conveyor_stopped = bool(message.data)
+            self._conveyor_lease.observe(bool(message.data), message_info)
+
+    def _conveyor_session(self):
+        with self._lock:
+            return self._conveyor_lease.current_session()
+
+    def _require_conveyor_session(self, session):
+        with self._lock:
+            allowed = self._conveyor_lease.permits(session)
+        if not allowed:
+            raise ContractFailure(
+                "CONVEYOR_NOT_STOPPED",
+                "fresh stopped heartbeat expired, cleared, or publisher session changed",
+            )
 
     def _latest(self, kind: str):
         with self._lock:
@@ -290,17 +305,13 @@ class OrchestrationActionServer(Node):
                 ContractFailure("INVALID_REQUEST", "job_id is required"),
             )
 
-        if bool(self.pcb_config.get("require_conveyor_stopped", True)):
-            with self._lock:
-                stopped = self._conveyor_stopped
-            if stopped is not True:
-                return self._pcb_failure(
-                    goal_handle,
-                    ContractFailure(
-                        "CONVEYOR_NOT_STOPPED",
-                        "Real Orchestrator has not asserted conveyor_stopped=true",
-                    ),
-                )
+        require_stopped = bool(self.pcb_config.get("require_conveyor_stopped", True))
+        conveyor_session = self._conveyor_session() if require_stopped else None
+        if require_stopped:
+            try:
+                self._require_conveyor_session(conveyor_session)
+            except ContractFailure as failure:
+                return self._pcb_failure(goal_handle, failure)
 
         deadline = time.monotonic() + self.timeout_sec
         next_feedback = 0.0
@@ -314,17 +325,11 @@ class OrchestrationActionServer(Node):
                     ContractFailure("CANCELLED", "PCB calibration was cancelled"),
                     cancelled=True,
                 )
-            if bool(self.pcb_config.get("require_conveyor_stopped", True)):
-                with self._lock:
-                    stopped = self._conveyor_stopped
-                if stopped is not True:
-                    return self._pcb_failure(
-                        goal_handle,
-                        ContractFailure(
-                            "CONVEYOR_NOT_STOPPED",
-                            "conveyor stopped state was cleared during calibration",
-                        ),
-                    )
+            if require_stopped:
+                try:
+                    self._require_conveyor_session(conveyor_session)
+                except ContractFailure as failure:
+                    return self._pcb_failure(goal_handle, failure)
 
             now = time.monotonic()
             if now >= next_feedback:
@@ -371,6 +376,11 @@ class OrchestrationActionServer(Node):
                     ):
                         return self._pcb_failure(goal_handle, failure)
                 else:
+                    if require_stopped:
+                        try:
+                            self._require_conveyor_session(conveyor_session)
+                        except ContractFailure as failure:
+                            return self._pcb_failure(goal_handle, failure)
                     return self._complete_pcb(goal_handle, job_id, snapshot)
             time.sleep(0.05)
         return self._pcb_failure(goal_handle, last_failure)

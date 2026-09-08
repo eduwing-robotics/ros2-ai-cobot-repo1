@@ -39,6 +39,15 @@ class PlacementOrientationTest(unittest.TestCase):
         self.assertAlmostEqual(plan["rotation_delta_deg"], 91.4834, places=2)
         self.assertAlmostEqual(abs(plan["target_tcp_abc_deg"][2]), 179.6724, places=2)
 
+    def test_locked_hbm_branch_survives_shorter_opposite_rotation(self):
+        for pick_c in (80.0, 90.0, 100.0, -80.0, -100.0):
+            for target_axis in (89.7, 90.3):
+                plan = plan_carried_part_orientation(
+                    [-180.0, 0.0, pick_c], target_axis, "tool_y", 180.0,
+                    preferred_tcp_c_deg=180.0, lock_preferred_branch=True,
+                )
+                self.assertGreater(abs(plan["target_tcp_abc_deg"][2]), 179.0)
+
     def test_hbm_avoids_unnecessary_quarter_turn(self):
         target_axis = slot_axis_base_angle_deg(BOARD_ROTATION, 90.0)
         plan = plan_carried_part_orientation(

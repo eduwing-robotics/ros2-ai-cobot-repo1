@@ -28,6 +28,8 @@ class AssemblyInspector(Node):
         self._auto = bool(self.get_parameter('auto').value)
         self._history = deque(maxlen=self._stable_frames)
         self._auto_published_for_window = False
+        self._last_source_ns = None
+        self._input_error = None
 
         self._result_publisher = self.create_publisher(
             Inspection, str(rules['result_topic']), 10
@@ -48,6 +50,17 @@ class AssemblyInspector(Node):
         if message.camera != self._camera:
             return
         now = time.monotonic()
+        source_ns = self._source_ns(message)
+        error = self._source_error(source_ns)
+        if error is None and self._last_source_ns is not None:
+            if source_ns == self._last_source_ns:
+                error = 'DUPLICATE_SOURCE_FRAME'
+            elif source_ns < self._last_source_ns:
+                error = 'REVERSED_SOURCE_FRAME'
+        if error is not None:
+            self._reject_input(error)
+            return
+        self._last_source_ns = source_ns
         if self._history and now - self._history[-1][0] > self._max_age:
             self._history.clear()
             self._auto_published_for_window = False
@@ -57,6 +70,10 @@ class AssemblyInspector(Node):
             exact_count=self._exact_count,
             unknown_class=self._unknown_class,
         )
+        if any(error.startswith('INVALID_SCORE:') for error in evaluated.errors):
+            self._reject_input('INVALID_DETECTION_SCORE')
+            return
+        self._input_error = None
         self._history.append((now, message, evaluated))
         if self._auto and len(self._history) == self._stable_frames:
             signatures = [entry[2].signature for entry in self._history]
@@ -67,6 +84,36 @@ class AssemblyInspector(Node):
                 self._run_check()
                 self._auto_published_for_window = True
 
+    @staticmethod
+    def _source_ns(message):
+        try:
+            stamp = message.header.stamp
+            sec, nanosec = int(stamp.sec), int(stamp.nanosec)
+            if sec < 0 or not 0 <= nanosec < 1_000_000_000:
+                return None
+            source_ns = sec * 1_000_000_000 + nanosec
+            return source_ns if source_ns > 0 else None
+        except (AttributeError, TypeError, ValueError, OverflowError):
+            return None
+
+    def _source_error(self, source_ns):
+        if source_ns is None:
+            return 'INVALID_SOURCE_STAMP'
+        age_ns = self.get_clock().now().nanoseconds - source_ns
+        if age_ns < 0:
+            return 'FUTURE_SOURCE_FRAME'
+        if age_ns > self._max_age * 1_000_000_000:
+            return 'STALE_SOURCE_FRAME'
+        return None
+
+    def _reject_input(self, error):
+        # Never let an invalid callback leave a previous successful window usable.
+        self._history.clear()
+        self._auto_published_for_window = False
+        self._input_error = error
+        if self._auto:
+            self._publish_empty('WAIT', [error])
+
     def _on_service(self, _request, response):
         status, message = self._run_check()
         response.success = status in ('PASS', 'FAIL')
@@ -75,11 +122,19 @@ class AssemblyInspector(Node):
 
     def _run_check(self):
         if not self._history:
+            if self._input_error:
+                self._publish_empty('WAIT', [self._input_error])
+                return 'WAIT', self._input_error
             self._publish_empty('WAIT', ['NO_DETECTION'])
             return 'WAIT', 'No S22 detection is available'
 
         receipt_time, detection, evaluated = self._history[-1]
         now = time.monotonic()
+        for _, source, _ in self._history:
+            error = self._source_error(self._source_ns(source))
+            if error:
+                self._publish(detection, evaluated, 'WAIT', [error])
+                return 'WAIT', error
         if now - receipt_time > self._max_age:
             self._publish(detection, evaluated, 'WAIT', ['STALE_DETECTION'])
             return 'WAIT', 'The latest detection is stale'

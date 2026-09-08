@@ -1,0 +1,38 @@
+{
+  "schema": "fr5.assembly_launcher_revision/v1",
+  "revision": "20260908_gpu_fixed_successful_pick_z",
+  "reviewed_config_sha256": {
+    "vision_assembly/config/part_gripper_recipes.json": "9b4b223901a81fb2d02001d3cd2a33d9977d8fbfb8283317f6678f5c3af29580"
+  },
+  "changes": [
+    "PM03/04 observed board center plus carried pick offset; fresh board transform, no saved TCP replay",
+    "VRM four-edge centers/axes before non-SMD plan, original cell references preserved",
+    "VRM Base correction [-1.516428864,1.589801064], open30/grip24/release28",
+    "PM duplicate masks prefer candidates passing unchanged confidence/shape/rectangle gates; PM-only 960 input",
+    "TrayHome SMD confidence deferred to mandatory close-view validation; coarse SMD coordinates cannot authorize picking",
+    "All25 successful pick/place branches enforced independently by planner and executor",
+    "SMD slot heights: CAP-01 keeps -1.9mm total; CAP-02..05 use -2.4mm total, another -0.5mm; pick XYZ, place XY/ABC, gripper unchanged",
+    "SMD fresh measurement up to 4 attempts; TrayHome pick inspection up to 3 windows of 45s; no automatic regrasp or motion restart.",
+    "PM low-quality masks retry at 640; VRM at 960. Preserve passing primary masks; require same-frame unique center <=3px, axis <=3deg, size within20%, depth <=2mm and unchanged quality gates.",
+    "Low-quality HBM masks additionally retry at 960 with unchanged confidence0.55 and same-frame geometry agreement; live full25 capture passed twice.",
+    "VRM total TCP rotation envelope120deg reconciles existing90/180 successful branches with15deg fine-angle allowance per endpoint; joint-step95deg/J6 limits unchanged. Failed scene general20 controller IK432 waypoints passed maxstep94.518deg.",
+    "Operator requested PM01..04 placement Z another -0.5mm after pm_all_05; recipe and independent planner/executor checks updated; XY/ABC/pick unchanged.",
+    "After smd5_after_pm_20260908, operator requested CAP01 placement +0.2mm: slot override -1.9 to -1.7; CAP02..05 remain -2.4.",
+    "Operator accepted HBM8 placement and requested another -0.5mm for all HBM slots; only place Z adjustment changes.",
+    "Operator requested HBM another -0.5mm after minus05 trial: total adjustment -1.0mm, XY/ABC/pick unchanged; manual reference capture requested.",
+    "Promote operator-confirmed PM02 pick C90/place C180 to shared planner/executor direction reference; opposite endpoint branches remain rejected.",
+    "Use Fast DDS UDPv4 for shell and direct Python cycle launch and inherited child processes.",
+    "Promote physically tested shortest wrapped PlaceCamera return; remove extra full turn for negative yaw corrections.",
+    "Correct launcher displayed slot heights; unvalidated manual-reference XY/angle candidates remain excluded.",
+    "Operator requested GPU fixed-fixture pick TCP Z -49.719mm from successful morning all25 run; replaces live surface-relative pick height. Other part recipes and GPU XY/ABC/gripper/place unchanged. Physical retrial pending."
+  ],
+  "physical_evidence": [
+    "runtime/assembly_cycles/pm34_test_20260907/validated_pm34_result.json",
+    "runtime/assembly_cycles/vrm01_pick_test_20260907/vrm2345_140145/validated_result.json",
+    "runtime/assembly_cycles/smd_resume_locked_20260907/operator_result.json",
+    "runtime/assembly_cycles/smd_split19_24_assembly/result.json",
+    "runtime/placement_reference_20260908/trial/pm_all_05/result.json",
+    "runtime/assembly_cycles/hbm8_reference_trial_20260908/result.json"
+  ],
+  "validation_scope": "Morning full25 cycle completed at 20260908-102057-579195 with prior settings. PM02 C180 and short camera return physically executed in isolated trials. HBM8 total -1.0mm physically executed; precision reference comparison withheld. PM -0.5mm and CAP01 -1.7mm configured but not physically rerun. Integrated full25 cycle not physically rerun. No manual-reference XY/angle correction approved."
+}

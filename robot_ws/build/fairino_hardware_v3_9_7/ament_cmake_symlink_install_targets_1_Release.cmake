@@ -1,1 +1,0 @@
-ament_cmake_symlink_install_targets("TARGET_FILES" "/home/juchan-yoon/FR5_robot_control/robot_ws/build/fairino_hardware_v3_9_7/srv_test_client" "TARGETS" "srv_test_client" "DESTINATION" "lib/fairino_hardware_v3_9_7")

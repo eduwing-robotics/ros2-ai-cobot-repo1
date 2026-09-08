@@ -10,7 +10,9 @@ def select_smd_set(
     items: Sequence[dict],
     layout: Mapping,
     set_index: int,
-) -> list[dict]:
+    *,
+    consumed_prefix_count: int = 0,
+) -> list[dict | None]:
     """Return one configured row ordered left-to-right.
 
     ``required_count`` describes the full two-set fixture capacity. A cycle
@@ -19,6 +21,8 @@ def select_smd_set(
     """
     set_count = int(layout["set_count"])
     parts_per_set = int(layout["parts_per_set"])
+    if type(consumed_prefix_count) is not int or not 0 <= consumed_prefix_count < parts_per_set:
+        raise RuntimeError("invalid operator-confirmed consumed SMD prefix")
     capacity = int(layout["required_count"])
     ranges = layout["canonical_y_ranges"]
     if set_count < 1 or parts_per_set < 1 or capacity != set_count * parts_per_set:
@@ -37,9 +41,13 @@ def select_smd_set(
         y = float(center[1])
         if low <= y < high:
             selected.append(item)
-    if len(selected) != parts_per_set:
+    expected_count = parts_per_set - consumed_prefix_count
+    if len(selected) != expected_count:
         raise RuntimeError(
-            f"SMD set {set_index} requires {parts_per_set} detections in "
+            f"SMD set {set_index} requires {expected_count} detections in "
             f"canonical Y [{low}, {high}), got {len(selected)}"
         )
-    return sorted(selected, key=lambda item: float(item["center"][0]))
+    # Only an explicitly confirmed contiguous consumed prefix may be omitted.
+    # Preserve physical indices; never renumber the remaining parts from one.
+    return [None] * consumed_prefix_count + sorted(
+        selected, key=lambda item: float(item["center"][0]))

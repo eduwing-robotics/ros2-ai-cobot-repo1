@@ -2,12 +2,19 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>fr5_process_sequences</name>
-  <version>0.1.0</version>
-  <description>Safety-gated dry-run process sequence planning for the FR5 cell.</description>
+  <version>0.2.0</version>
+  <description>Fail-closed process planning and Real robot operation backend for the FR5 cell.</description>
   <maintainer email="lucas@example.com">Lucas</maintainer>
   <license>Apache-2.0</license>
 
   <buildtool_depend>ament_python</buildtool_depend>
+
+  <exec_depend>fairino_msgs</exec_depend>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>std_srvs</exec_depend>
+  <exec_depend>python3-yaml</exec_depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>

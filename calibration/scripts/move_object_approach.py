@@ -27,6 +27,58 @@ def symmetric_angle_delta_deg(target_deg, current_deg, branch="shortest"):
     raise ValueError(f"unknown symmetric rotation branch: {branch}")
 
 
+def completion_sample_eligible(
+    motion_done,
+    xyz_error_mm,
+    angle_error_deg,
+    joint_error_deg,
+    saw_motion_in_progress,
+    elapsed_sec,
+):
+    """Reject a stale pre-motion sample that already falls inside loose tolerances."""
+    within_final_tolerance = (
+        xyz_error_mm <= 1.0
+        and angle_error_deg <= 1.0
+        and joint_error_deg <= 1.0
+    )
+    within_strict_tolerance = (
+        xyz_error_mm <= 0.2
+        and angle_error_deg <= 0.1
+        and joint_error_deg <= 0.1
+    )
+    return (
+        int(motion_done) == 1
+        and within_final_tolerance
+        and (
+            saw_motion_in_progress
+            or (elapsed_sec >= 0.25 and within_strict_tolerance)
+        )
+    )
+
+
+def bounded_manual_yaw_delta(value):
+    if value is None:
+        return None
+    value=float(value)
+    if not math.isfinite(value) or abs(value) > 5.0:
+        raise ValueError("manual yaw delta must be finite and within +/-5 degrees")
+    return value
+
+
+def bounded_held_part_yaw_delta(value):
+    if value is None:
+        return None
+    value=float(value)
+    if not math.isfinite(value) or abs(value) > 95.0:
+        raise ValueError("held-part yaw delta must be finite and within +/-95 degrees")
+    return value
+
+
+def needs_rotation_waypoint(rotation_delta_deg, manual_adjustment=False):
+    threshold=0.05 if manual_adjustment else 0.5
+    return abs(float(rotation_delta_deg)) > threshold
+
+
 class Mover(Node):
     def __init__(self):
         super().__init__("move_object_approach")
@@ -50,19 +102,35 @@ class Mover(Node):
 
     def wait_motion_done(self, target_pose, target_joints, tool_id, timeout=90.0, tolerance_mm=1.0):
         deadline=time.monotonic()+timeout
+        started=time.monotonic()
+        saw_motion_in_progress=False
+        eligible_samples=0
         target=np.asarray(target_pose[:3],dtype=float)
         target_rotation=Rotation.from_euler("xyz",target_pose[3:],degrees=True)
         while rclpy.ok() and time.monotonic()<deadline:
             state=self.refresh_state(timeout=min(3.0,max(0.1,deadline-time.monotonic())))
             assert_safe_state(state,tool_id,require_auto=True,require_stationary=False)
+            if int(state.robot_motion_done) != 1:
+                saw_motion_in_progress=True
+                eligible_samples=0
             current=np.asarray([state.cart_x_cur_pos,state.cart_y_cur_pos,state.cart_z_cur_pos],dtype=float)
             rotation=Rotation.from_euler("xyz",[state.cart_a_cur_pos,state.cart_b_cur_pos,state.cart_c_cur_pos],degrees=True)
             angle_error=math.degrees((rotation.inv()*target_rotation).magnitude())
             joints=np.asarray([state.j1_cur_pos,state.j2_cur_pos,state.j3_cur_pos,state.j4_cur_pos,state.j5_cur_pos,state.j6_cur_pos],dtype=float)
             joint_error=float(np.max(np.abs(joints-target_joints)))
-            if (int(state.robot_motion_done)==1
-                    and float(np.linalg.norm(current-target))<=tolerance_mm
-                    and angle_error<=1.0 and joint_error<=1.0):
+            xyz_error=float(np.linalg.norm(current-target))
+            eligible=completion_sample_eligible(
+                state.robot_motion_done,
+                xyz_error,
+                angle_error,
+                joint_error,
+                saw_motion_in_progress,
+                time.monotonic()-started,
+            )
+            if tolerance_mm < 1.0:
+                eligible = eligible and xyz_error <= tolerance_mm
+            eligible_samples = eligible_samples + 1 if eligible else 0
+            if eligible_samples >= 2:
                 return state
         raise RuntimeError("robot motion pose/joint verification timeout")
 
@@ -124,6 +192,23 @@ def main():
     p.add_argument("--x",type=float); p.add_argument("--y",type=float); p.add_argument("--z",type=float)
     p.add_argument("--target-file",type=Path)
     p.add_argument("--align-part",action="store_true",help="align the gripper axis with the detected part long axis")
+    p.add_argument(
+        "--grasp-axis-offset-deg",
+        type=float,
+        default=0.0,
+        help="validated offset added to the detected part axis before gripper alignment",
+    )
+    p.add_argument(
+        "--yaw-delta-deg",
+        type=float,
+        help="bounded Base-Z yaw adjustment for a direct XYZ target; preserves XY/Z",
+    )
+    p.add_argument(
+        "--held-part-yaw-delta-deg",
+        type=float,
+        help="bounded Base-Z rotation for a confirmed held part at a direct XYZ target",
+    )
+    p.add_argument("--confirm-held-part-rotation", action="store_true")
     p.add_argument("--gripper-axis",choices=("tool_x","tool_y"),default="tool_x")
     p.add_argument(
         "--symmetric-rotation-branch",
@@ -139,9 +224,10 @@ def main():
     p.add_argument("--center-correction",action=argparse.BooleanOptionalAction,default=True)
     p.add_argument("--approach-offset-mm",type=float,default=100.0)
     p.add_argument("--max-target-age-sec",type=float,default=120.0)
-    p.add_argument("--speed-percent",type=int,default=50)
-    p.add_argument("--descent-speed-percent",type=int,default=50)
-    p.add_argument("--rotation-speed-percent",type=int,default=50)
+    p.add_argument("--controller-global-speed-percent",type=int,default=40)
+    p.add_argument("--speed-percent",type=int,default=25)
+    p.add_argument("--descent-speed-percent",type=int,default=25)
+    p.add_argument("--rotation-speed-percent",type=int,default=25)
     p.add_argument("--safe-clearance-mm",type=float,default=100); p.add_argument("--max-distance-mm",type=float,default=450)
     p.add_argument("--safe-z-mm",type=float,help="explicit Base-Z travel height; must be at or above current and target Z")
     p.add_argument("--joint-limit-margin-deg",type=float,default=10.0)
@@ -159,6 +245,38 @@ def main():
         p.error("--target-file cannot be combined with --x/--y/--z")
     if a.target_file is None and not all(value is not None for value in direct_values):
         p.error("provide either --target-file or all of --x --y --z")
+    orientation_modes = sum(
+        value is not None
+        for value in (a.yaw_delta_deg, a.held_part_yaw_delta_deg)
+    ) + int(a.align_part)
+    if orientation_modes > 1:
+        p.error("choose only one of --align-part, --yaw-delta-deg, or --held-part-yaw-delta-deg")
+    if a.grasp_axis_offset_deg != 0.0 and not a.align_part:
+        p.error("--grasp-axis-offset-deg requires --align-part")
+    try:
+        a.grasp_axis_offset_deg=bounded_manual_yaw_delta(a.grasp_axis_offset_deg)
+    except ValueError as exc:
+        p.error(str(exc).replace("manual yaw delta", "grasp-axis offset"))
+    if a.yaw_delta_deg is not None:
+        if a.target_file is not None:
+            p.error("--yaw-delta-deg requires a direct XYZ target")
+        try:
+            a.yaw_delta_deg=bounded_manual_yaw_delta(a.yaw_delta_deg)
+        except ValueError as exc:
+            p.error(str(exc))
+    if a.held_part_yaw_delta_deg is not None:
+        if a.target_file is not None:
+            p.error("--held-part-yaw-delta-deg requires a direct XYZ target")
+        try:
+            a.held_part_yaw_delta_deg=bounded_held_part_yaw_delta(
+                a.held_part_yaw_delta_deg
+            )
+        except ValueError as exc:
+            p.error(str(exc))
+        if a.execute and not a.confirm_held_part_rotation:
+            p.error("held-part rotation requires --confirm-held-part-rotation")
+    elif a.confirm_held_part_rotation:
+        p.error("--confirm-held-part-rotation requires --held-part-yaw-delta-deg")
     if a.target_file is not None:
         try:
             payload=json.loads(a.target_file.read_text(encoding="utf-8"))
@@ -177,6 +295,7 @@ def main():
         a.x=float(center[0]); a.y=float(center[1]); a.z=float(center[2]+a.approach_offset_mm)
     if a.execute != a.confirm_move:p.error("실제 이동에는 --execute와 --confirm-move가 모두 필요합니다")
     if a.dry_run and a.execute:p.error("--dry-run and --execute cannot be combined")
+    if not 1<=a.controller_global_speed_percent<=50:p.error("--controller-global-speed-percent must be between 1 and 50")
     if not 1<=a.speed_percent<=50:p.error("--speed-percent must be between 1 and 50")
     if not 1<=a.descent_speed_percent<=50:p.error("--descent-speed-percent must be between 1 and 50")
     if not 1<=a.rotation_speed_percent<=50:p.error("--rotation-speed-percent must be between 1 and 50")
@@ -202,7 +321,17 @@ def main():
         target_abc=list(abc)
         target_rotation=Rotation.from_euler("xyz",target_abc,degrees=True).as_matrix()
         rotation_delta=0.0
-        if a.align_part:
+        requested_yaw_delta = (
+            a.yaw_delta_deg
+            if a.yaw_delta_deg is not None
+            else a.held_part_yaw_delta_deg
+        )
+        if requested_yaw_delta is not None:
+            rotation_delta=float(requested_yaw_delta)
+            base_z_rotation=Rotation.from_euler("z",rotation_delta,degrees=True).as_matrix()
+            target_rotation=base_z_rotation@target_rotation
+            target_abc=Rotation.from_matrix(target_rotation).as_euler("xyz",degrees=True).tolist()
+        elif a.align_part:
             if a.target_file is None:
                 p.error("--align-part requires --target-file")
             if not math.isfinite(part_base_angle):
@@ -213,8 +342,9 @@ def main():
             if np.linalg.norm(axis_xy)<0.5:
                 raise RuntimeError(f"{a.gripper_axis} is nearly vertical; cannot align in Base XY")
             current_axis_angle=math.degrees(math.atan2(axis_xy[1],axis_xy[0]))
+            corrected_part_base_angle=part_base_angle+a.grasp_axis_offset_deg
             rotation_delta=symmetric_angle_delta_deg(
-                part_base_angle,
+                corrected_part_base_angle,
                 current_axis_angle,
                 a.symmetric_rotation_branch,
             )
@@ -247,11 +377,15 @@ def main():
                 raise RuntimeError("--safe-z-mm must be finite and at or above current and target Z")
         waypoints=[]
         if safe_z-current[2]>1:waypoints.append((current[0],current[1],safe_z,abc,a.descent_speed_percent,"vertical raise"))
-        if abs(rotation_delta)>0.5:waypoints.append((current[0],current[1],safe_z,target_abc,a.rotation_speed_percent,"part orientation alignment"))
+        if needs_rotation_waypoint(
+            rotation_delta,
+            manual_adjustment=requested_yaw_delta is not None,
+        ):
+            waypoints.append((current[0],current[1],safe_z,target_abc,a.rotation_speed_percent,"part orientation alignment"))
         horizontal_delta=math.hypot(a.x-current[0],a.y-current[1])
         if horizontal_delta>a.min_horizontal_move_mm:
             waypoints.append((a.x,a.y,safe_z,target_abc,a.speed_percent,"horizontal positioning"))
-        if safe_z-a.z>1:waypoints.append((a.x,a.y,a.z,target_abc,a.descent_speed_percent,"vertical approach"))
+        if safe_z-a.z>0.01:waypoints.append((a.x,a.y,a.z,target_abc,a.descent_speed_percent,"vertical approach"))
         current_joints=np.asarray([s.j1_cur_pos,s.j2_cur_pos,s.j3_cur_pos,s.j4_cur_pos,s.j5_cur_pos,s.j6_cur_pos],float)
         soft=parse_response(n.request("GetJointSoftLimitDeg(1)"),12,"joint soft-limit")
         negative=soft[:6]; positive=soft[6:]
@@ -284,10 +418,24 @@ def main():
               f"fixed Base [mm]: {np.round(correction_base_fixed,3).tolist()}; "
               f"total Base [mm]: {np.round(correction_base,3).tolist()}")
         if a.align_part:
-            print(f"Part long axis/Base XY: {part_base_angle:.3f} deg")
+            print(
+                f"Part long axis/Base XY: detected={part_base_angle:.3f} deg, "
+                f"validated offset={a.grasp_axis_offset_deg:.3f} deg, "
+                f"grasp axis={part_base_angle+a.grasp_axis_offset_deg:.3f} deg"
+            )
             print(
                 f"Gripper alignment: {a.gripper_axis}, "
                 f"branch={a.symmetric_rotation_branch}, delta={rotation_delta:.3f} deg, "
+                f"target ABC={np.round(target_abc,3).tolist()}"
+            )
+        elif a.yaw_delta_deg is not None:
+            print(
+                f"Bounded in-place Base yaw adjustment: delta={rotation_delta:.3f} deg, "
+                f"target ABC={np.round(target_abc,3).tolist()}"
+            )
+        elif a.held_part_yaw_delta_deg is not None:
+            print(
+                f"Confirmed held-part Base yaw adjustment: delta={rotation_delta:.3f} deg, "
                 f"target ABC={np.round(target_abc,3).tolist()}"
             )
         else:
@@ -297,7 +445,7 @@ def main():
             print(f"Stage {i}/{len(planned)} {w[7]}: [{w[0]:.3f}, {w[1]:.3f}, {w[2]:.3f}], ABC={np.round(w[3:6],3).tolist()}, speed={w[6]}%, joints={np.round(w[8],3).tolist()}, min_limit_margin={float(np.min(w[9])):.1f} deg")
         if not a.execute:
             print("DRY RUN - ROBOT DID NOT MOVE"); return
-        n.command(f"SetSpeed({a.speed_percent})")
+        n.command(f"SetSpeed({a.controller_global_speed_percent})")
         for i,(x,y,z,rx,ry,rz,speed,name,joints,margins) in enumerate(planned,1):
             assert_safe_state(n.refresh_state(),a.tool_id,require_auto=True)
             safety_stop=parse_response(n.request("GetSafetyStopState()"),2,"safety-stop")

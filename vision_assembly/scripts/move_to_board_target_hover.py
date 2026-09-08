@@ -209,6 +209,15 @@ def main():
         if compensation_source else [0.0, 0.0],
         dtype=float,
     )
+    correction_base_xy_mm = np.asarray(
+        compensation_source.get('place_tcp_correction_base_mm', [0.0, 0.0])
+        if compensation_source else [0.0, 0.0],
+        dtype=float,
+    )
+    if compensation_board_mm.shape != (2,) or not np.all(np.isfinite(compensation_board_mm)):
+        raise RuntimeError(f'invalid board-frame placement compensation for {target_slot}')
+    if correction_base_xy_mm.shape != (2,) or not np.all(np.isfinite(correction_base_xy_mm)):
+        raise RuntimeError(f'invalid Base-frame placement correction for {target_slot}')
     rclpy.init(); node = HoverMover()
     try:
         node.wait_state(); state = node.state
@@ -221,7 +230,9 @@ def main():
             compensation_board_mm[0], compensation_board_mm[1], 0.0
         ])
         commanded_surface = (
-            np.asarray(target_surface, dtype=float) + compensation_base_mm
+            np.asarray(target_surface, dtype=float)
+            + compensation_base_mm
+            + np.asarray([correction_base_xy_mm[0], correction_base_xy_mm[1], 0.0])
         ).tolist()
         target = [commanded_surface[0], commanded_surface[1], commanded_surface[2] + args.hover_mm]
         if math.dist(current[:3], target) > 650: raise RuntimeError('target distance exceeds 650 mm')
@@ -295,6 +306,7 @@ def main():
         print('GRASPED PART -> BOARD TARGET HOVER ONLY')
         print('Board surface/Base [mm]:', [round(v, 3) for v in target_surface])
         print('Placement TCP compensation/Board [mm]:', np.round(compensation_board_mm, 3).tolist())
+        print('Placement TCP correction/Base [mm]:', np.round(correction_base_xy_mm, 3).tolist())
         print('Commanded surface/Base [mm]:', [round(v, 3) for v in commanded_surface])
         print('Hover target/Base [mm]:', [round(v, 3) for v in target])
         print(f'Placement slot: {target_slot}')

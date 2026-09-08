@@ -24,3 +24,12 @@ vision_assembly/models/
 weights/
 *.orig
 *.pt
+
+# Historical snapshots and generated handoff bundles stay local.
+/vision_assembly/checkpoints/**
+/vision_assembly/data/*/
+/unity_integration/*.zip
+# Frequently regenerated observations (keep validated fixtures under tests/).
+/vision_assembly/data/board_pose_3d_live.json
+/vision_assembly/data/safe_pick_*.json
+/vision_assembly/data/smd_close_targets_current.json

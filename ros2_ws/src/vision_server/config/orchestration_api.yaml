@@ -54,6 +54,7 @@ orchestration_api:
     maximum_plane_mad_mm: 2.0
     minimum_plane_inliers: 200
     require_conveyor_stopped: true
+    conveyor_heartbeat_max_age_sec: 1.0
     pose_convention:
       origin: physical_board_geometric_center
       axes: physical_board_canonical_xy_and_right_handed_z

@@ -81,14 +81,19 @@ cp config/ksmc.env.example config/ksmc.env
 안전 기준에 맞지 않는다. 통합 motion executor가 완성되기 전 자동운전에
 사용하지 않는다.
 
-## 현재 상태
+## 현재 구현과 검증
 
-- D435 aligned depth 및 CameraInfo 처리: 이관 완료
-- 활성 Eye-in-Hand 결과와 좌표변환 코드: 이관 완료
-- 비전/보드/부품 검출 코드: 이관 완료
-- FR5 벤더 드라이버와 상태/명령 서버: 이관 완료
-- 안전 dry-run pick/place 플래너: 이관 완료
-- 비전 목표와 플래너의 typed ROS 계약: 다음 구현 단계
-- 단일 안전 motion executor와 hover 재관측 루프: 다음 구현 단계
-- 실제 접촉·파지·배치 자동운전 승인: 미완료
+- `run_fr5_cycle.sh`는 새 기판/트레이 촬영, 일반20개 조립, SMD5개 근접측정/조립을 연결한다. 사용법과 실행 전 조건은 [단일 런처 문서](docs/FR5_CYCLE_LAUNCHER_KO.md)를 확인한다.
+- 성공 파지·배치 방향, 최신 SMD 배치높이, 촬영 최신성 및 관절 경로 제한을 계획과 실행에서 검사한다. 조립 동작 완료와 실제 안착 품질은 별도로 기록한다.
+- Unity 로봇 API·Ghost 미리보기·보드/트레이 캘리브레이션 API가 있다. Real API 하드웨어 실행은 기본 비활성이다.
+- `run_fr5_assembly_stack.sh view`는 D435 RQT와 USB 휴대폰 검사 화면을 함께 연다. 휴대폰의 mm 추정과 전체25개 안착 검증은 별도 검증 과제다.
+- 최근 문제 분석·검증 범위는 [프로젝트 검토](docs/PROJECT_REVIEW_2026-09-08.md)와 [결함 수정 기록](docs/PROJECT_REVIEW_FIXES_2026-09-08.md), 현장 상태는 [최신 인계](docs/CODEX_HANDOFF.md)와 [작업일지](작업일지/README.md)를 확인한다.
 
+`./scripts/test_all.sh`는 ROS 개발 환경을 읽어 메시지 타입을 사용할 수 있게 하고, 조립·비전·API·스택·진행률의 오프라인 시험과 구문 검사를 실행한다. 실제 ROS 서비스와 로봇·GUI 실행 경계는 시험에서 대체한다. 시스템 Python에 pytest가 필요하며, 카메라나 로봇을 연결할 필요는 없다. 전체25개 반복 실기와 슬롯별 품질 판정은 이 시험과 별도로 검증한다.
+
+
+## 2026-09-08 소스 배포 상태
+
+최신 작업과 다음 시작점은 [오늘 작업일지](작업일지/2026-09-08.md)를 먼저 확인한다. 로봇 API·그리퍼 피드백·런처와 높은 위치 연속 이동을 포함한다. 연속 이동은 [적용 범위와 검증 상태](docs/CONTINUOUS_TRANSFER_20260908.md)를 따른다. 카메라 이동 경로는 별도 개선 예정이며 마지막 실행은 VRM3 검출 품질 미달로 중단됐다.
+
+빌드/install/log/cache 및 현장 runtime은 Git에서 제외하고 재생성한다. 실행 기준 설정과 작은 회귀시험 fixture는 포함한다. 대형 모델/영상과 전체 checkpoint 복제본, Unity 전달 ZIP, 일회성 진단 산출물은 별도 현장 보관이다. 로컬 config/ksmc.env의 KSMC_REAL_HARDWARE_EXECUTION 및 KSMC_CONTINUOUS_TRANSFER는 장비별 명시 설정이며 배포 예제 기본값은 false다.

@@ -1,4 +1,5 @@
 from vision_server.inspection_rules import evaluate_parts
+import pytest
 
 
 CATALOG = {
@@ -49,3 +50,19 @@ def test_unknown_class_fails():
     result = evaluate_parts(observations, CATALOG)
     assert result.status == 'FAIL'
     assert 'UNKNOWN:mystery' in result.errors
+
+
+@pytest.mark.parametrize('score', [float('nan'), float('inf'), -float('inf'), -.1, 1.1, None, 'bad'])
+def test_invalid_scores_fail_and_are_not_counted(score):
+    observations = complete_board()
+    observations[0]['score'] = score
+    result = evaluate_parts(observations, CATALOG)
+    assert result.status == 'FAIL'
+    assert result.found_total == 24
+    assert 'INVALID_SCORE:gpu' in result.errors
+
+
+def test_invalid_unknown_score_is_not_ignored():
+    result = evaluate_parts(complete_board() + [{'name': 'unknown', 'score': float('nan')}],
+                            CATALOG, unknown_class='ignore')
+    assert result.status == 'FAIL'

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import math
 from typing import Dict, Iterable, List
 
 
@@ -40,7 +41,13 @@ def evaluate_parts(
 
     for item in observations:
         name = str(_value(item, 'name'))
-        score = float(_value(item, 'score'))
+        try:
+            score = float(_value(item, 'score'))
+        except (TypeError, ValueError, KeyError, AttributeError):
+            score = float('nan')
+        if not math.isfinite(score) or not 0.0 <= score <= 1.0:
+            errors.append(f'INVALID_SCORE:{name}')
+            continue
         if name not in catalog:
             if unknown_class == 'fail':
                 errors.append(f'UNKNOWN:{name}')

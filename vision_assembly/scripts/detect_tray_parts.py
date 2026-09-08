@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """Find raised objects in saved tray ROIs. Read-only dry run."""
+import uuid
+from tray_source_identity import TraySourceIdentity
 import argparse, hashlib, json, threading, time, traceback
 from collections import deque
 from pathlib import Path
@@ -27,11 +29,16 @@ def wrapped_angle_span(samples):
  unwrapped=reference+(angles-reference+180.)%360.-180.
  return np.ptp(unwrapped,axis=0)
 
+from pm_mask_selection import priority as pm_candidate_priority
+from segmentation_scale_retry import passes_quality, merge_scale_retry
+
 class Detector(Node):
  def __init__(self,a):
   super().__init__('tray_part_detector'); self.a=a
   self.layout=json.loads(a.layout.read_text());self.bins=self.layout['bins']
   self.specs=json.loads(a.specs.read_text())['parts']
+  self.seg_quality=json.loads((Path(__file__).resolve().parents[1]/'config/part_gripper_recipes.json').read_text())['tray_snapshot_quality']['parts']
+  self.pm_quality=self.seg_quality['long_orange']
   ref=Path(self.layout['reference_image'])
   if not ref.is_absolute():ref=a.layout.parents[2]/ref
   image=cv2.imread(str(ref))
@@ -82,6 +89,8 @@ class Detector(Node):
   self.previous_robot_pose=None
   self.homography_corners=deque(maxlen=a.homography_smoothing_frames)
   self.depth=self.info=None; self.ds=0; self.last=0.
+  # Capture sensor inputs together before the inference thread yields to new callbacks.
+  self.observation_lock=threading.RLock()
   # Drop overlapping GPU inference callbacks to prevent latency and CUDA memory growth.
   self.processing_lock=threading.Lock()
   self.display_lock=threading.Lock()
@@ -96,6 +105,8 @@ class Detector(Node):
                             reliability=ReliabilityPolicy.BEST_EFFORT)
   self.shared_homography=None;self.shared_registration_stamp_ns=0;self.shared_registration_state='NONE'
   self.registration_generation=0
+  self.detector_session_id=str(uuid.uuid4())
+  self.source_identity=TraySourceIdentity()
   self.pub=self.create_publisher(CompressedImage,a.output_topic,self.image_qos)
   self.counts_pub=self.create_publisher(String,a.counts_topic,10)
   self.overlay_state_pub=self.create_publisher(String,a.overlay_state_topic,10)
@@ -109,8 +120,11 @@ class Detector(Node):
   self.get_logger().info('Dry-run only: no robot command is sent.')
  @staticmethod
  def stamp(m): return m.header.stamp.sec*1000000000+m.header.stamp.nanosec
- def info_cb(self,m): self.info=m
+ def info_cb(self,m):
+  with self.observation_lock:self.info=m
  def registration_cb(self,message):
+  with self.observation_lock:self.update_registration(message)
+ def update_registration(self,message):
   try:
    payload=json.loads(message.data)
    state=str(payload.get('state','NONE'))
@@ -143,17 +157,37 @@ class Detector(Node):
   now=time.monotonic()
   pose=np.array([m.flange_x_cur_pos,m.flange_y_cur_pos,m.flange_z_cur_pos,
    m.flange_a_cur_pos,m.flange_b_cur_pos,m.flange_c_cur_pos],float)
-  if self.previous_robot_pose is not None and now-self.robot_time<self.a.robot_stream_gap_sec:
-   translation_delta=np.abs(pose[:3]-self.previous_robot_pose[:3])
-   angle_delta=wrapped_angle_delta(pose[3:],self.previous_robot_pose[3:])
-   if np.max(translation_delta)>self.a.max_robot_sample_jump_mm or np.max(angle_delta)>self.a.max_robot_sample_jump_deg:
-    return
-  self.robot=m;self.robot_time=now
-  self.previous_robot_pose=pose;self.pose_history.append(pose)
+  with self.observation_lock:
+   if self.previous_robot_pose is not None and now-self.robot_time<self.a.robot_stream_gap_sec:
+    translation_delta=np.abs(pose[:3]-self.previous_robot_pose[:3])
+    angle_delta=wrapped_angle_delta(pose[3:],self.previous_robot_pose[3:])
+    if np.max(translation_delta)>self.a.max_robot_sample_jump_mm or np.max(angle_delta)>self.a.max_robot_sample_jump_deg:
+     return
+   self.robot=m;self.robot_time=now
+   self.previous_robot_pose=pose;self.pose_history.append(pose)
  def depth_cb(self,m):
   if m.encoding not in ('16UC1','mono16'): return
   x=np.frombuffer(m.data,np.uint16).reshape(m.height,m.step//2)
-  self.depth=x[:,:m.width].copy(); self.ds=self.stamp(m)
+  depth=x[:,:m.width].copy();depth.setflags(write=False)
+  with self.observation_lock:self.depth=depth;self.ds=self.stamp(m)
+ def robot_observation(self):
+  with self.observation_lock:
+   return {'robot_pose':None if self.robot is None else self.previous_robot_pose.copy(),
+           'robot_time':self.robot_time,'pose_history':np.asarray(self.pose_history,float).copy(),
+           'capture_monotonic':time.monotonic()}
+ def capture_observation(self,m):
+  """Hold one RGB/depth calibration/pose bundle throughout asynchronous inference."""
+  image_stamp_ns=self.stamp(m)
+  with self.observation_lock:
+   if self.depth is None or self.info is None:return None
+   if abs(image_stamp_ns-self.ds)>self.a.max_sync_ms*1000000:return None
+   # depth_cb owns immutable arrays, so replacing self.depth cannot alter this frame.
+   return {'depth':self.depth,'depth_stamp_ns':self.ds,'image_stamp_ns':image_stamp_ns,
+           'intrinsics':tuple(self.info.k),'camera_info_stamp_ns':self.stamp(self.info),
+           'homography':None if self.shared_homography is None else self.shared_homography.copy(),
+           'registration_stamp_ns':self.shared_registration_stamp_ns,
+           'registration_state':self.shared_registration_state,
+           'registration_generation':self.registration_generation,**self.robot_observation()}
  def ref_points(self,item):
   return np.array([[round(x*self.rw),round(y*self.rh)]
                    for x,y in item['section_polygon_normalized']],np.int32)
@@ -210,14 +244,14 @@ class Detector(Node):
   full=cv2.getPerspectiveTransform(source,smooth)
   return full,len(good),count
  def find(self,item,image,background_delta,depth_float,hue,saturation,value_channel,fx,fy,cx,cy,H):
-  h,w=self.depth.shape
+  h,w=depth_float.shape
   ref=self.ref_points(item).astype(np.float32).reshape(-1,1,2)
   poly=np.rint(cv2.perspectiveTransform(ref,H)[:,0,:]).astype(np.int32)
   roi=np.zeros((h,w),np.uint8); cv2.fillPoly(roi,[poly],255)
   inset=35 if item['part_spec_id']=='marked_white' else 13
   roi=cv2.erode(roi,np.ones((inset,inset),np.uint8))
   color_roi=roi>0
-  valid=color_roi&(self.depth>100)&(self.depth<2000); sample=self.depth[valid]
+  valid=color_roi&(depth_float>100)&(depth_float<2000); sample=depth_float[valid]
   if sample.size<500:return [],poly,0.
   floor=float(np.percentile(sample,82)); part=item['part_spec_id']
   size=self.specs[part]['nominal_size_mm']
@@ -285,10 +319,10 @@ class Detector(Node):
    if abs(moments['m00'])<1e-6:continue
    u=float(moments['m10']/moments['m00']);v=float(moments['m01']/moments['m00'])
    cm=np.zeros_like(roi);cv2.drawContours(cm,[contour],-1,255,-1)
-   values=self.depth[(cm>0)&(self.depth>100)]
+   values=depth_float[(cm>0)&(depth_float>100)]
    if values.size<10:
     expanded=cv2.dilate(cm,np.ones((9,9),np.uint8))
-    values=self.depth[(expanded>0)&(self.depth>100)&(self.depth<2000)]
+    values=depth_float[(expanded>0)&(depth_float>100)&(depth_float<2000)]
    if values.size<10:continue
    zmm=float(np.median(values));z=zmm/1000.;measured_height=floor-zmm
    if part=='right_white_brown' and measured_height>max(8.,size['height']*2.5):continue
@@ -344,7 +378,9 @@ class Detector(Node):
    expected_size=self.specs[part]['nominal_size_mm']
    expected_aspect=max(expected_size['x'],expected_size['y'])/max(1e-6,min(expected_size['x'],expected_size['y']))
    shape=float(np.exp(-abs(np.log(max(aspect,1e-6)/expected_aspect))))
-   return (shape,score) if part=='long_orange' else (score,shape)
+   if part=='long_orange':
+    return pm_candidate_priority(score,polygon,expected_aspect,self.seg_single_areas[part],self.pm_quality)
+   return (score,shape)
   def overlap_fraction(first,second):
    hull_a=cv2.convexHull(first.astype(np.float32))
    hull_b=cv2.convexHull(second.astype(np.float32))
@@ -377,9 +413,9 @@ class Detector(Node):
    # Reject mixed edge pixels where aligned depth can blend the package top
    # with the tray floor.  Keep the full mask as a fallback for tiny parts.
    depth_mask=cv2.erode(cm,np.ones((5,5),np.uint8)) if part in ('gpu','hbm') else cm
-   values=self.depth[(depth_mask>0)&(self.depth>100)&(self.depth<2000)]
+   values=depth_float[(depth_mask>0)&(depth_float>100)&(depth_float<2000)]
    if values.size<3:
-    values=self.depth[(cv2.dilate(cm,np.ones((5,5),np.uint8))>0)&(self.depth>100)&(self.depth<2000)]
+    values=depth_float[(cv2.dilate(cm,np.ones((5,5),np.uint8))>0)&(depth_float>100)&(depth_float<2000)]
    if values.size<3:continue
    zmm=float(np.median(values));z=zmm/1000.
    reference_contour=reference.reshape(-1,1,2).astype(np.float32)
@@ -469,16 +505,14 @@ class Detector(Node):
    for row_start in range(0,len(one_set),2):
     ordered.extend(sorted(one_set[row_start:row_start+2],key=x))
   return ordered
- def stabilize(self,H,fx,fy,cx,cy):
+ def stabilize(self,H,fx,fy,cx,cy,observation):
   clusters=[]
+  current=observation['robot_pose'];h,w=observation['depth'].shape
   radii={'long_orange':60.,'gpu':45.,'hbm':45.,'black_block':40.,
          'marked_white':26.,'right_white_brown':18.}
   for frame_id,items in self.history:
    for d in items:
-    if self.robot is not None and '_flange_pose' in d:
-     current=np.array([self.robot.flange_x_cur_pos,self.robot.flange_y_cur_pos,
-      self.robot.flange_z_cur_pos,self.robot.flange_a_cur_pos,
-      self.robot.flange_b_cur_pos,self.robot.flange_c_cur_pos],float)
+    if current is not None and '_flange_pose' in d:
      source=np.asarray(d['_flange_pose'],float)
      translation_delta=np.abs(current[:3]-source[:3])
      angle_delta=wrapped_angle_delta(current[3:],source[3:])
@@ -516,7 +550,6 @@ class Detector(Node):
    if hits<self.a.min_stable_hits:continue
    ref=np.median(np.array(cluster['points']),axis=0).astype(np.float32).reshape(1,1,2)
    u,v=cv2.perspectiveTransform(ref,H)[0,0];ui,vi=round(float(u)),round(float(v))
-   h,w=self.depth.shape
    if not (2<=ui<w-2 and 2<=vi<h-2):continue
    camera=np.median(np.asarray(cluster['cameras'],float),axis=0);z=float(camera[2])
    radians=np.deg2rad(np.array(cluster['angles'])*2.)
@@ -546,22 +579,33 @@ class Detector(Node):
    counts[d['part_type']]=counts.get(d['part_type'],0)+1
    d['instance_index']=counts[d['part_type']]
   return stable
- def add_base_coordinates(self,result,fx,fy):
-  if self.robot is None or time.monotonic()-self.robot_time>self.a.max_robot_state_age_sec:
+ def add_base_coordinates(self,result,fx,fy,observation):
+  pose=observation['robot_pose']
+  # Pose freshness belongs to acquisition time; inference may legitimately take
+  # longer than the state stream's freshness limit while new feedback continues.
+  if pose is None or observation['capture_monotonic']-observation['robot_time']>self.a.max_robot_state_age_sec:
    return 'NO_FRESH_ROBOT_STATE'
-  if len(self.pose_history)<self.a.robot_stable_samples:return 'ROBOT_STABILITY_PENDING'
-  poses=np.asarray(self.pose_history)
+  poses=observation['pose_history']
+  if len(poses)<self.a.robot_stable_samples:return 'ROBOT_STABILITY_PENDING'
   translation_span=float(np.max(np.ptp(poses[:,:3],axis=0)))
   rotation_span=float(np.max(wrapped_angle_span(poses[:,3:])))
   result['robot_pose_span_mm']=round(translation_span,4)
   result['robot_rotation_span_deg']=round(rotation_span,5)
   if translation_span>self.a.max_robot_translation_span_mm or rotation_span>self.a.max_robot_rotation_span_deg:
    return 'ROBOT_MOVING'
-  state=self.robot;T=np.eye(4)
-  T[:3,:3]=Rotation.from_euler(self.euler,[state.flange_a_cur_pos,
-   state.flange_b_cur_pos,state.flange_c_cur_pos],degrees=True).as_matrix()
-  T[:3,3]=np.array([state.flange_x_cur_pos,state.flange_y_cur_pos,
-                    state.flange_z_cur_pos],float)/1000.
+  # Keep the publication-time feedback gate, without using a newer pose in XYZ.
+  current=self.robot_observation()
+  if current['robot_pose'] is None or current['capture_monotonic']-current['robot_time']>self.a.max_robot_state_age_sec:
+   return 'NO_FRESH_ROBOT_STATE'
+  if len(current['pose_history'])<self.a.robot_stable_samples:return 'ROBOT_STABILITY_PENDING'
+  if not self.robot_is_stable(current):return 'ROBOT_MOVING'
+  translation_delta=np.abs(current['robot_pose'][:3]-pose[:3])
+  angle_delta=wrapped_angle_delta(current['robot_pose'][3:],pose[3:])
+  if np.max(translation_delta)>self.a.history_pose_match_mm or np.max(angle_delta)>self.a.history_pose_match_deg:
+   return 'ROBOT_MOVING'
+  T=np.eye(4)
+  T[:3,:3]=Rotation.from_euler(self.euler,pose[3:],degrees=True).as_matrix()
+  T[:3,3]=pose[:3]/1000.
   T_base_camera=T@self.T_flange_camera
   for detection in result['stable_detections']:
    point=np.r_[np.asarray(detection['camera_xyz_m'],float),1.]
@@ -572,7 +616,7 @@ class Detector(Node):
    detection['long_axis_angle_base_deg']=round(float(np.degrees(np.arctan2(base_axis[1],base_axis[0]))),3)
   result['transform_chain']='p_base=T_base_flange@T_flange_camera@p_camera'
   result['euler_convention']=self.euler
-  result['flange_pose_mm_deg']=np.round(poses[-1],5).tolist()
+  result['flange_pose_mm_deg']=np.round(pose,5).tolist()
   result['T_base_flange']=np.round(T,10).tolist()
   result['T_flange_camera']=np.round(self.T_flange_camera,10).tolist()
   result['handeye_file']=str(self.a.handeye_file)
@@ -641,33 +685,36 @@ class Detector(Node):
   ok,jpg=cv2.imencode('.jpg',image,[cv2.IMWRITE_JPEG_QUALITY,self.a.display_jpeg_quality])
   if ok:
    out=CompressedImage();out.header=m.header;out.format='jpeg';out.data=jpg.tobytes();self.pub.publish(out)
- def robot_is_stable(self):
-  now=time.monotonic()
+ def robot_is_stable(self,observation=None):
+  observation=self.robot_observation() if observation is None else observation
+  now=observation['capture_monotonic']
   # The visual tracker remains the safety gate when the robot-state driver is absent.
-  if self.robot is None or now-self.robot_time>self.a.max_robot_state_age_sec:return True
-  if len(self.pose_history)<self.a.robot_stable_samples:return False
-  poses=np.asarray(self.pose_history,float)
+  if observation['robot_pose'] is None or now-observation['robot_time']>self.a.max_robot_state_age_sec:return True
+  poses=observation['pose_history']
+  if len(poses)<self.a.robot_stable_samples:return False
   translation_span=float(np.max(np.ptp(poses[:,:3],axis=0)))
   rotation_span=float(np.max(wrapped_angle_span(poses[:,3:])))
   return (translation_span<=self.a.max_robot_translation_span_mm and
           rotation_span<=self.a.max_robot_rotation_span_deg)
  def process_color(self,m):
   now=time.monotonic()
-  if now-self.last<1/self.a.process_hz or self.depth is None or self.info is None:return
-  if abs(self.stamp(m)-self.ds)>self.a.max_sync_ms*1000000:return
+  if now-self.last<1/self.a.process_hz:return
+  observation=self.capture_observation(m)
+  if observation is None:return
+  depth=observation['depth']
   image=cv2.imdecode(np.frombuffer(m.data,np.uint8),cv2.IMREAD_COLOR)
-  if image is None or image.shape[:2]!=self.depth.shape:return
+  if image is None or image.shape[:2]!=depth.shape:return
   self.last=now
-  image_stamp_ns=self.stamp(m)
-  registration_generation=self.registration_generation
-  registration_age_ms=abs(image_stamp_ns-self.shared_registration_stamp_ns)/1000000.
-  robot_stable=self.robot_is_stable()
-  if (self.shared_homography is not None and self.shared_registration_state=='TRACKING' and
+  image_stamp_ns=observation['image_stamp_ns']
+  registration_generation=observation['registration_generation']
+  registration_age_ms=abs(image_stamp_ns-observation['registration_stamp_ns'])/1000000.
+  robot_stable=self.robot_is_stable(observation)
+  if (observation['homography'] is not None and observation['registration_state']=='TRACKING' and
       registration_age_ms<=self.a.max_registration_age_ms and robot_stable):
-   H=self.shared_homography.copy();matches=0;inliers=0;registration_source='shared_section_tracker'
+   H=observation['homography'];matches=0;inliers=0;registration_source='shared_section_tracker'
   else:
    H=None;matches=0;inliers=0;registration_source='unavailable'
-  fx,fy,cx,cy=self.info.k[0],self.info.k[4],self.info.k[2],self.info.k[5]
+  k=observation['intrinsics'];fx,fy,cx,cy=k[0],k[4],k[2],k[5]
   if H is not None:state='TRACKING'
   elif not robot_stable:state='ROBOT_MOVING'
   else:state='NOT_REGISTERED'
@@ -675,7 +722,10 @@ class Detector(Node):
    self.get_logger().info(f'Tray state={state}, matches={matches}, inliers={inliers}')
    self.registration_state=state
   result={'schema_version':1,'mode':'tray_detection_dry_run',
-          'timestamp_ros_ns':self.stamp(m),'tray_registration':state,
+          'timestamp_ros_ns':image_stamp_ns,'tray_registration':state,
+          'depth_timestamp_ros_ns':observation['depth_stamp_ns'],
+          'depth_sync_ms':round(abs(image_stamp_ns-observation['depth_stamp_ns'])/1000000.,3),
+          'camera_info_timestamp_ros_ns':observation['camera_info_stamp_ns'],
           'registration_matches':matches,'registration_inliers':inliers,
           'registration_source':registration_source,'registration_age_ms':round(registration_age_ms,1),
           'detections':[]}
@@ -701,7 +751,7 @@ class Detector(Node):
    self.overlay_frame+=1
    inverse=np.linalg.inv(H)
    canonical=cv2.warpPerspective(image,inverse,(self.rw,self.rh),flags=cv2.INTER_LINEAR)
-   depth_float=self.depth.astype(np.float32,copy=False)
+   depth_float=depth.astype(np.float32,copy=False)
    hsv=cv2.cvtColor(image,cv2.COLOR_BGR2HSV)
    hue,saturation,value_channel=cv2.split(hsv)
    background_delta=None
@@ -723,10 +773,24 @@ class Detector(Node):
      conf=min(self.a.seg_confidence,self.a.power_seg_confidence),device=self.a.seg_device,
      iou=self.a.seg_nms_iou,retina_masks=True,verbose=False,batch=len(seg_crops))
     seg_results={item['part_spec_id']:prediction for item,prediction in zip(seg_items,predictions)}
+   if self.seg_model is not None:
+    # PM-only inference keeps other part models at their validated resolution.
+    for seg_item,crop in zip(seg_items,seg_crops):
+     if seg_item['part_spec_id']=='long_orange':
+      seg_results['long_orange']=self.seg_model.predict(crop,imgsz=self.a.power_seg_image_size,conf=self.a.power_seg_confidence,device=self.a.seg_device,iou=self.a.seg_nms_iou,retina_masks=True,verbose=False)[0]
    for item in self.bins:
     part=item['part_spec_id']
     if self.seg_model is not None and part in self.seg_class_ids:
      found,poly,floor=self.find_segmented(item,canonical,image,depth_float,fx,fy,cx,cy,H,seg_results[part])
+     if part in ('long_orange','black_block','hbm') and any(not passes_quality(d,self.seg_quality[part]) for d in found):
+      primary_size=self.a.power_seg_image_size if part=='long_orange' else self.a.seg_image_size
+      alternate_size=640 if part=='long_orange' else 960
+      sx1,sy1,sx2,sy2=map(int,item['roi_px']);pad=self.a.seg_crop_padding
+      crop=canonical[max(0,sy1-pad):min(self.rh,sy2+pad),max(0,sx1-pad):min(self.rw,sx2+pad)]
+      alt_prediction=self.seg_model.predict(crop,imgsz=alternate_size,conf=self.a.power_seg_confidence if part=='long_orange' else self.a.seg_confidence,
+       device=self.a.seg_device,iou=self.a.seg_nms_iou,retina_masks=True,verbose=False)[0]
+      alternate,_,_=self.find_segmented(item,canonical,image,depth_float,fx,fy,cx,cy,H,alt_prediction)
+      found=merge_scale_retry(found,alternate,self.seg_quality[part],primary_size=primary_size,alternate_size=alternate_size)
     else:found,poly,floor=self.find(item,image,background_delta,depth_float,hue,saturation,value_channel,fx,fy,cx,cy,H)
     color=COLORS[part]
     cv2.polylines(image,[poly],True,color,3)
@@ -745,14 +809,12 @@ class Detector(Node):
    self.draw_held_overlays(image,H)
   self.frame_index+=1
   history_items=[dict(d) for d in result['detections']]
-  if self.robot is not None:
-   pose=[self.robot.flange_x_cur_pos,self.robot.flange_y_cur_pos,
-    self.robot.flange_z_cur_pos,self.robot.flange_a_cur_pos,
-    self.robot.flange_b_cur_pos,self.robot.flange_c_cur_pos]
+  if observation['robot_pose'] is not None:
+   pose=observation['robot_pose'].tolist()
    for item in history_items:item['_flange_pose']=pose
   self.history.append((self.frame_index,history_items))
   # Never mix contours from different frames; stale history created ghost parts.
-  result['stable_detections']=self.stabilize(H,fx,fy,cx,cy) if H is not None else []
+  result['stable_detections']=self.stabilize(H,fx,fy,cx,cy,observation) if H is not None else []
   result['detected_total']=len(result['detections'])
   result['stable_detected_total']=len(result['stable_detections'])
   instant_counts={item['part_spec_id']:0 for item in self.bins}
@@ -793,12 +855,19 @@ class Detector(Node):
     (tw,th),base=cv2.getTextSize(label,cv2.FONT_HERSHEY_SIMPLEX,.45,1)
     cv2.rectangle(image,(x-4,y-th-4),(x+tw+4,y+base+4),(20,20,20),-1)
     cv2.putText(image,label,(x,y),cv2.FONT_HERSHEY_SIMPLEX,.45,color,1,cv2.LINE_AA)
-  result['base_transform_status']=self.add_base_coordinates(result,fx,fy) if H is not None else 'TRAY_NOT_REGISTERED'
+  result['base_transform_status']=self.add_base_coordinates(result,fx,fy,observation) if H is not None else 'TRAY_NOT_REGISTERED'
   result['robot_motion_authorized']=False
+  registration_id=f"{self.detector_session_id}:{registration_generation}"
+  result['tray_registration_id']=registration_id
+  result['source_observation_id']=f"{registration_id}:{result['timestamp_ros_ns']}"
+  self.source_identity.assign(result['stable_detections'])
+  for detection in result['stable_detections']:
+   detection['tray_registration_id']=registration_id
+   detection['source_observation_id']=result['source_observation_id']
   unity_parts=[]
   for detection in result['stable_detections']:
    unity_parts.append({
-    'id':f"{detection['part_type']}:{int(detection['instance_index']):02d}",
+    'id':detection['id'],
     'part_type':detection['part_type'],
     'display_name':detection['display_name'],
     'instance_index':int(detection['instance_index']),
@@ -810,6 +879,8 @@ class Detector(Node):
    })
   unity_payload={
    'schema':'fr5.tray.unity_state/v1',
+   'tray_registration_id':registration_id,
+   'source_observation_id':result['source_observation_id'],
    'sequence':self.frame_index,
    'timestamp_ros_ns':result['timestamp_ros_ns'],
    'valid':bool(fresh_registration and result['base_transform_status'] in ('OK','VALID_COORDINATES_ONLY')),
@@ -841,6 +912,7 @@ def main():
  p.add_argument('--seg-confidence',type=float,default=.20)
  p.add_argument('--power-seg-confidence',type=float,default=.05)
  p.add_argument('--seg-image-size',type=int,default=640)
+ p.add_argument('--power-seg-image-size',type=int,default=960)
  p.add_argument('--seg-device',default='0');p.add_argument('--seg-nms-iou',type=float,default=.99)
  p.add_argument('--seg-crop-padding',type=int,default=20)
  p.add_argument('--handeye-file',type=Path,default=root.parents[0]/'calibration/data/handeye_result.json')

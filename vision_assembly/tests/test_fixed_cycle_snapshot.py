@@ -7,14 +7,17 @@ from argparse import Namespace
 from pathlib import Path
 
 import pytest
+import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPTS = ROOT / "vision_assembly" / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
 from fixed_cycle_snapshot import (
+    capture_tray,
     load_smd_close_angles,
     merge_smd_close_angles,
+    resolve_placement,
     update_readiness,
     validate_tray_detection_quality,
 )
@@ -26,6 +29,34 @@ QUALITY = json.loads(
         encoding="utf-8"
     )
 )["tray_snapshot_quality"]
+
+
+def test_hbm_snapshot_accepts_pick_orientation_preservation_policy() -> None:
+    slot = {
+        "place_tcp_compensation_board_mm": [0.0, 0.0],
+        "place_tcp_correction_base_mm": [0.0, 0.0],
+        "long_axis_board_deg": 90.0,
+    }
+    recipe = {
+        "placement_surface_to_tcp_z_offset_mm": 0.04,
+        "placement_orientation_policy": {
+            "mode": "preserve_pick_tcp_orientation",
+            "maximum_intentional_rotation_deg": 0.0,
+            "source": "operator physical correction",
+        },
+    }
+
+    result = resolve_placement(
+        "HBM-01",
+        np.array([10.0, 20.0, 30.0]),
+        slot,
+        recipe,
+        np.eye(3),
+    )
+
+    assert result["placement_ready"] is True
+    assert result["placement_orientation"]["mode"] == "preserve_pick_tcp_orientation"
+    assert result["placement_orientation"]["maximum_intentional_rotation_deg"] == 0.0
 
 
 def detection(**overrides) -> dict:
@@ -120,6 +151,8 @@ def close_batch(set_index: int = 1, timestamp_unix: float | None = None) -> dict
                 "frame_count": 8,
                 "confidence_median": 0.9,
                 "long_axis_angle_base_deg": float(instance * 10),
+                "part_center_base_mm": [instance + 10, instance + 20, -47.0],
+                "center_correction_applied": False,
                 "validation_passed": True,
             }
             for instance in range(1, cycle_count + 1)
@@ -168,7 +201,7 @@ def test_close_batch_rejects_old_capture_even_when_file_is_new(tmp_path: Path) -
         load_smd_close_angles(close_args(path))
 
 
-def test_smd_merge_keeps_trayhome_xyz_and_requires_close_angles() -> None:
+def test_smd_merge_uses_close_xyz_and_angles() -> None:
     payload = {
         "board_captured": True,
         "tray_captured": True,
@@ -193,6 +226,7 @@ def test_smd_merge_keeps_trayhome_xyz_and_requires_close_angles() -> None:
     angles = {
         instance: {
             "long_axis_angle_base_deg": 1.5 + instance,
+            "base_xyz_mm": [instance + 10, instance + 20, -47.0],
             "confidence_median": 0.9,
             "frame_count": 8,
             "physical_instance_index": instance,
@@ -203,36 +237,248 @@ def test_smd_merge_keeps_trayhome_xyz_and_requires_close_angles() -> None:
     merged = merge_smd_close_angles(
         payload,
         angles,
-        {"angle_source": "SMD close-view robust OBB only", "set_index": 1},
+        {"angle_source": "SMD close-view three-batch two-white-terminal axis", "set_index": 1},
     )
 
     assert merged["ready_for_continuous_execution"] is True
     for cap in merged["tray_capture"]["parts"]:
         instance = cap["instance_index"]
-        assert cap["base_xyz_mm"] == [instance, instance + 1, instance + 2]
+        assert cap["base_xyz_mm"] == [instance + 10, instance + 20, -47.0]
+        assert cap["coarse_base_xyz_mm"] == [instance, instance + 1, instance + 2]
         assert cap["coarse_long_axis_angle_base_deg"] == 1.5
         assert cap["long_axis_angle_base_deg"] == 1.5 + instance
         assert cap["smd_physical_instance_index"] == instance
+        assert cap["smd_close_quality"]["coarse_angle_is_diagnostic_only"] is True
 
-    bad_payload = json.loads(json.dumps(payload))
-    for cap in bad_payload["tray_capture"]["parts"]:
+    diagnostic_payload = json.loads(json.dumps(payload))
+    for cap in diagnostic_payload["tray_capture"]["parts"]:
         cap["long_axis_angle_base_deg"] = cap["coarse_long_axis_angle_base_deg"]
-    bad_angles = json.loads(json.dumps(angles))
-    bad_angles["1"]["long_axis_angle_base_deg"] = 91.5
-    with pytest.raises(RuntimeError, match="coarse/close angle contradiction"):
-        merge_smd_close_angles(
-            bad_payload,
-            {int(key): value for key, value in bad_angles.items()},
-            {"angle_source": "SMD close-view robust OBB only", "set_index": 1},
+    diagnostic_angles = json.loads(json.dumps(angles))
+    diagnostic_angles["1"]["long_axis_angle_base_deg"] = 91.5
+    result = merge_smd_close_angles(
+        diagnostic_payload,
+        {int(key): value for key, value in diagnostic_angles.items()},
+        {"angle_source": "SMD close-view three-batch two-white-terminal axis", "set_index": 1},
+    )
+    cap1 = next(item for item in result["tray_capture"]["parts"] if item["instance_index"] == 1)
+    assert cap1["long_axis_angle_base_deg"] == 91.5
+    assert cap1["smd_close_quality"]["coarse_close_angle_error_deg"] == 90.0
+
+
+def test_gpu_only_tray_capture_ignores_unrelated_overcounts(tmp_path: Path) -> None:
+    gpu = detection(
+        part_type="gpu",
+        instance_index=1,
+        base_xyz_mm=[-519.232, -157.813, -41.747],
+        long_axis_angle_base_deg=1.637,
+    )
+    tray = {
+        "tray_registration": "TRACKING",
+        "base_transform_status": "VALID_COORDINATES_ONLY",
+        "handeye_sha256": "a" * 64,
+        "stable_detections": [gpu]
+        + [{"part_type": "hbm", "instance_index": index} for index in range(1, 30)],
+    }
+    tray_path = tmp_path / "tray.json"
+    tray_path.write_text(json.dumps(tray), encoding="utf-8")
+    args = Namespace(
+        tray_input=tray_path,
+        max_source_age_sec=10.0,
+        recipe_file=ROOT / "vision_assembly" / "config" / "part_gripper_recipes.json",
+        only_part_type="gpu",
+    )
+
+    result = capture_tray(args, {"board_captured": True, "resolved_placements": {}})
+
+    assert result["tray_captured"] is True
+    assert result["smd_close_captured"] is False
+    assert result["ready_for_continuous_execution"] is False
+    assert result["tray_capture"]["counts"] == {"gpu": 1}
+    assert result["tray_capture"]["part_count"] == 1
+    assert result["tray_capture"]["capture_scope"] == {
+        "mode": "part_type_subset",
+        "selected_part_types": ["gpu"],
+    }
+    assert result["tray_capture"]["parts"][0]["part_type"] == "gpu"
+
+
+def test_default_tray_capture_still_rejects_overcount(tmp_path: Path) -> None:
+    tray_path = tmp_path / "tray.json"
+    tray_path.write_text(
+        json.dumps(
+            {
+                "tray_registration": "TRACKING",
+                "base_transform_status": "VALID_COORDINATES_ONLY",
+                "handeye_sha256": "a" * 64,
+                "stable_detections": [{} for _ in range(30)],
+            }
+        ),
+        encoding="utf-8",
+    )
+    args = Namespace(
+        tray_input=tray_path,
+        max_source_age_sec=10.0,
+        recipe_file=ROOT / "vision_assembly" / "config" / "part_gripper_recipes.json",
+        only_part_type=None,
+    )
+
+    with pytest.raises(RuntimeError, match="expected 25 stable tray detections"):
+        capture_tray(args, {"board_captured": True})
+
+
+def test_hbm_01_capture_selects_one_from_thirteen_and_records_scope(
+    tmp_path: Path,
+) -> None:
+    hbm_01 = detection(
+        part_type="hbm",
+        instance_index=1,
+        base_xyz_mm=[-595.556, -50.336, -47.733],
+        long_axis_angle_base_deg=173.642,
+    )
+    tray = {
+        "tray_registration": "TRACKING",
+        "base_transform_status": "VALID_COORDINATES_ONLY",
+        "handeye_sha256": "b" * 64,
+        "stable_detections": [hbm_01]
+        + [
+            {"part_type": "hbm", "instance_index": index}
+            for index in range(2, 14)
+        ]
+        + [{"part_type": "gpu", "instance_index": 1}],
+    }
+    tray_path = tmp_path / "tray.json"
+    tray_path.write_text(json.dumps(tray), encoding="utf-8")
+    args = Namespace(
+        tray_input=tray_path,
+        max_source_age_sec=10.0,
+        recipe_file=ROOT / "vision_assembly" / "config" / "part_gripper_recipes.json",
+        only_part_type="hbm",
+        only_instance_index=1,
+    )
+
+    result = capture_tray(args, {"board_captured": True, "resolved_placements": {}})
+
+    assert result["tray_capture"]["counts"] == {"hbm": 1}
+    assert result["tray_capture"]["part_count"] == 1
+    assert result["tray_capture"]["parts"][0]["instance_index"] == 1
+    assert result["tray_capture"]["parts"][0]["quality"]["observation_frames"] == 40
+    assert result["tray_capture"]["capture_scope"] == {
+        "mode": "part_instance_subset",
+        "selected_part_types": ["hbm"],
+        "selected_instance_index": 1,
+    }
+
+
+def test_hbm_partial_capture_requires_instance_one(tmp_path: Path) -> None:
+    tray_path = tmp_path / "tray.json"
+    tray_path.write_text(
+        json.dumps(
+            {
+                "tray_registration": "TRACKING",
+                "base_transform_status": "VALID_COORDINATES_ONLY",
+                "handeye_sha256": "b" * 64,
+                "stable_detections": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    base_args = {
+        "tray_input": tray_path,
+        "max_source_age_sec": 10.0,
+        "recipe_file": ROOT / "vision_assembly" / "config" / "part_gripper_recipes.json",
+        "only_part_type": "hbm",
+    }
+
+    for instance_index in (None, 2):
+        with pytest.raises(RuntimeError, match="requires --only-instance-index 1"):
+            capture_tray(
+                Namespace(**base_args, only_instance_index=instance_index),
+                {"board_captured": True},
+            )
+
+
+def test_hbm_01_capture_applies_frame_quality_gate(tmp_path: Path) -> None:
+    weak = detection(
+        part_type="hbm",
+        instance_index=1,
+        observation_frames=0,
+        base_xyz_mm=[-595.556, -50.336, -47.733],
+        long_axis_angle_base_deg=173.642,
+    )
+    tray_path = tmp_path / "tray.json"
+    tray_path.write_text(
+        json.dumps(
+            {
+                "tray_registration": "TRACKING",
+                "base_transform_status": "VALID_COORDINATES_ONLY",
+                "handeye_sha256": "b" * 64,
+                "stable_detections": [weak],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(RuntimeError, match="observation_frames=0"):
+        capture_tray(
+            Namespace(
+                tray_input=tray_path,
+                max_source_age_sec=10.0,
+                recipe_file=ROOT
+                / "vision_assembly"
+                / "config"
+                / "part_gripper_recipes.json",
+                only_part_type="hbm",
+                only_instance_index=1,
+            ),
+            {"board_captured": True},
         )
 
-    sign_payload = json.loads(json.dumps(bad_payload))
-    sign_payload["tray_capture"]["parts"][0]["long_axis_angle_base_deg"] = 1.657
-    sign_angles = json.loads(json.dumps(angles))
-    sign_angles["1"]["long_axis_angle_base_deg"] = 7.026
-    with pytest.raises(RuntimeError, match="coarse/close angle contradiction"):
-        merge_smd_close_angles(
-            sign_payload,
-            {int(key): value for key, value in sign_angles.items()},
-            {"angle_source": "SMD close-view robust OBB only", "set_index": 1},
-        )
+
+def test_deferred_smd_requires_presence_quality_but_retains_low_confidence():
+    d={'part_type':'right_white_brown','instance_index':1,'observation_frames':20,
+       'median_detection_confidence':.3,'median_mask_shape_score':.9,'median_rectangularity':.9}
+    with pytest.raises(RuntimeError,match='median_detection_confidence'):
+        validate_tray_detection_quality(d,QUALITY)
+    result=validate_tray_detection_quality(d,QUALITY,defer_smd_to_close_view=True)
+    assert result['median_detection_confidence']==.3
+    assert result['pick_coordinates_authorized'] is False
+    d['median_mask_shape_score']=.1
+    with pytest.raises(RuntimeError,match='median_mask_shape_score'):
+        validate_tray_detection_quality(d,QUALITY,defer_smd_to_close_view=True)
+
+
+@pytest.mark.parametrize("indices", [[1,2,3,4,5], [1,2,3,4], [1,2,3,4,4], [1,2,3,4,5,6]])
+def test_fresh_smd_subset_requires_exactly_five_unique_cells(tmp_path, indices):
+    tray = {"tray_registration":"TRACKING", "base_transform_status":"VALID_COORDINATES_ONLY",
+            "handeye_sha256":"a"*64, "stable_detections":[detection(part_type="right_white_brown",
+            instance_index=i, base_xyz_mm=[-600., -120., -50.], long_axis_angle_base_deg=0.) for i in indices]}
+    path=tmp_path/"tray.json";path.write_text(json.dumps(tray))
+    args=Namespace(tray_input=path,max_source_age_sec=10.,recipe_file=ROOT/"vision_assembly/config/part_gripper_recipes.json",
+                   only_part_type="right_white_brown",only_instance_index=None)
+    payload={"board_captured":True,"resolved_placements":{}}
+    if indices != [1,2,3,4,5]:
+        with pytest.raises(RuntimeError):capture_tray(args,payload)
+    else:
+        result=capture_tray(args,payload)
+        assert len(result["tray_capture"]["parts"])==5
+        assert result["tray_capture"]["capture_scope"]["mode"]=="smd_only"
+        assert not result["ready_for_non_smd_execution"] and not result["ready_for_continuous_execution"]
+
+
+@pytest.mark.parametrize('kind,count', [('gpu',1),('hbm',8),('long_orange',4),('black_block',5),('marked_white',2),('right_white_brown',5)])
+def test_whole_group_capture_preserves_quality_and_physical_indices(tmp_path,kind,count):
+    from copy import deepcopy
+    values=[detection(part_type=kind,instance_index=i,base_xyz_mm=[-600.,-120.,-50.],long_axis_angle_base_deg=0.) for i in range(1,count+1)]
+    tray={'tray_registration':'TRACKING','base_transform_status':'VALID_COORDINATES_ONLY','handeye_sha256':'a'*64,'stable_detections':values}
+    path=tmp_path/'group.json'
+    args=Namespace(tray_input=path,max_source_age_sec=10.,recipe_file=ROOT/'vision_assembly/config/part_gripper_recipes.json',part_group=kind)
+    def run(v):
+        path.write_text(json.dumps(dict(tray,stable_detections=v)))
+        return capture_tray(args,{'board_captured':True,'resolved_placements':{}})
+    result=run(values)
+    assert result['tray_capture']['counts']=={kind:count}
+    assert [x['instance_index'] for x in result['tray_capture']['parts']]==list(range(1,count+1))
+    for v in [values[:-1],values+[values[0]], [dict(x,instance_index=1) for x in values] if count>1 else [dict(values[0],instance_index=2)]]:
+        with pytest.raises(RuntimeError):run(v)
+    bad=deepcopy(values);bad[0]['median_detection_confidence']=.01
+    with pytest.raises(RuntimeError):run(bad)

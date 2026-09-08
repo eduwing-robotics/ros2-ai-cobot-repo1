@@ -21,6 +21,7 @@ from fairino_msgs.msg import RobotNonrtState
 from fairino_msgs.srv import RemoteCmdInterface
 from rclpy.node import Node
 from scipy.spatial.transform import Rotation
+from execution_safety import STATE_MAX_AGE_SEC, STOP_RPC_TIMEOUT_SEC, STOP_FEEDBACK_TIMEOUT_SEC
 
 from placement_orientation import (
     plan_carried_part_orientation,
@@ -36,6 +37,18 @@ RECIPES = VISION / "config/part_gripper_recipes.json"
 SLOT_FILE = VISION / "config/assembly_slots_r1.json"
 RUN_RECORD = VISION / "data/cached_hbm_05_08_run.json"
 SLOTS = [f"HBM-{index:02d}" for index in range(5, 9)]
+J6_OPERATIONAL_MIN_DEG = -178.0
+J6_OPERATIONAL_MAX_DEG = 178.0
+
+
+def init_executor_ros() -> None:
+    """Keep ROS alive for StopMotion when Python receives KeyboardInterrupt.
+
+    rclpy's default SIGINT handler shuts down the context before caller cleanup.
+    These executors own shutdown in finally, after their bounded stop attempt.
+    """
+    from rclpy.signals import SignalHandlerOptions
+    rclpy.init(signal_handler_options=SignalHandlerOptions.NO)
 
 
 def load(path: Path) -> dict:
@@ -65,8 +78,16 @@ def finite(values, length: int, label: str) -> np.ndarray:
 def atomic_write(path: Path, payload: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
-    temporary.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    with temporary.open("w", encoding="utf-8") as output:
+        output.write(json.dumps(payload, indent=2) + "\n")
+        output.flush()
+        os.fsync(output.fileno())
     os.replace(temporary, path)
+    directory_fd = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(directory_fd)
+    finally:
+        os.close(directory_fd)
 
 
 def build_plan(args: argparse.Namespace) -> list[dict]:
@@ -108,22 +129,10 @@ def build_plan(args: argparse.Namespace) -> list[dict]:
 
     recipe = load(args.recipe_file)["parts"]["hbm"]
     orientation_policy = recipe.get("placement_orientation_policy", {})
-    if orientation_policy.get("mode") != "align_actual_carried_axis_to_current_slot_axis":
-        raise RuntimeError("HBM dynamic carried-axis placement policy is missing")
-    gripper_axis = str(orientation_policy.get("gripper_axis"))
-    symmetry = float(orientation_policy.get("symmetry_period_deg", math.nan))
-    maximum_rotation = float(
-        orientation_policy.get("maximum_intentional_rotation_deg", math.nan)
-    )
-    tie_threshold = float(
-        orientation_policy.get("preference_tie_threshold_deg", 5.0)
-    )
-    skip_rotation = float(orientation_policy.get("skip_rotation_below_deg", 0.5))
-    if gripper_axis not in ("tool_x", "tool_y") or not all(
-        math.isfinite(value)
-        for value in (symmetry, maximum_rotation, tie_threshold, skip_rotation)
-    ):
-        raise RuntimeError("invalid HBM dynamic orientation policy")
+    if orientation_policy.get("mode") != "preserve_pick_tcp_orientation":
+        raise RuntimeError("HBM pick-orientation preservation policy is missing")
+    if float(orientation_policy.get("maximum_intentional_rotation_deg", math.nan)) != 0.0:
+        raise RuntimeError("HBM preservation policy must prohibit intentional rotation")
     correction = recipe.get("grasp_center_correction_base_mm", {})
     pick_xy = finite(
         [correction.get("x"), correction.get("y")],
@@ -153,13 +162,6 @@ def build_plan(args: argparse.Namespace) -> list[dict]:
         reference_c = pick_c
         place_xy = finite(placement["corrected_place_xy_base_mm"], 2, "place XY")
         place_z = float(placement["final_tcp_z_mm"])
-        slot = slot_config.get(slot_code)
-        if slot is None:
-            raise RuntimeError(f"missing slot configuration for {slot_code}")
-        target_axis = slot_axis_base_angle_deg(
-            board_rotation, float(slot["long_axis_board_deg"])
-        )
-        preferred_c = slot.get("preferred_tcp_c_deg")
         pick_final = [
             float(surface[0] + pick_xy[0]),
             float(surface[1] + pick_xy[1]),
@@ -168,24 +170,7 @@ def build_plan(args: argparse.Namespace) -> list[dict]:
             0.0,
             float(pick_c),
         ]
-        orientation_plan = plan_carried_part_orientation(
-            pick_final[3:], target_axis, gripper_axis, symmetry,
-            preferred_tcp_c_deg=preferred_c,
-            preference_tie_threshold_deg=tie_threshold,
-        )
-        if abs(orientation_plan["rotation_delta_deg"]) > maximum_rotation + 1e-6:
-            raise RuntimeError(
-                f"{slot_code} required rotation "
-                f"{orientation_plan['rotation_delta_deg']:.3f}deg exceeds policy"
-            )
-        rotation_skipped = (
-            abs(orientation_plan["rotation_delta_deg"]) <= skip_rotation
-        )
-        place_abc = (
-            pick_final[3:]
-            if rotation_skipped
-            else orientation_plan["target_tcp_abc_deg"]
-        )
+        place_abc = list(pick_final[3:])
         place_final = [
             float(place_xy[0]),
             float(place_xy[1]),
@@ -201,15 +186,10 @@ def build_plan(args: argparse.Namespace) -> list[dict]:
                 "pick_final_tcp": pick_final,
                 "place_final_tcp": place_final,
                 "placement_orientation": {
-                    "target_axis_base_deg": target_axis,
-                    "gripper_axis": gripper_axis,
-                    "symmetry_period_deg": symmetry,
-                    "maximum_intentional_rotation_deg": maximum_rotation,
-                    "preference_tie_threshold_deg": tie_threshold,
-                    "skip_rotation_below_deg": skip_rotation,
-                    "preferred_tcp_c_deg": preferred_c,
-                    "rotation_skipped_in_plan": rotation_skipped,
-                    "planned_from_pick": orientation_plan,
+                    "mode": "preserve_pick_tcp_orientation",
+                    "maximum_intentional_rotation_deg": 0.0,
+                    "rotation_delta_deg": 0.0,
+                    "target_tcp_abc_deg": list(place_abc),
                 },
                 "grip_position": grip,
                 "release_position": release,
@@ -222,6 +202,8 @@ class Executor(Node):
     def __init__(self) -> None:
         super().__init__("execute_cached_hbm_remaining")
         self.state = None
+        self.state_sequence = 0
+        self.state_received_monotonic = 0.0
         self.create_subscription(RobotNonrtState, "/nonrt_state_data", self.state_cb, 10)
         self.client = self.create_client(
             RemoteCmdInterface, "/fairino_remote_command_service"
@@ -229,25 +211,42 @@ class Executor(Node):
 
     def state_cb(self, message) -> None:
         self.state = message
+        self.state_sequence += 1
+        self.state_received_monotonic = time.monotonic()
 
-    def spin_state(self, timeout_sec: float = 8.0):
+    def state_is_fresh(self, after_sequence: int) -> bool:
+        age = time.monotonic() - self.state_received_monotonic
+        return (self.state is not None and self.state_sequence > after_sequence
+                and 0.0 <= age <= STATE_MAX_AGE_SEC)
+
+    def spin_state(self, timeout_sec: float = 8.0, *, after_sequence: int | None = None):
+        # Every caller must see a new callback, even if the cached pose matches.
+        baseline = self.state_sequence if after_sequence is None else after_sequence
         deadline = time.monotonic() + timeout_sec
         while rclpy.ok() and time.monotonic() < deadline:
             rclpy.spin_once(self, timeout_sec=0.1)
-            if self.state is not None:
+            if self.state_is_fresh(baseline):
                 return self.state
-        raise RuntimeError("no FR5 state received")
+        raise RuntimeError("no fresh FR5 state received (stale or unchanged sequence)")
 
     @staticmethod
     def safety_error(state) -> str | None:
         checks = {
             "emg": getattr(state, "emg", 0),
+            "abnormal_stop": getattr(state, "abnormal_stop", 0),
             "main_error": getattr(state, "main_error_code", 0),
             "sub_error": getattr(state, "sub_error_code", 0),
             "collision": getattr(state, "collision_err", 0),
             "alarm": getattr(state, "alarm", 0),
+            "safety_door": getattr(state, "safetydoor_alarm", 0),
             "motion_alarm": getattr(state, "motionalarm", 0),
             "safety_plane": getattr(state, "safetyplanealarm", 0),
+            "interference": getattr(state, "interferealarm", 0),
+            "soft_limit": getattr(state, "out_sflimit_err", 0),
+            "strange_pose": getattr(state, "strangeposflag", 0),
+            "control_box": getattr(state, "ctrlboxerror", 0),
+            "command_point": getattr(state, "cmdpointerror", 0),
+            "parameter": getattr(state, "paraerror", 0),
         }
         active = [f"{key}={value}" for key, value in checks.items() if float(value) != 0.0]
         return ", ".join(active) if active else None
@@ -257,6 +256,10 @@ class Executor(Node):
         error = self.safety_error(state)
         if error:
             raise RuntimeError("FR5 safety state is not clear: " + error)
+        return self.state_tcp(state)
+
+    @staticmethod
+    def state_tcp(state) -> list[float]:
         return [
             float(state.cart_x_cur_pos),
             float(state.cart_y_cur_pos),
@@ -266,7 +269,61 @@ class Executor(Node):
             float(state.cart_c_cur_pos),
         ]
 
-    def service(self, command: str) -> str:
+    def feedback_observation(self, state=None) -> dict:
+        state = self.state if state is None else state
+        return {
+            "observed_unix": time.time(),
+            "state_sequence": self.state_sequence,
+            "state_age_sec": time.monotonic() - self.state_received_monotonic,
+            "tcp": self.state_tcp(state),
+            "robot_motion_done": int(state.robot_motion_done),
+            "gripper_position": int(getattr(state, "gripper_position", -1)),
+            "safety_error": self.safety_error(state),
+        }
+
+    def observe_stop(self, *, after_sequence: int, timeout_sec=STOP_FEEDBACK_TIMEOUT_SEC) -> dict:
+        from feedback_settle import FeedbackSettle
+        settle = FeedbackSettle(duration=0.5)
+        deadline = time.monotonic() + timeout_sec
+        anchor = None
+        observation = {"feedback_verified_stopped": False, "latest_feedback": None}
+        baseline = after_sequence
+        while rclpy.ok() and time.monotonic() < deadline:
+            rclpy.spin_once(self, timeout_sec=0.05)
+            if not self.state_is_fresh(baseline):
+                continue
+            baseline = self.state_sequence
+            state = self.state
+            observation["latest_feedback"] = self.feedback_observation(state)
+            pose = np.asarray(self.state_tcp(state))
+            if anchor is None:
+                anchor = pose.copy()
+            stable = (int(state.robot_motion_done) == 1 and np.all(np.isfinite(pose))
+                      and np.max(abs(pose[:3] - anchor[:3])) <= 0.2
+                      and np.max(abs((pose[3:] - anchor[3:] + 180) % 360 - 180)) <= 0.1)
+            if not stable:
+                anchor = pose.copy()
+            if settle.update(baseline, time.monotonic(), stable):
+                observation["feedback_verified_stopped"] = True
+                return observation
+        observation["error"] = "fresh stationary feedback not verified before stop observation timeout"
+        return observation
+
+    def service(self, command: str, *, timeout_sec: float | None = None, state_validator=None) -> str:
+        motion = command.startswith(("MoveJ(", "MoveL(", "MoveCart("))
+        hook = getattr(self, "command_event_hook", None)
+        journalled = motion or command.startswith("MoveGripper(")
+        if hook and journalled:
+            hook("requested", command, None)
+        # Durable journalling can take time: refresh after it, immediately
+        # before issuing the actuator command.
+        if journalled:
+            state = self.spin_state(timeout_sec=STATE_MAX_AGE_SEC)
+            error = self.safety_error(state)
+            if error or int(state.robot_motion_done) != 1:
+                raise RuntimeError("FR5 is not ready for actuator command: " + (error or "robot moving"))
+            if state_validator is not None:
+                state_validator(state)
         request = RemoteCmdInterface.Request()
         request.cmd_str = command
         future = self.client.call_async(request)
@@ -274,12 +331,16 @@ class Executor(Node):
         # than ten seconds even though the controller accepted the command.
         # Keep the client alive long enough to receive the real result; pose
         # verification below still independently checks motion completion.
-        rclpy.spin_until_future_complete(self, future, timeout_sec=90.0)
+        if timeout_sec is None:
+            timeout_sec = STOP_RPC_TIMEOUT_SEC if command == "StopMotion()" else 90.0
+        rclpy.spin_until_future_complete(self, future, timeout_sec=timeout_sec)
         if not future.done() or future.result() is None:
             raise RuntimeError(f"FR5 command timeout: {command}")
         result = str(future.result().cmd_res)
         if result.split(",", 1)[0] != "0":
             raise RuntimeError(f"FR5 rejected {command}: {result}")
+        if hook and journalled:
+            hook("accepted", command, result)
         return result
 
     @staticmethod
@@ -309,6 +370,11 @@ class Executor(Node):
     def referenced_ik(self, target: list[float], max_joint_step_deg: float = 90.0) -> np.ndarray:
         state = self.spin_state()
         reference = self.state_joints(state)
+        if not J6_OPERATIONAL_MIN_DEG <= reference[5] <= J6_OPERATIONAL_MAX_DEG:
+            raise RuntimeError(
+                f"current J6={reference[5]:.3f}deg is outside operational envelope "
+                f"[{J6_OPERATIONAL_MIN_DEG:.1f}, {J6_OPERATIONAL_MAX_DEG:.1f}]"
+            )
         soft = self.response_values(
             self.service("GetJointSoftLimitDeg(1)"), 12, "joint soft-limit"
         )
@@ -324,6 +390,11 @@ class Executor(Node):
             f"{value:.6f}" for value in [0.0, *target, *reference.tolist()]
         ) + ")"
         joints = self.response_values(self.service(request), 6, "referenced IK")
+        if not J6_OPERATIONAL_MIN_DEG <= joints[5] <= J6_OPERATIONAL_MAX_DEG:
+            raise RuntimeError(
+                f"target J6={joints[5]:.3f}deg is outside operational envelope "
+                f"[{J6_OPERATIONAL_MIN_DEG:.1f}, {J6_OPERATIONAL_MAX_DEG:.1f}]"
+            )
         margins = np.minimum(joints - negative, positive - joints)
         if np.any(margins < 10.0):
             joint = int(np.argmin(margins)) + 1
@@ -344,14 +415,22 @@ class Executor(Node):
         target: list[float],
         target_joints: np.ndarray | None = None,
         timeout_sec: float = 90.0,
+        *,
+        after_sequence: int | None = None,
     ) -> list[float]:
         deadline = time.monotonic() + timeout_sec
+        baseline = self.state_sequence if after_sequence is None else after_sequence
+        last_new_feedback = time.monotonic()
         target_rotation = Rotation.from_euler("xyz", target[3:], degrees=True)
         while rclpy.ok() and time.monotonic() < deadline:
             rclpy.spin_once(self, timeout_sec=0.1)
-            state = self.state
-            if state is None:
+            if not self.state_is_fresh(baseline):
+                if time.monotonic() - last_new_feedback > STATE_MAX_AGE_SEC:
+                    raise RuntimeError("stale FR5 state during pose verification")
                 continue
+            baseline = self.state_sequence
+            last_new_feedback = time.monotonic()
+            state = self.state
             error = self.safety_error(state)
             if error:
                 raise RuntimeError("FR5 safety fault during motion: " + error)
@@ -374,7 +453,9 @@ class Executor(Node):
                     or float(np.max(np.abs(self.state_joints(state) - target_joints))) <= 1.0
                 )
             ):
-                return self.snapshot()
+                # Return exactly the sample that passed, without spinning again.
+                self.last_pose_verification = self.feedback_observation(state)
+                return self.state_tcp(state)
         raise RuntimeError(f"pose verification timeout: {target}")
 
     def move(
@@ -416,21 +497,73 @@ class Executor(Node):
         return self.move(target, speed, label)
 
     def gripper(self, position: int, label: str) -> None:
+        from feedback_settle import FeedbackSettle
+        self.assert_gripper_ready()
+        # Require stationary fresh TCP before changing the gripper.
+        settle=FeedbackSettle(duration=.5)
+        anchor=None;deadline=time.monotonic()+8
+        while time.monotonic()<deadline:
+            rclpy.spin_once(self,timeout_sec=.05)
+            s=self.state;now=time.monotonic()
+            if s is None or now-self.state_received_monotonic>.25:continue
+            error=self.safety_error(s)
+            if error:raise RuntimeError(error)
+            pose=np.array([s.cart_x_cur_pos,s.cart_y_cur_pos,s.cart_z_cur_pos,s.cart_a_cur_pos,s.cart_b_cur_pos,s.cart_c_cur_pos])
+            if anchor is None:anchor=pose.copy()
+            stable=(int(s.robot_motion_done)==1 and np.max(abs(pose[:3]-anchor[:3]))<=.2
+                    and np.max(abs((pose[3:]-anchor[3:]+180)%360-180))<=.1)
+            if not stable:anchor=pose.copy()
+            if settle.update(self.state_sequence,now,stable):break
+        else:raise RuntimeError('TCP did not settle before gripper command')
         print(f"{label}: MoveGripper(1,{position})", flush=True)
         self.service(f"MoveGripper(1,{position})")
+        after_ack_sequence=self.state_sequence
+        accepted_after=time.monotonic()+.2
+        settle=FeedbackSettle(duration=1.0)
         deadline = time.monotonic() + 8.0
         while rclpy.ok() and time.monotonic() < deadline:
             rclpy.spin_once(self, timeout_sec=0.1)
             state = self.state
             if state is None:
                 continue
+            now=time.monotonic()
+            if self.state_sequence<=after_ack_sequence or now<accepted_after or now-self.state_received_monotonic>.25:
+                continue
             error = self.safety_error(state)
             if error:
                 raise RuntimeError("FR5 safety fault during gripper command: " + error)
-            if int(state.gripper_position) == position:
-                print(f"VERIFIED {label}: gripper={position}", flush=True)
+            valid=(
+                bool(getattr(state, "gripper_feedback_valid", False))
+                and int(getattr(state, "grip_motion_done", 0)) == 1
+                and int(getattr(state, "gripperfaultnum", 0)) == 0
+                and int(getattr(state, "grippererro", 0)) == 0
+                and int(state.gripper_position) == position
+                and int(state.robot_motion_done)==1
+            )
+            if settle.update(self.state_sequence,now,valid):
+                print(f"SETTLED {label}: gripper={position}, continuous_feedback>=1s; physical grasp unverified", flush=True)
                 return
         raise RuntimeError(f"gripper verification timeout for position {position}")
+
+    def assert_gripper_ready(self) -> None:
+        state = self.spin_state()
+        if not bool(getattr(state, "gripper_feedback_valid", False)):
+            raise RuntimeError("gripper feedback is invalid or the gripper is inactive")
+        faults = {
+            "gripperfaultnum": int(getattr(state, "gripperfaultnum", 0)),
+            "grippererro": int(getattr(state, "grippererro", 0)),
+        }
+        active_faults = [f"{key}={value}" for key, value in faults.items() if value]
+        if active_faults:
+            raise RuntimeError("gripper fault is active: " + ", ".join(active_faults))
+        activation = self.response_values(
+            self.service("GetGripperActivateStatus()"), 2, "gripper activation"
+        )
+        if int(activation[0]) != 0 or int(activation[1]) & 1 == 0:
+            raise RuntimeError(
+                "gripper 1 is not active: "
+                f"fault={int(activation[0])}, status_bits={int(activation[1])}"
+            )
 
 
 def print_plan(plan: list[dict], transfer_z: float) -> None:
@@ -471,6 +604,7 @@ def execute(args: argparse.Namespace, plan: list[dict]) -> None:
         if int(state.robot_motion_done) != 1:
             raise RuntimeError("robot must be stationary before execution")
         node.snapshot()
+        node.assert_gripper_ready()
 
         for index, item in enumerate(plan, 1):
             slot = item["slot_code"]
@@ -479,53 +613,51 @@ def execute(args: argparse.Namespace, plan: list[dict]) -> None:
             print(f"\n=== {index}/4 {slot} ===", flush=True)
 
             node.vertical(args.transfer_z_mm, 40, f"{slot} pre-pick safe vertical")
-            node.rotate(pick[3:], 40, f"{slot} pick orientation")
-            node.horizontal(pick[:2], 40, f"{slot} pick horizontal")
+            node.move(
+                [pick[0], pick[1], args.transfer_z_mm, *pick[3:]],
+                30,
+                f"{slot} combined body-turn transfer to tray",
+                linear=False,
+            )
             node.vertical(pick[2] + 100.0, 40, f"{slot} pick 100mm hover")
             node.gripper(item["release_position"], f"{slot} pre-pick open")
             node.vertical(pick[2], 20, f"{slot} final pick descent")
             node.gripper(item["grip_position"], f"{slot} grasp")
             node.vertical(pick[2] + 100.0, 20, f"{slot} post-grasp 100mm lift")
             node.vertical(args.transfer_z_mm, 40, f"{slot} carry safe vertical")
-            policy = item["placement_orientation"]
             actual_abc = node.snapshot()[3:]
-            actual_orientation = plan_carried_part_orientation(
-                actual_abc,
-                policy["target_axis_base_deg"],
-                policy["gripper_axis"],
-                policy["symmetry_period_deg"],
-                preferred_tcp_c_deg=policy["preferred_tcp_c_deg"],
-                preference_tie_threshold_deg=policy["preference_tie_threshold_deg"],
+            orientation_error = math.degrees(
+                (
+                    Rotation.from_euler("xyz", pick[3:], degrees=True).inv()
+                    * Rotation.from_euler("xyz", actual_abc, degrees=True)
+                ).magnitude()
             )
-            rotation_delta = float(actual_orientation["rotation_delta_deg"])
-            if abs(rotation_delta) > policy["maximum_intentional_rotation_deg"] + 1e-6:
+            if orientation_error > 1.0:
                 raise RuntimeError(
-                    f"{slot} actual required rotation {rotation_delta:.3f}deg exceeds policy"
+                    f"{slot} pick orientation changed by {orientation_error:.3f}deg "
+                    "before board transfer"
                 )
-            skip_rotation = float(policy["skip_rotation_below_deg"])
-            rotation_skipped = abs(rotation_delta) <= skip_rotation
-            place[3:] = (
-                actual_abc
-                if rotation_skipped
-                else actual_orientation["target_tcp_abc_deg"]
-            )
+            place[3:] = actual_abc
             record["actual_orientation_decisions"].append(
                 {
                     "slot_code": slot,
-                    "rotation_skipped": rotation_skipped,
-                    "skip_rotation_below_deg": skip_rotation,
-                    **actual_orientation,
+                    "mode": "preserve_pick_tcp_orientation",
+                    "rotation_commanded": False,
+                    "pick_to_carry_orientation_error_deg": orientation_error,
+                    "actual_tcp_abc_deg": actual_abc,
                 }
             )
             atomic_write(args.run_record, record)
-            if not rotation_skipped:
-                node.rotate(place[3:], 40, f"{slot} minimal required place rotation")
-            else:
-                print(
-                    f"VERIFIED {slot}: carried orientation already fits slot; "
-                    f"rotation skipped ({rotation_delta:.3f}deg)", flush=True
-                )
-            node.horizontal(place[:2], 40, f"{slot} place horizontal")
+            print(
+                f"VERIFIED {slot}: preserving actual pick ABC; no post-grasp "
+                f"rotation ({orientation_error:.3f}deg drift)", flush=True
+            )
+            node.move(
+                [place[0], place[1], args.transfer_z_mm, *place[3:]],
+                30,
+                f"{slot} combined body-turn transfer to board",
+                linear=False,
+            )
             node.vertical(place[2] + 100.0, 40, f"{slot} place 100mm hover")
             node.vertical(place[2], 20, f"{slot} final place descent")
             node.gripper(item["release_position"], f"{slot} release")

@@ -35,10 +35,10 @@ check_command 'colcon' colcon
 check_command 'rosdep' rosdep
 check_command 'ADB (S22)' adb
 
-if command -v droidcam-cli >/dev/null 2>&1; then
-  printf 'OK   DroidCam CLI (optional)\n'
+if [[ -x "${HOME}/.local/bin/fr5-phone-view" ]]; then
+  printf 'OK   USB phone viewer (optional): use run_fr5_assembly_stack.sh view\n'
 else
-  printf 'WARN DroidCam CLI not installed; S22 camera will be unavailable\n'
+  printf 'WARN USB phone viewer not installed (optional); D435 can be used independently\n'
 fi
 
 printf '\nProject root: %s\n' "${PROJECT_DIR}"

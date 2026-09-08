@@ -98,8 +98,11 @@ def load_pick_recipe(part_type):
         raise ValueError(f"invalid symmetric rotation branch {branch}")
     max_rotation = float(pick_policy.get("maximum_rotation_deg", 90.0))
     max_joint_step = float(pick_policy.get("maximum_joint_step_deg", 91.0))
+    grasp_axis_offset = float(pick_policy.get("grasp_axis_offset_from_detected_deg", 0.0))
     if not 0.0 < max_rotation <= 180.0 or not 0.0 < max_joint_step <= 180.0:
         raise ValueError("invalid pick rotation safety limit")
+    if not math.isfinite(grasp_axis_offset) or abs(grasp_axis_offset) > 5.0:
+        raise ValueError("grasp-axis offset must be finite and within +/-5 degrees")
 
     grip = recipe.get("grip")
     if grip is None and part_type == "black_block":
@@ -118,6 +121,7 @@ def load_pick_recipe(part_type):
         "symmetric_rotation_branch": branch,
         "max_pick_rotation_deg": max_rotation,
         "max_pick_joint_step_deg": max_joint_step,
+        "grasp_axis_offset_deg": grasp_axis_offset,
         "grip_args": grip["args"],
         "tray_open_args": recipe.get("tray_pick_open", {}).get("args"),
         "release_args": recipe.get("release", {}).get("args"),
@@ -217,6 +221,7 @@ def prepare(args, recipe):
         MOVE, "--target-file", target, "--approach-offset-mm", "100",
         "--align-part", "--gripper-axis", recipe["gripper_axis"],
         "--symmetric-rotation-branch", recipe["symmetric_rotation_branch"],
+        "--grasp-axis-offset-deg", str(recipe["grasp_axis_offset_deg"]),
         "--max-rotation-deg", str(recipe["max_pick_rotation_deg"]),
         "--center-correction", "--tool-correction-x-mm", str(tool[0]),
         "--tool-correction-y-mm", str(tool[1]),

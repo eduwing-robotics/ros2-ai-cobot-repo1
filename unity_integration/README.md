@@ -1,3 +1,7 @@
+> 전체 런처 후속: [25개 단계 API 연결](../docs/FR5_FULL_CYCLE_STEP_API_20260908.md). 최신 전달 묶음은 UNITY_ROBOT_STEP_API_FULL_CYCLE_20260908.zip입니다.
+
+> 2026-09-08 로봇 생산 연동 수정: [단일 Pick/Place API 전달 문서](UNITY_ROBOT_STEP_API_HANDOFF_KO_20260908.md)를 사용하세요. 이전 UNITY_ASSEMBLY_CYCLE_API_20260908.zip의 batch start는 생산용에서 제외했습니다. 기존 비전 문서는 아래에 유지합니다.
+
 # D435 tray to Unity digital-twin synchronization
 
 ## 관제 연동 기준
@@ -29,3 +33,6 @@ ros2 topic echo /vision/tray/unity_state std_msgs/msg/String --once
 ```
 
 `CurrentCounts` is exposed by the component for a UI/status panel. Scene objects are named `Vision_<part_type>:<physical index>` and are created, moved, or destroyed only from valid, monotonically newer snapshots.
+
+
+기판 자세와 25개 보정 슬롯의 Unity 동기화 및 요청 API는 [Unity 기판 캘리브레이션 연결 안내](../docs/UNITY_BOARD_CALIBRATION_API_KO.md)를 참고한다. 기존 Vision Action 계약은 유지된다.

@@ -85,13 +85,18 @@ def plan_carried_part_orientation(
     *,
     preferred_tcp_c_deg: float | None = None,
     preference_tie_threshold_deg: float = 5.0,
+    lock_preferred_branch: bool = False,
 ) -> dict:
     """Return the smallest valid Base-Z rotation for the carried part.
 
     A preferred TCP C value is only a tie-breaker between nearly equal travel
     candidates.  It can preserve a physically taught head/tail choice without
-    reintroducing unconditional absolute-C motion.
+    reintroducing unconditional absolute-C motion. With lock_preferred_branch,
+    choose the aligned symmetry branch nearest the preference regardless of travel.
+    The caller must still enforce its rotation envelope.
     """
+    if lock_preferred_branch and preferred_tcp_c_deg is None:
+        raise ValueError("locked placement branch requires preferred_tcp_c_deg")
     current = np.asarray(current_tcp_abc_deg, dtype=float)
     current_axis = tool_axis_base_angle_deg(current.tolist(), gripper_axis)
     candidates = _alignment_candidates_deg(
@@ -119,7 +124,7 @@ def plan_carried_part_orientation(
         if not math.isfinite(preference):
             raise ValueError("preferred_tcp_c_deg must be finite")
         delta = min(
-            eligible,
+            candidates if lock_preferred_branch else eligible,
             key=lambda value: (
                 circular_distance_deg(target_for(value)[2], preference),
                 abs(value),
