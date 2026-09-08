@@ -586,6 +586,13 @@ class AssemblySequencer(Node):
 
     def fail_active(self, error_code, error, immediate=False):
         active = self.active
+        if self.runtime_mode == "real" and str(error).startswith("SAFETY_STOP:"):
+            # Unknown physical completion must not finalize the Unit or advance
+            # the recipe. Recovery starts a new Unit after equipment reset.
+            active["state"] = "PAUSED"
+            self.publish(failed_feedback(active["job_id"], "SAFETY_STOP", str(error),
+                                         self.db_writer.sync_state) | {"state": "PAUSED"})
+            return
         cleanup_error = self.fail_job(active["job_id"], immediate)
         if cleanup_error is not None:
             error_code = "DB_ERROR"
