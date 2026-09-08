@@ -102,10 +102,9 @@ namespace MainUnity.UI
         readonly CamTile[] camTiles =
         {
             new CamTile { Index = 1, Title = "TRAY",     Topic = "/vision/tray/detections_image/compressed", On = true },
-            new CamTile { Index = 2, Title = "PARTS",    Topic = "/vision/parts_obb/image/compressed" },
+            new CamTile { Index = 2, Title = "PCB",      Topic = "/vision/board/image/compressed" },
             new CamTile { Index = 3, Title = "CONVEYOR", Topic = "/vision/conveyor/stop_image/compressed" },
-            // 전경 카메라에는 대응하는 검출 스트림이 없다. 유일한 광각이라 원본으로 남긴다.
-            new CamTile { Index = 4, Title = "CELL · RAW", Topic = "/camera3/image_raw/compressed" },
+            new CamTile { Index = 4, Title = "ASSEMBLY", Topic = "/vision/assembly/image/compressed" },
         };
 
         // 이 시간을 넘겨 프레임이 없으면 그 칸만 늦은 것으로 표시한다.

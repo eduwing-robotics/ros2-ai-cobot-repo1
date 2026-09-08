@@ -87,6 +87,30 @@ namespace MainUnity.Static
 
         readonly Dictionary<long, Transform> completedBoards = new();
         [NonSerialized] AssemblySlot[] currentSlots;
+        Transform observedBoard;
+        bool observationAwaitingUnit;
+
+        internal Transform ObservationBoard => CurrentBoard != null ? CurrentBoard : observedBoard;
+        internal bool ObservationAwaitingUnit => observationAwaitingUnit;
+
+        internal Transform EnsureObservationBoard()
+        {
+            if (!Application.isPlaying)
+                throw new InvalidOperationException("Board observations require Play Mode.");
+            if (ObservationBoard != null) return ObservationBoard;
+            if (observationAwaitingUnit) return null;
+            ValidateConfiguration();
+            observedBoard = Instantiate(motherboardPrefab, spawnPoint.position,
+                spawnPoint.rotation, spawnRoot).transform;
+            observedBoard.name = "motherBoard_observed";
+            return observedBoard;
+        }
+
+        internal void ReleaseObservationBoard()
+        {
+            Remove(observedBoard);
+            observedBoard = null;
+        }
 
         public string JobId { get; private set; }
         public long UnitId { get; private set; }
@@ -140,7 +164,7 @@ namespace MainUnity.Static
                 throw new InvalidOperationException("Motherboard pose and scale must be finite with positive scale.");
         }
 
-        /// <summary>Unit 투입 직전에 한 번 생성한다. 다른 Job의 완료품은 이 경계에서 정리한다.</summary>
+        /// <summary>관측 기판을 Unit에 연결하거나 한 번 생성한다. 다른 Job의 완료품은 이 경계에서 정리한다.</summary>
         public Transform BeginUnit(string jobId, long unitId)
         {
             if (!Application.isPlaying || !Guid.TryParse(jobId, out _) || unitId <= 0)
@@ -154,7 +178,7 @@ namespace MainUnity.Static
                 throw new InvalidOperationException("Finish or discard the current Unit before starting another.");
 
             // 검증·생성 실패 시 이전 Job의 완료품을 잃지 않도록 생성 후 정리한다.
-            Transform board = Instantiate(motherboardPrefab, spawnPoint.position,
+            Transform board = observedBoard != null ? observedBoard : Instantiate(motherboardPrefab, spawnPoint.position,
                 spawnPoint.rotation, spawnRoot).transform;
             board.name = $"motherBoard_{unitId}";
             var slots = new AssemblySlot[assemblySlots.Length];
@@ -176,6 +200,8 @@ namespace MainUnity.Static
             UnitId = unitId;
             CurrentBoard = board;
             currentSlots = slots;
+            observedBoard = null;
+            observationAwaitingUnit = false;
             return board;
         }
 
@@ -189,6 +215,9 @@ namespace MainUnity.Static
             completedBoards.Add(unitId, CurrentBoard);
             CurrentBoard = null;
             currentSlots = null;
+            // 관측에는 PCB 개체 ID가 없다. 완료 직후의 새 프레임도 같은 PCB일 수 있으므로
+            // 완료품은 보존하고, 다음 Unit이 확인될 때까지 별도 관측 객체를 생성하지 않는다.
+            observationAwaitingUnit = true;
         }
 
         public bool IsUnitCompleted(string jobId, long unitId) =>

@@ -12,7 +12,7 @@ namespace MainUnity.Runtime.Camera
     {
         [SerializeField] UIDocument targetDocument;
         [Tooltip("구독할 CompressedImage 토픽입니다. 실행 중 TrySetTopic 으로 바꿀 수 있습니다.")]
-        [SerializeField] string topicName = "/camera/camera/color/image_raw/compressed";
+        [SerializeField] string topicName = "/vision/tray/detections_image/compressed";
         [SerializeField] string imageElementName = "RealdepthCam";
         [Tooltip("이 시간 동안 새 프레임이 없으면 스트림이 끊긴 것으로 본다.")]
         [SerializeField, Min(0.1f)] float staleAfterSeconds = 1f;

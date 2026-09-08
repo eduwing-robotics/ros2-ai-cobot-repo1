@@ -25,10 +25,18 @@ Scenario는 주입된 자동 조립 계약만 사용합니다. UI와 Scenario는
 ## 조립체 씬 객체
 
 `ItemManager`가 프리팹 슬롯·공급 위치와 현재 Job의 기판 인스턴스를 소유합니다.
-`BeginUnit(jobId, unitId)`는 투입 직전에 기판을 한 번 생성하고,
+Real에서는 Play 중 유효하고 안정된 기판 관측으로 Job 없이도 PCB와 25개 슬롯을 표시합니다.
+`BeginUnit(jobId, unitId)`는 관측 PCB가 있으면 같은 객체를 Unit에 연결하고, 없을 때만 생성합니다.
+관측만으로 Job·Unit ID를 만들거나 실행 상태를 바꾸지 않습니다.
 `CompleteUnit(jobId, unitId)`는 기판과 장착 부품을 현재 위치에 보존합니다.
 다른 Job의 첫 Unit을 생성할 때 이전 완료품을 정리하며, 적재 위치 이동은 수행하지 않습니다.
 보존 범위는 현재 Unity 실행 세션이며 앱 재시작 후 과거 완료품 전체 복원은 제공하지 않습니다.
+
+기판 관측이 불안정하거나 끊기면 마지막 정상 배치를 유지하며 UI에 수신·반영 경과 시간을 표시합니다.
+관측에는 PCB 개체 ID가 없으므로 Unit 완료 후에는 완료품을 보존하고 다음 Unit 확인까지
+관측 PCB를 새로 만들지 않습니다. 새 프레임만으로 새 PCB라고 판단하지 않습니다.
+Real 관측 수신기를 비활성화하면 Unit에 연결되지 않은 관측 객체만 정리합니다.
+카메라 패널은 트레이 부품 검출, PCB 인식, 컨베이어 정지선, 조립 인식 영상을 사용합니다.
 
 Scene의 `ItemManager`에는 기존 motherboard 프리팹, `TransSpots/BoardSpawnPoint`,
 `Items`, `Items/CompletedBoards`를 연결합니다. 슬롯은 프리팹 내부 Transform을,

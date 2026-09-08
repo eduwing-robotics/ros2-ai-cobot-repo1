@@ -7322,7 +7322,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Camera.CamVisionReceiver
   targetDocument: {fileID: 915942456}
-  topicName: /vision/parts_obb/image/compressed
+  topicName: /vision/tray/detections_image/compressed
   imageElementName: camera-image
   staleAfterSeconds: 1
 --- !u!114 &915942458

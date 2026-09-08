@@ -1,4 +1,4 @@
-// 역할: 기판 관측을 검증하고 ItemManager가 소유한 현재 Unit의 기판·슬롯 배치에 반영한다.
+// 역할: 기판 관측을 검증하고 ItemManager가 소유한 관측·Unit 기판의 슬롯 배치에 반영한다.
 
 using System;
 using System.Collections.Generic;
@@ -56,6 +56,7 @@ namespace MainUnity.Runtime.Camera
 
         void OnDisable()
         {
+            itemManager?.ReleaseObservationBoard();
             currentBoard = null;
             slots.Clear();
             LastAppliedTime = -1d;
@@ -80,14 +81,14 @@ namespace MainUnity.Runtime.Camera
 
         void RefreshBoard()
         {
-            Transform board = itemManager != null ? itemManager.CurrentBoard : null;
+            Transform board = itemManager != null ? itemManager.ObservationBoard : null;
             if (ReferenceEquals(board, currentBoard)) return;
             currentBoard = board;
             slots.Clear();
             LastAppliedTime = -1d;
             CalibrationId = null;
             waitingForNewFrame = true;
-            SetProgress(ProgressState.Waiting, board == null ? "현재 Unit 기판 생성 대기" : "새 Unit 기판 관측 대기");
+            SetProgress(ProgressState.Waiting, board == null ? "유효한 기판 관측 대기" : "새 기판 관측 대기");
         }
 
         void ReceiveState(StringMsg message)
@@ -133,35 +134,44 @@ namespace MainUnity.Runtime.Camera
                     throw new FormatException("Stale or invalid observation timestamp.");
                 // 토픽에는 Unit ID가 없다. Unit 교체·publisher 재시작 후 첫 관측은 경계로만
                 // 사용하고 그보다 새로운 원본 프레임을 기다린다. 이전 관측을 새 Unit에 복사하지 않는다.
-                if (currentBoard == null || waitingForNewFrame)
+                if (waitingForNewFrame)
                 {
                     lastFrame = Math.Max(lastFrame, frame);
-                    waitingForNewFrame = currentBoard == null;
-                    SetProgress(ProgressState.Waiting, currentBoard == null ? "현재 Unit 기판 생성 대기" : "새 원본 기판 프레임 대기");
+                    waitingForNewFrame = false;
+                    SetProgress(ProgressState.Waiting, "새 원본 기판 프레임 대기");
                     return;
                 }
                 if (frame <= lastFrame) return;
                 if (!ConfigurationValid()) throw new FormatException("Invalid board calibration configuration.");
-                if (!Finite(currentBoard.lossyScale) || currentBoard.lossyScale.x <= 0f ||
-                    currentBoard.lossyScale.y <= 0f || currentBoard.lossyScale.z <= 0f)
+                if (itemManager.ObservationAwaitingUnit && currentBoard == null)
+                {
+                    SetProgress(ProgressState.Waiting, "완료품 배치 유지 · 다음 Unit 확인 대기");
+                    return;
+                }
+                itemManager.ValidateConfiguration();
+                if (currentBoard != null && (!Finite(currentBoard.lossyScale) || currentBoard.lossyScale.x <= 0f ||
+                    currentBoard.lossyScale.y <= 0f || currentBoard.lossyScale.z <= 0f))
                     throw new FormatException("Board scale must be finite and positive.");
                 Vector3 boardPosition = Position(state["board_pose"]?["position_m"]);
                 Quaternion boardRotation = Orientation(state["board_pose"]?["orientation_xyzw"]);
 
                 if (slots.Count == 0)
                 {
-                    foreach (ItemManager.AssemblySlot group in itemManager.AssemblySlots)
+                    foreach (ItemManager.AssemblySlot group in itemManager.PrefabSlots)
                     {
                         if (group == null) throw new FormatException("Missing slot group.");
-                        foreach (Transform slot in group.Slots)
-                            if (slot == null || slot.parent != currentBoard || !slots.TryAdd(slot.name, slot))
+                        foreach (Transform template in group.Slots)
+                        {
+                            Transform slot = currentBoard != null ? currentBoard.Find(template.name) : template;
+                            if (slot == null || (currentBoard != null && slot.parent != currentBoard) || !slots.TryAdd(slot.name, slot))
                                 throw new FormatException("Slots must be unique children of the current board.");
+                        }
                     }
                 }
                 JArray rows = state["slots"] as JArray;
                 if (slots.Count != 25 || rows == null || rows.Count != slots.Count)
                     throw new FormatException("Expected the current board's 25 slots.");
-                var pending = new Dictionary<Transform, Pose>();
+                var pending = new Dictionary<string, Pose>(StringComparer.Ordinal);
                 Quaternion worldRotation = baseLink.rotation * boardRotation;
                 Vector3 worldPosition = baseLink.TransformPoint(boardPosition);
                 foreach (JToken row in rows)
@@ -169,11 +179,11 @@ namespace MainUnity.Runtime.Camera
                     if (row is not JObject) throw new FormatException("Invalid slot entry.");
                     string code = (string)row["slot_code"];
                     if (string.IsNullOrWhiteSpace(code) || !slots.TryGetValue(code, out Transform slot) ||
-                        slot == null || slot.parent != currentBoard)
+                        slot == null || (currentBoard != null && slot.parent != currentBoard))
                         throw new FormatException("Unknown or missing slot code.");
                     Vector3 position = worldPosition + worldRotation * Position(row["board_position_m"]);
                     Quaternion rotation = worldRotation * Orientation(row["board_orientation_xyzw"]);
-                    if (!Finite(position) || !pending.TryAdd(slot, new Pose(position, rotation)))
+                    if (!Finite(position) || !pending.TryAdd(code, new Pose(position, rotation)))
                         throw new FormatException("Invalid or duplicate slot pose.");
                 }
                 Vector3 modelPosition = worldPosition + worldRotation * modelPositionOffsetMeters;
@@ -181,10 +191,17 @@ namespace MainUnity.Runtime.Camera
                 string calibration = (string)state["calibration_id"];
                 // 전부 검증한 다음 반영한다. 프리팹 스케일·계층은 유지하고 슬롯은 보정 완료된
                 // 표면 중심의 월드 자세로 갱신한다. 모델 축/원점 보정이나 잔차를 슬롯에 다시 더하지 않는다.
+                if (currentBoard == null)
+                {
+                    currentBoard = itemManager.EnsureObservationBoard();
+                    slots.Clear();
+                    foreach (string code in pending.Keys)
+                        slots.Add(code, currentBoard.Find(code));
+                }
                 currentBoard.SetPositionAndRotation(modelPosition,
                     worldRotation * Quaternion.Euler(modelRotationOffsetDegrees));
                 foreach (var entry in pending)
-                    entry.Key.SetPositionAndRotation(entry.Value.position, entry.Value.rotation);
+                    slots[entry.Key].SetPositionAndRotation(entry.Value.position, entry.Value.rotation);
                 lastFrame = frame;
                 LastAppliedTime = Time.realtimeSinceStartupAsDouble;
                 CalibrationId = calibration;
