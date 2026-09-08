@@ -27,8 +27,6 @@ namespace MainUnity.Runtime.Robot.Real
         void OnDisable() => Unbind();
         void OnValidate() => RefreshReferences();
 
-        // TODO(API·Real): 조립 노드 계약이 생기면 assemblyControl 이 assemblyProgress 에 쓴다.
-        //                 Mock 과 같은 곳에 쓰면 UI 는 바뀌지 않는다.
         public void Initialize(ArticulationBody articulationRoot, RobotStatusManager statusManager,
             AssemblyProgressManager assemblyProgress)
         {
@@ -36,6 +34,7 @@ namespace MainUnity.Runtime.Robot.Real
             control?.Initialize(articulationRoot, statusManager);
             ghostControl?.InitializeReal(statusManager, control);
             gripperRequest?.Initialize(statusManager);
+            assemblyControl?.Initialize(assemblyProgress);
 
             shadowing?.Initialize(articulationRoot);
         }

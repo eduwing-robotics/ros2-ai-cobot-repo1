@@ -88,10 +88,10 @@ CREATE TABLE IF NOT EXISTS production.units (
         inspection_result IN ('PENDING', 'PASS', 'FAIL', 'UNKNOWN')
     ),
     CONSTRAINT ck_units_inspected CHECK (
-        (inspection_result = 'PENDING' AND inspected_at IS NULL)
+        (inspection_result = 'PENDING' AND unit_status IN ('RUNNING', 'FAILED')
+         AND inspected_at IS NULL)
         OR
         (inspection_result IN ('PASS', 'FAIL')
-         AND unit_status = 'COMPLETED'
          AND assembly_completed_at IS NOT NULL
          AND inspected_at IS NOT NULL)
         OR

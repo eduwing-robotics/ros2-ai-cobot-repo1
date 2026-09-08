@@ -24,7 +24,7 @@ setup(
     license="Proprietary",
     entry_points={
         "console_scripts": [
-            "mock_node = assembly_sequencer.mock_node:main",
+            "sequencer_node = assembly_sequencer.sequencer_node:main",
         ],
     },
 )

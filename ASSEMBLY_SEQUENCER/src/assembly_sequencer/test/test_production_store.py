@@ -135,6 +135,7 @@ class ProductionStoreIntegrationTest(unittest.TestCase):
     def complete(self, unit_id, result="PASS", defects=()):
         store.complete_assembly_and_consume_stock(unit_id)
         store.record_inspection(unit_id, result, defects)
+        store.complete_unit(unit_id)
 
     def test_vision_slot_storage_replay_and_evidence_integrity(self):
         with psycopg.connect(TEST_DSN) as connection:
@@ -233,6 +234,88 @@ class ProductionStoreIntegrationTest(unittest.TestCase):
                 self.assertEqual(self.scalar("SELECT COUNT(*) FROM production.unit_defects WHERE unit_id=%s AND defect_type IS NOT NULL", (new_unit,)), int(verdict == "FAIL"))
                 self.assertEqual(self.scalar("SELECT COUNT(*) FROM production.defect_report_deliveries d JOIN production.unit_defects u USING(unit_defect_id) WHERE u.unit_id=%s", (new_unit,)), int(verdict == "FAIL"))
                 store.finish_job(new_job, "FAILED")
+
+    def test_inspected_pass_is_not_complete_until_transfer_finishes(self):
+        job_id = self.create_job()
+        unit_id = self.claim(job_id)["unit_id"]
+        with self.assertRaisesRegex(RuntimeError, "confirmed inspection"):
+            store.complete_unit(unit_id)
+        store.complete_assembly_and_consume_stock(unit_id)
+        store.record_inspection(unit_id, "PASS", [])
+        self.assertEqual(store.get_job_state(job_id)["completed_quantity"], 0)
+        with self.assertRaisesRegex(RuntimeError, "requested PASS"):
+            store.finish_job(job_id, "COMPLETED")
+        store.complete_unit(unit_id)
+        store.complete_unit(unit_id)
+        self.assertEqual(store.get_job_state(job_id)["completed_quantity"], 1)
+        store.finish_job(job_id, "COMPLETED")
+
+    def test_transfer_failure_preserves_inspection_without_counting_pass(self):
+        job_id = self.create_job()
+        unit_id = self.claim(job_id)["unit_id"]
+        store.complete_assembly_and_consume_stock(unit_id)
+        store.record_inspection(unit_id, "PASS", [])
+        store.recover_interrupted_units()
+        self.assertEqual(store.get_job_state(job_id)["completed_quantity"], 0)
+        self.assertEqual(self.scalar(
+            "SELECT unit_status FROM production.units WHERE unit_id=%s", (unit_id,)), "FAILED")
+        self.assertEqual(self.scalar(
+            "SELECT inspection_result FROM production.units WHERE unit_id=%s", (unit_id,)), "PASS")
+        with self.assertRaisesRegex(RuntimeError, "must be running"):
+            store.complete_unit(unit_id)
+        self.claim(job_id)
+
+    def test_main_server_pass_progress_requires_workflow_completion(self):
+        sys.path.insert(0, str(Path(__file__).resolve().parents[4] / "MAIN_SERVER"))
+        import queries
+
+        job_id = self.create_job()
+        unit_id = self.claim(job_id)["unit_id"]
+        store.complete_assembly_and_consume_stock(unit_id)
+        store.record_inspection(unit_id, "PASS", [])
+        with patch.dict(os.environ, {"MAIN_SERVER_MODE": "mock", "MAIN_SERVER_DB_DSN": TEST_DSN}):
+            for completed in (False, True):
+                if completed:
+                    store.complete_unit(unit_id)
+                detail = queries.job(job_id)
+                listing = next(row for row in queries.jobs() if str(row["job_id"]) == job_id)
+                for row in (detail, listing):
+                    self.assertEqual(row["completed_quantity"], int(completed))
+                    self.assertEqual(row["progress_percent"], 100 if completed else 0)
+
+    def test_failed_inspected_unit_remains_visible_to_quality_readers(self):
+        sys.path.insert(0, str(Path(__file__).resolve().parents[4] / "MAIN_SERVER"))
+        import queries
+        import generate_defect_reports
+
+        job_id = self.create_job()
+        unit_id = self.claim(job_id)["unit_id"]
+        store.complete_assembly_and_consume_stock(unit_id)
+        store.record_inspection(unit_id, "FAIL", [
+            {"slot_code": "SLOT-A-01", "defect_type": "MISSING"}
+        ])
+        defect_id = self.scalar(
+            "SELECT unit_defect_id FROM production.unit_defects WHERE unit_id=%s", (unit_id,))
+        with patch.dict(os.environ, {"MAIN_SERVER_MODE": "mock", "MAIN_SERVER_DB_DSN": TEST_DSN}):
+            for failed in (False, True):
+                if failed:
+                    store.finish_job(job_id, "FAILED")
+                self.assertEqual(queries.job(job_id)["completed_quantity"], 0)
+                self.assertIn(defect_id, [row["unit_defect_id"] for row in queries.defect_reports()])
+                context = generate_defect_reports.load_defect_context(TEST_DSN, defect_id)
+                self.assertEqual(context[0]["target_unit_id"], unit_id)
+                self.assertEqual(context[0]["inspected_units"], 1)
+
+    def test_ready_pending_job_bypasses_unprepared_older_job(self):
+        older = self.create_job()
+        ready = self.create_job()
+        args = (self.product_code, self.product_version, "assembly-r1")
+        self.assertIsNone(store.get_next_runnable_job(*args, ready_job_ids=[]))
+        self.assertEqual(store.get_next_runnable_job(*args, ready_job_ids=[ready])["job_id"], ready)
+        unit_id = self.claim(older)["unit_id"]
+        self.assertIsNone(store.get_next_runnable_job(*args, ready_job_ids=[ready]))
+        store.recover_interrupted_units()
+        self.assertEqual(store.get_next_runnable_job(*args, ready_job_ids=[ready])["job_id"], older)
 
     def test_requested_quantity_pass_target_finishes_job(self):
         job_id = self.create_job(quantity=2)
@@ -394,6 +477,7 @@ class ProductionStoreIntegrationTest(unittest.TestCase):
         )
         writer.assembly_completed(work["unit_id"])
         writer.inspection_recorded(work["unit_id"], "PASS", [])
+        writer.unit_completed(work["unit_id"])
         writer.finish(job_id, "COMPLETED")
         self.assertTrue(writer.flush(1.0))
         self.assertEqual(store.get_job_state(job_id)["job_status"], "COMPLETED")

@@ -244,10 +244,10 @@ def job(job_id):
     row = _one("""
         SELECT j.job_id, j.product_id, pr.product_code, pr.product_version,
                j.recipe_version, j.job_status, j.requested_quantity,
-               COUNT(u.unit_id) FILTER (WHERE u.inspection_result = 'PASS')::integer AS completed_quantity,
+               COUNT(u.unit_id) FILTER (WHERE u.unit_status = 'COMPLETED' AND u.inspection_result = 'PASS')::integer AS completed_quantity,
                COUNT(u.unit_id) FILTER (WHERE u.unit_status = 'RUNNING')::integer AS running_quantity,
                COUNT(u.unit_id) FILTER (WHERE u.unit_status = 'FAILED')::integer AS failed_quantity,
-               ROUND(100.0 * COUNT(u.unit_id) FILTER (WHERE u.inspection_result = 'PASS')
+               ROUND(100.0 * COUNT(u.unit_id) FILTER (WHERE u.unit_status = 'COMPLETED' AND u.inspection_result = 'PASS')
                      / j.requested_quantity, 2) AS progress_percent,
                j.requested_at, j.job_started_at, j.job_finished_at
         FROM production.jobs j JOIN production.products pr ON pr.product_id = j.product_id
@@ -280,11 +280,11 @@ def jobs(status=None, limit=12):
                pr.product_version, j.recipe_version, j.job_status,
                j.requested_quantity,
                COUNT(u.unit_id)::integer AS attempted_quantity,
-               COUNT(u.unit_id) FILTER (WHERE u.inspection_result = 'PASS')::integer AS completed_quantity,
+               COUNT(u.unit_id) FILTER (WHERE u.unit_status = 'COMPLETED' AND u.inspection_result = 'PASS')::integer AS completed_quantity,
                COUNT(u.unit_id) FILTER (WHERE u.unit_status = 'RUNNING')::integer AS running_quantity,
                COUNT(u.unit_id) FILTER (WHERE u.unit_status = 'FAILED')::integer AS failed_quantity,
                COUNT(u.unit_id) FILTER (WHERE u.inspection_result = 'FAIL')::integer AS inspection_failed_quantity,
-               ROUND(100.0 * COUNT(u.unit_id) FILTER (WHERE u.inspection_result = 'PASS')
+               ROUND(100.0 * COUNT(u.unit_id) FILTER (WHERE u.unit_status = 'COMPLETED' AND u.inspection_result = 'PASS')
                      / j.requested_quantity, 2) AS progress_percent,
                j.requested_at, j.job_started_at, j.job_finished_at
         FROM selected_jobs j
@@ -462,7 +462,7 @@ def defect_reports(product_id=None, slot_code=None, unit_defect_id=None, *, dsn=
         JOIN production.jobs j USING (job_id)
         JOIN production.product_slots ps USING (product_slot_id)
         LEFT JOIN production.defect_report_deliveries delivery USING (unit_defect_id)
-        WHERE u.unit_status = 'COMPLETED' AND u.inspection_result = 'FAIL'
+        WHERE u.inspection_result = 'FAIL'
           AND ud.defect_type IS NOT NULL
           AND (%s::bigint IS NULL OR j.product_id = %s)
           AND (%s::text IS NULL OR ps.slot_code = %s)

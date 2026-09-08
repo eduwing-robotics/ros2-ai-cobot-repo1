@@ -63,6 +63,11 @@ namespace MainUnity.Runtime.Robot.Mock
         AssemblyProgressManager progress;
         ROSConnection connection;
         TaskCompletionSource<string> terminal;
+        readonly System.Diagnostics.Stopwatch executionClock = new();
+        TaskCompletionSource<bool> executionStateChanged = new();
+        bool awaitingExecution;
+
+        public bool IsRunning => terminal != null && !terminal.Task.IsCompleted;
         Task recoveryTask = Task.CompletedTask;
         Transform heldItem;
         string activeJobId;
@@ -279,7 +284,8 @@ namespace MainUnity.Runtime.Robot.Mock
             inspectionTransferStarted = false;
             assemblyConveyorStarted = false;
 
-            Task timeout = Task.Delay(TimeSpan.FromSeconds(completionTimeoutSeconds));
+            awaitingExecution = true;
+            executionClock.Restart();
             bool accepted = false;
             try
             {
@@ -306,9 +312,7 @@ namespace MainUnity.Runtime.Robot.Mock
                 await SendMockAsync(observationsJson, "observations");
                 accepted = true;
 
-                if (await Task.WhenAny(current.Task, timeout) != current.Task)
-                    throw new TimeoutException(
-                        $"Mock assembly timed out after {completionTimeoutSeconds:0.###} seconds.");
+                await WaitForCompletionAsync(current.Task);
 
                 string failure = await current.Task;
                 if (!string.IsNullOrEmpty(failure))
@@ -316,11 +320,38 @@ namespace MainUnity.Runtime.Robot.Mock
             }
             finally
             {
-                if (ReferenceEquals(terminal, current))
-                    terminal = null;
-                if (accepted)
-                    activeJobId = string.Empty;
-                processedCallbacks.Clear();
+                awaitingExecution = false;
+                executionClock.Stop();
+                // A caller timeout does not stop equipment. Retain tracking until terminal feedback.
+                if (!accepted || current.Task.IsCompleted)
+                {
+                    if (ReferenceEquals(terminal, current))
+                        terminal = null;
+                    if (accepted)
+                        activeJobId = string.Empty;
+                    processedCallbacks.Clear();
+                }
+            }
+        }
+
+        async Task WaitForCompletionAsync(Task completion)
+        {
+            while (!completion.IsCompleted)
+            {
+                Task stateChanged = executionStateChanged.Task;
+                if (!executionClock.IsRunning)
+                {
+                    await Task.WhenAny(completion, stateChanged);
+                    continue;
+                }
+                double remaining = completionTimeoutSeconds - executionClock.Elapsed.TotalSeconds;
+                if (remaining <= 0)
+                    throw new TimeoutException(
+                        $"Mock assembly timed out after {completionTimeoutSeconds:0.###} active seconds.");
+                using var cancellation = new System.Threading.CancellationTokenSource();
+                Task timeout = Task.Delay(TimeSpan.FromSeconds(remaining), cancellation.Token);
+                await Task.WhenAny(completion, stateChanged, timeout);
+                cancellation.Cancel();
             }
         }
 
@@ -946,6 +977,8 @@ namespace MainUnity.Runtime.Robot.Mock
                         AssemblyCompleted => AssemblyState.Placed,
                         PcbPicked => AssemblyState.Placed,
                         PcbPlaced => AssemblyState.Placed,
+                        Completed => AssemblyState.Completed,
+                        Failed => AssemblyState.Failed,
                         _ => throw new InvalidOperationException(
                             "Unknown resumed assembly state: " + feedback.state)
                     }, feedback.state == Picked || feedback.state == Placed
@@ -1346,10 +1379,11 @@ namespace MainUnity.Runtime.Robot.Mock
                 gripperCatcher.Release();
                 assembledPcbHeld = false;
             }
-            if (!CompleteActive(error))
+            if (!IsRunning)
                 return;
             Debug.LogError("Mock assembly failed: " + error, this);
             Report(AssemblyState.Failed, null, error);
+            CompleteActive(error);
         }
 
         bool CompleteActive(string failure)
@@ -1362,6 +1396,8 @@ namespace MainUnity.Runtime.Robot.Mock
             {
                 terminal = null;
                 processedCallbacks.Clear();
+                if (!awaitingExecution)
+                    activeJobId = string.Empty;
             }
             return true;
         }
@@ -1372,6 +1408,17 @@ namespace MainUnity.Runtime.Robot.Mock
         /// </summary>
         void Report(AssemblyState state, AssemblyFeedback feedback, string error = null)
         {
+            // Only confirmed PAUSED time is excluded; resume retains the remaining budget.
+            if (awaitingExecution)
+            {
+                if (state == AssemblyState.Paused)
+                    executionClock.Stop();
+                else
+                    executionClock.Start();
+                TaskCompletionSource<bool> changed = executionStateChanged;
+                executionStateChanged = new TaskCompletionSource<bool>();
+                changed.TrySetResult(true);
+            }
             if (progress == null)
                 return;
             progress.Apply(new AssemblyProgressFrame(

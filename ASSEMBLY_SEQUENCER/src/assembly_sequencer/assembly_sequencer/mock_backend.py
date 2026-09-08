@@ -1,6 +1,7 @@
 """Semantic assembly client for the existing Mock ROS service."""
 
 import json
+import random
 import threading
 import time
 import uuid
@@ -8,11 +9,12 @@ import uuid
 from fairino_msgs.srv import RemoteCmdInterface
 from rclpy.task import Future
 
-from .mock_contract import parse_internal_response
+from .recipe_contract import DEFECT_TYPES
 
 
 SERVICE_TIMEOUT_SECONDS = 5.0
 OPERATION_TIMEOUT_SECONDS = 600.0
+CONVEYOR_SIGNAL_TIMEOUT_SECONDS = 60.0
 
 
 class MockBackend:
@@ -26,6 +28,79 @@ class MockBackend:
         self._paused_job_id = None
         self._operation_remaining_seconds = 0.0
         self._operation_running_since = None
+        self._conveyor_future = None
+        self._conveyor_job_id = None
+        self._conveyor_station = None
+        self._assembled_pcb = None
+        self._rng = random.Random()
+        self._fail_probability = 0.2
+
+    def configure_inspection(self, probability, seed):
+        if isinstance(probability, bool) or not 0.0 <= float(probability) <= 1.0:
+            raise ValueError("inspection_fail_probability must be between 0 and 1")
+        if isinstance(seed, bool) or not isinstance(seed, int):
+            raise ValueError("random_seed must be an integer")
+        self._fail_probability = float(probability)
+        self._rng = random.Random(None if seed == -1 else seed)
+
+    async def prepare(self, joint_points, frame):
+        # Observations are validated by the common recipe boundary before claim.
+        snapshot = await self.status()
+        if not snapshot.get("available", False) or snapshot.get("active", False):
+            raise RuntimeError("Mock equipment is unavailable or already active")
+
+    async def resolve_targets(self, observations):
+        return observations
+
+    async def move_conveyor(self, job_id, station):
+        if station not in {"ASSEMBLY", "INSPECTION"} or self._conveyor_future is not None:
+            raise RuntimeError("another conveyor action is pending or station is invalid")
+        future = Future(executor=self._node.executor)
+        self._conveyor_future = future
+        self._conveyor_job_id = job_id
+        self._conveyor_station = station
+        if station == "ASSEMBLY":
+            self._assembled_pcb = None
+        timer = self._node.create_timer(CONVEYOR_SIGNAL_TIMEOUT_SECONDS, future.cancel)
+        try:
+            await future
+            if future.cancelled():
+                raise TimeoutError("conveyor completion was not reported within 60 seconds")
+        finally:
+            self._node.destroy_timer(timer)
+            self._conveyor_future = None
+            self._conveyor_job_id = None
+            self._conveyor_station = None
+
+    def confirm_conveyor(self, job_id, station, assembled_pcb=None):
+        future = self._conveyor_future
+        if job_id != self._conveyor_job_id or station != self._conveyor_station or future is None:
+            raise RuntimeError("matching conveyor movement is not awaiting completion")
+        if future.cancelled():
+            raise RuntimeError("conveyor completion deadline has expired")
+        if not future.done():
+            if station == "INSPECTION":
+                if assembled_pcb is None:
+                    raise ValueError("inspection arrival requires assembled PCB coordinates")
+                self._assembled_pcb = assembled_pcb
+            future.set_result(None)
+
+    def fail_conveyor(self, job_id, message):
+        future = self._conveyor_future
+        if job_id != self._conveyor_job_id or future is None or future.done():
+            raise RuntimeError("matching conveyor movement is not awaiting completion")
+        future.set_exception(RuntimeError(message))
+
+    async def inspect_unit(self, job_id, unit_id, slot_codes):
+        result, defects = choose_inspection(self._rng, self._fail_probability, slot_codes)
+        return {"result": result, "defects": defects,
+                "image_path": "InspectionSamples/mock-pass.jpg" if result == "PASS"
+                else "InspectionSamples/mock-fail.jpg"}
+
+    def close(self):
+        for future in (self._conveyor_future, self._operation_future):
+            if future is not None and not future.done():
+                future.cancel()
 
     def is_available(self):
         return self._client.wait_for_service(timeout_sec=0.0)
@@ -80,6 +155,9 @@ class MockBackend:
     async def transfer_assembled_pcb(
         self, job_id, frame, assembled_pcb, motion, gripper
     ):
+        assembled_pcb = self._assembled_pcb if assembled_pcb is None else assembled_pcb
+        if assembled_pcb is None:
+            raise RuntimeError("assembled PCB coordinates have not been confirmed")
         await self._execute(job_id, "robot.transfer", {
             "frame": frame,
             "source": assembled_pcb["source"],
@@ -204,3 +282,24 @@ class MockBackend:
             return response
         finally:
             self._node.destroy_timer(timeout_timer)
+
+
+def choose_inspection(rng, fail_probability, slot_codes):
+    if rng.random() >= fail_probability:
+        return "PASS", []
+    if not slot_codes:
+        raise RuntimeError("Mock FAIL inspection requires a product slot")
+    return "FAIL", [{
+        "slot_code": rng.choice(slot_codes),
+        "defect_type": rng.choice(DEFECT_TYPES),
+    }]
+
+
+def parse_internal_response(raw):
+    try:
+        response = json.loads(raw)
+    except (TypeError, json.JSONDecodeError) as error:
+        raise RuntimeError("Mock response is not valid JSON") from error
+    if not isinstance(response, dict) or not isinstance(response.get("accepted"), bool):
+        raise RuntimeError("Mock response is missing accepted")
+    return response

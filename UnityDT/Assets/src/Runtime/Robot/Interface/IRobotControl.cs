@@ -15,6 +15,9 @@ namespace MainUnity.Runtime.Robot.Interface
     /// <summary>Scenario가 요청하는 자동 조립 작업의 공통 계약이다.</summary>
     public interface IRobotScenarioControl
     {
+        /// <summary>호출자의 대기가 끝난 뒤에도 추적 중인 작업이 있으면 true다.</summary>
+        bool IsRunning { get; }
+
         /// <summary>조립 작업이 실제로 완료되거나 실패할 때까지 기다린다.</summary>
         Task ExecuteAsync();
         /// <summary>이미 등록된 PENDING Job을 같은 ID로 실행한다.</summary>

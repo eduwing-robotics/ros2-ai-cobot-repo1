@@ -68,9 +68,10 @@ def generate_launch_description():
         ),
         Node(
             package="assembly_sequencer",
-            executable="mock_node",
+            executable="sequencer_node",
             name="assembly_sequencer_mock",
             output="screen",
+            additional_env={"ASSEMBLY_SEQUENCER_MODE": "mock"},
             parameters=[{
                 "recipe": LaunchConfiguration("recipe"),
                 "inspection_fail_probability": ParameterValue(

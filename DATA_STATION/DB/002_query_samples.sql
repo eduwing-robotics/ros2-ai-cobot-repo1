@@ -78,7 +78,7 @@ SELECT j.job_id,
        j.job_status,
        j.requested_quantity,
        COUNT(u.unit_id) FILTER (
-           WHERE u.inspection_result = 'PASS'
+           WHERE u.unit_status = 'COMPLETED' AND u.inspection_result = 'PASS'
        ) AS completed_quantity,
        COUNT(u.unit_id) FILTER (
            WHERE u.unit_status = 'RUNNING'
@@ -88,7 +88,7 @@ SELECT j.job_id,
        ) AS failed_quantity,
        ROUND(
            100.0 * COUNT(u.unit_id) FILTER (
-               WHERE u.inspection_result = 'PASS'
+               WHERE u.unit_status = 'COMPLETED' AND u.inspection_result = 'PASS'
            ) / j.requested_quantity,
            2
        ) AS progress_percent,

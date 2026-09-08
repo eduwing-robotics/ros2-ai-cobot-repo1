@@ -126,7 +126,10 @@ namespace MainUnity.Runtime.RobotGhost
                 if (!float.IsFinite(degrees))
                     return false;
                 ArticulationDrive drive = joints[i].xDrive;
-                targetDegrees[i] = Mathf.Clamp(degrees, drive.lowerLimit, drive.upperLimit);
+                // 표시 각도를 몰래 제한하면 검사한 경로와 요청 각도가 달라진다.
+                if (degrees < drive.lowerLimit || degrees > drive.upperLimit)
+                    return false;
+                targetDegrees[i] = degrees;
                 int bodyIndex = joints[i].index;
                 if (bodyIndex < 0 || bodyIndex >= dofStartIndices.Count)
                     return false;

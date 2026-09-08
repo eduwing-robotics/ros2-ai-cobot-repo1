@@ -18,9 +18,20 @@ ACTIVE_JOB_STATUSES = ("PENDING", "RUNNING")
 FINAL_JOB_STATUSES = ("COMPLETED", "FAILED", "CANCELLED")
 DEFECT_TYPES = {"MISSING", "POSITION_ERROR", "ORIENTATION_ERROR", "CRACK",
                 "SEATING_ERROR", "UNCLASSIFIED_ANOMALY"}
+_RUNTIME_MODE = os.environ.get("ASSEMBLY_SEQUENCER_MODE", "mock")
 
 
-def _connect(expected_mode="mock"):
+def _connect(expected_mode=None):
+    # The process owns one DB mode for its lifetime. An explicit Real-only
+    # operation cannot override it, and changing the environment cannot switch it.
+    configured_mode = os.environ.get("ASSEMBLY_SEQUENCER_MODE", "mock")
+    expected = _RUNTIME_MODE if expected_mode is None else expected_mode
+    if (_RUNTIME_MODE not in {"mock", "real"}
+            or configured_mode != _RUNTIME_MODE or expected != _RUNTIME_MODE):
+        raise RuntimeError(
+            f"MODE_REJECTED stage=db_connect expected={_RUNTIME_MODE!r} "
+            f"configured={configured_mode!r} requested={expected!r} "
+            "result=blocked_before_connect")
     dsn = os.environ.get("PRODUCTION_DB_DSN", "").strip()
     if not dsn:
         raise RuntimeError("PRODUCTION_DB_DSN is required")
@@ -38,8 +49,7 @@ def _connect(expected_mode="mock"):
               AND split_part(setting, '=', 1) = 'app.runtime_mode'
         """).fetchone()
         actual = row["runtime_mode"] if row else None
-        expected = expected_mode
-        if expected not in {"mock", "real"} or actual != expected:
+        if actual != expected:
             raise RuntimeError(
                 f"MODE_REJECTED stage=db_connect expected={expected!r} actual={actual!r} "
                 f"database={connection.info.dbname!r} result=blocked_before_write")
@@ -117,7 +127,7 @@ def _insert_next_unit(cursor, job_id):
         """
         SELECT COALESCE(MAX(unit_sequence_in_job), 0) AS last_sequence,
                COUNT(*) FILTER (WHERE unit_status = 'RUNNING') AS running_count,
-               COUNT(*) FILTER (WHERE inspection_result = 'PASS') AS pass_count
+               COUNT(*) FILTER (WHERE unit_status = 'COMPLETED' AND inspection_result = 'PASS') AS pass_count
         FROM production.units
         WHERE job_id = %s
         """,
@@ -214,11 +224,12 @@ def claim_job(job_id, product_code, product_version, recipe_version):
             }
 
 
-def get_next_runnable_job(product_code, product_version, recipe_version):
+def get_next_runnable_job(product_code, product_version, recipe_version, ready_job_ids=None):
     """Return the compatible interrupted or oldest pending Job without claiming it."""
     _required_text(product_code, "product_code")
     _required_text(product_version, "product_version")
     _required_text(recipe_version, "recipe_version")
+    ready_ids = None if ready_job_ids is None else [_job_id(value) for value in ready_job_ids]
     with _connect() as connection, connection.cursor() as cursor:
         cursor.execute(
             """
@@ -233,6 +244,7 @@ def get_next_runnable_job(product_code, product_version, recipe_version):
                           AND u.unit_status = 'RUNNING'
                     )
                   OR j.job_status = 'PENDING'
+                    AND (%s::uuid[] IS NULL OR j.job_id = ANY(%s::uuid[]))
                     AND NOT EXISTS (
                         SELECT 1 FROM production.jobs active
                         WHERE active.job_status = 'RUNNING'
@@ -245,7 +257,7 @@ def get_next_runnable_job(product_code, product_version, recipe_version):
             ORDER BY (j.job_status = 'RUNNING') DESC, j.requested_at, j.job_id
             LIMIT 1
             """,
-            (recipe_version, product_code, product_version),
+            (ready_ids, ready_ids, recipe_version, product_code, product_version),
         )
         return cursor.fetchone()
 
@@ -463,13 +475,12 @@ def record_inspection(unit_id, result, defects, image_path=None, *, inspection=N
             cursor.execute(
                 """
                 UPDATE production.units
-                SET unit_status = %s,
-                    inspection_result = %s,
+                SET inspection_result = %s,
                     inspection_image_path = %s,
                     inspected_at = now()
                 WHERE unit_id = %s
                 """,
-                ("COMPLETED", result, image_path, unit_id),
+                (result, image_path, unit_id),
             )
 
 
@@ -632,11 +643,40 @@ def _record_vision_inspection(unit_id, inspection, image_bytes):
                     os.close(descriptor)
             if not replay:
                 cursor.execute("""
-                    UPDATE production.units SET unit_status = %s, inspection_result = %s,
+                    UPDATE production.units SET inspection_result = %s,
                         inspection_image_path = %s, inspected_at = %s WHERE unit_id = %s
-                """, ("RUNNING" if decision == "UNKNOWN" else "COMPLETED",
-                      decision, image_path, inspected_at, unit_id))
+                """, (decision, image_path, inspected_at, unit_id))
     return links
+
+
+def complete_unit(unit_id):
+    """Complete an inspected Unit only after the entire workflow succeeds."""
+    _positive_id(unit_id, "unit_id")
+    with _connect() as connection, connection.transaction():
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT u.unit_status, u.inspection_result, j.job_status
+                FROM production.units u
+                JOIN production.jobs j ON j.job_id = u.job_id
+                WHERE u.unit_id = %s
+                FOR UPDATE OF u, j
+                """,
+                (unit_id,),
+            )
+            unit = cursor.fetchone()
+            if unit is None:
+                raise RuntimeError("unit was not found")
+            if unit["unit_status"] == "COMPLETED":
+                return
+            if unit["unit_status"] != "RUNNING" or unit["job_status"] != "RUNNING":
+                raise RuntimeError("unit and job must be running")
+            if unit["inspection_result"] not in ("PASS", "FAIL"):
+                raise RuntimeError("unit requires a confirmed inspection")
+            cursor.execute(
+                "UPDATE production.units SET unit_status = 'COMPLETED' WHERE unit_id = %s",
+                (unit_id,),
+            )
 
 
 def finish_job(job_id, final_status):
@@ -666,7 +706,7 @@ def finish_job(job_id, final_status):
             cursor.execute(
                 """
                 SELECT COUNT(*) FILTER (
-                           WHERE inspection_result = 'PASS'
+                           WHERE unit_status = 'COMPLETED' AND inspection_result = 'PASS'
                        ) AS pass_count,
                        COUNT(*) FILTER (
                            WHERE unit_status = 'RUNNING'
@@ -720,7 +760,7 @@ def _get_job_state(connection, job_id):
         cursor.execute(
             """
             SELECT COUNT(*) FILTER (
-                       WHERE inspection_result = 'PASS'
+                       WHERE unit_status = 'COMPLETED' AND inspection_result = 'PASS'
                    ) AS completed_quantity,
                    COUNT(*) FILTER (
                        WHERE unit_status = 'FAILED'

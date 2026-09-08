@@ -53,6 +53,7 @@ def generate_launch_description():
         ),
         GroupAction(scoped=True, actions=[
             SetEnvironmentVariable("PRODUCTION_DB_DSN", production_dsn),
+            SetEnvironmentVariable("ASSEMBLY_SEQUENCER_MODE", "mock"),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
                     f"{sequencer_share}/launch/mock.launch.py"

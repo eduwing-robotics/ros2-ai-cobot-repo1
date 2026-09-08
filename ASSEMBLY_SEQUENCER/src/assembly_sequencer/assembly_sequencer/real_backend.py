@@ -1,13 +1,171 @@
-"""Vision request/pull boundary; no production writes or equipment commands."""
+"""Real equipment readiness and Vision request/pull; no production writes."""
 
 import hashlib
 import http.client
 import json
 import math
 import os
+import threading
 import time
 import uuid
 from urllib.parse import urlsplit
+
+
+class RealBackend:
+    """Expose Real readiness without treating simulator signals as equipment proof."""
+
+    def __init__(self, node):
+        from fairino_msgs.msg import RobotNonrtState
+        from fairino_msgs.srv import RemoteCmdInterface
+        from rclpy.callback_groups import ReentrantCallbackGroup
+
+        if node.runtime_mode != "real" or node.context.get_domain_id() != 43:
+            raise RuntimeError(
+                "MODE_REJECTED stage=real_backend expected=real/domain43 result=blocked"
+            )
+        self._node = node
+        self._closed = False
+        self._state = None
+        self._received_at = 0.0
+        self._inspection_future = None
+        self._vision_url = node.declare_parameter("vision_base_url", "").value
+        group = ReentrantCallbackGroup()
+        self._client = node.create_client(
+            RemoteCmdInterface, "/fairino_remote_command_service", callback_group=group
+        )
+        self._subscription = node.create_subscription(
+            RobotNonrtState, "/nonrt_state_data", self._on_state, 10,
+            callback_group=group,
+        )
+
+    def _on_state(self, message):
+        self._state = message
+        # The existing publisher timestamp has one-second resolution. Local
+        # receive time diagnoses a missing stream without implying motion completion.
+        self._received_at = time.monotonic()
+
+    def is_available(self):
+        return not self._closed and self._client.wait_for_service(timeout_sec=0.0)
+
+    @staticmethod
+    def _commissioning_error():
+        # No enable/reset parameter can replace these physical completion contracts.
+        # The existing point table is shared with manual callers, so automatic
+        # command ownership also has to be established before using JNT/CARTPoint.
+        return (
+            "NOT_READY: Real assembly requires taught joint points and base_link/Tool/User "
+            "calibration, motion/gripper safety limits and completion, calibrated target poses, "
+            "conveyor arrival and physical reset feedback, and automatic/manual command "
+            "ownership; these equipment boundaries are not connected"
+        )
+
+    async def status(self):
+        from .recipe_contract import unavailable_snapshot
+
+        snapshot = unavailable_snapshot(self._commissioning_error())
+        state = self._state
+        fresh = (state is not None and time.monotonic() - self._received_at <= 0.5
+                 and state.reconnect_flag == 0)
+        snapshot.update(runtime_mode="real", equipment_ready=False, error_code="NOT_READY",
+                        command_service_available=self.is_available(),
+                        robot_state_fresh=fresh)
+        return snapshot
+
+    async def prepare(self, joint_points, frame):
+        if frame != "base_link":
+            raise ValueError("Real recipe frame must be base_link")
+        for name, point in joint_points.items():
+            if (not isinstance(point, (list, tuple)) or len(point) != 6
+                    or any(isinstance(value, bool) or not isinstance(value, (int, float))
+                           or not math.isfinite(value) for value in point)):
+                raise ValueError(f"{name} must contain six finite joint angles in degrees")
+        if not self.is_available():
+            raise RuntimeError("NOT_READY: Real FAIRINO command service is unavailable")
+        state = self._state
+        if state is None or time.monotonic() - self._received_at > 0.5 or state.reconnect_flag != 0:
+            raise RuntimeError("NOT_READY: Real robot state is missing, stale or disconnected")
+        if any((state.emg, state.abnormal_stop, state.alarm, state.main_error_code,
+                state.sub_error_code, state.gripperfaultnum, state.grippererro,
+                state.safetydoor_alarm, state.safetyplanealarm)):
+            raise RuntimeError("NOT_READY: Real robot or gripper reports a fault or safety stop")
+        # This runs before the shared Sequencer claims a Job. The current recipe
+        # contains placeholder teaching poses, and hardware preparation/reset has
+        # no verified source. Reject without changing DB state or sending motion.
+        raise RuntimeError(self._commissioning_error())
+
+    async def start(self, job_id, recipe_version, expected_step_count):
+        raise RuntimeError(self._commissioning_error())
+
+    async def move_joint(self, job_id, joint_point):
+        raise RuntimeError(self._commissioning_error())
+
+    async def pick(self, job_id, step, frame, source, motion, gripper):
+        raise RuntimeError(self._commissioning_error())
+
+    async def place(self, job_id, step, frame, target, motion, gripper):
+        raise RuntimeError(self._commissioning_error())
+
+    async def transfer_assembled_pcb(self, job_id, frame, assembled_pcb, motion, gripper):
+        raise RuntimeError(self._commissioning_error())
+
+    async def move_conveyor(self, job_id, station):
+        raise RuntimeError("Real conveyor drive and physical arrival feedback are not connected")
+
+    async def resolve_targets(self, observations):
+        raise RuntimeError(
+            "Real calibrated target provider is not connected; Unity poses are not accepted"
+        )
+
+    async def set_paused(self, job_id, paused):
+        raise RuntimeError(
+            "Real assembly pause/resume and physical reset verification are not connected"
+        )
+
+    def accept_operation_feedback(self, payload):
+        return False
+
+    async def inspect_unit(self, job_id, unit_id, slot_codes):
+        from rclpy.task import Future
+
+        if self._closed or self._inspection_future is not None:
+            raise RuntimeError("Real backend is closed or another inspection is pending")
+        future = Future(executor=self._node.executor)
+        self._inspection_future = future
+        inspection_id = str(uuid.uuid5(uuid.UUID(job_id), f"unit:{unit_id}"))
+
+        def run():
+            try:
+                output = inspect(inspection_id, job_id, unit_id, base_url=self._vision_url)
+                data = output["data"]
+                value = {
+                    "result": data["result"]["decision"], "defects": None,
+                    "image_path": None, "inspection": data,
+                    "image_bytes": output["image_bytes"],
+                }
+                if not future.done():
+                    future.set_result(value)
+            except Exception as error:
+                if not future.done():
+                    future.set_exception(error)
+
+        # Vision capture and HTTP polling must not block the ROS executor. The
+        # existing inspect function retries only the same inspection identity;
+        # cancelling this local Future does not cancel the remote inspection.
+        threading.Thread(target=run, name="real-vision-inspection", daemon=True).start()
+        try:
+            return await future
+        finally:
+            if self._inspection_future is future:
+                self._inspection_future = None
+
+    def close(self):
+        if self._closed:
+            return
+        self._closed = True
+        if self._inspection_future is not None:
+            self._inspection_future.cancel()
+        self._node.destroy_subscription(self._subscription)
+        self._node.destroy_client(self._client)
 
 
 def inspect(inspection_id, job_id, unit_id, *, base_url, token=None,

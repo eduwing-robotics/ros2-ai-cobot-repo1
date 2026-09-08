@@ -28,6 +28,8 @@ Mock 성공도 시뮬레이션 요청 수락이 아니라 동작과 검사 완�
 
 ```bash
 psql "$DB_ADMIN_DSN" -f DATA_STATION/DB/007_defect_report_delivery_migration.sql
+psql "$DB_ADMIN_DSN" -v ON_ERROR_STOP=1 -f DATA_STATION/DB/008_vision_slot_results_migration.sql
+psql "$DB_ADMIN_DSN" -v ON_ERROR_STOP=1 -f DATA_STATION/DB/009_unit_execution_completion_migration.sql
 psql "$DB_ADMIN_DSN" -f DATA_STATION/DB/005_roles.sql
 ```
 
@@ -155,6 +157,15 @@ Real 통신 프로세스와 외부 ROS CLI는 `ROS_DOMAIN_ID=43`을 사용합니
 SDK 연결 전에 종료합니다. MainServer는 `MAIN_SERVER_MODE=real`과 관리자 설정
 `app.runtime_mode=real`인 전용 DB를 사용합니다. 위 SQL은 확인한 Real DB에 한해서
 환경 값을 `real`로 지정하여 사용합니다.
+
+공통 Sequencer 실행 파일은 `sequencer_node`입니다. 기존 Mock 올인원 launch는
+`ASSEMBLY_SEQUENCER_MODE=mock`을 지정합니다. Real launch는 `start_sequencer:=true`를
+명시할 때만 `ASSEMBLY_SEQUENCER_MODE=real`로 Sequencer와 ROS TCP endpoint를 추가합니다.
+기본값은 `false`이며 `start_endpoint:=false`로 이미 실행 중인 endpoint를 재사용할 수 있습니다.
+Real Sequencer도 `PRODUCTION_DB_DSN`을 요구하고 관리자 설정이 Real인 DB만 사용합니다.
+`recipe` 인자의 기본값은 설치된 공통 `assembly-r1.yaml`입니다.
+이 선택은 기존 Real MoveIt 실행에 프로세스를 추가하는 옵션이며 전체 스택 실행기를 새로 만들지 않습니다.
+현재 Real 실행 준비는 항상 미완료로 판정되므로 이 옵션으로 로봇 자동조립이 활성화되지는 않습니다.
 
 `/fairino_remote_command_service`의 `cmd_str`는 실제 LF를 포함한 `real\n` 접두사 뒤에
 기존 `Function(arguments)`를 전달합니다. 누락·다른 접두사는 `MODE_MISMATCH`를 반환하고

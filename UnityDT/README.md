@@ -18,6 +18,8 @@ Scenario는 주입된 자동 조립 계약만 사용합니다. UI와 Scenario는
 
 자동 조립과 수동 조작은 별도 계약입니다. 자동 흐름은 수동 명령을 조합해 만들지 않으며, 수동 UI는 생산 Job 상태를 변경하지 않습니다.
 
+`IRobotScenarioControl.IsRunning`은 호출자 timeout 이후에도 추적 중인 작업을 표시합니다. Mock 완료 대기에서는 확인된 일시정지 시간을 제외하고, timeout 이후에도 종료 피드백을 받을 때까지 작업 ID와 재개 경로를 유지합니다.
+
 요청 수락은 완료가 아닙니다. Unity는 backend가 실제 완료를 반환한 뒤에만 성공을 표시하고 실패와 timeout을 사용자에게 전달합니다.
 
 ## 조립체 씬 객체
@@ -34,8 +36,10 @@ Scene의 `ItemManager`에는 기존 motherboard 프리팹, `TransSpots/BoardSpaw
 Mock은 Unit별 공급 부품을 새로 생성하므로 완료품의 장착 부품을 회수하지 않습니다.
 
 Mock 피드백의 `unit_id`로 투입·완료를 연결합니다. Real의 `BeginUnit`·`CompleteUnit`도
-동일한 ItemManager를 사용하지만 Real 자동 조립 ROS 계약은 아직 미연결입니다.
-Real `ExecuteAsync`·`ExecuteQueuedAsync`는 이 상태에서 성공을 반환하지 않습니다.
+동일한 ItemManager를 사용합니다. Real 자동조립은 공통 ROS service에 요청하고
+`runtime_mode=real`과 일치하는 Job 상태·DB 저장 완료를 확인합니다.
+현재 Real 설비 실행은 미연결이므로 Sequencer의 `NOT_READY`를 호출자에게 전달합니다.
+요청 수락이나 통신 연결만으로 성공을 반환하지 않습니다.
 
 ## 문서
 

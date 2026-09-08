@@ -1,6 +1,5 @@
-// 역할: FR5 MANUAL 페이지의 Ghost 조그 미리보기와 안전 안내를 담당한다.
-//   - J1~J6 목표 자세를 Ghost에 표시
-//   - APPLY · 그리퍼는 실제 로봇 명령을 발행하지 않음
+// 역할: MANUAL 목표 경로를 Ghost로 검사하고 주입된 수동 제어 계약에 요청한다.
+// 그리퍼 명령은 연결하지 않으며, 요청 수락을 작업 완료로 표시하지 않는다.
 //
 // 조회하는 UXML name 은 Inspector 직렬화 필드로 지정합니다.
 
@@ -77,9 +76,27 @@ namespace MainUnity.UI
         Button homeButton;
         Label hint;
         bool bound;
+        bool initializedTargets;
+        bool requestSubmitted;
+        double nextRefresh;
+        readonly float[] previewStart = new float[JointCount];
+        readonly float[] requestedTargets = new float[JointCount];
+        string lastHint;
+        bool lastHintError;
 
-        void OnEnable() => Bind();
-        void OnDisable() => Unbind();
+        void OnEnable()
+        {
+            initializedTargets = false;
+            requestSubmitted = false;
+            nextRefresh = 0d;
+            lastHint = null;
+            Bind();
+        }
+        void OnDisable()
+        {
+            ghostMaster?.EndManualPreview();
+            Unbind();
+        }
 
         void Update()
         {
@@ -92,33 +109,93 @@ namespace MainUnity.UI
                     return;
             }
 
+            if (Time.realtimeSinceStartupAsDouble < nextRefresh) return;
+            nextRefresh = Time.realtimeSinceStartupAsDouble + 0.1d;
             RefreshReferences();
             float[] joints = statusManager?.Latest?.JointDegrees;
-            if (joints == null || joints.Length != JointCount)
-                return;
-
-            for (int i = 0; i < JointCount; i++)
-                actualLabels[i].text = $"{joints[i]:0.0}°";
+            bool fresh = statusManager != null && statusManager.HasFreshState && joints?.Length == JointCount;
+            for (int i = 0; i < JointCount; i++) actualLabels[i].text = fresh ? $"{joints[i]:0.0}°" : "—";
+            if (fresh && !initializedTargets)
+            {
+                initializedTargets = true;
+                SetTargets(joints);
+            }
+            bool canRequest = CanRequest(out string reason);
+            applyButton.SetEnabled(canRequest);
+            applyButton.tooltip = reason;
+            if (requestSubmitted) SetHint("요청 접수 · 실행 완료 아님 · 진행 상태를 확인하세요.");
+            else if (!fresh) SetHint("요청 거부 · 최신 로봇 자세를 확인할 수 없습니다.", true);
+            else
+            {
+                string preview = ghostMaster != null ? ghostMaster.ManualStatus : "Ghost 연결 없음";
+                SetHint(preview + (uiMaster?.IsSimulated == false ? "\nREAL 임의 관절 이동 미지원 · 요청 차단" : ""),
+                    ghostMaster?.ManualCollision == true);
+            }
         }
 
-        /// <summary>APPLY는 현재 실동작을 차단하고 Ghost 미리보기만 유지한다.</summary>
+        /// <summary>검사한 목표를 수동 제어 계약에 전달한다. true는 요청 수락이며 실제 완료가 아니다.</summary>
         public bool TryApplyJointTargets()
         {
-            SetHint("실동작 차단 중 — 목표만 미리보기로 표시합니다.");
-            return false;
+            RefreshReferences();
+            if (!CanRequest(out string reason))
+            {
+                SetHint("요청 거부 · " + reason, true);
+                return false;
+            }
+            bool accepted = uiMaster.RobotMaster.Control.TrySetJointTarget(requestedTargets);
+            if (!accepted)
+            {
+                SetHint("요청 거부 · " + (statusManager?.ErrorDetail ?? "수동 제어가 요청을 수락하지 않았습니다."), true);
+                return false;
+            }
+            requestSubmitted = true;
+            applyButton.SetEnabled(false);
+            SetHint("요청 접수 · 실행 완료 아님 · 진행 상태를 확인하세요.");
+            return true;
         }
 
-        /// <summary>현재 Slider의 J1~J6 목표 자세를 Ghost에만 표시한다.</summary>
+        bool CanRequest(out string reason)
+        {
+            reason = "최신 로봇 자세가 필요합니다.";
+            if (!bound || !initializedTargets || statusManager == null || !statusManager.HasFreshState) return false;
+            if (uiMaster?.RobotMaster?.Control == null) { reason = "수동 제어 연결 없음"; return false; }
+            if (uiMaster.Scenario?.IsRunning == true) { reason = "자동 조립 실행 중"; return false; }
+            if (requestSubmitted) { reason = "이미 요청한 목표입니다."; return false; }
+            if (!statusManager.CanAcceptCommand(out reason)) return false;
+            if (ghostMaster == null || !ghostMaster.ManualPathReady)
+            { reason = ghostMaster != null ? ghostMaster.ManualStatus : "Ghost 경로 검사 없음"; return false; }
+            float[] current = statusManager.Latest?.JointDegrees;
+            if (current == null || current.Length != JointCount) { reason = "현재 자세 미확인"; return false; }
+            for (int i = 0; i < JointCount; i++)
+            {
+                if (!float.IsFinite(current[i]) || Mathf.Abs(current[i] - previewStart[i]) > 0.2f ||
+                    sliders[i].value != requestedTargets[i])
+                { reason = "검사 후 현재 자세 또는 목표가 바뀌었습니다. 목표를 다시 확인하세요."; return false; }
+            }
+            if (!uiMaster.IsSimulated) { reason = "REAL 임의 관절 이동 미지원"; return false; }
+            reason = "검사한 관절 목표 요청 · 실제 계획 및 완료는 실행 설비에서 확인";
+            return true;
+        }
+
+        /// <summary>현재 자세에서 Slider 목표까지 Ghost 관절 보간 경로 검사를 시작한다.</summary>
         public bool TryPreviewJointTargets()
         {
             RefreshReferences();
-            if (!bound || ghostMaster == null)
+            if (!bound || ghostMaster == null || statusManager == null || !statusManager.HasFreshState ||
+                statusManager.Latest?.JointDegrees?.Length != JointCount)
+            {
+                ghostMaster?.EndManualPreview();
+                SetHint("요청 거부 · 최신 현재 자세 또는 Ghost 연결 없음", true);
                 return false;
-
-            var targets = new float[JointCount];
+            }
+            requestSubmitted = false;
             for (int i = 0; i < JointCount; i++)
-                targets[i] = sliders[i].value;
-            return ghostMaster.PreviewJoints(targets);
+            {
+                previewStart[i] = statusManager.Latest.JointDegrees[i];
+                requestedTargets[i] = sliders[i].value;
+            }
+            applyButton.SetEnabled(false);
+            return ghostMaster.PreviewManualPath(previewStart, requestedTargets);
         }
 
 
@@ -161,6 +238,7 @@ namespace MainUnity.UI
                     return;
                 }
                 initialTargets[i] = sliders[i].value;
+                targetLabels[i].text = sliders[i].value.ToString("0.0") + "°";
                 sliders[i].RegisterValueChangedCallback(OnSliderChanged);
             }
 
@@ -177,7 +255,7 @@ namespace MainUnity.UI
                 gripperCloseButton.clicked += CloseGripper;
             }
             applyButton.SetEnabled(false);
-            applyButton.tooltip = "목표 자세는 슬라이더 조작 즉시 Ghost에 반영됩니다.";
+            applyButton.tooltip = "현재 자세와 목표 경로 검사 후 요청할 수 있습니다.";
             applyButton.clicked += Apply;
             cancelButton.clicked += Cancel;
             homeButton.clicked += SetHome;
@@ -238,10 +316,14 @@ namespace MainUnity.UI
                 }
         }
 
-        void SetHint(string message)
+        void SetHint(string message, bool error = false)
         {
-            if (hint != null)
-                hint.text = message;
+            if (hint == null || message == lastHint && error == lastHintError) return;
+            lastHint = message;
+            lastHintError = error;
+            hint.enableRichText = false;
+            hint.text = message;
+            hint.EnableInClassList("bad", error);
         }
 
         // 참조는 전부 UIMaster 를 통해서만 받는다. 여기서 씬을 뒤지지 않는다.

@@ -1,10 +1,13 @@
 # Assembly Sequencer ROS API
 
-이 문서는 현재 구현된 Assembly Sequencer public ROS 2 경계를 설명합니다. 기준 원본은 `mock_node.py`의 endpoint 생성과 `mock_contract.py`의 JSON 검증입니다.
+이 문서는 현재 구현된 Assembly Sequencer public ROS 2 경계를 설명합니다. 기준 원본은 `sequencer_node.py`의 endpoint 생성과 `recipe_contract.py`의 JSON 검증입니다.
 
 ## 가용 범위
 
-현재 public 조립 API는 Mock 구현만 제공합니다. Real 자동 조립 API와 전용 IDL은 구현되어 있지 않으며 이 문서에서 endpoint 이름을 예약하지 않습니다.
+공통 Sequencer는 모드별 ROS domain에서 같은 service와 feedback 형식을 사용합니다.
+Mock 자동조립은 연결되어 있습니다. Real은 상태 조회와 시작 요청의 검증 경계가 연결되었지만,
+설비 실행 경계가 미완성이므로 `start`를 `NOT_READY`로 거절하며 Job claim·이동을 수행하지 않습니다.
+Real 상태의 `available`과 `equipment_ready`는 현재 `false`입니다. 이는 노드 통신 실패와 구분됩니다.
 
 내부 `/mock_db_mvp/internal/*` service와 topic은 Sequencer와 Mock runner 사이의 구현 세부사항이므로 public API에 포함하지 않습니다.
 
@@ -12,8 +15,8 @@
 
 | 범위 | 구분 | Endpoint | ROS type | 방향 |
 |---|---|---|---|---|
-| Mock | Service | `/unity/assembly/start` | `fairino_msgs/srv/RemoteCmdInterface` | UnityDT·MainServer → Sequencer |
-| Mock | Topic | `/unity/assembly/feedback` | `std_msgs/msg/String` | Sequencer → UnityDT |
+| Mock / Real | Service | `/unity/assembly/start` | `fairino_msgs/srv/RemoteCmdInterface` | UnityDT·MainServer → Sequencer |
+| Mock / Real | Topic | `/unity/assembly/feedback` | `std_msgs/msg/String` | Sequencer → UnityDT |
 
 Service는 모드 접두사와 요청 JSON을 `cmd_str`, 응답 JSON을 `cmd_res`에 넣습니다. 접두사 규칙은 실행 모드 검증 절을 따릅니다. Feedback topic은 JSON을 `data`에 넣으며 queue depth는 10입니다.
 
@@ -22,12 +25,18 @@ Service는 모드 접두사와 요청 JSON을 `cmd_str`, 응답 JSON을 `cmd_res
 | `command` | 필수 데이터 | 의미 |
 |---|---|---|
 | `status` | 없음 | 활성 작업 또는 최근 terminal snapshot 조회 |
+| `start` | `job_id`, `recipe_version` | Real 전용: 등록된 Job의 실행 준비 검증과 실행 요청 |
 | `observations` | `job_id`, `recipe_version`, `observations` | 현재 Scene의 부품·슬롯 좌표 등록 |
 | `conveyor_arrived` | `job_id` | 조립 위치 도착 확인 후 workflow 재개 |
 | `conveyor_failed` | `job_id`, `message` | 진행 중 컨베이어 실패 전달 |
 | `transfer_assembled_pcb` | `job_id`, `assembled_pcb` | 검사 위치 이송 좌표 등록과 workflow 재개 |
 | `pause` | `job_id` | 활성 작업 일시정지 요청 |
 | `resume` | `job_id` | 활성 작업 재개 요청 |
+
+`observations`, `conveyor_arrived`, `conveyor_failed`, `transfer_assembled_pcb`는 Mock 전용입니다.
+Real은 이 명령들을 `INVALID_REQUEST`로 거절하며 Unity 신호를 물리 설비 완료로 사용하지 않습니다.
+Mock에서는 `start`를 거절하고 기존 observations와 영속 Job 결합 방식을 유지합니다.
+`pause`·`resume`은 활성 Job과 대조하며 Real 설비의 해당 동작은 아직 연결되지 않았습니다.
 
 알 수 없는 필드와 누락된 필드는 `INVALID_REQUEST`입니다. `job_id`는 UUID 문자열이며 status를 제외한 모든 명령에서 현재 Job과 대조합니다.
 
@@ -67,6 +76,20 @@ Service는 모드 접두사와 요청 JSON을 `cmd_str`, 응답 JSON을 `cmd_res
 `placed_count`와 같습니다. 다음 Unit에서는 빈 목록으로 시작합니다. Unity는 이 목록과
 `held_slot_code`로 화면을 복구하며 Scene 배열 순서로 배치 위치를 추정하지 않습니다.
 전체 레시피나 DB checkpoint는 전달·저장하지 않습니다.
+
+### start (Real)
+
+`real`과 실제 LF 뒤에 아래 JSON을 보냅니다.
+
+```json
+{"command":"start","job_id":"12345678-1234-5678-1234-567812345678","recipe_version":"assembly-r1"}
+```
+
+이 요청은 Job을 생성하지 않습니다. 현재는 실제 교시·좌표 공급·안전·컨베이어 도착·reset·
+수동/자동 명령 소유권 경계가 연결되지 않아 `accepted=false`, `error_code=NOT_READY`를 반환합니다.
+이 실패는 DB Job을 `FAILED`로 전이하지 않습니다.
+상태 조회에는 `runtime_mode=real`, `command_service_available`, `robot_state_fresh`,
+`equipment_ready=false`가 포함되며 개별 통신 정상도 셀 준비 완료를 뜻하지 않습니다.
 
 ### observations
 
@@ -163,6 +186,7 @@ status 이외의 명령은 다음 형식을 반환합니다.
 
 | `error_code` | 의미 |
 |---|---|
+| `NOT_READY` | 실행 준비·설비 계약 미확인, Job claim 전 거절 |
 | `INVALID_REQUEST` | JSON, 필드, UUID, 좌표 또는 레시피 버전 오류 |
 | `NOT_ACTIVE` | Job이 terminal이거나 현재 활성 Job과 다름 |
 | `BUSY` | 현재 상태에서 명령을 받을 수 없음 |
@@ -226,8 +250,13 @@ DB 동기화 상태는 `NOT_STARTED`, `PENDING`, `SYNCED`, `FAILED` 중 하나�
 
 ## 실행 모드 검증
 
-Mock service의 `cmd_str`는 실제 LF를 포함한 `mock\n` 접두사 뒤에 기존 JSON payload를
+선택된 service의 `cmd_str`는 실제 LF를 포함한 `mock\n` 또는 `real\n` 접두사 뒤에 해당 모드의 JSON payload를
 전달합니다. 접두사 누락·불일치는 `accepted=false`, `error_code=MODE_MISMATCH`이며
 DB·실행 함수를 호출하지 않습니다. 읽기 요청 `{"command":"status"}`는 접두사 없이도
-허용하며 상태 응답의 `runtime_mode`는 `mock`입니다. 내부 backend도 같은 접두사를
-검사합니다. 프로세스는 ROS domain 42에서만 시작합니다. 도메인은 인증 수단이 아닙니다.
+허용하며 상태 응답의 `runtime_mode`는 선택된 모드입니다. 내부 Mock backend도 접두사를 검사합니다.
+`ASSEMBLY_SEQUENCER_MODE`는 시작 시 고정되며 Mock/domain 42, Real/domain 43 조합만 허용합니다.
+DB는 같은 모드의 관리자 설정을 확인하고 실행 중 모드 변경을 거절합니다. 도메인은 인증 수단이 아닙니다.
+
+검사 결과 `UNKNOWN`은 자료 저장·flush 후 `PAUSED`와 `INSPECTION_UNKNOWN`으로 표시합니다.
+Job·Unit은 RUNNING을 유지하고 기판 이송·다음 Unit·일반 resume는 진행하지 않습니다.
+검사 판정 해소·재검사 API는 제공하지 않습니다.

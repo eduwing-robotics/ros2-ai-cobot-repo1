@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
-"""AssemblySequencer orchestration for the existing Mock robot runner."""
+"""Common YAML and production lifecycle orchestration over one fixed backend."""
 
 import os
 import json
-import random
 import sys
-import time
 
 import rclpy
 from fairino_msgs.srv import RemoteCmdInterface
@@ -17,12 +15,12 @@ from std_msgs.msg import String
 from .db import DbWriter
 from .db.writer import DB_SYNC_TIMEOUT_SECONDS
 from .mock_backend import MockBackend
-from .mock_contract import (
+from .real_backend import RealBackend
+from .recipe_contract import (
     RELAY_STATES,
     apply_relay_feedback,
     assembly_snapshot,
     resolve_observations,
-    choose_inspection,
     failed_feedback,
     load_recipe,
     parse_command,
@@ -38,58 +36,52 @@ INTERNAL_START = "/mock_db_mvp/internal/assembly/start"
 INTERNAL_FEEDBACK = "/mock_db_mvp/internal/assembly/feedback"
 EXTERNAL_START = "/unity/assembly/start"
 EXTERNAL_FEEDBACK = "/unity/assembly/feedback"
-PASS_IMAGE_PATH = "InspectionSamples/mock-pass.jpg"
-FAIL_IMAGE_PATH = "InspectionSamples/mock-fail.jpg"
-# Unity owns the Mock conveyor signal; this deadline prevents a lost process
-# from leaving its DB Job RUNNING indefinitely.
-CONVEYOR_SIGNAL_TIMEOUT_SECONDS = 60.0
 
 
-class MockAssemblySequencer(Node):
+class AssemblySequencer(Node):
     def __init__(self):
-        super().__init__("assembly_sequencer_mock")
+        super().__init__("assembly_sequencer")
+        self.runtime_mode = os.environ.get("ASSEMBLY_SEQUENCER_MODE", "mock")
+        expected_domain = {"mock": 42, "real": 43}.get(self.runtime_mode)
+        if expected_domain is None or self.context.get_domain_id() != expected_domain:
+            raise RuntimeError("MODE_REJECTED stage=startup: runtime mode and ROS domain disagree")
         recipe_path = self.declare_parameter("recipe", "").value
         self.recipe = load_recipe(recipe_path)
         self.recipe_version = self.recipe["recipe_version"]
-        self.recipe_slots = [
-            (step["slot_code"], step["part_id"])
-            for step in self.recipe["steps"]
-        ]
+        self.recipe_slots = [(step["slot_code"], step["part_id"]) for step in self.recipe["steps"]]
         self_check(self.recipe)
-        probability = self.declare_parameter(
-            "inspection_fail_probability", 0.2
-        ).value
-        seed = self.declare_parameter("random_seed", -1).value
-        if isinstance(probability, bool) or not 0.0 <= float(probability) <= 1.0:
-            raise ValueError("inspection_fail_probability must be between 0 and 1")
-        if isinstance(seed, bool) or not isinstance(seed, int):
-            raise ValueError("random_seed must be an integer")
+
+        service_group = MutuallyExclusiveCallbackGroup()
+        if self.runtime_mode == "mock":
+            internal_client = self.create_client(
+                RemoteCmdInterface, INTERNAL_START, callback_group=ReentrantCallbackGroup()
+            )
+            self.backend = MockBackend(self, internal_client)
+            self.backend.configure_inspection(
+                self.declare_parameter("inspection_fail_probability", 0.2).value,
+                self.declare_parameter("random_seed", -1).value,
+            )
+            self.internal_subscription = self.create_subscription(
+                String, INTERNAL_FEEDBACK, self.on_internal_feedback, 10,
+                callback_group=MutuallyExclusiveCallbackGroup(),
+            )
+        else:
+            self.backend = RealBackend(self)
 
         self.db_writer = DbWriter()
         try:
             recovered = self.db_writer.recover_interrupted()
             if recovered:
                 self.get_logger().warning(
-                    f"failed {recovered} interrupted Mock Unit attempt(s)"
+                    f"failed {recovered} interrupted Unit attempt(s)"
                 )
         except Exception:
             self.db_writer.close(0.1)
             raise
 
-        self.fail_probability = float(probability)
-        self.rng = random.Random(None if seed == -1 else seed)
         self.active = None
-        self.pending_observations = {}
+        self.pending_requests = {}
         self.terminal_snapshot = None
-        self.conveyor_deadline = None
-
-        service_group = MutuallyExclusiveCallbackGroup()
-        feedback_group = MutuallyExclusiveCallbackGroup()
-        client_group = ReentrantCallbackGroup()
-        internal_client = self.create_client(
-            RemoteCmdInterface, INTERNAL_START, callback_group=client_group
-        )
-        self.backend = MockBackend(self, internal_client)
         self.external_service = self.create_service(
             RemoteCmdInterface,
             EXTERNAL_START,
@@ -97,20 +89,10 @@ class MockAssemblySequencer(Node):
             callback_group=service_group,
         )
         self.create_timer(
-            1.0, self.on_conveyor_timeout, callback_group=service_group
-        )
-        self.create_timer(
             0.5, self.on_pending_job, callback_group=service_group
         )
         self.external_publisher = self.create_publisher(
             String, EXTERNAL_FEEDBACK, 10
-        )
-        self.internal_subscription = self.create_subscription(
-            String,
-            INTERNAL_FEEDBACK,
-            self.on_internal_feedback,
-            10,
-            callback_group=feedback_group,
         )
 
     @staticmethod
@@ -125,14 +107,16 @@ class MockAssemblySequencer(Node):
 
     async def on_external_request(self, request, response):
         if request.cmd_str != '{"command":"status"}':
-            if not request.cmd_str.startswith("mock\n"):
-                self.get_logger().error("MODE_REJECTED stage=assembly_request expected=mock result=blocked_before_execution")
-                return self.set_response(response, False, error_code="MODE_MISMATCH", message="Mock mode prefix is required")
-            request.cmd_str = request.cmd_str[5:]
+            prefix = self.runtime_mode + "\n"
+            if not request.cmd_str.startswith(prefix):
+                self.get_logger().error("MODE_REJECTED stage=assembly_request result=blocked_before_execution")
+                return self.set_response(response, False, error_code="MODE_MISMATCH",
+                                         message=f"{self.runtime_mode} mode prefix is required")
+            request.cmd_str = request.cmd_str[len(prefix):]
         command = None
         try:
             command_type, command = parse_command(
-                request.cmd_str, self.recipe_version
+                request.cmd_str, self.recipe_version, self.runtime_mode
             )
             if command_type == "observations":
                 command["resolved_steps"] = resolve_observations(
@@ -166,7 +150,7 @@ class MockAssemblySequencer(Node):
                     snapshot["db_sync_state"] = self.db_writer.sync_state
                 except Exception as error:
                     snapshot = unavailable_snapshot(str(error))
-            snapshot["runtime_mode"] = "mock"
+            snapshot["runtime_mode"] = self.runtime_mode
             response.cmd_res = json.dumps(snapshot, separators=(",", ":"))
             return response
 
@@ -183,6 +167,8 @@ class MockAssemblySequencer(Node):
                     response, False, job_id, "NOT_ACTIVE",
                     "matching assembly is not active",
                 )
+            if self.active.get("inspection_hold"):
+                return self.set_response(response, False, job_id, "BUSY", "inspection resolution is required")
             try:
                 await self.backend.set_paused(job_id, command_type == "pause")
             except Exception as error:
@@ -207,13 +193,19 @@ class MockAssemblySequencer(Node):
                     "assembly is not ready for inspection and PCB transfer",
                 )
 
-            self.conveyor_deadline = None
+            try:
+                self.backend.confirm_conveyor(job_id, "INSPECTION", command["assembled_pcb"])
+            except Exception as error:
+                return self.set_response(response, False, job_id, "BUSY", str(error))
             active["transfer_requested"] = True
-            active["assembled_pcb"] = command["assembled_pcb"]
-            self.executor.create_task(self.run_transfer_workflow(active))
             return self.set_response(response, True, job_id)
 
         job_id = command["job_id"]
+        if command_type == "start":
+            try:
+                await self.backend.prepare(self.recipe["joint_points"], self.recipe["frame"])
+            except Exception as error:
+                return self.set_response(response, False, job_id, "NOT_READY", str(error))
         try:
             job = self.db_writer.get_job(job_id)
         except Exception as error:
@@ -225,7 +217,7 @@ class MockAssemblySequencer(Node):
                 response, False, job_id, "NOT_ACTIVE", "Job is already finalized"
             )
         if self.active is None or self.active["job_id"] != job_id:
-            self.pending_observations[job_id] = command
+            self.pending_requests[job_id] = command
         return self.set_response(response, True, job_id)
 
     async def conveyor_arrived(self, command, response):
@@ -244,9 +236,11 @@ class MockAssemblySequencer(Node):
         if active["conveyor_confirmed"]:
             return self.set_response(response, True, job_id)
 
-        self.conveyor_deadline = None
+        try:
+            self.backend.confirm_conveyor(job_id, "ASSEMBLY")
+        except Exception as error:
+            return self.set_response(response, False, job_id, "BUSY", str(error))
         active["conveyor_confirmed"] = True
-        self.executor.create_task(self.run_assembly_workflow(active))
         return self.set_response(response, True, job_id)
 
     def conveyor_failed(self, command, response):
@@ -271,7 +265,8 @@ class MockAssemblySequencer(Node):
             return
         try:
             pending = self.db_writer.get_next_runnable_job(
-                PRODUCT_CODE, PRODUCT_VERSION, self.recipe_version
+                PRODUCT_CODE, PRODUCT_VERSION, self.recipe_version,
+                ready_job_ids=list(self.pending_requests),
             )
         except Exception as error:
             self.get_logger().error(f"failed to read pending Job: {error}")
@@ -279,13 +274,18 @@ class MockAssemblySequencer(Node):
         if pending is None or not self.backend.is_available():
             return
         job_id = pending["job_id"]
-        command = self.pending_observations.get(job_id)
+        command = self.pending_requests.get(job_id)
         if command is None:
             return
         result = await self.start_job(command, RemoteCmdInterface.Response())
         outcome = json.loads(result.cmd_res)
-        self.pending_observations.pop(job_id, None)
+        self.pending_requests.pop(job_id, None)
         if outcome["accepted"]:
+            return
+        if outcome["error_code"] == "NOT_READY":
+            # Equipment readiness failure does not turn a queued request into a
+            # failed production attempt. A fresh start request is required.
+            self.publish(failed_feedback(job_id, "NOT_READY", outcome["message"], self.db_writer.sync_state))
             return
         try:
             self.db_writer.abort(job_id)
@@ -307,6 +307,10 @@ class MockAssemblySequencer(Node):
             )
 
         try:
+            await self.backend.prepare(self.recipe["joint_points"], self.recipe["frame"])
+        except Exception as error:
+            return self.set_response(response, False, job_id, "NOT_READY", str(error))
+        try:
             product_slots = self.db_writer.get_product_slots(job_id)
             db_slots = {
                 (slot["slot_code"], slot["part_id"])
@@ -323,7 +327,8 @@ class MockAssemblySequencer(Node):
                 "job_id": work["job_id"],
                 "unit_id": work["unit_id"],
                 "recipe_version": self.recipe_version,
-                "resolved_steps": command["resolved_steps"],
+                "resolved_steps": command.get("resolved_steps", []),
+                "observations": command.get("observations", []),
                 "before_action_index": 0,
                 "after_action_index": 0,
                 "backend_started": False,
@@ -351,18 +356,18 @@ class MockAssemblySequencer(Node):
     async def run_assembly_workflow(self, active):
         if self.active is not active:
             return
+        error_code = "INTERNAL_ERROR"
         try:
             before_all = self.recipe["workflow"]["before_all"]
-            # Unity confirms conveyor completion, then schedules this loop again
-            # at the next YAML action.
             while active["before_action_index"] < len(before_all):
+                if self.active is not active:
+                    return
                 command = before_all[active["before_action_index"]]
                 active["before_action_index"] += 1
                 action, argument = next(iter(command.items()))
                 if (action, argument) == ("conveyor.move_to", "ASSEMBLY"):
                     active["conveyor_confirmed"] = False
                     active["state"] = "CONVEYOR_MOVING"
-                    self.arm_conveyor_timeout()
                     self.publish({
                         "job_id": active["job_id"],
                         "state": "CONVEYOR_MOVING",
@@ -373,12 +378,13 @@ class MockAssemblySequencer(Node):
                         "message": "",
                         "db_sync_state": self.db_writer.sync_state,
                     })
-                    return
-                if (action, argument) == (
-                    "vision.resolve_targets", "recipe_steps"
-                ):
-                    # Scene observations were resolved before accepting the request,
-                    # so an invalid slot cannot claim a Job or start the conveyor.
+                    error_code = "CONVEYOR_FAILED"
+                    await self.backend.move_conveyor(active["job_id"], "ASSEMBLY")
+                    error_code = "INTERNAL_ERROR"
+                    continue
+                if (action, argument) == ("vision.resolve_targets", "recipe_steps"):
+                    observations = await self.backend.resolve_targets(active["observations"])
+                    active["resolved_steps"] = resolve_observations(self.recipe, observations)
                     continue
                 raise RuntimeError(f"unknown preflight action: {command}")
 
@@ -415,6 +421,8 @@ class MockAssemblySequencer(Node):
                     ],
                 }
                 for command in self.recipe["workflow"]["per_step"]:
+                    if self.active is not active:
+                        return
                     action, argument = next(iter(command.items()))
                     if action == "robot.move_joint":
                         await self.backend.move_joint(
@@ -440,7 +448,7 @@ class MockAssemblySequencer(Node):
             if self.active is active:
                 self.fail_active(
                     "INVALID_RECIPE" if isinstance(error, ValueError)
-                    else "INTERNAL_ERROR",
+                    else error_code,
                     error,
                     immediate=not active["backend_started"],
                 )
@@ -451,15 +459,14 @@ class MockAssemblySequencer(Node):
         error_code = "INTERNAL_ERROR"
         try:
             after_all = self.recipe["workflow"]["after_all"]
-            # Unity's transfer request confirms the inspection conveyor action
-            # and resumes the remaining YAML actions.
             while active["after_action_index"] < len(after_all):
+                if self.active is not active:
+                    return
                 command = after_all[active["after_action_index"]]
                 active["after_action_index"] += 1
                 action, argument = next(iter(command.items()))
                 if (action, argument) == ("conveyor.move_to", "INSPECTION"):
                     active["state"] = "ASSEMBLY_COMPLETED"
-                    self.arm_conveyor_timeout()
                     self.publish({
                         "job_id": active["job_id"],
                         "state": "ASSEMBLY_COMPLETED",
@@ -470,31 +477,33 @@ class MockAssemblySequencer(Node):
                         "message": "",
                         "db_sync_state": self.db_writer.sync_state,
                     })
-                    return
+                    error_code = "CONVEYOR_FAILED"
+                    await self.backend.move_conveyor(active["job_id"], "INSPECTION")
+                    error_code = "INTERNAL_ERROR"
+                    continue
                 if (action, argument) == ("inspection.run", "assembled_pcb"):
+                    inspection = await self.backend.inspect_unit(
+                        active["job_id"], active["unit_id"], active["slot_codes"]
+                    )
                     error_code = "DB_ERROR"
-                    result, defects = choose_inspection(
-                        self.rng, self.fail_probability, active["slot_codes"]
-                    )
                     self.db_writer.assembly_completed(active["unit_id"])
-                    image_path = (
-                        PASS_IMAGE_PATH if result == "PASS" else FAIL_IMAGE_PATH
-                    )
-                    self.db_writer.inspection_recorded(
-                        active["unit_id"], result, defects, image_path
-                    )
-                    active["inspection_result"] = result
+                    self.db_writer.inspection_recorded(active["unit_id"], **inspection)
+                    active["inspection_result"] = inspection["result"]
                     # Do not move equipment past an unconfirmed production write.
                     self.db_writer.flush(DB_SYNC_TIMEOUT_SECONDS)
+                    if active["inspection_result"] == "UNKNOWN":
+                        # Uncertain inspection is not a failed execution or PASS.
+                        # Preserve this Unit without moving the board or starting another.
+                        active["state"] = "PAUSED"
+                        active["inspection_hold"] = True
+                        self.publish(failed_feedback(active["job_id"], "INSPECTION_UNKNOWN",
+                                     "inspection requires an explicit resolution", self.db_writer.sync_state)
+                                     | {"state": "PAUSED"})
+                        return
                     error_code = "INTERNAL_ERROR"
                     continue
                 if (action, argument) == ("robot.transfer", "assembled_pcb"):
                     assembled_pcb = active.get("assembled_pcb")
-                    if assembled_pcb is None:
-                        raise RuntimeError(
-                            "assembled PCB coordinates are not available before "
-                            "robot.transfer"
-                        )
                     await self.backend.transfer_assembled_pcb(
                         active["job_id"], self.recipe["frame"],
                         assembled_pcb, self.recipe["motion"],
@@ -510,6 +519,7 @@ class MockAssemblySequencer(Node):
                 self.fail_active(error_code, error)
 
     def finish_active_unit(self, active):
+        self.db_writer.unit_completed(active["unit_id"])
         self.db_writer.flush(DB_SYNC_TIMEOUT_SECONDS)
         state = self.db_writer.get_job(active["job_id"])
         if state["completed_quantity"] < state["requested_quantity"]:
@@ -550,7 +560,6 @@ class MockAssemblySequencer(Node):
         self.terminal_snapshot = assembly_snapshot(
             active, "COMPLETED", db_sync_state=self.db_writer.sync_state
         )
-        self.conveyor_deadline = None
         self.active = None
         self.publish(payload)
         self.get_logger().info(
@@ -577,7 +586,6 @@ class MockAssemblySequencer(Node):
 
     def fail_active(self, error_code, error, immediate=False):
         active = self.active
-        self.conveyor_deadline = None
         cleanup_error = self.fail_job(active["job_id"], immediate)
         if cleanup_error is not None:
             error_code = "DB_ERROR"
@@ -657,26 +665,8 @@ class MockAssemblySequencer(Node):
             "backend reported completion without a matching operation",
         )
 
-    def arm_conveyor_timeout(self):
-        self.conveyor_deadline = time.monotonic() + CONVEYOR_SIGNAL_TIMEOUT_SECONDS
-
-    def on_conveyor_timeout(self):
-        active = self.active
-        deadline = self.conveyor_deadline
-        if active is None or deadline is None or time.monotonic() < deadline:
-            return
-        state = active["state"]
-        self.conveyor_deadline = None
-        if state not in {"CONVEYOR_MOVING", "ASSEMBLY_COMPLETED"}:
-            return
-        self.fail_active(
-            "CONVEYOR_FAILED",
-            f"conveyor completion was not reported within "
-            f"{CONVEYOR_SIGNAL_TIMEOUT_SECONDS:g} seconds",
-            immediate=state == "CONVEYOR_MOVING",
-        )
-
     def destroy_node(self):
+        self.backend.close()
         if not self.db_writer.close():
             self.get_logger().error(self.db_writer.last_error)
         return super().destroy_node()
@@ -686,12 +676,14 @@ def main(args=None):
     command_line = sys.argv[1:] if args is None else args
     if command_line == ["--self-check"]:
         self_check()
-        print("assembly_sequencer mock self-check passed")
+        print("assembly_sequencer recipe self-check passed")
         return
-    if os.environ.get("ROS_DOMAIN_ID") != "42":
-        raise SystemExit("MODE_REJECTED stage=startup expected=mock ROS_DOMAIN_ID=42 required; DB recovery not started")
+    mode = os.environ.get("ASSEMBLY_SEQUENCER_MODE", "mock")
+    expected_domain = {"mock": "42", "real": "43"}.get(mode)
+    if expected_domain is None or os.environ.get("ROS_DOMAIN_ID") != expected_domain:
+        raise SystemExit("MODE_REJECTED stage=startup: mode/domain mismatch; DB recovery not started")
     rclpy.init(args=args)
-    node = MockAssemblySequencer()
+    node = AssemblySequencer()
     executor = MultiThreadedExecutor(num_threads=2)
     executor.add_node(node)
     try:

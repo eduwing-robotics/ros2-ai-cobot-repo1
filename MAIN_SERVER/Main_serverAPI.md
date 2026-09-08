@@ -69,7 +69,7 @@ JSON 성공:
 ```
 
 - `job_id`는 호출자가 만든 UUID이며 멱등성 key입니다.
-- `requested_quantity`는 검사 PASS 목표 수량인 양의 정수입니다.
+- `requested_quantity`는 검사 PASS 목표 수량인 양의 정수입니다. `completed_quantity`와 진행률은 전체 workflow가 끝난 `COMPLETED`·`PASS` Unit만 집계합니다.
 - 같은 `job_id`와 같은 내용은 기존 Job 상태를 반환합니다.
 - 같은 `job_id`에 다른 내용을 사용하면 `409 duplicate_request`입니다.
 - 좌표와 레시피 본문은 이 API가 받거나 저장하지 않습니다.

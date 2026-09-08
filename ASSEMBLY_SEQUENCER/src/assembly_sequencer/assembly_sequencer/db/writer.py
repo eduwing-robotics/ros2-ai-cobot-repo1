@@ -14,6 +14,7 @@ from . import production_store
 
 ASSEMBLY_COMPLETED = "ASSEMBLY_COMPLETED"
 INSPECTION_RECORDED = "INSPECTION_RECORDED"
+UNIT_COMPLETED = "UNIT_COMPLETED"
 JOB_FINISHED = "JOB_FINISHED"
 DB_SYNC_TIMEOUT_SECONDS = 5.0
 
@@ -114,9 +115,9 @@ class DbWriter:
     def get_product_slots(self, job_id):
         return self._store.get_product_slots(self._job_id(job_id))
 
-    def get_next_runnable_job(self, product_code, product_version, recipe_version):
+    def get_next_runnable_job(self, product_code, product_version, recipe_version, ready_job_ids=None):
         return self._store.get_next_runnable_job(
-            product_code, product_version, recipe_version
+            product_code, product_version, recipe_version, ready_job_ids
         )
 
     def assembly_completed(self, unit_id):
@@ -151,6 +152,10 @@ class DbWriter:
                 "image_path": image_path,
             },
         ))
+
+    def unit_completed(self, unit_id):
+        self._positive_id(unit_id, "unit_id")
+        return self._submit(DbUpdateEvent(event_type=UNIT_COMPLETED, unit_id=unit_id))
 
     def finish(self, job_id, final_status):
         job_id = self._job_id(job_id)
@@ -281,6 +286,9 @@ class DbWriter:
             return
         if event.event_type == INSPECTION_RECORDED:
             self._store.record_inspection(event.unit_id, **event.payload)
+            return
+        if event.event_type == UNIT_COMPLETED:
+            self._store.complete_unit(event.unit_id)
             return
         if event.event_type == JOB_FINISHED:
             self._store.finish_job(event.job_id, event.payload["final_status"])

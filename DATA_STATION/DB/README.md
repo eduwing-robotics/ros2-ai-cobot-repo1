@@ -31,7 +31,8 @@ Job은 생산 요청이고 Unit은 실제 생산 시도입니다. 이 둘을 분
 - Job의 요청 수량은 PASS 목표 수량입니다.
 - 동시에 `RUNNING`인 Job은 하나입니다.
 - 한 Job에서 동시에 `RUNNING`인 Unit도 하나입니다.
-- 검사 FAIL Unit은 완료된 시도로 남고 목표 PASS 수에는 포함하지 않습니다.
+- 검사 결과는 이송 전에도 기록하며 Unit은 전체 workflow 성공 후 `COMPLETED`가 됩니다. 목표 PASS 수에는 `COMPLETED`·`PASS` Unit만 포함합니다.
+- 검사 이후 실행 실패·재시작 시 결과를 보존하고 Unit은 `FAILED`가 됩니다. 검사 FAIL도 전체 workflow가 성공하면 완료된 시도로 남습니다.
 - 실행 실패 Unit은 `FAILED`로 남습니다.
 - 생산에 사용된 제품 정의는 과거 의미가 바뀌지 않아야 합니다.
 - 재고 현재값과 변동 원장은 같은 생산 사실을 가리켜야 합니다.

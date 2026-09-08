@@ -1060,3 +1060,46 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
 .setup-detail { color: var(--c-ink); font-size: 16px; white-space: normal; }
 .setup-detail.bad { color: var(--c-bad); }
 .setup-footnote { color: var(--c-ink-3); font-size: 13px; white-space: normal; margin-top: 14px; }
+
+
+/* MANUAL: 트윈 시야를 왼쪽에 확보하고 모든 조작·관측을 오른쪽 한 열에 모은다. */
+.page--manual .manual-banner { position: absolute; left: 112px; top: 164px; right: 24px; height: 46px; flex-direction: row; align-items: center; padding-left: 18px; padding-right: 18px; background-color: rgb(34, 31, 24); border-left-width: 3px; border-left-color: var(--c-warn); }
+.page--manual .manual-banner-title { font-size: 16px; flex-shrink: 0; margin-right: 18px; }
+.page--manual .manual-banner-detail { color: rgb(194, 164, 99); font-size: 13px; white-space: normal; flex-shrink: 1; }
+.page--manual .manual-viewport { position: absolute; left: 112px; top: 226px; width: 1180px; height: 806px; border-width: 1px; border-color: var(--c-edge); }
+.page--manual .manual-viewport-title { position: absolute; left: 18px; top: 14px; }
+.page--manual .manual-viewport-legend { position: absolute; right: 18px; bottom: 14px; }
+.page--manual .manual-controls { position: absolute; left: 1316px; top: 226px; width: 580px; height: 806px; }
+.page--manual .manual-controls .panel__head { flex-shrink: 0; }
+.page--manual .manual-controls-body { min-height: 0; }
+.page--manual .manual-ghost-callout { min-height: 84px; flex-shrink: 0; padding-bottom: 10px; }
+.page--manual .manual-ghost-hint { color: var(--c-ink-2); font-size: 14px; white-space: normal; margin-top: 8px; min-height: 44px; }
+.page--manual .manual-ghost-hint.bad { color: var(--c-bad-ink); }
+.page--manual .manual-ghost-hint.warn { color: var(--c-warn); }
+.page--manual .manual-joint-heading { height: 24px; }
+.page--manual .manual-joint-row { height: 52px; border-bottom-width: 1px; border-bottom-color: var(--c-line); }
+.page--manual .manual-joint-axis { width: 36px; flex-shrink: 0; }
+.page--manual .manual-joint-value { width: 84px; flex-shrink: 0; font-size: 18px; color: var(--c-ink); -unity-text-align: middle-right; }
+.page--manual .manual-joint-value.accent { color: var(--c-accent); }
+.page--manual .manual-joint-heading .manual-joint-value { color: var(--c-ink-3); font-size: 11px; }
+.page--manual .manual-slider-heading { margin-left: 20px; }
+.page--manual .manual-joint-slider { flex-grow: 1; min-width: 0; margin-left: 20px; margin-right: 4px; }
+.page--manual .manual-actions { margin-top: 16px; margin-bottom: 16px; }
+.page--manual .manual-actions .btn { height: 46px; }
+.page--manual .manual-secondary-action { width: 112px; margin-right: 12px; }
+.page--manual .manual-primary-action { flex-grow: 1; font-size: 16px; }
+.page--manual .manual-observations { flex-shrink: 0; border-top-width: 1px; border-top-color: var(--c-edge); padding-top: 8px; margin: 0; }
+.page--manual .manual-observations .unity-foldout__text { font-size: 14px; color: var(--c-ink-2); }
+.page--manual .manual-observations .unity-foldout__content { margin-left: 0; }
+.page--manual .manual-observation-panel { padding-top: 4px; }
+.page--manual .manual-observation-heading { height: 24px; }
+.page--manual .manual-tcp-list { flex-direction: row; flex-wrap: wrap; flex-shrink: 0; }
+.page--manual .manual-tcp-row { width: 33.333%; height: 32px; padding-right: 10px; border-bottom-width: 1px; border-bottom-color: var(--c-line); }
+.page--manual .manual-tcp-axis { width: 40px; font-size: 11px; color: var(--c-ink-3); }
+.page--manual .manual-tcp-value { flex-grow: 1; font-size: 16px; color: var(--c-ink); -unity-text-align: middle-right; }
+.page--manual .manual-tcp-unit { font-size: 11px; margin-left: 6px; }
+.page--manual .manual-gripper-heading { height: 36px; margin-top: 8px; }
+.page--manual .manual-gripper-chip { margin-left: 12px; }
+.page--manual .manual-gripper-unit { font-size: 11px; margin-left: 6px; }
+.page--manual .manual-gripper-actions { margin-top: 10px; }
+.page--manual .manual-gripper-actions .btn { width: 134px; height: 32px; font-size: 11px; margin-right: 8px; }

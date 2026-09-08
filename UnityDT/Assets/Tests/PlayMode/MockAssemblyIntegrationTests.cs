@@ -26,6 +26,57 @@ namespace MainUnity.Tests.PlayMode
             public string job_status;
         }
 
+        [UnityTest]
+        public IEnumerator PausedTimePreservesBudgetAndTimeoutRetainsTracking()
+        {
+            var root = new GameObject("Assembly timeout regression");
+            root.SetActive(false);
+            try
+            {
+                var control = root.AddComponent(RuntimeType("MainUnity.Runtime.Robot.Mock.MockAssemblyScenarioControl"));
+                var scenario = root.AddComponent(RuntimeType("MainUnity.Runtime.Scenario.Scenario"));
+                Invoke(scenario, "Initialize", control);
+                var terminal = new System.Threading.Tasks.TaskCompletionSource<string>();
+                Field(control, "terminal").SetValue(control, terminal);
+                Field(control, "activeJobId").SetValue(control, "tracked-job");
+                Field(control, "awaitingExecution").SetValue(control, true);
+                Field(control, "completionTimeoutSeconds").SetValue(control, 0.15f);
+                var clock = (System.Diagnostics.Stopwatch)Field(control, "executionClock").GetValue(control);
+                Type stateType = RuntimeType("MainUnity.Runtime.Robot.Assembly.AssemblyState");
+                void Report(string state) => Invoke(control, "Report", Enum.Parse(stateType, state), null, null);
+                Report("Paused");
+                var wait = (System.Threading.Tasks.Task)Invoke(control, "WaitForCompletionAsync", terminal.Task);
+                yield return new WaitForSecondsRealtime(0.2f);
+                Assert.That(wait.IsCompleted, Is.False, "Confirmed pause must not spend timeout budget.");
+                Report("Started");
+                yield return new WaitForSecondsRealtime(0.05f);
+                Report("Paused");
+                double used = clock.Elapsed.TotalSeconds;
+                yield return new WaitForSecondsRealtime(0.2f);
+                Assert.That(clock.Elapsed.TotalSeconds, Is.EqualTo(used).Within(0.005));
+                Assert.That(wait.IsCompleted, Is.False);
+                Report("Started");
+                double deadline = Time.realtimeSinceStartupAsDouble + 2;
+                while (!wait.IsCompleted && Time.realtimeSinceStartupAsDouble < deadline)
+                    yield return null;
+                Assert.That(wait.IsFaulted, Is.True);
+                Assert.That(wait.Exception.InnerException, Is.TypeOf<TimeoutException>());
+                // The caller releases its wait, while equipment remains active until terminal feedback.
+                Field(control, "awaitingExecution").SetValue(control, false);
+                Assert.That(GetProperty(scenario, "IsRunning"), Is.True);
+                var retry = (System.Threading.Tasks.Task)Invoke(scenario, "Run");
+                Assert.That(retry.IsFaulted, Is.True);
+                Assert.That(retry.Exception.InnerException, Is.TypeOf<InvalidOperationException>());
+                Invoke(control, "CompleteActive", string.Empty);
+                Assert.That(GetProperty(scenario, "IsRunning"), Is.False);
+                Assert.That(Field(control, "activeJobId").GetValue(control), Is.EqualTo(string.Empty));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(root);
+            }
+        }
+
         [Test]
         public void JobsSelectionSeparatesPassAttemptsAndStaleActions()
         {

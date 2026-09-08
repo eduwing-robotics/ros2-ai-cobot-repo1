@@ -1,13 +1,14 @@
 """Checks for DB retry and YAML-driven Mock workflow gates."""
 
 import asyncio
+import os
 import json
 import random
 import sys
 import threading
 import unittest
 from pathlib import Path
-from types import SimpleNamespace
+from types import SimpleNamespace, MethodType
 from unittest.mock import AsyncMock, Mock, patch
 
 import psycopg
@@ -16,9 +17,11 @@ import psycopg
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from assembly_sequencer.db import DbQueueFull, DbWriter
-from assembly_sequencer.mock_backend import MockBackend
-from assembly_sequencer.mock_node import MockAssemblySequencer
-from assembly_sequencer.mock_contract import assembly_snapshot, load_recipe
+from assembly_sequencer.mock_backend import MockBackend, choose_inspection
+from assembly_sequencer.sequencer_node import AssemblySequencer
+from assembly_sequencer.recipe_contract import assembly_snapshot, load_recipe, resolve_observations, parse_command
+from assembly_sequencer.db import production_store as store
+from assembly_sequencer.real_backend import RealBackend
 
 
 JOB_ID = "12345678-1234-5678-1234-567812345678"
@@ -45,6 +48,9 @@ class FakeStore:
 
     def record_inspection(self, unit_id, result, defects, image_path=None):
         self.calls.append(("inspection", unit_id, result, defects, image_path))
+
+    def complete_unit(self, unit_id):
+        self.calls.append(("unit_completed", unit_id))
 
     def finish_job(self, job_id, final_status):
         self.calls.append(("finish", job_id, final_status))
@@ -160,12 +166,13 @@ class DbWriterTest(unittest.TestCase):
         work = writer.claim(JOB_ID, "PRODUCT", "v1", "recipe-v1")
         writer.assembly_completed(work["unit_id"])
         writer.inspection_recorded(work["unit_id"], "PASS", [])
+        writer.unit_completed(work["unit_id"])
         writer.finish(work["job_id"], "COMPLETED")
 
         self.assertTrue(writer.flush(1.0))
         self.assertEqual(
             [call[0] for call in store.calls],
-            ["claim", "assembly", "assembly", "inspection", "finish"],
+            ["claim", "assembly", "assembly", "inspection", "unit_completed", "finish"],
         )
         self.assertEqual(writer.sync_state, "SYNCED")
 
@@ -293,31 +300,31 @@ class BackendFeedbackTest(unittest.TestCase):
 
 class PendingJobTest(unittest.IsolatedAsyncioTestCase):
     async def test_mode_rejection_precedes_recipe_database_and_backend(self):
-        sequencer = SimpleNamespace(get_logger=lambda: Mock(),
-                                    set_response=MockAssemblySequencer.set_response)
+        sequencer = SimpleNamespace(runtime_mode="mock", get_logger=lambda: Mock(),
+                                    set_response=AssemblySequencer.set_response)
         for payload in ('real\n{}', '{}', ''):
-            response = await MockAssemblySequencer.on_external_request(
+            response = await AssemblySequencer.on_external_request(
                 sequencer, SimpleNamespace(cmd_str=payload), SimpleNamespace())
             self.assertEqual(json.loads(response.cmd_res)["error_code"], "MODE_MISMATCH")
 
 
     async def test_failed_writer_blocks_polling_and_failure_finalization(self):
         writer = Mock(sync_state="FAILED", last_error="permission denied")
-        sequencer = SimpleNamespace(
+        sequencer = SimpleNamespace(runtime_mode="mock",
             active=None, db_writer=writer, backend=Mock(),
             get_logger=lambda: Mock(),
         )
-        await MockAssemblySequencer.on_pending_job(sequencer)
-        error = MockAssemblySequencer.fail_job(sequencer, JOB_ID)
+        await AssemblySequencer.on_pending_job(sequencer)
+        error = AssemblySequencer.fail_job(sequencer, JOB_ID)
         self.assertIn("restart recovery required", str(error))
         self.assertEqual(writer.mock_calls, [])
         self.assertEqual(sequencer.backend.mock_calls, [])
 
         writer.sync_state = "PENDING"
-        await MockAssemblySequencer.on_pending_job(sequencer)
+        await AssemblySequencer.on_pending_job(sequencer)
         self.assertEqual(writer.mock_calls, [])
         writer.sync_state = "SYNCED"
-        self.assertIsNone(MockAssemblySequencer.fail_job(sequencer, JOB_ID))
+        self.assertIsNone(AssemblySequencer.fail_job(sequencer, JOB_ID))
         writer.finish.assert_called_once_with(JOB_ID, "FAILED")
         writer.flush.assert_called_once_with(5.0)
 
@@ -333,16 +340,16 @@ class PendingJobTest(unittest.IsolatedAsyncioTestCase):
         ]
         command = dict(command="observations", job_id=JOB_ID,
                        recipe_version=recipe["recipe_version"], observations=observations)
-        sequencer = SimpleNamespace(
+        sequencer = SimpleNamespace(runtime_mode="mock",
             recipe=recipe, recipe_version=recipe["recipe_version"], active=None,
-            pending_observations={}, set_response=MockAssemblySequencer.set_response,
+            pending_requests={}, set_response=AssemblySequencer.set_response,
             db_writer=Mock(), backend=Mock(), executor=Mock(),
         )
         sequencer.db_writer.get_job.return_value = {"job_status": "PENDING"}
-        response = await MockAssemblySequencer.on_external_request(
+        response = await AssemblySequencer.on_external_request(
             sequencer, SimpleNamespace(cmd_str="mock\n" + json.dumps(command)), SimpleNamespace())
         self.assertTrue(json.loads(response.cmd_res)["accepted"])
-        resolved = sequencer.pending_observations[JOB_ID]["resolved_steps"]
+        resolved = sequencer.pending_requests[JOB_ID]["resolved_steps"]
         self.assertEqual([row["step"] for row in resolved], recipe["steps"])
         self.assertEqual(resolved[0]["source"]["xyz_mm"], [len(observations), 0, 0])
         self.assertEqual(resolved[0]["target"]["xyz_mm"], [0, len(observations), 0])
@@ -367,9 +374,9 @@ class PendingJobTest(unittest.IsolatedAsyncioTestCase):
                     del rows[0]["slot_code"]
                 else:
                     rows[0]["slot_code"] = " "
-                sequencer.pending_observations.clear()
+                sequencer.pending_requests.clear()
                 sequencer.db_writer.reset_mock()
-                response = await MockAssemblySequencer.on_external_request(
+                response = await AssemblySequencer.on_external_request(
                     sequencer, SimpleNamespace(cmd_str="mock\n" + json.dumps(bad)), SimpleNamespace())
                 outcome = json.loads(response.cmd_res)
                 self.assertFalse(outcome["accepted"])
@@ -377,21 +384,21 @@ class PendingJobTest(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(sequencer.db_writer.mock_calls, [])
                 self.assertEqual(sequencer.backend.mock_calls, [])
                 self.assertEqual(sequencer.executor.mock_calls, [])
-                self.assertEqual(sequencer.pending_observations, {})
+                self.assertEqual(sequencer.pending_requests, {})
 
     def test_public_feedback_keeps_unit_identity_after_terminal_cleanup(self):
         publisher = Mock()
-        sequencer = SimpleNamespace(active=dict(job_id=JOB_ID, unit_id=22),
+        sequencer = SimpleNamespace(runtime_mode="mock", active=dict(job_id=JOB_ID, unit_id=22),
                                     terminal_snapshot=None, external_publisher=publisher)
         payload = dict(job_id=JOB_ID, state="CONVEYOR_MOVING")
-        MockAssemblySequencer.publish(sequencer, payload)
+        AssemblySequencer.publish(sequencer, payload)
         self.assertEqual(json.loads(publisher.publish.call_args.args[0].data)["unit_id"], 22)
         self.assertNotIn("unit_id", payload)
         sequencer.terminal_snapshot = sequencer.active
         sequencer.active = None
-        MockAssemblySequencer.publish(sequencer, dict(job_id=JOB_ID, state="COMPLETED"))
+        AssemblySequencer.publish(sequencer, dict(job_id=JOB_ID, state="COMPLETED"))
         self.assertEqual(json.loads(publisher.publish.call_args.args[0].data)["unit_id"], 22)
-        MockAssemblySequencer.publish(sequencer, dict(job_id="different", state="FAILED"))
+        AssemblySequencer.publish(sequencer, dict(job_id="different", state="FAILED"))
         self.assertEqual(json.loads(publisher.publish.call_args.args[0].data)["unit_id"], 0)
 
     def test_snapshot_contains_only_current_unit_placed_slots(self):
@@ -414,7 +421,7 @@ class PendingJobTest(unittest.IsolatedAsyncioTestCase):
         class Writer:
             sync_state = "SYNCED"
 
-            def get_next_runnable_job(self, product_code, product_version, recipe_version):
+            def get_next_runnable_job(self, product_code, product_version, recipe_version, ready_job_ids=None):
                 return {"job_id": JOB_ID}
 
         class Backend:
@@ -423,409 +430,288 @@ class PendingJobTest(unittest.IsolatedAsyncioTestCase):
 
         async def start_job(command, response):
             starts.append(command["job_id"])
-            return MockAssemblySequencer.set_response(response, True, JOB_ID)
+            return AssemblySequencer.set_response(response, True, JOB_ID)
 
-        sequencer = SimpleNamespace(
+        sequencer = SimpleNamespace(runtime_mode="mock",
             active=None,
             recipe_version="assembly-r1",
             db_writer=Writer(),
             backend=Backend(),
-            pending_observations={},
+            pending_requests={},
             start_job=start_job,
         )
-        await MockAssemblySequencer.on_pending_job(sequencer)
+        await AssemblySequencer.on_pending_job(sequencer)
         self.assertEqual(starts, [])
 
-        sequencer.pending_observations[JOB_ID] = {"job_id": JOB_ID}
-        await MockAssemblySequencer.on_pending_job(sequencer)
+        sequencer.pending_requests[JOB_ID] = {"job_id": JOB_ID}
+        await AssemblySequencer.on_pending_job(sequencer)
         self.assertEqual(starts, [JOB_ID])
-        self.assertEqual(sequencer.pending_observations, {})
+        self.assertEqual(sequencer.pending_requests, {})
 
 
 class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
+    def fixture(self):
+        recipe = load_recipe(str(Path(__file__).resolve().parents[1] / "config/recipes/assembly-r1.yaml"))
+        pose = {"xyz_mm": [100, 200, 300], "xyzw": [0, 0, 0, 1]}
+        observations = [dict(step, source=pose, target=pose) for step in recipe["steps"]]
+        active = dict(job_id=JOB_ID, unit_id=22, recipe_version=recipe["recipe_version"],
+                      state="STARTED", observations=observations,
+                      resolved_steps=resolve_observations(recipe, observations),
+                      before_action_index=0, after_action_index=0, backend_started=False,
+                      conveyor_confirmed=False, transfer_requested=False,
+                      expected_step_count=25, placed_count=0, held_step_order=0,
+                      held_part_id="", held_slot_code="", inspection_result="",
+                      slot_codes=[step["slot_code"] for step in recipe["steps"]])
+        backend = Mock()
+        for name in ("start", "move_joint", "pick", "place", "move_conveyor", "transfer_assembled_pcb"):
+            setattr(backend, name, AsyncMock())
+        backend.resolve_targets = AsyncMock(return_value=observations)
+        backend.inspect_unit = AsyncMock(return_value={"result": "PASS", "defects": [], "image_path": "test.png"})
+        writer = Mock(sync_state="SYNCED")
+        sequencer = SimpleNamespace(runtime_mode="mock", active=active, recipe=recipe,
+                                    recipe_version=recipe["recipe_version"], backend=backend,
+                                    db_writer=writer, publish=Mock(), fail_active=Mock(),
+                                    finish_active_unit=Mock(), set_response=AssemblySequencer.set_response)
+        sequencer.run_transfer_workflow = MethodType(AssemblySequencer.run_transfer_workflow, sequencer)
+        return sequencer, active
+
     async def test_recipe_workflow_waits_for_conveyor_then_follows_yaml(self):
-        calls = []
-        resolved_steps = [{
-            "step": {"order": 1, "part_id": "PART", "slot_code": "SLOT"},
-            "source": {},
-            "target": {},
-            "gripper_grasp_opening_percent": 20,
-            "gripper_release_opening_percent": 30,
-        }]
-        recipe = {
-            "frame": "base_link",
-            "joint_points": {
-                "home": [0] * 6,
-                "item_ready": [1] * 6,
-                "assembly_ready": [2] * 6,
-            },
-            "motion": {"approach_dz_mm": 100, "retract_dz_mm": 120},
-            "workflow": {
-                "before_all": [
-                    {"conveyor.move_to": "ASSEMBLY"},
-                    {"vision.resolve_targets": "recipe_steps"},
-                ],
-                "per_step": [
-                    {"robot.move_joint": "home"},
-                    {"robot.move_joint": "item_ready"},
-                    {"robot.pick": "current_part"},
-                    {"robot.move_joint": "home"},
-                    {"robot.move_joint": "assembly_ready"},
-                    {"robot.place": "current_slot"},
-                ],
-            },
-        }
-
-        class Backend:
-            async def start(self, job_id, recipe_version, expected_step_count):
-                calls.append(("start", expected_step_count))
-
-            async def move_joint(self, job_id, joint_point):
-                calls.append(("move_joint", joint_point[0]))
-
-            async def pick(self, job_id, step, frame, source, motion, gripper):
-                calls.append(("pick", step["order"]))
-
-            async def place(self, job_id, step, frame, target, motion, gripper):
-                calls.append(("place", step["order"]))
-
-        async def after_all(active):
-            calls.append(("after_all",))
-
-        active = {
-            "job_id": JOB_ID,
-            "state": "STARTED",
-            "resolved_steps": resolved_steps,
-            "before_action_index": 0,
-            "backend_started": False,
-            "conveyor_confirmed": False,
-            "expected_step_count": 1,
-        }
-        sequencer = SimpleNamespace(
-            active=active,
-            recipe=recipe,
-            recipe_version="assembly-r1",
-            backend=Backend(),
-            db_writer=SimpleNamespace(sync_state="SYNCED"),
-            arm_conveyor_timeout=lambda: calls.append(("arm",)),
-            publish=lambda payload: calls.append(("publish", payload["state"])),
-            run_transfer_workflow=after_all,
-            fail_active=lambda *args, **kwargs: self.fail(str((args, kwargs))),
-        )
-
-        await MockAssemblySequencer.run_assembly_workflow(sequencer, active)
-        self.assertEqual(calls, [
-            ("arm",),
-            ("publish", "CONVEYOR_MOVING"),
-        ])
-        active["conveyor_confirmed"] = True
-        await MockAssemblySequencer.run_assembly_workflow(sequencer, active)
-
-        self.assertEqual(calls, [
-            ("arm",),
-            ("publish", "CONVEYOR_MOVING"),
-            ("start", 1),
-            ("publish", "STARTED"),
-            ("move_joint", 0),
-            ("move_joint", 1),
-            ("pick", 1),
-            ("move_joint", 0),
-            ("move_joint", 2),
-            ("place", 1),
-            ("after_all",),
-        ])
-        self.assertEqual(active["state"], "STARTED")
+        sequencer, active = self.fixture()
+        arrived = asyncio.Event()
+        async def conveyor(job, station):
+            if station == "ASSEMBLY":
+                await arrived.wait()
+        sequencer.backend.move_conveyor.side_effect = conveyor
+        task = asyncio.create_task(AssemblySequencer.run_assembly_workflow(sequencer, active))
+        await asyncio.sleep(0)
+        sequencer.backend.start.assert_not_awaited()
+        sequencer.backend.pick.assert_not_awaited()
+        self.assertFalse(task.done())
+        arrived.set()
+        await task
+        sequencer.fail_active.assert_not_called()
+        moves = [(call[0], call.args[1] if call[0] == "move_joint" else None)
+                 for call in sequencer.backend.mock_calls if call[0] in {"move_joint", "pick", "place"}]
+        points = sequencer.recipe["joint_points"]
+        self.assertEqual(moves[:6], [("move_joint", points["home"]), ("move_joint", points["item_ready"]),
+                                    ("pick", None), ("move_joint", points["home"]),
+                                    ("move_joint", points["assembly_ready"]), ("place", None)])
+        self.assertEqual(len(moves), 25 * 6)
+        sequencer.finish_active_unit.assert_called_once_with(active)
 
     async def test_before_all_action_order_comes_from_recipe(self):
-        calls = []
-        active = {
-            "job_id": JOB_ID,
-            "state": "STARTED",
-            "observations": [{"order": 1}],
-            "resolved_steps": [],
-            "before_action_index": 0,
-            "backend_started": False,
-            "conveyor_confirmed": False,
-        }
-        sequencer = SimpleNamespace(
-            active=active,
-            recipe={"workflow": {"before_all": [
-                {"vision.resolve_targets": "recipe_steps"},
-                {"conveyor.move_to": "ASSEMBLY"},
-            ]}},
-            db_writer=SimpleNamespace(sync_state="SYNCED"),
-            arm_conveyor_timeout=lambda: calls.append(("arm",)),
-            publish=lambda payload: calls.append(("publish", payload["state"])),
-            fail_active=lambda *args, **kwargs: self.fail(str((args, kwargs))),
-        )
+        sequencer, active = self.fixture()
+        sequencer.recipe["workflow"]["before_all"].reverse()
+        await AssemblySequencer.run_assembly_workflow(sequencer, active)
+        self.assertEqual([c[0] for c in sequencer.backend.mock_calls[:3]],
+                         ["resolve_targets", "move_conveyor", "start"])
+        sequencer.fail_active.assert_not_called()
 
-        await MockAssemblySequencer.run_assembly_workflow(sequencer, active)
-
-        self.assertEqual(calls, [
-            ("arm",),
-            ("publish", "CONVEYOR_MOVING"),
-        ])
-        self.assertEqual(active["before_action_index"], 2)
-
-    async def test_inspection_precedes_assembled_pcb_transfer(self):
-        calls = []
-
-        class Writer:
-            sync_state = "SYNCED"
-
-            def flush(self, timeout_seconds):
-                calls.append(("flush",))
-                return True
-
-            def assembly_completed(self, unit_id):
-                calls.append(("assembly", unit_id))
-
-            def inspection_recorded(self, unit_id, result, defects, image_path):
-                calls.append(("inspection", unit_id, result))
-
-        class Backend:
-            async def transfer_assembled_pcb(
-                self, job_id, frame, assembled_pcb, motion, gripper
-            ):
-                calls.append(("transfer", job_id))
-
-        active = {
-            "job_id": JOB_ID,
-            "unit_id": 22,
-            "state": "STARTED",
-            "after_action_index": 0,
-            "slot_codes": ["SLOT-01"],
-            "inspection_result": "",
-            "assembled_pcb": {
-                "source": {"xyz_mm": [0, 0, 0], "xyzw": [0, 0, 0, 1]},
-                "target": {"xyz_mm": [0, 0, 0], "xyzw": [0, 0, 0, 1]},
-            },
-        }
-        sequencer = SimpleNamespace(
-            active=active,
-            recipe={
-                "frame": "base_link",
-                "motion": {},
-                "gripper": {"assembled_pcb": {}},
-                "workflow": {"after_all": [
-                    {"conveyor.move_to": "INSPECTION"},
-                    {"inspection.run": "assembled_pcb"},
-                    {"robot.transfer": "assembled_pcb"},
-                ]},
-            },
-            rng=random.Random(1),
-            fail_probability=0.0,
-            db_writer=Writer(),
-            backend=Backend(),
-            arm_conveyor_timeout=lambda: calls.append(("arm",)),
-            publish=lambda payload: calls.append(("publish", payload["state"])),
-            finish_active_unit=lambda current: calls.append(("finish",)),
-            fail_active=lambda *args: self.fail(str(args)),
-        )
-
-        await MockAssemblySequencer.run_transfer_workflow(sequencer, active)
-        self.assertEqual(calls, [
-            ("arm",),
-            ("publish", "ASSEMBLY_COMPLETED"),
-        ])
-
-        await MockAssemblySequencer.run_transfer_workflow(sequencer, active)
-        self.assertEqual(
-            [call[0] for call in calls],
-            ["arm", "publish", "assembly", "inspection", "flush", "transfer", "finish"],
-        )
+    async def test_inspection_precedes_transfer_and_db_failure_blocks_it(self):
+        sequencer, active = self.fixture()
+        inspection_arrived = asyncio.Event()
+        sequencer.backend.move_conveyor.side_effect = lambda *args: None
+        async def wait_arrival(*args):
+            await inspection_arrived.wait()
+        sequencer.backend.move_conveyor.side_effect = wait_arrival
+        task = asyncio.create_task(sequencer.run_transfer_workflow(active))
+        await asyncio.sleep(0)
+        sequencer.backend.inspect_unit.assert_not_awaited()
+        sequencer.backend.transfer_assembled_pcb.assert_not_awaited()
+        inspection_arrived.set()
+        await task
+        sequencer.db_writer.inspection_recorded.assert_called_once_with(22, result="PASS", defects=[], image_path="test.png")
+        sequencer.backend.transfer_assembled_pcb.assert_awaited_once()
         self.assertEqual(active["inspection_result"], "PASS")
-
-        calls.clear()
-        active["after_action_index"] = 1
-        sequencer.db_writer.flush = Mock(side_effect=RuntimeError("DB failed"))
-        sequencer.fail_active = Mock()
-        await MockAssemblySequencer.run_transfer_workflow(sequencer, active)
-        self.assertEqual([call[0] for call in calls], ["assembly", "inspection"])
+        sequencer, active = self.fixture()
+        sequencer.db_writer.flush.side_effect = RuntimeError("DB failed")
+        await sequencer.run_transfer_workflow(active)
         self.assertEqual(sequencer.fail_active.call_args.args[0], "DB_ERROR")
+        sequencer.backend.transfer_assembled_pcb.assert_not_awaited()
+        sequencer.finish_active_unit.assert_not_called()
+
+    async def test_unknown_inspection_holds_unit_without_transfer_or_completion(self):
+        sequencer, active = self.fixture()
+        sequencer.backend.inspect_unit.return_value = {"result": "UNKNOWN", "defects": None,
+                                                     "image_path": None, "inspection": {"id": "evidence"}}
+        await sequencer.run_transfer_workflow(active)
+        self.assertEqual(active["state"], "PAUSED")
+        self.assertTrue(active["inspection_hold"])
+        sequencer.db_writer.flush.assert_called_once()
+        sequencer.fail_active.assert_not_called()
+        sequencer.finish_active_unit.assert_not_called()
+        sequencer.backend.transfer_assembled_pcb.assert_not_awaited()
+        response = await AssemblySequencer.on_external_request(sequencer,
+            SimpleNamespace(cmd_str="mock\n" + json.dumps({"command": "resume", "job_id": JOB_ID})), SimpleNamespace())
+        self.assertEqual(json.loads(response.cmd_res)["error_code"], "BUSY")
+        sequencer.backend.set_paused.assert_not_called()
 
     async def test_transfer_request_requires_completed_assembly(self):
-        active = {
-            "job_id": JOB_ID,
-            "state": "PLACED",
-            "transfer_requested": False,
-        }
-        sequencer = SimpleNamespace(
-            active=active,
-            recipe_version="assembly-r1",
-            set_response=MockAssemblySequencer.set_response,
-        )
-        request = SimpleNamespace(cmd_str="mock\n" + json.dumps({
-            "command": "transfer_assembled_pcb",
-            "job_id": JOB_ID,
-            "assembled_pcb": {
-                "source": {"xyz_mm": [0, 0, 0], "xyzw": [0, 0, 0, 1]},
-                "target": {"xyz_mm": [0, 0, 0], "xyzw": [0, 0, 0, 1]},
-            },
-        }))
-
-        response = await MockAssemblySequencer.on_external_request(
-            sequencer, request, SimpleNamespace(cmd_res="")
-        )
-
-        self.assertFalse(json.loads(response.cmd_res)["accepted"])
+        sequencer, active = self.fixture()
+        active["state"] = "PLACED"
+        pose = {"xyz_mm": [0, 0, 0], "xyzw": [0, 0, 0, 1]}
+        response = await AssemblySequencer.on_external_request(sequencer,
+            SimpleNamespace(cmd_str="mock\n" + json.dumps({"command":"transfer_assembled_pcb", "job_id":JOB_ID,
+                                                          "assembled_pcb":{"source":pose,"target":pose}})), SimpleNamespace())
+        self.assertEqual(json.loads(response.cmd_res)["error_code"], "BUSY")
+        sequencer.backend.confirm_conveyor.assert_not_called()
 
     async def test_pause_is_forwarded_without_changing_job_state(self):
-        calls = []
-
-        class Backend:
-            async def set_paused(self, job_id, paused):
-                calls.append((job_id, paused))
-
-        sequencer = SimpleNamespace(
-            active={"job_id": JOB_ID, "state": "STARTED"},
-            recipe_version="assembly-r1",
-            backend=Backend(),
-            set_response=MockAssemblySequencer.set_response,
-        )
+        sequencer, active = self.fixture()
+        sequencer.backend.set_paused = AsyncMock()
         for command, paused in (("pause", True), ("resume", False)):
-            response = await MockAssemblySequencer.on_external_request(
-                sequencer,
-                SimpleNamespace(cmd_str="mock\n" + json.dumps({
-                    "command": command, "job_id": JOB_ID,
-                })),
-                SimpleNamespace(cmd_res=""),
-            )
+            response = await AssemblySequencer.on_external_request(sequencer,
+                SimpleNamespace(cmd_str="mock\n" + json.dumps({"command":command,"job_id":JOB_ID})), SimpleNamespace())
             self.assertTrue(json.loads(response.cmd_res)["accepted"])
-            self.assertEqual(sequencer.active["state"], "STARTED")
-            self.assertEqual(calls[-1], (JOB_ID, paused))
+            sequencer.backend.set_paused.assert_awaited_with(JOB_ID, paused)
+            self.assertEqual(active["state"], "STARTED")
+        sequencer.db_writer.assert_not_called()
 
-    async def test_conveyor_arrival_resumes_yaml_worker_once(self):
-        calls = []
-
-        async def workflow(active):
-            return None
-
-        class Executor:
-            def create_task(self, coroutine):
-                calls.append(("workflow",))
-                coroutine.close()
-
-        active = {
-            "job_id": JOB_ID,
-            "state": "CONVEYOR_MOVING",
-            "conveyor_confirmed": False,
-        }
-        sequencer = SimpleNamespace(
-            active=active,
-            set_response=MockAssemblySequencer.set_response,
-            conveyor_deadline=1.0,
-            executor=Executor(),
-            run_assembly_workflow=workflow,
-        )
-        first = await MockAssemblySequencer.conveyor_arrived(
-            sequencer, {"job_id": JOB_ID}, SimpleNamespace(cmd_res="")
-        )
-        second = await MockAssemblySequencer.conveyor_arrived(
-            sequencer, {"job_id": JOB_ID}, SimpleNamespace(cmd_res="")
-        )
-
-        self.assertTrue(json.loads(first.cmd_res)["accepted"])
-        self.assertTrue(json.loads(second.cmd_res)["accepted"])
+    async def test_conveyor_arrival_completes_wait_once(self):
+        sequencer, active = self.fixture()
+        active["state"] = "CONVEYOR_MOVING"
+        for _ in range(2):
+            response = await AssemblySequencer.conveyor_arrived(sequencer, {"job_id":JOB_ID}, SimpleNamespace())
+            self.assertTrue(json.loads(response.cmd_res)["accepted"])
+        sequencer.backend.confirm_conveyor.assert_called_once_with(JOB_ID, "ASSEMBLY")
         self.assertTrue(active["conveyor_confirmed"])
-        self.assertEqual(calls, [("workflow",)])
 
-    async def test_conveyor_failure_finalizes_the_active_job(self):
-        failures = []
-        sequencer = SimpleNamespace(
-            active={"job_id": JOB_ID, "state": "CONVEYOR_MOVING"},
-            set_response=MockAssemblySequencer.set_response,
-            fail_active=lambda *args, **kwargs: failures.append((args, kwargs)),
-        )
-        response = MockAssemblySequencer.conveyor_failed(
-            sequencer,
-            {"job_id": JOB_ID, "message": "belt timeout"},
-            SimpleNamespace(cmd_res=""),
-        )
+    async def test_conveyor_failure_ends_workflow_before_robot_start(self):
+        sequencer, active = self.fixture()
+        sequencer.backend.move_conveyor.side_effect = TimeoutError("belt timeout")
+        await AssemblySequencer.run_assembly_workflow(sequencer, active)
+        self.assertEqual(sequencer.fail_active.call_args.args[0], "CONVEYOR_FAILED")
+        sequencer.backend.start.assert_not_awaited()
+        sequencer.backend.pick.assert_not_awaited()
 
-        self.assertTrue(json.loads(response.cmd_res)["accepted"])
-        self.assertEqual(failures, [(
-            ("CONVEYOR_FAILED", "belt timeout"), {"immediate": True}
-        )])
+    def test_incomplete_pass_target_restarts_recipe_for_next_unit(self):
+        sequencer, active = self.fixture()
+        sequencer.db_writer.get_job.return_value = {"completed_quantity":1,"requested_quantity":2}
+        sequencer.db_writer.claim.return_value = {"job_id":JOB_ID,"unit_id":23}
+        sequencer.run_assembly_workflow = AsyncMock()
+        sequencer.executor = Mock()
+        sequencer.executor.create_task.side_effect = lambda coroutine: coroutine.close()
+        AssemblySequencer.finish_active_unit(sequencer, active)
+        sequencer.db_writer.unit_completed.assert_called_once_with(22)
+        calls = [call[0] for call in sequencer.db_writer.mock_calls]
+        self.assertLess(calls.index("unit_completed"), calls.index("flush"))
+        self.assertLess(calls.index("flush"), calls.index("claim"))
+        self.assertEqual(active["unit_id"],23)
+        self.assertEqual(active["before_action_index"],0)
+        self.assertEqual(active["after_action_index"],0)
+        self.assertEqual(active["placed_count"],0)
+        sequencer.db_writer.finish.assert_not_called()
+        sequencer.executor.create_task.assert_called_once()
 
-    async def test_incomplete_pass_target_restarts_recipe_for_next_unit(self):
-        calls = []
 
-        class Writer:
-            sync_state = "SYNCED"
-            last_error = ""
+class ModeIsolationTest(unittest.IsolatedAsyncioTestCase):
+    async def test_opposite_prefix_is_rejected_before_any_dependency(self):
+        for mode, prefix in (("real","mock"),("mock","real")):
+            sequencer=SimpleNamespace(runtime_mode=mode, get_logger=lambda:Mock(),set_response=AssemblySequencer.set_response)
+            response=await AssemblySequencer.on_external_request(sequencer,
+                SimpleNamespace(cmd_str=prefix+"\n{}"),SimpleNamespace())
+            self.assertEqual(json.loads(response.cmd_res)["error_code"],"MODE_MISMATCH")
 
-            def flush(self, timeout_seconds):
-                calls.append(("flush", timeout_seconds))
-                return True
+    async def test_real_rejects_simulated_signals_and_unready_start_before_db(self):
+        sequencer=SimpleNamespace(runtime_mode="real",recipe_version="assembly-r1",
+            recipe={"joint_points":{},"frame":"base_link"},
+            backend=SimpleNamespace(prepare=AsyncMock(side_effect=RuntimeError("reset is unverified"))),
+            set_response=AssemblySequencer.set_response,db_writer=Mock())
+        for command in ("observations","conveyor_arrived","conveyor_failed","transfer_assembled_pcb"):
+            response=await AssemblySequencer.on_external_request(sequencer,
+                SimpleNamespace(cmd_str="real\n"+json.dumps({"command":command,"job_id":JOB_ID})),SimpleNamespace())
+            self.assertEqual(json.loads(response.cmd_res)["error_code"],"INVALID_REQUEST")
+        response=await AssemblySequencer.on_external_request(sequencer,
+            SimpleNamespace(cmd_str="real\n"+json.dumps({"command":"start","job_id":JOB_ID,"recipe_version":"assembly-r1"})),SimpleNamespace())
+        self.assertEqual(json.loads(response.cmd_res)["error_code"],"NOT_READY")
+        self.assertEqual(sequencer.db_writer.mock_calls,[])
 
-            def get_job(self, job_id):
-                return {"completed_quantity": 1, "requested_quantity": 2}
+    def test_db_checks_both_modes_and_rejects_environment_changes(self):
+        for mode in ("mock","real"):
+            for actual in ("mock","real",None):
+                connection=Mock()
+                connection.execute.return_value.fetchone.return_value={"runtime_mode":actual}
+                with patch.object(store,"_RUNTIME_MODE",mode), patch.dict(os.environ,{"ASSEMBLY_SEQUENCER_MODE":mode,"PRODUCTION_DB_DSN":"test"}), patch.object(store.psycopg,"connect",return_value=connection):
+                    if actual==mode:
+                        self.assertIs(store._connect(),connection)
+                        connection.close.assert_not_called()
+                    else:
+                        with self.assertRaisesRegex(RuntimeError,"MODE_REJECTED"):
+                            store._connect()
+                        connection.commit.assert_not_called()
+                        connection.close.assert_called_once()
+            with patch.object(store,"_RUNTIME_MODE",mode), patch.dict(os.environ,{"ASSEMBLY_SEQUENCER_MODE":"real" if mode=="mock" else "mock"}), patch.object(store.psycopg,"connect") as connect:
+                with self.assertRaisesRegex(RuntimeError,"MODE_REJECTED"):
+                    store._connect()
+                connect.assert_not_called()
 
-            def claim(self, job_id, product_code, product_version, recipe_version):
-                calls.append(("claim", job_id))
-                return {"job_id": job_id, "unit_id": 23}
+    def test_mock_process_cannot_write_real_inspection(self):
+        with patch.object(store,"_RUNTIME_MODE","mock"), patch.dict(os.environ,{"ASSEMBLY_SEQUENCER_MODE":"mock"}), patch.object(store.psycopg,"connect") as connect:
+            with self.assertRaisesRegex(RuntimeError,"MODE_REJECTED"):
+                store._connect(expected_mode="real")
+            connect.assert_not_called()
 
-        async def workflow(active):
-            return None
 
-        class Executor:
-            def create_task(self, coroutine):
-                calls.append(("workflow",))
-                coroutine.close()
+class RealReadinessTest(unittest.IsolatedAsyncioTestCase):
+    async def test_live_state_does_not_override_unconnected_equipment_contracts(self):
+        node = Mock(runtime_mode="real", executor=None)
+        node.context.get_domain_id.return_value = 43
+        backend = RealBackend(node)
+        self.addCleanup(backend.close)
+        backend._on_state(SimpleNamespace(reconnect_flag=0, emg=0, abnormal_stop=0,
+            alarm=0, main_error_code=0, sub_error_code=0, gripperfaultnum=0,
+            grippererro=0, safetydoor_alarm=0, safetyplanealarm=0))
+        snapshot = await backend.status()
+        self.assertFalse(snapshot["available"])
+        self.assertFalse(snapshot["equipment_ready"])
+        self.assertTrue(snapshot["robot_state_fresh"])
+        with self.assertRaisesRegex(RuntimeError, "NOT_READY"):
+            await backend.prepare({"home": [0] * 6}, "base_link")
+        with self.assertRaisesRegex(RuntimeError, "NOT_READY"):
+            await backend.move_joint(JOB_ID, [0] * 6)
+        node.create_client.return_value.call_async.assert_not_called()
+        node.create_client.return_value.call.assert_not_called()
 
-        active = {
-            "job_id": JOB_ID,
-            "unit_id": 22,
-            "recipe_version": "assembly-r1",
-            "state": "PCB_PLACED",
-            "resolved_steps": [{"step": {"slot_code": "SLOT-01"}}],
-            "placed_count": 1,
-            "expected_step_count": 1,
-            "held_step_order": 0,
-            "held_part_id": "",
-            "held_slot_code": "",
-            "transfer_requested": True,
-            "inspection_result": "PASS",
-            "assembled_pcb": {},
-        }
-        sequencer = SimpleNamespace(
-            active=active,
-            recipe_version="assembly-r1",
-            db_writer=Writer(),
-            conveyor_deadline=None,
-            executor=Executor(),
-            run_assembly_workflow=workflow,
-        )
+    def test_real_backend_rejects_mock_process_before_ros_connections(self):
+        for mode, domain in (("mock", 42), ("real", 42), ("mock", 43)):
+            node = Mock(runtime_mode=mode)
+            node.context.get_domain_id.return_value = domain
+            with self.assertRaisesRegex(RuntimeError, "MODE_REJECTED"):
+                RealBackend(node)
+            node.create_client.assert_not_called()
+            node.create_subscription.assert_not_called()
 
-        MockAssemblySequencer.finish_active_unit(sequencer, active)
 
-        self.assertEqual(active["unit_id"], 23)
-        self.assertEqual(active["state"], "STARTED")
-        self.assertEqual(active["before_action_index"], 0)
-        self.assertEqual(active["after_action_index"], 0)
-        self.assertEqual(active["resolved_steps"], [{"step": {"slot_code": "SLOT-01"}}])
-        self.assertFalse(active["transfer_requested"])
-        self.assertNotIn("assembled_pcb", active)
-        self.assertEqual(
-            [call[0] for call in calls], ["flush", "claim", "workflow"]
-        )
+class MockConveyorTest(unittest.TestCase):
+    def test_arrival_timeout_and_wrong_job_cannot_advance_wait(self):
+        for timeout in (False,True):
+            node=Mock(executor=None)
+            backend=MockBackend(node,Mock())
+            operation=backend.move_conveyor(JOB_ID,"ASSEMBLY")
+            try:
+                future=operation.send(None)
+                with self.assertRaises(RuntimeError):
+                    backend.confirm_conveyor("other-job","ASSEMBLY")
+                self.assertFalse(future.done())
+                if timeout:
+                    node.create_timer.call_args.args[1]()
+                    with self.assertRaises(TimeoutError):
+                        operation.send(None)
+                else:
+                    backend.confirm_conveyor(JOB_ID,"ASSEMBLY")
+                    backend.confirm_conveyor(JOB_ID,"ASSEMBLY")
+                    with self.assertRaises(StopIteration):
+                        operation.send(None)
+                self.assertIsNone(backend._conveyor_future)
+                node.destroy_timer.assert_called_once()
+            finally:
+                operation.close()
 
-    def test_missing_conveyor_signal_fails_the_active_job(self):
-        failures = []
-        sequencer = SimpleNamespace(
-            active={"job_id": JOB_ID, "state": "CONVEYOR_MOVING"},
-            conveyor_deadline=0.0,
-            fail_active=lambda *args, **kwargs: failures.append((args, kwargs)),
-        )
-
-        MockAssemblySequencer.on_conveyor_timeout(sequencer)
-
-        self.assertEqual(failures, [(
-            ("CONVEYOR_FAILED",
-             "conveyor completion was not reported within 60 seconds"),
-            {"immediate": True},
-        )])
+    def test_mock_inspection_boundaries(self):
+        self.assertEqual(choose_inspection(random.Random(1),0,[]),("PASS",[]))
+        result,defects=choose_inspection(random.Random(1),1,["SLOT"])
+        self.assertEqual(result,"FAIL")
+        self.assertEqual(defects[0]["slot_code"],"SLOT")
 
 
 if __name__ == "__main__":

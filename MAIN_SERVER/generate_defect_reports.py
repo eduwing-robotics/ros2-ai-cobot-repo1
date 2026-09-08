@@ -56,7 +56,6 @@ def load_defect_context(dsn: str, unit_defect_id: int) -> list[dict[str, object]
             JOIN production.product_slots ps
               ON ps.product_slot_id = ud.product_slot_id
             WHERE ud.unit_defect_id = %s
-              AND u.unit_status = 'COMPLETED'
               AND u.inspection_result = 'FAIL'
               AND ud.defect_type IS NOT NULL
         )
@@ -83,7 +82,6 @@ def load_defect_context(dsn: str, unit_defect_id: int) -> list[dict[str, object]
         JOIN production.units u
           ON u.unit_id = ud.unit_id
          AND u.job_id = target.job_id
-         AND u.unit_status = 'COMPLETED'
          AND u.inspection_result = 'FAIL'
          AND u.inspected_at <= target.target_inspected_at
         JOIN production.product_slots ps

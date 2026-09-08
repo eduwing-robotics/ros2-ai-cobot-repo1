@@ -102,8 +102,9 @@ void OnValidate()
 
             // Backend 를 바꾸면 이전 작업의 진행은 더 이상 이 화면의 사실이 아니다.
             progress?.Clear();
-            mockBackend?.SetActive(operatingMode == RobotOperatingMode.Mock);
-            realBackend?.SetActive(operatingMode == RobotOperatingMode.Real);
+            // 해제는 같은 조립 토픽의 모든 callback을 지운다. 선택 구현의 구독은 마지막에 연결한다.
+            mockBackend?.SetActive(false);
+            realBackend?.SetActive(false);
 
             mockGhost?.Initialize(ghost);
             realGhost?.Initialize(ghost);
@@ -119,6 +120,7 @@ void OnValidate()
             IRobotBackend selectedBackend = operatingMode == RobotOperatingMode.Mock
                 ? mockBackend
                 : realBackend;
+            selectedBackend?.SetActive(true);
             IRobotStateSource stateSource = selectedBackend?.StateSource;
             Control = selectedBackend?.Control;
             scenario?.Initialize(selectedBackend?.ScenarioControl);

@@ -1,8 +1,7 @@
-"""Validated Mock assembly messages and state transitions."""
+"""Validated assembly recipes, requests and progress states."""
 
 import json
 import math
-import random
 import uuid
 from collections import Counter
 from pathlib import Path
@@ -279,7 +278,9 @@ def resolve_observations(recipe, observations):
     return resolved
 
 
-def parse_command(raw, expected_recipe_version):
+def parse_command(raw, expected_recipe_version, runtime_mode="mock"):
+    if runtime_mode not in {"mock", "real"}:
+        raise ValueError("runtime_mode must be mock or real")
     try:
         command = json.loads(raw)
     except (TypeError, json.JSONDecodeError) as error:
@@ -290,7 +291,19 @@ def parse_command(raw, expected_recipe_version):
         raise ValueError("cmd_str must be a JSON object")
 
     command_name = command.get("command")
-    if command_name in {"pause", "resume", "conveyor_arrived"}:
+    allowed = ({"start", "pause", "resume"} if runtime_mode == "real" else {
+        "observations", "conveyor_arrived", "conveyor_failed",
+        "transfer_assembled_pcb", "pause", "resume",
+    })
+    if command_name not in allowed:
+        raise ValueError(f"unsupported {runtime_mode} assembly command: {command_name}")
+    if command_name == "start":
+        if set(command) != {"command", "job_id", "recipe_version"}:
+            raise ValueError("command, job_id and recipe_version are required")
+        if command["recipe_version"] != expected_recipe_version:
+            raise ValueError(f"recipe_version must be {expected_recipe_version}")
+        command_type = command_name
+    elif command_name in {"pause", "resume", "conveyor_arrived"}:
         if set(command) != {"command", "job_id"}:
             raise ValueError("command and job_id are required")
         command_type = command_name
@@ -343,16 +356,6 @@ def parse_command(raw, expected_recipe_version):
     except (TypeError, ValueError, AttributeError) as error:
         raise ValueError("job_id must be a UUID string") from error
     return command_type, command
-
-
-def parse_internal_response(raw):
-    try:
-        response = json.loads(raw)
-    except (TypeError, json.JSONDecodeError) as error:
-        raise RuntimeError("Mock response is not valid JSON") from error
-    if not isinstance(response, dict) or not isinstance(response.get("accepted"), bool):
-        raise RuntimeError("Mock response is missing accepted")
-    return response
 
 
 def parse_feedback(raw):
@@ -480,17 +483,6 @@ def apply_relay_feedback(active, payload):
         })
 
 
-def choose_inspection(rng, fail_probability, slot_codes):
-    if rng.random() >= fail_probability:
-        return "PASS", []
-    if not slot_codes:
-        raise RuntimeError("Mock FAIL inspection requires a product slot")
-    return "FAIL", [{
-        "slot_code": rng.choice(slot_codes),
-        "defect_type": rng.choice(DEFECT_TYPES),
-    }]
-
-
 def self_check(recipe=None):
     job_id = "12345678-1234-5678-1234-567812345678"
     recipe_version = recipe["recipe_version"] if recipe else "assembly-r1"
@@ -534,9 +526,6 @@ def self_check(recipe=None):
         "command": "resume", "job_id": job_id,
     }), recipe_version)[0] == "resume"
     assert unavailable_snapshot("offline")["job_id"] == ""
-    assert choose_inspection(random.Random(1), 0.0, []) == ("PASS", [])
-    result, defects = choose_inspection(random.Random(1), 1.0, ["SLOT-01"])
-    assert result == "FAIL" and defects[0]["slot_code"] == "SLOT-01"
     assert failed_feedback(job_id, "DB_ERROR", "x")["state"] == "FAILED"
     active = {
         "job_id": job_id,

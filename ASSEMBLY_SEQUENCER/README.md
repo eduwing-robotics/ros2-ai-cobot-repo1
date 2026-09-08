@@ -21,9 +21,13 @@ Job·Unit, 수량, 검사 FAIL, 재시작과 안전정지의 공통 의미는 [�
 
 ## 공개 API
 
-현재 구현된 외부 ROS 경계는 Mock service와 feedback topic입니다. 구체 endpoint와 payload는 [Assembly Sequencer ROS API](API.md)를 따릅니다.
+외부 ROS 경계는 공통 service와 feedback topic이며 실행 모드별 domain을 사용합니다. 구체 endpoint와 payload는 [Assembly Sequencer ROS API](API.md)를 따릅니다.
 
-Real 자동 조립 API는 구현되어 있지 않으며 미구현 이름을 예약하지 않습니다. 구현이 추가될 때 코드·IDL과 API 문서를 같은 변경에서 갱신합니다.
+`sequencer_node.py`가 공통 YAML·Job·Unit 흐름을, `recipe_contract.py`가 입력 검증을 소유합니다.
+`mock_backend.py`는 Mock 동작 완료와 Unity 컨베이어 신호 대기·난수 검사를 소유합니다.
+`real_backend.py`는 Real 상태 조회·실행 준비 거절과 Vision 검사 경계를 소유합니다.
+Real의 실제 이동·그리퍼·컨베이어·reset·좌표 공급은 아직 연결되지 않아 실행 요청은
+Job claim 전에 `NOT_READY`로 실패합니다. Mock으로 자동 대체하지 않습니다.
 
 Mock 전체 스택의 유일한 실행 진입점은 [Mock 올인원 실행](../Farino_AIO_Mock/README.md#mock-올인원-실행)입니다.
 
@@ -35,16 +39,21 @@ Mock 전체 스택의 유일한 실행 진입점은 [Mock 올인원 실행](../F
 
 ## 검사 자료 저장 경계
 
+검사 저장은 Unit 실행 완료가 아닙니다. 전체 workflow 성공 뒤 `DbWriter.unit_completed(unit_id)`를 기록하고 `flush()`를 확인한 후 다음 Unit 또는 Job 완료로 진행합니다. 실패 시 이미 저장된 검사 자료는 유지합니다.
+
+
 `real_backend.inspect()`는 Vision의 완료 JSON과 검증된 PNG를
 `{"data": dict, "image_bytes": bytes | None}`로 반환하는 동기 함수입니다.
-실제 Real 자동 조립 노드와 연결된 상태는 아니며 ROS callback 스레드에서 호출하지 않습니다.
+공통 runner에서 사용하는 `RealBackend.inspect_unit()`은 별도 worker에서 이를 호출합니다.
+같은 Job·Unit에서 같은 검사 UUID를 사용하며 ROS callback을 HTTP 대기로 막지 않습니다.
+실제 Real 전체 흐름은 실행 준비 경계에서 차단되어 아직 검사 단계에 도달하지 않습니다.
 
 기존 `DbWriter.inspection_recorded(unit_id, result, defects, image_path=None)`는
 선택적 `inspection`, `image_bytes` 키워드 인자로 Vision 자료를 받을 수 있습니다.
 이 경우 `result`는 원본 decision, `defects=None`, `image_path=None`으로 전달합니다.
 `flush()`가 성공해야 저장 완료이며, 하위 `production_store.record_inspection()`의
 동기 반환값은 `slot_code`와 `unit_defect_id`의 매핑 목록입니다.
-Vision 자료 저장만 `real` DB 환경을 요구하고 기존 Mock 호출은 기존 환경 검증을 유지합니다.
+생산 lifecycle은 고정된 프로세스 모드와 같은 DB만 사용하며 Vision 자료 저장은 Real 프로세스·DB만 허용합니다.
 
 Unit당 재검사는 허용하지 않습니다. 같은 내용은 기존 UID를 복구하고 다른 내용은 거절합니다.
 모든 제품 슬롯을 검사 JSON과 대조하고, 확정 불량 없는 슬롯은 `defect_type=NULL`로 저장합니다.

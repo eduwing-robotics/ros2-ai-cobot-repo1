@@ -1,18 +1,7 @@
-// 역할: MANUAL 페이지(FR5Manual.uxml)에서 ManualJointPanel 이 다루지 않는 표시값만 담당한다.
-//
-// 조그 · 그리퍼 명령 · Ghost 미리보기는 ManualJointPanel 이 이미 검증된 상태로 소유한다.
-// (jog-N-slider / -actual / -target, jog-apply/cancel/home, gripper-open/close-button)
-// 여기서 다시 구현하면 같은 상태를 두 곳이 쓰게 되므로 건드리지 않는다.
-//
-// TODO(API·Real): Real 의 수동 관절 제어는 연결되어 있지 않다 (API.md 2절 각주).
-//                 IRobotControl.MoveJ 와 TrySetJointTarget 이 Real 에서 비어 있어
-//                 지금은 Mock 에서만 조그가 의미를 갖는다. 화면은 양쪽 모두 같다.
-//
-//   이 바인더가 맡는 것 : TCP · RPY 표시 · 그리퍼 폭 표시
-//   ManualJointPanel     : 조그 슬라이더 · APPLY/CANCEL/HOME · 그리퍼 OPEN/CLOSE · Ghost
-//
-// 수동 조작은 작업 흐름 밖이라 jobs·units 를 만들지 않는다 (Architecture.md).
+// 역할: MANUAL의 TCP·그리퍼 관측값과 로봇 카메라 표시 영역을 소유한다.
+// 목표·경로 미리보기와 이동 요청의 판정은 ManualJointPanel / Ghost가 담당한다.
 
+using System.Collections;
 using MainUnity.Runtime.Robot.Status;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -23,7 +12,7 @@ namespace MainUnity.UI
     [RequireComponent(typeof(UIDocument))]
     public sealed class FR5ManualBinder : MonoBehaviour
     {
-        static readonly string[] TcpAxes = { "X", "Y", "Z", "R", "P", "Y" };
+        static readonly string[] TcpAxes = { "X", "Y", "Z", "ROLL", "PITCH", "YAW" };
 
         [Header("데이터 소스")]
         [Tooltip("비우면 부모에서 찾습니다. 로봇 계층으로 들어가는 단일 입구입니다.")]
@@ -33,18 +22,57 @@ namespace MainUnity.UI
 
         [SerializeField] float gripperStrokeMillimeters = 40f;
 
+        [Header("로봇 표시 영역")]
+        [Tooltip("MANUAL에서만 표시 영역을 조정할 카메라입니다. 위치와 회전은 변경하지 않습니다.")]
+        [SerializeField] Camera previewCamera;
+
         readonly Label[] tcpLabels = new Label[6];
 
         Label gripperText, gripperValue;
         VisualElement gripperChip, gripperFill;
         bool cached;
+        VisualElement documentRoot, viewport;
+        Coroutine bindRoutine;
+        Rect previousCameraRect;
+        bool cameraRectChanged;
 
-        void OnEnable() => cached = false;
+        void OnEnable()
+        {
+            cached = false;
+            if (uiMaster == null) uiMaster = GetComponentInParent<UIMaster>();
+            ResolveReferences();
+            bindRoutine = StartCoroutine(BindDocument());
+        }
+
+        void OnDisable()
+        {
+            if (bindRoutine != null) StopCoroutine(bindRoutine);
+            bindRoutine = null;
+            documentRoot?.UnregisterCallback<GeometryChangedEvent>(OnViewportGeometryChanged);
+            viewport?.UnregisterCallback<GeometryChangedEvent>(OnViewportGeometryChanged);
+            if (cameraRectChanged && previewCamera != null)
+                previewCamera.rect = previousCameraRect;
+            cameraRectChanged = false;
+            documentRoot = null;
+            viewport = null;
+            cached = false;
+        }
+
+        IEnumerator BindDocument()
+        {
+            // UIDocument가 활성화 과정에서 시각 트리를 만든 뒤 연결한다.
+            yield return null;
+            while (!cached)
+            {
+                Build();
+                if (!cached) yield return null;
+            }
+            bindRoutine = null;
+        }
 
         void Update()
         {
-            // UIDocument 는 활성화된 뒤에야 rootVisualElement 를 만든다.
-            if (!cached) { Build(); if (!cached) return; }
+            if (!cached) return;
             ResolveReferences();
             RefreshTcp();
             RefreshGripper();
@@ -52,25 +80,29 @@ namespace MainUnity.UI
 
         void ResolveReferences()
         {
-            if (uiMaster == null) uiMaster = GetComponentInParent<UIMaster>();
             if (uiMaster == null) return;
             if (statusManager == null) statusManager = uiMaster.StatusManager;
             if (gripper == null) gripper = uiMaster.Gripper;
         }
 
-        /// <summary>TCP 행은 코드로 만든다. UXML 에는 빈 컨테이너만 둔다.</summary>
         void Build()
         {
             VisualElement root = GetComponent<UIDocument>().rootVisualElement;
             if (root == null) return;
 
             VisualElement tcpList = root.Q<VisualElement>("tcp-list");
-            if (tcpList != null)
-            {
-                tcpList.Clear();
-                for (int i = 0; i < TcpAxes.Length; i++)
-                    tcpList.Add(BuildTcpRow(i));
-            }
+            VisualElement previewViewport = root.Q<VisualElement>("manual-viewport");
+            if (tcpList == null || previewViewport == null) return;
+
+            tcpList.Clear();
+            for (int i = 0; i < TcpAxes.Length; i++)
+                tcpList.Add(BuildTcpRow(i));
+
+            documentRoot = root;
+            viewport = previewViewport;
+            documentRoot.RegisterCallback<GeometryChangedEvent>(OnViewportGeometryChanged);
+            viewport.RegisterCallback<GeometryChangedEvent>(OnViewportGeometryChanged);
+            UpdateCameraViewport();
 
             gripperChip = root.Q<VisualElement>("gripper-state-chip");
             gripperText = root.Q<Label>("gripper-state-text");
@@ -79,35 +111,49 @@ namespace MainUnity.UI
             cached = true;
         }
 
+        void OnViewportGeometryChanged(GeometryChangedEvent _) => UpdateCameraViewport();
+
+        void UpdateCameraViewport()
+        {
+            if (previewCamera == null || documentRoot == null || viewport == null) return;
+            Rect rootBounds = documentRoot.worldBound;
+            Rect viewportBounds = viewport.worldBound;
+            if (!(rootBounds.width > 0f && rootBounds.height > 0f &&
+                  viewportBounds.width > 0f && viewportBounds.height > 0f)) return;
+
+            float left = Mathf.Clamp01((viewportBounds.xMin - rootBounds.xMin) / rootBounds.width);
+            float right = Mathf.Clamp01((viewportBounds.xMax - rootBounds.xMin) / rootBounds.width);
+            // UI Toolkit은 좌상단, Camera.rect는 좌하단 원점이며 단위는 화면 대비 비율이다.
+            float bottom = Mathf.Clamp01(1f - (viewportBounds.yMax - rootBounds.yMin) / rootBounds.height);
+            float top = Mathf.Clamp01(1f - (viewportBounds.yMin - rootBounds.yMin) / rootBounds.height);
+            if (!(right > left && top > bottom)) return;
+
+            if (!cameraRectChanged)
+            {
+                previousCameraRect = previewCamera.rect;
+                cameraRectChanged = true;
+            }
+            previewCamera.rect = Rect.MinMaxRect(left, bottom, right, top);
+        }
+
         VisualElement BuildTcpRow(int i)
         {
             var row = new VisualElement();
             row.AddToClassList("row");
-            row.style.height = 74;
-            row.style.borderBottomWidth = 1;
-            row.style.borderBottomColor = new Color(1f, 1f, 1f, 0.055f);
+            row.AddToClassList("manual-tcp-row");
 
             var axis = new Label(TcpAxes[i]);
-            axis.AddToClassList("value");
-            axis.style.width = 60;
+            axis.AddToClassList("manual-tcp-axis");
             row.Add(axis);
 
             var value = new Label("—");
-            value.style.color = new Color(0.886f, 0.925f, 0.945f);
-            value.style.fontSize = 22;
-            value.style.unityFontStyleAndWeight = FontStyle.Bold;
-            value.style.width = 200;
-            value.style.unityTextAlign = TextAnchor.MiddleRight;
+            value.AddToClassList("manual-tcp-value");
             tcpLabels[i] = value;
             row.Add(value);
 
-            var spacer = new VisualElement();
-            spacer.AddToClassList("spacer");
-            row.Add(spacer);
-
             var unit = new Label(i < 3 ? "mm" : "deg");
             unit.AddToClassList("muted");
-            unit.style.fontSize = 12;
+            unit.AddToClassList("manual-tcp-unit");
             row.Add(unit);
             return row;
         }
@@ -127,7 +173,7 @@ namespace MainUnity.UI
             SetTcp(3, r.x); SetTcp(4, r.y); SetTcp(5, r.z);
         }
 
-        /// <summary>Mock Backend 는 TCP/RPY 를 채우지 않는다. 0 을 실측으로 오인하지 않게 비운다.</summary>
+        // Mock Backend는 TCP/RPY를 채우지 않으므로 0을 실측으로 오인하지 않게 비운다.
         void SetTcp(int i, float v)
         {
             if (tcpLabels[i] == null) return;

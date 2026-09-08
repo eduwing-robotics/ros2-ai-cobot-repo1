@@ -1,6 +1,8 @@
 // 역할: ROS JointTrajectory를 검증하고 시간값에 맞춰 Ghost 관절에 반복 재생한다.
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using RosMessageTypes.Trajectory;
 using UnityEngine;
 
@@ -23,11 +25,134 @@ namespace MainUnity.Runtime.RobotGhost
         public bool IsPlaying { get; private set; }
         public string LastError { get; private set; } = string.Empty;
 
+        GhostMaker manualMaker;
+        Coroutine manualRoutine;
+        LineRenderer manualLine;
+        MaterialPropertyBlock lineColor;
+        bool manualReady;
+        int obstacleSignature;
+        internal bool ManualCollision { get; private set; }
+        internal string ManualStatus { get; private set; } = "관절 목표를 선택하세요.";
+        internal bool ManualPathReady => manualReady && manualMaker != null &&
+            obstacleSignature == manualMaker.ManualObstacleSignature;
+
         void Awake() => RefreshReference();
+        void OnDisable() => Stop();
+
+        internal bool PreviewManualPath(GhostMaker maker, IReadOnlyList<float> from, IReadOnlyList<float> target)
+        {
+            Stop();
+            RefreshReference();
+            manualMaker = maker;
+            ManualCollision = false;
+            maker?.SetManualCollisionVisual(false);
+            if (maker == null || jointPreview == null || from == null || target == null ||
+                from.Count != JointCount || target.Count != JointCount)
+            {
+                ManualStatus = "요청 거부 · 현재 자세 또는 Ghost 연결 없음";
+                return false;
+            }
+            var start = new float[JointCount];
+            var destination = new float[JointCount];
+            float maxDelta = 0f;
+            for (int i = 0; i < JointCount; i++)
+            {
+                if (!float.IsFinite(from[i]) || !float.IsFinite(target[i]))
+                {
+                    ManualStatus = "요청 거부 · 유효하지 않은 관절 각도";
+                    return false;
+                }
+                start[i] = from[i];
+                destination[i] = target[i];
+                maxDelta = Mathf.Max(maxDelta, Mathf.Abs(target[i] - from[i]));
+            }
+            if (!jointPreview.TryApplyTrajectoryJoints(destination) || !jointPreview.TryApplyTrajectoryJoints(start))
+            {
+                ManualStatus = "요청 거부 · 관절 제한 범위 또는 Ghost 구성을 확인하세요.";
+                return false;
+            }
+            if (manualLine == null)
+            {
+                manualLine = gameObject.AddComponent<LineRenderer>();
+                manualLine.useWorldSpace = true;
+                manualLine.widthMultiplier = 0.008f;
+                manualLine.numCapVertices = 4;
+                manualLine.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                manualLine.receiveShadows = false;
+                var renderer = maker.GetOrCreateGhost().GetComponentInChildren<Renderer>();
+                if (renderer != null) manualLine.sharedMaterial = renderer.sharedMaterial;
+            }
+            manualLine.positionCount = 0;
+            manualLine.enabled = true;
+            SetLineColor(new Color(1f, 0.72f, 0.22f, 0.85f));
+            obstacleSignature = maker.ManualObstacleSignature;
+            ManualStatus = "경로 검사 중 · 관절 보간 미리보기";
+            // 1도 간격으로 물리 갱신 뒤 검사한다. 이산 검사이므로 연속 충돌 보장이나
+            // Backend가 생성할 실제 계획 경로를 대신하지 않는다.
+            manualRoutine = StartCoroutine(InspectManualPath(start, destination, Mathf.Max(1, Mathf.CeilToInt(maxDelta))));
+            return true;
+        }
+
+        IEnumerator InspectManualPath(float[] from, float[] target, int steps)
+        {
+            var physicsStep = new WaitForFixedUpdate();
+            for (int step = 0; step <= steps; step++)
+            {
+                float t = (float)step / steps;
+                for (int i = 0; i < JointCount; i++) previewDegrees[i] = Mathf.Lerp(from[i], target[i], t);
+                if (!jointPreview.TryApplyTrajectoryJoints(previewDegrees))
+                {
+                    ManualStatus = "요청 거부 · Ghost 자세 적용 실패";
+                    manualRoutine = null;
+                    yield break;
+                }
+                yield return physicsStep;
+                Physics.SyncTransforms();
+                manualLine.positionCount = step + 1;
+                manualLine.SetPosition(step, manualMaker.ManualPreviewPosition);
+                if (!manualMaker.TryCheckManualCollision(out string reason))
+                {
+                    ManualCollision = true;
+                    manualMaker.SetManualCollisionVisual(true);
+                    SetLineColor(new Color(1f, 0.15f, 0.2f, 0.9f));
+                    ManualStatus = "요청 거부 · " + reason;
+                    manualRoutine = null;
+                    yield break;
+                }
+                if (obstacleSignature != manualMaker.ManualObstacleSignature)
+                {
+                    ManualStatus = "요청 거부 · 검사 중 장애물이 변경되었습니다. 목표를 다시 확인하세요.";
+                    manualRoutine = null;
+                    yield break;
+                }
+            }
+            manualReady = true;
+            ManualStatus = "미리보기 검사 완료 · 실제 계획 경로는 실행 설비에서 별도 검증";
+            manualRoutine = null;
+        }
+
+        void SetLineColor(Color color)
+        {
+            lineColor ??= new MaterialPropertyBlock();
+            lineColor.SetColor("_BaseColor", color);
+            lineColor.SetColor("_Color", color);
+            manualLine.SetPropertyBlock(lineColor);
+        }
         void OnValidate() => RefreshReference();
 
         void Update()
         {
+            if (manualReady && manualMaker != null)
+            {
+                if (obstacleSignature != manualMaker.ManualObstacleSignature)
+                {
+                    manualReady = false;
+                    ManualCollision = true;
+                    manualMaker.SetManualCollisionVisual(true);
+                    SetLineColor(new Color(1f, 0.15f, 0.2f, 0.9f));
+                    ManualStatus = "요청 거부 · 장애물이 변경되었습니다. 경로를 다시 확인하세요.";
+                }
+            }
             if (!IsPlaying)
                 return;
 
@@ -108,6 +233,10 @@ namespace MainUnity.Runtime.RobotGhost
         /// <summary>현재 Ghost 경로 재생을 중단한다.</summary>
         public void Stop()
         {
+            if (manualRoutine != null) StopCoroutine(manualRoutine);
+            manualRoutine = null;
+            manualReady = false;
+            if (manualLine != null) manualLine.enabled = false;
             IsPlaying = false;
             LastError = string.Empty;
         }

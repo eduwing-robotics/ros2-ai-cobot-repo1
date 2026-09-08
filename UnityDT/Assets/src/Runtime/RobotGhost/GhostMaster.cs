@@ -13,6 +13,28 @@ namespace MainUnity.Runtime.RobotGhost
         [SerializeField] GhostJointPreview jointPreview;
         [SerializeField] GhostMovePreview movePreview;
 
+        bool manualPreviewActive;
+        internal bool ManualPathReady => movePreview != null && movePreview.ManualPathReady;
+        internal bool ManualCollision => movePreview != null && movePreview.ManualCollision;
+        internal string ManualStatus => movePreview != null ? movePreview.ManualStatus : "Ghost 경로 미리보기 연결 없음";
+
+        internal bool PreviewManualPath(IReadOnlyList<float> from, IReadOnlyList<float> target)
+        {
+            RefreshReferences();
+            if (movePreview == null || !SetVisible(true)) return false;
+            manualPreviewActive = true;
+            return movePreview.PreviewManualPath(maker, from, target);
+        }
+
+        internal void EndManualPreview()
+        {
+            if (!manualPreviewActive) return;
+            manualPreviewActive = false;
+            movePreview?.Stop();
+            maker?.SetManualCollisionVisual(false);
+            SetVisible(false);
+        }
+
         void Awake()
         {
             RefreshReferences();
@@ -22,7 +44,7 @@ namespace MainUnity.Runtime.RobotGhost
 
         public bool PreviewJoints(IReadOnlyList<float> jointDegrees)
         {
-            if (jointPreview == null || !SetVisible(true))
+            if (manualPreviewActive || jointPreview == null || !SetVisible(true))
                 return false;
 
             if (jointPreview.TryPreviewJoints(jointDegrees))
@@ -33,11 +55,11 @@ namespace MainUnity.Runtime.RobotGhost
         }
 
         public bool Play(JointTrajectoryMsg trajectory) =>
-            movePreview != null && movePreview.Play(trajectory);
+            !manualPreviewActive && movePreview != null && SetVisible(true) && movePreview.Play(trajectory);
 
         public bool ShowDestination(JointTrajectoryMsg trajectory)
         {
-            if (movePreview == null || !SetVisible(true))
+            if (manualPreviewActive || movePreview == null || !SetVisible(true))
                 return false;
 
             if (movePreview.ShowDestination(trajectory))
