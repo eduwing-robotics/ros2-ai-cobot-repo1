@@ -977,8 +977,10 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
 /* 접힌 이벤트 띠의 높이를 비워 계기와 겹치지 않게 한다. 펼친 이력은 하단 전체를 사용한다. */
 .page--run .run-col { top: 14px; bottom: 64px; }
 .run-operation-detail { font-size: 14px; color: var(--c-ink-2); white-space: normal; height: 42px; flex-shrink: 0; margin-top: 8px; overflow: hidden; }
-.run-calibration { height: 76px; flex-shrink: 0; border-bottom-width: 1px; border-bottom-color: var(--c-edge); margin-bottom: 8px; }
-.run-calibration-state { font-size: 16px; color: var(--c-ink); -unity-font-style: bold; }
+.run-calibration { height: 32px; min-height: 32px; max-height: 32px; flex-shrink: 0; border-bottom-width: 1px; border-bottom-color: var(--c-edge); margin-bottom: 8px; overflow: hidden; }
+.run-calibration-state { font-size: 16px; color: var(--c-ink); -unity-font-style: bold; min-width: 0; flex-shrink: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* 상세 원인과 수신 시각은 요약의 툴팁으로 제공해 슬롯 영역 높이를 유지한다. */
+.run-calibration .run-calibration-detail, .run-calibration #calibration-age { display: none; }
 .run-calibration-detail { font-size: 14px; color: var(--c-ink-2); margin-top: 4px; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .run-slot-content { flex-grow: 1; min-height: 0; overflow: hidden; }
 .run-slot-content .run-sect { margin-bottom: 4px; }
