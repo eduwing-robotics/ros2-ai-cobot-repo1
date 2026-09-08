@@ -127,7 +127,9 @@ def _insert_next_unit(cursor, job_id):
         """
         SELECT COALESCE(MAX(unit_sequence_in_job), 0) AS last_sequence,
                COUNT(*) FILTER (WHERE unit_status = 'RUNNING') AS running_count,
-               COUNT(*) FILTER (WHERE unit_status = 'COMPLETED' AND inspection_result = 'PASS') AS pass_count
+               COUNT(*) FILTER (
+                   WHERE unit_status = 'COMPLETED' AND inspection_result = 'PASS'
+               ) AS pass_count
         FROM production.units
         WHERE job_id = %s
         """,
@@ -224,8 +226,10 @@ def claim_job(job_id, product_code, product_version, recipe_version):
             }
 
 
-def get_next_runnable_job(product_code, product_version, recipe_version, ready_job_ids=None):
-    """Return the compatible interrupted or oldest pending Job without claiming it."""
+def get_next_runnable_job(
+    product_code, product_version, recipe_version, ready_job_ids=None
+):
+    """Prefer interrupted work, then the oldest compatible ready pending Job."""
     _required_text(product_code, "product_code")
     _required_text(product_version, "product_version")
     _required_text(recipe_version, "recipe_version")

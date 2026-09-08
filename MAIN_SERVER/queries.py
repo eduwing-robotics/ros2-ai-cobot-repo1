@@ -244,10 +244,13 @@ def job(job_id):
     row = _one("""
         SELECT j.job_id, j.product_id, pr.product_code, pr.product_version,
                j.recipe_version, j.job_status, j.requested_quantity,
-               COUNT(u.unit_id) FILTER (WHERE u.unit_status = 'COMPLETED' AND u.inspection_result = 'PASS')::integer AS completed_quantity,
+               COUNT(u.unit_id) FILTER (
+                   WHERE u.unit_status = 'COMPLETED' AND u.inspection_result = 'PASS'
+               )::integer AS completed_quantity,
                COUNT(u.unit_id) FILTER (WHERE u.unit_status = 'RUNNING')::integer AS running_quantity,
                COUNT(u.unit_id) FILTER (WHERE u.unit_status = 'FAILED')::integer AS failed_quantity,
-               ROUND(100.0 * COUNT(u.unit_id) FILTER (WHERE u.unit_status = 'COMPLETED' AND u.inspection_result = 'PASS')
+               ROUND(100.0 * COUNT(u.unit_id) FILTER (
+                         WHERE u.unit_status = 'COMPLETED' AND u.inspection_result = 'PASS')
                      / j.requested_quantity, 2) AS progress_percent,
                j.requested_at, j.job_started_at, j.job_finished_at
         FROM production.jobs j JOIN production.products pr ON pr.product_id = j.product_id
@@ -280,11 +283,14 @@ def jobs(status=None, limit=12):
                pr.product_version, j.recipe_version, j.job_status,
                j.requested_quantity,
                COUNT(u.unit_id)::integer AS attempted_quantity,
-               COUNT(u.unit_id) FILTER (WHERE u.unit_status = 'COMPLETED' AND u.inspection_result = 'PASS')::integer AS completed_quantity,
+               COUNT(u.unit_id) FILTER (
+                   WHERE u.unit_status = 'COMPLETED' AND u.inspection_result = 'PASS'
+               )::integer AS completed_quantity,
                COUNT(u.unit_id) FILTER (WHERE u.unit_status = 'RUNNING')::integer AS running_quantity,
                COUNT(u.unit_id) FILTER (WHERE u.unit_status = 'FAILED')::integer AS failed_quantity,
                COUNT(u.unit_id) FILTER (WHERE u.inspection_result = 'FAIL')::integer AS inspection_failed_quantity,
-               ROUND(100.0 * COUNT(u.unit_id) FILTER (WHERE u.unit_status = 'COMPLETED' AND u.inspection_result = 'PASS')
+               ROUND(100.0 * COUNT(u.unit_id) FILTER (
+                         WHERE u.unit_status = 'COMPLETED' AND u.inspection_result = 'PASS')
                      / j.requested_quantity, 2) AS progress_percent,
                j.requested_at, j.job_started_at, j.job_finished_at
         FROM selected_jobs j

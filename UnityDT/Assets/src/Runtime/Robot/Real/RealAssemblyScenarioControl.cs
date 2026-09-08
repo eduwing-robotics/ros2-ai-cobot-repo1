@@ -31,14 +31,13 @@ namespace MainUnity.Runtime.Robot.Real
         string pendingJobId;
         bool serviceRegistered;
         bool feedbackSubscribed;
-        public bool IsRunning => executionPending ||
-            (latest != null && latest.active);
-
         bool executionPending;
         bool controlPending;
         bool refreshRequested;
         bool realStatusConfirmed;
         int generation;
+
+        public bool IsRunning => executionPending || (latest != null && latest.active);
 
         [Serializable]
         sealed class AssemblyRequest

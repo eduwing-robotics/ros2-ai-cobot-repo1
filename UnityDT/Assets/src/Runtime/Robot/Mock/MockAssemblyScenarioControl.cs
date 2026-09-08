@@ -67,7 +67,6 @@ namespace MainUnity.Runtime.Robot.Mock
         TaskCompletionSource<bool> executionStateChanged = new();
         bool awaitingExecution;
 
-        public bool IsRunning => terminal != null && !terminal.Task.IsCompleted;
         Task recoveryTask = Task.CompletedTask;
         Transform heldItem;
         string activeJobId;
@@ -87,6 +86,8 @@ namespace MainUnity.Runtime.Robot.Mock
         bool assemblyConveyorStarted;
         bool recovering;
         int recoveryGeneration;
+
+        public bool IsRunning => terminal != null && !terminal.Task.IsCompleted;
 
         [Serializable]
         sealed class JobRequest

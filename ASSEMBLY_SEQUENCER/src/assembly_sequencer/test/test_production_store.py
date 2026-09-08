@@ -312,7 +312,7 @@ class ProductionStoreIntegrationTest(unittest.TestCase):
         args = (self.product_code, self.product_version, "assembly-r1")
         self.assertIsNone(store.get_next_runnable_job(*args, ready_job_ids=[]))
         self.assertEqual(store.get_next_runnable_job(*args, ready_job_ids=[ready])["job_id"], ready)
-        unit_id = self.claim(older)["unit_id"]
+        self.claim(older)
         self.assertIsNone(store.get_next_runnable_job(*args, ready_job_ids=[ready]))
         store.recover_interrupted_units()
         self.assertEqual(store.get_next_runnable_job(*args, ready_job_ids=[ready])["job_id"], older)
