@@ -168,7 +168,15 @@ namespace MainUnity.UI
                     jobRequest = null;
                 }
             }
-            if (shell?.ApiConnected != true || string.IsNullOrEmpty(currentJob)) return;
+            bool canQuery = shell?.ApiConnected == true && !string.IsNullOrEmpty(currentJob);
+            if (refresh != null)
+            {
+                refresh.SetEnabled(canQuery && jobRequest == null);
+                refresh.tooltip = string.IsNullOrEmpty(currentJob) ? "관측 Job이 없습니다. JOBS에서 작업을 확인하세요." :
+                    shell?.ApiConnected != true ? "MainServer 연결을 확인하세요." :
+                    jobRequest != null ? "작업 정보를 조회하고 있습니다." : "마지막 관측 Job의 제품·레시피를 다시 조회합니다.";
+            }
+            if (!canQuery) return;
             if (jobRequest != null)
             {
                 if (!jobRequest.isDone) return;
