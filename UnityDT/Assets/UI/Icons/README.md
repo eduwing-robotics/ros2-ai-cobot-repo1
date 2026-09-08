@@ -8,12 +8,12 @@
 
 | 파일 | iX 원본 | 쓰이는 곳 |
 |---|---|---|
-| `nav-monitor.png` | `monitoring.svg` | MONITOR 탭 |
-| `nav-run.png` | `play.svg` | RUN 탭 |
+| `nav-monitor.png` | `monitoring.svg` | RUN 탭 |
+| `nav-run.png` | `play.svg` | JOBS 탭 |
 | `nav-inspect.png` | `eye.svg` | INSPECT 탭 |
 | `nav-manual.png` | `hand.svg` | MANUAL 탭 |
-| `nav-quality.png` | `quality-report.svg` | QUALITY 탭 |
-| `nav-setup.png` | `cogwheel.svg` | SETUP 탭 |
+| `nav-quality.png` | `quality-report.svg` | 현재 메뉴 미사용 |
+| `nav-setup.png` | `cogwheel.svg` | SETUP 탭 (숨김) |
 | `view-twin.png` | `maximize.svg` | TWIN 집중 |
 
 이전에는 아이콘을 `VisualElement` 를 겹쳐 손으로 그렸다. 7개가 서로 굵기와 여백이 달랐고

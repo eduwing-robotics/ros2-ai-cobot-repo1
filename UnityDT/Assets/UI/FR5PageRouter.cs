@@ -4,7 +4,7 @@
 // 각 페이지는 자기 GameObject 에 UIDocument 하나 + 바인더를 갖고, 라우터는
 // 활성 페이지의 UIDocument 만 켠다. 비활성 페이지는 Update 가 돌지 않는다.
 //
-// 각 페이지 UXML 은 nav-run / nav-monitor / nav-inspect / nav-manual / nav-setup
+// 각 페이지 UXML 은 nav-run / nav-jobs / nav-inspect / nav-manual / nav-setup
 // 이라는 같은 이름의 버튼을 갖고 있으므로, 라우터가 모든 문서에서 한 번에 등록한다.
 
 using System;
@@ -51,7 +51,7 @@ namespace MainUnity.UI
 
         static readonly (FR5Page Page, string Button)[] NavButtons =
         {
-            (FR5Page.Run, "nav-run"),
+            (FR5Page.Run, "nav-jobs"),
             (FR5Page.Inspect, "nav-inspect"),
             (FR5Page.Manual, "nav-manual"),
             (FR5Page.Setup, "nav-setup"),
@@ -60,11 +60,11 @@ namespace MainUnity.UI
         readonly System.Collections.Generic.HashSet<UIDocument> wiredDocuments =
             new System.Collections.Generic.HashSet<UIDocument>();
 
-        UIDocument requestDocument;
+        UIDocument jobsDocument;
         FR5InspectBinder inspectBinder;
         AssemblyProgressManager assemblyProgress;
         bool progressSubscribed;
-        bool monitorRequested;
+        bool runRequested;
         FR5Page current;
 
         /// <summary>현재 열린 페이지다.</summary>
@@ -75,9 +75,10 @@ namespace MainUnity.UI
             wiredDocuments.Clear();
             current = startPage;
 
-            monitorRequested = false;
+            // Run은 JOBS와 페이지 번호를 공유하므로 시작 시 운전 문서를 명시적으로 선택한다.
+            runRequested = startPage == FR5Page.Run;
 
-            ResolveRequestDocument();
+            ResolveJobsDocument();
             inspectBinder = GetComponentInChildren<FR5InspectBinder>(true);
             ResolveProgress();
             Apply();
@@ -102,15 +103,15 @@ namespace MainUnity.UI
             // (전환이 먹지 않던 원인이 이것이었다)
             foreach (PageEntry entry in pages)
                 WireDocument(entry?.document);
-            WireDocument(requestDocument);
+            WireDocument(jobsDocument);
         }
 
-        void ResolveRequestDocument()
+        void ResolveJobsDocument()
         {
-            if (requestDocument != null) return;
+            if (jobsDocument != null) return;
 
             FR5RequestBinder binder = GetComponentInChildren<FR5RequestBinder>(true);
-            requestDocument = binder != null ? binder.GetComponent<UIDocument>() : null;
+            jobsDocument = binder != null ? binder.GetComponent<UIDocument>() : null;
         }
 
         bool ResolveProgress()
@@ -158,9 +159,9 @@ namespace MainUnity.UI
         /// <summary>한 문서의 nav 버튼을 한 번만 등록한다.</summary>
         void Wire(VisualElement root)
         {
-            Button monitor = root.Q<Button>("nav-monitor");
-            if (monitor != null)
-                monitor.clicked += OpenMonitor;
+            Button run = root.Q<Button>("nav-run");
+            if (run != null)
+                run.clicked += OpenMonitor;
 
             foreach ((FR5Page target, string buttonName) in NavButtons)
             {
@@ -178,7 +179,7 @@ namespace MainUnity.UI
         public void Go(FR5Page page)
         {
             if (!IsAvailable(page)) return;
-            monitorRequested = false;
+            runRequested = false;
             current = page;
             Apply();
         }
@@ -191,11 +192,11 @@ namespace MainUnity.UI
             Go(FR5Page.Inspect);
         }
 
-        /// <summary>진행 상태와 무관하게 실행 모니터 화면을 연다.</summary>
+        /// <summary>진행 상태와 무관하게 RUN 운전 현황 화면을 연다.</summary>
         public void OpenMonitor()
         {
             if (!IsAvailable(FR5Page.Run)) return;
-            monitorRequested = true;
+            runRequested = true;
             current = FR5Page.Run;
             Apply();
         }
@@ -218,33 +219,33 @@ namespace MainUnity.UI
                 if (entry?.document == null || entry.document.gameObject == null) continue;
                 SetDocumentActive(entry.document, entry.document == selected);
             }
-            SetDocumentActive(requestDocument, requestDocument == selected);
+            SetDocumentActive(jobsDocument, jobsDocument == selected);
             RefreshNavigationVisuals();
         }
         void RefreshNavigationVisuals()
         {
             foreach (PageEntry entry in pages)
                 RefreshNavigationVisuals(entry?.document?.rootVisualElement);
-            RefreshNavigationVisuals(requestDocument?.rootVisualElement);
+            RefreshNavigationVisuals(jobsDocument?.rootVisualElement);
         }
 
         void RefreshNavigationVisuals(VisualElement root)
         {
             if (root == null) return;
 
-            bool monitorActive = monitorRequested && current == FR5Page.Run;
-            root.Q<Button>("nav-monitor")?.EnableInClassList("tab--on", monitorActive);
+            bool runActive = runRequested && current == FR5Page.Run;
+            root.Q<Button>("nav-run")?.EnableInClassList("tab--on", runActive);
             foreach ((FR5Page target, string buttonName) in NavButtons)
                 root.Q<Button>(buttonName)?.EnableInClassList("tab--on",
-                    !monitorActive && target == current);
+                    !runActive && target == current);
         }
 
 
 
         UIDocument DocumentFor(FR5Page page)
         {
-            if (page == FR5Page.Run && !monitorRequested && requestDocument != null)
-                return requestDocument;
+            if (page == FR5Page.Run && !runRequested && jobsDocument != null)
+                return jobsDocument;
 
             foreach (PageEntry entry in pages)
                 if (entry != null && entry.page == page)
