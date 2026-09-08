@@ -109,6 +109,9 @@ namespace MainUnity.UI
 
         // 이 시간을 넘겨 프레임이 없으면 그 칸만 늦은 것으로 표시한다.
         const double CamStaleSeconds = 2d;
+        // 디코딩된 마지막 프레임 이후 100ms만 점등한다. 더 빠른 연속 수신에서는
+        // 점등이 이어지며, 새 프레임이 없으면 게임 시간 배율과 무관하게 소등한다.
+        const double CamPulseSeconds = 0.1d;
         bool camExpanded;
         Label camBadge;
         VisualElement camPanel, camGrid;
@@ -375,6 +378,8 @@ namespace MainUnity.UI
                     if (assigned) live++;
                     if (tile.Age != null)
                     {
+                        tile.Age.EnableInClassList("run-cam-tile__age--indicator", false);
+                        tile.Age.EnableInClassList("run-cam-tile__age--receiving", false);
                         tile.Age.text = assigned ? "SIM" : "카메라 미할당";
                         tile.Age.EnableInClassList("run-cam-tile__age--late", !assigned);
                     }
@@ -388,7 +393,11 @@ namespace MainUnity.UI
 
                 if (tile.Age != null)
                 {
-                    tile.Age.text = received ? (age * 1000d).ToString("0") + " ms" : "수신 없음";
+                    tile.Age.text = !received ? "수신 없음" :
+                        late ? "마지막 수신 " + age.ToString("0.0") + "초 전" : string.Empty;
+                    tile.Age.EnableInClassList("run-cam-tile__age--indicator", !late);
+                    tile.Age.EnableInClassList("run-cam-tile__age--receiving",
+                        !late && age <= CamPulseSeconds);
                     tile.Age.EnableInClassList("run-cam-tile__age--late", late);
                 }
             }

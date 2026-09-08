@@ -863,7 +863,15 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
     background-color: rgba(3, 6, 9, 0.72);
     padding-left: 6px; padding-right: 6px; padding-top: 2px; padding-bottom: 2px;
 }
-/* 늦은 칸만 색을 얻는다. 정상에는 색을 주지 않는다 (1절). */
+/* 정상 수신은 짧은 초록 점등으로, 지연은 경과 시간으로 표시한다. */
+.run-cam-tile__age--indicator {
+    width: 10px; height: 10px;
+    padding-left: 0; padding-right: 0; padding-top: 0; padding-bottom: 0;
+    border-top-left-radius: 5px; border-top-right-radius: 5px;
+    border-bottom-left-radius: 5px; border-bottom-right-radius: 5px;
+    background-color: rgba(3, 6, 9, 0.72);
+}
+.run-cam-tile__age--receiving { background-color: rgb(62, 207, 112); }
 .run-cam-tile__age--late { color: var(--c-bad); }
 
 /* 아래 띠에 놓인 패널 이름과 수신 요약. 칸 이름표와 자리를 다투지 않는다. */
