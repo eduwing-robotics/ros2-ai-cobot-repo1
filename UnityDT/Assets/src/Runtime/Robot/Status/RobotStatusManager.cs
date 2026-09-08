@@ -131,7 +131,11 @@ namespace MainUnity.Runtime.Robot.Status
             else if (frame.AbnormalStop != 0 || frame.Alarm != 0 ||
                      frame.MainErrorCode != 0 || frame.SubErrorCode != 0)
                 SetStatus(RobotRunState.Error, RobotErrorLabel.RobotAlarm,
-                    $"Robot alarm: main={frame.MainErrorCode}, sub={frame.SubErrorCode}.");
+                    $"수신 정지 신호: abnormal_stop={frame.AbnormalStop}, alarm={frame.Alarm}, " +
+                    $"main={frame.MainErrorCode}, sub={frame.SubErrorCode}." +
+                    (frame.AbnormalStop != 0 && frame.MainErrorCode == 0 && frame.SubErrorCode == 0
+                        ? " 이상정지 신호는 있으나 구체 원인은 수신 정보로 확인할 수 없습니다. 컨트롤러 진단을 확인하세요."
+                        : " 오류 코드의 상세 의미는 컨트롤러 진단에서 확인하세요."));
             else
                 SetStatus(frame.RobotMotionDone == 0 ? RobotRunState.Running : RobotRunState.Idle,
                     RobotErrorLabel.None, string.Empty);

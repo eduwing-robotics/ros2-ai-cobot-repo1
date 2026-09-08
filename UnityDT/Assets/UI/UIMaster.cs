@@ -151,7 +151,7 @@ namespace MainUnity.UI
             else if (state == RobotRunState.Error)
                 RecordEvent("로봇", "오류 · " + error + " · " + detail, true);
             else if (lastRobotState == RobotRunState.Disconnected || lastRobotState == RobotRunState.Error)
-                RecordEvent("로봇", "상태 복구 · 현재 오류 없음", false);
+                RecordEvent("로봇", "수신 오류 신호 해소 · 설비 준비는 별도 확인", false);
             lastRobotState = state;
         }
 

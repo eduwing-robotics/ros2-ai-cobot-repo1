@@ -115,6 +115,7 @@ namespace MainUnity.UI
         Product[] products = Array.Empty<Product>();
         ProductDetail selectedProduct;
         Requirement[] requirements = Array.Empty<Requirement>();
+        string requirementsQueriedAt;
         Job[] jobs = Array.Empty<Job>();
 
         bool cached, requirementsLoaded, jobsLoading, jobsLoaded, registerInFlight;
@@ -397,7 +398,7 @@ namespace MainUnity.UI
             if (selectedInspect != null) selectedInspect.tooltip = job != null && job.attempted_quantity > 0 ? "선택한 작업의 검사 기록을 엽니다." : "생산 시도가 있는 작업에서 확인할 수 있습니다.";
             if (selectedReason != null) selectedReason.text = job == null ? "선택한 작업의 진행과 가능한 동작을 확인합니다."
                 : !string.IsNullOrEmpty(jobQueryError) ? "갱신 실패 · 마지막 조회 기록입니다. 새로고침 후 상태를 확인하세요."
-                : pending ? blocked ?? "실행 가능한 대기 작업입니다."
+                : pending ? blocked ?? "실행 요청 가능 · 설비 준비 미확인"
                 : job.job_status == "RUNNING" ? "현재 실행 중입니다. 운전 현황에서 진행을 확인하세요."
                 : "PASS만 목표 달성에 포함됩니다. 불합격과 실행 실패도 생산 시도 횟수에 포함됩니다.";
         }
@@ -492,7 +493,7 @@ namespace MainUnity.UI
             if (job.job_status == "FAILED") return "Job 실패 · 사유 미제공";
             if (job.job_status == "CANCELLED") return "사용자 취소";
             if (job.job_status == "COMPLETED") return "완료";
-            if (job.job_status == "PENDING") return StartBlockedReason(job) ?? "시작 가능";
+            if (job.job_status == "PENDING") return StartBlockedReason(job) ?? "실행 요청 가능 · 설비 준비 미확인";
             return "시도 " + job.attempted_quantity;
         }
 
@@ -563,7 +564,11 @@ namespace MainUnity.UI
             {
                 requirements = JsonUtility.FromJson<RequirementListResponse>(json)?.data
                     ?? Array.Empty<Requirement>();
-                requirementsLoaded = true;
+                requirementsLoaded = requirements.Length > 0 && Array.TrueForAll(requirements,
+                    item => item != null && !string.IsNullOrEmpty(item.part_id) &&
+                        item.required_quantity > 0 && item.stock_quantity >= 0 && item.shortage_quantity >= 0);
+                if (!requirementsLoaded) productError = "부품 요구사항 미확인 · 빈 응답 또는 누락";
+                requirementsQueriedAt = requirementsLoaded ? DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") : null;
                 BuildSlots();
                 interlockSignature = null;
             }, SetProductError);
@@ -613,7 +618,8 @@ namespace MainUnity.UI
                 selectedProduct.product_code + " · " + selectedProduct.product_version);
             int slotCount = selectedProduct.slots?.Length ?? 0;
             int partCount = selectedProduct.slots == null ? 0 : GroupByPart(selectedProduct.slots).Count;
-            FR5EmptyState.Detail(productSlotCount, slotCount + " 슬롯 · " + partCount + " 부품");
+            FR5EmptyState.Detail(productSlotCount, selectedProduct.slots == null
+                ? "제품 슬롯 구성 미확인" : slotCount + " 슬롯 · " + partCount + " 부품");
         }
 
         sealed class PartGroup
@@ -681,8 +687,9 @@ namespace MainUnity.UI
             tile.Add(line);
 
             Requirement stock = Array.Find(requirements,
-                item => string.Equals(item.part_id, group.PartId, StringComparison.OrdinalIgnoreCase));
-            var stockText = new Label(stock == null ? "재고 조회 중" : "보유 " + stock.stock_quantity);
+                item => requirementsLoaded && item != null && string.Equals(item.part_id, group.PartId, StringComparison.OrdinalIgnoreCase));
+            var stockText = new Label(stock == null ? "재고 미확인" : "조회 당시 재고 " + stock.stock_quantity);
+            stockText.tooltip = stock == null ? "유효한 재고 조회 결과 없음" : "DB 조회 " + requirementsQueriedAt + " · 실시간 실물 수량 아님";
             stockText.AddToClassList("parttile__stock");
             if (stock != null && stock.shortage_quantity > 0) stockText.AddToClassList("bad");
             tile.Add(stockText);
@@ -714,7 +721,9 @@ namespace MainUnity.UI
         {
             if (interlockList == null) return;
 
-            bool productReady = selectedProduct != null && requirementsLoaded;
+            bool productReady = selectedProduct?.slots != null && selectedProduct.slots.Length > 0 && requirementsLoaded &&
+                Array.TrueForAll(selectedProduct.slots, slot => slot != null && !string.IsNullOrEmpty(slot.part_id) &&
+                    Array.Exists(requirements, item => item != null && string.Equals(item.part_id, slot.part_id, StringComparison.OrdinalIgnoreCase)));
             bool stockReady = productReady && Array.TrueForAll(requirements, item => item.shortage_quantity == 0);
             bool mock = uiMaster != null && uiMaster.IsSimulated;
             string signature = productReady + "|" + stockReady + "|" + mock + "|" + registerInFlight;
@@ -726,8 +735,8 @@ namespace MainUnity.UI
 
             interlockSignature = signature;
             interlockList.Clear();
-            AddCheck("제품 · 레시피 확인", productReady);
-            AddCheck("목표 수량분 재고", stockReady);
+            AddCheck("제품 · 요구 부품 조회", productReady);
+            AddCheck("조회 당시 목표 수량분 재고", stockReady);
             AddCheck("시뮬레이션 등록 모드", mock);
             ApplyRegisterState(productReady, stockReady, mock);
         }

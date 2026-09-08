@@ -64,6 +64,71 @@ namespace MainUnity.Tests.PlayMode
             }
         }
 
+        [Test]
+        public void UiGripperShowsFeedbackWithoutInferringGraspAndBlanksStaleValues()
+        {
+            var root = new GameObject("UI feedback truthfulness regression");
+            root.SetActive(false);
+            try
+            {
+                var status = root.AddComponent(RuntimeType("MainUnity.Runtime.Robot.Status.RobotStatusManager"));
+                var gripper = root.AddComponent(RuntimeType("MainUnity.Runtime.Robot.Status.GripperSubscriber"));
+                var constructor = RuntimeType("MainUnity.Runtime.Robot.Status.RobotStatusFrame")
+                    .GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic).Single();
+                object[] args = constructor.GetParameters().Select(parameter =>
+                    parameter.ParameterType.IsValueType ? Activator.CreateInstance(parameter.ParameterType) : null).ToArray();
+                args[0] = new float[6];
+                args[8] = (byte)1;
+                args[11] = (byte)40;
+                args[12] = true;
+                foreach (string name in new[] { "FR5RunBinder", "FR5ManualBinder" })
+                {
+                    var binder = root.AddComponent(RuntimeType("MainUnity.UI." + name));
+                    var value = new UnityEngine.UIElements.Label();
+                    var state = new UnityEngine.UIElements.Label();
+                    Field(binder, "statusManager").SetValue(binder, status);
+                    Field(binder, "gripper").SetValue(binder, gripper);
+                    Field(binder, "gripperValue").SetValue(binder, value);
+                    Field(binder, "gripperText").SetValue(binder, state);
+                    args[args.Length - 1] = Time.realtimeSinceStartupAsDouble;
+                    var frame = constructor.Invoke(args);
+                    Invoke(status, "ApplyState", frame);
+                    Invoke(gripper, "ApplyState", frame);
+                    Invoke(binder, "RefreshGripper");
+                    Assert.That(value.text, Is.EqualTo(name == "FR5RunBinder" ? "40 %" : "40"));
+                    Assert.That(state.text, Is.EqualTo("파지 미확인"));
+                    Field(status, "lastReceiveTimeSeconds").SetValue(status, Time.realtimeSinceStartupAsDouble - 1d);
+                    Invoke(binder, "RefreshGripper");
+                    Assert.That(value.text, Is.EqualTo("—"));
+                    Assert.That(state.text, Is.EqualTo("—"));
+                }
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        [Test]
+        public void UiProgressUsesReceivedStepCountInsteadOfSceneSlots()
+        {
+            var root = new GameObject("UI progress truthfulness regression");
+            root.SetActive(false);
+            try
+            {
+                var binder = root.AddComponent(RuntimeType("MainUnity.UI.FR5RunBinder"));
+                var label = new UnityEngine.UIElements.Label();
+                Field(binder, "progressCount").SetValue(binder, label);
+                Field(binder, "planTotal").SetValue(binder, 25);
+                var frameType = RuntimeType("MainUnity.Runtime.Robot.Assembly.AssemblyProgressFrame");
+                var stateType = RuntimeType("MainUnity.Runtime.Robot.Assembly.AssemblyState");
+                var frame = Activator.CreateInstance(frameType, "test", "recipe", Enum.Parse(stateType, "Placed"),
+                    3, 10, 3, "HBM", "HBM-03", "", "", Time.realtimeSinceStartupAsDouble);
+                Invoke(binder, "RefreshProgressHeader", frame, 3);
+                Assert.That(label.text, Is.EqualTo("3 / 10"));
+                Invoke(binder, "RefreshProgressHeader", null, 0);
+                Assert.That(label.text, Is.EqualTo("진행 수량 미확인"));
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
         [UnityTest]
         public IEnumerator PausedTimePreservesBudgetAndTimeoutRetainsTracking()
         {
@@ -232,7 +297,33 @@ namespace MainUnity.Tests.PlayMode
                 Assert.That(verdict.ClassListContains("warn"), Is.True);
                 Invoke(binder, "ShowState", "작업 없음", "현재 조회할 작업이 없습니다.", false);
                 Assert.That(verdict.ClassListContains("warn"), Is.False);
-                Assert.That(source.text, Is.EqualTo("현재 영상 · LIVE"));
+                Assert.That(source.text, Is.EqualTo("영상 수신 대기"));
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        [Test]
+        public void QualityDistinguishesMissingInspectionsFromZeroDefects()
+        {
+            var root = new GameObject("Quality truthfulness regression");
+            root.SetActive(false);
+            try
+            {
+                var binder = root.AddComponent(RuntimeType("MainUnity.UI.FR5QualityBinder"));
+                var visual = new UnityEngine.UIElements.VisualElement();
+                var empty = new UnityEngine.UIElements.VisualElement { name = "pareto-empty" };
+                visual.Add(empty);
+                Field(binder, "root").SetValue(binder, visual);
+                var rateType = binder.GetType().GetNestedType("SlotRate", BindingFlags.NonPublic);
+                var rates = Array.CreateInstance(rateType, 1);
+                var rate = JsonUtility.FromJson("{\"part_id\":\"HBM\",\"inspected_quantity\":0,\"defective_quantity\":0}", rateType);
+                rates.SetValue(rate, 0);
+                Field(binder, "rates").SetValue(binder, rates);
+                Invoke(binder, "Rebuild");
+                Assert.That(((UnityEngine.UIElements.Label)empty[0][1]).text, Does.Contain("검사 이력 없음"));
+                Field(rate, "inspected_quantity").SetValue(rate, 10);
+                Invoke(binder, "Rebuild");
+                Assert.That(((UnityEngine.UIElements.Label)empty[0][1]).text, Does.Contain("10건 중 기록된 불량 0건"));
             }
             finally { UnityEngine.Object.DestroyImmediate(root); }
         }

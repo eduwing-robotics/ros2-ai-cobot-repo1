@@ -277,7 +277,7 @@ namespace MainUnity.UI
             Defect[] defects = selected.defects ?? Array.Empty<Defect>();
             defectGrid?.Clear();
             if (defects.Length == 0)
-                defectGrid?.Add(CheckLine(pending ? "검사 완료 후 불량 내역을 확인할 수 있습니다." :
+                defectGrid?.Add(CheckLine(selected.defects == null ? "불량 상세 미확인 · 자료 없음" : pending ? "검사 완료 후 불량 내역을 확인할 수 있습니다." :
                     result == "FAIL" ? "불합격 판정이지만 상세 불량 내역은 없습니다." : "기록된 불량이 없습니다.", false));
             foreach (Defect defect in defects)
             {
@@ -312,7 +312,7 @@ namespace MainUnity.UI
             }
             if (!string.IsNullOrEmpty(selected.inspection_error))
                 checkList?.Add(CheckLine("상세 검사 자료를 읽지 못했습니다. 새로고침하세요.", true));
-            FR5EmptyState.Detail(defectSql, "확정 불량 " + defects.Length + "건");
+            FR5EmptyState.Detail(defectSql, selected.defects == null ? "확정 불량 건수 미확인" : "확정 불량 " + defects.Length + "건");
 
             unitStrip?.Clear();
             foreach (Unit unit in units)
@@ -456,7 +456,8 @@ namespace MainUnity.UI
             evidenceButton?.EnableInClassList("inspect-tab--on", !showLiveVideo);
             evidenceButton?.SetEnabled(hasSelection);
             if (cameraSource != null)
-                cameraSource.text = showLiveVideo ? "현재 영상 · LIVE" : hasEvidence ? "검사 기록 · SAMPLE" : "검사 기록 이미지";
+                cameraSource.text = showLiveVideo ? (fresh ? "현재 수신 영상 · LIVE" : received ? "마지막 영상 · 수신 중단" : "영상 수신 대기")
+                    : hasEvidence ? evidenceStats : "검사 기록 이미지";
             if (cameraEmptyTitle != null)
                 cameraEmptyTitle.text = showLiveVideo ? (received ? "영상 수신 중단" : "영상 수신 대기") : "검사 기록 이미지";
             if (cameraEmptyDesc != null)

@@ -232,9 +232,10 @@ namespace MainUnity.UI
         /// <summary>액센트 색을 쓰는 유일한 곳이다. 여기가 흐려지면 실기/모의 구분이 사라진다.</summary>
         void RefreshMode()
         {
-            bool mock = uiMaster == null || uiMaster.IsSimulated;
+            bool known = uiMaster != null && uiMaster.RobotMaster != null;
+            bool mock = known && uiMaster.IsSimulated;
             modeMock?.EnableInClassList("chip--accent", mock);
-            modeReal?.EnableInClassList("chip--accent", !mock);
+            modeReal?.EnableInClassList("chip--accent", known && !mock);
 
             // 페이지 뿌리의 fr5--mock 이 --c-accent 를 정한다. 이 줄이 없으면 UXML 에
             // 박아 둔 fr5--mock 이 그대로 남아, REAL 로 바꿔도 화면 전체 액센트가
@@ -244,7 +245,7 @@ namespace MainUnity.UI
 
         void RefreshState()
         {
-            RobotRunState state = statusManager != null ? statusManager.State : RobotRunState.Disconnected;
+            RobotRunState state = statusManager != null && statusManager.HasFreshState ? statusManager.State : RobotRunState.Disconnected;
             if (robotText != null) robotText.text = state switch
             {
                 RobotRunState.Running => "이동 중",
@@ -398,7 +399,7 @@ namespace MainUnity.UI
         {
             if (alarmBanner == null) return;
 
-            RobotRunState state = statusManager != null ? statusManager.State : RobotRunState.Disconnected;
+            RobotRunState state = statusManager != null && statusManager.HasFreshState ? statusManager.State : RobotRunState.Disconnected;
             RobotStatusFrame frame = statusManager != null ? statusManager.Latest : null;
 
             bool emergency = frame != null && frame.EmergencyStop != 0;
@@ -423,11 +424,13 @@ namespace MainUnity.UI
             if (!condition)
             {
                 if (alarmLabel != null) alarmLabel.text = "상태 복구";
-                if (alarmDetail != null) alarmDetail.text = lastAlarmLabel + " · 현재 오류 없음 · 작업 재개 여부는 별도 확인";
+                if (alarmDetail != null) alarmDetail.text = lastAlarmLabel + " · 수신 오류 신호 해소 · 설비 준비와 작업 재개는 별도 확인";
                 return;
             }
 
             string label =
+                statusManager == null || !statusManager.HasFreshState
+                    ? frame == null ? "로봇 상태 수신 대기" : "로봇 상태 수신 중단" :
                 emergency ? "비상정지 작동" :
                 alarm ? "로봇 알람 발생" :
                 abnormal ? "이상 정지" :
@@ -440,10 +443,24 @@ namespace MainUnity.UI
             string detail = state == RobotRunState.Disconnected
                 ? "현재 자세를 확인할 수 없습니다 · 로봇 연결을 확인하세요"
                 : "로봇 상태와 오류 코드를 확인하세요";
-            if (alarmDetail != null) alarmDetail.tooltip = statusManager?.ErrorDetail ?? "상태 수신 없음";
+            if (frame != null && statusManager.HasFreshState && abnormal && !emergency && !alarm)
+                detail = frame.MainErrorCode == 0 && frame.SubErrorCode == 0
+                    ? $"abnormal_stop={frame.AbnormalStop} · 코드 0:0 · 상세 원인 미확인 · 컨트롤러 진단 확인"
+                    : $"abnormal_stop={frame.AbnormalStop} · 컨트롤러 진단에서 코드 원인 확인";
+            if (frame != null && !statusManager.HasFreshState)
+                detail = $"마지막 수신 {Math.Max(0d, now - frame.ReceiveTimeSeconds):0.0}초 전 · E-STOP {frame.EmergencyStop} / ALARM {frame.Alarm} / 이상정지 {frame.AbnormalStop} · 현재 상태 미확인";
             if (frame != null && (frame.MainErrorCode != 0 || frame.SubErrorCode != 0))
                 detail = $"error {frame.MainErrorCode}:{frame.SubErrorCode}   ·   {detail}";
-            if (alarmDetail != null) alarmDetail.text = detail;
+            if (alarmDetail != null)
+            {
+                alarmDetail.text = detail;
+                alarmDetail.tooltip = (statusManager?.ErrorDetail ?? "상태 수신 없음") +
+                    (frame == null ? "" : $"\n/nonrt_state_data · 마지막 수신 {Math.Max(0d, now - frame.ReceiveTimeSeconds):0.0}초 전" +
+                        $"\nabnormal_stop={frame.AbnormalStop}, emg={frame.EmergencyStop}, alarm={frame.Alarm}" +
+                        $"\nmain={frame.MainErrorCode}, sub={frame.SubErrorCode}, robot_motion_done={frame.RobotMotionDone}" +
+                        $"\nrobot_mode={frame.RobotMode}, prg_state={frame.ProgramState}" +
+                        "\n동작 완료 신호와 이상정지 신호는 별도 값입니다. 동작 완료만으로 오류 해제를 판정하지 않습니다.");
+            }
 
             // TODO(API): 해제 가능한 경고만 초기화하는 알람 확인·해제 경로가 없다.
             //            fairino_msgs 의 리셋 명령이 붙으면 여기에 해제 버튼을 단다.

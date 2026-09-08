@@ -112,7 +112,7 @@
                     <ui:VisualElement class="rule" style="margin-bottom:14px;" />
                     <ui:VisualElement class="row" style="height:46px;">
                         <ui:VisualElement style="width:230px;">
-                            <ui:Label text="레시피" class="micro" />
+                            <ui:Label text="요청 레시피 · 사전 검증 미확인" class="micro" />
                             <ui:Label name="recipe-version" text="assembly-r1" class="value" style="margin-top:4px;" />
                         </ui:VisualElement>
                         <ui:VisualElement>

@@ -20,6 +20,7 @@ namespace MainUnity.UI
         [SerializeField] RobotStatusManager statusManager;
         [SerializeField] GripperSubscriber gripper;
 
+        // 기존 씬 직렬화 호환용으로 보존한다. 실측 거리로 환산하는 데 사용하지 않는다.
         [SerializeField] float gripperStrokeMillimeters = 40f;
 
         [Header("로봇 표시 영역")]
@@ -161,7 +162,7 @@ namespace MainUnity.UI
         void RefreshTcp()
         {
             RobotStatusFrame frame = statusManager != null ? statusManager.Latest : null;
-            if (frame == null)
+            if (frame == null || !statusManager.HasFreshState)
             {
                 foreach (Label l in tcpLabels) if (l != null) l.text = "—";
                 return;
@@ -183,7 +184,7 @@ namespace MainUnity.UI
 
         void RefreshGripper()
         {
-            if (gripper == null || !gripper.TryGetOpeningPercent(out float percent))
+            if (statusManager == null || !statusManager.HasFreshState || gripper == null || !gripper.TryGetOpeningPercent(out float percent))
             {
                 if (gripperValue != null) gripperValue.text = "—";
                 if (gripperText != null) gripperText.text = "—";
@@ -192,13 +193,11 @@ namespace MainUnity.UI
                 return;
             }
 
-            float mm = gripperStrokeMillimeters * percent * 0.01f;
-            if (gripperValue != null) gripperValue.text = $"{mm:0.0} / {gripperStrokeMillimeters:0}";
+            if (gripperValue != null) gripperValue.text = $"{percent:0}";
             if (gripperFill != null) gripperFill.style.width = Length.Percent(percent);
 
-            bool holding = percent < 95f;
-            if (gripperText != null) gripperText.text = holding ? "HOLDING" : "OPEN";
-            gripperChip?.EnableInClassList("chip--accent", holding);
+            if (gripperText != null) gripperText.text = "파지 미확인";
+            gripperChip?.EnableInClassList("chip--accent", false);
         }
 
     }

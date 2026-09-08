@@ -39,7 +39,7 @@ namespace MainUnity.UI
         [SerializeField] GripperSubscriber gripper;
         [SerializeField] CamVisionReceiver vision;
 
-        // 그리퍼 스트로크(mm)는 여기 없다. RUN 은 열림 백분율만 적는다 — 위 RefreshGripper 참고.
+        // 기존 씬 직렬화 호환용으로 보존한다. 장비 watchdog 기준으로 사용하지 않는다.
         [SerializeField] float watchdogLimitMilliseconds = 50f;
 
         [Header("카메라")]
@@ -414,7 +414,7 @@ namespace MainUnity.UI
             watchdogSpark = Attach(root, "watchdog-spark");
             // 지연은 자동 범위다. 한계(50ms)를 넘는 순간이 아니라 한계로 다가가는
             // 기울기를 읽는 것이 목적이라, 실제 변동 폭에 맞춰야 기울기가 보인다.
-            if (watchdogSpark != null) watchdogSpark.Limit = watchdogLimitMilliseconds;
+            if (watchdogSpark != null) watchdogSpark.Limit = float.NaN;
 
         }
 
@@ -448,7 +448,7 @@ namespace MainUnity.UI
 
             if (gripperSpark != null)
             {
-                if (gripper != null && gripper.TryGetOpeningPercent(out float percent))
+                if (statusManager != null && statusManager.HasFreshState && gripper != null && gripper.TryGetOpeningPercent(out float percent))
                     gripperSpark.Push(percent);
                 else gripperSpark.ClearHistory();
             }
@@ -655,28 +655,20 @@ namespace MainUnity.UI
 
             int placed = frame != null ? frame.PlacedCount : 0;
 
-            // StepOrder 는 1부터다. 진행 중인 스텝의 부품은 아직 기판에 없다.
-            bool running = frame != null && !frame.IsTerminal && frame.StepOrder > 0;
-            int nowIndex = running ? frame.StepOrder - 1 : -1;
-            int badIndex = frame != null && frame.State == AssemblyState.Failed && frame.StepOrder > 0
-                ? frame.StepOrder - 1
-                : -1;
-
+            // 피드백의 누적 수량은 슬롯별 이력이 아니다. 씬 그룹 순서에 배분하면
+            // 레시피 순서가 다르거나 중간에 연결했을 때 다른 슬롯을 완료로 표시한다.
             foreach (SlotGroup group in slotGroups)
             {
-                int done = Mathf.Clamp(placed - group.Start, 0, group.Total);
-                bool isNow = nowIndex >= group.Start && nowIndex < group.Start + group.Total;
-
-                group.Count.text = frame != null ? $"{done} / {group.Total}" : group.Total.ToString();
-                group.Root.EnableInClassList("grp--now", isNow);
+                group.Count.text = $"{group.Total} 슬롯";
+                group.Root.tooltip = "트윈 구성 · 슬롯별 실물 장착 여부 미확인";
+                group.Root.EnableInClassList("grp--now", false);
 
                 for (int i = 0; i < group.Cells.Length; i++)
                 {
-                    int step = group.Start + i;
                     VisualElement cell = group.Cells[i];
-                    cell.EnableInClassList("cell--done", i < done);
-                    cell.EnableInClassList("cell--now", step == nowIndex);
-                    cell.EnableInClassList("cell--bad", step == badIndex);
+                    cell.EnableInClassList("cell--done", false);
+                    cell.EnableInClassList("cell--now", false);
+                    cell.EnableInClassList("cell--bad", false);
                 }
             }
 
@@ -702,14 +694,15 @@ namespace MainUnity.UI
         void RefreshProgressHeader(AssemblyProgressFrame frame, int placed)
         {
             if (progressCount != null)
-                progressCount.text = frame != null ? $"{placed} / {planTotal}" : $"{planTotal} 슬롯";
+                progressCount.text = frame != null && frame.ExpectedStepCount > 0
+                    ? $"{placed} / {frame.ExpectedStepCount}" : "진행 수량 미확인";
 
-            // 상단 진행 레일. 화면에서 크게 움직이는 유일한 것이라 여기 하나에서만 값을 준다.
-            // 슬롯이 0 이면 나눌 수 없고, 그 경우 레일은 비어 있는 것이 맞다 — 0% 는
-            // "아직 아무것도 안 놓았다"가 아니라 "셀 수 있는 것이 없다"이기 때문이다.
+            // 분모는 씬 슬롯 수가 아닌 실행 피드백의 전체 단계 수다.
+            // 단계 수가 없으면 빈 레일과 미확인 문구를 함께 표시한다.
             if (progressRailFill != null)
                 progressRailFill.style.width = Length.Percent(
-                    planTotal > 0 ? Mathf.Clamp01((float)placed / planTotal) * 100f : 0f);
+                    frame != null && frame.ExpectedStepCount > 0
+                        ? Mathf.Clamp01((float)placed / frame.ExpectedStepCount) * 100f : 0f);
 
             if (progressNow == null) return;
             progressNow.text = frame == null ? "진행 피드백 없음" : Describe(frame);
@@ -724,7 +717,7 @@ namespace MainUnity.UI
         {
             if (unitPhase != null)
             {
-                unitPhase.text = "조립 · " + (frame == null ? "피드백 없음" : frame.State switch
+                unitPhase.text = "조립 수신 · " + (frame == null ? "피드백 없음" : frame.State switch
                 {
                     AssemblyState.Idle => "대기",
                     AssemblyState.Started => "시작",
@@ -772,7 +765,9 @@ namespace MainUnity.UI
                 return;
             }
 
-            unitStep.text = $"현재 조립 단계 {Mathf.Clamp(frame.StepOrder, 0, planTotal)} / {planTotal}";
+            unitStep.text = frame.ExpectedStepCount > 0
+                ? $"마지막 수신 단계 {frame.StepOrder} / {frame.ExpectedStepCount}"
+                : "조립 단계 수 미확인";
         }
 
         /// <summary>
@@ -816,9 +811,7 @@ namespace MainUnity.UI
                 default:
                     if (string.IsNullOrEmpty(frame.SlotCode))
                         return string.IsNullOrEmpty(frame.PartId) ? "시작" : frame.PartId;
-                    return frame.IsHolding
-                        ? $"{frame.PartId} 파지   →   {frame.SlotCode}"
-                        : $"{frame.PartId}   ·   {frame.SlotCode}";
+                    return $"{frame.PartId}   ·   {frame.SlotCode}";
             }
         }
 
@@ -943,10 +936,10 @@ namespace MainUnity.UI
             realStatus.Clear();
             realRows.Clear();
 
-            AddRealRow("안전", f =>
+            AddRealRow("정지 신호", f =>
                 f.EmergencyStop != 0 ? "E-STOP 작동" :
                 f.Alarm != 0 ? "ALARM 발생" :
-                f.AbnormalStop != 0 ? "이상 정지" : "정상");
+                f.AbnormalStop != 0 ? "이상 정지" : "수신 플래그 없음");
             AddRealRow("프로그램", f => f.MainErrorCode == 0 && f.SubErrorCode == 0
                 ? $"mode {f.RobotMode} · state {f.ProgramState}"
                 : $"error {f.MainErrorCode}:{f.SubErrorCode}");
@@ -1027,7 +1020,7 @@ namespace MainUnity.UI
         void RefreshJoints()
         {
             float[] joints = statusManager != null ? statusManager.Latest?.JointDegrees : null;
-            bool live = joints != null && joints.Length == JointCount;
+            bool live = statusManager != null && statusManager.HasFreshState && joints != null && joints.Length == JointCount;
             for (int i = 0; i < JointCount; i++)
             {
                 if (jointValues[i] != null) jointValues[i].text = live ? joints[i].ToString("0.0") : "—";
@@ -1035,17 +1028,16 @@ namespace MainUnity.UI
 
                 float ratio = live ? Mathf.InverseLerp(LimitLow[i], LimitHigh[i], joints[i]) : 0f;
                 jointFills[i].style.width = Length.Percent(ratio * 100f);
-                // 가동범위 양 끝 어느 쪽이든 가까우면 경고색
-                bool near = live && (ratio >= 0.8f || ratio <= 0.2f);
-                jointFills[i].EnableInClassList("gauge__fill--warn", near);
-                jointFills[i].EnableInClassList("gauge__fill--neutral", !near);
+                // 로컬 표시 범위는 설비의 안전 한계가 아니므로 경고 판정에 쓰지 않는다.
+                jointFills[i].EnableInClassList("gauge__fill--warn", false);
+                jointFills[i].EnableInClassList("gauge__fill--neutral", true);
             }
         }
 
         void RefreshPose()
         {
             RobotStatusFrame frame = statusManager != null ? statusManager.Latest : null;
-            if (frame == null)
+            if (frame == null || !statusManager.HasFreshState)
             {
                 foreach (Label l in tcpValues) if (l != null) l.text = "—";
                 foreach (Label l in rpyValues) if (l != null) l.text = "—";
@@ -1066,7 +1058,7 @@ namespace MainUnity.UI
 
         void RefreshGripper()
         {
-            if (gripper == null || !gripper.TryGetOpeningPercent(out float percent))
+            if (statusManager == null || !statusManager.HasFreshState || gripper == null || !gripper.TryGetOpeningPercent(out float percent))
             {
                 if (gripperValue != null) gripperValue.text = "—";
                 if (gripperText != null) gripperText.text = "—";
@@ -1074,38 +1066,30 @@ namespace MainUnity.UI
                 gripperChip?.EnableInClassList("chip--accent", false);
                 return;
             }
-            // "100.0 / 100 %" 는 22px 굵은 글자로 145px 이다. 칩(HOLDING · 79px)과 나란히
-            // 놓이면 열의 내용 폭 166px 을 60px 넘겨 옆 열(SLOT MAP) 위로 흘렀다.
-            // 피드백은 정수 백분율이므로 소수점은 표시하지 않는다.
-            // 단위와 눈금(%)은 섹션 머리의 "열림 % · 30초" 가 이미 말한다.
+            // 개방률은 파지 센서가 아니므로 물체를 잡았다고 단정하지 않는다.
             if (gripperValue != null) gripperValue.text = $"{percent:0} %";
             if (gripperFill != null) gripperFill.style.width = Length.Percent(percent);
-            bool holding = percent < 95f;
-            if (gripperText != null) gripperText.text = holding ? "HOLDING" : "OPEN";
-            gripperChip?.EnableInClassList("chip--accent", holding);
+            if (gripperText != null) gripperText.text = "파지 미확인";
+            gripperChip?.EnableInClassList("chip--accent", false);
         }
 
         /// <summary>모드·로봇상태·링크는 FR5ShellBinder 가 맡는다. 여기서는 페이지 고유값만 본다.</summary>
         void RefreshLink()
         {
             bool live = statusManager != null && statusManager.HasFreshState;
-            // 워치독이 살아 있는 것은 정상이다. 초록을 주면 화면에서 가장 눈에 띄는 것이
-            // "정상"이 된다. 늦어지는 것은 아래 스파크라인이 알람 전에 보여 준다.
+            // 기존 수신 유효성 기준만 사용한다. 장비 watchdog이나 안전 한계가 아니다.
             watchdogDot?.EnableInClassList("dot--ok", live);
             watchdogDot?.EnableInClassList("dot--good", false);
             watchdogDot?.EnableInClassList("dot--bad", !live);
-            // "OK" 는 값이 아니다. 한계까지 얼마나 남았는지 알 수 없으므로 실측 지연을 적는다.
-            // 위 스파크라인이 그 값의 30초 기울기를 함께 보여 준다.
             if (watchdogValue != null)
             {
                 double ageMs = live
                     ? (Time.realtimeSinceStartupAsDouble - statusManager.Latest.ReceiveTimeSeconds) * 1000d
                     : -1d;
                 watchdogValue.text = live
-                    ? $"{ageMs:0} / {watchdogLimitMilliseconds:0} ms"
-                    : "STALE";
-                // 한계를 넘은 것만 색을 얻는다.
-                SetTone(watchdogValue, !live || ageMs > watchdogLimitMilliseconds ? "bad" : "none");
+                    ? $"{ageMs:0} ms"
+                    : "수신 미확인";
+                SetTone(watchdogValue, !live ? "bad" : "none");
             }
             // 툴 오프셋 · 페이로드는 하드코딩된 상수였다. 레시피/툴 정의에서 오는 값이
             // 생기기 전까지 지어낸 숫자를 띄우지 않는다. 카메라는 RefreshCamera 가 맡는다.

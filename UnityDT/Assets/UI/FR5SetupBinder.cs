@@ -110,10 +110,10 @@ namespace MainUnity.UI
             var traySource = uiMaster != null ? uiMaster.Calibration : null;
             var boardSource = uiMaster != null ? uiMaster.BoardCalibration : null;
             tray.text = mock ? "사용 안 함 · 시뮬레이션 배치 사용" : traySource == null ? "미확인 · 트레이 좌표 수신기 없음" :
-                (traySource.isActiveAndEnabled ? "" : "수신 비활성 · ") + traySource.ProgressDetail +
+                (traySource.isActiveAndEnabled ? "" : "수신 비활성 · ") + "마지막 관측: " + traySource.ProgressDetail +
                 "\n수신 " + Age(traySource.LastReceiveTime) + " · 반영 " + Age(traySource.LastAppliedTime);
             board.text = mock ? "사용 안 함 · 시뮬레이션 배치 사용" : boardSource == null ? "미확인 · 기판 좌표 수신기 없음" :
-                (boardSource.isActiveAndEnabled ? "" : "수신 비활성 · ") + boardSource.ProgressDetail +
+                (boardSource.isActiveAndEnabled ? "" : "수신 비활성 · ") + "마지막 관측: " + boardSource.ProgressDetail +
                 "\n수신 " + Age(boardSource.LastReceiveTime) + " · 반영 " + Age(boardSource.LastAppliedTime) +
                 "\n보정 ID " + (string.IsNullOrEmpty(boardSource.CalibrationId) ? "미확인" : boardSource.CalibrationId);
 

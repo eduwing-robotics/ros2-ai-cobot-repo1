@@ -13,13 +13,13 @@
 
         <ui:VisualElement name="manual-banner" class="manual-banner">
             <ui:Label text="경로 사전 확인" class="warn manual-banner-title" />
-            <ui:Label text="목표 관절을 조정하면 Ghost로 이동 경로를 확인합니다. 벽과 충돌하는 경로는 빨간색으로 표시하며 이동 요청을 거부합니다." class="manual-banner-detail" />
+            <ui:Label text="트윈 모델에서 관절 보간 경로를 미리 검사합니다. 모델상 충돌 시 이동 요청을 거부하며, 실제 설비의 안전을 보장하지 않습니다." class="manual-banner-detail" />
         </ui:VisualElement>
 
         <!-- 카메라의 표시 영역도 이 창에 맞춰 로봇과 Ghost가 조작 패널 뒤로 숨지 않게 한다. -->
         <ui:VisualElement name="manual-viewport" picking-mode="Ignore" class="manual-viewport">
             <ui:Label text="ROBOT VIEW · TWIN + GHOST" picking-mode="Ignore" class="panel__title on-twin manual-viewport-title" />
-            <ui:Label text="실제 자세 / 관절 보간 미리보기" picking-mode="Ignore" class="page-heading__meta on-twin manual-viewport-legend" />
+            <ui:Label text="수신 자세 / 모델상 관절 보간 미리보기" picking-mode="Ignore" class="page-heading__meta on-twin manual-viewport-legend" />
         </ui:VisualElement>
 
         <ui:VisualElement name="jog-panel" class="panel manual-controls">
@@ -77,7 +77,7 @@
                     <ui:Slider name="jog-6-slider" low-value="-175" high-value="175" value="-4.688" class="manual-joint-slider" />
                 </ui:VisualElement>
                 <ui:VisualElement class="row manual-actions">
-                    <ui:Button name="jog-home-button" text="HOME" class="btn manual-secondary-action" />
+                    <ui:Button name="jog-home-button" text="기본 목표" class="btn manual-secondary-action" />
                     <ui:Button name="jog-cancel-button" text="초기화" class="btn manual-secondary-action" />
                     <ui:Button name="jog-apply-button" text="이동 요청" class="btn btn--accent manual-primary-action" />
                 </ui:VisualElement>
@@ -95,7 +95,7 @@
                             <ui:VisualElement name="gripper-state-chip" class="chip manual-gripper-chip"><ui:Label name="gripper-state-text" text="—" class="chip__text" /></ui:VisualElement>
                             <ui:VisualElement class="spacer" />
                             <ui:Label name="gripper-value" text="—" class="value" />
-                            <ui:Label text="mm" class="muted manual-gripper-unit" />
+                            <ui:Label text="%" class="muted manual-gripper-unit" />
                         </ui:VisualElement>
                         <ui:VisualElement class="gauge"><ui:VisualElement name="gripper-fill" class="gauge__fill" /></ui:VisualElement>
                         <ui:VisualElement class="row manual-gripper-actions">

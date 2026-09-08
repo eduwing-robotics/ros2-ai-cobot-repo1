@@ -288,7 +288,9 @@ namespace MainUnity.UI
         void Cancel()
         {
             float[] joints = statusManager?.Latest?.JointDegrees;
-            SetTargets(joints != null && joints.Length == JointCount ? joints : initialTargets);
+            // 최신 수신이 없으면 이전 자세나 기본값을 현재 자세처럼 목표에 복사하지 않는다.
+            if (statusManager != null && statusManager.HasFreshState && joints?.Length == JointCount)
+                SetTargets(joints);
         }
 
         void SetHome() => SetTargets(initialTargets);

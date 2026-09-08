@@ -339,7 +339,11 @@ namespace MainUnity.UI
             rates = loaded;
             Label source = root.Q<Label>("source-text");
             VisualElement chip = root.Q<VisualElement>("source-chip");
-            if (source != null) source.text = "MainServer";
+            if (source != null)
+            {
+                source.text = "MainServer 조회 기록";
+                source.tooltip = "조회 " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " · 제품 누적 집계";
+            }
             chip?.EnableInClassList("chip--good", true);
             chip?.EnableInClassList("chip--bad", false);
 
@@ -434,7 +438,11 @@ namespace MainUnity.UI
 
             if (ranked.Count == 0 || totalDefective == 0)
             {
-                ShowChartEmpty(partFilter == null ? "검사 이력에 불량 없음" : $"{partFilter} 에 불량 없음");
+                int inspected = 0;
+                foreach (SlotRate rate in rates)
+                    if (partFilter == null || string.Equals(rate.part_id, partFilter, StringComparison.Ordinal))
+                        inspected += rate.inspected_quantity;
+                ShowChartEmpty(inspected > 0 ? $"슬롯 검사 {inspected}건 중 기록된 불량 0건" : "검사 이력 없음 · 품질 미확인");
                 return;
             }
 
@@ -595,7 +603,7 @@ namespace MainUnity.UI
             head.style.unityTextAlign = align;
             plot.Add(head);
 
-            var sub = new Label($"여기까지 고치면 {totalDefective}건 중 {covered}건");
+            var sub = new Label($"선택 범위의 기록된 불량 {covered}건 / 전체 {totalDefective}건");
             sub.AddToClassList("pknee__sub");
             sub.style.left = left;
             sub.style.width = BoxWidth;
@@ -926,11 +934,15 @@ namespace MainUnity.UI
             root.Q<VisualElement>("pareto-y2ticks")?.Clear();
             VisualElement chartEmpty = root.Q<VisualElement>("pareto-empty");
             FR5EmptyState.Fill(chartEmpty, message, PlotHeight);
+            Label chartTitle = chartEmpty?.Q<Label>(className: "empty__title");
+            if (chartTitle != null) chartTitle.text = "품질 집계";
             Show(chartEmpty);
 
             Hide(root.Q<VisualElement>("detail-body"));
             VisualElement detailEmpty = root.Q<VisualElement>("detail-empty");
             FR5EmptyState.Fill(detailEmpty, message, 300f);
+            Label detailTitle = detailEmpty?.Q<Label>(className: "empty__title");
+            if (detailTitle != null) detailTitle.text = "선택된 불량 슬롯 없음";
             Show(detailEmpty);
         }
 
