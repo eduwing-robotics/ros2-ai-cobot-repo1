@@ -160,7 +160,7 @@ void OnValidate()
                 ? real.GetComponentInChildren<MainUnity.Runtime.Camera.BoardPartCalibrator>(true)
                 : null;
             if (ghost == null)
-                ghost = FindAnyObjectByType<GhostMaster>(FindObjectsInactive.Include);
+                ghost = GetComponentInChildren<GhostMaster>(true);
             if (mockGhost == null && mock != null)
                 mockGhost = mock.GetComponentInChildren<MockRobotGhostControl>(true);
             if (realGhost == null && real != null)

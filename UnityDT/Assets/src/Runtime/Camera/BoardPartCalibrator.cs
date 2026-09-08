@@ -17,6 +17,9 @@ namespace MainUnity.Runtime.Camera
         const string TopicName = "/vision/board/unity_state";
         const double ObservationLifetimeSeconds = 2.5d;
         const double StaleAfterSeconds = 3d;
+        // 표시 전용 지수 보간의 시간 상수. 0.2초에 오차의 약 63%를 따라가며
+        // 실제 기울기와 ROS 원본 자세는 유지한다. 로봇 제어 목표에는 사용하지 않는다.
+        const float DisplaySmoothingSeconds = 0.2f;
 
         [Tooltip("트레이와 동일한 ROS 기준 Transform(최상위 ArticulationBody). 기준 계층의 스케일은 1이어야 합니다.")]
         [SerializeField] Transform baseLink;
@@ -37,6 +40,10 @@ namespace MainUnity.Runtime.Camera
         ROSConnection connection;
         Transform currentBoard;
         readonly Dictionary<string, Transform> slots = new(StringComparer.Ordinal);
+        Dictionary<string, Pose> targetSlotPoses;
+        readonly Dictionary<string, Pose> displayedSlotPoses = new(StringComparer.Ordinal);
+        Pose targetBoardPose;
+        Pose displayedBoardPose;
         string publisherId;
         long lastSequence = -1;
         long lastFrame;
@@ -59,6 +66,8 @@ namespace MainUnity.Runtime.Camera
             itemManager?.ReleaseObservationBoard();
             currentBoard = null;
             slots.Clear();
+            targetSlotPoses = null;
+            displayedSlotPoses.Clear();
             LastAppliedTime = -1d;
             CalibrationId = null;
             waitingForNewFrame = true;
@@ -77,6 +86,8 @@ namespace MainUnity.Runtime.Camera
             if (Progress == ProgressState.Applied &&
                 Time.realtimeSinceStartupAsDouble - LastAppliedTime > StaleAfterSeconds)
                 SetProgress(ProgressState.Preparing, "기판 관측 갱신 중단 · 이전 배치 유지");
+            if (Progress == ProgressState.Applied && currentBoard != null && targetSlotPoses != null)
+                ApplyDisplayPose(1f - Mathf.Exp(-Time.unscaledDeltaTime / DisplaySmoothingSeconds));
         }
 
         void RefreshBoard()
@@ -85,6 +96,8 @@ namespace MainUnity.Runtime.Camera
             if (ReferenceEquals(board, currentBoard)) return;
             currentBoard = board;
             slots.Clear();
+            targetSlotPoses = null;
+            displayedSlotPoses.Clear();
             LastAppliedTime = -1d;
             CalibrationId = null;
             waitingForNewFrame = true;
@@ -181,9 +194,9 @@ namespace MainUnity.Runtime.Camera
                     if (string.IsNullOrWhiteSpace(code) || !slots.TryGetValue(code, out Transform slot) ||
                         slot == null || (currentBoard != null && slot.parent != currentBoard))
                         throw new FormatException("Unknown or missing slot code.");
-                    Vector3 position = worldPosition + worldRotation * Position(row["board_position_m"]);
-                    Quaternion rotation = worldRotation * Orientation(row["board_orientation_xyzw"]);
-                    if (!Finite(position) || !pending.TryAdd(code, new Pose(position, rotation)))
+                    Vector3 position = Position(row["board_position_m"]);
+                    Quaternion rotation = Orientation(row["board_orientation_xyzw"]);
+                    if (!Finite(worldPosition + worldRotation * position) || !pending.TryAdd(code, new Pose(position, rotation)))
                         throw new FormatException("Invalid or duplicate slot pose.");
                 }
                 Vector3 modelPosition = worldPosition + worldRotation * modelPositionOffsetMeters;
@@ -198,10 +211,11 @@ namespace MainUnity.Runtime.Camera
                     foreach (string code in pending.Keys)
                         slots.Add(code, currentBoard.Find(code));
                 }
-                currentBoard.SetPositionAndRotation(modelPosition,
-                    worldRotation * Quaternion.Euler(modelRotationOffsetDegrees));
-                foreach (var entry in pending)
-                    slots[entry.Key].SetPositionAndRotation(entry.Value.position, entry.Value.rotation);
+                targetBoardPose = new Pose(worldPosition, worldRotation);
+                targetSlotPoses = pending;
+                // 최초 배치만 즉시 적용한다. Unit 교체 시 RefreshBoard에서 보간 이력을 비운다.
+                if (LastAppliedTime < 0d)
+                    ApplyDisplayPose(1f);
                 lastFrame = frame;
                 LastAppliedTime = Time.realtimeSinceStartupAsDouble;
                 CalibrationId = calibration;
@@ -214,6 +228,35 @@ namespace MainUnity.Runtime.Camera
                 slots.Clear();
                 SetProgress(ProgressState.Rejected, error.Message +
                     (LastAppliedTime >= 0d ? " · 이전 배치 유지" : " · 유효한 배치 없음"));
+            }
+        }
+
+        void ApplyDisplayPose(float blend)
+        {
+            // 기판 기준 자세를 한 번 보간하고 같은 기준으로 모든 슬롯을 재구성한다.
+            // 월드 위치를 각각 보간하면 회전 도중 슬롯이 PCB 표면에서 어긋날 수 있다.
+            foreach (string code in targetSlotPoses.Keys)
+                if (!slots.TryGetValue(code, out Transform slot) || slot == null || slot.parent != currentBoard)
+                {
+                    SetProgress(ProgressState.Rejected, "기판 슬롯 연결 변경 · 이전 배치 유지");
+                    return;
+                }
+            displayedBoardPose = new Pose(
+                Vector3.Lerp(displayedBoardPose.position, targetBoardPose.position, blend),
+                blend >= 1f ? targetBoardPose.rotation : Quaternion.Slerp(displayedBoardPose.rotation, targetBoardPose.rotation, blend));
+            currentBoard.SetPositionAndRotation(
+                displayedBoardPose.position + displayedBoardPose.rotation * modelPositionOffsetMeters,
+                displayedBoardPose.rotation * Quaternion.Euler(modelRotationOffsetDegrees));
+            foreach (var entry in targetSlotPoses)
+            {
+                Pose pose = entry.Value;
+                if (displayedSlotPoses.TryGetValue(entry.Key, out Pose previous))
+                    pose = new Pose(Vector3.Lerp(previous.position, pose.position, blend),
+                        Quaternion.Slerp(previous.rotation, pose.rotation, blend));
+                displayedSlotPoses[entry.Key] = pose;
+                slots[entry.Key].SetPositionAndRotation(
+                    displayedBoardPose.position + displayedBoardPose.rotation * pose.position,
+                    displayedBoardPose.rotation * pose.rotation);
             }
         }
 

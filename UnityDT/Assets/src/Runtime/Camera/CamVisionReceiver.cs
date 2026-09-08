@@ -88,6 +88,10 @@ namespace MainUnity.Runtime.Camera
 
         void ReceiveImage(CompressedImageMsg message)
         {
+            // ROS 콜백은 비활성 컴포넌트에도 호출된다. 구독을 해제하면 같은 토픽의
+            // 다른 수신기까지 해제되므로, 숨긴 화면은 디코딩 전에 건너뛴다.
+            if (!isActiveAndEnabled) return;
+
             if (message?.data == null || message.data.Length == 0 ||
                 !receivedTexture.LoadImage(message.data))
                 return;

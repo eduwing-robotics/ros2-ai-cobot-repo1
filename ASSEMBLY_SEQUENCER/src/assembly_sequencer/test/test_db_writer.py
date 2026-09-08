@@ -652,167 +652,85 @@ class ModeIsolationTest(unittest.IsolatedAsyncioTestCase):
             connect.assert_not_called()
 
 
-class RealReadinessTest(unittest.IsolatedAsyncioTestCase):
-    async def test_live_state_does_not_override_unconnected_equipment_contracts(self):
+class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
+    def backend(self):
         node = Mock(runtime_mode="real", executor=None)
         node.context.get_domain_id.return_value = 43
         backend = RealBackend(node)
         self.addCleanup(backend.close)
-        backend._on_state(SimpleNamespace(reconnect_flag=0, emg=0, abnormal_stop=0,
-            alarm=0, main_error_code=0, sub_error_code=0, gripperfaultnum=0,
-            grippererro=0, safetydoor_alarm=0, safetyplanealarm=0))
-        snapshot = await backend.status()
-        self.assertFalse(snapshot["available"])
-        self.assertFalse(snapshot["equipment_ready"])
-        self.assertTrue(snapshot["robot_state_fresh"])
-        with self.assertRaisesRegex(RuntimeError, "NOT_READY"):
-            await backend.prepare({"home": [0] * 6}, "base_link")
-        with self.assertRaisesRegex(RuntimeError, "NOT_READY"):
-            await backend.move_joint(JOB_ID, [0] * 6)
-        node.create_client.return_value.call_async.assert_not_called()
-        node.create_client.return_value.call.assert_not_called()
+        return backend, node
 
-    def test_real_backend_rejects_mock_process_before_ros_connections(self):
-        for mode, domain in (("mock", 42), ("real", 42), ("mock", 43)):
+    async def test_unconnected_operations_never_send_hardware_commands(self):
+        backend, node = self.backend()
+        operations = [backend.prepare({}, "base_link"), backend.start(JOB_ID, "assembly-r1", 25),
+                      backend.move_joint(JOB_ID, [0]*6), backend.pick(JOB_ID, {}, "base_link", {}, {}, {}),
+                      backend.place(JOB_ID, {}, "base_link", {}, {}, {}),
+                      backend.transfer_assembled_pcb(JOB_ID, "base_link", {}, {}, {}),
+                      backend.move_conveyor(JOB_ID, "ASSEMBLY"), backend.resolve_targets([])]
+        for operation in operations:
+            with self.assertRaisesRegex(RuntimeError, "NOT_READY"):
+                await operation
+        node.create_client.return_value.call_async.assert_not_called()
+        node.create_publisher.return_value.publish.assert_not_called()
+        self.assertEqual(node.create_client.call_args.args[1], "/real/robot/status")
+        node.create_subscription.assert_not_called()
+
+    async def test_status_uses_api_but_does_not_enable_unconnected_runner(self):
+        backend, node = self.backend()
+        future = asyncio.get_running_loop().create_future()
+        future.set_result(SimpleNamespace(success=True, message='{"hardware_execution_enabled":false}'))
+        node.create_client.return_value.call_async.return_value = future
+        snapshot = await backend.status()
+        self.assertFalse(snapshot["equipment_ready"])
+        self.assertFalse(snapshot["robot_api_status"]["hardware_execution_enabled"])
+        self.assertFalse(backend._pending_calls)
+
+    async def test_pause_uses_api_and_does_not_claim_physical_completion(self):
+        backend, node = self.backend()
+        with self.assertRaisesRegex(RuntimeError, "not yet confirmed"):
+            await backend.set_paused(JOB_ID, True)
+        self.assertEqual(node.create_publisher.call_args.args[1], "/real/robot/pause")
+        self.assertTrue(node.create_publisher.return_value.publish.call_args.args[0].data)
+        with self.assertRaisesRegex(RuntimeError, "does not provide resume"):
+            await backend.set_paused(JOB_ID, False)
+        node.create_publisher.return_value.publish.assert_called_once()
+        node.create_client.return_value.call_async.assert_not_called()
+
+    def test_wrong_mode_is_rejected_before_any_ros_connections(self):
+        for mode, domain in (("mock",42),("real",42),("mock",43)):
             node = Mock(runtime_mode=mode)
             node.context.get_domain_id.return_value = domain
             with self.assertRaisesRegex(RuntimeError, "MODE_REJECTED"):
                 RealBackend(node)
             node.create_client.assert_not_called()
-            node.create_subscription.assert_not_called()
+            node.create_publisher.assert_not_called()
 
-
-class RealMotionTest(unittest.IsolatedAsyncioTestCase):
-    def backend(self):
-        backend = RealBackend.__new__(RealBackend)
-        backend._require_ready = Mock()
-        backend._command = AsyncMock(return_value=[])
-        backend._delay = AsyncMock()
-        backend._operation_active = False
-        backend._conveyor_active = False
-        backend._prepared = True
-        backend._node = Mock()
-        backend._motion_speed = 20
-        backend._tool = 0
-        backend._user = 0
-        backend._gripper_speed = 50
-        backend._gripper_force = 30
-        backend._state = SimpleNamespace(gripper_feedback_valid=False, gripper_position=0)
-        return backend
-
-    async def test_joint_motion_waits_for_target_even_if_done_was_stale(self):
-        backend = self.backend()
-        backend._command.side_effect = [[], [], [1], [0]*6, [0], [10]*6, [1], [10]*6]
-        await backend.move_joint(JOB_ID, [10]*6)
-        commands = [call.args[0] for call in backend._command.call_args_list]
-        self.assertTrue(commands[0].startswith("JNTPoint(1,10.000000"))
-        self.assertEqual(commands[1], "MoveJ(JNT1,20,0,0)")
-        self.assertEqual(commands.count("GetRobotMotionDone()"), 3)
-        self.assertEqual(backend._delay.await_count, 2)
-
-    async def test_pick_uses_recipe_distances_and_gripper_profile_in_order(self):
-        backend = self.backend()
-        calls = []
-        async def move(target): calls.append(("move", target[2]))
-        async def grip(opening): calls.append(("grip", opening))
-        backend._move = move
-        backend._grip = grip
-        await backend.pick(JOB_ID, {}, "base_link", {"xyz_mm": [10,20,30], "xyzw": [0,0,0,1]},
-                           {"approach_dz_mm": 80, "retract_dz_mm": 90},
-                           {"release_opening_percent": 25, "grasp_opening_percent": 18})
-        self.assertEqual(calls, [("move",110),("grip",25),("move",30),("grip",18),("move",120)])
-
-    async def test_gripper_does_not_accept_previous_done_flag(self):
-        backend = self.backend()
-        backend._command.side_effect = [[], [0,1], [0,0], [0,1]]
-        await backend._grip(18)
-        self.assertEqual(backend._command.await_count, 4)
-        self.assertEqual(backend._delay.await_count, 2)
-        self.assertEqual(backend._command.call_args_list[0].args[0], "MoveGripper(1,18,50,30,3000,1)")
-
-    async def test_uncertain_motion_stops_without_retry_or_next_step(self):
-        backend = self.backend()
-        backend._move = AsyncMock(side_effect=TimeoutError("response lost"))
-        backend._grip = AsyncMock()
-        with self.assertRaisesRegex(RuntimeError, "SAFETY_STOP"):
-            await backend.pick(JOB_ID, {}, "base_link", {"xyz_mm": [0,0,0], "xyzw": [0,0,0,1]},
-                               {"approach_dz_mm": 80, "retract_dz_mm": 90},
-                               {"release_opening_percent": 25, "grasp_opening_percent": 18})
-        backend._move.assert_awaited_once()
-        backend._grip.assert_not_awaited()
-        backend._command.assert_awaited_once_with("StopMotion()")
-        self.assertFalse(backend._prepared)
-        self.assertFalse(backend._operation_active)
-
-    async def test_transfer_validates_destination_before_pick_and_uses_drop_height(self):
-        backend = self.backend()
-        backend.pick = AsyncMock()
-        backend.place = AsyncMock()
-        pose = {"xyz_mm": [10,20,30], "xyzw": [0,0,0,1]}
-        motion = {"approach_dz_mm": 100, "retract_dz_mm": 100,
-                  "assembled_pcb_drop_approach_dz_mm": 150}
-        with self.assertRaises(ValueError):
-            await backend.transfer_assembled_pcb(JOB_ID, "base_link", {"source": pose, "target": {}}, motion, {})
-        backend.pick.assert_not_awaited()
-        await backend.transfer_assembled_pcb(JOB_ID, "base_link", {"source": pose, "target": pose}, motion, {})
-        self.assertEqual(backend.place.call_args.args[4]["approach_dz_mm"], 150)
-        self.assertEqual(motion["approach_dz_mm"], 100)
-
-    def test_tcp_conversion_preserves_mm_and_converts_quaternion_to_degrees(self):
-        pose = {"xyz_mm": [100,200,300], "xyzw": [0,0,2**-0.5,2**-0.5]}
-        target = RealBackend._tcp_pose(pose, "base_link", 100)
-        self.assertEqual(target[:3], [100,200,400])
-        self.assertAlmostEqual(target[5], 90)
-        with self.assertRaises(ValueError):
-            RealBackend._tcp_pose(pose, "unity")
-
-    def test_safety_stop_preserves_active_unit_without_db_finalization(self):
-        node = SimpleNamespace(runtime_mode="real", active={"job_id": JOB_ID, "state": "STARTED"},
-                               db_writer=Mock(sync_state="SYNCED"), publish=Mock(), fail_job=Mock())
-        AssemblySequencer.fail_active(node, "INTERNAL_ERROR", RuntimeError("SAFETY_STOP: timeout"))
-        self.assertEqual(node.active["state"], "PAUSED")
-        node.fail_job.assert_not_called()
-        node.db_writer.finish.assert_not_called()
-        self.assertEqual(node.publish.call_args.args[0]["error_code"], "SAFETY_STOP")
-
-    async def test_conveyor_waits_for_arrival_then_turns_off_drive(self):
-        backend = self.backend()
-        backend._conveyor_do = 2
-        backend._arrival_di = {"ASSEMBLY": 3}
-        backend._drive_level = 1
-        backend._arrival_level = 1
-        backend._command.side_effect = [[0], [], [0], [1], []]
-        await backend.move_conveyor(JOB_ID, "ASSEMBLY")
-        self.assertEqual([call.args[0] for call in backend._command.call_args_list],
-                         ["GetDI(3,1)", "SetDO(2,1,0,1)", "GetDI(3,1)", "GetDI(3,1)", "SetDO(2,0,0,1)"])
-        self.assertFalse(backend._conveyor_active)
-
-    async def test_conveyor_rejects_missing_io_without_sending_commands(self):
-        backend = self.backend()
-        backend._conveyor_do = -1
-        backend._arrival_di = {"ASSEMBLY": -1}
-        with self.assertRaisesRegex(RuntimeError, "NOT_READY"):
-            await backend.move_conveyor(JOB_ID, "ASSEMBLY")
-        backend._command.assert_not_awaited()
-
-    async def test_command_prefix_and_sdk_error_handling(self):
-        backend = RealBackend.__new__(RealBackend)
-        backend._closed = False
-        backend._pending_calls = set()
-        backend._node = Mock()
-        backend._client = Mock()
-        backend.is_available = Mock(return_value=True)
-        future = asyncio.get_running_loop().create_future()
-        future.set_result(SimpleNamespace(cmd_res="0,1"))
-        backend._client.call_async.return_value = future
-        self.assertEqual(await backend._command("GetRobotMotionDone()", 1), [1])
-        self.assertEqual(backend._client.call_async.call_args.args[0].cmd_str, "real\nGetRobotMotionDone()")
-        future = asyncio.get_running_loop().create_future()
-        future.set_result(SimpleNamespace(cmd_res="-4,1"))
-        backend._client.call_async.return_value = future
-        with self.assertRaisesRegex(RuntimeError, "failed"):
-            await backend._command("GetRobotMotionDone()", 1)
-        self.assertFalse(backend._pending_calls)
+    def test_real_backend_has_only_reviewed_imports_and_ros_endpoints(self):
+        import ast
+        source = Path(sys.modules[RealBackend.__module__].__file__).read_text()
+        tree = ast.parse(source)
+        allowed_imports = {"hashlib", "http", "json", "math", "os", "threading", "time", "uuid",
+                           "urllib", "rclpy", "std_msgs", "std_srvs", "recipe_contract", "copy", "unittest"}
+        endpoints = {"/real/robot/command", "/real/robot/event", "/real/robot/pause", "/real/robot/status",
+                     "/conveyor/move_to_assembly", "/conveyor/move_to_inspection", "/conveyor/stop",
+                     "/conveyor/reset", "/conveyor/state", "/conveyor/moving"}
+        for item in ast.walk(tree):
+            if isinstance(item, ast.Import):
+                for alias in item.names:
+                    self.assertIn(alias.name.split(".")[0], allowed_imports)
+            elif isinstance(item, ast.ImportFrom):
+                self.assertIn(item.module.split(".")[0], allowed_imports)
+            elif isinstance(item, ast.Call):
+                if isinstance(item.func, ast.Name):
+                    self.assertNotIn(item.func.id, {"eval", "exec", "__import__"})
+                if isinstance(item.func, ast.Attribute):
+                    self.assertNotIn(item.func.attr, {"system", "popen", "execv", "spawnv", "import_module"})
+                    if item.func.attr in {"create_client", "create_publisher", "create_subscription"}:
+                        self.assertIsInstance(item.args[1], ast.Constant)
+                        self.assertIn(item.args[1].value, endpoints)
+        for forbidden in ("fairino_remote_command_service", "nonrt_state_data", "MoveJ(", "MoveL(",
+                          "MoveGripper(", "SetDO(", "GetDI(", "CARTPoint(", "JNTPoint("):
+            self.assertNotIn(forbidden, source)
 
 
 class MockConveyorTest(unittest.TestCase):

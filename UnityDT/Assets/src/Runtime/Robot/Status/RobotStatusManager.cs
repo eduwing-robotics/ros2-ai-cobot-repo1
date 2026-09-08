@@ -140,6 +140,14 @@ namespace MainUnity.Runtime.Robot.Status
         /// <summary>현재 상태에서 새 제어 명령을 안전하게 받을 수 있는지 확인한다.</summary>
         public bool CanAcceptCommand(out string reason)
         {
+            // Update 순서와 무관하게 명령을 받는 순간의 최신성을 확인한다.
+            if (!HasFreshState)
+                SetStatus(RobotRunState.Disconnected,
+                    lastReceiveTimeSeconds < 0d ? RobotErrorLabel.Connection : RobotErrorLabel.Timeout,
+                    lastReceiveTimeSeconds < 0d
+                        ? "Robot state has not been received."
+                        : $"Robot state is older than {staleAfterSeconds:0.###} seconds.");
+
             if (State == RobotRunState.Idle && ErrorLabel == RobotErrorLabel.None)
             {
                 reason = string.Empty;

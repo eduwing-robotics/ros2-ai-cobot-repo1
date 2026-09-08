@@ -493,7 +493,7 @@ namespace MainUnity.Runtime.Robot.Mock
         void RefreshReferences()
         {
             if (statusManager == null)
-                statusManager = FindAnyObjectByType<RobotStatusManager>();
+                statusManager = GetComponentInChildren<RobotStatusManager>(true);
         }
     }
 }

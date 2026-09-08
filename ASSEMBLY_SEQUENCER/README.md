@@ -25,19 +25,22 @@ Job·Unit, 수량, 검사 FAIL, 재시작과 안전정지의 공통 의미는 [�
 
 `sequencer_node.py`가 공통 YAML·Job·Unit 흐름을, `recipe_contract.py`가 입력 검증을 소유합니다.
 `mock_backend.py`는 Mock 동작 완료와 Unity 컨베이어 신호 대기·난수 검사를 소유합니다.
-`real_backend.py`는 FAIRINO 명령 호출·완료 대기와 Vision 검사 경계를 소유합니다.
-관절 이동은 `JNTPoint`/`MoveJ`, TCP 접근·배치·후퇴는 `CARTPoint`/`MoveL`,
-그리퍼는 `MoveGripper`와 완료 조회를 사용합니다. YAML의 거리와 개방률을 적용하며,
-로봇 완료 플래그와 실제 목표 위치를 함께 확인합니다. 응답이 유실된 이동 명령은 재전송하지 않습니다.
-컨베이어 동작은 설정된 DO로 구동하고 DI의 비활성→활성 도착을 확인한 뒤 구동을 해제합니다.
-실제 동작 오류는 정지를 요청하고 `SAFETY_STOP`으로 전달하며 Sequencer는 Unit을 RUNNING으로 보류합니다.
-정지 후 중간 동작 자동 재개는 제공하지 않습니다.
+`real_backend.py`는 문서화된 설비 작업 API와 Vision HTTP 경계만 사용합니다.
+현재 `/real/robot/status`로 상태를 조회하고 `/real/robot/pause`로 정지를 요청합니다.
+Pause 발행은 물리 정지 완료가 아니며, 최종 이벤트 연결 전에는 완료로 반환하지 않습니다.
+작업 command/event 및 컨베이어 service/state 연결은 미완이므로 자동조립은
+Job claim 전에 `NOT_READY`로 거절합니다. Mock으로 자동 대체하지 않습니다.
 
-현재 이 동작 구현을 전체 생산 실행에 개방하지는 않습니다. `prepare()`는 교시·Tool/User,
-관측 종류와 레시피 부품의 매핑·TCP 보정, PCB 적재 목표, 컨베이어 IO·reset 및
-수동 명령과 공유하는 point table의 사용 경계가 미확정이므로 Job claim 전에 거절합니다.
-새로 추가한 동작 코드는 모의 응답 테스트로 검증하며 실제 설비 동작 검증을 대신하지 않습니다.
-Mock으로 자동 대체하지 않습니다.
+### Runner의 SDK·저수준 제어 금지
+
+Real runner와 Real backend는 로봇 SDK, 드라이버 서비스, 직접 IO, 장비 소켓 또는
+외부 프로세스를 통한 저수준 제어를 사용하지 않습니다. TCP·IK·그리퍼 세부 동작은
+로봇 PC가 소유하며, 우리 쪽은 `/real/robot/command`와 `/real/robot/event`의 작업 경계를 사용합니다.
+컨베이어는 `/conveyor/*`의 공개 이동·정지·reset 서비스와 상태 토픽을 사용합니다.
+API 부재·실패·timeout 시 직접 제어로 우회하지 않고 실행을 거절하거나 보류합니다.
+기존 Mock 내부 서비스는 이 Real 장비 제어 경로와 별개입니다.
+기존 테스트에서 Real backend의 import·ROS endpoint 허용 목록과 저수준 호출 부재를 검사합니다.
+이는 코드 회귀 검사이며 운영체제 수준의 네트워크 접근 차단을 뜻하지 않습니다.
 
 Mock 전체 스택의 유일한 실행 진입점은 [Mock 올인원 실행](../Farino_AIO_Mock/README.md#mock-올인원-실행)입니다.
 

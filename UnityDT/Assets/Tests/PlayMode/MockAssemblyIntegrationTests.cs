@@ -26,6 +26,44 @@ namespace MainUnity.Tests.PlayMode
             public string job_status;
         }
 
+        [Test]
+        public void CommandsRejectStaleStateBeforeUpdateAndAcceptFreshRecovery()
+        {
+            var root = new GameObject("Command freshness regression");
+            root.SetActive(false);
+            try
+            {
+                var status = root.AddComponent(RuntimeType("MainUnity.Runtime.Robot.Status.RobotStatusManager"));
+                var frameType = RuntimeType("MainUnity.Runtime.Robot.Status.RobotStatusFrame");
+                var constructor = frameType.GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic).Single();
+                object[] args = constructor.GetParameters().Select(parameter =>
+                    parameter.ParameterType.IsValueType ? Activator.CreateInstance(parameter.ParameterType) : null).ToArray();
+                args[0] = new float[6];
+                args[8] = (byte)1; // robotMotionDone: an idle frame must still expire.
+                Field(status, "staleAfterSeconds").SetValue(status, 0.5f);
+                object[] commandArgs = { null };
+                Assert.That(Invoke(status, "CanAcceptCommand", commandArgs), Is.False);
+                Assert.That(GetProperty(status, "ErrorLabel").ToString(), Is.EqualTo("Connection"));
+
+                args[args.Length - 1] = Time.realtimeSinceStartupAsDouble;
+                Invoke(status, "ApplyState", constructor.Invoke(args));
+                Assert.That(Invoke(status, "CanAcceptCommand", commandArgs), Is.True);
+                Field(status, "lastReceiveTimeSeconds").SetValue(status, Time.realtimeSinceStartupAsDouble - 0.6d);
+                // No Update runs on this inactive object: the command boundary must reject it itself.
+                Assert.That(Invoke(status, "CanAcceptCommand", commandArgs), Is.False);
+                Assert.That(GetProperty(status, "ErrorLabel").ToString(), Is.EqualTo("Timeout"));
+                Assert.That(commandArgs[0], Does.Contain("older than"));
+
+                args[args.Length - 1] = Time.realtimeSinceStartupAsDouble;
+                Invoke(status, "ApplyState", constructor.Invoke(args));
+                Assert.That(Invoke(status, "CanAcceptCommand", commandArgs), Is.True);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(root);
+            }
+        }
+
         [UnityTest]
         public IEnumerator PausedTimePreservesBudgetAndTimeoutRetainsTracking()
         {
@@ -530,6 +568,45 @@ namespace MainUnity.Tests.PlayMode
                 Transform recoveredObservation = (Transform)GetProperty(owner, "ObservationBoard");
                 Assert.That(recoveredObservation, Is.Not.Null, "Discarded Units must allow observation-only recovery.");
                 Assert.That(GetProperty(owner, "CurrentBoard"), Is.Null);
+                Transform smoothedSlot = recoveredObservation.Find("SLOT-1");
+                Vector3 startPosition = recoveredObservation.position;
+                Vector3 startSlotPosition = smoothedSlot.position;
+                Vector3 movement = origin.TransformVector(Vector3.forward);
+                Receive(Payload(9, 7000000000, publisher: "camera-b").Replace("[1,2,3]", "[2,2,3]"));
+                Assert.That(recoveredObservation.position, Is.EqualTo(startPosition), "New observations update the target without snapping the display.");
+                double targetReceivedAt = (double)GetProperty(calibration, "LastAppliedTime");
+                float halfTimeStep = 1f - Mathf.Exp(-0.1f / 0.2f);
+                Invoke(calibration, "ApplyDisplayPose", halfTimeStep);
+                Invoke(calibration, "ApplyDisplayPose", halfTimeStep);
+                float fraction = 1f - Mathf.Exp(-1f);
+                Assert.That(Vector3.Distance(recoveredObservation.position, startPosition + movement * fraction), Is.LessThan(1e-5f));
+                Assert.That(Vector3.Distance(smoothedSlot.position, startSlotPosition + movement * fraction), Is.LessThan(1e-5f));
+                Assert.That((double)GetProperty(calibration, "LastAppliedTime"), Is.EqualTo(targetReceivedAt), "Rendering must not refresh observation age.");
+                Invoke(calibration, "ApplyDisplayPose", 1f);
+                Quaternion startRotation = recoveredObservation.rotation;
+                Receive(Payload(10, 8000000000, publisher: "camera-b")
+                    .Replace("[1,2,3]", "[2,2,3]")
+                    .Replace("[0,0,0.7071067811865475,0.7071067811865476]", "[0,0,0,1]"));
+                Assert.That(Quaternion.Angle(recoveredObservation.rotation, startRotation), Is.LessThan(0.001f));
+                Invoke(calibration, "ApplyDisplayPose", 0.5f);
+                Quaternion modelCorrection = Quaternion.Euler(0f, -90f, 0f);
+                Quaternion expectedRotation = Quaternion.Slerp(startRotation, origin.rotation * modelCorrection, 0.5f);
+                Assert.That(Quaternion.Angle(recoveredObservation.rotation, expectedRotation), Is.LessThan(0.01f));
+                Quaternion displayedOrigin = recoveredObservation.rotation * Quaternion.Inverse(modelCorrection);
+                Vector3 expectedSlot = recoveredObservation.position + displayedOrigin * (new Vector3(-0.2f, 0.3f, 0.1f) - offset);
+                Assert.That(Vector3.Distance(smoothedSlot.position, expectedSlot), Is.LessThan(1e-5f), "Rotating PCB and slots must share the same displayed coordinate frame.");
+                Assert.That(Quaternion.Angle(smoothedSlot.rotation, displayedOrigin), Is.LessThan(0.01f));
+                Vector3 frozen = recoveredObservation.position;
+                Quaternion frozenRotation = recoveredObservation.rotation;
+                Receive(Payload(11, 9000000000, publisher: "camera-b").Replace("\"valid\":true", "\"valid\":false"));
+                Invoke(calibration, "Update");
+                Assert.That(recoveredObservation.position, Is.EqualTo(frozen));
+                Assert.That(recoveredObservation.rotation, Is.EqualTo(frozenRotation), "Invalid observations must freeze pending interpolation.");
+                Receive(Payload(12, 10000000000, publisher: "camera-b"));
+                Field(calibration, "<LastAppliedTime>k__BackingField").SetValue(calibration, Time.realtimeSinceStartupAsDouble - 4d);
+                Invoke(calibration, "Update");
+                Assert.That(recoveredObservation.position, Is.EqualTo(frozen));
+                Assert.That(recoveredObservation.rotation, Is.EqualTo(frozenRotation), "Stale input must freeze the last displayed pose.");
                 ((Behaviour)calibration).enabled = false;
                 Assert.That(recoveredObservation.gameObject.activeSelf, Is.False, "Mode changes must not leave an orphan preview.");
                 Assert.That(GetProperty(owner, "ObservationBoard"), Is.Null);

@@ -62,13 +62,13 @@ namespace MainUnity.UI
         readonly Label[] tcpValues = new Label[3];
         readonly Label[] rpyValues = new Label[3];
 
-        Label gripperText, gripperValue, watchdogValue, toolValue, visionStats, realSource, mockNote;
+        Label gripperText, gripperValue, watchdogValue, realSource, mockNote;
         Label progressNow, progressCount, unitPhase, unitStep;
         VisualElement progressHost, progressRailFill;
         readonly List<SlotGroup> slotGroups = new();
         int planTotal;
         bool warnedStepCount;
-        VisualElement gripperChip, gripperFill, watchdogDot, visionEmpty, realStatus, poseBlock, safetyBlock;
+        VisualElement gripperChip, gripperFill, watchdogDot, realStatus, poseBlock, safetyBlock;
 
         // 추세 (Docs/ui-design.md 3.1절). 값 하나만으로는 방향을 알 수 없어서,
         // 운전자가 이상을 알람이 뜬 뒤에야 알아채게 된다.
@@ -160,7 +160,6 @@ namespace MainUnity.UI
             if (uiMaster == null) return;
             if (statusManager == null) statusManager = uiMaster.StatusManager;
             if (gripper == null) gripper = uiMaster.Gripper;
-            if (vision == null) vision = uiMaster.VisionImage;
         }
 
         void Build()
@@ -197,9 +196,6 @@ namespace MainUnity.UI
             gripperFill = root.Q<VisualElement>("gripper-fill");
             watchdogDot = root.Q<VisualElement>("watchdog-dot");
             watchdogValue = root.Q<Label>("watchdog-value");
-            toolValue = root.Q<Label>("tool-value");
-            visionEmpty = root.Q<VisualElement>("vision-empty");
-            visionStats = root.Q<Label>("vision-stats");
             realStatus = root.Q<VisualElement>("real-status");
             realSource = root.Q<Label>("real-source");
             poseBlock = root.Q<VisualElement>("pose-block");
@@ -288,6 +284,7 @@ namespace MainUnity.UI
                     // 수신기가 Start 에서 잡아 둔 Image 는 버려진 트리에 남으므로,
                     // 화면을 다시 세우는 이쪽에서 새 Image 를 넘긴다.
                     tile.Receiver.SetTargetImage(tile.Image);
+                    tile.Receiver.enabled = tile.On;
                 }
 
                 CamTile captured = tile;
@@ -349,6 +346,7 @@ namespace MainUnity.UI
             int live = 0;
             foreach (CamTile tile in camTiles)
             {
+                if (tile.Receiver != null) tile.Receiver.enabled = !mock && tile.On;
                 tile.Chip?.EnableInClassList("chip--accent", tile.On);
                 if (tile.Root == null) continue;
 
@@ -1054,11 +1052,6 @@ namespace MainUnity.UI
             sink[i].text = blank ? "—" : v.ToString("0.0");
         }
 
-        /// <summary>
-        /// TODO(API·Real): Real 그리퍼는 개폐 명령만 있고 열림 폭 피드백이 없다.
-        ///                 RobotNonrtState 에 폭이 들어오면 여기서 percent 를 그 값으로 바꾼다.
-        ///                 지금 Real 모드의 폭 표시는 GripperSubscriber 추정치다.
-        /// </summary>
         void RefreshGripper()
         {
             if (gripper == null || !gripper.TryGetOpeningPercent(out float percent))
@@ -1071,7 +1064,7 @@ namespace MainUnity.UI
             }
             // "100.0 / 100 %" 는 22px 굵은 글자로 145px 이다. 칩(HOLDING · 79px)과 나란히
             // 놓이면 열의 내용 폭 166px 을 60px 넘겨 옆 열(SLOT MAP) 위로 흘렀다.
-            // 소수점도 지운다 — Real 은 폭 피드백이 없어 이 값 자체가 추정치다(위 TODO).
+            // 피드백은 정수 백분율이므로 소수점은 표시하지 않는다.
             // 단위와 눈금(%)은 섹션 머리의 "열림 % · 30초" 가 이미 말한다.
             if (gripperValue != null) gripperValue.text = $"{percent:0} %";
             if (gripperFill != null) gripperFill.style.width = Length.Percent(percent);
