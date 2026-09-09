@@ -1,6 +1,7 @@
 """Checks for DB retry and YAML-driven Mock workflow gates."""
 
 import asyncio
+from copy import deepcopy
 import os
 import json
 import random
@@ -9,7 +10,7 @@ import threading
 import unittest
 from pathlib import Path
 from types import SimpleNamespace, MethodType
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, patch, mock_open, PropertyMock
 
 import psycopg
 
@@ -19,12 +20,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from assembly_sequencer.db import DbQueueFull, DbWriter
 from assembly_sequencer.mock_backend import MockBackend, choose_inspection
 from assembly_sequencer.sequencer_node import AssemblySequencer
-from assembly_sequencer.recipe_contract import assembly_snapshot, load_recipe, resolve_observations, parse_command
+from assembly_sequencer.recipe_contract import assembly_snapshot, load_recipe, resolve_observations, parse_command, validate_recipe
 from assembly_sequencer.db import production_store as store
 from assembly_sequencer.real_backend import RealBackend
 
 
 JOB_ID = "12345678-1234-5678-1234-567812345678"
+OPERATION_ID = "87654321-4321-8765-4321-876543218765"
 
 
 class FakeStore:
@@ -458,7 +460,7 @@ class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
                       state="STARTED", observations=observations,
                       resolved_steps=resolve_observations(recipe, observations),
                       before_action_index=0, after_action_index=0, backend_started=False,
-                      conveyor_confirmed=False, transfer_requested=False,
+                      conveyor_confirmed=False, transfer_requested=False, conveyor_operation_id=OPERATION_ID,
                       expected_step_count=25, placed_count=0, held_step_order=0,
                       held_part_id="", held_slot_code="", inspection_result="",
                       slot_codes=[step["slot_code"] for step in recipe["steps"]])
@@ -472,13 +474,16 @@ class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
                                     recipe_version=recipe["recipe_version"], backend=backend,
                                     db_writer=writer, publish=Mock(), fail_active=Mock(),
                                     finish_active_unit=Mock(), set_response=AssemblySequencer.set_response)
+        sequencer.conveyor_arrived = MethodType(AssemblySequencer.conveyor_arrived, sequencer)
+        sequencer.conveyor_failed = MethodType(AssemblySequencer.conveyor_failed, sequencer)
         sequencer.run_transfer_workflow = MethodType(AssemblySequencer.run_transfer_workflow, sequencer)
         return sequencer, active
 
     async def test_recipe_workflow_waits_for_conveyor_then_follows_yaml(self):
         sequencer, active = self.fixture()
         arrived = asyncio.Event()
-        async def conveyor(job, station):
+        async def conveyor(job, station, **kwargs):
+            kwargs["on_ready"]()
             if station == "ASSEMBLY":
                 await arrived.wait()
         sequencer.backend.move_conveyor.side_effect = conveyor
@@ -499,19 +504,50 @@ class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(moves), 25 * 6)
         sequencer.finish_active_unit.assert_called_once_with(active)
 
-    async def test_before_all_action_order_comes_from_recipe(self):
-        sequencer, active = self.fixture()
-        sequencer.recipe["workflow"]["before_all"].reverse()
-        await AssemblySequencer.run_assembly_workflow(sequencer, active)
-        self.assertEqual([c[0] for c in sequencer.backend.mock_calls[:3]],
-                         ["resolve_targets", "move_conveyor", "start"])
-        sequencer.fail_active.assert_not_called()
+    def test_invalid_workflow_orders_are_rejected(self):
+        sequencer, _ = self.fixture()
+        validate_recipe(sequencer.recipe)
+        for section, left, right in (("before_all", 0, 1), ("per_step", 2, 5), ("after_all", 0, 1)):
+            recipe = deepcopy(sequencer.recipe)
+            actions = recipe["workflow"][section]
+            actions[left], actions[right] = actions[right], actions[left]
+            with self.subTest(section=section), self.assertRaisesRegex(ValueError, "invalid action order"):
+                validate_recipe(recipe)
+        for section in sequencer.recipe["workflow"]:
+            for mutation in ("missing", "duplicate"):
+                recipe = deepcopy(sequencer.recipe)
+                actions = recipe["workflow"][section]
+                if mutation == "missing":
+                    actions.pop()
+                else:
+                    actions.append(actions[0])
+                with self.subTest(section=section, mutation=mutation), self.assertRaises(ValueError):
+                    validate_recipe(recipe)
+
+    def test_invalid_recipe_stops_startup_before_equipment_and_database(self):
+        sequencer, _ = self.fixture()
+        recipe = deepcopy(sequencer.recipe)
+        recipe["workflow"]["per_step"][2], recipe["workflow"]["per_step"][5] = (
+            recipe["workflow"]["per_step"][5], recipe["workflow"]["per_step"][2])
+        with patch("rclpy.node.Node.__init__", return_value=None), \
+             patch.object(AssemblySequencer, "context", new_callable=PropertyMock) as context, \
+             patch.object(AssemblySequencer, "declare_parameter", return_value=SimpleNamespace(value="assembly-r1.yaml")), \
+             patch.object(AssemblySequencer, "create_client") as client, \
+             patch("assembly_sequencer.sequencer_node.DbWriter") as writer, \
+             patch("pathlib.Path.open", mock_open(read_data="unused")), \
+             patch("assembly_sequencer.recipe_contract.yaml.safe_load", return_value=recipe):
+            context.return_value.get_domain_id.return_value = 42
+            with patch.dict(os.environ, {"ASSEMBLY_SEQUENCER_MODE": "mock"}), self.assertRaisesRegex(ValueError, "invalid action order"):
+                AssemblySequencer()
+            client.assert_not_called()
+            writer.assert_not_called()
 
     async def test_inspection_precedes_transfer_and_db_failure_blocks_it(self):
         sequencer, active = self.fixture()
         inspection_arrived = asyncio.Event()
-        sequencer.backend.move_conveyor.side_effect = lambda *args: None
-        async def wait_arrival(*args):
+        sequencer.backend.move_conveyor.side_effect = lambda *args, **kwargs: None
+        async def wait_arrival(*args, **kwargs):
+            kwargs["on_ready"]()
             await inspection_arrived.wait()
         sequencer.backend.move_conveyor.side_effect = wait_arrival
         task = asyncio.create_task(sequencer.run_transfer_workflow(active))
@@ -552,6 +588,7 @@ class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
         pose = {"xyz_mm": [0, 0, 0], "xyzw": [0, 0, 0, 1]}
         response = await AssemblySequencer.on_external_request(sequencer,
             SimpleNamespace(cmd_str="mock\n" + json.dumps({"command":"transfer_assembled_pcb", "job_id":JOB_ID,
+                                                          "unit_id":22, "operation_id":OPERATION_ID,
                                                           "assembled_pcb":{"source":pose,"target":pose}})), SimpleNamespace())
         self.assertEqual(json.loads(response.cmd_res)["error_code"], "BUSY")
         sequencer.backend.confirm_conveyor.assert_not_called()
@@ -571,10 +608,94 @@ class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
         sequencer, active = self.fixture()
         active["state"] = "CONVEYOR_MOVING"
         for _ in range(2):
-            response = await AssemblySequencer.conveyor_arrived(sequencer, {"job_id":JOB_ID}, SimpleNamespace())
+            response = await AssemblySequencer.conveyor_arrived(sequencer, {"job_id":JOB_ID,"unit_id":22,"operation_id":OPERATION_ID}, SimpleNamespace())
             self.assertTrue(json.loads(response.cmd_res)["accepted"])
-        sequencer.backend.confirm_conveyor.assert_called_once_with(JOB_ID, "ASSEMBLY")
+        sequencer.backend.confirm_conveyor.assert_called_once_with(JOB_ID, "ASSEMBLY", unit_id=22, operation_id=OPERATION_ID)
         self.assertTrue(active["conveyor_confirmed"])
+
+    async def test_stale_conveyor_commands_do_not_mutate_current_unit(self):
+        pose = {"xyz_mm": [0, 0, 0], "xyzw": [0, 0, 0, 1]}
+        for name, state, extra in (
+            ("conveyor_arrived", "CONVEYOR_MOVING", {}),
+            ("conveyor_failed", "CONVEYOR_MOVING", {"message": "old failure"}),
+            ("conveyor_failed", "ASSEMBLY_COMPLETED", {"message": "old failure"}),
+            ("transfer_assembled_pcb", "ASSEMBLY_COMPLETED", {"assembled_pcb": {"source": pose, "target": pose}}),
+        ):
+            for identity in ({"unit_id": 21}, {"operation_id": JOB_ID}, {"job_id": OPERATION_ID}):
+                sequencer, active = self.fixture()
+                active["state"] = state
+                before = deepcopy(active)
+                command = dict(command=name, job_id=JOB_ID, unit_id=22, operation_id=OPERATION_ID, **extra)
+                command.update(identity)
+                response = await AssemblySequencer.on_external_request(sequencer,
+                    SimpleNamespace(cmd_str="mock\n" + json.dumps(command)), SimpleNamespace())
+                with self.subTest(command=name, identity=identity):
+                    self.assertEqual(json.loads(response.cmd_res)["error_code"], "NOT_ACTIVE")
+                    self.assertEqual(active, before)
+                    self.assertEqual(sequencer.backend.mock_calls, [])
+                    sequencer.fail_active.assert_not_called()
+                    sequencer.db_writer.claim.assert_not_called()
+
+    async def test_conveyor_identity_is_required_before_dispatch(self):
+        sequencer, active = self.fixture()
+        for name in ("conveyor_arrived", "conveyor_failed", "transfer_assembled_pcb"):
+            pose = {"xyz_mm": [0, 0, 0], "xyzw": [0, 0, 0, 1]}
+            valid = dict(command=name, job_id=JOB_ID, unit_id=22, operation_id=OPERATION_ID)
+            if name == "conveyor_failed":
+                valid["message"] = "stopped"
+            if name == "transfer_assembled_pcb":
+                valid["assembled_pcb"] = {"source": pose, "target": pose}
+            for key, value in (("unit_id", None), ("unit_id", True), ("unit_id", 0),
+                               ("unit_id", "22"), ("operation_id", None), ("operation_id", "bad")):
+                command = dict(valid)
+                if value is None:
+                    del command[key]
+                else:
+                    command[key] = value
+                response = await AssemblySequencer.on_external_request(sequencer,
+                    SimpleNamespace(cmd_str="mock\n" + json.dumps(command)), SimpleNamespace())
+                with self.subTest(command=name, key=key, value=value):
+                    self.assertEqual(json.loads(response.cmd_res)["error_code"], "INVALID_REQUEST")
+        self.assertEqual(sequencer.backend.mock_calls, [])
+
+    async def test_matching_transfer_is_idempotent_and_failed_wait_is_rejected(self):
+        sequencer, active = self.fixture()
+        active["state"] = "ASSEMBLY_COMPLETED"
+        pose = {"xyz_mm": [0, 0, 0], "xyzw": [0, 0, 0, 1]}
+        command = dict(command="transfer_assembled_pcb", job_id=JOB_ID, unit_id=22,
+                       operation_id=OPERATION_ID, assembled_pcb={"source": pose, "target": pose})
+        for _ in range(2):
+            response = await AssemblySequencer.on_external_request(sequencer,
+                SimpleNamespace(cmd_str="mock\n" + json.dumps(command)), SimpleNamespace())
+            self.assertTrue(json.loads(response.cmd_res)["accepted"])
+        sequencer.backend.confirm_conveyor.assert_called_once()
+        self.assertTrue(active["transfer_requested"])
+        command = dict(command="conveyor_failed", job_id=JOB_ID, unit_id=22,
+                       operation_id=OPERATION_ID, message="late failure")
+        sequencer.backend.fail_conveyor.side_effect = RuntimeError("movement already completed")
+        response = await AssemblySequencer.on_external_request(sequencer,
+            SimpleNamespace(cmd_str="mock\n" + json.dumps(command)), SimpleNamespace())
+        self.assertEqual(json.loads(response.cmd_res)["error_code"], "BUSY")
+        sequencer.fail_active.assert_not_called()
+
+    async def test_movement_ids_are_distinct_and_recoverable(self):
+        sequencer, active = self.fixture()
+        sequencer.external_publisher = Mock()
+        sequencer.terminal_snapshot = None
+        sequencer.publish = MethodType(AssemblySequencer.publish, sequencer)
+        snapshots = []
+        def ready(*args, **kwargs):
+            kwargs["on_ready"]()
+            snapshots.append(assembly_snapshot(active, active["state"]))
+        sequencer.backend.move_conveyor.side_effect = ready
+        await AssemblySequencer.run_assembly_workflow(sequencer, active)
+        self.assertEqual(len(snapshots), 2)
+        self.assertNotEqual(snapshots[0]["operation_id"], snapshots[1]["operation_id"])
+        messages = [json.loads(call.args[0].data) for call in sequencer.external_publisher.publish.call_args_list]
+        movements = [row for row in messages if row["state"] in {"CONVEYOR_MOVING", "ASSEMBLY_COMPLETED"}]
+        for snapshot, payload in zip(snapshots, movements):
+            self.assertEqual(payload["operation_id"], snapshot["operation_id"])
+            self.assertEqual(payload["unit_id"], 22)
 
     async def test_conveyor_failure_ends_workflow_before_robot_start(self):
         sequencer, active = self.fixture()
@@ -666,7 +787,7 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
                       backend.move_joint(JOB_ID, [0]*6), backend.pick(JOB_ID, {}, "base_link", {}, {}, {}),
                       backend.place(JOB_ID, {}, "base_link", {}, {}, {}),
                       backend.transfer_assembled_pcb(JOB_ID, "base_link", {}, {}, {}),
-                      backend.move_conveyor(JOB_ID, "ASSEMBLY"), backend.resolve_targets([])]
+                      backend.move_conveyor(JOB_ID, "ASSEMBLY", unit_id=22, operation_id=OPERATION_ID, on_ready=Mock()), backend.resolve_targets([])]
         for operation in operations:
             with self.assertRaisesRegex(RuntimeError, "NOT_READY"):
                 await operation
@@ -738,25 +859,134 @@ class MockConveyorTest(unittest.TestCase):
         for timeout in (False,True):
             node=Mock(executor=None)
             backend=MockBackend(node,Mock())
-            operation=backend.move_conveyor(JOB_ID,"ASSEMBLY")
+            operation=backend.move_conveyor(JOB_ID,"ASSEMBLY", unit_id=22, operation_id=OPERATION_ID, on_ready=Mock())
             try:
                 future=operation.send(None)
                 with self.assertRaises(RuntimeError):
-                    backend.confirm_conveyor("other-job","ASSEMBLY")
+                    backend.confirm_conveyor("other-job","ASSEMBLY", unit_id=22, operation_id=OPERATION_ID)
                 self.assertFalse(future.done())
                 if timeout:
                     node.create_timer.call_args.args[1]()
                     with self.assertRaises(TimeoutError):
                         operation.send(None)
                 else:
-                    backend.confirm_conveyor(JOB_ID,"ASSEMBLY")
-                    backend.confirm_conveyor(JOB_ID,"ASSEMBLY")
+                    backend.confirm_conveyor(JOB_ID,"ASSEMBLY", unit_id=22, operation_id=OPERATION_ID)
+                    backend.confirm_conveyor(JOB_ID,"ASSEMBLY", unit_id=22, operation_id=OPERATION_ID)
                     with self.assertRaises(StopIteration):
                         operation.send(None)
                 self.assertIsNone(backend._conveyor_future)
                 node.destroy_timer.assert_called_once()
             finally:
                 operation.close()
+
+    def test_waiter_exists_before_request_and_rejects_previous_movement(self):
+        backend = MockBackend(Mock(executor=None), Mock())
+        for unit, operation_id in ((21, JOB_ID), (22, OPERATION_ID)):
+            ready = Mock(side_effect=lambda: self.assertIsNotNone(backend._conveyor_future))
+            operation = backend.move_conveyor(JOB_ID, "ASSEMBLY", unit_id=unit,
+                                              operation_id=operation_id, on_ready=ready)
+            try:
+                future = operation.send(None)
+                ready.assert_called_once()
+                if unit == 22:
+                    for old_unit, old_operation in ((21, JOB_ID), (22, JOB_ID), (21, OPERATION_ID)):
+                        with self.assertRaises(RuntimeError):
+                            backend.confirm_conveyor(JOB_ID, "ASSEMBLY", unit_id=old_unit, operation_id=old_operation)
+                        with self.assertRaises(RuntimeError):
+                            backend.fail_conveyor(JOB_ID, "stale", unit_id=old_unit, operation_id=old_operation)
+                        self.assertFalse(future.done())
+                backend.confirm_conveyor(JOB_ID, "ASSEMBLY", unit_id=unit, operation_id=operation_id)
+                backend.confirm_conveyor(JOB_ID, "ASSEMBLY", unit_id=unit, operation_id=operation_id)
+                with self.assertRaises(RuntimeError):
+                    backend.fail_conveyor(JOB_ID, "late", unit_id=unit, operation_id=operation_id)
+                with self.assertRaises(StopIteration):
+                    operation.send(None)
+            finally:
+                operation.close()
+
+    def test_immediate_arrival_is_not_lost_and_duplicate_preserves_coordinates(self):
+        backend = MockBackend(Mock(executor=None), Mock())
+        coordinates = {"source": "first", "target": "first"}
+        def arrive():
+            backend.confirm_conveyor(JOB_ID, "INSPECTION", unit_id=22,
+                                     operation_id=OPERATION_ID, assembled_pcb=coordinates)
+            backend.confirm_conveyor(JOB_ID, "INSPECTION", unit_id=22,
+                                     operation_id=OPERATION_ID, assembled_pcb={"source": "replacement"})
+        operation = backend.move_conveyor(JOB_ID, "INSPECTION", unit_id=22,
+                                          operation_id=OPERATION_ID, on_ready=arrive)
+        try:
+            with self.assertRaises(StopIteration):
+                operation.send(None)
+            self.assertEqual(backend._assembled_pcb, coordinates)
+            self.assertIsNone(backend._conveyor_future)
+        finally:
+            operation.close()
+
+    def test_timeout_or_failure_cannot_be_reversed_by_late_arrival(self):
+        for timeout in (True, False):
+            node = Mock(executor=None)
+            backend = MockBackend(node, Mock())
+            operation = backend.move_conveyor(JOB_ID, "INSPECTION", unit_id=22,
+                                              operation_id=OPERATION_ID, on_ready=Mock())
+            try:
+                operation.send(None)
+                if timeout:
+                    node.create_timer.call_args.args[1]()
+                    with self.assertRaises(RuntimeError):
+                        backend.fail_conveyor(JOB_ID, "late failure", unit_id=22, operation_id=OPERATION_ID)
+                else:
+                    backend.fail_conveyor(JOB_ID, "stopped", unit_id=22, operation_id=OPERATION_ID)
+                with self.assertRaises(RuntimeError):
+                    backend.confirm_conveyor(JOB_ID, "INSPECTION", unit_id=22,
+                                             operation_id=OPERATION_ID, assembled_pcb={"old": "pose"})
+                self.assertIsNone(backend._assembled_pcb)
+                with self.assertRaises(TimeoutError if timeout else RuntimeError):
+                    operation.send(None)
+            finally:
+                operation.close()
+
+    def test_concurrent_timeout_cannot_be_overwritten_by_arrival(self):
+        node = Mock(executor=None)
+        backend = MockBackend(node, Mock())
+        operation = backend.move_conveyor(JOB_ID, "ASSEMBLY", unit_id=22,
+                                          operation_id=OPERATION_ID, on_ready=Mock())
+        entered, release, attempted = threading.Event(), threading.Event(), threading.Event()
+        errors = []
+        future = operation.send(None)
+        cancel = future.cancel
+        def delayed_cancel():
+            entered.set()
+            release.wait(2)
+            cancel()
+        def arrive():
+            attempted.set()
+            try:
+                backend.confirm_conveyor(JOB_ID, "ASSEMBLY", unit_id=22, operation_id=OPERATION_ID)
+            except RuntimeError as error:
+                errors.append(str(error))
+        future.cancel = delayed_cancel
+        timer = threading.Thread(target=node.create_timer.call_args.args[1])
+        arrival = threading.Thread(target=arrive)
+        try:
+            timer.start()
+            self.assertTrue(entered.wait(1))
+            arrival.start()
+            self.assertTrue(attempted.wait(1))
+            release.set()
+            timer.join(2)
+            arrival.join(2)
+            self.assertFalse(timer.is_alive())
+            self.assertFalse(arrival.is_alive())
+            self.assertTrue(future.cancelled())
+            self.assertEqual(len(errors), 1)
+            with self.assertRaises(TimeoutError):
+                operation.send(None)
+        finally:
+            release.set()
+            timer.join(2)
+            if arrival.ident is not None:
+                arrival.join(2)
+            operation.close()
 
     def test_mock_inspection_boundaries(self):
         self.assertEqual(choose_inspection(random.Random(1),0,[]),("PASS",[]))

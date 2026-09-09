@@ -115,6 +115,20 @@ namespace MainUnity.UI
             viewFocusButton = root.Q<Button>("view-focus");
             viewFocusRule = root.Q<VisualElement>("view-focus-rule");
             pageRoot = root.Q<VisualElement>(className: "page");
+            // RUN에서는 같은 확대 버튼과 상태 소유자를 트윈 도구 모음에 재사용한다.
+            VisualElement twinToolbar = root.Q<VisualElement>("twin-toolbar");
+            if (twinToolbar != null && viewFocusButton != null)
+            {
+                viewFocusButton.Clear();
+                viewFocusButton.text = "트윈 확대";
+                viewFocusButton.RemoveFromClassList("tab");
+                viewFocusButton.AddToClassList("chip");
+                viewFocusButton.style.width = 90;
+                viewFocusButton.style.height = 30;
+                viewFocusButton.style.marginTop = 0;
+                viewFocusButton.style.marginBottom = 0;
+                twinToolbar.Add(viewFocusButton);
+            }
             hasAuxPanels = pageRoot != null && pageRoot.Q<VisualElement>(className: "panel--aux") != null;
 
             // 셸이 없는 문서에 붙었을 수 있다. 그 경우 조용히 아무것도 하지 않는다.
@@ -163,11 +177,17 @@ namespace MainUnity.UI
             // 아래에 아무것도 나누지 않는 선 하나가 화면 끝에 붙어 떠 있다.
             DisplayStyle focusDisplay = hasAuxPanels ? DisplayStyle.Flex : DisplayStyle.None;
             if (viewFocusButton != null) viewFocusButton.style.display = focusDisplay;
-            if (viewFocusRule != null) viewFocusRule.style.display = focusDisplay;
+            if (viewFocusRule != null) viewFocusRule.style.display =
+                pageRoot != null && pageRoot.ClassListContains("page--run") ? DisplayStyle.None : focusDisplay;
 
             bool on = focusMode && hasAuxPanels;
             pageRoot?.EnableInClassList("page--focus", on);
             viewFocusButton?.EnableInClassList("tab--on", on);
+            if (pageRoot != null && pageRoot.ClassListContains("page--run") && viewFocusButton != null)
+            {
+                viewFocusButton.text = on ? "비교 화면" : "트윈 확대";
+                viewFocusButton.EnableInClassList("chip--accent", on);
+            }
         }
 
         void SelectMockMode() => SelectMode(RobotOperatingMode.Mock);

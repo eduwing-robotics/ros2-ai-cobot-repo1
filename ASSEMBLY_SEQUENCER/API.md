@@ -27,9 +27,9 @@ Service는 모드 접두사와 요청 JSON을 `cmd_str`, 응답 JSON을 `cmd_res
 | `status` | 없음 | 활성 작업 또는 최근 terminal snapshot 조회 |
 | `start` | `job_id`, `recipe_version` | Real 전용: 등록된 Job의 실행 준비 검증과 실행 요청 |
 | `observations` | `job_id`, `recipe_version`, `observations` | 현재 Scene의 부품·슬롯 좌표 등록 |
-| `conveyor_arrived` | `job_id` | 조립 위치 도착 확인 후 workflow 재개 |
-| `conveyor_failed` | `job_id`, `message` | 진행 중 컨베이어 실패 전달 |
-| `transfer_assembled_pcb` | `job_id`, `assembled_pcb` | 검사 위치 이송 좌표 등록과 workflow 재개 |
+| `conveyor_arrived` | `job_id`, `unit_id`, `operation_id` | 조립 위치 도착 확인 후 workflow 재개 |
+| `conveyor_failed` | `job_id`, `unit_id`, `operation_id`, `message` | 진행 중 컨베이어 실패 전달 |
+| `transfer_assembled_pcb` | `job_id`, `unit_id`, `operation_id`, `assembled_pcb` | 검사 위치 이송 좌표 등록과 workflow 재개 |
 | `pause` | `job_id` | 활성 작업 일시정지 요청 |
 | `resume` | `job_id` | 활성 작업 재개 요청 |
 
@@ -133,7 +133,7 @@ Mock에서는 `start`를 거절하고 기존 observations와 영속 Job 결합 �
 도착:
 
 ```json
-{"command": "conveyor_arrived", "job_id": "12345678-1234-5678-1234-567812345678"}
+{"command": "conveyor_arrived", "job_id": "12345678-1234-5678-1234-567812345678", "unit_id": 42, "operation_id": "87654321-4321-8765-4321-876543218765"}
 ```
 
 실패:
@@ -142,11 +142,26 @@ Mock에서는 `start`를 거절하고 기존 observations와 영속 Job 결합 �
 {
   "command": "conveyor_failed",
   "job_id": "12345678-1234-5678-1234-567812345678",
+  "unit_id": 42,
+  "operation_id": "87654321-4321-8765-4321-876543218765",
   "message": "conveyor stopped before the station"
 }
 ```
 
 `conveyor_arrived`는 상태가 `CONVEYOR_MOVING`일 때만 유효합니다. `conveyor_failed`는 컨베이어 완료를 기다리는 상태에서만 유효하며 `message`는 비어 있지 않아야 합니다.
+
+컨베이어 관련 세 명령은 양의 정수 `unit_id`와 UUID 문자열 `operation_id`를 요구합니다.
+Sequencer가 이동마다 새 UUID를 부여하고 `CONVEYOR_MOVING`·`ASSEMBLY_COMPLETED`
+feedback과 활성 status의 `operation_id`로 전달합니다. Unity는 이동 시작 시 받은
+`job_id`, `unit_id`, `operation_id`를 보관해 응답하며 완료 시점의 현재 식별자로 바꾸지 않습니다.
+status의 `operation_id`는 가장 최근 컨베이어 이동을 식별하며, 새 이동에서는 교체됩니다.
+이 필드만으로 이동 대기 여부를 판단하지 않고 `state`와 함께 해석해야 합니다.
+
+필드 누락·형식 오류는 `INVALID_REQUEST`, 현재 Job·Unit·이동 불일치는 `NOT_ACTIVE`입니다.
+같은 이동의 중복 도착·이송 요청은 완료를 재적용하지 않습니다. 이미 완료되거나
+실패·timeout 처리된 대기에 대한 실패 신호는 `BUSY`로 거절합니다.
+timeout 이후 도착은 대기를 성공으로 되돌리지 못합니다.
+이전 식별자 없는 클라이언트는 지원하지 않으므로 Unity와 Sequencer를 함께 갱신해야 합니다.
 
 ### assembled PCB 이송
 
@@ -154,6 +169,8 @@ Mock에서는 `start`를 거절하고 기존 observations와 영속 Job 결합 �
 {
   "command": "transfer_assembled_pcb",
   "job_id": "12345678-1234-5678-1234-567812345678",
+  "unit_id": 42,
+  "operation_id": "87654321-4321-8765-4321-876543218765",
   "assembled_pcb": {
     "source": {
       "xyz_mm": [100.0, 200.0, 300.0],
@@ -188,7 +205,7 @@ status 이외의 명령은 다음 형식을 반환합니다.
 |---|---|
 | `NOT_READY` | 실행 준비·설비 계약 미확인, Job claim 전 거절 |
 | `INVALID_REQUEST` | JSON, 필드, UUID, 좌표 또는 레시피 버전 오류 |
-| `NOT_ACTIVE` | Job이 terminal이거나 현재 활성 Job과 다름 |
+| `NOT_ACTIVE` | Job이 terminal이거나 현재 활성 Job·Unit·컨베이어 이동과 다름 |
 | `BUSY` | 현재 상태에서 명령을 받을 수 없음 |
 | `DB_ERROR` | Job 조회·정리 실패 |
 | `INTERNAL_ERROR` | backend 요청 또는 내부 처리 실패 |
@@ -217,6 +234,7 @@ status 이외의 명령은 다음 형식을 반환합니다.
 |---|---|
 | `job_id` | 진행·결과를 대조하는 UUID |
 | `unit_id` | 현재 생산 시도의 ID, Unit 생성 전 실패는 0 |
+| `operation_id` | `CONVEYOR_MOVING`·`ASSEMBLY_COMPLETED`에 포함되는 이동 UUID |
 | `state` | 실행 상태 |
 | `step_order` | 해당 step 순서, step이 없으면 0 |
 | `part_id`, `slot_code` | Pick·Place 대상, 해당 없으면 빈 문자열 |

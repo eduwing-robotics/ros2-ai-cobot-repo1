@@ -389,15 +389,15 @@ class AssemblySequencer(Node):
                         active["job_id"], "ASSEMBLY", unit_id=active["unit_id"],
                         operation_id=active["conveyor_operation_id"],
                         on_ready=lambda: self.publish({
-                        "job_id": active["job_id"],
-                        "state": "CONVEYOR_MOVING",
-                        "step_order": 0,
-                        "part_id": "",
-                        "slot_code": "",
-                        "error_code": "",
-                        "message": "",
-                        "db_sync_state": self.db_writer.sync_state,
-                    }))
+                            "job_id": active["job_id"],
+                            "state": "CONVEYOR_MOVING",
+                            "step_order": 0,
+                            "part_id": "",
+                            "slot_code": "",
+                            "error_code": "",
+                            "message": "",
+                            "db_sync_state": self.db_writer.sync_state,
+                        }))
                     error_code = "INTERNAL_ERROR"
                     continue
                 if (action, argument) == ("vision.resolve_targets", "recipe_steps"):
@@ -491,15 +491,15 @@ class AssemblySequencer(Node):
                         active["job_id"], "INSPECTION", unit_id=active["unit_id"],
                         operation_id=active["conveyor_operation_id"],
                         on_ready=lambda: self.publish({
-                        "job_id": active["job_id"],
-                        "state": "ASSEMBLY_COMPLETED",
-                        "step_order": 0,
-                        "part_id": "",
-                        "slot_code": "",
-                        "error_code": "",
-                        "message": "",
-                        "db_sync_state": self.db_writer.sync_state,
-                    }))
+                            "job_id": active["job_id"],
+                            "state": "ASSEMBLY_COMPLETED",
+                            "step_order": 0,
+                            "part_id": "",
+                            "slot_code": "",
+                            "error_code": "",
+                            "message": "",
+                            "db_sync_state": self.db_writer.sync_state,
+                        }))
                     error_code = "INTERNAL_ERROR"
                     continue
                 if (action, argument) == ("inspection.run", "assembled_pcb"):

@@ -25,6 +25,10 @@ Job·Unit, 수량, 검사 FAIL, 재시작과 안전정지의 공통 의미는 [�
 
 `sequencer_node.py`가 공통 YAML·Job·Unit 흐름을, `recipe_contract.py`가 입력 검증을 소유합니다.
 `mock_backend.py`는 Mock 동작 완료와 Unity 컨베이어 신호 대기·난수 검사를 소유합니다.
+YAML의 `before_all`·`per_step`·`after_all`은 필수 동작과 실행 순서까지 검증합니다.
+부품·슬롯 조립 순서와 동작 설정은 YAML에서 관리하지만, 공정 골격의 재배열은
+시작 시 거절하며 Job claim과 첫 설비 동작에 도달하지 않습니다.
+컨베이어는 이동마다 Job·Unit·이동 UUID를 대조하며 이전 이동의 도착·실패·이송 좌표를 적용하지 않습니다.
 `real_backend.py`는 문서화된 설비 작업 API와 Vision HTTP 경계만 사용합니다.
 현재 `/real/robot/status`로 상태를 조회하고 `/real/robot/pause`로 정지를 요청합니다.
 Pause 발행은 물리 정지 완료가 아니며, 최종 이벤트 연결 전에는 완료로 반환하지 않습니다.

@@ -1,47 +1,35 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
     <ui:Style src="project://database/Assets/UI/FR5Theme.uss" />
     <ui:Template src="project://database/Assets/UI/FR5Shell.uxml" name="FR5Shell" />
-    <!--
-      MONITOR · 이중 시야 (Docs/ui-design.md 2절)
-
-      화면을 좌우로 나눈다.
-        왼쪽  기준 — 트윈이 계산한 제자리. 로봇이 보고한 상태에서 파생된 그림이다.
-        오른쪽 관측 — 카메라가 본 실제. 로봇의 자기 보고와 무관한 유일한 증거다.
-
-      둘을 같은 크기로 나란히 두는 것이 이 배치의 전부다. 크기가 다르면 사람이
-      한쪽을 먼저 보고, 그러면 비교가 아니라 확인이 된다.
-      차이를 계산하려면 "제자리가 어디인가"를 알아야 하고 그 기준을 트윈이 준다.
-      카메라만으로는 어긋났다는 사실 자체를 모른다.
-
-      좌표
-        진행 레일   x   88 .. 1920   y   64 ..   70
-        기준(트윈)  x   88 ..  996   y   70 ..  810
-        관측(카메라) x 1012 .. 1920   y   70 ..  810
-        계기 띠     x   88 .. 1920   y  810 .. 1080
-
-      실데이터: 모드 · 로봇상태 · 워치독 · 관절 6축 · 그리퍼 · 조립 진행 ·
-                슬롯/부품 · 레시피 버전 · 요청 ID
-                TCP · RPY · 안전은 Real 전용이라 Mock 에서는 접힌다.
-    -->
+    <!-- 기본은 트윈과 관측의 좌우 비교이며, 확대 중에도 공통 알람을 유지한다. -->
     <ui:VisualElement name="fr5-run" class="page page--run fr5--mock">
+
+        <!-- 축소된 Camera.rect 바깥은 이전 프레임을 남길 수 있어 창 사이를 UI로 덮는다. -->
+        <ui:VisualElement class="run-alarm-space" picking-mode="Ignore" />
+        <ui:VisualElement class="run-view-gutter" picking-mode="Ignore" />
 
         <!-- 진행 레일. 화면에서 크게 움직이는 유일한 것이다. -->
         <ui:VisualElement name="run-rail" class="run-rail">
             <ui:VisualElement name="run-progress-fill" class="run-rail__fill" />
         </ui:VisualElement>
 
-        <!-- ==================== 좌 · 기준 (트윈) ====================
-          여기는 비워 둔다. page 배경이 투명이라 3D 트윈이 그대로 보인다.
-          이름표만 얹고 아무것도 덮지 않는다.
-        -->
         <ui:VisualElement name="twin-pane" class="run-pane run-pane--twin" picking-mode="Ignore">
-            <!-- 패널이 아니라 3D 위에 바로 얹히는 글자다. on-twin 이 바탕을 준다. -->
-            <ui:Label text="기준 — 트윈이 계산한 제자리" class="run-pane__title on-twin" />
-            <ui:Label name="twin-source" text="—" class="run-pane__source on-twin" />
+            <ui:VisualElement name="twin-viewport" class="run-twin-viewport" focusable="true" tooltip="왼쪽 드래그: 회전 · 오른쪽/가운데 드래그: 이동 · 휠: 확대/축소" />
+            <ui:VisualElement name="twin-toolbar" class="run-twin-toolbar">
+                <ui:Label text="트윈" class="run-sect__title" />
+                <ui:Button name="twin-overview" text="전체" class="chip" />
+                <ui:Button name="twin-board" text="기판" class="chip" />
+                <ui:Button name="twin-assembly" text="조립부" class="chip" />
+                <ui:Button name="twin-tray" text="부품 트레이" class="chip" tooltip="고정 공급 위치를 중심으로 트레이 구획을 봅니다" />
+                <ui:VisualElement class="spacer" />
+                <ui:Button name="twin-reset" text="시점 초기화" class="chip" />
+            </ui:VisualElement>
+            <ui:Label name="twin-source" text="—" class="run-twin-source on-twin" picking-mode="Ignore" />
+            <ui:Label text="드래그 회전 · 우클릭 드래그 이동 · 휠 확대" class="run-twin-help on-twin" picking-mode="Ignore" />
         </ui:VisualElement>
 
         <!-- ==================== 우 · 관측 (카메라) ====================
-          CCTV 분할. 켠 카메라 수에 따라 1 · 2 · 4 칸으로 나뉜다.
+          선택 영상 하나를 크게 보거나 분할 버튼으로 두 영상을 비교한다.
           칸마다 자기 수신기가 붙고, 자기 이름과 마지막 프레임 나이를 스스로 적는다.
           어느 칸이 늦는지 한 눈에 보여야 하므로 나이는 칸마다 따로 둔다.
         -->
@@ -84,6 +72,7 @@
                 <ui:Button name="cam-chip-3" class="chip" style="margin-left:6px;"><ui:Label text="컨베이어" class="chip__text" /></ui:Button>
                 <ui:Button name="cam-chip-4" class="chip" style="margin-left:6px;"><ui:Label text="조립" class="chip__text" /></ui:Button>
                 <ui:VisualElement class="spacer" />
+                <ui:Button name="cam-split" text="분할" class="chip" style="margin-right:12px;" />
                 <ui:Label name="cam-badge" text="—" class="run-cam__bar-badge" />
                 <ui:Button name="cam-expand" class="chip"><ui:Label text="확대" class="chip__text" /></ui:Button>
             </ui:VisualElement>

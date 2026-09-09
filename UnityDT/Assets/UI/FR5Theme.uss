@@ -838,7 +838,7 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
    보여야 하고, 하나로 합치면 어느 카메라가 죽었는지 알 수 없다. */
 .run-cam-grid {
     position: absolute;
-    left: 0; top: 0; right: 0; bottom: 0;
+    left: 0; top: 0; right: 0; bottom: 52px;
     flex-direction: row;
     flex-wrap: wrap;
     align-content: flex-start;
@@ -1121,3 +1121,23 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
 .page--manual .manual-gripper-unit { font-size: 11px; margin-left: 6px; }
 .page--manual .manual-gripper-actions { margin-top: 10px; }
 .page--manual .manual-gripper-actions .btn { width: 134px; height: 32px; font-size: 11px; margin-right: 8px; }
+
+/* RUN의 표시 영역과 Camera.rect를 일치시켜 UI 뒤로 셀이 잘리지 않게 한다. */
+.run-twin-viewport { position: absolute; left: 0; right: 0; top: 48px; bottom: 0; }
+.run-twin-toolbar {
+    position: absolute; left: 0; right: 0; top: 0; height: 48px;
+    flex-direction: row; align-items: center;
+    padding-left: 12px; padding-right: 12px;
+    background-color: rgb(28, 42, 52);
+}
+.run-twin-toolbar .chip { margin-left: 8px; min-height: 30px; }
+.run-twin-source { position: absolute; left: 14px; top: 60px; font-size: 12px; }
+.run-twin-help { position: absolute; left: 14px; bottom: 12px; font-size: 12px; }
+.page--run.page--focus .run-pane--twin { width: auto; right: 0; height: auto; bottom: 64px; }
+.page--run .run-pane--cam.run-cam-panel--expanded {
+    left: 88px; right: 0; width: auto; top: 112px; height: 698px; bottom: auto;
+}
+
+.run-alarm-space { position: absolute; left: 88px; right: 0; top: 64px; height: 48px; background-color: rgb(28, 42, 52); }
+.run-view-gutter { position: absolute; left: 996px; width: 16px; top: 112px; height: 698px; background-color: rgb(28, 42, 52); }
+.page--focus .run-view-gutter { display: none; }

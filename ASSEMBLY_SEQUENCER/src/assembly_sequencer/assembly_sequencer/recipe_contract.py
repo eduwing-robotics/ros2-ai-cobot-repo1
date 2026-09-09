@@ -529,6 +529,7 @@ def self_check(recipe=None):
     assert parse_command(json.dumps({
         "command": "transfer_assembled_pcb",
         "job_id": job_id,
+        "unit_id": 22, "operation_id": job_id,
         "assembled_pcb": {"source": pose, "target": pose},
     }), recipe_version)[0] == "transfer_assembled_pcb"
     assert parse_command('{"command":"status"}', recipe_version)[0] == "status"

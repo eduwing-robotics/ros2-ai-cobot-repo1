@@ -71,6 +71,7 @@ namespace MainUnity.Runtime.Robot.Mock
         Transform heldItem;
         string activeJobId;
         long activeUnitId;
+        string activeConveyorOperationId;
         string heldPartId;
         string heldSlotCode;
         int expectedStepCount;
@@ -114,6 +115,8 @@ namespace MainUnity.Runtime.Robot.Mock
         {
             public string command;
             public string job_id;
+            public long unit_id;
+            public string operation_id;
             public AssembledPcbTransfer assembled_pcb;
         }
 
@@ -125,10 +128,21 @@ namespace MainUnity.Runtime.Robot.Mock
         }
 
         [Serializable]
+        sealed class ConveyorArrivalRequest
+        {
+            public string command;
+            public string job_id;
+            public long unit_id;
+            public string operation_id;
+        }
+
+        [Serializable]
         sealed class ConveyorFailureRequest
         {
             public string command;
             public string job_id;
+            public long unit_id;
+            public string operation_id;
             public string message;
         }
 
@@ -184,6 +198,7 @@ namespace MainUnity.Runtime.Robot.Mock
         {
             public string job_id;
             public long unit_id;
+            public string operation_id;
             public string state;
             public int step_order;
             public string part_id;
@@ -199,6 +214,7 @@ namespace MainUnity.Runtime.Robot.Mock
             public bool active;
             public string job_id;
             public long unit_id;
+            public string operation_id;
             public string recipe_version;
             public string state;
             public int placed_count;
@@ -231,7 +247,7 @@ namespace MainUnity.Runtime.Robot.Mock
             recovering = false;
             bufferedFeedback.Clear();
             if (progress?.Latest?.State == AssemblyState.ConveyorMoving)
-                _ = ReportConveyorFailureAsync(
+                _ = ReportConveyorFailureAsync(activeJobId, activeUnitId, activeConveyorOperationId,
                     "Mock assembly control was disabled during conveyor movement.");
             conveyor?.StopConveyor();
             FailActive("Mock assembly control was disabled.");
@@ -450,9 +466,9 @@ namespace MainUnity.Runtime.Robot.Mock
                     _ => throw new InvalidOperationException("Unknown Mock assembly state.")
                 }, null, snapshot.state == Failed ? snapshot.message : null);
                 if (snapshot.state == ConveyorMoving)
-                    _ = MoveToAssemblyAndConfirmAsync();
+                    _ = MoveToAssemblyAndConfirmAsync(snapshot.operation_id);
                 else if (snapshot.state == AssemblyCompleted)
-                    _ = MoveToInspectionAndRequestTransferAsync();
+                    _ = MoveToInspectionAndRequestTransferAsync(snapshot.operation_id);
                 if (!snapshot.active)
                     activeJobId = string.Empty;
                 foreach (AssemblyFeedback feedback in bufferedFeedback.ToArray())
@@ -480,6 +496,7 @@ namespace MainUnity.Runtime.Robot.Mock
 
             gripperCatcher.Release();
             processedCallbacks.Clear();
+            activeConveyorOperationId = null;
             heldItem = null;
             heldPartId = string.Empty;
             heldSlotCode = string.Empty;
@@ -556,6 +573,9 @@ namespace MainUnity.Runtime.Robot.Mock
 
         void ValidateSnapshot(AssemblySnapshot snapshot, MockObservation[] observations)
         {
+            if ((snapshot.state == ConveyorMoving || snapshot.state == AssemblyCompleted) &&
+                !Guid.TryParse(snapshot.operation_id, out _))
+                throw new InvalidOperationException("Conveyor status requires an operation UUID.");
             bool activeState = snapshot.state == ConveyorMoving || snapshot.state == Started || snapshot.state == Picked ||
                 snapshot.state == Placed || snapshot.state == AssemblyCompleted ||
                 snapshot.state == PcbPicked || snapshot.state == Paused ||
@@ -779,12 +799,13 @@ namespace MainUnity.Runtime.Robot.Mock
                 : $"{response.data.error_code}: {rejected}");
         }
 
-        async Task MoveToAssemblyAndConfirmAsync()
+        async Task MoveToAssemblyAndConfirmAsync(string operationId)
         {
             if (assemblyConveyorStarted)
                 return;
 
             assemblyConveyorStarted = true;
+            activeConveyorOperationId = operationId;
             string jobId = activeJobId;
             long unitId = activeUnitId;
             try
@@ -799,26 +820,28 @@ namespace MainUnity.Runtime.Robot.Mock
                 conveyor.SetBoard(assembledPcb);
                 await conveyor.MoveBoardToAssemblyAsync();
                 if (!isActiveAndEnabled || terminal == null || terminal.Task.IsCompleted ||
-                    jobId != activeJobId || unitId != activeUnitId)
+                    jobId != activeJobId || unitId != activeUnitId || operationId != activeConveyorOperationId)
                     return;
 
-                await SendMockAsync(JsonUtility.ToJson(new ControlRequest
+                await SendMockAsync(JsonUtility.ToJson(new ConveyorArrivalRequest
                 {
                     command = "conveyor_arrived",
-                    job_id = activeJobId
+                    job_id = jobId,
+                    unit_id = unitId,
+                    operation_id = operationId
                 }), "conveyor arrival");
             }
             catch (Exception exception)
             {
-                if (jobId != activeJobId || unitId != activeUnitId) return;
+                if (jobId != activeJobId || unitId != activeUnitId || operationId != activeConveyorOperationId) return;
                 if (isActiveAndEnabled)
-                    await ReportConveyorFailureAsync(exception.Message);
-                if (jobId == activeJobId && unitId == activeUnitId)
+                    await ReportConveyorFailureAsync(jobId, unitId, operationId, exception.Message);
+                if (jobId == activeJobId && unitId == activeUnitId && operationId == activeConveyorOperationId)
                     FailActive(exception.Message);
             }
         }
 
-        async Task ReportConveyorFailureAsync(string message)
+        async Task ReportConveyorFailureAsync(string jobId, long unitId, string operationId, string message)
         {
             if (string.IsNullOrEmpty(activeJobId))
                 return;
@@ -828,7 +851,9 @@ namespace MainUnity.Runtime.Robot.Mock
                 await SendMockAsync(JsonUtility.ToJson(new ConveyorFailureRequest
                 {
                     command = "conveyor_failed",
-                    job_id = activeJobId,
+                    job_id = jobId,
+                    unit_id = unitId,
+                    operation_id = operationId,
                     message = string.IsNullOrWhiteSpace(message)
                         ? "Mock conveyor movement failed."
                         : message
@@ -841,26 +866,32 @@ namespace MainUnity.Runtime.Robot.Mock
             }
         }
 
-        async Task MoveToInspectionAndRequestTransferAsync()
+        async Task MoveToInspectionAndRequestTransferAsync(string operationId)
         {
             if (inspectionTransferStarted)
                 return;
             inspectionTransferStarted = true;
+            activeConveyorOperationId = operationId;
             Report(AssemblyState.ConveyorMoving, null);
             bool conveyorArrived = false;
+            string jobId = activeJobId;
+            long unitId = activeUnitId;
 
             try
             {
                 await conveyor.MoveBoardToInspectionAsync();
                 conveyorArrived = true;
-                if (!isActiveAndEnabled || terminal == null || terminal.Task.IsCompleted)
+                if (!isActiveAndEnabled || terminal == null || terminal.Task.IsCompleted ||
+                    jobId != activeJobId || unitId != activeUnitId || operationId != activeConveyorOperationId)
                     return;
 
                 EnsureRosConnection();
                 string json = JsonUtility.ToJson(new TransferRequest
                 {
                     command = "transfer_assembled_pcb",
-                    job_id = activeJobId,
+                    job_id = jobId,
+                    unit_id = unitId,
+                    operation_id = operationId,
                     assembled_pcb = BuildAssembledPcbTransfer()
                 });
                 Task<RemoteCmdInterfaceResponse> request = connection
@@ -901,9 +932,11 @@ namespace MainUnity.Runtime.Robot.Mock
             }
             catch (Exception exception)
             {
+                if (jobId != activeJobId || unitId != activeUnitId || operationId != activeConveyorOperationId) return;
                 if (!conveyorArrived && isActiveAndEnabled)
-                    await ReportConveyorFailureAsync(exception.Message);
-                FailActive(exception.Message);
+                    await ReportConveyorFailureAsync(jobId, unitId, operationId, exception.Message);
+                if (jobId == activeJobId && unitId == activeUnitId && operationId == activeConveyorOperationId)
+                    FailActive(exception.Message);
             }
         }
 
@@ -1005,7 +1038,7 @@ namespace MainUnity.Runtime.Robot.Mock
                     case ConveyorMoving:
                         assemblyConveyorStarted = false;
                         Report(AssemblyState.ConveyorMoving, feedback);
-                        _ = MoveToAssemblyAndConfirmAsync();
+                        _ = MoveToAssemblyAndConfirmAsync(feedback.operation_id);
                         break;
                     case Started:
                         Report(AssemblyState.Started, feedback);
@@ -1025,7 +1058,7 @@ namespace MainUnity.Runtime.Robot.Mock
                         if (lastPlacedStepOrder != expectedStepCount)
                             throw new InvalidOperationException(
                                 "ASSEMBLY_COMPLETED arrived before all Mock observations were placed.");
-                        _ = MoveToInspectionAndRequestTransferAsync();
+                        _ = MoveToInspectionAndRequestTransferAsync(feedback.operation_id);
                         break;
                     case PcbPicked:
                         ApplyAssembledPcbPicked();
@@ -1083,6 +1116,7 @@ namespace MainUnity.Runtime.Robot.Mock
         void ResetProgress()
         {
             processedCallbacks.Clear();
+            activeConveyorOperationId = null;
             heldItem = null;
             heldPartId = string.Empty;
             heldSlotCode = string.Empty;
@@ -1096,6 +1130,9 @@ namespace MainUnity.Runtime.Robot.Mock
 
         static void ValidateFeedback(AssemblyFeedback feedback)
         {
+            if ((feedback.state == ConveyorMoving || feedback.state == AssemblyCompleted) &&
+                !Guid.TryParse(feedback.operation_id, out _))
+                throw new InvalidOperationException("Conveyor feedback requires an operation UUID.");
             if (feedback.step_order < 0)
                 throw new InvalidOperationException("Assembly feedback step_order must not be negative.");
             if ((feedback.state == Picked || feedback.state == Placed) &&

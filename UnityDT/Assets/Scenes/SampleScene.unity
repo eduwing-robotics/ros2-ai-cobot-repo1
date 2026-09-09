@@ -6462,6 +6462,7 @@ MonoBehaviour:
   boardCamTexture: {fileID: 8400000, guid: 1ce422e539c2cd341aaba5e8f875f4e1, type: 2}
   robotCamCamera: {fileID: 330585545}
   boardCamCamera: {fileID: 943061422}
+  twinCamera: {fileID: 550952895}
 --- !u!4 &813333164
 Transform:
   m_ObjectHideFlags: 0

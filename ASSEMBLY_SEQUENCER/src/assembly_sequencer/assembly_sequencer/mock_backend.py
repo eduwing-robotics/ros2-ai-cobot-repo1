@@ -65,7 +65,14 @@ class MockBackend:
         self._conveyor_operation_id = operation_id
         if station == "ASSEMBLY":
             self._assembled_pcb = None
-        timer = self._node.create_timer(CONVEYOR_SIGNAL_TIMEOUT_SECONDS, future.cancel)
+
+        def expire():
+            # Timer and service callbacks run on different executor threads. A timeout
+            # and arrival must settle the wait atomically; rclpy permits set_result after cancel.
+            with self._timeout_lock:
+                future.cancel()
+
+        timer = self._node.create_timer(CONVEYOR_SIGNAL_TIMEOUT_SECONDS, expire)
         try:
             # Register the waiter before exposing the movement to the external caller.
             on_ready()
@@ -81,26 +88,31 @@ class MockBackend:
             self._conveyor_operation_id = None
 
     def confirm_conveyor(self, job_id, station, *, unit_id, operation_id, assembled_pcb=None):
-        future = self._conveyor_future
-        if (job_id != self._conveyor_job_id or station != self._conveyor_station
-                or unit_id != self._conveyor_unit_id or operation_id != self._conveyor_operation_id
-                or future is None):
-            raise RuntimeError("matching conveyor movement is not awaiting completion")
-        if future.cancelled():
-            raise RuntimeError("conveyor completion deadline has expired")
-        if not future.done():
-            if station == "INSPECTION":
-                if assembled_pcb is None:
-                    raise ValueError("inspection arrival requires assembled PCB coordinates")
-                self._assembled_pcb = assembled_pcb
-            future.set_result(None)
+        with self._timeout_lock:
+            future = self._conveyor_future
+            if (job_id != self._conveyor_job_id or station != self._conveyor_station
+                    or unit_id != self._conveyor_unit_id or operation_id != self._conveyor_operation_id
+                    or future is None):
+                raise RuntimeError("matching conveyor movement is not awaiting completion")
+            if future.cancelled():
+                raise RuntimeError("conveyor completion deadline has expired")
+            if future.done() and future.exception() is not None:
+                raise RuntimeError("conveyor movement has already failed")
+            if not future.done():
+                if station == "INSPECTION":
+                    if assembled_pcb is None:
+                        raise ValueError("inspection arrival requires assembled PCB coordinates")
+                    self._assembled_pcb = assembled_pcb
+                future.set_result(None)
 
     def fail_conveyor(self, job_id, message, *, unit_id, operation_id):
-        future = self._conveyor_future
-        if (job_id != self._conveyor_job_id or unit_id != self._conveyor_unit_id
-                or operation_id != self._conveyor_operation_id or future is None or future.done()):
-            raise RuntimeError("matching conveyor movement is not awaiting completion")
-        future.set_exception(RuntimeError(message))
+        with self._timeout_lock:
+            future = self._conveyor_future
+            if (job_id != self._conveyor_job_id or unit_id != self._conveyor_unit_id
+                    or operation_id != self._conveyor_operation_id or future is None
+                    or future.cancelled() or future.done()):
+                raise RuntimeError("matching conveyor movement is not awaiting completion")
+            future.set_exception(RuntimeError(message))
 
     async def inspect_unit(self, job_id, unit_id, slot_codes):
         result, defects = choose_inspection(self._rng, self._fail_probability, slot_codes)
@@ -109,9 +121,10 @@ class MockBackend:
                 else "InspectionSamples/mock-fail.jpg"}
 
     def close(self):
-        for future in (self._conveyor_future, self._operation_future):
-            if future is not None and not future.done():
-                future.cancel()
+        with self._timeout_lock:
+            for future in (self._conveyor_future, self._operation_future):
+                if future is not None and not future.done():
+                    future.cancel()
 
     def is_available(self):
         return self._client.wait_for_service(timeout_sec=0.0)

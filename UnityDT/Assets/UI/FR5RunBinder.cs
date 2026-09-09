@@ -57,6 +57,20 @@ namespace MainUnity.UI
         [Tooltip("검출 대체용 기판 카메라입니다. 고르지 않은 동안 꺼 둡니다.")]
         [SerializeField] UnityEngine.Camera boardCamCamera;
 
+        [Tooltip("RUN 트윈 표시용 카메라입니다. 페이지를 나가면 원래 자세와 렌즈를 복원합니다.")]
+        [SerializeField] UnityEngine.Camera twinCamera;
+
+        VisualElement twinViewport, documentRoot;
+        Button twinOverviewButton, twinBoardButton, twinAssemblyButton, twinTrayButton, twinResetButton;
+        Vector3 originalCameraPosition, twinPivot;
+        Quaternion originalCameraRotation;
+        Rect originalCameraRect;
+        float originalNearClip, twinDistance, twinYaw, twinPitch;
+        bool twinCameraOwned, twinFree, hasBoardViewPosition, twinReferenceView;
+        Vector3 boardViewPosition;
+        int twinPreset, dragPointer = -1, dragButton;
+        Vector2 dragPosition;
+
         readonly VisualElement[] jointFills = new VisualElement[JointCount];
         readonly Label[] jointValues = new Label[JointCount];
         readonly Label[] tcpValues = new Label[3];
@@ -113,10 +127,11 @@ namespace MainUnity.UI
         // 디코딩된 마지막 프레임 이후 100ms만 점등한다. 더 빠른 연속 수신에서는
         // 점등이 이어지며, 새 프레임이 없으면 게임 시간 배율과 무관하게 소등한다.
         const double CamPulseSeconds = 0.1d;
-        bool camExpanded;
+        bool camExpanded, camSplit;
+        int selectedCamIndex;
         Label camBadge;
         VisualElement camPanel, camGrid;
-        Button camExpandButton;
+        Button camExpandButton, camSplitButton;
 
         Label nowSlot, nowPart, recipeVersion, requestId, twinSource;
 
@@ -152,6 +167,13 @@ namespace MainUnity.UI
             if (Time.realtimeSinceStartupAsDouble >= nextProgressRefreshTime)
             {
                 nextProgressRefreshTime = Time.realtimeSinceStartupAsDouble + 0.25d;
+                bool hasBoardView = TryGetBoardViewPosition(out _, out bool observed);
+                twinBoardButton?.SetEnabled(hasBoardView && twinCameraOwned);
+                twinAssemblyButton?.SetEnabled(hasBoardView && twinCameraOwned);
+                twinTrayButton?.SetEnabled(twinCameraOwned && TryGetTrayView(out _, out _));
+                string viewHint = observed ? "현재 기판 위치" : hasBoardView ? "기판 투입 기준 위치 · 기판 미표시" : "기판 위치 설정을 확인하세요";
+                if (twinBoardButton != null) twinBoardButton.tooltip = viewHint;
+                if (twinAssemblyButton != null) twinAssemblyButton.tooltip = viewHint;
                 RefreshAssembly();
                 RefreshCalibration();
                 RefreshEvents();
@@ -210,34 +232,271 @@ namespace MainUnity.UI
             recipeVersion = root.Q<Label>("recipe-version");
             requestId = root.Q<Label>("request-id");
             twinSource = root.Q<Label>("twin-source");
+            BuildTwin(root);
             BuildCamera(root);
             BuildSparklines(root);
             BuildRealStatus();
             cached = true;
         }
 
+        void BuildTwin(VisualElement root)
+        {
+            UnbindTwin();
+            hasBoardViewPosition = false;
+            if (uiMaster != null && uiMaster.Board != null)
+            {
+                try
+                {
+                    uiMaster.Board.ValidateConfiguration();
+                    boardViewPosition = uiMaster.Board.IncomingBoardPosition;
+                    hasBoardViewPosition = true;
+                }
+                catch (System.InvalidOperationException) { }
+            }
+            documentRoot = root;
+            twinViewport = root.Q<VisualElement>("twin-viewport");
+            twinOverviewButton = root.Q<Button>("twin-overview");
+            twinBoardButton = root.Q<Button>("twin-board");
+            twinAssemblyButton = root.Q<Button>("twin-assembly");
+            twinTrayButton = root.Q<Button>("twin-tray");
+            twinResetButton = root.Q<Button>("twin-reset");
+            root.Q<VisualElement>("twin-toolbar")?.SetEnabled(twinCamera != null);
+            if (twinCamera == null || twinViewport == null) return;
+
+            originalCameraPosition = twinCamera.transform.position;
+            originalCameraRotation = twinCamera.transform.rotation;
+            originalCameraRect = twinCamera.rect;
+            originalNearClip = twinCamera.nearClipPlane;
+            twinCameraOwned = true;
+            // 표시 좌표는 Unity 월드 m. 근접 관찰용 절단면이며 설비 안전 거리가 아니다.
+            twinCamera.nearClipPlane = 0.01f;
+            twinOverviewButton.clicked += ShowTwinOverview;
+            twinBoardButton.clicked += ShowTwinBoard;
+            twinAssemblyButton.clicked += ShowTwinAssembly;
+            if (twinTrayButton != null) twinTrayButton.clicked += ShowTwinTray;
+            twinResetButton.clicked += ResetTwinView;
+            twinViewport.RegisterCallback<GeometryChangedEvent>(OnTwinGeometryChanged);
+            documentRoot.RegisterCallback<GeometryChangedEvent>(OnTwinGeometryChanged);
+            twinViewport.RegisterCallback<PointerDownEvent>(OnTwinPointerDown);
+            twinViewport.RegisterCallback<PointerMoveEvent>(OnTwinPointerMove);
+            twinViewport.RegisterCallback<PointerUpEvent>(OnTwinPointerUp);
+            twinViewport.RegisterCallback<PointerCaptureOutEvent>(OnTwinCaptureOut);
+            twinViewport.RegisterCallback<WheelEvent>(OnTwinWheel);
+            UpdateTwinViewport();
+            ResetTwinView();
+        }
+
+        void UnbindTwin()
+        {
+            if (twinOverviewButton != null) twinOverviewButton.clicked -= ShowTwinOverview;
+            if (twinBoardButton != null) twinBoardButton.clicked -= ShowTwinBoard;
+            if (twinAssemblyButton != null) twinAssemblyButton.clicked -= ShowTwinAssembly;
+            if (twinTrayButton != null) twinTrayButton.clicked -= ShowTwinTray;
+            if (twinResetButton != null) twinResetButton.clicked -= ResetTwinView;
+            if (twinViewport != null)
+            {
+                if (dragPointer >= 0) twinViewport.ReleasePointer(dragPointer);
+                twinViewport.UnregisterCallback<GeometryChangedEvent>(OnTwinGeometryChanged);
+                twinViewport.UnregisterCallback<PointerDownEvent>(OnTwinPointerDown);
+                twinViewport.UnregisterCallback<PointerMoveEvent>(OnTwinPointerMove);
+                twinViewport.UnregisterCallback<PointerUpEvent>(OnTwinPointerUp);
+                twinViewport.UnregisterCallback<PointerCaptureOutEvent>(OnTwinCaptureOut);
+                twinViewport.UnregisterCallback<WheelEvent>(OnTwinWheel);
+            }
+            documentRoot?.UnregisterCallback<GeometryChangedEvent>(OnTwinGeometryChanged);
+            dragPointer = -1;
+            if (twinCameraOwned && twinCamera != null)
+            {
+                twinCamera.transform.SetPositionAndRotation(originalCameraPosition, originalCameraRotation);
+                twinCamera.rect = originalCameraRect;
+                twinCamera.nearClipPlane = originalNearClip;
+            }
+            twinCameraOwned = false;
+        }
+
+        void ShowTwinOverview() { twinPreset = 0; ResetTwinView(); }
+        void ShowTwinBoard() { twinPreset = 1; ResetTwinView(); }
+        void ShowTwinAssembly() { twinPreset = 2; ResetTwinView(); }
+        void ShowTwinTray() { twinPreset = 3; ResetTwinView(); }
+
+        void ResetTwinView()
+        {
+            if (!twinCameraOwned) return;
+            // 전체 프리셋은 이 셀의 작업면을 고정 구도로 보여준다. 공정 피드백으로
+            // 자동 이동하지 않으며, 기판 프리셋도 누른 시점의 위치만 관찰한다.
+            twinPivot = new Vector3(0.3f, 0.05f, 0f);
+            twinReferenceView = false;
+            twinDistance = 2.1f;
+            twinYaw = -43f;
+            twinPitch = 43f;
+            if (twinPreset == 3)
+            {
+                if (TryGetTrayView(out Vector3 center, out float distance))
+                {
+                    twinPivot = center;
+                    twinDistance = distance;
+                    twinPitch = 75f;
+                    twinYaw = 0f;
+                }
+                else twinPreset = 0;
+            }
+            else if (twinPreset != 0)
+            {
+                if (!TryGetBoardViewPosition(out twinPivot, out bool observed))
+                {
+                    twinPreset = 0;
+                    twinPivot = new Vector3(0.3f, 0.05f, 0f);
+                }
+                else
+                {
+                    twinReferenceView = !observed;
+                    twinDistance = twinPreset == 1 ? 0.38f : 0.45f;
+                    // 조립부는 벨트 길이 방향에서 내려다봐 측면 프레임의 가림을 줄인다.
+                    twinPitch = twinPreset == 1 ? 85f : 55f;
+                    twinYaw = twinPreset == 1 ? -43f : 180f;
+                }
+            }
+            twinFree = false;
+            ApplyTwinPose();
+        }
+
+        bool TryGetTrayView(out Vector3 center, out float distance)
+        {
+            center = default;
+            distance = 0f;
+            var board = uiMaster != null ? uiMaster.Board : null;
+            if (board == null || board.ItemGroups == null) return false;
+            Bounds bounds = default;
+            bool found = false;
+            foreach (var group in board.ItemGroups)
+            {
+                if (group?.SupplyPoints == null) continue;
+                foreach (Transform point in group.SupplyPoints)
+                {
+                    if (point == null) continue;
+                    if (!found) { bounds = new Bounds(point.position, Vector3.zero); found = true; }
+                    else bounds.Encapsulate(point.position);
+                }
+            }
+            if (!found) return false;
+            // 이동하는 부품 대신 Inspector의 고정 공급 위치를 사용한다.
+            // 구획 벽과 가장자리 부품 여백을 포함하는 관찰 거리이며 Unity 월드 m이다.
+            center = bounds.center;
+            distance = Mathf.Max(0.5f, Mathf.Max(bounds.size.x, bounds.size.z) * 1.8f);
+            return true;
+        }
+
+        bool TryGetBoardViewPosition(out Vector3 position, out bool observed)
+        {
+            var board = uiMaster != null ? uiMaster.Board : null;
+            Transform target = board != null ? board.ObservationBoard : null;
+            observed = target != null;
+            // 기판 생성 여부는 생산 상태다. 관찰 시점은 생성 전에도 기존 투입 위치를
+            // 사용할 수 있으며, 이를 현재 관측 위치로 표시하지 않는다.
+            position = observed ? target.position : boardViewPosition;
+            return observed || hasBoardViewPosition;
+        }
+
+        void OnTwinGeometryChanged(GeometryChangedEvent _) => UpdateTwinViewport();
+
+        void UpdateTwinViewport()
+        {
+            if (!twinCameraOwned || documentRoot == null || twinViewport == null) return;
+            Rect root = documentRoot.worldBound, view = twinViewport.worldBound;
+            if (!(root.width > 0 && root.height > 0 && view.width > 0 && view.height > 0)) return;
+            // UI는 좌상단, Camera.rect는 좌하단 원점이다. MANUAL과 같은 변환을
+            // 적용하며 소유 기간을 분리해 페이지 이동 시 원래 카메라를 복원한다.
+            twinCamera.rect = Rect.MinMaxRect(
+                Mathf.Clamp01((view.xMin - root.xMin) / root.width),
+                Mathf.Clamp01(1f - (view.yMax - root.yMin) / root.height),
+                Mathf.Clamp01((view.xMax - root.xMin) / root.width),
+                Mathf.Clamp01(1f - (view.yMin - root.yMin) / root.height));
+        }
+
+        void ApplyTwinPose()
+        {
+            Quaternion rotation = Quaternion.Euler(twinPitch, twinYaw, 0f);
+            twinCamera.transform.SetPositionAndRotation(twinPivot - rotation * Vector3.forward * twinDistance, rotation);
+            twinOverviewButton?.EnableInClassList("chip--accent", twinPreset == 0 && !twinFree);
+            twinBoardButton?.EnableInClassList("chip--accent", twinPreset == 1 && !twinFree);
+            twinAssemblyButton?.EnableInClassList("chip--accent", twinPreset == 2 && !twinFree);
+            twinTrayButton?.EnableInClassList("chip--accent", twinPreset == 3 && !twinFree);
+        }
+
+        void OnTwinPointerDown(PointerDownEvent evt)
+        {
+            if (!twinCameraOwned || dragPointer >= 0 || evt.button < 0 || evt.button > 2) return;
+            dragPointer = evt.pointerId;
+            dragButton = evt.button;
+            dragPosition = evt.position;
+            twinViewport.CapturePointer(dragPointer);
+            evt.StopPropagation();
+        }
+
+        void OnTwinPointerMove(PointerMoveEvent evt)
+        {
+            if (evt.pointerId != dragPointer || !twinCameraOwned) return;
+            Vector2 position = evt.position;
+            Vector2 delta = position - dragPosition;
+            dragPosition = position;
+            if (delta.sqrMagnitude == 0f) return;
+            if (dragButton == 0)
+            {
+                twinYaw += delta.x * 0.25f;
+                twinPitch = Mathf.Clamp(twinPitch + delta.y * 0.25f, 5f, 85f);
+            }
+            else
+            {
+                float unitsPerPixel = 2f * twinDistance * Mathf.Tan(twinCamera.fieldOfView * Mathf.Deg2Rad * 0.5f) /
+                    Mathf.Max(1f, twinViewport.resolvedStyle.height);
+                twinPivot += (-twinCamera.transform.right * delta.x + twinCamera.transform.up * delta.y) * unitsPerPixel;
+            }
+            twinFree = true;
+            ApplyTwinPose();
+            evt.StopPropagation();
+        }
+
+        void OnTwinPointerUp(PointerUpEvent evt)
+        {
+            if (evt.pointerId != dragPointer || evt.button != dragButton) return;
+            twinViewport.ReleasePointer(dragPointer);
+            dragPointer = -1;
+            evt.StopPropagation();
+        }
+
+        void OnTwinCaptureOut(PointerCaptureOutEvent _) => dragPointer = -1;
+
+        void OnTwinWheel(WheelEvent evt)
+        {
+            if (!twinCameraOwned) return;
+            twinDistance = Mathf.Clamp(twinDistance * Mathf.Exp(evt.delta.y * 0.06f), 0.12f, 8f);
+            twinFree = true;
+            ApplyTwinPose();
+            evt.StopPropagation();
+        }
+
         void BuildCamera(VisualElement root)
         {
+            UnbindCamera();
             camPanel = root.Q<VisualElement>("cam-panel");
             camGrid = root.Q<VisualElement>("cam-grid");
             camBadge = root.Q<Label>("cam-badge");
             camExpandButton = root.Q<Button>("cam-expand");
 
-            UnbindCamera();
+            camSplitButton = root.Q<Button>("cam-split");
             bool mock = uiMaster == null || uiMaster.IsSimulated;
             SetMockCameras(false, false);
-            // 모드 전환으로 선택이 모두 해제됐으면 해당 모드의 기본 영상을 표시한다.
-            if (mock && !camTiles[0].On && !camTiles[1].On)
-                camTiles[0].On = true;
-            if (!mock && !camTiles[2].On && !camTiles[3].On)
-                camTiles[2].On = camTiles[3].On = true;
+            if (mock ? selectedCamIndex < 1 || selectedCamIndex > 2 : selectedCamIndex < 3 || selectedCamIndex > 4)
+                selectedCamIndex = mock ? 1 : 3;
             foreach (CamTile tile in camTiles)
             {
                 tile.Root = root.Q<VisualElement>("cam-tile-" + tile.Index);
                 tile.Age = root.Q<Label>("cam-age-" + tile.Index);
                 tile.Chip = root.Q<Button>("cam-chip-" + tile.Index);
                 tile.Image = root.Q<Image>("cam-image-" + tile.Index);
+                if (tile.Image != null) tile.Image.scaleMode = ScaleMode.ScaleToFit;
                 bool supported = mock ? tile.Index <= 2 : tile.Index > 2;
+                tile.On = supported && (camSplit || tile.Index == selectedCamIndex);
                 if (!supported)
                 {
                     tile.On = false;
@@ -305,47 +564,44 @@ namespace MainUnity.UI
                 if (tile.Chip != null) tile.Chip.clicked += () => ToggleCamTile(captured);
             }
             if (camExpandButton != null) camExpandButton.clicked += ToggleCamExpand;
+            if (camSplitButton != null) camSplitButton.clicked += ToggleCamSplit;
         }
 
         void UnbindCamera()
         {
             if (camExpandButton != null) camExpandButton.clicked -= ToggleCamExpand;
+            if (camSplitButton != null) camSplitButton.clicked -= ToggleCamSplit;
         }
 
         void OnDisable()
         {
+            UnbindTwin();
             UnbindCamera();
             SetMockCameras(false, false);
         }
 
         void ToggleCamExpand() => camExpanded = !camExpanded;
 
-        /// <summary>
-        /// 칸을 켜고 끈다. 전부 끄면 화면 절반이 빈 상자가 되므로 마지막 하나는 남긴다.
-        /// </summary>
+        void ToggleCamSplit() => camSplit = !camSplit;
+
         void ToggleCamTile(CamTile tile)
         {
             bool mock = uiMaster == null || uiMaster.IsSimulated;
-            if (mock ? tile.Index > 2 : tile.Index <= 2)
-                return;
-            if (tile.On)
-            {
-                int on = 0;
-                foreach (CamTile t in camTiles) if (t.On) on++;
-                if (on <= 1) return;
-            }
-            tile.On = !tile.On;
+            if (mock ? tile.Index > 2 : tile.Index <= 2) return;
+            selectedCamIndex = tile.Index;
+            camSplit = false;
         }
 
-        /// <summary>
-        /// 켠 칸 수에 따라 1 · 2 · 4 로 나눈다. 셋이면 넷과 같은 격자를 쓰고 한 자리를
-        /// 비운다 — 셋을 3등분하면 칸마다 종횡비가 달라져 같은 장면도 다르게 보인다.
-        /// </summary>
+        // 두 영상은 위아래로 배치해 기본 비교 영역에서도 가로 영상의 폭을 확보한다.
         void RefreshCamera()
         {
             if (camGrid == null) return;
 
             bool mock = uiMaster == null || uiMaster.IsSimulated;
+            foreach (CamTile tile in camTiles)
+                tile.On = (mock ? tile.Index <= 2 : tile.Index > 2) &&
+                    (camSplit || tile.Index == selectedCamIndex);
+            camSplitButton?.EnableInClassList("chip--accent", camSplit);
             SetMockCameras(
                 mock && camTiles[0].On && GetMockTexture(camTiles[0]) != null,
                 mock && camTiles[1].On && GetMockTexture(camTiles[1]) != null);
@@ -354,8 +610,8 @@ namespace MainUnity.UI
 
             int visible = 0;
             foreach (CamTile t in camTiles) if (t.On) visible++;
-            float w = visible <= 1 ? 100f : 50f;
-            float h = visible <= 2 ? 100f : 50f;
+            float w = 100f;
+            float h = visible <= 1 ? 100f : 50f;
 
             double now = Time.realtimeSinceStartupAsDouble;
             int live = 0;
@@ -1021,7 +1277,14 @@ namespace MainUnity.UI
 
             // 좌측 「기준」 창의 출처. 트윈이 무엇을 근거로 그려지는지 밝힌다.
             if (twinSource != null)
-                twinSource.text = mock ? "SIM · joint_states" : "/nonrt_state_data";
+                twinSource.text = twinCamera == null ? "트윈 카메라 미연결" :
+                    statusManager == null || !statusManager.HasFreshState ? "현재 자세 미확인 · 상태 수신 대기" :
+                    mock ? "SIM · 수신 상태 기반" : "수신 상태 기반 트윈";
+            if (twinSource != null && (twinPreset == 1 || twinPreset == 2) && !twinFree)
+                twinSource.text += " · 선택 시점 위치" +
+                    (twinReferenceView ? " · 기판 투입 기준" : "");
+            if (twinSource != null && twinPreset == 3 && !twinFree)
+                twinSource.text += " · 부품 트레이 공급 위치";
 
             foreach ((Label value, System.Func<RobotStatusFrame, string> read) in realRows)
             {
