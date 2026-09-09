@@ -103,7 +103,7 @@ namespace MainUnity.Runtime.Camera
         readonly Dictionary<string, Attachment> attachments = new(StringComparer.Ordinal);
         readonly Dictionary<string, string> instanceRegistrations = new(StringComparer.Ordinal);
         readonly Dictionary<string, string> instanceTypes = new(StringComparer.Ordinal);
-        readonly HashSet<string> observations = new(StringComparer.Ordinal);
+        readonly HashSet<(string Registration, string Observation, string Source)> observations = new();
         string registration;
         Transform measuredGripper;
         BoardPartCalibrator boardCalibration;
@@ -121,6 +121,9 @@ namespace MainUnity.Runtime.Camera
         }
 
         List<PartPose> latestPoses;
+        string latestRegistration;
+        string latestObservation;
+        double latestCandidateTime = -1d;
 
         ROSConnection connection;
         bool hasSequence;
@@ -307,7 +310,7 @@ namespace MainUnity.Runtime.Camera
                 if (record == null)
                 {
                     if (action != "robot.pick" || kind != "PHASE_STARTED" || reg != registration ||
-                        !observations.Contains(observation) || !instanceRegistrations.TryGetValue(id, out string sourceReg) || sourceReg != reg ||
+                        !observations.Contains((reg, observation, id)) || !instanceRegistrations.TryGetValue(id, out string sourceReg) || sourceReg != reg ||
                         !instanceTypes.TryGetValue(id, out string type) || PartCode(type) != part)
                         throw new FormatException("Pick 시작·원래 관측 미수신 · 부착 복원 미확인");
                     record = new Attachment { Job = job, PickOperation = operation, Registration = reg,
@@ -476,17 +479,35 @@ namespace MainUnity.Runtime.Camera
                 return;
             }
 
+            // Detector absence is not physical removal. Keep the original scene and
+            // identity through gripper occlusion, partial frames and re-registration.
+            if (poses.Count == 0)
+            {
+                SetProgress(ProgressState.Preparing, "검출 부품 없음 · 이전 배치 유지");
+                return;
+            }
+            latestPoses = poses;
+            latestRegistration = state.tray_registration_id;
+            latestObservation = state.source_observation_id;
+            latestCandidateTime = Time.realtimeSinceStartupAsDouble;
+            if (instancesById.Count > 0 && registration != state.tray_registration_id)
+            {
+                SetProgress(ProgressState.Preparing, "트레이 등록 세대 변경 · 기존 배치 유지 · 명시적 재생성 필요");
+                return;
+            }
+            if (attachments.Count > 0)
+            {
+                SetProgress(ProgressState.Preparing, "로봇 실행 배치 고정 · 관측으로 부품을 변경하지 않음");
+                return;
+            }
             if (!hasSequence || state.sequence != lastSequence)
             {
-                if (registration != state.tray_registration_id)
-                {
-                    observations.Clear();
-                    registration = state.tray_registration_id;
-                }
-                if (!string.IsNullOrWhiteSpace(state.source_observation_id) && observations.Count < 4096)
-                    observations.Add(state.source_observation_id);
+                registration = state.tray_registration_id;
                 Apply(poses);
-                latestPoses = poses;
+                if (!string.IsNullOrWhiteSpace(registration) && !string.IsNullOrWhiteSpace(state.source_observation_id))
+                    foreach (PartPose pose in poses)
+                        if (observations.Count < 16384 && !pose.Id.StartsWith("display-only:", StringComparison.Ordinal))
+                            observations.Add((registration, state.source_observation_id, pose.Id));
                 LastAppliedTime = Time.realtimeSinceStartupAsDouble;
             }
             lastRejectedReason = null;
@@ -556,7 +577,7 @@ namespace MainUnity.Runtime.Camera
                 }
 
                 // ID 누락 시 타입·순번은 화면 객체 추적에만 사용한다. ROS 원본 ID를
-                // 채우거나 생산 요청에 전달하지 않는다. 정상 ID 수신 시 Apply가 임시 객체를 제거한다.
+                // 채우거나 생산 요청에 전달하지 않는다. 임시 객체도 명시적 재생성 전까지 유지한다.
                 string displayId = string.IsNullOrWhiteSpace(part.id)
                     ? $"display-only:{part.part_type}:{part.instance_index}"
                     : part.id;
@@ -593,11 +614,9 @@ namespace MainUnity.Runtime.Camera
 
         void Apply(List<PartPose> poses)
         {
-            var currentIds = new HashSet<string>(StringComparer.Ordinal);
+            if (attachments.Count > 0) return;
             foreach (PartPose pose in poses)
             {
-                currentIds.Add(pose.Id);
-                if (attachments.ContainsKey(pose.Id)) continue;
                 if (!instancesById.TryGetValue(pose.Id, out GameObject instance) || instance == null)
                 {
                     instance = Instantiate(pose.Binding.Prefab, SpawnRoot);
@@ -610,28 +629,15 @@ namespace MainUnity.Runtime.Camera
                 instance.transform.SetPositionAndRotation(pose.Position, pose.Rotation);
             }
 
-            var staleIds = new List<string>();
-            foreach (KeyValuePair<string, GameObject> pair in instancesById)
-                if (!currentIds.Contains(pair.Key) && !attachments.ContainsKey(pair.Key)) staleIds.Add(pair.Key);
-
-            foreach (string id in staleIds)
-            {
-                if (instancesById[id] != null)
-                {
-                    // Destroy는 프레임 끝에 실행되므로 ID 복구 시 이전 표시를 즉시 숨긴다.
-                    instancesById[id].SetActive(false);
-                    Destroy(instancesById[id]);
-                }
-                instancesById.Remove(id);
-                instanceRegistrations.Remove(id);
-                instanceTypes.Remove(id);
-            }
+            // Only explicit recreation removes objects. An empty/partial detector
+            // list is not authoritative evidence that a physical part disappeared.
         }
 
         [ContextMenu("Recreate Parts From Latest Calibration")]
         void RecreatePartsFromLatestCalibration()
         {
-            if (!Application.isPlaying || latestPoses == null)
+            if (!Application.isPlaying || latestPoses == null || latestPoses.Count == 0 ||
+                Time.realtimeSinceStartupAsDouble - latestCandidateTime > 3d)
             {
                 Debug.LogWarning("[TrayPartCalibrator] Enter Play Mode and wait for a valid tray state first.", this);
                 return;
@@ -643,10 +649,25 @@ namespace MainUnity.Runtime.Camera
                 return;
             }
             foreach (GameObject instance in instancesById.Values)
-                if (instance != null) Destroy(instance);
+                if (instance != null)
+                {
+                    instance.SetActive(false);
+                    Destroy(instance);
+                }
 
             instancesById.Clear();
+            instanceRegistrations.Clear();
+            instanceTypes.Clear();
+            observations.Clear();
+            registration = latestRegistration;
             Apply(latestPoses);
+            if (!string.IsNullOrWhiteSpace(registration) && !string.IsNullOrWhiteSpace(latestObservation))
+                foreach (PartPose pose in latestPoses)
+                    if (!pose.Id.StartsWith("display-only:", StringComparison.Ordinal))
+                        observations.Add((registration, latestObservation, pose.Id));
+            hasSequence = false;
+            LastAppliedTime = Time.realtimeSinceStartupAsDouble;
+            SetProgress(ProgressState.Applied, "명시적 트레이 재생성 완료");
         }
 
 
