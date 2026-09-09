@@ -30,6 +30,8 @@ class MockBackend:
         self._operation_running_since = None
         self._conveyor_future = None
         self._conveyor_job_id = None
+        self._conveyor_unit_id = None
+        self._conveyor_operation_id = None
         self._conveyor_station = None
         self._assembled_pcb = None
         self._rng = random.Random()
@@ -52,17 +54,21 @@ class MockBackend:
     async def resolve_targets(self, observations):
         return observations
 
-    async def move_conveyor(self, job_id, station):
+    async def move_conveyor(self, job_id, station, *, unit_id, operation_id, on_ready):
         if station not in {"ASSEMBLY", "INSPECTION"} or self._conveyor_future is not None:
             raise RuntimeError("another conveyor action is pending or station is invalid")
         future = Future(executor=self._node.executor)
         self._conveyor_future = future
         self._conveyor_job_id = job_id
         self._conveyor_station = station
+        self._conveyor_unit_id = unit_id
+        self._conveyor_operation_id = operation_id
         if station == "ASSEMBLY":
             self._assembled_pcb = None
         timer = self._node.create_timer(CONVEYOR_SIGNAL_TIMEOUT_SECONDS, future.cancel)
         try:
+            # Register the waiter before exposing the movement to the external caller.
+            on_ready()
             await future
             if future.cancelled():
                 raise TimeoutError("conveyor completion was not reported within 60 seconds")
@@ -71,10 +77,14 @@ class MockBackend:
             self._conveyor_future = None
             self._conveyor_job_id = None
             self._conveyor_station = None
+            self._conveyor_unit_id = None
+            self._conveyor_operation_id = None
 
-    def confirm_conveyor(self, job_id, station, assembled_pcb=None):
+    def confirm_conveyor(self, job_id, station, *, unit_id, operation_id, assembled_pcb=None):
         future = self._conveyor_future
-        if job_id != self._conveyor_job_id or station != self._conveyor_station or future is None:
+        if (job_id != self._conveyor_job_id or station != self._conveyor_station
+                or unit_id != self._conveyor_unit_id or operation_id != self._conveyor_operation_id
+                or future is None):
             raise RuntimeError("matching conveyor movement is not awaiting completion")
         if future.cancelled():
             raise RuntimeError("conveyor completion deadline has expired")
@@ -85,9 +95,10 @@ class MockBackend:
                 self._assembled_pcb = assembled_pcb
             future.set_result(None)
 
-    def fail_conveyor(self, job_id, message):
+    def fail_conveyor(self, job_id, message, *, unit_id, operation_id):
         future = self._conveyor_future
-        if job_id != self._conveyor_job_id or future is None or future.done():
+        if (job_id != self._conveyor_job_id or unit_id != self._conveyor_unit_id
+                or operation_id != self._conveyor_operation_id or future is None or future.done()):
             raise RuntimeError("matching conveyor movement is not awaiting completion")
         future.set_exception(RuntimeError(message))
 

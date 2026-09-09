@@ -88,7 +88,7 @@ class RealBackend:
     async def transfer_assembled_pcb(self, job_id, frame, assembled_pcb, motion, gripper):
         raise RuntimeError(self._connection_error())
 
-    async def move_conveyor(self, job_id, station):
+    async def move_conveyor(self, job_id, station, *, unit_id=None, operation_id=None, on_ready=None):
         raise RuntimeError("NOT_READY: conveyor service/state adapter is not connected; direct IO is prohibited")
 
     async def resolve_targets(self, observations):

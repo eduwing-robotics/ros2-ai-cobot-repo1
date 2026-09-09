@@ -4,6 +4,7 @@
 import os
 import json
 import sys
+import uuid
 
 import rclpy
 from fairino_msgs.srv import RemoteCmdInterface
@@ -154,6 +155,14 @@ class AssemblySequencer(Node):
             response.cmd_res = json.dumps(snapshot, separators=(",", ":"))
             return response
 
+        if command_type in {"conveyor_arrived", "conveyor_failed", "transfer_assembled_pcb"}:
+            active = self.active
+            if (active is None or command["job_id"] != active["job_id"]
+                    or command["unit_id"] != active["unit_id"]
+                    or command["operation_id"] != active.get("conveyor_operation_id")):
+                return self.set_response(response, False, command["job_id"], "NOT_ACTIVE",
+                                         "matching Unit conveyor movement is not active")
+
         if command_type == "conveyor_arrived":
             return await self.conveyor_arrived(command, response)
 
@@ -194,7 +203,9 @@ class AssemblySequencer(Node):
                 )
 
             try:
-                self.backend.confirm_conveyor(job_id, "INSPECTION", command["assembled_pcb"])
+                self.backend.confirm_conveyor(
+                    job_id, "INSPECTION", unit_id=command["unit_id"],
+                    operation_id=command["operation_id"], assembled_pcb=command["assembled_pcb"])
             except Exception as error:
                 return self.set_response(response, False, job_id, "BUSY", str(error))
             active["transfer_requested"] = True
@@ -237,7 +248,8 @@ class AssemblySequencer(Node):
             return self.set_response(response, True, job_id)
 
         try:
-            self.backend.confirm_conveyor(job_id, "ASSEMBLY")
+            self.backend.confirm_conveyor(
+                job_id, "ASSEMBLY", unit_id=command["unit_id"], operation_id=command["operation_id"])
         except Exception as error:
             return self.set_response(response, False, job_id, "BUSY", str(error))
         active["conveyor_confirmed"] = True
@@ -256,8 +268,11 @@ class AssemblySequencer(Node):
                 response, False, job_id, "BUSY", "conveyor movement is not expected"
             )
 
-        self.fail_active("CONVEYOR_FAILED", command["message"],
-                         immediate=active["state"] == "CONVEYOR_MOVING")
+        try:
+            self.backend.fail_conveyor(job_id, command["message"],
+                                       unit_id=command["unit_id"], operation_id=command["operation_id"])
+        except Exception as error:
+            return self.set_response(response, False, job_id, "BUSY", str(error))
         return self.set_response(response, True, job_id)
 
     async def on_pending_job(self):
@@ -368,7 +383,12 @@ class AssemblySequencer(Node):
                 if (action, argument) == ("conveyor.move_to", "ASSEMBLY"):
                     active["conveyor_confirmed"] = False
                     active["state"] = "CONVEYOR_MOVING"
-                    self.publish({
+                    active["conveyor_operation_id"] = str(uuid.uuid4())
+                    error_code = "CONVEYOR_FAILED"
+                    await self.backend.move_conveyor(
+                        active["job_id"], "ASSEMBLY", unit_id=active["unit_id"],
+                        operation_id=active["conveyor_operation_id"],
+                        on_ready=lambda: self.publish({
                         "job_id": active["job_id"],
                         "state": "CONVEYOR_MOVING",
                         "step_order": 0,
@@ -377,9 +397,7 @@ class AssemblySequencer(Node):
                         "error_code": "",
                         "message": "",
                         "db_sync_state": self.db_writer.sync_state,
-                    })
-                    error_code = "CONVEYOR_FAILED"
-                    await self.backend.move_conveyor(active["job_id"], "ASSEMBLY")
+                    }))
                     error_code = "INTERNAL_ERROR"
                     continue
                 if (action, argument) == ("vision.resolve_targets", "recipe_steps"):
@@ -467,7 +485,12 @@ class AssemblySequencer(Node):
                 action, argument = next(iter(command.items()))
                 if (action, argument) == ("conveyor.move_to", "INSPECTION"):
                     active["state"] = "ASSEMBLY_COMPLETED"
-                    self.publish({
+                    active["conveyor_operation_id"] = str(uuid.uuid4())
+                    error_code = "CONVEYOR_FAILED"
+                    await self.backend.move_conveyor(
+                        active["job_id"], "INSPECTION", unit_id=active["unit_id"],
+                        operation_id=active["conveyor_operation_id"],
+                        on_ready=lambda: self.publish({
                         "job_id": active["job_id"],
                         "state": "ASSEMBLY_COMPLETED",
                         "step_order": 0,
@@ -476,9 +499,7 @@ class AssemblySequencer(Node):
                         "error_code": "",
                         "message": "",
                         "db_sync_state": self.db_writer.sync_state,
-                    })
-                    error_code = "CONVEYOR_FAILED"
-                    await self.backend.move_conveyor(active["job_id"], "INSPECTION")
+                    }))
                     error_code = "INTERNAL_ERROR"
                     continue
                 if (action, argument) == ("inspection.run", "assembled_pcb"):
@@ -631,6 +652,8 @@ class AssemblySequencer(Node):
         unit_id = (state["unit_id"] if state is not None
                    and state["job_id"] == payload["job_id"] else 0)
         payload = dict(payload, unit_id=unit_id)
+        if state is not None and payload["state"] in {"CONVEYOR_MOVING", "ASSEMBLY_COMPLETED"}:
+            payload["operation_id"] = state.get("conveyor_operation_id", "")
         self.external_publisher.publish(
             String(data=json.dumps(payload, separators=(",", ":")))
         )

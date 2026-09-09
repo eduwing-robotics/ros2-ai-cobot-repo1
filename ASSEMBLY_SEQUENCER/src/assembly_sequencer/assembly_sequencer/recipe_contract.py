@@ -3,7 +3,6 @@
 import json
 import math
 import uuid
-from collections import Counter
 from pathlib import Path
 
 import yaml
@@ -70,9 +69,9 @@ def _validate_workflow(workflow):
                 raise ValueError(
                     f"unsupported workflow.{section} action: {command}"
                 )
-        if Counter(actions) != Counter(allowed):
+        if actions != list(allowed):
             raise ValueError(
-                f"workflow.{section} must contain each required action"
+                f"workflow.{section} has an invalid action order"
             )
 
 
@@ -303,19 +302,23 @@ def parse_command(raw, expected_recipe_version, runtime_mode="mock"):
         if command["recipe_version"] != expected_recipe_version:
             raise ValueError(f"recipe_version must be {expected_recipe_version}")
         command_type = command_name
-    elif command_name in {"pause", "resume", "conveyor_arrived"}:
+    elif command_name in {"pause", "resume"}:
         if set(command) != {"command", "job_id"}:
             raise ValueError("command and job_id are required")
         command_type = command_name
+    elif command_name == "conveyor_arrived":
+        if set(command) != {"command", "job_id", "unit_id", "operation_id"}:
+            raise ValueError("command, job_id, unit_id and operation_id are required")
+        command_type = command_name
     elif command_name == "conveyor_failed":
-        if set(command) != {"command", "job_id", "message"}:
-            raise ValueError("command, job_id and message are required")
+        if set(command) != {"command", "job_id", "unit_id", "operation_id", "message"}:
+            raise ValueError("command, job_id, unit_id, operation_id and message are required")
         if not isinstance(command["message"], str) or not command["message"].strip():
             raise ValueError("message must be a nonblank string")
         command_type = command_name
     elif command_name == "transfer_assembled_pcb":
-        if set(command) != {"command", "job_id", "assembled_pcb"}:
-            raise ValueError("command, job_id and assembled_pcb are required")
+        if set(command) != {"command", "job_id", "unit_id", "operation_id", "assembled_pcb"}:
+            raise ValueError("command, job_id, unit_id, operation_id and assembled_pcb are required")
         assembled_pcb = command["assembled_pcb"]
         if not isinstance(assembled_pcb, dict) or set(assembled_pcb) != {
             "source", "target"
@@ -355,6 +358,13 @@ def parse_command(raw, expected_recipe_version, runtime_mode="mock"):
         command["job_id"] = str(uuid.UUID(command["job_id"]))
     except (TypeError, ValueError, AttributeError) as error:
         raise ValueError("job_id must be a UUID string") from error
+    if command_name in {"conveyor_arrived", "conveyor_failed", "transfer_assembled_pcb"}:
+        if isinstance(command["unit_id"], bool) or not isinstance(command["unit_id"], int) or command["unit_id"] <= 0:
+            raise ValueError("unit_id must be a positive integer")
+        try:
+            command["operation_id"] = str(uuid.UUID(command["operation_id"]))
+        except (TypeError, ValueError, AttributeError) as error:
+            raise ValueError("operation_id must be a UUID string") from error
     return command_type, command
 
 
@@ -443,6 +453,7 @@ def assembly_snapshot(
         "active": state in RELAY_STATES,
         "job_id": active["job_id"],
         "unit_id": active["unit_id"],
+        "operation_id": active.get("conveyor_operation_id", ""),
         "recipe_version": active["recipe_version"],
         "state": state,
         "placed_count": placed_count,
@@ -509,9 +520,11 @@ def self_check(recipe=None):
         assert len(resolved) == len(steps)
     assert parse_command(json.dumps({
         "command": "conveyor_arrived", "job_id": job_id,
+        "unit_id": 22, "operation_id": job_id,
     }), recipe_version)[0] == "conveyor_arrived"
     assert parse_command(json.dumps({
-        "command": "conveyor_failed", "job_id": job_id, "message": "stopped",
+        "command": "conveyor_failed", "job_id": job_id,
+        "unit_id": 22, "operation_id": job_id, "message": "stopped",
     }), recipe_version)[0] == "conveyor_failed"
     assert parse_command(json.dumps({
         "command": "transfer_assembled_pcb",
