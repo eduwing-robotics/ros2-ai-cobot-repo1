@@ -38,10 +38,10 @@ namespace MainUnity.UI
         VisualElement modeMock, modeReal, robotChip, linkJointDot, linkImageDot,
             linkApiDot, linkSequencerDot, alarmBanner;
         VisualElement pageRoot;
-        Button modeMockButton, modeRealButton, stopAllButton, viewFocusButton;
+        Button modeMockButton, modeRealButton, stopAllButton, viewFocusButton, alarmCloseButton;
         VisualElement viewFocusRule;
         Label robotText, linkJointAge, linkImageAge, linkApiLabel, linkSequencerLabel,
-            alarmLabel, alarmDetail, commandResult;
+            alarmLabel, alarmDetail, alarmTime, commandResult;
         Coroutine servicePolling;
         Label setupApi, setupSequencer;
         internal bool? ApiConnected { get; private set; }
@@ -109,6 +109,8 @@ namespace MainUnity.UI
             alarmBanner = root.Q<VisualElement>("alarm-banner");
             alarmLabel = root.Q<Label>("alarm-label");
             alarmDetail = root.Q<Label>("alarm-detail");
+            alarmTime = root.Q<Label>("alarm-time");
+            alarmCloseButton = root.Q<Button>("alarm-close");
             commandResult = root.Q<Label>("command-result");
             viewFocusButton = root.Q<Button>("view-focus");
             viewFocusRule = root.Q<VisualElement>("view-focus-rule");
@@ -133,6 +135,7 @@ namespace MainUnity.UI
             if (modeRealButton != null) modeRealButton.clicked += SelectRealMode;
             if (stopAllButton != null) stopAllButton.clicked += TogglePause;
             if (viewFocusButton != null) viewFocusButton.clicked += ToggleFocus;
+            if (alarmCloseButton != null) alarmCloseButton.clicked += DismissAlarm;
         }
 
         void UnbindCommands()
@@ -141,6 +144,7 @@ namespace MainUnity.UI
             if (modeRealButton != null) modeRealButton.clicked -= SelectRealMode;
             if (stopAllButton != null) stopAllButton.clicked -= TogglePause;
             if (viewFocusButton != null) viewFocusButton.clicked -= ToggleFocus;
+            if (alarmCloseButton != null) alarmCloseButton.clicked -= DismissAlarm;
         }
 
         static void ToggleFocus() => focusMode = !focusMode;
@@ -394,6 +398,15 @@ namespace MainUnity.UI
         double alarmSinceTime = -1d;
         double alarmShownUntil = -1d;
         string lastAlarmLabel;
+        bool alarmDismissed;
+        (RobotRunState State, int Emergency, int Alarm, int Abnormal, int Main, int Sub, RobotErrorLabel Error) alarmIdentity;
+        string alarmDetectedAt;
+
+        void DismissAlarm()
+        {
+            alarmDismissed = true;
+            alarmBanner.style.display = DisplayStyle.None;
+        }
 
         void RefreshAlarm()
         {
@@ -410,21 +423,39 @@ namespace MainUnity.UI
 
             double now = Time.realtimeSinceStartupAsDouble;
             if (!condition) alarmSinceTime = -1d;
-            else if (alarmSinceTime < 0d) alarmSinceTime = now;
+            else
+            {
+                var identity = (state, (int)(frame?.EmergencyStop ?? 0), (int)(frame?.Alarm ?? 0),
+                    (int)(frame?.AbnormalStop ?? 0), (int)(frame?.MainErrorCode ?? 0),
+                    (int)(frame?.SubErrorCode ?? 0), statusManager != null ? statusManager.ErrorLabel : RobotErrorLabel.None);
+                if (alarmSinceTime < 0d || alarmIdentity != identity)
+                {
+                    alarmSinceTime = now;
+                    alarmIdentity = identity;
+                    alarmDismissed = false;
+                    // 설비 발생 시각은 수신 계약에 없으므로 이 화면의 최초 감지 시각을 표시한다.
+                    alarmDetectedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                }
+            }
 
             // 하드 알람은 즉시, 링크 계열은 조건이 이어진 뒤에 켠다.
             bool arm = condition && (hard || now - alarmSinceTime >= AlarmShowDelaySeconds);
             if (arm) alarmShownUntil = now + AlarmHoldSeconds;
 
-            bool show = arm || now < alarmShownUntil;
+            bool show = !alarmDismissed && (arm || now < alarmShownUntil);
             alarmBanner.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
             if (!show) return;
+            if (alarmTime != null) alarmTime.text = "최초 감지 " + alarmDetectedAt;
 
             alarmBanner.EnableInClassList("alarm-banner--recovered", !condition);
             if (!condition)
             {
                 if (alarmLabel != null) alarmLabel.text = "상태 복구";
-                if (alarmDetail != null) alarmDetail.text = lastAlarmLabel + " · 수신 오류 신호 해소 · 설비 준비와 작업 재개는 별도 확인";
+                if (alarmDetail != null)
+                {
+                    alarmDetail.text = lastAlarmLabel + " · 수신 오류 신호 해소 · 설비 준비와 작업 재개는 별도 확인";
+                    alarmDetail.tooltip = string.Empty;
+                }
                 return;
             }
 
@@ -462,8 +493,7 @@ namespace MainUnity.UI
                         "\n동작 완료 신호와 이상정지 신호는 별도 값입니다. 동작 완료만으로 오류 해제를 판정하지 않습니다.");
             }
 
-            // TODO(API): 해제 가능한 경고만 초기화하는 알람 확인·해제 경로가 없다.
-            //            fairino_msgs 의 리셋 명령이 붙으면 여기에 해제 버튼을 단다.
+            // 배너 닫기는 표시만 숨긴다. 로봇 오류 상태와 명령 허용 판정은 변경하지 않는다.
         }
     }
 }

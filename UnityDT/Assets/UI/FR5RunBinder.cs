@@ -109,6 +109,7 @@ namespace MainUnity.UI
 
         // 이 시간을 넘겨 프레임이 없으면 그 칸만 늦은 것으로 표시한다.
         const double CamStaleSeconds = 2d;
+        const double CamNoSignalSeconds = 30d;
         // 디코딩된 마지막 프레임 이후 100ms만 점등한다. 더 빠른 연속 수신에서는
         // 점등이 이어지며, 새 프레임이 없으면 게임 시간 배율과 무관하게 소등한다.
         const double CamPulseSeconds = 0.1d;
@@ -375,6 +376,7 @@ namespace MainUnity.UI
                     RenderTexture texture = GetMockTexture(tile);
                     if (tile.Image != null) tile.Image.image = texture;
                     bool assigned = texture != null;
+                    tile.Root.EnableInClassList("run-cam-tile--no-signal", !assigned);
                     if (assigned) live++;
                     if (tile.Age != null)
                     {
@@ -389,6 +391,9 @@ namespace MainUnity.UI
                 bool received = tile.Receiver != null && tile.Receiver.HasReceivedImage;
                 double age = received ? now - tile.Receiver.LastReceiveTimeSeconds : -1d;
                 bool late = !received || age > CamStaleSeconds;
+                // 표시만 숨겨 수신·디코딩을 유지한다. 새 프레임이 오면 같은 Image를 다시 드러낸다.
+                tile.Root.EnableInClassList("run-cam-tile--no-signal",
+                    !received || age >= CamNoSignalSeconds);
                 if (!late) live++;
 
                 if (tile.Age != null)

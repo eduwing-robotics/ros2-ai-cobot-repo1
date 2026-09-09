@@ -49,21 +49,25 @@
             <ui:VisualElement name="cam-grid" class="run-cam-grid">
                 <ui:VisualElement name="cam-tile-1" class="run-cam-tile">
                     <ui:Image name="cam-image-1" class="run-cam-tile__img" />
+                    <ui:Label text="NO SIGNAL" class="run-cam-tile__no-signal" picking-mode="Ignore" />
                     <ui:Label name="cam-title-1" text="TRAY" class="run-cam-tile__title" />
                     <ui:Label name="cam-age-1" text="—" class="run-cam-tile__age" />
                 </ui:VisualElement>
                 <ui:VisualElement name="cam-tile-2" class="run-cam-tile">
                     <ui:Image name="cam-image-2" class="run-cam-tile__img" />
+                    <ui:Label text="NO SIGNAL" class="run-cam-tile__no-signal" picking-mode="Ignore" />
                     <ui:Label name="cam-title-2" text="PARTS" class="run-cam-tile__title" />
                     <ui:Label name="cam-age-2" text="—" class="run-cam-tile__age" />
                 </ui:VisualElement>
                 <ui:VisualElement name="cam-tile-3" class="run-cam-tile">
                     <ui:Image name="cam-image-3" class="run-cam-tile__img" />
+                    <ui:Label text="NO SIGNAL" class="run-cam-tile__no-signal" picking-mode="Ignore" />
                     <ui:Label name="cam-title-3" text="컨베이어" class="run-cam-tile__title" />
                     <ui:Label name="cam-age-3" text="—" class="run-cam-tile__age" />
                 </ui:VisualElement>
                 <ui:VisualElement name="cam-tile-4" class="run-cam-tile">
                     <ui:Image name="cam-image-4" class="run-cam-tile__img" />
+                    <ui:Label text="NO SIGNAL" class="run-cam-tile__no-signal" picking-mode="Ignore" />
                     <ui:Label name="cam-title-4" text="조립" class="run-cam-tile__title" />
                     <ui:Label name="cam-age-4" text="—" class="run-cam-tile__age" />
                 </ui:VisualElement>
@@ -158,7 +162,7 @@
                 <ui:VisualElement class="run-hr" style="margin-top:12px; margin-bottom:12px;" />
                 <ui:VisualElement class="row">
                     <ui:VisualElement name="watchdog-dot" class="dot" />
-                    <ui:Label text="수신 경과" class="run-sect__title" style="margin-left:10px;" />
+                    <ui:Label text="로봇 상태 수신 경과" tooltip="Unity가 마지막 로봇 상태를 수신한 뒤 경과한 시간입니다. Real: /nonrt_state_data · Mock: /joint_states" class="run-sect__title" style="margin-left:10px;" />
                     <ui:VisualElement class="spacer" />
                     <ui:Label name="watchdog-value" text="—" class="run-sub" />
                 </ui:VisualElement>

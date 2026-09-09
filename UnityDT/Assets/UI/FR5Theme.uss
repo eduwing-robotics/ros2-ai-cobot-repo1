@@ -849,6 +849,14 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
     border-color: rgba(255, 255, 255, 0.08);
 }
 .run-cam-tile__img { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.run-cam-tile__no-signal {
+    display: none;
+    position: absolute; left: 0; top: 0; right: 0; bottom: 0;
+    -unity-text-align: middle-center;
+    color: var(--c-ink-3); font-size: 18px; letter-spacing: 2px;
+}
+.run-cam-tile--no-signal .run-cam-tile__img { display: none; }
+.run-cam-tile--no-signal .run-cam-tile__no-signal { display: flex; }
 /* 이름표는 영상 위에 얹히므로 자기 바탕을 갖는다. 밝은 프레임에서 글자가 씻긴다. */
 .run-cam-tile__title {
     position: absolute; left: 8px; top: 8px;

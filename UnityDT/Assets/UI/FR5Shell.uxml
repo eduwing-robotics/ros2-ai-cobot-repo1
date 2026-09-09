@@ -82,7 +82,10 @@
         <ui:VisualElement name="alarm-banner" class="alarm-banner" style="position:absolute; left:88px; top:64px; right:0; height:44px; display:none; border-top-width:2px; flex-direction:row; align-items:center; padding-left:24px; padding-right:24px;">
             <ui:VisualElement name="alarm-dot" class="dot dot--bad" />
             <ui:Label name="alarm-label" text="—" class="bad" style="margin-left:12px; font-size:14px; letter-spacing:1.2px;" />
-            <ui:Label name="alarm-detail" text="" class="wrap" style="color:rgb(214,160,168); font-size:13px; margin-left:16px;" />
+            <ui:Label name="alarm-detail" text="" class="wrap" style="flex-shrink:1;color:rgb(214,160,168); font-size:13px; margin-left:16px;" />
+            <ui:VisualElement class="spacer" />
+            <ui:Label name="alarm-time" text="" style="font-size:11px; margin-left:12px; flex-shrink:0;" />
+            <ui:Button name="alarm-close" text="닫기" class="chip" tooltip="이 알림만 닫습니다. 설비 오류를 해제하지 않습니다." style="margin-left:12px; flex-shrink:0;" />
         </ui:VisualElement>
 
         <ui:Label name="command-result" text="" class="command-result bad wrap" />
