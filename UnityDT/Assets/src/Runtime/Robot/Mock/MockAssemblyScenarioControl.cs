@@ -427,7 +427,8 @@ namespace MainUnity.Runtime.Robot.Mock
                         "Mock assembly status returned invalid JSON.", exception);
                 }
 
-                if (snapshot == null || !snapshot.available)
+                if (snapshot == null || !snapshot.available ||
+                    (!snapshot.active && string.IsNullOrEmpty(snapshot.job_id)))
                     return;
 
                 MockObservation[] preview = BuildObservations(true);

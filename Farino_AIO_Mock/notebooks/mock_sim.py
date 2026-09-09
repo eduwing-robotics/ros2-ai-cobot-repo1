@@ -440,6 +440,28 @@ def self_check():
         pass
     else:
         raise AssertionError("mixed hardware must be rejected")
+    node.latest_assembly_snapshot = empty_assembly_snapshot()
+    node.joint_state = object()
+    node.execution_faulted = False
+    node.args = SimpleNamespace(plan_only=False)
+    node.active_assembly = None
+    node.manual_executing = False
+    node.manual_command_pending = lambda: False
+    def status():
+        return json.loads(MockMoveJ.on_start_assembly(
+            node, SimpleNamespace(cmd_str='{"command":"status"}'), SimpleNamespace()).cmd_res)
+    assert status()["available"] and not status()["active"]
+    node.manual_executing = True
+    assert status()["active"]
+    node.manual_executing = False
+    node.execution_faulted = True
+    assert not status()["available"]
+    node.execution_faulted = False
+    node.args.plan_only = True
+    assert not status()["available"]
+    node.args.plan_only = False
+    node.joint_state = None
+    assert not status()["available"]
     assert gripper_position(100.0) == 0.0
     assert gripper_position(0.0) == GRIPPER_CLOSED_METERS
     home_radians = [math.radians(value) for value in INITIAL_JOINTS_DEG]
@@ -709,7 +731,12 @@ class MockMoveJ(Node):
             command = None
         if command == {"command": "status"}:
             response.cmd_res = json.dumps(
-                {**self.latest_assembly_snapshot, "runtime_mode": "mock"}, separators=(",", ":")
+                {**self.latest_assembly_snapshot, "runtime_mode": "mock",
+                 # Empty history is not unavailable equipment. Never admit a new Job
+                 # during manual motion, plan-only mode, or an execution fault.
+                 "available": self.joint_state is not None and not self.execution_faulted and not self.args.plan_only,
+                 "active": self.active_assembly is not None or self.manual_executing or self.manual_command_pending()},
+                separators=(",", ":")
             )
             return response
 
