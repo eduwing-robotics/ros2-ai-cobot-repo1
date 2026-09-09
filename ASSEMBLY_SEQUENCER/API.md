@@ -272,7 +272,7 @@ DB 동기화 상태는 `NOT_STARTED`, `PENDING`, `SYNCED`, `FAILED` 중 하나�
 전달합니다. 접두사 누락·불일치는 `accepted=false`, `error_code=MODE_MISMATCH`이며
 DB·실행 함수를 호출하지 않습니다. 읽기 요청 `{"command":"status"}`는 접두사 없이도
 허용하며 상태 응답의 `runtime_mode`는 선택된 모드입니다. 내부 Mock backend도 접두사를 검사합니다.
-`ASSEMBLY_SEQUENCER_MODE`는 시작 시 고정되며 Mock/domain 42, Real/domain 43 조합만 허용합니다.
+`ASSEMBLY_SEQUENCER_MODE`는 시작 시 고정되며 Mock/domain 42, Real/domain 5 조합만 허용합니다.
 DB는 같은 모드의 관리자 설정을 확인하고 실행 중 모드 변경을 거절합니다. 도메인은 인증 수단이 아닙니다.
 
 검사 결과 `UNKNOWN`은 자료 저장·flush 후 `PAUSED`와 `INSPECTION_UNKNOWN`으로 표시합니다.

@@ -30,9 +30,19 @@ YAML의 `before_all`·`per_step`·`after_all`은 필수 동작과 실행 순서�
 시작 시 거절하며 Job claim과 첫 설비 동작에 도달하지 않습니다.
 컨베이어는 이동마다 Job·Unit·이동 UUID를 대조하며 이전 이동의 도착·실패·이송 좌표를 적용하지 않습니다.
 `real_backend.py`는 문서화된 설비 작업 API와 Vision HTTP 경계만 사용합니다.
-현재 `/real/robot/status`로 상태를 조회하고 `/real/robot/pause`로 정지를 요청합니다.
-Pause 발행은 물리 정지 완료가 아니며, 최종 이벤트 연결 전에는 완료로 반환하지 않습니다.
-작업 command/event 및 컨베이어 service/state 연결은 미완이므로 자동조립은
+`/real/robot/command`로 개별 동작을 요청하고 `/real/robot/event`의 실행 UUID·동작 UUID·action이
+일치하는 terminal까지 기다립니다. 생산 Job ID는 준비 스냅샷의 명시적인 Unit 실행 UUID와
+대조하며 로봇 요청의 `job_id`로 그대로 재사용하지 않습니다.
+`/real/robot/status`는 요청 전 설비 준비와 고정된 계획을 확인하는 경계입니다.
+Timeout 후에는 dispatch를 차단하고 상태를 조회합니다. API 프로세스와 준비 계획이 같고
+복구 불필요 상태일 때만 같은 UUID·같은 요청 내용을 한 번 재전송하며 자동 진행하지 않습니다.
+확정 동작 실패는 상위로 전달하고, 취소·완료 불명확 상태는 `SAFETY_STOP`으로 전달합니다.
+`/real/robot/pause`의 발행은 정지 완료가 아닙니다. 상관 ID가 일치하는 PAUSED 이벤트의
+`stop_verified=true`, `control_mode=legacy_cancel`, `resume_available=false`를 확인해야 반환합니다.
+Legacy 취소 후 재개는 지원하지 않습니다.
+부품 PREOPEN·GRASP·RELEASE 개도는 공통 YAML에서 검증하고 Real Pick에 전달합니다.
+Place에는 RELEASE만 보내며 기존 Mock 요청 필드는 유지합니다.
+생산 비전 준비·컨베이어·완성 PCB 이송과 현장 준비점 연결이 미완이므로 자동조립은
 Job claim 전에 `NOT_READY`로 거절합니다. Mock으로 자동 대체하지 않습니다.
 
 ### Runner의 SDK·저수준 제어 금지

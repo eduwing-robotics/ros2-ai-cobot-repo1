@@ -24,7 +24,7 @@ def generate_launch_description():
     ).to_moveit_configs()
 
     ld = LaunchDescription()
-    ld.add_action(SetEnvironmentVariable("ROS_DOMAIN_ID", "43"))
+    ld.add_action(SetEnvironmentVariable("ROS_DOMAIN_ID", "5"))
     ld.add_action(declare_use_fake_hardware)
     ld.add_action(DeclareLaunchArgument("start_sequencer", default_value="false"))
     for action in generate_demo_launch(moveit_config).entities:

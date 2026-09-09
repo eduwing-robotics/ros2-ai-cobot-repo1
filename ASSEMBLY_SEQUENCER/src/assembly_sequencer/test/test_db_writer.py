@@ -502,7 +502,48 @@ class TransferSequenceTest(unittest.IsolatedAsyncioTestCase):
                                     ("pick", None), ("move_joint", points["home"]),
                                     ("move_joint", points["assembly_ready"]), ("place", None)])
         self.assertEqual(len(moves), 25 * 6)
+        self.assertNotIn("pregrasp_opening_percent", sequencer.backend.pick.call_args.args[-1])
         sequencer.finish_active_unit.assert_called_once_with(active)
+
+    async def test_real_progress_changes_only_after_operation_completion(self):
+        sequencer, active = self.fixture()
+        sequencer.runtime_mode = "real"
+        picked = asyncio.Event()
+        release = asyncio.Event()
+        async def pick(*args):
+            if not picked.is_set():
+                picked.set()
+                await release.wait()
+        sequencer.backend.pick.side_effect = pick
+        task = asyncio.create_task(AssemblySequencer.run_assembly_workflow(sequencer, active))
+        await picked.wait()
+        self.assertEqual(active["held_step_order"], 0)
+        self.assertEqual(active["placed_count"], 0)
+        release.set()
+        await task
+        sequencer.fail_active.assert_not_called()
+        frames = [call.args[0] for call in sequencer.publish.call_args_list
+                  if call.args[0]["state"] in {"PICKED", "PLACED"}]
+        self.assertEqual(len(frames), 50)
+        self.assertEqual([frame["state"] for frame in frames[:2]], ["PICKED", "PLACED"])
+        self.assertEqual(active["placed_count"], 25)
+        for call in sequencer.backend.pick.call_args_list:
+            step, gripper = call.args[1], call.args[-1]
+            self.assertEqual(gripper["pregrasp_opening_percent"],
+                             sequencer.recipe["gripper"]["parts"][step["part_id"]]["pregrasp_opening_percent"])
+
+    def test_preopen_is_required_finite_and_in_range_for_parts(self):
+        sequencer, _ = self.fixture()
+        for value in (None, True, -1, 101, float("nan")):
+            recipe = deepcopy(sequencer.recipe)
+            profile = recipe["gripper"]["parts"]["HBM"]
+            if value is None:
+                del profile["pregrasp_opening_percent"]
+            else:
+                profile["pregrasp_opening_percent"] = value
+            with self.assertRaises(ValueError):
+                validate_recipe(recipe)
+        self.assertNotIn("pregrasp_opening_percent", sequencer.recipe["gripper"]["assembled_pcb"])
 
     def test_invalid_workflow_orders_are_rejected(self):
         sequencer, _ = self.fixture()
@@ -776,7 +817,7 @@ class ModeIsolationTest(unittest.IsolatedAsyncioTestCase):
 class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
     def backend(self):
         node = Mock(runtime_mode="real", executor=None)
-        node.context.get_domain_id.return_value = 43
+        node.context.get_domain_id.return_value = 5
         backend = RealBackend(node)
         self.addCleanup(backend.close)
         return backend, node
@@ -794,7 +835,7 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
         node.create_client.return_value.call_async.assert_not_called()
         node.create_publisher.return_value.publish.assert_not_called()
         self.assertEqual(node.create_client.call_args.args[1], "/real/robot/status")
-        node.create_subscription.assert_not_called()
+        self.assertEqual(node.create_subscription.call_args.args[1], "/real/robot/event")
 
     async def test_status_uses_api_but_does_not_enable_unconnected_runner(self):
         backend, node = self.backend()
@@ -806,19 +847,195 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(snapshot["robot_api_status"]["hardware_execution_enabled"])
         self.assertFalse(backend._pending_calls)
 
-    async def test_pause_uses_api_and_does_not_claim_physical_completion(self):
+    def ready_backend(self):
         backend, node = self.backend()
-        with self.assertRaisesRegex(RuntimeError, "not yet confirmed"):
+        prepared = {"job_id": OPERATION_ID, "plan_sha256": "plan", "source_cycle_id": "cycle",
+                    "execution_context": {"production_job_id": JOB_ID, "unit_id": 22,
+                                          "execution_job_id": OPERATION_ID}, "parts": []}
+        backend._execution = prepared
+        backend._server_instance_id = "server"
+        backend._joint_points = {"PlaceCamera": [1, 2, 3, 4, 5, 6]}
+        status = dict(hardware_execution_enabled=True, state_fresh=True, robot_health_clear=True,
+                      gripper_feedback_valid=True, robot_mode=0, tool_num=1, work_num=0,
+                      robot_motion_done=1, recovery_required=False, active_operation=None,
+                      prepared_execution=deepcopy(prepared), event_context={"server_instance_id": "server"})
+        backend._read_robot_status = AsyncMock(return_value=status)
+        return backend, node
+
+    def event(self, backend, event, **fields):
+        return dict({key: backend._operation[key] for key in ("job_id", "operation_id", "action")},
+                    event=event, message="", **fields)
+
+    def test_terminal_identity_and_phase_do_not_advance_next_move(self):
+        backend, node = self.ready_backend()
+        operation = backend.move_joint(JOB_ID, [1, 2, 3, 4, 5, 6])
+        try:
+            future = operation.send(None)
+            payload = json.loads(backend._command_publisher.publish.call_args.args[0].data)
+            self.assertEqual(payload["job_id"], OPERATION_ID)
+            self.assertNotEqual(payload["operation_id"], OPERATION_ID)
+            self.assertEqual(set(payload), {"job_id", "operation_id", "action", "point_name", "joint_point"})
+            wrong = self.event(backend, "OPERATION_COMPLETED") | {"operation_id": JOB_ID}
+            self.assertFalse(backend.accept_operation_feedback(wrong))
+            backend.accept_operation_feedback(self.event(backend, "PHASE_COMPLETED", phase="GRASP"))
+            self.assertFalse(future.done())
+            terminal = self.event(backend, "OPERATION_COMPLETED")
+            backend.accept_operation_feedback(terminal)
+            backend.accept_operation_feedback(terminal)
+            with self.assertRaises(StopIteration):
+                operation.send(None)
+            self.assertFalse(backend._dispatch_blocked)
+        finally:
+            operation.close()
+
+    def test_rejected_request_does_not_replace_original_terminal(self):
+        backend, node = self.ready_backend()
+        operation = backend.move_joint(JOB_ID, [1, 2, 3, 4, 5, 6])
+        try:
+            future = operation.send(None)
+            backend.accept_operation_feedback(self.event(backend, "REQUEST_REJECTED"))
+            self.assertFalse(future.done())
+            self.assertTrue(backend._dispatch_blocked)
+            backend.accept_operation_feedback(self.event(backend, "OPERATION_COMPLETED"))
+            with self.assertRaisesRegex(RuntimeError, "SAFETY_STOP"):
+                operation.send(None)
+        finally:
+            operation.close()
+
+    def test_timeout_replays_same_bytes_only_for_unchanged_server_and_plan(self):
+        for changed in (False, True):
+            backend, node = self.ready_backend()
+            operation = backend.move_joint(JOB_ID, [1, 2, 3, 4, 5, 6])
+            try:
+                operation.send(None)
+                sent = backend._command_publisher.publish.call_args.args[0].data
+                if changed:
+                    backend._read_robot_status.return_value["event_context"]["server_instance_id"] = "restarted"
+                node.create_timer.call_args.args[1]()
+                with self.assertRaisesRegex(RuntimeError, "SAFETY_STOP"):
+                    operation.send(None)
+                self.assertTrue(backend._dispatch_blocked)
+                self.assertEqual(backend._command_publisher.publish.call_count, 1 if changed else 2)
+                self.assertEqual(backend._command_publisher.publish.call_args.args[0].data, sent)
+            finally:
+                operation.close()
+
+    def test_pause_requires_correlated_verified_stop_and_never_resumes(self):
+        backend, node = self.ready_backend()
+        operation = backend.move_joint(JOB_ID, [1, 2, 3, 4, 5, 6])
+        pause = None
+        try:
+            operation.send(None)
+            pause = backend.set_paused(JOB_ID, True)
+            future = pause.send(None)
+            self.assertFalse(future.done())
+            self.assertTrue(backend._dispatch_blocked)
+            event = self.event(backend, "PAUSED")
+            event["message"] = json.dumps(dict(stop_verified=True, control_mode="legacy_cancel", resume_available=False))
+            backend.accept_operation_feedback(event)
+            with self.assertRaises(StopIteration):
+                pause.send(None)
+            with self.assertRaisesRegex(RuntimeError, "SAFETY_STOP"):
+                operation.send(None)
+            self.assertEqual(backend._command_publisher.publish.call_count, 2)  # shared publisher mock: move + pause
+        finally:
+            operation.close()
+            if pause is not None:
+                pause.close()
+
+    async def test_resume_and_unbound_pause_do_not_publish(self):
+        backend, node = self.backend()
+        with self.assertRaisesRegex(RuntimeError, "NOT_READY"):
             await backend.set_paused(JOB_ID, True)
-        self.assertEqual(node.create_publisher.call_args.args[1], "/real/robot/pause")
-        self.assertTrue(node.create_publisher.return_value.publish.call_args.args[0].data)
         with self.assertRaisesRegex(RuntimeError, "does not provide resume"):
             await backend.set_paused(JOB_ID, False)
-        node.create_publisher.return_value.publish.assert_called_once()
-        node.create_client.return_value.call_async.assert_not_called()
+        backend._pause_publisher.publish.assert_not_called()
+
+    async def test_readiness_or_plan_change_blocks_before_publish(self):
+        for field, value in (("state_fresh", False), ("robot_motion_done", True),
+                             ("prepared_execution", {}), ("recovery_required", True),
+                             ("event_context", {"server_instance_id": "restarted"})):
+            backend, node = self.ready_backend()
+            backend._read_robot_status.return_value[field] = value
+            with self.assertRaisesRegex(RuntimeError, "SAFETY_STOP"):
+                await backend.move_joint(JOB_ID, [1, 2, 3, 4, 5, 6])
+            backend._command_publisher.publish.assert_not_called()
+
+    def test_confirmed_failure_does_not_replay_or_claim_safety_pause(self):
+        backend, node = self.ready_backend()
+        operation = backend.move_joint(JOB_ID, [1, 2, 3, 4, 5, 6])
+        try:
+            operation.send(None)
+            backend.accept_operation_feedback(self.event(backend, "OPERATION_FAILED", error_code="GRIPPER_FAILED"))
+            with self.assertRaisesRegex(RuntimeError, "^GRIPPER_FAILED"):
+                operation.send(None)
+            self.assertEqual(backend._command_publisher.publish.call_count, 1)
+            self.assertTrue(backend._dispatch_blocked)
+        finally:
+            operation.close()
+
+    def test_pick_place_fields_and_identity_come_from_prepared_part(self):
+        backend, node = self.ready_backend()
+        step = dict(order=1, part_id="HBM", slot_code="HBM-01")
+        part = dict(step, source_index=3, source_id="opaque:original", tray_registration_id="registration",
+                    source_observation_id="observation")
+        backend._execution["parts"] = [part]
+        backend._read_robot_status.return_value["prepared_execution"] = deepcopy(backend._execution)
+        motion = dict(approach_dz_mm=100, retract_dz_mm=100)
+        gripper = dict(pregrasp_opening_percent=25, grasp_opening_percent=18, release_opening_percent=25)
+        for action in ("pick", "place"):
+            operation = getattr(backend, action)(JOB_ID, step, "base_link", {"ignored_tcp": [9]*6}, motion, gripper)
+            try:
+                operation.send(None)
+                wire = json.loads(backend._command_publisher.publish.call_args.args[0].data)
+                self.assertEqual(wire["source_index"], 3)
+                self.assertNotIn("source", wire)
+                self.assertNotIn("source_id", wire)
+                if action == "place":
+                    self.assertNotIn("grasp_opening_percent", wire)
+                    self.assertNotIn("pregrasp_opening_percent", wire)
+                backend.accept_operation_feedback(self.event(backend, "OPERATION_COMPLETED"))
+                with self.assertRaises(StopIteration):
+                    operation.send(None)
+            finally:
+                operation.close()
+        self.assertIsNone(backend._held_part)
+        del gripper["pregrasp_opening_percent"]
+        with self.assertRaisesRegex(ValueError, "pregrasp"):
+            backend._part_request(JOB_ID, step, "base_link", motion, gripper, True)
+
+    async def test_start_binds_only_explicit_unit_mapping_without_batch_publish(self):
+        backend, node = self.ready_backend()
+        node.active = dict(job_id=JOB_ID, unit_id=22)
+        node.recipe = dict(recipe_version="assembly-r1", joint_points=backend._joint_points)
+        status = backend._read_robot_status.return_value
+        status.update(held_candidate=None, vision_plan_sha256="plan")
+        status["prepared_execution"]["parts"] = [dict(order=1, part_id="HBM", slot_code="HBM-01")]
+        await backend.start(JOB_ID, "assembly-r1", 1)
+        self.assertEqual(backend._execution["job_id"], OPERATION_ID)
+        backend._command_publisher.publish.assert_not_called()
+        status["prepared_execution"]["execution_context"]["unit_id"] = 23
+        with self.assertRaisesRegex(RuntimeError, "NOT_READY"):
+            await backend.start(JOB_ID, "assembly-r1", 1)
+
+    def test_stop_during_timer_registration_prevents_command_publish(self):
+        backend, node = self.ready_backend()
+        def register_timer(*args):
+            backend._dispatch_blocked = True
+            backend._cancel_requested = True
+            return Mock()
+        node.create_timer.side_effect = register_timer
+        operation = backend.move_joint(JOB_ID, [1, 2, 3, 4, 5, 6])
+        try:
+            with self.assertRaisesRegex(RuntimeError, "SAFETY_STOP"):
+                operation.send(None)
+            backend._command_publisher.publish.assert_not_called()
+            self.assertIsNone(backend._operation_future)
+        finally:
+            operation.close()
 
     def test_wrong_mode_is_rejected_before_any_ros_connections(self):
-        for mode, domain in (("mock",42),("real",42),("mock",43)):
+        for mode, domain in (("mock",42),("real",42),("mock",5),("real",43)):
             node = Mock(runtime_mode=mode)
             node.context.get_domain_id.return_value = domain
             with self.assertRaisesRegex(RuntimeError, "MODE_REJECTED"):

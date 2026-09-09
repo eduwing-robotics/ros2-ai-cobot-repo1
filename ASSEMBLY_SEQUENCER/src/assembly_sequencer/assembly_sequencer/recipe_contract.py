@@ -151,13 +151,11 @@ def validate_recipe(recipe):
     profiles = list(part_profiles.items())
     profiles.append(("assembled_pcb", gripper["assembled_pcb"]))
     for name, profile in profiles:
-        if not isinstance(profile, dict) or set(profile) != {
-            "grasp_opening_percent", "release_opening_percent"
-        }:
-            raise ValueError(
-                f"gripper.{name} must contain grasp_opening_percent and "
-                "release_opening_percent"
-            )
+        required = {"grasp_opening_percent", "release_opening_percent"}
+        if name != "assembled_pcb":
+            required.add("pregrasp_opening_percent")
+        if not isinstance(profile, dict) or set(profile) != required:
+            raise ValueError(f"gripper.{name} must contain exactly {', '.join(sorted(required))}")
         for field, value in profile.items():
             value = _finite_number(value, f"gripper.{name}.{field}")
             if not 0.0 <= value <= 100.0:
@@ -265,6 +263,7 @@ def resolve_observations(recipe, observations):
         profile = recipe["gripper"]["parts"][recipe_step["part_id"]]
         resolved.append({
             "step": recipe_step,
+            "gripper_pregrasp_opening_percent": profile["pregrasp_opening_percent"],
             "gripper_grasp_opening_percent": profile[
                 "grasp_opening_percent"
             ],

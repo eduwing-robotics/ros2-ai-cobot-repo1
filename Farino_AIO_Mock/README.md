@@ -55,6 +55,13 @@ MainServer·Sequencer는 `pg_db_role_setting`의 DB 전체 설정을 검사합�
 애플리케이션 계정에는 DB 소유자·관리자 권한을 부여하지 않습니다.
 Mock 계정의 Real DB 접근 및 실제 설비망 접근은 배포 관리자가 별도로 차단해야 합니다.
 
+Mock의 손목→TCP 기본 보정은 현재 Unity의 단축된 그리퍼에 맞춘
+FLU 기준 `(-0.115, 0, 254.364536) mm`, 회전 `(0, 0, 0)°`입니다.
+URDF 원본의 공구 길이나 Real 현장 보정값과 혼용하지 않습니다.
+PTP 접근은 현재 관절값으로 IK를 요청한 뒤 관절 목표로 계획하며,
+현재 J5에서 90°를 초과해 벗어나는 궤적은 실행 전에 거절합니다.
+이는 현재 조립의 손목 자세를 유지하는 Mock 정책이며 설비 안전 인증을 대신하지 않습니다.
+
 Mock 올인원 launch는 자식 프로세스에 `ROS_DOMAIN_ID=42`를 지정합니다.
 외부 ROS CLI도 `export ROS_DOMAIN_ID=42`를 사용합니다.
 불량 보고 프로세스를 개별 실행할 때도 `export MAIN_SERVER_MODE=mock`을 지정합니다.
@@ -152,8 +159,8 @@ backend는 timeout, 통신 실패와 로봇 fault를 호출자에게 전달합�
 
 ## Real 실행 환경과 명령 계약
 
-Real 통신 프로세스와 외부 ROS CLI는 `ROS_DOMAIN_ID=43`을 사용합니다.
-`real_robot.launch.py`는 자식 프로세스에 43을 지정하며 command server는 다른 도메인에서
+Real 통신 프로세스와 외부 ROS CLI는 `ROS_DOMAIN_ID=5`를 사용합니다.
+`real_robot.launch.py`는 자식 프로세스에 5를 지정하며 command server는 다른 도메인에서
 SDK 연결 전에 종료합니다. MainServer는 `MAIN_SERVER_MODE=real`과 관리자 설정
 `app.runtime_mode=real`인 전용 DB를 사용합니다. 위 SQL은 확인한 Real DB에 한해서
 환경 값을 `real`로 지정하여 사용합니다.

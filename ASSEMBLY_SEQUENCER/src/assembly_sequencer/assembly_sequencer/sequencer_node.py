@@ -43,7 +43,7 @@ class AssemblySequencer(Node):
     def __init__(self):
         super().__init__("assembly_sequencer")
         self.runtime_mode = os.environ.get("ASSEMBLY_SEQUENCER_MODE", "mock")
-        expected_domain = {"mock": 42, "real": 43}.get(self.runtime_mode)
+        expected_domain = {"mock": 42, "real": 5}.get(self.runtime_mode)
         if expected_domain is None or self.context.get_domain_id() != expected_domain:
             raise RuntimeError("MODE_REJECTED stage=startup: runtime mode and ROS domain disagree")
         recipe_path = self.declare_parameter("recipe", "").value
@@ -180,6 +180,11 @@ class AssemblySequencer(Node):
                 return self.set_response(response, False, job_id, "BUSY", "inspection resolution is required")
             try:
                 await self.backend.set_paused(job_id, command_type == "pause")
+                if (self.runtime_mode == "real" and command_type == "pause"
+                        and self.active is not None and self.active["job_id"] == job_id):
+                    # Legacy cancellation never resumes the suspended recipe. Even
+                    # between operations, preserve the Unit after verified arm stop.
+                    self.active["state"] = "PAUSED"
             except Exception as error:
                 return self.set_response(
                     response, False, job_id, "INTERNAL_ERROR", str(error)
@@ -438,6 +443,10 @@ class AssemblySequencer(Node):
                         "gripper_release_opening_percent"
                     ],
                 }
+                if self.runtime_mode == "real":
+                    # PREOPEN is a Real step API field; the existing Mock operation
+                    # contract accepts only grasp/release and opens in its own Pick.
+                    gripper["pregrasp_opening_percent"] = resolved["gripper_pregrasp_opening_percent"]
                 for command in self.recipe["workflow"]["per_step"]:
                     if self.active is not active:
                         return
@@ -451,11 +460,25 @@ class AssemblySequencer(Node):
                             active["job_id"], step, frame, resolved["source"],
                             motion, gripper,
                         )
+                        if self.runtime_mode == "real":
+                            feedback = dict(job_id=active["job_id"], state="PICKED",
+                                            step_order=step["order"], part_id=step["part_id"],
+                                            slot_code=step["slot_code"], error_code="", message="",
+                                            db_sync_state=self.db_writer.sync_state)
+                            apply_relay_feedback(active, feedback)
+                            self.publish(feedback)
                     elif (action, argument) == ("robot.place", "current_slot"):
                         await self.backend.place(
                             active["job_id"], step, frame, resolved["target"],
                             motion, gripper,
                         )
+                        if self.runtime_mode == "real":
+                            feedback = dict(job_id=active["job_id"], state="PLACED",
+                                            step_order=step["order"], part_id=step["part_id"],
+                                            slot_code=step["slot_code"], error_code="", message="",
+                                            db_sync_state=self.db_writer.sync_state)
+                            apply_relay_feedback(active, feedback)
+                            self.publish(feedback)
                     else:
                         raise RuntimeError(f"unknown assembly action: {command}")
 
@@ -709,7 +732,7 @@ def main(args=None):
         print("assembly_sequencer recipe self-check passed")
         return
     mode = os.environ.get("ASSEMBLY_SEQUENCER_MODE", "mock")
-    expected_domain = {"mock": "42", "real": "43"}.get(mode)
+    expected_domain = {"mock": "42", "real": "5"}.get(mode)
     if expected_domain is None or os.environ.get("ROS_DOMAIN_ID") != expected_domain:
         raise SystemExit("MODE_REJECTED stage=startup: mode/domain mismatch; DB recovery not started")
     rclpy.init(args=args)

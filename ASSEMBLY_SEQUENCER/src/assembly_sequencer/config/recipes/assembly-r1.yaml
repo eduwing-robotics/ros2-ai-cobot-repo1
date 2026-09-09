@@ -33,12 +33,12 @@ workflow:
 
 gripper:
   parts:
-    HBM: {grasp_opening_percent: 18, release_opening_percent: 25}
-    PM:  {grasp_opening_percent: 26, release_opening_percent: 30}
-    GPU: {grasp_opening_percent: 65, release_opening_percent: 70}
-    CAP: {grasp_opening_percent: 5,  release_opening_percent: 8}
-    IND: {grasp_opening_percent: 16, release_opening_percent: 20}
-    VRM: {grasp_opening_percent: 32, release_opening_percent: 34}
+    HBM: {pregrasp_opening_percent: 25, grasp_opening_percent: 18, release_opening_percent: 25}
+    PM:  {pregrasp_opening_percent: 30, grasp_opening_percent: 25, release_opening_percent: 30}
+    GPU: {pregrasp_opening_percent: 70, grasp_opening_percent: 65, release_opening_percent: 70}
+    CAP: {pregrasp_opening_percent: 18, grasp_opening_percent: 12, release_opening_percent: 17}
+    IND: {pregrasp_opening_percent: 21, grasp_opening_percent: 14, release_opening_percent: 20}
+    VRM: {pregrasp_opening_percent: 30, grasp_opening_percent: 24, release_opening_percent: 28}
   assembled_pcb: {grasp_opening_percent: 0, release_opening_percent: 100}
 
 # Order mirrors SampleScene ItemManger. A type's source and slot indices advance

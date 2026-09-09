@@ -8,8 +8,8 @@
 int main(int argc, char *argv[]){
     //该main函数用于创建简化指令客户端的app
     const char* domain = std::getenv("ROS_DOMAIN_ID");
-    if (!domain || std::strcmp(domain, "43") != 0) {
-        std::fprintf(stderr, "MODE_REJECTED stage=startup expected=real ROS_DOMAIN_ID=43 required; SDK not connected\n");
+    if (!domain || std::strcmp(domain, "5") != 0) {
+        std::fprintf(stderr, "MODE_REJECTED stage=startup expected=real ROS_DOMAIN_ID=5 required; SDK not connected\n");
         return 1;
     }
     rclcpp::init(argc,argv);

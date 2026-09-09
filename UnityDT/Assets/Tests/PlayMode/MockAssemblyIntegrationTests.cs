@@ -828,7 +828,15 @@ namespace MainUnity.Tests.PlayMode
                 Assert.That(item1.parent, Is.SameAs(board));
                 Assert.That(item2.parent, Is.SameAs(root.transform));
 
+                // Domain reload loses the nonserialized supply array while
+                // its scene objects survive. Recovery must not duplicate them.
+                Transform orphanedSupply = item2;
+                Field(supplyGroup, "RuntimeItems").SetValue(supplyGroup, null);
                 Invoke(control, "ResetVisualization", true);
+                Assert.That(orphanedSupply.gameObject.activeSelf, Is.False,
+                    "Recovery must remove existing supply even after runtime references are lost.");
+                Assert.That(root.transform.Cast<Transform>().Count(t =>
+                    t.name == "HBM" && t.gameObject.activeSelf), Is.EqualTo(2));
                 board = (Transform)GetProperty(manager, "CurrentBoard");
                 slot1 = board.Find("HBM-01");
                 runtime = (Transform[])Field(supplyGroup, "RuntimeItems").GetValue(supplyGroup);

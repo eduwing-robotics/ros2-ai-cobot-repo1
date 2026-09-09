@@ -27,7 +27,7 @@ from datasheet import DATASHEET
 
 ROOT = Path(__file__).resolve().parent
 REPO_ROOT = ROOT.parent
-TEMPLATE = ROOT / "templates" / "불량대책서_표준양식.xlsx"
+TEMPLATE = ROOT / "templates" / "불량대책서_표준양식_v2.xlsx"
 OUTPUT_DIR = ROOT / "reports" / "defects"
 DEFAULT_IMAGE_ROOT = REPO_ROOT / "UnityDT" / "Assets" / "StreamingAssets"
 TOKEN_RE = re.compile(r"\{\{[A-Za-z0-9_]+\}\}")

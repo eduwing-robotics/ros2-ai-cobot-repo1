@@ -198,7 +198,8 @@ namespace MainUnity.Runtime.Robot.Real
         }
 
         public Task PauseAsync() => SetPausedAsync(true);
-        public Task ResumeAsync() => SetPausedAsync(false);
+        public Task ResumeAsync() => Task.FromException(new InvalidOperationException(
+            "Real robot pause cancels the operation; retained resume is unavailable. Physical reconciliation is required."));
 
         async Task SetPausedAsync(bool paused)
         {

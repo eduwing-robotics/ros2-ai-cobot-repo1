@@ -254,10 +254,15 @@ namespace MainUnity.Static
             }
             foreach (ItemGroup group in itemGroups)
             {
-                if (group.RuntimeItems != null)
-                    foreach (Transform item in group.RuntimeItems)
-                        if (item != null && item.parent == spawnRoot)
-                            Remove(item);
+                // Supply instances survive editor reload even when RuntimeItems
+                // does not. This owner names them by type under spawnRoot;
+                // mounted and completed parts have another parent and stay intact.
+                for (int i = spawnRoot.childCount - 1; i >= 0; i--)
+                {
+                    Transform item = spawnRoot.GetChild(i);
+                    if (item.name == group.ItemType)
+                        Remove(item);
+                }
                 group.RuntimeItems = new Transform[group.SupplyPoints.Length];
                 for (int i = 0; i < group.RuntimeItems.Length; i++)
                 {

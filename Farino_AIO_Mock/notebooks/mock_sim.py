@@ -30,7 +30,7 @@ from moveit_msgs.msg import (
     OrientationConstraint,
     PositionConstraint,
 )
-from moveit_msgs.srv import GetCartesianPath
+from moveit_msgs.srv import GetCartesianPath, GetPositionIK
 from rcl_interfaces.msg import FloatingPointRange, ParameterDescriptor
 from sensor_msgs.msg import JointState
 from shape_msgs.msg import SolidPrimitive
@@ -41,7 +41,9 @@ from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 JOINTS = ("j1", "j2", "j3", "j4", "j5", "j6")
 INITIAL_JOINTS_DEG = (-4.689, -86.951, 84.467, -87.516, -90.0, -4.688)
 GRIPPER_CLOSED_METERS = 0.021
-DEFAULT_TOOL_OFFSET = (0.0, 0.0, 274.073, 0.0, 0.0, 0.0)
+# Current Unity gripper has a shortened mount; metres in its j6 frame
+# become FLU millimetres here. This calibration is Mock-only.
+DEFAULT_TOOL_OFFSET = (-0.115, 0.0, 254.364536, 0.0, 0.0, 0.0)
 FUTURE_TIMEOUT_SECONDS = 60.0
 FAULT_RESTART_MESSAGE = "execution state is unknown after a timeout; restart the mock node"
 ASSEMBLY_STATES = {
@@ -419,6 +421,45 @@ def advance_assembly_snapshot(current, feedback, recipe_version, expected_step_c
 def self_check():
     from types import SimpleNamespace
     # No ROS node or equipment is created: reject a foreign command before parsing.
+    current = [math.radians(v) for v in INITIAL_JOINTS_DEG]
+    published = []
+    validator = SimpleNamespace(
+        args=SimpleNamespace(min_j3_deg=0),
+        joint_state=JointState(name=list(JOINTS), position=current),
+        display_publisher=SimpleNamespace(publish=published.append),
+        preview_publisher=SimpleNamespace(publish=published.append),
+        publish_status=lambda message: None)
+    points = [JointTrajectoryPoint(positions=list(current)),
+              JointTrajectoryPoint(positions=list(current))]
+    points[-1].positions[0] += 0.1
+    trajectory = SimpleNamespace(joint_trajectory=JointTrajectory(
+        joint_names=list(JOINTS), points=points))
+    # The observed wrist flip must be rejected before preview or execution.
+    points[-1].positions[4] = math.pi / 2
+    trajectory.joint_trajectory.points = points
+    try:
+        MockMoveJ.validate_and_publish(validator, trajectory, None, "PTP")
+    except RuntimeError as error:
+        assert "wrist branch" in str(error)
+    else:
+        raise AssertionError("opposite wrist branch was accepted")
+    assert not published
+    from moveit_msgs.msg import RobotState, RobotTrajectory
+    # Also reject a flip inside the path even when the endpoint returns home.
+    points.append(JointTrajectoryPoint(positions=list(current)))
+    trajectory.joint_trajectory.points = points
+    try:
+        MockMoveJ.validate_and_publish(validator, trajectory, None, "LIN")
+    except RuntimeError as error:
+        assert "wrist branch" in str(error)
+    else:
+        raise AssertionError("intermediate wrist flip was accepted")
+    points[1].positions[4] = current[4]
+    normal = RobotTrajectory(joint_trajectory=JointTrajectory(
+        joint_names=list(JOINTS), points=points))
+    assert MockMoveJ.validate_and_publish(validator, normal, RobotState(), "PTP") is normal
+    assert len(published) == 2
+
     logger = SimpleNamespace(error=lambda message: None)
     node = SimpleNamespace(get_logger=lambda: logger)
     rejected = MockMoveJ.on_start_assembly(node, SimpleNamespace(cmd_str="real\nMoveJ()"), SimpleNamespace())
@@ -558,7 +599,8 @@ def self_check():
     wrist_target = MockMoveJ.tool_target_to_wrist_target(
         tcp_target, DEFAULT_TOOL_OFFSET
     )
-    assert math.isclose(wrist_target.position.z, -0.274073)
+    assert math.isclose(wrist_target.position.z, -0.254364536)
+    assert math.isclose(wrist_target.position.x, 0.000115)
     assert wrist_target.orientation.w == 1.0
     try:
         parse_start_command("{}")
@@ -637,6 +679,7 @@ class MockMoveJ(Node):
             "/gripper_controller/follow_joint_trajectory"
         )
         self.cartesian_client = self.create_client(GetCartesianPath, "/compute_cartesian_path")
+        self.ik_client = self.create_client(GetPositionIK, "/compute_ik")
         self.hardware_components_client = self.create_client(
             ListHardwareComponents, "/controller_manager/list_hardware_components"
         )
@@ -1074,11 +1117,45 @@ class MockMoveJ(Node):
         goal.request.max_velocity_scaling_factor = velocity
         goal.request.max_acceleration_scaling_factor = acceleration
         goal.request.start_state.is_diff = True
-        goal.request.goal_constraints = [
-            self.make_pose_goal(pose_target) if pose_target is not None else (
-                self.make_joint_goal() if self.args.joints else self.make_pose_goal()
-            )
-        ]
+        if pose_target is not None:
+            # A Cartesian PTP goal permits a different wrist branch. Resolve it
+            # from the observed joints first, then plan to that joint solution.
+            if not self.ik_client.wait_for_service(timeout_sec=5.0):
+                raise RuntimeError("/compute_ik is unavailable")
+            pose_goal = self.make_pose_goal(pose_target)
+            request = GetPositionIK.Request()
+            ik = request.ik_request
+            ik.group_name = goal.request.group_name
+            ik.ik_link_name = self.args.tip
+            ik.robot_state.joint_state = copy.deepcopy(self.joint_state)
+            ik.robot_state.is_diff = True
+            ik.pose_stamped.header.frame_id = pose_target.header.frame_id or self.args.frame
+            ik.pose_stamped.pose.position = pose_goal.position_constraints[0].constraint_region.primitive_poses[0].position
+            ik.pose_stamped.pose.orientation = pose_goal.orientation_constraints[0].orientation
+            ik.avoid_collisions = True
+            ik.timeout.sec = 1
+            current = dict(zip(self.joint_state.name, self.joint_state.position))
+            # This Mock assembly keeps the wrist branch through each approach;
+            # crossing to the opposite branch caused observed 180-degree flips.
+            ik.constraints.joint_constraints = [JointConstraint(
+                joint_name="j5", position=current["j5"],
+                tolerance_above=math.pi / 2, tolerance_below=math.pi / 2, weight=1.0)]
+            response = self.wait_for_future(self.ik_client.call_async(request), "PTP IK")
+            if response.error_code.val != MoveItErrorCodes.SUCCESS:
+                raise RuntimeError(f"PTP IK failed: MoveIt code {response.error_code.val}")
+            solution = dict(zip(response.solution.joint_state.name, response.solution.joint_state.position))
+            goal.request.start_state.joint_state = copy.deepcopy(self.joint_state)
+            # Previous controller completion is awaited before planning. Drop
+            # residual measured velocity: Pilz requires a rest-to-rest start.
+            goal.request.start_state.joint_state.velocity = []
+            goal.request.start_state.joint_state.effort = []
+            goal.request.goal_constraints = [Constraints(joint_constraints=[
+                JointConstraint(joint_name=name, position=solution[name],
+                                tolerance_above=0.001, tolerance_below=0.001, weight=1.0)
+                for name in JOINTS])]
+        else:
+            goal.request.goal_constraints = [
+                self.make_joint_goal() if self.args.joints else self.make_pose_goal()]
         goal.planning_options.plan_only = True
 
         future = self.move_client.send_goal_async(goal)
@@ -1116,6 +1193,12 @@ class MockMoveJ(Node):
                 f"{label} rejected: j3 would move below {self.args.min_j3_deg:.1f} deg"
             )
         current = arm_joint_positions(self.joint_state)
+        if current is None:
+            raise RuntimeError("Cannot validate trajectory without current joints")
+        j5_index = joint_trajectory.joint_names.index("j5")
+        if any(abs(point.positions[j5_index] - current[4]) > math.pi / 2 + 0.001
+               for point in points):
+            raise RuntimeError(f"{label} rejected: trajectory changes wrist branch")
         if len(points) == 1:
             if current is not None and trajectory_target_reached(
                 current, joint_trajectory.joint_names, points[0].positions

@@ -54,7 +54,7 @@ namespace MainUnity.Runtime.Robot.Mock
         Transform assembledPcbPicker;
         [SerializeField] Transform assembledPcbDropPoint;
 
-        readonly Dictionary<string, (string PartId, Transform Item, Transform Slot)> slotTargets =
+        readonly Dictionary<string, (string PartId, Transform Item, Transform Slot, Vector3 GripPosition, Quaternion GripRotation)> slotTargets =
             new(StringComparer.Ordinal);
         readonly HashSet<string> processedCallbacks = new(StringComparer.Ordinal);
         readonly List<AssemblyFeedback> bufferedFeedback = new();
@@ -1163,11 +1163,14 @@ namespace MainUnity.Runtime.Robot.Mock
             if (!gripperCatcher.TryCatch(item))
                 throw new InvalidOperationException("Mock gripper could not catch: " + feedback.part_id);
 
-            // This snap represents confirmed pickup, not a measured part pose.
-            item.position = gripperCatcher.transform.position;
+            // Live pickup preserves the world pose and grasp offset. Only
+            // recovery reconstructs attachment after missing motion feedback.
             if (restoreRotation)
-                item.rotation = gripperCatcher.transform.rotation *
-                    Quaternion.Euler(0f, resumeRotationOffsetDegrees, 0f);
+            {
+                item.position = gripperCatcher.transform.position +
+                    gripperCatcher.transform.rotation * target.GripPosition;
+                item.rotation = gripperCatcher.transform.rotation * target.GripRotation;
+            }
             heldItem = item;
             heldPartId = feedback.part_id;
             heldSlotCode = feedback.slot_code;
@@ -1333,7 +1336,7 @@ namespace MainUnity.Runtime.Robot.Mock
                         throw new InvalidOperationException(
                             "Mock observation part and slot Transforms are required.");
                     if (string.IsNullOrWhiteSpace(slot.name) ||
-                        !slotTargets.TryAdd(slot.name, (slotGroup.RequiredItemType, item, slot)))
+                        !slotTargets.TryAdd(slot.name, (slotGroup.RequiredItemType, item, slot, Vector3.zero, Quaternion.identity)))
                         throw new InvalidOperationException(
                             "Mock slot names must be non-empty and unique: " + slot.name);
                     ValidateFiniteTransform(item, "part", slotGroup.RequiredItemType);
@@ -1347,6 +1350,10 @@ namespace MainUnity.Runtime.Robot.Mock
                         itemGroup.PickVertically ? 90f : 0f, 0f);
                     Pose pickup = new(item.position + new Vector3(itemGroup.PickupOffsetXZ.x,
                         0f, itemGroup.PickupOffsetXZ.y), pickupRotation);
+                    Quaternion tcpRotation = DownwardTcpRotation(pickup.rotation);
+                    slotTargets[slot.name] = (slotGroup.RequiredItemType, item, slot,
+                        Quaternion.Inverse(tcpRotation) * (item.position - pickup.position),
+                        Quaternion.Inverse(tcpRotation) * item.rotation);
                     Vector3 gripOffset = Quaternion.Inverse(item.rotation) *
                         (pickup.position - item.position);
                     Pose slotPose = itemManager.GetSlotPose(slot);
@@ -1480,13 +1487,14 @@ namespace MainUnity.Runtime.Robot.Mock
                 return;
 
             connection ??= ROSConnection.GetOrCreateInstance();
-            if (!serviceRegistered)
+            if (!serviceRegistered || connection.GetTopic(startService)?.IsRosService != true)
             {
                 connection.RegisterRosService<RemoteCmdInterfaceRequest,
                     RemoteCmdInterfaceResponse>(startService);
                 serviceRegistered = true;
             }
-            if (!feedbackSubscribed && isActiveAndEnabled)
+            if (isActiveAndEnabled &&
+                (!feedbackSubscribed || connection.GetTopic(feedbackTopic)?.HasSubscriberCallback != true))
             {
                 connection.Subscribe<StringMsg>(feedbackTopic, ReceiveFeedback);
                 feedbackSubscribed = true;
