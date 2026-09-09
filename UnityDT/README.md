@@ -41,6 +41,17 @@ Real에서는 Play 중 유효하고 안정된 기판 관측으로 Job 없이도 
 Real 관측 수신기를 비활성화하면 Unit에 연결되지 않은 관측 객체만 정리합니다.
 카메라 패널은 트레이 부품 검출, PCB 인식, 컨베이어 정지선, 조립 인식 영상을 사용합니다.
 
+`TrayPartCalibrator`는 생산 실행 여부와 무관하게 `/real/robot/event`를 수신합니다.
+로컬 실행도 원래 트레이 객체·등록/관측 세대와 Pick 시작을 대조한 뒤 GRASP/RELEASE의
+식별·연속 그리퍼 피드백이 유효할 때만 실측 TCP/원래 관측 기판으로 부모를 변경합니다.
+월드 자세를 유지하며 생산 Job·Unit 생성, 수량과 DB 기록에는 연결하지 않습니다.
+예약·부착·배치된 객체는 트레이 갱신과 수동 재생성에서 보호합니다. 실패·식별 변경·API
+재시작은 마지막 관계를 유지하고 미확인으로 표시합니다. 트레이 패널의 로봇 시각화
+상태는 생산 IDLE/진행 상태와 별개입니다.
+연결 시 `/real/robot/status`의 부착 snapshot을 읽기 전용으로 대조합니다. 기존 관계와
+식별이 일치할 때만 재확인하며, 관측하지 못한 파지의 상대 자세를 snapshot에 없는 정보로
+복원하거나 새 부품을 만들어 대신 붙이지 않습니다. 해당 경우 복원 미확인으로 표시합니다.
+
 Scene의 `ItemManager`에는 기존 motherboard 프리팹, `TransSpots/BoardSpawnPoint`,
 `Items`, `Items/CompletedBoards`를 연결합니다. 슬롯은 프리팹 내부 Transform을,
 공급 위치는 `Items/SupplyPoints`의 고정 Transform을 참조합니다.

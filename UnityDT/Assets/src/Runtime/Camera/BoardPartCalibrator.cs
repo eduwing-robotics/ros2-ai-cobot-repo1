@@ -39,6 +39,7 @@ namespace MainUnity.Runtime.Camera
 
         ROSConnection connection;
         Transform currentBoard;
+        internal Transform AttachmentBoard => LastAppliedTime >= 0d ? currentBoard : null;
         readonly Dictionary<string, Transform> slots = new(StringComparer.Ordinal);
         Dictionary<string, Pose> targetSlotPoses;
         readonly Dictionary<string, Pose> displayedSlotPoses = new(StringComparer.Ordinal);

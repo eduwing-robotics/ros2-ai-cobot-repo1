@@ -93,6 +93,7 @@ void OnValidate()
         public bool Initialize()
         {
             RefreshReferences();
+            Calibration?.InitializeAttachments(tcp, BoardCalibration);
             IRobotBackend mockBackend = mock;
             IRobotBackend realBackend = real;
             RobotStatusManager statusManager = Status?.StatusManager;

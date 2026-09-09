@@ -588,8 +588,15 @@ namespace MainUnity.UI
         {
             bool mock = uiMaster == null || uiMaster.IsSimulated;
             if (mock ? tile.Index > 2 : tile.Index <= 2) return;
-            selectedCamIndex = tile.Index;
-            camSplit = false;
+            if (camSplit)
+            {
+                selectedCamIndex = mock ? (tile.Index == 1 ? 2 : 1) : (tile.Index == 3 ? 4 : 3);
+                camSplit = false;
+            }
+            else if (tile.Index != selectedCamIndex)
+            {
+                camSplit = true;
+            }
         }
 
         // 두 영상은 위아래로 배치해 기본 비교 영역에서도 가로 영상의 폭을 확보한다.
@@ -1137,6 +1144,9 @@ namespace MainUnity.UI
                 state = "수신 중단";
             calibrationState.text = state;
             SetTone(calibrationState, error ? "bad" : "none");
+            if (!mock && source != null)
+                detail += "\n로봇 시각화: " + source.RobotDetail +
+                    (source.LastRobotReceiveTime >= 0d ? " · 수신 " + Age(source.LastRobotReceiveTime) : "");
             calibrationDetail.text = detail;
             calibrationDetail.tooltip = !mock && source != null ? source.ProgressDetail : detail;
             calibrationAge.text = mock || source == null ? "수신 기록 없음" :
