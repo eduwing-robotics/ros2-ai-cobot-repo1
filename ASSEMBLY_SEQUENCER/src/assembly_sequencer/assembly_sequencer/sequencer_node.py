@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Common YAML and production lifecycle orchestration over one fixed backend."""
+"""Production lifecycle orchestration; YAML motion execution is Mock-only."""
 
 import os
 import json
@@ -46,11 +46,15 @@ class AssemblySequencer(Node):
         expected_domain = {"mock": 42, "real": 5}.get(self.runtime_mode)
         if expected_domain is None or self.context.get_domain_id() != expected_domain:
             raise RuntimeError("MODE_REJECTED stage=startup: runtime mode and ROS domain disagree")
-        recipe_path = self.declare_parameter("recipe", "").value
-        self.recipe = load_recipe(recipe_path)
-        self.recipe_version = self.recipe["recipe_version"]
-        self.recipe_slots = [(step["slot_code"], step["part_id"]) for step in self.recipe["steps"]]
-        self_check(self.recipe)
+        self.recipe = None
+        self.recipe_version = None
+        self.recipe_slots = []
+        if self.runtime_mode == "mock":
+            recipe_path = self.declare_parameter("recipe", "").value
+            self.recipe = load_recipe(recipe_path)
+            self.recipe_version = self.recipe["recipe_version"]
+            self.recipe_slots = [(step["slot_code"], step["part_id"]) for step in self.recipe["steps"]]
+            self_check(self.recipe)
 
         service_group = MutuallyExclusiveCallbackGroup()
         if self.runtime_mode == "mock":
@@ -146,7 +150,7 @@ class AssemblySequencer(Node):
                     snapshot["placed_slot_codes"] = (
                         [step["slot_code"] for step in self.recipe["steps"]]
                         [:snapshot["placed_count"]]
-                        if snapshot.get("recipe_version") == self.recipe_version else []
+                        if self.runtime_mode == "mock" and snapshot.get("recipe_version") == self.recipe_version else []
                     )
                     snapshot["db_sync_state"] = self.db_writer.sync_state
                 except Exception as error:
@@ -178,13 +182,10 @@ class AssemblySequencer(Node):
                 )
             if self.active.get("inspection_hold"):
                 return self.set_response(response, False, job_id, "BUSY", "inspection resolution is required")
+            if self.runtime_mode == "real":
+                return self.set_response(response, False, job_id, "NOT_READY", RealBackend._connection_error())
             try:
                 await self.backend.set_paused(job_id, command_type == "pause")
-                if (self.runtime_mode == "real" and command_type == "pause"
-                        and self.active is not None and self.active["job_id"] == job_id):
-                    # Legacy cancellation never resumes the suspended recipe. Even
-                    # between operations, preserve the Unit after verified arm stop.
-                    self.active["state"] = "PAUSED"
             except Exception as error:
                 return self.set_response(
                     response, False, job_id, "INTERNAL_ERROR", str(error)
@@ -218,10 +219,7 @@ class AssemblySequencer(Node):
 
         job_id = command["job_id"]
         if command_type == "start":
-            try:
-                await self.backend.prepare(self.recipe["joint_points"], self.recipe["frame"])
-            except Exception as error:
-                return self.set_response(response, False, job_id, "NOT_READY", str(error))
+            return self.set_response(response, False, job_id, "NOT_READY", RealBackend._connection_error())
         try:
             job = self.db_writer.get_job(job_id)
         except Exception as error:
@@ -281,6 +279,8 @@ class AssemblySequencer(Node):
         return self.set_response(response, True, job_id)
 
     async def on_pending_job(self):
+        if self.runtime_mode == "real":
+            return
         if self.active is not None or self.db_writer.sync_state in {"PENDING", "FAILED"}:
             return
         try:
@@ -319,6 +319,8 @@ class AssemblySequencer(Node):
 
     async def start_job(self, command, response):
         job_id = command["job_id"]
+        if self.runtime_mode == "real":
+            return self.set_response(response, False, job_id, "NOT_READY", RealBackend._connection_error())
         if self.active is not None:
             if self.active["job_id"] == job_id:
                 return self.set_response(response, True, job_id)
@@ -374,6 +376,8 @@ class AssemblySequencer(Node):
             )
 
     async def run_assembly_workflow(self, active):
+        if self.runtime_mode != "mock":
+            raise RuntimeError("NOT_READY: YAML execution is Mock-only")
         if self.active is not active:
             return
         error_code = "INTERNAL_ERROR"
@@ -443,10 +447,6 @@ class AssemblySequencer(Node):
                         "gripper_release_opening_percent"
                     ],
                 }
-                if self.runtime_mode == "real":
-                    # PREOPEN is a Real step API field; the existing Mock operation
-                    # contract accepts only grasp/release and opens in its own Pick.
-                    gripper["pregrasp_opening_percent"] = resolved["gripper_pregrasp_opening_percent"]
                 for command in self.recipe["workflow"]["per_step"]:
                     if self.active is not active:
                         return
@@ -460,25 +460,11 @@ class AssemblySequencer(Node):
                             active["job_id"], step, frame, resolved["source"],
                             motion, gripper,
                         )
-                        if self.runtime_mode == "real":
-                            feedback = dict(job_id=active["job_id"], state="PICKED",
-                                            step_order=step["order"], part_id=step["part_id"],
-                                            slot_code=step["slot_code"], error_code="", message="",
-                                            db_sync_state=self.db_writer.sync_state)
-                            apply_relay_feedback(active, feedback)
-                            self.publish(feedback)
                     elif (action, argument) == ("robot.place", "current_slot"):
                         await self.backend.place(
                             active["job_id"], step, frame, resolved["target"],
                             motion, gripper,
                         )
-                        if self.runtime_mode == "real":
-                            feedback = dict(job_id=active["job_id"], state="PLACED",
-                                            step_order=step["order"], part_id=step["part_id"],
-                                            slot_code=step["slot_code"], error_code="", message="",
-                                            db_sync_state=self.db_writer.sync_state)
-                            apply_relay_feedback(active, feedback)
-                            self.publish(feedback)
                     else:
                         raise RuntimeError(f"unknown assembly action: {command}")
 
@@ -495,6 +481,8 @@ class AssemblySequencer(Node):
                 )
 
     async def run_transfer_workflow(self, active):
+        if self.runtime_mode != "mock":
+            raise RuntimeError("NOT_READY: YAML execution is Mock-only")
         if self.active is not active:
             return
         error_code = "INTERNAL_ERROR"
@@ -682,6 +670,8 @@ class AssemblySequencer(Node):
         )
 
     async def on_internal_feedback(self, message):
+        if self.runtime_mode != "mock":
+            return
         try:
             payload = parse_feedback(message.data)
         except ValueError as error:

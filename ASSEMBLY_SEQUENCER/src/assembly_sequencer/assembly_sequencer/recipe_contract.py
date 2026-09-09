@@ -5,7 +5,6 @@ import math
 import uuid
 from pathlib import Path
 
-import yaml
 
 DEFECT_TYPES = ("MISSING", "POSITION_ERROR", "ORIENTATION_ERROR", "CRACK")
 RELAY_STATES = {
@@ -166,6 +165,8 @@ def validate_recipe(recipe):
 
 
 def load_recipe(path):
+    import yaml
+
     if not isinstance(path, str) or not path.strip():
         raise ValueError("recipe path must be a non-empty string")
     recipe_path = Path(path)
@@ -298,8 +299,8 @@ def parse_command(raw, expected_recipe_version, runtime_mode="mock"):
     if command_name == "start":
         if set(command) != {"command", "job_id", "recipe_version"}:
             raise ValueError("command, job_id and recipe_version are required")
-        if command["recipe_version"] != expected_recipe_version:
-            raise ValueError(f"recipe_version must be {expected_recipe_version}")
+        if not isinstance(command["recipe_version"], str) or not command["recipe_version"].strip():
+            raise ValueError("recipe_version must be a nonblank string")
         command_type = command_name
     elif command_name in {"pause", "resume"}:
         if set(command) != {"command", "job_id"}:

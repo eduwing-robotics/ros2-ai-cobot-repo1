@@ -86,8 +86,8 @@ Mock에서는 `start`를 거절하고 기존 observations와 영속 Job 결합 �
 {"command":"start","job_id":"12345678-1234-5678-1234-567812345678","recipe_version":"assembly-r1"}
 ```
 
-이 요청은 Job을 생성하지 않습니다. 현재는 실제 교시·좌표 공급·안전·컨베이어 도착·reset·
-수동/자동 명령 소유권 경계가 연결되지 않아 `accepted=false`, `error_code=NOT_READY`를 반환합니다.
+이 요청은 Job을 생성하지 않습니다. `recipe_version`은 비어 있지 않은 문자열이어야 하며
+로컬 YAML과 대조하지 않습니다. 현재는 전체 조립·컨베이어·PCB 이송 계약이 미연결이므로 `accepted=false`, `error_code=NOT_READY`를 반환합니다.
 이 실패는 DB Job을 `FAILED`로 전이하지 않습니다.
 상태 조회에는 `runtime_mode=real`, `command_service_available`, `robot_state_fresh`,
 `equipment_ready=false`가 포함되며 개별 통신 정상도 셀 준비 완료를 뜻하지 않습니다.
@@ -120,7 +120,7 @@ Mock에서는 `start`를 거절하고 기존 observations와 영속 Job 결합 �
 - `order`는 관측 배열 안에서 1부터 연속되는 번호이며 조립 실행 순서가 아닙니다.
 - `slot_code`는 연결된 Scene 슬롯 Transform의 이름이며 대소문자를 포함해 YAML과 정확히 일치해야 합니다.
 - 슬롯 누락·중복·추가와 슬롯별 `part_id` 불일치는 `INVALID_REQUEST`입니다.
-- Sequencer는 `slot_code`로 좌표를 연결하고 고정된 YAML step 순서대로 실행합니다.
+- Mock Sequencer는 `slot_code`로 좌표를 연결하고 고정된 YAML step 순서대로 실행합니다.
 - Unity는 각 슬롯에 보낸 source의 공급 부품을 집고, 배치 완료 feedback의 `slot_code`로 snap 대상을 찾습니다.
 - `xyz_mm`는 유한한 숫자 3개, `xyzw`는 0이 아닌 유한한 숫자 4개입니다.
 - Sequencer는 quaternion을 정규화합니다.

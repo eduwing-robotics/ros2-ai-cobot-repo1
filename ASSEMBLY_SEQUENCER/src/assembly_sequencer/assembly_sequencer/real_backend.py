@@ -16,7 +16,6 @@ class RealBackend:
 
     def __init__(self, node):
         from rclpy.callback_groups import ReentrantCallbackGroup
-        from std_msgs.msg import Bool, String
         from std_srvs.srv import Trigger
 
         if node.runtime_mode != "real" or node.context.get_domain_id() != 5:
@@ -25,26 +24,10 @@ class RealBackend:
         self._closed = False
         self._inspection_future = None
         self._pending_calls = set()
-        self._operation_lock = threading.RLock()
-        self._operation = None
-        self._operation_future = None
-        self._terminal_event = None
-        self._pause_future = None
-        self._dispatch_blocked = False
-        self._cancel_requested = False
-        self._execution = None
-        self._server_instance_id = None
-        self._joint_points = {}
-        self._held_part = None
         self._vision_url = node.declare_parameter("vision_base_url", "").value
         self._status_client = node.create_client(
             Trigger, "/real/robot/status", callback_group=ReentrantCallbackGroup()
         )
-        # Subscribe before publishing; terminal events are volatile, not a durable queue.
-        self._event_subscription = node.create_subscription(
-            String, "/real/robot/event", self._receive_event, 100)
-        self._command_publisher = node.create_publisher(String, "/real/robot/command", 10)
-        self._pause_publisher = node.create_publisher(Bool, "/real/robot/pause", 10)
 
     def is_available(self):
         return not self._closed and self._status_client.wait_for_service(timeout_sec=0.0)
@@ -90,294 +73,6 @@ class RealBackend:
             self._pending_calls.discard(future)
             self._node.destroy_timer(timer)
 
-    async def prepare(self, joint_points, frame):
-        # Full production remains blocked before claim. The selected ownership requires
-        # a robot-owned assembly cycle; individual operations and diagnostic status
-        # cannot substitute for that contract or enable production execution.
-        raise RuntimeError(self._connection_error())
-
-    @staticmethod
-    def _require_robot_ready(data):
-        if (any(data.get(key) is not True for key in
-                ("hardware_execution_enabled", "state_fresh", "robot_health_clear",
-                 "gripper_feedback_valid"))
-                or any(type(data.get(key)) is not int or data[key] != value for key, value in
-                       (("robot_mode", 0), ("tool_num", 1), ("work_num", 0), ("robot_motion_done", 1)))
-                or data.get("recovery_required") is not False
-                or "active_operation" not in data or data["active_operation"] is not None):
-            raise RuntimeError("SAFETY_STOP: robot readiness or idle state is unconfirmed")
-
-    async def start(self, job_id, recipe_version, expected_step_count):
-        # No batch start is sent. Bind only the explicit snapshot to the Unit
-        # already owned by the Sequencer, never reuse a production UUID as execution ID.
-        active = self._node.active
-        if type(expected_step_count) is not int or expected_step_count <= 0:
-            raise RuntimeError("NOT_READY: a positive recipe step count is required")
-        if (not isinstance(active, dict) or active.get("job_id") != job_id
-                or type(active.get("unit_id")) is not int or active["unit_id"] <= 0):
-            raise RuntimeError("NOT_READY: no matching production Unit")
-        data = await self._read_robot_status()
-        self._require_robot_ready(data)
-        prepared = data.get("prepared_execution")
-        context = prepared.get("execution_context") if isinstance(prepared, dict) else None
-        if (not isinstance(context, dict) or context.get("production_job_id") != job_id
-                or type(context.get("unit_id")) is not int or context["unit_id"] != active["unit_id"]
-                or context.get("execution_job_id") != prepared.get("job_id")
-                or prepared.get("job_id") == job_id
-                or not prepared.get("plan_sha256") or not prepared.get("source_cycle_id")
-                or prepared["plan_sha256"] != data.get("vision_plan_sha256")
-                or not isinstance(prepared.get("parts"), list)
-                or len(prepared["parts"]) != expected_step_count
-                or data.get("held_candidate", True) is not None):
-            raise RuntimeError("NOT_READY: prepared execution does not match the production Unit")
-        try:
-            uuid.UUID(prepared["job_id"])
-        except (ValueError, TypeError, KeyError) as error:
-            raise RuntimeError("NOT_READY: invalid execution UUID") from error
-        if self._dispatch_blocked or self._operation_future is not None:
-            raise RuntimeError("SAFETY_STOP: previous operation requires reconciliation")
-        recipe = self._node.recipe
-        if recipe["recipe_version"] != recipe_version:
-            raise ValueError("recipe version does not match")
-        event_context = data.get("event_context")
-        server_id = event_context.get("server_instance_id") if isinstance(event_context, dict) else None
-        if not isinstance(server_id, str) or not server_id:
-            raise RuntimeError("NOT_READY: API process identity missing")
-        self._server_instance_id = server_id
-        self._joint_points = recipe["joint_points"]
-        self._execution = json.loads(json.dumps(prepared))
-        self._held_part = None
-
-    def _require_execution(self, job_id):
-        if self._closed or self._execution is None:
-            raise RuntimeError("NOT_READY: no prepared Unit execution")
-        if self._execution["execution_context"]["production_job_id"] != job_id:
-            raise ValueError("production Job does not match prepared execution")
-        if self._dispatch_blocked:
-            raise RuntimeError("SAFETY_STOP: dispatch blocked pending physical reconciliation")
-
-    async def move_joint(self, job_id, joint_point):
-        self._require_execution(job_id)
-        names = [name for name, point in self._joint_points.items() if point == joint_point]
-        if len(names) != 1:
-            raise ValueError("joint target must identify exactly one reviewed recipe point")
-        if (not isinstance(joint_point, list) or len(joint_point) != 6
-                or any(type(v) not in (int, float) or not math.isfinite(v) for v in joint_point)):
-            raise ValueError("joint_point requires six finite degree values")
-        await self._execute(job_id, "robot.move_joint", {"point_name": names[0], "joint_point": joint_point})
-
-    def _part_request(self, job_id, step, frame, motion, gripper, pick):
-        self._require_execution(job_id)
-        if frame != "base_link":
-            raise ValueError("Real robot requests require base_link")
-        parts = [part for part in self._execution["parts"] if isinstance(part, dict)
-                 and all(part.get(key) == step.get(key) for key in ("order", "part_id", "slot_code"))]
-        if len(parts) != 1:
-            raise ValueError("recipe part does not uniquely match prepared execution")
-        part = parts[0]
-        if (type(part.get("source_index")) is not int or part["source_index"] <= 0
-                or type(part.get("order")) is not int or part["order"] <= 0
-                or any(not isinstance(part.get(key), str) or not part[key] for key in
-                       ("source_id", "tray_registration_id", "source_observation_id", "part_id", "slot_code"))):
-            raise ValueError("prepared part lacks source identity or registration generation")
-        payload = {key: part[key] for key in ("part_id", "slot_code", "order", "source_index")}
-        for key in ("approach_dz_mm", "retract_dz_mm"):
-            if type(motion.get(key)) not in (int, float) or motion[key] != 100:
-                raise ValueError("Real precision operations support only 100mm approach/retract")
-            payload[key] = motion[key]
-        fields = ("pregrasp_opening_percent", "grasp_opening_percent", "release_opening_percent") if pick else ("release_opening_percent",)
-        for key in fields:
-            value = gripper.get(key)
-            if type(value) not in (int, float) or not math.isfinite(value) or not 0 <= value <= 100:
-                raise ValueError(f"recipe must explicitly provide {key} in 0..100")
-            payload[key] = value
-        return payload
-
-    async def pick(self, job_id, step, frame, source, motion, gripper):
-        payload = self._part_request(job_id, step, frame, motion, gripper, True)
-        if self._held_part is not None:
-            raise RuntimeError("SAFETY_STOP: a previous Pick has not been placed")
-        await self._execute(job_id, "robot.pick", payload)
-        self._held_part = {key: payload[key] for key in ("part_id", "slot_code", "order", "source_index")}
-
-    async def place(self, job_id, step, frame, target, motion, gripper):
-        payload = self._part_request(job_id, step, frame, motion, gripper, False)
-        if self._held_part != {key: payload[key] for key in ("part_id", "slot_code", "order", "source_index")}:
-            raise ValueError("Place must match the completed Pick")
-        await self._execute(job_id, "robot.place", payload)
-        self._held_part = None
-
-    async def _execute(self, job_id, action, fields):
-        from rclpy.task import Future
-        from std_msgs.msg import String
-
-        self._require_execution(job_id)
-        try:
-            data = await self._read_robot_status()
-            self._require_robot_ready(data)
-        except Exception as error:
-            self._dispatch_blocked = True
-            raise RuntimeError(f"SAFETY_STOP: pre-dispatch state unconfirmed: {error}") from error
-        if data.get("prepared_execution") != self._execution:
-            self._dispatch_blocked = True
-            raise RuntimeError("SAFETY_STOP: prepared execution changed")
-        event_context = data.get("event_context")
-        server_id = event_context.get("server_instance_id") if isinstance(event_context, dict) else None
-        if not server_id or server_id != self._server_instance_id:
-            self._dispatch_blocked = True
-            raise RuntimeError("SAFETY_STOP: API process identity missing or changed")
-        self._require_execution(job_id)
-        with self._operation_lock:
-            if self._operation_future is not None:
-                raise RuntimeError("another robot operation is pending")
-            self._operation = dict(fields, job_id=self._execution["job_id"],
-                                   operation_id=str(uuid.uuid4()), action=action)
-            future = Future(executor=self._node.executor)
-            self._operation_future = future
-            self._terminal_event = None
-            wire = json.dumps(self._operation, sort_keys=True, separators=(",", ":"), allow_nan=False)
-
-        timed_out = False
-
-        def expire():
-            nonlocal timed_out
-            with self._operation_lock:
-                if not future.done():
-                    timed_out = True
-                    self._dispatch_blocked = True
-                    future.set_exception(RuntimeError("SAFETY_STOP: operation deadline; physical result unconfirmed"))
-
-        timer = self._node.create_timer(600.0, expire)
-        try:
-            # Pause can arrive while the timer is being registered. Serialize the
-            # final dispatch check with pause so no new command follows the stop.
-            with self._operation_lock:
-                self._require_execution(job_id)
-                self._command_publisher.publish(String(data=wire))
-            await future
-        except Exception as operation_error:
-            self._dispatch_blocked = True
-            # Preserve the request and block dispatch even if the status call fails.
-            # Replay uses the exact same UUID and bytes; it must never create a new move.
-            try:
-                data = await self._read_robot_status()
-                prepared = data.get("prepared_execution", {})
-                if (timed_out and not self._cancel_requested and prepared == self._execution
-                        and data.get("event_context", {}).get("server_instance_id") == server_id
-                        and data.get("recovery_required") is False):
-                    with self._operation_lock:
-                        if not self._closed and not self._cancel_requested:
-                            self._command_publisher.publish(String(data=wire))
-            except Exception as error:
-                self._node.get_logger().warning(f"robot reconciliation remains required: {error}")
-            if self._terminal_event != "OPERATION_FAILED" and not str(operation_error).startswith("SAFETY_STOP:"):
-                raise RuntimeError(f"SAFETY_STOP: physical result unconfirmed: {operation_error}") from operation_error
-            raise
-        finally:
-            self._node.destroy_timer(timer)
-            with self._operation_lock:
-                if not future.done():
-                    future.cancel()
-                self._operation_future = None
-
-    def _receive_event(self, message):
-        try:
-            payload = json.loads(message.data)
-            self.accept_operation_feedback(payload)
-        except (ValueError, TypeError, AttributeError) as error:
-            self._node.get_logger().warning(f"ignored invalid robot event: {error}")
-
-    async def transfer_assembled_pcb(self, job_id, frame, assembled_pcb, motion, gripper):
-        raise RuntimeError(self._connection_error())
-
-    async def move_conveyor(self, job_id, station, *, unit_id, operation_id, on_ready):
-        raise RuntimeError("NOT_READY: conveyor service/state adapter is not connected; direct IO is prohibited")
-
-    async def resolve_targets(self, observations):
-        raise RuntimeError("NOT_READY: robot-side vision preparation API is not connected")
-
-    async def set_paused(self, job_id, paused):
-        from rclpy.task import Future
-        from std_msgs.msg import Bool
-
-        if self._closed:
-            raise RuntimeError("Real API client is closed")
-        if not paused:
-            raise RuntimeError("NOT_READY: robot API does not provide resume; legacy pause cancels")
-        with self._operation_lock:
-            if self._execution is None or self._execution["execution_context"]["production_job_id"] != job_id:
-                raise RuntimeError("NOT_READY: no matching robot execution to stop")
-            if self._pause_future is not None:
-                raise RuntimeError("a stop confirmation is already pending")
-            self._dispatch_blocked = True
-            self._cancel_requested = True
-            future = Future(executor=self._node.executor)
-            self._pause_future = future
-
-        def expire():
-            with self._operation_lock:
-                if not future.done():
-                    future.set_exception(RuntimeError("SAFETY_STOP: physical stop not confirmed"))
-
-        timer = self._node.create_timer(60.0, expire)
-        try:
-            self._pause_publisher.publish(Bool(data=True))
-            await future
-        finally:
-            self._node.destroy_timer(timer)
-            self._pause_future = None
-
-    def accept_operation_feedback(self, payload):
-        if not isinstance(payload, dict):
-            return False
-        with self._operation_lock:
-            operation = self._operation
-            if operation is None or any(payload.get(key) != operation[key]
-                                        for key in ("job_id", "operation_id", "action")):
-                return False
-            context = payload.get("message", "")
-            try:
-                context = json.loads(context) if isinstance(context, str) else None
-            except ValueError:
-                context = None
-            event = payload.get("event")
-            future = self._operation_future
-            if (isinstance(context, dict) and context.get("server_instance_id")
-                    and context["server_instance_id"] != self._server_instance_id):
-                self._dispatch_blocked = True
-                if future is not None and not future.done():
-                    future.set_exception(RuntimeError("SAFETY_STOP: API process changed during operation"))
-                return True
-            if event in {"PAUSED", "CONTROL_FAILED"}:
-                self._dispatch_blocked = True
-                verified = (event == "PAUSED" and isinstance(context, dict)
-                            and context.get("stop_verified") is True
-                            and context.get("control_mode") == "legacy_cancel"
-                            and context.get("resume_available") is False)
-                if self._pause_future is not None and not self._pause_future.done():
-                    if verified:
-                        self._pause_future.set_result(None)
-                    else:
-                        self._pause_future.set_exception(RuntimeError("SAFETY_STOP: physical stop not confirmed"))
-                if future is not None and not future.done():
-                    future.set_exception(RuntimeError("SAFETY_STOP: legacy cancel; automatic resume prohibited"))
-            elif event == "REQUEST_REJECTED":
-                # A conflicting retransmission is not the original operation's terminal.
-                self._dispatch_blocked = True
-            elif event in {"OPERATION_COMPLETED", "OPERATION_FAILED"} and future is not None and not future.done():
-                self._terminal_event = event
-                if event == "OPERATION_COMPLETED" and not self._dispatch_blocked:
-                    future.set_result(payload)
-                else:
-                    was_blocked = self._dispatch_blocked
-                    self._dispatch_blocked = True
-                    reason = payload.get("error_code") or "OPERATION_FAILED"
-                    # A confirmed execution failure is FAILED at the Sequencer.
-                    # Cancellation and uncertain completion preserve RUNNING instead.
-                    prefix = "SAFETY_STOP: " if was_blocked else ""
-                    future.set_exception(RuntimeError(f"{prefix}{reason}: {payload.get('message', '')}"))
-            return True
-
     async def inspect_unit(self, job_id, unit_id, slot_codes):
         from rclpy.task import Future
 
@@ -416,18 +111,11 @@ class RealBackend:
         if self._closed:
             return
         self._closed = True
-        self._dispatch_blocked = True
-        for future in (self._operation_future, self._pause_future):
-            if future is not None and not future.done():
-                future.set_exception(RuntimeError("SAFETY_STOP: robot client closed"))
         for future in tuple(self._pending_calls):
             future.cancel()
         if self._inspection_future is not None:
             self._inspection_future.cancel()
         self._node.destroy_client(self._status_client)
-        self._node.destroy_publisher(self._pause_publisher)
-        self._node.destroy_publisher(self._command_publisher)
-        self._node.destroy_subscription(self._event_subscription)
 
 
 def inspect(inspection_id, job_id, unit_id, *, base_url, token=None,

@@ -6,7 +6,7 @@ production Job을 조립·검사 실행으로 조정하는 업무 계층입니�
 
 - 실행 가능한 Job 선택과 단일 실행 보장
 - Unit 생성과 Job·Unit 상태 전이
-- 시작 시 레시피 검증과 실행 중 snapshot 고정
+- Mock 시작 시 YAML 레시피 검증과 실행 중 snapshot 고정
 - 조립, 이송과 검사 순서 조정
 - backend 완료·실패·timeout 전달
 - 생산 결과, 검사와 재고 기록
@@ -15,9 +15,11 @@ Unity UI, HTTP 요청 수신, 좌표 변환, Raw ROS 메시지와 하드웨어 �
 
 ## 실행 경계
 
-책임 계약은 Sequencer가 생산 공정을 조정하고 로봇 실행기가 조립 내부 순서를 소유하는 구조입니다. 현재 Real 생산 실행은 차단되어 있으며, 남아 있는 개별 동작 클라이언트는 전체 조립 실행 계약으로 간주하지 않습니다. 로봇 전체 조립의 시작·정지·최종 결과 계약이 연결되기 전에는 개별 동작 루프를 생산 대체 경로로 활성화하지 않습니다. Resume은 보존된 실행 상태의 재개를 실제 지원할 때만 연결합니다. Mock은 기존 YAML 실행 경로를 사용합니다.
-
-Sequencer는 레시피 순서에 따라 backend의 의미 단위 공개 동작만 호출합니다. 통신, 좌표 변환, timeout과 실제 완료 판정은 backend가 완결합니다.
+Sequencer는 생산 공정을 조정하고 로봇 실행기는 조립 내부 순서를 소유합니다.
+Real은 YAML을 읽거나 개별 MoveJoint·Pick·Place를 실행하지 않습니다.
+전체 조립 계약과 컨베이어·PCB 이송 연결이 없으므로 시작 요청은 Job claim 전에
+`NOT_READY`로 거절합니다. Mock으로 자동 대체하지 않습니다.
+Mock은 기존 YAML 실행 경로를 사용하며, 통신·timeout·실제 완료 판정은 backend가 완결합니다.
 
 Job·Unit, 수량, 검사 FAIL, 재시작과 안전정지의 공통 의미는 [시스템 아키텍처](../docs/architecture/index.md)가 소유합니다.
 
@@ -25,34 +27,23 @@ Job·Unit, 수량, 검사 FAIL, 재시작과 안전정지의 공통 의미는 [�
 
 외부 ROS 경계는 공통 service와 feedback topic이며 실행 모드별 domain을 사용합니다. 구체 endpoint와 payload는 [Assembly Sequencer ROS API](API.md)를 따릅니다.
 
-현재 구현에서 `sequencer_node.py`가 YAML·Job·Unit 흐름을, `recipe_contract.py`가 입력 검증을 소유합니다. 아래 개별 동작 경로 설명은 남아 있는 구현을 설명하며, 채택한 전체 조립 경계가 연결되었다는 뜻이 아닙니다.
+`sequencer_node.py`는 Job·Unit 흐름과 Mock YAML 실행을, `recipe_contract.py`는
+공통 요청·상태 검증과 Mock 레시피 검증을 소유합니다.
 `mock_backend.py`는 Mock 동작 완료와 Unity 컨베이어 신호 대기·난수 검사를 소유합니다.
-YAML의 `before_all`·`per_step`·`after_all`은 필수 동작과 실행 순서까지 검증합니다.
-부품·슬롯 조립 순서와 동작 설정은 YAML에서 관리하지만, 공정 골격의 재배열은
-시작 시 거절하며 Job claim과 첫 설비 동작에 도달하지 않습니다.
-컨베이어는 이동마다 Job·Unit·이동 UUID를 대조하며 이전 이동의 도착·실패·이송 좌표를 적용하지 않습니다.
-`real_backend.py`는 문서화된 설비 작업 API와 Vision HTTP 경계만 사용합니다.
-`/real/robot/command`로 개별 동작을 요청하고 `/real/robot/event`의 실행 UUID·동작 UUID·action이
-일치하는 terminal까지 기다립니다. 생산 Job ID는 준비 스냅샷의 명시적인 Unit 실행 UUID와
-대조하며 로봇 요청의 `job_id`로 그대로 재사용하지 않습니다.
-`/real/robot/status`는 요청 전 설비 준비와 고정된 계획을 확인하는 경계입니다.
-Timeout 후에는 dispatch를 차단하고 상태를 조회합니다. API 프로세스와 준비 계획이 같고
-복구 불필요 상태일 때만 같은 UUID·같은 요청 내용을 한 번 재전송하며 자동 진행하지 않습니다.
-확정 동작 실패는 상위로 전달하고, 취소·완료 불명확 상태는 `SAFETY_STOP`으로 전달합니다.
-`/real/robot/pause`의 발행은 정지 완료가 아닙니다. 상관 ID가 일치하는 PAUSED 이벤트의
-`stop_verified=true`, `control_mode=legacy_cancel`, `resume_available=false`를 확인해야 반환합니다.
-Legacy 취소 후 재개는 지원하지 않습니다.
-부품 PREOPEN·GRASP·RELEASE 개도는 공통 YAML에서 검증하고 Real Pick에 전달합니다.
-Place에는 RELEASE만 보내며 기존 Mock 요청 필드는 유지합니다.
-로봇 전체 조립 계약·컨베이어·완성 PCB 이송 연결이 미완이므로 자동조립은
-Job claim 전에 `NOT_READY`로 거절합니다. Mock으로 자동 대체하지 않습니다.
+Mock YAML의 `before_all`·`per_step`·`after_all`은 필수 동작과 순서까지 검증합니다.
+컨베이어는 이동마다 Job·Unit·이동 UUID를 대조합니다.
+
+`real_backend.py`에는 `/real/robot/status` 조회와 Vision HTTP 검사 경계가 있습니다.
+로봇 개별 동작 publisher, 동작별 재전송, 취소형 Pause 연결과 로컬 파지 상태는 없습니다.
+생산 Pause/Resume은 미연결이며 취소를 상태 보존형 일시정지로 표현하지 않습니다.
+Unity의 실측·Ghost·부품 이벤트 수신과 수동 로봇 조작은 이 제거 범위에 포함되지 않습니다.
 
 ### Runner의 SDK·저수준 제어 금지
 
 Real runner와 Real backend는 로봇 SDK, 드라이버 서비스, 직접 IO, 장비 소켓 또는
 외부 프로세스를 통한 저수준 제어를 사용하지 않습니다. TCP·IK·그리퍼 세부 동작은
-로봇 PC가 소유하며, 우리 쪽은 `/real/robot/command`와 `/real/robot/event`의 작업 경계를 사용합니다.
-컨베이어는 `/conveyor/*`의 공개 이동·정지·reset 서비스와 상태 토픽을 사용합니다.
+로봇 PC가 소유합니다. Sequencer의 Real backend는 로봇 상태만 조회하며 동작을 발행하지 않습니다.
+컨베이어 실행 어댑터는 아직 연결되지 않았습니다.
 API 부재·실패·timeout 시 직접 제어로 우회하지 않고 실행을 거절하거나 보류합니다.
 기존 Mock 내부 서비스는 이 Real 장비 제어 경로와 별개입니다.
 기존 테스트에서 Real backend의 import·ROS endpoint 허용 목록과 저수준 호출 부재를 검사합니다.
@@ -73,7 +64,7 @@ Mock 전체 스택의 유일한 실행 진입점은 [Mock 올인원 실행](../F
 
 `real_backend.inspect()`는 Vision의 완료 JSON과 검증된 PNG를
 `{"data": dict, "image_bytes": bytes | None}`로 반환하는 동기 함수입니다.
-공통 runner에서 사용하는 `RealBackend.inspect_unit()`은 별도 worker에서 이를 호출합니다.
+`RealBackend.inspect_unit()`은 별도 worker에서 이를 호출합니다.
 같은 Job·Unit에서 같은 검사 UUID를 사용하며 ROS callback을 HTTP 대기로 막지 않습니다.
 실제 Real 전체 흐름은 실행 준비 경계에서 차단되어 아직 검사 단계에 도달하지 않습니다.
 
