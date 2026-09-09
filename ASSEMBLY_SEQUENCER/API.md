@@ -8,6 +8,7 @@
 Mock 자동조립은 연결되어 있습니다. Real은 상태 조회와 시작 요청의 검증 경계가 연결되었지만,
 설비 실행 경계가 미완성이므로 `start`를 `NOT_READY`로 거절하며 Job claim·이동을 수행하지 않습니다.
 Real 상태의 `available`과 `equipment_ready`는 현재 `false`입니다. 이는 노드 통신 실패와 구분됩니다.
+개별 로봇 연결이나 진단 `check_completed`는 전체 조립 준비·완료가 아닙니다. 전체 조립 계약과 컨베이어·PCB 이송 연결이 없으면 Job claim 전에 `NOT_READY`로 거절합니다.
 
 내부 `/mock_db_mvp/internal/*` service와 topic은 Sequencer와 Mock runner 사이의 구현 세부사항이므로 public API에 포함하지 않습니다.
 

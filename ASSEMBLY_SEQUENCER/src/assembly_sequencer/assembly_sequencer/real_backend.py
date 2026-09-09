@@ -52,8 +52,9 @@ class RealBackend:
     @staticmethod
     def _connection_error():
         return (
-            "NOT_READY: production vision preparation, conveyor and PCB transfer are not connected; "
-            "reviewed recipe points are required"
+            "NOT_READY: production assembly start/stop and correlated cycle results "
+            "are not connected; individual robot operations or diagnostic check_completed "
+            "cannot substitute for assembly completion; conveyor and PCB transfer are not connected"
         )
 
     async def status(self):
@@ -90,8 +91,9 @@ class RealBackend:
             self._node.destroy_timer(timer)
 
     async def prepare(self, joint_points, frame):
-        # Full production remains blocked before claim: a robot connection cannot
-        # stand in for the missing conveyor, vision preparation or PCB transfer.
+        # Full production remains blocked before claim. The selected ownership requires
+        # a robot-owned assembly cycle; individual operations and diagnostic status
+        # cannot substitute for that contract or enable production execution.
         raise RuntimeError(self._connection_error())
 
     @staticmethod

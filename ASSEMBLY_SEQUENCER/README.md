@@ -15,6 +15,8 @@ Unity UI, HTTP 요청 수신, 좌표 변환, Raw ROS 메시지와 하드웨어 �
 
 ## 실행 경계
 
+책임 계약은 Sequencer가 생산 공정을 조정하고 로봇 실행기가 조립 내부 순서를 소유하는 구조입니다. 현재 Real 생산 실행은 차단되어 있으며, 남아 있는 개별 동작 클라이언트는 전체 조립 실행 계약으로 간주하지 않습니다. 로봇 전체 조립의 시작·정지·최종 결과 계약이 연결되기 전에는 개별 동작 루프를 생산 대체 경로로 활성화하지 않습니다. Resume은 보존된 실행 상태의 재개를 실제 지원할 때만 연결합니다. Mock은 기존 YAML 실행 경로를 사용합니다.
+
 Sequencer는 레시피 순서에 따라 backend의 의미 단위 공개 동작만 호출합니다. 통신, 좌표 변환, timeout과 실제 완료 판정은 backend가 완결합니다.
 
 Job·Unit, 수량, 검사 FAIL, 재시작과 안전정지의 공통 의미는 [시스템 아키텍처](../docs/architecture/index.md)가 소유합니다.
@@ -23,7 +25,7 @@ Job·Unit, 수량, 검사 FAIL, 재시작과 안전정지의 공통 의미는 [�
 
 외부 ROS 경계는 공통 service와 feedback topic이며 실행 모드별 domain을 사용합니다. 구체 endpoint와 payload는 [Assembly Sequencer ROS API](API.md)를 따릅니다.
 
-`sequencer_node.py`가 공통 YAML·Job·Unit 흐름을, `recipe_contract.py`가 입력 검증을 소유합니다.
+현재 구현에서 `sequencer_node.py`가 YAML·Job·Unit 흐름을, `recipe_contract.py`가 입력 검증을 소유합니다. 아래 개별 동작 경로 설명은 남아 있는 구현을 설명하며, 채택한 전체 조립 경계가 연결되었다는 뜻이 아닙니다.
 `mock_backend.py`는 Mock 동작 완료와 Unity 컨베이어 신호 대기·난수 검사를 소유합니다.
 YAML의 `before_all`·`per_step`·`after_all`은 필수 동작과 실행 순서까지 검증합니다.
 부품·슬롯 조립 순서와 동작 설정은 YAML에서 관리하지만, 공정 골격의 재배열은
@@ -42,7 +44,7 @@ Timeout 후에는 dispatch를 차단하고 상태를 조회합니다. API 프로
 Legacy 취소 후 재개는 지원하지 않습니다.
 부품 PREOPEN·GRASP·RELEASE 개도는 공통 YAML에서 검증하고 Real Pick에 전달합니다.
 Place에는 RELEASE만 보내며 기존 Mock 요청 필드는 유지합니다.
-생산 비전 준비·컨베이어·완성 PCB 이송과 현장 준비점 연결이 미완이므로 자동조립은
+로봇 전체 조립 계약·컨베이어·완성 PCB 이송 연결이 미완이므로 자동조립은
 Job claim 전에 `NOT_READY`로 거절합니다. Mock으로 자동 대체하지 않습니다.
 
 ### Runner의 SDK·저수준 제어 금지
