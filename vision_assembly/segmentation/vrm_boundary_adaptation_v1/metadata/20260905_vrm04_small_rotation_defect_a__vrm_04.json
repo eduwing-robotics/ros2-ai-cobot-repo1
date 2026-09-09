@@ -1,0 +1,26 @@
+{
+  "source_image": "/home/hc/KSMC/runtime/inspection/s22_inspection_roi_20260905_142337.png",
+  "source_sha256": "9c61bdac386450790738c80daa605ab2a0cddec0062b27752adf1e48be2fcfa4",
+  "origin_px": [
+    3,
+    305
+  ],
+  "crop_size_px": [
+    189,
+    241
+  ],
+  "expected_pose": "FAIL",
+  "scene_id": "20260905_vrm04_small_rotation_defect_a",
+  "slot_id": "vrm_04",
+  "annotation_status": "DRAFT_NOT_REVIEWED",
+  "training_allowed": false,
+  "normal_patchcore_training_allowed": false,
+  "sam_prompt_box": [
+    19,
+    24,
+    170,
+    217
+  ],
+  "sam_model_sha256": "3c1e81ca9b037dd39d70a014ddb9a813d6c4c4e12555420db7eaff31689bd4e3",
+  "crop_sha256": "744cce7d28609484d39654e1ea92a2b45c1266e9323889f5bc63effec95f4ab9"
+}

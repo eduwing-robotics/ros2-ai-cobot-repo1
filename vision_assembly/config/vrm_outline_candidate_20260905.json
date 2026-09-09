@@ -1,0 +1,23 @@
+{
+  "candidate_id": "vrm_outline_blur1_development_v1",
+  "authority": "ADVISORY_ONLY",
+  "runtime_enabled": false,
+  "validated": false,
+  "method": "fixed_slot_1.5x_seeded_grabcut_min_area_rect",
+  "foreground_gaussian_sigma_px": 1.0,
+  "grabcut_iterations": 5,
+  "rng_seed": 0,
+  "diagnostic_angle_warning_deg": 3.0,
+  "threshold_status": "DEVELOPMENT_ONLY_NOT_MANUFACTURING_TOLERANCE",
+  "presence_gate_required": true,
+  "no_warning_means_pass": false,
+  "final_status": "UNKNOWN",
+  "development_report": "runtime/inspection/vrm_outline_blur1_20260905/edges.json",
+  "limitations": [
+    "Parameters selected using these development images; not independent validation",
+    "Empty slots produce spurious rectangles without independent presence gating",
+    "Image-axis deviation is not calibrated slot-relative physical angle",
+    "Translation and out-of-plane seating are not validated",
+    "Rectangle fit may include socket pixels even when warning detects a defect"
+  ]
+}

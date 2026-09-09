@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "scope_id": "s22_demo_scope_20260908_v1",
+  "status": "SCOPE_AGREED_NOT_CALIBRATION_RELEASE",
+  "fusion_contract": "s22_hybrid_aoi_v1",
+  "expected_slots": 25,
+  "runtime_authority_override": false,
+  "vrm_placement_policy": {
+    "id": "socket_seating_not_right_clearance_20260908",
+    "accepted": "Fully seated inside socket, including centered or lateral placement",
+    "excluded_inspection_requirement": "Right-wall 1mm process clearance",
+    "retained": ["missing", "rotation", "outside_socket", "lip_seating"],
+    "uncertain_seating": "UNKNOWN",
+    "robot_safety_changed": false,
+    "socket_seating_detector_validated": false
+  },
+  "included": [
+    {"category": "MISSING", "label_ko": "부품 누락", "criterion": "Expected component absent from its assigned slot; ambiguous appearance is UNKNOWN."},
+    {"category": "DIRECTION", "label_ko": "방향 오류", "criterion": "Wrong GPU/HBM reference-dot corner, wrong inductor black-marker direction, or clearly wrong supported component orientation."},
+    {"category": "POSITION", "label_ko": "위치 오류", "criterion": "Clearly outside socket or clearly rotated/lip-seated, with validated position evidence. Boundary-only uncertain cases are UNKNOWN."},
+    {"category": "PINS", "label_ko": "핀 오류", "criterion": "Clearly visible missing/collapsed white pin with validated evidence. Unavailable HBM pin checks are UNKNOWN."},
+    {"category": "SURFACE", "label_ko": "표면 이상", "criterion": "Visible scratch/damage supported under validated imaging conditions; an anomaly heatmap alone is not confirmed damage."}
+  ],
+  "excluded_from_confirmed_claims": ["subtle_lip_seating", "physical_1mm_clearance", "unresolved_microcracks"],
+  "excluded_result": "UNKNOWN_NOT_PASS",
+  "decision_policy": {
+    "PASS": "All mandatory stages calibrated, available and PASS under the existing fusion contract.",
+    "FAIL": "At least one calibrated authoritative check confirms a defect.",
+    "UNKNOWN": "Missing, unverified, ambiguous, contradictory or low-confidence evidence."
+  },
+  "unknown_workflow": {
+    "requested_additional_captures": 1,
+    "requested_max_total_attempts": 2,
+    "after_retry": "HOLD",
+    "confirmed_defect": false,
+    "runtime_wiring_verified": false,
+    "pipeline_code_wired": true,
+    "pipeline_unit_tests_verified": true,
+    "equipment_hold_verified": false,
+    "note": "triggered_inspection_once.py recaptures UNKNOWN once; local event recommends HOLD without commanding equipment. Full physical/Sequencer hold integration unverified."
+  },
+  "reporting": {
+    "preserve_advisory_evidence": true,
+    "candidate_is_confirmed_defect": false,
+    "no_candidate_is_pass": false,
+    "teammate_api_unchanged": true,
+    "category_identifiers_are_api_codes": false
+  },
+  "freeze": {
+    "automatic_threshold_tuning": false,
+    "automatic_model_promotion": false,
+    "remaining_work": "Fix reproducible execution defects and verify agreed scope; do not expand subtle-defect claims to meet deadline."
+  }
+}

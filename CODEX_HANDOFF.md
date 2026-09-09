@@ -23,7 +23,7 @@ production safety system.
 - `vision_assembly/`: board detection, slot recipes and pick-to-board hover.
 - `ros2_ws/`: ROS interfaces, AI/Vision server and TurtleBot conveyor stop
   controller.
-- `camera2_droidcam/`: S22 DroidCam USB bridge.
+- `camera2_scrcpy/`: S22 USB scrcpy high-quality stream and optical capture.
 - `gopro_camera3/`: optional cell-monitoring camera.
 - `docs/logs/`: subsystem work history and portfolio/presentation evidence.
 
@@ -66,7 +66,7 @@ fall back to RGB board plane plus configured part height.
 
 ## Current tested conveyor behavior
 
-`run_s22_conveyor.sh` publishes the S22 image and dual stop-line detection.
+`run_s22_conveyor_hq.sh` publishes the S22 image and dual stop-line detection.
 The first line is the assembly station and the downstream line is the vision
 inspection station. `run_conveyor_to_assembly.sh` and
 `run_conveyor_to_inspection.sh` command one explicitly selected movement at
@@ -128,7 +128,7 @@ ros2 topic info /cmd_vel -v
 - AI/Vision package: `ros2_ws/src/vision_server/README.md`
 - Conveyor: `docs/CONVEYOR_VISION_ROS_ARCHITECTURE.md`,
   `docs/logs/conveyor.md`
-- S22: `camera2_droidcam/README.md`
+- S22: `camera2_scrcpy/README.md`
 - Architecture: `docs/architecture/TEAM_SYSTEM_ARCHITECTURE.md`
 
 ## Git hygiene

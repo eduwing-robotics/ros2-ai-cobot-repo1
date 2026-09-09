@@ -28,3 +28,8 @@ The six physical tray areas are defined in `config/tray_layout.json`:
 `tray_reference_no_tape.jpg` is required for registration. The config contains the
 physically adjusted section boundaries and is the source of truth for later per-part
 detectors. This viewer never sends a robot motion command.
+
+For the current default tray waiting view, non-SMD motion uses
+`run_tray_part_hover_5cm.sh`. It consumes the already-running detector's fresh
+RGB-D/Base state and stops exactly 50 mm above the selected surface. See
+`TRAY_HOVER_5CM.md`; the runner contains no contact descent or gripper action.

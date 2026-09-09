@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "units": "mm",
+  "source_project": "/home/hc/My project",
+  "source_board_mesh": "Assets/반도체 기판 모델링(Unity)/ASt/motherBoard.obj",
+  "method": "Horizontal socket faces in the Unity motherboard mesh were compared with the local OBJ bounds of each component.",
+  "notes": [
+    "The printed socket is nominally 1.0 mm larger than its component on both local planar axes.",
+    "center_tolerance_mm is half of total_clearance_mm and is the mechanical placement allowance before adding vision measurement uncertainty.",
+    "Values are CAD-derived and should be replaced by caliper measurements if the printed parts shrink or warp materially."
+  ],
+  "component_types": {
+    "GPU": {
+      "part_size_local_mm": [29.7166, 57.1065],
+      "socket_size_local_mm": [30.7166, 58.1065],
+      "total_clearance_mm": [1.0, 1.0],
+      "center_tolerance_mm": [0.5, 0.5]
+    },
+    "HBM": {
+      "part_size_local_mm": [10.24665, 14.30996],
+      "socket_size_local_mm": [11.24665, 15.30996],
+      "total_clearance_mm": [1.0, 1.0],
+      "center_tolerance_mm": [0.5, 0.5]
+    },
+    "Power Module": {
+      "part_size_local_mm": [12.13001, 59.9891],
+      "socket_size_local_mm": [13.13001, 60.9891],
+      "total_clearance_mm": [1.0, 1.0],
+      "center_tolerance_mm": [0.5, 0.5]
+    },
+    "VRM": {
+      "part_size_local_mm": [11.0, 14.0],
+      "socket_size_local_mm": [12.0, 15.0],
+      "total_clearance_mm": [1.0, 1.0],
+      "center_tolerance_mm": [0.5, 0.5]
+    },
+    "Inductor": {
+      "part_size_local_mm": [9.36862, 9.36862],
+      "socket_size_local_mm": [10.36862, 10.36862],
+      "total_clearance_mm": [1.0, 1.0],
+      "center_tolerance_mm": [0.5, 0.5]
+    },
+    "SMD Capacitor": {
+      "part_size_local_mm": [3.83615, 6.8013],
+      "socket_size_local_mm": [4.83615, 7.8013],
+      "total_clearance_mm": [1.0, 1.0],
+      "center_tolerance_mm": [0.5, 0.5]
+    }
+  }
+}

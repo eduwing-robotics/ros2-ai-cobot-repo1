@@ -163,14 +163,14 @@
         {
           "id": "inductor_01",
           "x_mm": -59.674,
-          "y_mm": 32.872,
+          "y_mm": -32.872,
           "top_z_mm_nominal": 9.721,
           "long_axis_board_deg": 0.0
         },
         {
           "id": "inductor_02",
           "x_mm": -59.674,
-          "y_mm": 44.297,
+          "y_mm": -44.297,
           "top_z_mm_nominal": 9.721,
           "long_axis_board_deg": 0.0
         }
@@ -181,38 +181,38 @@
       "slots": [
         {
           "id": "smd_capacitor_01",
-          "x_mm": -60.763,
-          "y_mm": 17.913,
-          "top_z_mm_nominal": 4.229,
-          "long_axis_board_deg": 90.0
+          "x_mm": -40.95,
+          "y_mm": -39.21,
+          "top_z_mm_nominal": 4.228,
+          "long_axis_board_deg": 0.0
         },
         {
           "id": "smd_capacitor_02",
-          "x_mm": -60.763,
-          "y_mm": 0.563,
+          "x_mm": -60.43,
+          "y_mm": -17.97,
           "top_z_mm_nominal": 4.229,
           "long_axis_board_deg": 90.0
         },
         {
           "id": "smd_capacitor_03",
-          "x_mm": -60.763,
-          "y_mm": -16.186,
+          "x_mm": -59.98,
+          "y_mm": -1.38,
           "top_z_mm_nominal": 4.229,
           "long_axis_board_deg": 90.0
         },
         {
           "id": "smd_capacitor_04",
-          "x_mm": -60.763,
-          "y_mm": -33.433,
+          "x_mm": -60.39,
+          "y_mm": 15.59,
           "top_z_mm_nominal": 4.229,
           "long_axis_board_deg": 90.0
         },
         {
           "id": "smd_capacitor_05",
-          "x_mm": -41.634,
-          "y_mm": 39.185,
-          "top_z_mm_nominal": 4.228,
-          "long_axis_board_deg": 0.0
+          "x_mm": -60.25,
+          "y_mm": 32.47,
+          "top_z_mm_nominal": 4.229,
+          "long_axis_board_deg": 90.0
         }
       ],
       "aliases": [

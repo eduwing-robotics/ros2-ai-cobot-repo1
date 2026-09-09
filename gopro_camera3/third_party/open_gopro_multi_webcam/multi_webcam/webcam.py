@@ -56,7 +56,12 @@ class Webcam:
 
     def _send_http_no_validate(self, endpoint: Webcam.Endpoint, **kwargs) -> requests.Response:
         logging.debug(f"Sending {endpoint.value}: {kwargs}")
-        response = requests.get(self._base_url + endpoint.value, params=kwargs)
+        # Never let a disconnected camera block the ROS process indefinitely.
+        response = requests.get(
+            self._base_url + endpoint.value,
+            params=kwargs,
+            timeout=(2.0, 5.0),
+        )
         logging.debug(f"HTTP return code {response.status_code}")
         logging.debug(json.dumps(response.json(), indent=4))
         return response

@@ -1,10 +1,12 @@
 from dataclasses import dataclass
+import time
 
 import cv2
 import numpy as np
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import HistoryPolicy, QoSProfile, ReliabilityPolicy
+from geometry_msgs.msg import Point32, PolygonStamped
 from sensor_msgs.msg import CompressedImage
 from std_msgs.msg import Bool, Float32, Int32
 
@@ -16,6 +18,21 @@ SENSOR_QOS = QoSProfile(
     depth=1,
     reliability=ReliabilityPolicy.BEST_EFFORT,
 )
+
+
+def timestamp_age_seconds(
+    now_nanoseconds: int, stamp_seconds: int, stamp_nanoseconds: int
+) -> float:
+    """Return source-frame age; unverifiable timestamps have infinite age."""
+    values = (now_nanoseconds, stamp_seconds, stamp_nanoseconds)
+    if not all(np.isfinite(value) for value in values):
+        return float('inf')
+    if stamp_seconds < 0 or not 0 <= stamp_nanoseconds < 1_000_000_000:
+        return float('inf')
+    stamp = int(stamp_seconds) * 1_000_000_000 + int(stamp_nanoseconds)
+    if stamp <= 0 or now_nanoseconds <= 0 or stamp > now_nanoseconds:
+        return float('inf')
+    return (int(now_nanoseconds) - stamp) / 1_000_000_000.0
 
 
 @dataclass(frozen=True)
@@ -35,6 +52,13 @@ class BoardDetection:
     area_fraction: float
     aspect_ratio: float
     rectangularity: float
+    long_axis_angle_deg: float
+
+
+@dataclass
+class VisualBoardTrack:
+    detection: BoardDetection
+    missing_frames: int = 0
 
 
 @dataclass
@@ -62,6 +86,65 @@ def travel_axis(travel_direction: str) -> str:
 def direction_is_positive(travel_direction: str) -> bool:
     travel_axis(travel_direction)
     return travel_direction.startswith('positive_')
+
+
+def smooth_board_detection(
+    previous: BoardDetection,
+    current: BoardDetection,
+    *,
+    center_alpha: float,
+    shape_alpha: float,
+) -> BoardDetection:
+    """Smooth a perspective body quadrilateral while preserving its live edge."""
+    center_alpha = float(center_alpha)
+    shape_alpha = float(shape_alpha)
+    if not 0.0 < center_alpha <= 1.0:
+        raise ValueError('center_alpha must satisfy 0 < alpha <= 1')
+    if not 0.0 < shape_alpha <= 1.0:
+        raise ValueError('shape_alpha must satisfy 0 < alpha <= 1')
+
+    previous_center = np.asarray(previous.center_px, dtype=np.float32)
+    current_center = np.asarray(current.center_px, dtype=np.float32)
+    center = (
+        previous_center * (1.0 - center_alpha)
+        + current_center * center_alpha
+    )
+
+    previous_points = np.asarray(previous.points, dtype=np.float32).reshape(4, 2)
+    current_points = np.asarray(current.points, dtype=np.float32).reshape(4, 2)
+    candidates = []
+    for source in (current_points, current_points[::-1]):
+        for shift in range(4):
+            candidate = np.roll(source, shift, axis=0)
+            error = float(np.sum((candidate - previous_points) ** 2))
+            candidates.append((error, candidate))
+    aligned_current = min(candidates, key=lambda item: item[0])[1]
+
+    previous_offsets = previous_points - previous_center
+    current_offsets = aligned_current - current_center
+    offsets = (
+        previous_offsets * (1.0 - shape_alpha)
+        + current_offsets * shape_alpha
+    )
+    points = np.asarray(center + offsets, dtype=np.float32)
+
+    angle_delta = (
+        current.long_axis_angle_deg - previous.long_axis_angle_deg + 90.0
+    ) % 180.0 - 90.0
+    angle = previous.long_axis_angle_deg + shape_alpha * angle_delta
+    angle = (angle + 90.0) % 180.0 - 90.0
+    return BoardDetection(
+        points=points,
+        center_px=(float(center[0]), float(center[1])),
+        # Never smooth the control-critical edge. A smoothed moving edge would
+        # delay the stop command even though the overlay looked steadier.
+        trailing_edge_px=current.trailing_edge_px,
+        travel_length_px=current.travel_length_px,
+        area_fraction=current.area_fraction,
+        aspect_ratio=current.aspect_ratio,
+        rectangularity=current.rectangularity,
+        long_axis_angle_deg=float(angle),
+    )
 
 
 def normalized_line_to_pixels(
@@ -202,25 +285,110 @@ def _longest_true_run(values: np.ndarray) -> tuple[int, int] | None:
     return best
 
 
+def _refine_body_quad_from_edges(
+    contour: np.ndarray, body_points: np.ndarray
+) -> np.ndarray:
+    """Snap a coarse body box to four robust outer-edge lines.
+
+    Only the end portions of each side participate in the fit. This keeps the
+    central fixture grip tab and a nearby dark conveyor guide from pulling a
+    PCB edge outward, while still allowing the four image edges to form a mild
+    perspective quadrilateral instead of forcing an inaccurate rectangle.
+    """
+    contour_points = np.asarray(contour, dtype=np.float32).reshape(-1, 2)
+    body_points = np.asarray(body_points, dtype=np.float32).reshape(4, 2)
+    body_edges = np.roll(body_points, -1, axis=0) - body_points
+    body_lengths = np.linalg.norm(body_edges, axis=1)
+    minimum_length = float(np.min(body_lengths))
+    if minimum_length <= 4.0 or contour_points.shape[0] < 16:
+        return body_points
+
+    proximity = float(np.clip(minimum_length * 0.14, 4.0, 14.0))
+    fitted_lines = []
+    for start, edge, length in zip(body_points, body_edges, body_lengths):
+        length = float(length)
+        tangent = edge / max(length, 1e-6)
+        relative = contour_points - start
+        along = relative @ tangent
+        perpendicular = np.abs(
+            relative[:, 0] * tangent[1] - relative[:, 1] * tangent[0]
+        )
+        normalized_along = along / max(length, 1e-6)
+        end_sections = (
+            ((normalized_along >= 0.08) & (normalized_along <= 0.38))
+            | ((normalized_along >= 0.62) & (normalized_along <= 0.92))
+        )
+        nearby = contour_points[end_sections & (perpendicular <= proximity)]
+        if nearby.shape[0] < 8:
+            fitted_lines.append((start, tangent))
+            continue
+
+        vx, vy, px, py = np.asarray(
+            cv2.fitLine(nearby, cv2.DIST_HUBER, 0, 0.01, 0.01)
+        ).reshape(-1)
+        direction = np.asarray((vx, vy), dtype=np.float32)
+        direction /= max(float(np.linalg.norm(direction)), 1e-6)
+        if float(direction @ tangent) < 0.0:
+            direction *= -1.0
+        fitted_lines.append(
+            (np.asarray((px, py), dtype=np.float32), direction)
+        )
+
+    refined = []
+    for index in range(4):
+        previous_point, previous_direction = fitted_lines[(index - 1) % 4]
+        current_point, current_direction = fitted_lines[index]
+        denominator = float(np.cross(previous_direction, current_direction))
+        if abs(denominator) < 1e-3:
+            return body_points
+        offset = current_point - previous_point
+        distance = float(np.cross(offset, current_direction) / denominator)
+        refined.append(previous_point + previous_direction * distance)
+    refined = np.asarray(refined, dtype=np.float32)
+
+    diagonal = float(np.linalg.norm(np.ptp(body_points, axis=0)))
+    maximum_corner_shift = max(8.0, diagonal * 0.14)
+    if float(np.max(np.linalg.norm(refined - body_points, axis=1))) > maximum_corner_shift:
+        return body_points
+    if not cv2.isContourConvex(np.rint(refined).astype(np.int32)):
+        return body_points
+    original_area = abs(float(cv2.contourArea(body_points)))
+    refined_area = abs(float(cv2.contourArea(refined)))
+    if not original_area * 0.72 <= refined_area <= original_area * 1.28:
+        return body_points
+    return refined
+
+
 def fit_dominant_body_box(
     contour: np.ndarray,
     *,
     span_ratio: float = 0.68,
+    extension_ratio: float = 1.08,
+    extension_fraction: float = 0.15,
 ) -> tuple[np.ndarray, tuple[float, float]]:
-    """Fit the broad rectangular fixture body while ignoring a narrow handle.
+    """Fit the rectangular PCB body while rejecting the fixture handle.
 
-    The S22 sees the PCB inside a dark fixture whose grip tab protrudes from one
-    side. A plain minAreaRect includes that tab and shifts the reported centre.
-    This helper rectifies the contour into its long/short-axis coordinates and
-    keeps the longest short-axis run whose cross-section remains broad.
+    The handle is connected to the PCB, so a plain ``minAreaRect`` includes it.
+    After an in-plane rotation the handle may protrude along either body axis.
+    We inspect both rectified scan-line profiles and replace only an outlier
+    boundary with the profile's median body boundary. The returned polygon is
+    always a regular oriented rectangle so shadows or one noisy contour corner
+    cannot visibly shear the board outline.
     """
     span_ratio = float(span_ratio)
     if not 0.40 <= span_ratio <= 0.95:
         raise ValueError('span_ratio must be between 0.40 and 0.95')
+    extension_ratio = float(extension_ratio)
+    if not 1.01 <= extension_ratio <= 1.50:
+        raise ValueError('extension_ratio must be between 1.01 and 1.50')
+    extension_fraction = float(extension_fraction)
+    if not 0.05 <= extension_fraction <= 0.90:
+        raise ValueError('extension_fraction must be between 0.05 and 0.90')
 
     contour = np.asarray(contour, dtype=np.float32).reshape(-1, 1, 2)
     preliminary_center, _, _ = cv2.minAreaRect(contour)
     preliminary_box = cv2.boxPoints(cv2.minAreaRect(contour))
+
     edges = np.roll(preliminary_box, -1, axis=0) - preliminary_box
     edge_lengths = np.linalg.norm(edges, axis=1)
     long_axis = edges[int(np.argmax(edge_lengths))]
@@ -243,50 +411,84 @@ def fit_dominant_body_box(
     long_values = relative @ long_axis
     short_values = relative @ short_axis
 
-    short_min = float(np.floor(np.min(short_values)))
-    short_bins = np.rint(short_values - short_min).astype(np.int32)
-    bin_count = int(np.max(short_bins)) + 1
-    minimum_long = np.full(bin_count, np.inf, dtype=np.float32)
-    maximum_long = np.full(bin_count, -np.inf, dtype=np.float32)
-    np.minimum.at(minimum_long, short_bins, long_values)
-    np.maximum.at(maximum_long, short_bins, long_values)
-    spans = maximum_long - minimum_long
-    populated = np.isfinite(spans) & (spans > 0.0)
-    if not np.any(populated):
+    def profile(primary_values, secondary_values):
+        primary_min = float(np.floor(np.min(primary_values)))
+        bins = np.rint(primary_values - primary_min).astype(np.int32)
+        bin_count = int(np.max(bins)) + 1
+        minimum = np.full(bin_count, np.inf, dtype=np.float32)
+        maximum = np.full(bin_count, -np.inf, dtype=np.float32)
+        np.minimum.at(minimum, bins, secondary_values)
+        np.maximum.at(maximum, bins, secondary_values)
+        spans = maximum - minimum
+        valid = np.isfinite(spans) & (spans > 0.0)
+        return minimum, maximum, spans, valid
+
+    # Profile A scans across the short axis and measures long-axis width.
+    # Profile B scans across the long axis and measures short-axis width.
+    minimum_long, maximum_long, long_spans, long_valid = profile(
+        short_values, long_values
+    )
+    minimum_short, maximum_short, short_spans, short_valid = profile(
+        long_values, short_values
+    )
+    if not np.any(long_valid) or not np.any(short_valid):
         return preliminary_box, tuple(float(value) for value in preliminary_center)
 
-    reference_span = float(np.quantile(spans[populated], 0.95))
-    broad = populated & (spans >= reference_span * span_ratio)
-    run = _longest_true_run(broad)
-    if run is None or run[1] - run[0] + 1 < max(4, int(bin_count * 0.30)):
-        return preliminary_box, tuple(float(value) for value in preliminary_center)
+    long_min, long_max = np.quantile(long_values, (0.003, 0.997))
+    short_min, short_max = np.quantile(short_values, (0.003, 0.997))
 
-    run_short_min = short_min + run[0] - 0.5
-    run_short_max = short_min + run[1] + 0.5
-    selected = (short_values >= run_short_min) & (short_values <= run_short_max)
-    selected_long = long_values[selected]
-    if selected_long.size < 16:
-        return preliminary_box, tuple(float(value) for value in preliminary_center)
+    def body_bounds(minimum, maximum, spans, valid):
+        reference = float(np.median(spans[valid]))
+        body_like = valid & (spans >= reference * span_ratio)
+        if int(np.count_nonzero(body_like)) < 4:
+            body_like = valid
+        outlier = valid & (spans > reference * extension_ratio)
+        outlier_fraction = float(np.count_nonzero(outlier)) / float(
+            np.count_nonzero(valid)
+        )
+        if outlier_fraction >= extension_fraction:
+            return (
+                float(np.median(minimum[body_like])),
+                float(np.median(maximum[body_like])),
+                True,
+            )
+        return 0.0, 0.0, False
 
-    run_long_min, run_long_max = np.quantile(selected_long, (0.003, 0.997))
-    center_long = float((run_long_min + run_long_max) * 0.5)
-    center_short = float((run_short_min + run_short_max) * 0.5)
+    # A large span in Profile A is a handle extending along the long axis.
+    clipped_min, clipped_max, clipped = body_bounds(
+        minimum_long, maximum_long, long_spans, long_valid
+    )
+    if clipped:
+        long_min, long_max = clipped_min, clipped_max
+
+    # A large span in Profile B is a handle extending along the short axis.
+    clipped_min, clipped_max, clipped = body_bounds(
+        minimum_short, maximum_short, short_spans, short_valid
+    )
+    if clipped:
+        short_min, short_max = clipped_min, clipped_max
+
+    center_long = float((long_min + long_max) * 0.5)
+    center_short = float((short_min + short_max) * 0.5)
     center = origin + long_axis * center_long + short_axis * center_short
     corners = []
     for long_coordinate, short_coordinate in (
-        (run_long_min, run_short_min),
-        (run_long_max, run_short_min),
-        (run_long_max, run_short_max),
-        (run_long_min, run_short_max),
+        (long_min, short_min),
+        (long_max, short_min),
+        (long_max, short_max),
+        (long_min, short_max),
     ):
         corners.append(
             origin
             + long_axis * float(long_coordinate)
             + short_axis * float(short_coordinate)
         )
-    return np.asarray(corners, dtype=np.float32), (
-        float(center[0]),
-        float(center[1]),
+    regular_points = np.asarray(corners, dtype=np.float32)
+    refined_points = _refine_body_quad_from_edges(contour, regular_points)
+    refined_center = np.mean(refined_points, axis=0)
+    return refined_points, (
+        float(refined_center[0]),
+        float(refined_center[1]),
     )
 
 
@@ -303,6 +505,8 @@ def detect_dark_boards(
     min_rectangularity: float,
     travel_direction: str,
     body_span_ratio: float = 0.68,
+    body_extension_ratio: float = 1.08,
+    body_extension_fraction: float = 0.15,
 ):
     height, width = image.shape[:2]
     x1 = int(round(np.clip(search_bounds[0], 0.0, 1.0) * width))
@@ -321,7 +525,10 @@ def detect_dark_boards(
     )
     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
     contours, _ = cv2.findContours(
-        mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+        # Keep every boundary pixel: the robust four-line fit needs uniform
+        # samples along the true PCB edges. CHAIN_APPROX_SIMPLE overweights
+        # chamfers and grip-tab corners and made the fitted angle jump.
+        mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE
     )
 
     image_area = float(width * height)
@@ -349,7 +556,21 @@ def detect_dark_boards(
         points, translated_center = fit_dominant_body_box(
             translated_contour,
             span_ratio=body_span_ratio,
+            extension_ratio=body_extension_ratio,
+            extension_fraction=body_extension_fraction,
         )
+        # Report orientation from the body-only polygon, not from the raw
+        # PCB-plus-handle contour used for candidate filtering.
+        body_edges = np.roll(points, -1, axis=0) - points
+        body_edge_lengths = np.linalg.norm(body_edges, axis=1)
+        body_long_axis = body_edges[int(np.argmax(body_edge_lengths))]
+        long_axis_angle = float(
+            np.degrees(np.arctan2(body_long_axis[1], body_long_axis[0]))
+        )
+        while long_axis_angle >= 90.0:
+            long_axis_angle -= 180.0
+        while long_axis_angle < -90.0:
+            long_axis_angle += 180.0
         trailing_edge, travel_length = _trailing_edge_and_length(
             points, travel_direction
         )
@@ -362,6 +583,7 @@ def detect_dark_boards(
                 area_fraction=area_fraction,
                 aspect_ratio=aspect_ratio,
                 rectangularity=rectangularity,
+                long_axis_angle_deg=long_axis_angle,
             )
         )
 
@@ -385,6 +607,17 @@ def station_distance_px(
     return trailing_edge_px - stop_line_px
 
 
+def trigger_boundary_crossed(distance_px: float, lead_px: float) -> bool:
+    """Return true when a board reaches the latency-compensated trigger edge."""
+    distance_px = float(distance_px)
+    lead_px = float(lead_px)
+    if not np.isfinite(distance_px):
+        return False
+    if not np.isfinite(lead_px) or lead_px < 0.0:
+        raise ValueError('trigger lead must be finite and >= 0 px')
+    return distance_px <= lead_px
+
+
 def closest_detection_to_station(
     detections: list[BoardDetection],
     stop_line_px: float,
@@ -405,6 +638,11 @@ def closest_detection_to_station(
 class ConveyorStopLine(Node):
     def __init__(self) -> None:
         super().__init__('conveyor_stop_line')
+        # The camera publisher also uses OpenCV. Avoid two Python processes
+        # each creating a worker for every CPU, which caused periodic frame
+        # stalls even though average CPU usage looked acceptable.
+        cv2.setNumThreads(2)
+        self._hud_fonts = self._load_hud_fonts()
         self.declare_parameter('config_file', default_path('config/conveyor_roi.yaml'))
         config = load_yaml(self.get_parameter('config_file').value).get(
             'conveyor_roi', {}
@@ -481,6 +719,12 @@ class ConveyorStopLine(Node):
             'min_rectangularity': float(detector.get('min_rectangularity', 0.60)),
             'travel_direction': self._travel_direction,
             'body_span_ratio': float(detector.get('body_span_ratio', 0.68)),
+            'body_extension_ratio': float(
+                detector.get('body_extension_ratio', 1.08)
+            ),
+            'body_extension_fraction': float(
+                detector.get('body_extension_fraction', 0.15)
+            ),
         }
         self._stable_frames_required = max(
             1, int(detector.get('stable_crossing_frames', 5))
@@ -494,8 +738,48 @@ class ConveyorStopLine(Node):
         self._rearm_margin_px = max(
             1.0, float(detector.get('rearm_margin_px', 30.0))
         )
+        self._trigger_lead_px = max(
+            0.0, float(detector.get('stop_trigger_lead_px', 0.0))
+        )
+        self._track_center_alpha = float(
+            detector.get('tracking_center_alpha', 0.75)
+        )
+        self._track_shape_alpha = float(
+            detector.get('tracking_shape_alpha', 0.25)
+        )
+        if not 0.0 < self._track_center_alpha <= 1.0:
+            raise ValueError('tracking_center_alpha must satisfy 0 < alpha <= 1')
+        if not 0.0 < self._track_shape_alpha <= 1.0:
+            raise ValueError('tracking_shape_alpha must satisfy 0 < alpha <= 1')
+        self._track_match_distance_px = max(
+            1.0, float(detector.get('tracking_match_distance_px', 80.0))
+        )
+        self._track_hold_frames = max(
+            0, int(detector.get('tracking_hold_frames', 3))
+        )
+        self._visual_tracks: list[VisualBoardTrack] = []
+        self._last_spacing_ratio = float('nan')
 
         self._jpeg_quality = int(np.clip(config.get('jpeg_quality', 90), 50, 100))
+        self._processing_max_width = max(
+            0, int(config.get('processing_max_width', 0))
+        )
+        self._annotated_max_width = max(
+            0, int(config.get('annotated_max_width', 0))
+        )
+        self._annotated_fps = float(config.get('annotated_fps', 15.0))
+        if not np.isfinite(self._annotated_fps) or self._annotated_fps <= 0.0:
+            raise ValueError('annotated_fps must be finite and > 0')
+        self._annotated_period = 1.0 / self._annotated_fps
+        self._last_annotated_at = 0.0
+        self._max_frame_age_seconds = float(
+            config.get('max_frame_age_seconds', 0.20)
+        )
+        if (
+            not np.isfinite(self._max_frame_age_seconds)
+            or self._max_frame_age_seconds <= 0.0
+        ):
+            raise ValueError('max_frame_age_seconds must be finite and > 0')
         image_topic = str(config.get('image_topic', '/camera2/image_raw/compressed'))
         annotated_topic = str(
             config.get(
@@ -524,6 +808,11 @@ class ConveyorStopLine(Node):
                 ),
                 'distance': self.create_publisher(
                     Float32, f'{prefix}/distance_to_stop_px', 1
+                ),
+                'polygon': self.create_publisher(
+                    PolygonStamped,
+                    f'{prefix}/board_polygon_normalized',
+                    SENSOR_QOS,
                 ),
             }
 
@@ -569,7 +858,12 @@ class ConveyorStopLine(Node):
             'Assembly line='
             f'{self._stations["assembly"].line.position:.5f}, inspection line='
             f'{self._stations["inspection"].line.position:.5f}, '
-            f'separation={self._normalized_separation:.5f}; no /cmd_vel publisher'
+            f'separation={self._normalized_separation:.5f}, '
+            f'trigger lead={self._trigger_lead_px:.1f}px; no /cmd_vel publisher'
+        )
+        self.get_logger().info(
+            f'Control is published before UI; stale-frame cutoff='
+            f'{self._max_frame_age_seconds:.3f}s, overlay={self._annotated_fps:g} FPS'
         )
 
     @staticmethod
@@ -614,7 +908,10 @@ class ConveyorStopLine(Node):
             stop_line_px,
             self._travel_direction,
         )
-        crossed = distance_px <= 0.0
+        # The live detector runs at 15 FPS. Trigger slightly before the visible
+        # line to compensate one capture/transport interval while keeping the
+        # displayed line at the actual desired stop position.
+        crossed = trigger_boundary_crossed(distance_px, self._trigger_lead_px)
         station.crossing_frames = (
             min(station.crossing_frames + 1, self._stable_frames_required)
             if crossed
@@ -633,12 +930,68 @@ class ConveyorStopLine(Node):
             station.rearm_frames = 0
         return distance_px
 
+    def _update_visual_tracks(
+        self, detections: list[BoardDetection]
+    ) -> list[BoardDetection]:
+        unmatched_track_indices = set(range(len(self._visual_tracks)))
+        updated_tracks: list[VisualBoardTrack] = []
+        axis_index = 0 if travel_axis(self._travel_direction) == 'x' else 1
+
+        for detection in sorted(
+            detections, key=lambda item: item.center_px[axis_index]
+        ):
+            best_index = None
+            best_distance = float('inf')
+            current_center = np.asarray(detection.center_px, dtype=np.float32)
+            for index in unmatched_track_indices:
+                previous_center = np.asarray(
+                    self._visual_tracks[index].detection.center_px,
+                    dtype=np.float32,
+                )
+                distance = float(np.linalg.norm(current_center - previous_center))
+                if distance < best_distance:
+                    best_index = index
+                    best_distance = distance
+
+            if (
+                best_index is not None
+                and best_distance <= self._track_match_distance_px
+            ):
+                previous = self._visual_tracks[best_index].detection
+                stabilized = smooth_board_detection(
+                    previous,
+                    detection,
+                    center_alpha=self._track_center_alpha,
+                    shape_alpha=self._track_shape_alpha,
+                )
+                unmatched_track_indices.remove(best_index)
+            else:
+                stabilized = detection
+            updated_tracks.append(VisualBoardTrack(stabilized))
+
+        for index in unmatched_track_indices:
+            previous_track = self._visual_tracks[index]
+            missing_frames = previous_track.missing_frames + 1
+            if missing_frames <= self._track_hold_frames:
+                updated_tracks.append(
+                    VisualBoardTrack(previous_track.detection, missing_frames)
+                )
+
+        updated_tracks.sort(
+            key=lambda track: track.detection.center_px[axis_index]
+        )
+        self._visual_tracks = updated_tracks
+        return [track.detection for track in updated_tracks]
+
     def _publish_station(
         self,
         station: StopStation,
         detection: BoardDetection | None,
         distance_px: float,
         spacing_valid: bool,
+        source_header,
+        image_width: int,
+        image_height: int,
         *,
         legacy: bool,
     ) -> None:
@@ -652,6 +1005,20 @@ class ConveyorStopLine(Node):
             publishers['edge'].publish(
                 Float32(data=float(detection.trailing_edge_px))
             )
+            polygon = PolygonStamped()
+            polygon.header.stamp = source_header.stamp
+            polygon.header.frame_id = 'camera2_normalized_image'
+            width_scale = max(1.0, float(image_width - 1))
+            height_scale = max(1.0, float(image_height - 1))
+            polygon.polygon.points = [
+                Point32(
+                    x=float(point[0]) / width_scale,
+                    y=float(point[1]) / height_scale,
+                    z=0.0,
+                )
+                for point in detection.points
+            ]
+            publishers['polygon'].publish(polygon)
         if np.isfinite(distance_px):
             publishers['distance'].publish(Float32(data=float(distance_px)))
 
@@ -681,83 +1048,785 @@ class ConveyorStopLine(Node):
         station: StopStation,
         point1,
         point2,
-        thickness: int,
     ) -> None:
-        cv2.line(
-            overlay, point1, point2, (12, 18, 24), thickness + 6, cv2.LINE_AA
+        vector = np.asarray(point2, dtype=np.float32) - np.asarray(
+            point1, dtype=np.float32
         )
-        cv2.line(
-            overlay, point1, point2, station.color, thickness, cv2.LINE_AA
-        )
-        if station.line.axis == 'x':
-            label_origin = (max(8, point1[0] - 145), max(150, point1[1] - 12))
-        else:
-            label_origin = (max(8, point1[0]), max(150, point1[1] - 12))
-        cv2.putText(
-            overlay,
-            station.display_name,
-            label_origin,
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.57,
-            (12, 18, 24),
-            4,
-            cv2.LINE_AA,
-        )
-        cv2.putText(
-            overlay,
-            station.display_name,
-            label_origin,
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.57,
-            station.color,
-            2,
-            cv2.LINE_AA,
-        )
-
-    def _draw_travel_arrow(self, overlay, width, height) -> None:
-        positive = direction_is_positive(self._travel_direction)
-        color = (0, 210, 255)
-        if travel_axis(self._travel_direction) == 'x':
-            y = int(round(height * 0.92))
-            start = (int(width * (0.08 if positive else 0.25)), y)
-            end = (int(width * (0.25 if positive else 0.08)), y)
-            text_origin = (min(start[0], end[0]), y - 16)
-        else:
-            x = int(round(width * 0.94))
-            start = (x, int(height * (0.68 if positive else 0.88)))
-            end = (x, int(height * (0.88 if positive else 0.68)))
-            text_origin = (max(8, x - 95), min(start[1], end[1]) - 12)
-        cv2.arrowedLine(
-            overlay, start, end, color, 4, cv2.LINE_AA, tipLength=0.12
-        )
-        cv2.putText(
-            overlay,
-            'BELT',
-            text_origin,
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.62,
-            color,
-            2,
-            cv2.LINE_AA,
-        )
-
-    def _image_cb(self, message: CompressedImage) -> None:
-        encoded = np.frombuffer(message.data, dtype=np.uint8)
-        image = cv2.imdecode(encoded, cv2.IMREAD_COLOR)
-        if image is None:
-            self.get_logger().warning(
-                'Failed to decode camera2 compressed frame',
-                throttle_duration_sec=3.0,
+        length = float(np.linalg.norm(vector))
+        if length <= 0.0:
+            return
+        direction = vector / length
+        ui_scale = max(0.75, overlay.shape[1] / 960.0)
+        segment_px = 10.0 * ui_scale
+        gap_px = 7.0 * ui_scale
+        shadow_thickness = max(2, int(round(3 * ui_scale)))
+        line_thickness = max(1, int(round(ui_scale)))
+        for start in np.arange(0.0, length, segment_px + gap_px):
+            end = min(start + segment_px, length)
+            segment_start = tuple(
+                np.rint(np.asarray(point1) + direction * start).astype(int)
             )
-            self._ready_pub.publish(Bool(data=False))
+            segment_end = tuple(
+                np.rint(np.asarray(point1) + direction * end).astype(int)
+            )
+            cv2.line(
+                overlay,
+                segment_start,
+                segment_end,
+                (12, 18, 24),
+                shadow_thickness,
+                cv2.LINE_AA,
+            )
+            cv2.line(
+                overlay,
+                segment_start,
+                segment_end,
+                station.color,
+                line_thickness,
+                cv2.LINE_AA,
+            )
+
+        # A small geometric notch marks the calibrated line. Station names
+        # remain in the lower process HUD, keeping text off the conveyor.
+        notch_half = max(5, int(round(8 * ui_scale)))
+        notch_depth = max(4, int(round(6 * ui_scale)))
+        if station.line.axis == 'x':
+            cv2.line(
+                overlay,
+                (point1[0] - notch_half, point1[1]),
+                (point1[0] + notch_half, point1[1]),
+                station.color,
+                max(1, line_thickness),
+                cv2.LINE_AA,
+            )
+            notch = np.asarray(
+                [
+                    (point1[0] - notch_depth, point1[1] - notch_depth),
+                    (point1[0] + notch_depth, point1[1] - notch_depth),
+                    (point1[0], point1[1] + 1),
+                ],
+                dtype=np.int32,
+            )
+        else:
+            cv2.line(
+                overlay,
+                (point1[0], point1[1] - notch_half),
+                (point1[0], point1[1] + notch_half),
+                station.color,
+                max(1, line_thickness),
+                cv2.LINE_AA,
+            )
+            notch = np.asarray(
+                [
+                    (point1[0] - notch_depth, point1[1] - notch_depth),
+                    (point1[0] - notch_depth, point1[1] + notch_depth),
+                    (point1[0] + 1, point1[1]),
+                ],
+                dtype=np.int32,
+            )
+        cv2.fillConvexPoly(overlay, notch, station.color, cv2.LINE_AA)
+
+    @staticmethod
+    def _draw_rounded_box(
+        image,
+        point1,
+        point2,
+        color,
+        *,
+        radius: int = 12,
+        thickness: int = -1,
+    ) -> None:
+        x1, y1 = point1
+        x2, y2 = point2
+        radius = max(1, min(radius, (x2 - x1) // 2, (y2 - y1) // 2))
+        if thickness < 0:
+            cv2.rectangle(image, (x1 + radius, y1), (x2 - radius, y2), color, -1)
+            cv2.rectangle(image, (x1, y1 + radius), (x2, y2 - radius), color, -1)
+            for center in (
+                (x1 + radius, y1 + radius),
+                (x2 - radius, y1 + radius),
+                (x1 + radius, y2 - radius),
+                (x2 - radius, y2 - radius),
+            ):
+                cv2.circle(image, center, radius, color, -1, cv2.LINE_AA)
             return
 
-        height, width = image.shape[:2]
-        detections = detect_dark_boards(
+        cv2.line(
+            image, (x1 + radius, y1), (x2 - radius, y1), color, thickness, cv2.LINE_AA
+        )
+        cv2.line(
+            image, (x1 + radius, y2), (x2 - radius, y2), color, thickness, cv2.LINE_AA
+        )
+        cv2.line(
+            image, (x1, y1 + radius), (x1, y2 - radius), color, thickness, cv2.LINE_AA
+        )
+        cv2.line(
+            image, (x2, y1 + radius), (x2, y2 - radius), color, thickness, cv2.LINE_AA
+        )
+        for center, start_angle, end_angle in (
+            ((x1 + radius, y1 + radius), 180, 270),
+            ((x2 - radius, y1 + radius), 270, 360),
+            ((x2 - radius, y2 - radius), 0, 90),
+            ((x1 + radius, y2 - radius), 90, 180),
+        ):
+            cv2.ellipse(
+                image,
+                center,
+                (radius, radius),
+                0,
+                start_angle,
+                end_angle,
+                color,
+                thickness,
+                cv2.LINE_AA,
+            )
+
+    @staticmethod
+    def _load_hud_fonts():
+        if not hasattr(cv2, 'freetype'):
+            return None
+        font_paths = (
+            '/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf',
+            '/usr/share/fonts/truetype/noto/NotoSans-Medium.ttf',
+        )
+        try:
+            fonts = []
+            for font_path in font_paths:
+                font = cv2.freetype.createFreeType2()
+                font.loadFontData(fontFileName=font_path, id=0)
+                fonts.append(font)
+            return tuple(fonts)
+        except (cv2.error, OSError):
+            return None
+
+    def _draw_hud_text(
+        self,
+        image,
+        text: str,
+        origin,
+        font_height: int,
+        color,
+        *,
+        medium: bool = False,
+    ) -> None:
+        font_height = max(8, int(font_height))
+        if self._hud_fonts is not None:
+            font = self._hud_fonts[1 if medium else 0]
+            font.putText(
+                image,
+                text,
+                origin,
+                font_height,
+                color,
+                -1,
+                cv2.LINE_AA,
+                False,
+            )
+            return
+        cv2.putText(
             image,
+            text,
+            (origin[0], origin[1] + font_height),
+            cv2.FONT_HERSHEY_DUPLEX,
+            font_height / 30.0,
+            color,
+            1,
+            cv2.LINE_AA,
+        )
+
+    def _draw_card_dashboard(
+        self,
+        overlay,
+        detections: list[BoardDetection],
+        station_results,
+        spacing_valid: bool,
+        spacing_ratio: float,
+        separation_px: float,
+        required_spacing_px: float,
+    ) -> None:
+        height, width = overlay.shape[:2]
+        ui_scale = max(0.75, width / 960.0)
+
+        def px(value: float) -> int:
+            return int(round(value * ui_scale))
+
+        panel_height = max(px(100), int(round(height * 0.19)))
+        panel_top = height - panel_height
+        panel = overlay[panel_top:height]
+        shade = np.full_like(panel, (7, 11, 18))
+        cv2.addWeighted(panel, 0.08, shade, 0.92, 0.0, panel)
+        cv2.line(
+            overlay,
+            (0, panel_top),
+            (width - 1, panel_top),
+            (42, 54, 72),
+            max(1, px(1)),
+            cv2.LINE_AA,
+        )
+        cv2.line(
+            overlay,
+            (0, panel_top),
+            (px(118), panel_top),
+            (255, 178, 55),
+            max(1, px(2)),
+            cv2.LINE_AA,
+        )
+
+        if not spacing_valid:
+            system_state = 'SYSTEM INTERLOCK'
+            system_color = (50, 75, 245)
+            spacing_text = f'{separation_px:.0f}/{required_spacing_px:.0f}px'
+        elif np.isfinite(spacing_ratio):
+            system_state = 'SYSTEM READY'
+            system_color = (85, 225, 125)
+            spacing_text = f'{spacing_ratio:.2f}x'
+        else:
+            system_state = 'SYSTEM READY'
+            system_color = (85, 225, 125)
+            spacing_text = '--'
+
+        margin = px(12)
+        gap = px(8)
+        card_top = panel_top + px(10)
+        card_bottom = height - px(10)
+        summary_width = int(round(width * 0.24))
+        station_width = (width - margin * 2 - gap * 2 - summary_width) // 2
+        cards = {
+            'summary': (margin, margin + summary_width),
+            'assembly': (
+                margin + summary_width + gap,
+                margin + summary_width + gap + station_width,
+            ),
+            'inspection': (
+                margin + summary_width + gap * 2 + station_width,
+                width - margin,
+            ),
+        }
+        for x1, x2 in cards.values():
+            self._draw_rounded_box(
+                overlay,
+                (x1, card_top),
+                (x2, card_bottom),
+                (19, 27, 39),
+                radius=px(11),
+            )
+            self._draw_rounded_box(
+                overlay,
+                (x1, card_top),
+                (x2, card_bottom),
+                (48, 62, 82),
+                radius=px(11),
+                thickness=max(1, px(1)),
+            )
+
+        summary_x1, _ = cards['summary']
+        summary_x = summary_x1 + px(15)
+        cv2.line(
+            overlay,
+            (summary_x1 + px(12), card_top),
+            (summary_x1 + px(72), card_top),
+            system_color,
+            max(1, px(2)),
+            cv2.LINE_AA,
+        )
+        cv2.circle(
+            overlay,
+            (summary_x + px(4), card_top + px(17)),
+            px(3),
+            system_color,
+            -1,
+            cv2.LINE_AA,
+        )
+        self._draw_hud_text(
+            overlay,
+            'KSMC  //  CELL 01',
+            (summary_x + px(14), card_top + px(11)),
+            px(10),
+            (158, 171, 190),
+            medium=True,
+        )
+        self._draw_hud_text(
+            overlay,
+            system_state,
+            (summary_x, card_top + px(31)),
+            px(18),
+            system_color,
+            medium=True,
+        )
+        positive = direction_is_positive(self._travel_direction)
+        flow = '>>>' if positive else '<<<'
+        self._draw_hud_text(
+            overlay,
+            f'LIVE  |  {len(detections):02d} BOARDS  |  SPACE {spacing_text}  |  {flow}',
+            (summary_x, card_top + px(63)),
+            px(9),
+            (148, 161, 180),
+        )
+
+        for station in self._stations.values():
+            detection, distance_px = station_results[station.name]
+            if station.trigger_latched and spacing_valid:
+                state = 'TARGET LOCKED'
+            elif detection is None:
+                state = 'WAITING'
+            elif distance_px <= 35.0:
+                state = 'APPROACH'
+            else:
+                state = 'TRACKING'
+            yaw = (
+                f'{detection.long_axis_angle_deg:+.1f} deg'
+                if detection is not None
+                else '--'
+            )
+            offset = f'{distance_px:+.0f} px' if np.isfinite(distance_px) else '--'
+            x1, x2 = cards[station.name]
+            content_x = x1 + px(17)
+            station_number = '01' if station.name == 'assembly' else '02'
+            cv2.line(
+                overlay,
+                (x1 + px(12), card_top),
+                (x1 + px(84), card_top),
+                station.color,
+                max(1, px(2)),
+                cv2.LINE_AA,
+            )
+            self._draw_hud_text(
+                overlay,
+                f'STATION {station_number}  //  {station.display_name}',
+                (content_x, card_top + px(11)),
+                px(10),
+                (158, 171, 190),
+                medium=True,
+            )
+            cv2.circle(
+                overlay,
+                (x2 - px(19), card_top + px(17)),
+                px(4),
+                station.color if detection is not None else (92, 102, 118),
+                -1,
+                cv2.LINE_AA,
+            )
+            self._draw_hud_text(
+                overlay,
+                station_number,
+                (x2 - px(50), card_top + px(27)),
+                px(30),
+                (31, 42, 58),
+                medium=True,
+            )
+            self._draw_hud_text(
+                overlay,
+                state,
+                (content_x, card_top + px(31)),
+                px(18),
+                station.color if state == 'TARGET LOCKED' else (235, 239, 245),
+                medium=True,
+            )
+            self._draw_hud_text(
+                overlay,
+                f'EDGE  {offset}    //    YAW  {yaw}',
+                (content_x, card_top + px(63)),
+                px(9),
+                (148, 161, 180),
+            )
+
+    def _draw_dashboard(
+        self,
+        overlay,
+        detections: list[BoardDetection],
+        station_results,
+        spacing_valid: bool,
+        spacing_ratio: float,
+        separation_px: float,
+        required_spacing_px: float,
+    ) -> None:
+        height, width = overlay.shape[:2]
+        ui_scale = max(0.75, width / 960.0)
+
+        def px(value: float) -> int:
+            return int(round(value * ui_scale))
+
+        panel_height = max(px(104), int(round(height * 0.195)))
+        panel_top = height - panel_height
+        panel = overlay[panel_top:height]
+        shade = np.full_like(panel, (6, 11, 19))
+        cv2.addWeighted(panel, 0.07, shade, 0.93, 0.0, panel)
+
+        # Low-contrast technical grid and a segmented status rail keep the HUD
+        # structured without introducing another set of boxed cards.
+        grid_color = (14, 23, 36)
+        for x in range(0, width, max(1, px(32))):
+            cv2.line(
+                overlay,
+                (x, panel_top),
+                (x, height - 1),
+                grid_color,
+                1,
+                cv2.LINE_AA,
+            )
+        cv2.line(
+            overlay,
+            (0, panel_top),
+            (width - 1, panel_top),
+            (42, 57, 78),
+            max(1, px(1)),
+            cv2.LINE_AA,
+        )
+
+        brand_end = px(190)
+        metrics_start = width - px(205)
+        cv2.line(
+            overlay,
+            (brand_end, panel_top + px(12)),
+            (brand_end, height - px(12)),
+            (43, 57, 76),
+            1,
+            cv2.LINE_AA,
+        )
+        cv2.line(
+            overlay,
+            (metrics_start, panel_top + px(12)),
+            (metrics_start, height - px(12)),
+            (43, 57, 76),
+            1,
+            cv2.LINE_AA,
+        )
+
+        if not spacing_valid:
+            system_state = 'SYSTEM INTERLOCK'
+            system_color = (55, 78, 245)
+            spacing_text = f'{separation_px:.0f}/{required_spacing_px:.0f}'
+        elif np.isfinite(spacing_ratio):
+            system_state = 'SYSTEM READY'
+            system_color = (82, 226, 126)
+            spacing_text = f'{spacing_ratio:.2f}x'
+        else:
+            system_state = 'SYSTEM READY'
+            system_color = (82, 226, 126)
+            spacing_text = '--'
+
+        # Brand and controller state.
+        brand_x = px(20)
+        self._draw_hud_text(
+            overlay,
+            'KSMC',
+            (brand_x, panel_top + px(13)),
+            px(22),
+            (242, 247, 252),
+            medium=True,
+        )
+        cv2.line(
+            overlay,
+            (brand_x, panel_top + px(43)),
+            (brand_x + px(44), panel_top + px(43)),
+            (255, 179, 52),
+            max(1, px(2)),
+            cv2.LINE_AA,
+        )
+        self._draw_hud_text(
+            overlay,
+            'VISION ASSEMBLY CELL',
+            (brand_x, panel_top + px(49)),
+            px(8),
+            (139, 154, 175),
+            medium=True,
+        )
+        cv2.circle(
+            overlay,
+            (brand_x + px(4), panel_top + px(73)),
+            px(3),
+            system_color,
+            -1,
+            cv2.LINE_AA,
+        )
+        self._draw_hud_text(
+            overlay,
+            system_state,
+            (brand_x + px(13), panel_top + px(66)),
+            px(10),
+            system_color,
+            medium=True,
+        )
+        self._draw_hud_text(
+            overlay,
+            'LIVE  //  ROS DOMAIN 05',
+            (brand_x, panel_top + px(87)),
+            px(8),
+            (108, 123, 145),
+        )
+
+        # Central process flow. The two nodes mirror the physical stop lines
+        # without putting station text over the conveyor image.
+        flow_left = brand_end + px(28)
+        flow_right = metrics_start - px(28)
+        flow_span = flow_right - flow_left
+        node_positions = {
+            'assembly': flow_left + int(round(flow_span * 0.28)),
+            'inspection': flow_left + int(round(flow_span * 0.72)),
+        }
+        node_y = panel_top + px(48)
+        node_radius = px(15)
+        assembly_x = node_positions['assembly']
+        inspection_x = node_positions['inspection']
+        cv2.line(
+            overlay,
+            (assembly_x + node_radius, node_y),
+            (inspection_x - node_radius, node_y),
+            (48, 66, 88),
+            max(1, px(3)),
+            cv2.LINE_AA,
+        )
+        cv2.line(
+            overlay,
+            (assembly_x + node_radius, node_y),
+            (inspection_x - node_radius, node_y),
+            (88, 178, 175),
+            max(1, px(1)),
+            cv2.LINE_AA,
+        )
+        for fraction in (0.40, 0.50, 0.60):
+            arrow_x = int(round(assembly_x + (inspection_x - assembly_x) * fraction))
+            chevron = np.asarray(
+                [
+                    (arrow_x - px(3), node_y - px(4)),
+                    (arrow_x + px(2), node_y),
+                    (arrow_x - px(3), node_y + px(4)),
+                ],
+                dtype=np.int32,
+            )
+            cv2.polylines(
+                overlay,
+                [chevron],
+                False,
+                (255, 181, 58),
+                max(1, px(1)),
+                cv2.LINE_AA,
+            )
+
+        for station in self._stations.values():
+            detection, distance_px = station_results[station.name]
+            if station.trigger_latched and spacing_valid:
+                state = 'LOCKED'
+            elif detection is None:
+                state = 'WAIT'
+            elif distance_px <= 35.0:
+                state = 'APPROACH'
+            else:
+                state = 'TRACK'
+            station_number = '01' if station.name == 'assembly' else '02'
+            short_name = 'ASSEMBLY' if station.name == 'assembly' else 'INSPECTION'
+            node_x = node_positions[station.name]
+            self._draw_hud_text(
+                overlay,
+                f'{station_number}  {short_name}',
+                (node_x - px(38), panel_top + px(10)),
+                px(9),
+                (158, 173, 193),
+                medium=True,
+            )
+            glow_color = tuple(int(channel * 0.22) for channel in station.color)
+            cv2.circle(
+                overlay,
+                (node_x, node_y),
+                px(20),
+                glow_color,
+                -1,
+                cv2.LINE_AA,
+            )
+            cv2.circle(
+                overlay,
+                (node_x, node_y),
+                node_radius,
+                (13, 21, 31),
+                -1,
+                cv2.LINE_AA,
+            )
+            cv2.circle(
+                overlay,
+                (node_x, node_y),
+                node_radius,
+                station.color,
+                max(1, px(2)),
+                cv2.LINE_AA,
+            )
+            self._draw_hud_text(
+                overlay,
+                station_number,
+                (node_x - px(7), node_y - px(7)),
+                px(11),
+                (238, 244, 250),
+                medium=True,
+            )
+
+            yaw = (
+                f'{detection.long_axis_angle_deg:+.1f}'
+                if detection is not None
+                else '--'
+            )
+            offset = f'{distance_px:+.0f}' if np.isfinite(distance_px) else '--'
+            pill_half = px(77)
+            pill_top = panel_top + px(72)
+            pill_bottom = panel_top + px(94)
+            self._draw_rounded_box(
+                overlay,
+                (node_x - pill_half, pill_top),
+                (node_x + pill_half, pill_bottom),
+                (17, 25, 36),
+                radius=px(9),
+            )
+            self._draw_rounded_box(
+                overlay,
+                (node_x - pill_half, pill_top),
+                (node_x + pill_half, pill_bottom),
+                tuple(int(channel * 0.55) for channel in station.color),
+                radius=px(9),
+                thickness=1,
+            )
+            self._draw_hud_text(
+                overlay,
+                f'{state}  |  {offset}px  |  {yaw}deg',
+                (node_x - pill_half + px(9), pill_top + px(6)),
+                px(8),
+                station.color if state == 'LOCKED' else (184, 195, 211),
+                medium=True,
+            )
+
+        # Compact production metrics on the right.
+        metric_x = metrics_start + px(18)
+        self._draw_hud_text(
+            overlay,
+            'BOARDS',
+            (metric_x, panel_top + px(13)),
+            px(8),
+            (128, 143, 165),
+            medium=True,
+        )
+        self._draw_hud_text(
+            overlay,
+            f'{len(detections):02d}',
+            (metric_x, panel_top + px(28)),
+            px(25),
+            (242, 247, 252),
+            medium=True,
+        )
+        spacing_x = metric_x + px(72)
+        self._draw_hud_text(
+            overlay,
+            'SPACING',
+            (spacing_x, panel_top + px(13)),
+            px(8),
+            (128, 143, 165),
+            medium=True,
+        )
+        self._draw_hud_text(
+            overlay,
+            spacing_text,
+            (spacing_x, panel_top + px(32)),
+            px(16),
+            system_color,
+            medium=True,
+        )
+        cv2.line(
+            overlay,
+            (metric_x, panel_top + px(66)),
+            (width - px(18), panel_top + px(66)),
+            (42, 56, 75),
+            1,
+            cv2.LINE_AA,
+        )
+        positive = direction_is_positive(self._travel_direction)
+        flow_text = 'FORWARD  >>>' if positive else 'REVERSE  <<<'
+        self._draw_hud_text(
+            overlay,
+            'PCB FLOW',
+            (metric_x, panel_top + px(76)),
+            px(8),
+            (128, 143, 165),
+            medium=True,
+        )
+        self._draw_hud_text(
+            overlay,
+            flow_text,
+            (metric_x, panel_top + px(88)),
+            px(10),
+            (255, 181, 58),
+            medium=True,
+        )
+
+    def _reject_frame(self, reason: str) -> None:
+        self._ready_pub.publish(Bool(data=False))
+        # Invalid frames break consecutive evidence, but must not clear an
+        # already latched station stop or count as a board leaving the scene.
+        for station in self._stations.values():
+            station.crossing_frames = 0
+            station.rearm_frames = 0
+        self.get_logger().error(reason, throttle_duration_sec=1.0)
+
+    def _frame_is_fresh(self, message: CompressedImage) -> bool:
+        frame_age = timestamp_age_seconds(
+            self.get_clock().now().nanoseconds,
+            message.header.stamp.sec,
+            message.header.stamp.nanosec,
+        )
+        if not np.isfinite(frame_age) or frame_age > self._max_frame_age_seconds:
+            # Do not continue moving from a delayed picture. The controller
+            # receives ready=False immediately and publishes zero velocity.
+            self._reject_frame(
+                f'Rejecting stale or invalid S22 control frame: age={frame_age:.3f}s '
+                f'> {self._max_frame_age_seconds:.3f}s'
+            )
+            return False
+        return True
+
+    def _image_cb(self, message: CompressedImage) -> None:
+        if not self._frame_is_fresh(message):
+            return
+
+        encoded = np.frombuffer(message.data, dtype=np.uint8)
+        try:
+            image = cv2.imdecode(encoded, cv2.IMREAD_COLOR) if encoded.size else None
+        except cv2.error:
+            image = None
+        if image is None:
+            self._reject_frame('Failed to decode camera2 compressed frame')
+            return
+
+        # Detection, UI drawing, and JPEG output all use the final 960 px
+        # frame. Drawing at 1280 and then shrinking the completed overlay
+        # doubled the per-frame work and let the monitor lag behind the live
+        # stop decision without adding any detail to the 960 px output.
+        processing_image = image
+        if (
+            self._processing_max_width
+            and processing_image.shape[1] > self._processing_max_width
+        ):
+            scale = self._processing_max_width / float(processing_image.shape[1])
+            processing_image = cv2.resize(
+                processing_image,
+                (
+                    self._processing_max_width,
+                    max(1, int(round(processing_image.shape[0] * scale))),
+                ),
+                interpolation=cv2.INTER_AREA,
+            )
+        display_image = processing_image
+
+        height, width = processing_image.shape[:2]
+        detections = detect_dark_boards(
+            processing_image,
             search_bounds=self._search_bounds,
             **self._detector_settings,
         )
+        if any(
+            not np.isfinite(detection.trailing_edge_px)
+            or not np.isfinite(detection.travel_length_px)
+            or detection.travel_length_px <= 0.0
+            or not np.all(np.isfinite(detection.points))
+            or not np.all(np.isfinite(detection.center_px))
+            for detection in detections
+        ):
+            self._reject_frame('Rejecting invalid S22 board geometry')
+            return
         separation_px = station_separation_px(
             self._stations['assembly'].line,
             self._stations['inspection'].line,
@@ -778,6 +1847,11 @@ class ConveyorStopLine(Node):
                 self._minimum_clearance_px,
             )
 
+        # A frame can expire during decode/detection. Never refresh the motor
+        # heartbeat from it just because it was fresh on callback entry.
+        if not self._frame_is_fresh(message):
+            return
+
         station_geometry = {}
         station_results = {}
         for name, station in self._stations.items():
@@ -794,118 +1868,9 @@ class ConveyorStopLine(Node):
             station_geometry[name] = (point1, point2, stop_px)
             station_results[name] = (relevant, distance_px)
 
-        overlay = image.copy()
-        cv2.rectangle(overlay, (0, 0), (width, 138), (12, 18, 24), -1)
-        cv2.putText(
-            overlay,
-            'DUAL STOP-LINE MONITOR | NO MOTOR COMMAND',
-            (24, 38),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.80,
-            (255, 255, 255),
-            2,
-            cv2.LINE_AA,
-        )
-
-        if not spacing_valid:
-            spacing_text = (
-                f'SPACING FAULT | have {separation_px:.0f}px, '
-                f'need {required_spacing_px:.0f}px'
-            )
-        elif np.isfinite(spacing_ratio):
-            spacing_text = f'SPACING OK | {spacing_ratio:.2f} board lengths'
-        else:
-            spacing_text = 'SPACING OK | waiting for board size'
-        spacing_color = (60, 235, 80) if spacing_valid else (0, 0, 255)
-        cv2.putText(
-            overlay,
-            f'BOARDS {len(detections)} | {spacing_text}',
-            (24, 72),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.66,
-            spacing_color,
-            2,
-            cv2.LINE_AA,
-        )
-
-        status_chunks = []
-        for station in self._stations.values():
-            relevant, distance_px = station_results[station.name]
-            if station.trigger_latched and spacing_valid:
-                state_text = 'STOP'
-            elif relevant is None:
-                state_text = 'WAIT'
-            else:
-                state_text = f'{distance_px:.0f}px'
-            status_chunks.append(f'{station.display_name}: {state_text}')
-        cv2.putText(
-            overlay,
-            '   |   '.join(status_chunks),
-            (24, 106),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.64,
-            (220, 225, 232),
-            2,
-            cv2.LINE_AA,
-        )
-
-        for detection in detections:
-            points = np.rint(detection.points).astype(np.int32)
-            cv2.polylines(overlay, [points], True, (255, 120, 40), 4, cv2.LINE_AA)
-            center = tuple(int(round(value)) for value in detection.center_px)
-            cv2.drawMarker(
-                overlay,
-                center,
-                (255, 255, 255),
-                cv2.MARKER_CROSS,
-                24,
-                3,
-                cv2.LINE_AA,
-            )
-
-        thickness = 6
-        for name, station in self._stations.items():
-            point1, point2, _ = station_geometry[name]
-            self._draw_station_line(
-                overlay, station, point1, point2, thickness
-            )
-            relevant, _ = station_results[name]
-            if relevant is not None:
-                if station.line.axis == 'x':
-                    marker_point = (
-                        int(round(relevant.trailing_edge_px)),
-                        int(round(relevant.center_px[1])),
-                    )
-                else:
-                    marker_point = (
-                        int(round(relevant.center_px[0])),
-                        int(round(relevant.trailing_edge_px)),
-                    )
-                cv2.drawMarker(
-                    overlay,
-                    marker_point,
-                    station.color,
-                    cv2.MARKER_DIAMOND,
-                    24,
-                    3,
-                    cv2.LINE_AA,
-                )
-
-        self._draw_travel_arrow(overlay, width, height)
-
-        success, output = cv2.imencode(
-            '.jpg', overlay, [cv2.IMWRITE_JPEG_QUALITY, self._jpeg_quality]
-        )
-        if not success:
-            self._ready_pub.publish(Bool(data=False))
-            return
-
-        annotated = CompressedImage()
-        annotated.header = message.header
-        annotated.format = 'jpeg'
-        annotated.data = output.tobytes()
-        self._image_pub.publish(annotated)
-
+        # Publish all control-critical messages before drawing the dashboard
+        # or encoding its JPEG. UI load and slow viewers must never postpone
+        # the physical stop trigger.
         assembly = self._stations['assembly']
         assembly_detection, assembly_distance = station_results['assembly']
         self._publish_station(
@@ -913,21 +1878,185 @@ class ConveyorStopLine(Node):
             assembly_detection,
             assembly_distance,
             spacing_valid,
+            message.header,
+            width,
+            height,
             legacy=True,
         )
         inspection = self._stations['inspection']
-        inspection_detection, inspection_distance = station_results['inspection']
+        inspection_detection, inspection_distance = station_results[
+            'inspection'
+        ]
         self._publish_station(
             inspection,
             inspection_detection,
             inspection_distance,
             spacing_valid,
+            message.header,
+            width,
+            height,
             legacy=False,
         )
         self._board_count_pub.publish(Int32(data=len(detections)))
         self._spacing_valid_pub.publish(Bool(data=spacing_valid))
         self._spacing_ratio_pub.publish(Float32(data=float(spacing_ratio)))
         self._ready_pub.publish(Bool(data=spacing_valid))
+
+        if np.isfinite(spacing_ratio):
+            self._last_spacing_ratio = spacing_ratio
+
+        # The overlay is observability, not control. Skip all drawing when no
+        # one watches it and cap it independently when a viewer is connected.
+        if self._image_pub.get_subscription_count() <= 0:
+            self._visual_tracks = []
+            return
+        render_started_at = time.monotonic()
+        if (
+            self._last_annotated_at > 0.0
+            and render_started_at - self._last_annotated_at
+            < self._annotated_period
+        ):
+            return
+        if render_started_at - self._last_annotated_at > 1.0:
+            self._visual_tracks = []
+        self._last_annotated_at = render_started_at
+        display_detections = self._update_visual_tracks(detections)
+
+        display_station_results = {}
+        for name, station in self._stations.items():
+            _, _, stop_px = station_geometry[name]
+            display_relevant = closest_detection_to_station(
+                display_detections, stop_px, self._travel_direction
+            )
+            _, live_distance = station_results[name]
+            if np.isfinite(live_distance):
+                display_distance = live_distance
+            elif display_relevant is not None:
+                display_distance = station_distance_px(
+                    display_relevant.trailing_edge_px,
+                    stop_px,
+                    self._travel_direction,
+                )
+            else:
+                display_distance = float('nan')
+            display_station_results[name] = (
+                display_relevant,
+                display_distance,
+            )
+
+        display_spacing_ratio = (
+            spacing_ratio
+            if np.isfinite(spacing_ratio)
+            else self._last_spacing_ratio
+        )
+
+        display_height, display_width = display_image.shape[:2]
+        x_scale = display_width / float(width)
+        y_scale = display_height / float(height)
+        overlay = display_image.copy()
+
+        for detection in display_detections:
+            nearest_station = min(
+                self._stations.values(),
+                key=lambda station: abs(
+                    station_distance_px(
+                        detection.trailing_edge_px,
+                        station_geometry[station.name][2],
+                        self._travel_direction,
+                    )
+                ),
+            )
+            points = np.rint(
+                detection.points * np.asarray((x_scale, y_scale))
+            ).astype(np.int32)
+            cv2.polylines(
+                overlay,
+                [points],
+                True,
+                nearest_station.color,
+                1,
+                cv2.LINE_AA,
+            )
+            center = (
+                int(round(detection.center_px[0] * x_scale)),
+                int(round(detection.center_px[1] * y_scale)),
+            )
+            cv2.drawMarker(
+                overlay,
+                center,
+                (255, 255, 255),
+                cv2.MARKER_CROSS,
+                max(8, int(round(10 * x_scale))),
+                1,
+                cv2.LINE_AA,
+            )
+
+        for name, station in self._stations.items():
+            point1, point2 = normalized_line_to_pixels(
+                station.line, display_width, display_height
+            )
+            self._draw_station_line(overlay, station, point1, point2)
+            relevant, _ = display_station_results[name]
+            if relevant is not None:
+                if station.line.axis == 'x':
+                    marker_point = (
+                        int(round(relevant.trailing_edge_px * x_scale)),
+                        int(round(relevant.center_px[1] * y_scale)),
+                    )
+                else:
+                    marker_point = (
+                        int(round(relevant.center_px[0] * x_scale)),
+                        int(round(relevant.trailing_edge_px * y_scale)),
+                    )
+                cv2.drawMarker(
+                    overlay,
+                    marker_point,
+                    station.color,
+                    cv2.MARKER_DIAMOND,
+                    max(8, int(round(9 * x_scale))),
+                    1,
+                    cv2.LINE_AA,
+                )
+
+        self._draw_dashboard(
+            overlay,
+            display_detections,
+            display_station_results,
+            spacing_valid,
+            display_spacing_ratio,
+            separation_px,
+            required_spacing_px,
+        )
+
+        if (
+            self._annotated_max_width
+            and overlay.shape[1] > self._annotated_max_width
+        ):
+            scale = self._annotated_max_width / float(overlay.shape[1])
+            overlay = cv2.resize(
+                overlay,
+                (
+                    self._annotated_max_width,
+                    int(round(overlay.shape[0] * scale)),
+                ),
+                interpolation=cv2.INTER_AREA,
+            )
+
+        success, output = cv2.imencode(
+            '.jpg', overlay, [cv2.IMWRITE_JPEG_QUALITY, self._jpeg_quality]
+        )
+        if not success:
+            self.get_logger().warning(
+                'Could not encode the optional stop-line overlay',
+                throttle_duration_sec=3.0,
+            )
+            return
+
+        annotated = CompressedImage()
+        annotated.header = message.header
+        annotated.format = 'jpeg'
+        annotated.data = output.tobytes()
+        self._image_pub.publish(annotated)
 
 
 def main(args=None) -> None:

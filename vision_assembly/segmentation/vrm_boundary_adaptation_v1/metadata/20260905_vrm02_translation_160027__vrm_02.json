@@ -1,0 +1,26 @@
+{
+  "source_image": "/home/hc/KSMC/runtime/inspection/s22_inspection_roi_20260905_160027.png",
+  "source_sha256": "33952ec62ddaa392d3d3ba4d6587f7c183b8c1060804163336caa9dee0c85ae1",
+  "origin_px": [
+    3,
+    721
+  ],
+  "crop_size_px": [
+    189,
+    241
+  ],
+  "expected_pose": "FAIL",
+  "scene_id": "20260905_vrm02_translation_160027",
+  "slot_id": "vrm_02",
+  "annotation_status": "DRAFT_NOT_REVIEWED",
+  "training_allowed": false,
+  "normal_patchcore_training_allowed": false,
+  "sam_prompt_box": [
+    19,
+    24,
+    170,
+    217
+  ],
+  "sam_model_sha256": "3c1e81ca9b037dd39d70a014ddb9a813d6c4c4e12555420db7eaff31689bd4e3",
+  "crop_sha256": "e8d19547ffdf0abee53cd8c9577f1bee47214e13968c424c0480f44ecc20b7a6"
+}

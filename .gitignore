@@ -16,7 +16,24 @@ robot_ws/src/vendor/
 
 # Per-computer device identity and runtime output
 config/ksmc.env
+config/private/
 runtime/
+vision_assembly/data/tray_hover_target_last.json
 
-# Third-party DroidCam source is fetched at the pinned revision by the installer.
-camera2_droidcam/vendor/
+# Local YOLO-OBB environment and generated training artifacts
+vision_assembly/.venv_obb/
+vision_assembly/obb/runs/
+vision_assembly/obb/gpu_obb_runtime.yaml
+vision_assembly/obb/dataset/images/
+vision_assembly/obb/dataset/labels/
+ros2_ws/src/vision_server/models/*.pt
+
+# S22 YOLO segmentation captures, generated datasets, runs, and local weights
+vision_assembly/segmentation/s22_source/
+vision_assembly/segmentation/s22_parts_seg_dataset/
+vision_assembly/segmentation/runs/
+vision_assembly/segmentation/models/
+yolo26n-seg.pt
+
+# Blender-rendered synthetic datasets are reproducible and can be regenerated locally.
+vision_assembly/synthetic/output/

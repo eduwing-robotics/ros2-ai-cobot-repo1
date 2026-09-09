@@ -1,0 +1,11 @@
+cameras:
+  d435:
+    enabled: true
+    source_topic: /camera/camera/color/image_ai/compressed
+    output_topic: /camera/camera/color/image_ai/compressed
+    transport: compressed
+    role: gpu_obb_pick
+    run_yolo: true
+    required_for_ready: true
+    # Consume the complete 15 FPS AI relay. Queue depth 1 keeps newest frames.
+    yolo_max_fps: 15.0

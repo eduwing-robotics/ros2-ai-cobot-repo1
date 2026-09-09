@@ -5,6 +5,7 @@ import time
 from geometry_msgs.msg import Twist, TwistStamped
 import rclpy
 from rclpy.node import Node
+from rclpy.qos import HistoryPolicy, QoSProfile, ReliabilityPolicy
 from std_msgs.msg import Bool
 
 
@@ -13,6 +14,23 @@ def bounded_speed(value: float) -> float:
     if not math.isfinite(value) or value <= 0.0 or value > 0.10:
         raise ValueError('test speed must be > 0 and <= 0.10 m/s')
     return value
+
+
+def bounded_heartbeat_timeout(value: float) -> float:
+    value = float(value)
+    if not math.isfinite(value) or value < 0.10 or value > 1.0:
+        raise ValueError('heartbeat timeout must be between 0.10 and 1.0 seconds')
+    return value
+
+
+def heartbeat_is_fresh(received_at: float, now: float, timeout: float) -> bool:
+    """Missing, invalid, or future reception times never authorize motion."""
+    return bool(
+        all(math.isfinite(value) for value in (received_at, now, timeout))
+        and received_at > 0.0
+        and timeout > 0.0
+        and 0.0 <= now - received_at <= timeout + 1e-9
+    )
 
 
 def signed_speed(speed: float, direction: str) -> float:
@@ -39,6 +57,9 @@ class ConveyorController(Node):
         self.timeout = float(args.timeout)
         if not math.isfinite(self.timeout) or self.timeout < 0.0:
             raise ValueError('timeout must be >= 0 seconds (0 disables timeout)')
+        self.heartbeat_timeout = bounded_heartbeat_timeout(
+            args.heartbeat_timeout
+        )
 
         self.trigger = False
         self.ready = False
@@ -53,17 +74,28 @@ class ConveyorController(Node):
         self.station = args.station
         self.trigger_topic = args.trigger_topic
         message_type = TwistStamped if self.cmd_type == 'twist_stamped' else Twist
-        self.publisher = self.create_publisher(message_type, args.cmd_topic, 10)
-        self.create_subscription(
-            Bool, self.trigger_topic, self.trigger_callback, 10
+        # Keep only the newest motion command. A reliable depth-10 queue can
+        # replay old speed commands before the zero command on a congested
+        # network, extending belt motion after the visual trigger.
+        command_qos = QoSProfile(
+            history=HistoryPolicy.KEEP_LAST,
+            depth=1,
+            reliability=ReliabilityPolicy.RELIABLE,
         )
-        self.create_subscription(Bool, args.ready_topic, self.ready_callback, 10)
-        self.timer = self.create_timer(0.05, self.control_tick)
+        self.publisher = self.create_publisher(
+            message_type, args.cmd_topic, command_qos
+        )
+        self.create_subscription(
+            Bool, self.trigger_topic, self.trigger_callback, 1
+        )
+        self.create_subscription(Bool, args.ready_topic, self.ready_callback, 1)
+        self.timer = self.create_timer(0.02, self.control_tick)
         self.get_logger().warning(
             f'MOTION TEST ARMED: {args.cmd_topic} ({self.cmd_type}), '
             f'station={self.station}, trigger={self.trigger_topic}, '
             f'belt speed={self.speed:.3f} m/s, robot direction={self.direction}, '
             f'linear.x={self.command_speed:.3f} m/s, '
+            f'heartbeat_timeout={self.heartbeat_timeout:.2f}s, '
             f'timeout={"disabled" if self.timeout == 0.0 else f"{self.timeout:.1f} s"}'
         )
 
@@ -71,7 +103,7 @@ class ConveyorController(Node):
         self.trigger = bool(message.data)
         self.last_trigger_time = time.monotonic()
         # Stop in the subscription callback so a visual line crossing does not
-        # wait for the next 50 ms control tick.  The timer continues publishing
+        # wait for the next 20 ms control tick.  The timer continues publishing
         # zero afterwards to make the stop command robust on the network.
         if self.trigger and not self.stopped:
             self.request_stop(f'{self.station} vision stop trigger')
@@ -79,6 +111,8 @@ class ConveyorController(Node):
     def ready_callback(self, message):
         self.ready = bool(message.data)
         self.last_ready_time = time.monotonic()
+        if not self.ready and not self.stopped:
+            self.request_stop('vision safety became not ready')
 
     def publish_speed(self, speed):
         if self.cmd_type == 'twist_stamped':
@@ -106,6 +140,13 @@ class ConveyorController(Node):
         if self.stopped:
             self.request_stop(self.stop_reason)
             return
+        if (
+            not math.isfinite(now)
+            or not math.isfinite(self.started_at)
+            or now < self.started_at
+        ):
+            self.request_stop('invalid motion clock')
+            return
         if self.trigger:
             self.request_stop(f'{self.station} vision stop trigger')
             return
@@ -126,8 +167,12 @@ class ConveyorController(Node):
             return
         if (
             not self.ready
-            or now - self.last_ready_time > 1.0
-            or now - self.last_trigger_time > 1.0
+            or not heartbeat_is_fresh(
+                self.last_ready_time, now, self.heartbeat_timeout
+            )
+            or not heartbeat_is_fresh(
+                self.last_trigger_time, now, self.heartbeat_timeout
+            )
         ):
             self.request_stop('vision heartbeat missing')
             return
@@ -161,6 +206,12 @@ def parse_args():
     )
     parser.add_argument('--ready-topic', default='/vision/conveyor/stop_line_ready')
     parser.add_argument('--speed', type=float, default=0.02)
+    parser.add_argument(
+        '--heartbeat-timeout',
+        type=float,
+        default=0.25,
+        help='stop if fresh vision status is absent for this many seconds',
+    )
     parser.add_argument(
         '--direction',
         choices=('positive_x', 'negative_x'),

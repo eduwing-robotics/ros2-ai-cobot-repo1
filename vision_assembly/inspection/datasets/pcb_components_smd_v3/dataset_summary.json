@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "source_dataset": "/home/hc/KSMC/vision_assembly/inspection/datasets/pcb_smd_normal_v3",
+  "config": "/home/hc/KSMC/vision_assembly/config/full_board_inspection.json",
+  "excluded_component_types": [],
+  "margin_ratio": 0.22,
+  "source_image_shape": [
+    1266,
+    1600,
+    3
+  ],
+  "counts": {
+    "gpu": {
+      "train/good": 39,
+      "test/good": 14,
+      "unverified/mixed_defect": 13
+    },
+    "hbm": {
+      "train/good": 312,
+      "test/good": 112,
+      "unverified/mixed_defect": 104
+    },
+    "inductor": {
+      "train/good": 78,
+      "test/good": 28,
+      "unverified/mixed_defect": 26
+    },
+    "power_module": {
+      "train/good": 156,
+      "test/good": 56,
+      "unverified/mixed_defect": 52
+    },
+    "smd_capacitor": {
+      "train/good": 195,
+      "test/good": 70,
+      "unverified/mixed_defect": 65
+    },
+    "vrm": {
+      "train/good": 195,
+      "test/good": 70,
+      "unverified/mixed_defect": 65
+    }
+  },
+  "physical_override_slots": [
+    "smd_capacitor_01",
+    "smd_capacitor_02",
+    "smd_capacitor_03",
+    "smd_capacitor_04",
+    "smd_capacitor_05",
+    "inductor_01",
+    "inductor_02"
+  ],
+  "policy": {
+    "train_good": "reviewed normal board crops",
+    "test_good": "held-out reviewed normal board crops",
+    "unverified_mixed_defect": "inference only; board-level defect labels do not identify bad slots"
+  }
+}

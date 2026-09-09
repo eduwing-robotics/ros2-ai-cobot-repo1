@@ -27,9 +27,12 @@ setup(
         'console_scripts': [
             'camera_manager = vision_server.camera_manager:main',
             'part_detector = vision_server.part_detector:main',
+            'd435_ai_stream = vision_server.d435_ai_stream:main',
             'assembly_inspector = vision_server.assembly_inspector:main',
             'conveyor_roi = vision_server.conveyor_roi:main',
             'conveyor_controller = vision_server.conveyor_controller:main',
+            'conveyor_remote_server = vision_server.conveyor_remote_server:main',
+            's22_board_localizer = vision_server.s22_board_localizer:main',
             'vision_mock = vision_server.vision_mock:main',
         ],
     },

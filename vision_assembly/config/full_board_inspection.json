@@ -1,0 +1,224 @@
+{
+  "schema_version": 1,
+  "reference_image": "runtime/inspection/reference/s22_package_legs_golden.png",
+  "board_layout": "vision_assembly/config/board_layout_from_unity.json",
+  "physical_board": "vision_assembly/config/physical_board.json",
+  "socket_clearance": "vision_assembly/config/unity_socket_clearance.json",
+  "coordinate_mapping": {
+    "image_x_from_board_x_sign": -1.0,
+    "image_y_from_board_y_sign": -1.0,
+    "note": "Board +Y points toward the fixture handle/image top. Physical overrides make S1 horizontal, S2-S5 the right vertical column, and I1-I2 the lower-right round slots."
+  },
+  "global_alignment": {
+    "downscale": 0.35,
+    "iterations": 90,
+    "epsilon": 1e-05,
+    "gaussian_filter_size": 3,
+    "minimum_score": 0.82,
+    "max_translation_px": 45.0,
+    "determinant_range": [0.94, 1.06],
+    "component_exclusion_margin_mm": 2.5
+  },
+  "measurement_uncertainty": {
+    "position_mm": 0.25,
+    "axis_angle_deg": 1.5,
+    "common_projection_bias_max_mm": 1.5
+  },
+  "auxiliary_pose_slot_reference_offsets_mm": {
+    "hbm_01": {
+      "offset_mm": [0.7368, 0.1766],
+      "calibration_id": "s22_hbm_fixed_slots_verified_normal_20260904_eight_frames",
+      "note": "Median post-common-bias YOLO centroid offset from eight user-verified normal HBM captures; used only for slot-relative geometry."
+    },
+    "hbm_02": {
+      "offset_mm": [0.7546, -0.0468],
+      "calibration_id": "s22_hbm_fixed_slots_verified_normal_20260904_eight_frames",
+      "note": "Median post-common-bias YOLO centroid offset from eight user-verified normal HBM captures; used only for slot-relative geometry."
+    },
+    "hbm_03": {
+      "offset_mm": [0.5694, 0.1915],
+      "calibration_id": "s22_hbm_fixed_slots_verified_normal_20260904_eight_frames",
+      "note": "Median post-common-bias YOLO centroid offset from eight user-verified normal HBM captures; used only for slot-relative geometry."
+    },
+    "hbm_04": {
+      "offset_mm": [-0.0527, 0.1728],
+      "calibration_id": "s22_hbm_fixed_slots_verified_normal_20260904_eight_frames",
+      "note": "Median post-common-bias YOLO centroid offset from eight user-verified normal HBM captures; used only for slot-relative geometry."
+    },
+    "hbm_05": {
+      "offset_mm": [0.0521, -0.4582],
+      "calibration_id": "s22_hbm_fixed_slots_verified_normal_20260904_eight_frames",
+      "note": "Median post-common-bias YOLO centroid offset from eight user-verified normal HBM captures; used only for slot-relative geometry."
+    },
+    "hbm_06": {
+      "offset_mm": [-0.0563, -0.5857],
+      "calibration_id": "s22_hbm_fixed_slots_verified_normal_20260904_eight_frames",
+      "note": "Median post-common-bias YOLO centroid offset from eight user-verified normal HBM captures; used only for slot-relative geometry."
+    },
+    "hbm_07": {
+      "offset_mm": [0.0107, 0.0285],
+      "calibration_id": "s22_hbm_fixed_slots_verified_normal_20260904_eight_frames",
+      "note": "Median post-common-bias YOLO centroid offset from eight user-verified normal HBM captures; used only for slot-relative geometry."
+    },
+    "hbm_08": {
+      "offset_mm": [-0.0709, -0.2939],
+      "calibration_id": "s22_hbm_fixed_slots_verified_normal_20260904_eight_frames",
+      "note": "Median post-common-bias YOLO centroid offset from eight user-verified normal HBM captures; used only for slot-relative geometry."
+    },
+    "power_module_01": {
+      "offset_mm": [0.7629, 0.0062],
+      "calibration_id": "s22_pm01_verified_normal_20260904_101656_101935",
+      "note": "Median post-common-bias YOLO centroid offset from five unchanged user-verified normal captures. The physical 0.75 mm pose allowance is unchanged."
+    },
+    "vrm_01": {
+      "offset_mm": [-0.5634, 0.6974],
+      "calibration_id": "s22_vrm01_verified_normal_20260904_six_frames",
+      "note": "Median post-common-bias YOLO centroid offset from six user-verified normal captures; used only for slot-relative geometry."
+    },
+    "vrm_02": {
+      "offset_mm": [-0.7187, 0.2383],
+      "calibration_id": "s22_vrm02_verified_normal_20260904_six_frames",
+      "note": "Median post-common-bias YOLO centroid offset from six user-verified normal captures; used only for slot-relative geometry."
+    },
+    "vrm_03": {
+      "offset_mm": [-0.5865, 0.0089],
+      "calibration_id": "s22_vrm03_verified_normal_20260904_six_frames",
+      "note": "Median post-common-bias YOLO centroid offset from six user-verified normal captures; the physical 0.75 mm pose allowance is unchanged."
+    },
+    "vrm_04": {
+      "offset_mm": [-0.3705, -0.1425],
+      "calibration_id": "s22_vrm04_verified_normal_20260904_six_frames",
+      "note": "Median post-common-bias YOLO centroid offset from six user-verified normal captures; the physical 0.75 mm pose allowance is unchanged."
+    },
+    "vrm_05": {
+      "offset_mm": [-0.5780, -0.2489],
+      "calibration_id": "s22_vrm05_verified_normal_20260904_six_frames",
+      "note": "Median post-common-bias YOLO centroid offset from six user-verified normal captures; the physical 0.75 mm pose allowance is unchanged."
+    }
+  },
+  "pose_search": {
+    "margin_mm": 2.0,
+    "rotation_step_deg": 1.0,
+    "rotation_search_deg": 12.0
+  },
+  "white_features": {
+    "lab_l_min": 130,
+    "hsv_s_max": 105,
+    "open_kernel_px": 2,
+    "dot_min_radius_mm": 0.42,
+    "dot_rank_winner_margin_min": 0.15,
+    "dot_geometry_scale": 1.18,
+    "dot_anchor_penalty": 0.8,
+    "hbm_logo_half_x": 0.42,
+    "hbm_logo_half_y": 0.28,
+    "hbm_logo_hue_max": 42,
+    "hbm_logo_s_min": 45,
+    "hbm_logo_v_min": 45,
+    "hbm_logo_present_ratio_min": 0.3,
+    "hbm_logo_missing_ratio_max": 0.08,
+    "inductor_mark_contrast_min": 7.0,
+    "inductor_mark_radius_scale": 0.48,
+    "inductor_mark_radial_min": 0.18,
+    "inductor_mark_radial_max": 0.72,
+    "inductor_mark_angle_bins": 72,
+    "inductor_expected_mark_angle_deg": 180.0,
+    "inductor_mark_angle_tolerance_deg": 50.0,
+    "inductor_mark_axis_tolerance_deg": 10.0,
+    "inductor_mark_inner_edge_reference_deg": {"inductor_01": 87.3, "inductor_02": 85.6}
+  },
+  "leg_inspection": {
+    "GPU": {
+      "strip_half_width_mm": 2.3,
+      "minimum_reference_peaks": 31,
+      "maximum_reference_peaks": 35,
+      "peak_min_distance_px": 9,
+      "peak_profile_min": 0.022,
+      "left_keep_fraction": 0.9,
+      "reference_peak_radius_px": 3,
+      "sample_peak_radius_px": 5,
+      "missing_evidence_ratio": 0.2,
+      "uncertain_evidence_ratio": 0.3,
+      "maximum_lateral_shift_mm": 0.7,
+      "maximum_extra_width_mm": 0.8,
+      "adaptive_lab_min": 70,
+      "adaptive_lab_max": 145,
+      "adaptive_lab_offset": 5,
+      "adaptive_hsv_s_max": 130,
+      "fallen_end_ignore_fraction": 0.16,
+      "max_profile_shift_px": 6,
+      "sample_peak_search_radius_px": 6
+    },
+    "HBM": {
+      "strip_half_width_mm": 2.0,
+      "minimum_reference_peaks": 8,
+      "maximum_reference_peaks": 9,
+      "peak_min_distance_px": 9,
+      "peak_profile_min": 0.022,
+      "left_keep_fraction": 0.9,
+      "reference_peak_radius_px": 3,
+      "sample_peak_radius_px": 5,
+      "missing_evidence_ratio": 0.2,
+      "uncertain_evidence_ratio": 0.24,
+      "maximum_lateral_shift_mm": 0.9,
+      "fallen_recheck_lateral_shift_mm": 0.7,
+      "maximum_extra_width_mm": 1.0,
+      "adaptive_lab_min": 70,
+      "adaptive_lab_max": 145,
+      "adaptive_lab_offset": 5,
+      "adaptive_hsv_s_max": 85,
+      "fallen_end_ignore_fraction": 0.16,
+      "max_profile_shift_px": 6,
+      "sample_peak_search_radius_px": 6,
+      "remove_common_lateral_trend": true
+    }
+  },
+  "component_types": {
+    "GPU": {
+      "detector": "edge_template",
+      "orientation": "lower_left_white_dot",
+      "template_scale": [0.82, 0.8],
+      "presence_pass_score": 0.38,
+      "presence_fail_score": 0.16,
+      "rotation_search_deg": 5.0,
+      "search_margin_mm": 3.0,
+      "inspect_legs": true
+    },
+    "HBM": {
+      "detector": "edge_template",
+      "orientation": "lower_left_white_dot",
+      "template_scale": [0.72, 0.68],
+      "presence_pass_score": 0.34,
+      "presence_fail_score": 0.14,
+      "rotation_search_deg": 45.0,
+      "search_margin_mm": 5.0,
+      "inspect_legs": true
+    },
+    "Power Module": {
+      "detector": "yellow_mask",
+      "orientation": "axis_only",
+      "presence_pass_ratio": 0.55,
+      "presence_fail_ratio": 0.16
+    },
+    "VRM": {
+      "detector": "dark_rect_mask",
+      "orientation": "axis_only",
+      "presence_pass_ratio": 0.4,
+      "presence_fail_ratio": 0.12
+    },
+    "Inductor": {
+      "detector": "circle_edge",
+      "orientation": "left_black_mark",
+      "presence_pass_ratio": 0.48,
+      "presence_fail_ratio": 0.14,
+      "rotation_search_deg": 18.0
+    },
+    "SMD Capacitor": {
+      "detector": "white_mask",
+      "orientation": "axis_only",
+      "presence_pass_ratio": 0.42,
+      "presence_fail_ratio": 0.12,
+      "position_extra_tolerance_mm": [0.15, 0.15],
+      "axis_angle_extra_tolerance_deg": 2.0
+    }
+  }
+}

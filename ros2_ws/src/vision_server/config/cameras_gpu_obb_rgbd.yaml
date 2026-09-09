@@ -1,0 +1,18 @@
+cameras:
+  d435:
+    enabled: true
+    source_topic: /camera/camera/color/image_raw/compressed
+    output_topic: /camera/camera/color/image_raw/compressed
+    transport: compressed
+    role: gpu_obb_pick_rgbd
+    run_yolo: true
+    required_for_ready: true
+    yolo_max_fps: 12.0
+    depth_topic: /camera/camera/aligned_depth_to_color/image_raw
+    camera_info_topic: /camera/camera/color/camera_info
+    depth_scale_m_per_unit: 0.001
+    depth_max_age_sec: 0.20
+    depth_sync_tolerance_sec: 0.10
+    depth_roi_fraction: 0.25
+    depth_min_m: 0.05
+    depth_max_m: 1.50

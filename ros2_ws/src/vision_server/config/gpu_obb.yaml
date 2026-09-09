@@ -1,0 +1,16 @@
+yolo:
+  model_path: models/gpu_obb_best.pt
+  # Keep original-image coordinates while reducing inference latency.
+  image_size: 640
+  confidence: 0.45
+  iou: 0.30
+  obb_duplicate_iou: 0.25
+  device: auto
+  camera_timeout_sec: 2.0
+  output_topic: /vision/gpu_obb/detections
+  status_topic: /vision/gpu_obb/status
+  annotated_topic: /vision/gpu_obb/image/compressed
+  jpeg_quality: 80
+  # Angle remains in /vision/gpu_obb/detections; hide it only in the overlay
+  # so labels stay readable when many parts are present.
+  draw_angle: false

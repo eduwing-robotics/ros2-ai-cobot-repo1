@@ -1,0 +1,119 @@
+{
+  "adaptation_scene_ids": [
+    "20260905_vrm04_small_rotation_defect_a",
+    "20260905_vrm01_rotation_lip_144513",
+    "20260905_vrm02_translation_160027"
+  ],
+  "retained_development_validation_scene_ids": [
+    "20260905_after_user_bump_190202",
+    "20260905_all_normal_post165057_165413",
+    "20260905_all_normal_post_multiscale_163509",
+    "20260905_all_normal_reseated_170142",
+    "20260905_all_vrm_flat_143632",
+    "20260905_all_vrm_normal_frozen_spatial_154927",
+    "20260905_normal_swap01_03_145643",
+    "20260905_vrm01_03_05_empty_a",
+    "20260905_vrm01_04_translation_postfreeze_164343",
+    "20260905_vrm02_04_empty_a",
+    "20260905_vrm02_small_rotation_a",
+    "20260905_vrm02_translation_postfreeze_163741",
+    "20260905_vrm03_opposite_translation_155745",
+    "20260905_vrm03_rotation_150517",
+    "20260905_vrm03_translation_frozen_spatial_155509",
+    "20260905_vrm03_translation_lip_150807",
+    "20260905_vrm03_translation_postfreeze_164022",
+    "20260905_vrm04_left_postfreeze_165642",
+    "20260905_vrm05_controlled_lip_183451",
+    "20260905_vrm05_normal_near_wall_181938",
+    "20260905_vrm05_rotation_144017",
+    "20260905_vrm05_subtle_lip_184100",
+    "20260905_vrm05_translation_postfreeze_165914",
+    "20260905_vrm235_normal_185803"
+  ],
+  "note": "Entire scene excluded from later candidate evaluation if any crop is adapted. All scenes already inspected; retained validation is not blind. Drafts cannot be used for training.",
+  "training_allowed": false,
+  "normal_patchcore_training_allowed": false,
+  "rows": [
+    {
+      "stem": "20260905_vrm04_small_rotation_defect_a__vrm_04",
+      "source_image": "/home/hc/KSMC/runtime/inspection/s22_inspection_roi_20260905_142337.png",
+      "source_sha256": "9c61bdac386450790738c80daa605ab2a0cddec0062b27752adf1e48be2fcfa4",
+      "origin_px": [
+        3,
+        305
+      ],
+      "crop_size_px": [
+        189,
+        241
+      ],
+      "expected_pose": "FAIL",
+      "scene_id": "20260905_vrm04_small_rotation_defect_a",
+      "slot_id": "vrm_04",
+      "annotation_status": "DRAFT_NOT_REVIEWED",
+      "training_allowed": false,
+      "normal_patchcore_training_allowed": false,
+      "sam_prompt_box": [
+        19,
+        24,
+        170,
+        217
+      ],
+      "sam_model_sha256": "3c1e81ca9b037dd39d70a014ddb9a813d6c4c4e12555420db7eaff31689bd4e3",
+      "crop_sha256": "744cce7d28609484d39654e1ea92a2b45c1266e9323889f5bc63effec95f4ab9"
+    },
+    {
+      "stem": "20260905_vrm01_rotation_lip_144513__vrm_01",
+      "source_image": "/home/hc/KSMC/runtime/inspection/s22_inspection_roi_20260905_144513.png",
+      "source_sha256": "5a876b65994296e0fa99e735bd5f29191426d941070f71bcbbca509ddd646dd1",
+      "origin_px": [
+        3,
+        931
+      ],
+      "crop_size_px": [
+        189,
+        241
+      ],
+      "expected_pose": "FAIL",
+      "scene_id": "20260905_vrm01_rotation_lip_144513",
+      "slot_id": "vrm_01",
+      "annotation_status": "DRAFT_NOT_REVIEWED",
+      "training_allowed": false,
+      "normal_patchcore_training_allowed": false,
+      "sam_prompt_box": [
+        19,
+        24,
+        170,
+        217
+      ],
+      "sam_model_sha256": "3c1e81ca9b037dd39d70a014ddb9a813d6c4c4e12555420db7eaff31689bd4e3",
+      "crop_sha256": "8a96e4f2faf36883f510f81b865d9d6197376ff9c7e442213b86c700487fd8a5"
+    },
+    {
+      "stem": "20260905_vrm02_translation_160027__vrm_02",
+      "source_image": "/home/hc/KSMC/runtime/inspection/s22_inspection_roi_20260905_160027.png",
+      "source_sha256": "33952ec62ddaa392d3d3ba4d6587f7c183b8c1060804163336caa9dee0c85ae1",
+      "origin_px": [
+        3,
+        721
+      ],
+      "crop_size_px": [
+        189,
+        241
+      ],
+      "expected_pose": "FAIL",
+      "scene_id": "20260905_vrm02_translation_160027",
+      "slot_id": "vrm_02",
+      "annotation_status": "DRAFT_NOT_REVIEWED",
+      "training_allowed": false,
+      "normal_patchcore_training_allowed": false,
+      "sam_prompt_box": [
+        19,
+        24,
+        170,
+        217
+      ],
+      "sam_model_sha256": "3c1e81ca9b037dd39d70a014ddb9a813d6c4c4e12555420db7eaff31689bd4e3",
+      "crop_sha256": "e8d19547ffdf0abee53cd8c9577f1bee47214e13968c424c0480f44ecc20b7a6"
+    }
+  ]
+}

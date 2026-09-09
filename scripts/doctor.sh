@@ -32,11 +32,21 @@ check_command 'Python' python3
 check_command 'colcon' colcon
 check_command 'rosdep' rosdep
 check_command 'ADB (S22)' adb
+check_command 'V4L2 utilities' v4l2-ctl
 
-if command -v droidcam-cli >/dev/null 2>&1; then
-  printf 'OK   DroidCam CLI (optional)\n'
+scrcpy_bin="${PROJECT_DIR}/runtime/tools/scrcpy-linux-x86_64-v4.1/scrcpy"
+if [[ -x "${scrcpy_bin}" ]]; then
+  printf 'OK   scrcpy 4.1 (S22 USB camera)\n'
 else
-  printf 'WARN DroidCam CLI not installed; S22 camera will be unavailable\n'
+  printf 'FAIL scrcpy 4.1: run camera2_scrcpy/install_scrcpy.sh\n'
+  failures=$((failures + 1))
+fi
+
+if modinfo v4l2loopback >/dev/null 2>&1; then
+  printf 'OK   v4l2loopback kernel module\n'
+else
+  printf 'FAIL v4l2loopback kernel module is unavailable\n'
+  failures=$((failures + 1))
 fi
 
 printf '\nProject root: %s\n' "${PROJECT_DIR}"

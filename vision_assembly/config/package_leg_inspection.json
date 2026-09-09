@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "reference_image": "runtime/inspection/reference/s22_package_legs_golden.png",
+  "board_layout": "vision_assembly/config/board_layout_from_unity.json",
+  "global_alignment": {
+    "downscale": 0.35,
+    "iterations": 90,
+    "epsilon": 1e-05,
+    "gaussian_filter_size": 3,
+    "minimum_score": 0.88,
+    "max_translation_px": 45.0,
+    "determinant_range": [0.94, 1.06]
+  },
+  "white_segmentation": {
+    "lab_l_min": 110,
+    "hsv_s_max": 160,
+    "open_kernel_px": 2,
+    "profile_sigma_px": 1.2
+  },
+  "component_types": {
+    "GPU": {
+      "strip_half_width_mm": 2.2,
+      "body_width_fraction": 0.62,
+      "body_height_fraction": 0.72,
+      "local_search_px": 18,
+      "minimum_local_match": 0.68,
+      "maximum_reference_peaks": 35,
+      "minimum_reference_peaks": 31,
+      "peak_min_distance_px": 9,
+      "peak_profile_min": 0.025,
+      "left_keep_fraction": 0.90,
+      "reference_peak_radius_px": 2,
+      "sample_peak_radius_px": 4,
+      "missing_peak_ratio": 0.38,
+      "weak_peak_ratio": 0.67,
+      "maximum_weak_pass": 2,
+      "pass_profile_correlation": 0.78,
+      "pass_profile_deficit": 0.25,
+      "fail_missing_count": 1
+    },
+    "HBM": {
+      "strip_half_width_mm": 1.9,
+      "body_width_fraction": 0.58,
+      "body_height_fraction": 0.62,
+      "local_search_px": 15,
+      "minimum_local_match": 0.56,
+      "maximum_reference_peaks": 9,
+      "minimum_reference_peaks": 8,
+      "peak_min_distance_px": 9,
+      "peak_profile_min": 0.025,
+      "left_keep_fraction": 0.90,
+      "reference_peak_radius_px": 2,
+      "sample_peak_radius_px": 4,
+      "missing_peak_ratio": 0.34,
+      "weak_peak_ratio": 0.60,
+      "maximum_weak_pass": 2,
+      "pass_profile_correlation": 0.68,
+      "pass_profile_deficit": 0.32,
+      "fail_missing_count": 1
+    }
+  }
+}

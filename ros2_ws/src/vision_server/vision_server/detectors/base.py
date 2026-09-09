@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 
 @dataclass(frozen=True)
@@ -13,6 +13,7 @@ class Detection:
     width: int
     height: int
     angle_deg: Optional[float] = None
+    obb_points: Optional[Tuple[Tuple[float, float], ...]] = None
 
 
 class Detector(ABC):

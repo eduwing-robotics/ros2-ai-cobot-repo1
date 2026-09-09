@@ -40,6 +40,11 @@ D435 aligned depth + CameraInfo ───────┘   ├→ /vision/status
 | `/vision/conveyor/station_spacing_valid` | 두 정지점에 기판 2장이 겹치지 않는 간격인지 여부 |
 | `/vision/conveyor/station_spacing_board_lengths` | 정지선 간격을 현재 기판 진행축 길이로 나눈 값 |
 | `/vision/conveyor/stop_line_ready` | 영상·검출·정지선 간격을 포함한 모터 허가 heartbeat |
+| `/conveyor/state` | 원격 컨베이어 서버의 JSON 상태 heartbeat |
+| `/conveyor/moving` | 원격 서버의 명령 기준 이동 여부 |
+| `/conveyor/move_to_assembly` | 안전 조건 확인 후 조립선까지 이동하는 Trigger 서비스 |
+| `/conveyor/move_to_inspection` | 조립 정지 확인 후 검사선까지 이동하는 Trigger 서비스 |
+| `/conveyor/stop`, `/conveyor/reset` | 즉시 HOLD 및 무동작 상태 reset 서비스 |
 
 기존 `/vision/conveyor/stop_trigger`, `/board_detected`,
 `/stop_line_normalized` 토픽은 조립 station의 하위 호환 별칭이다. 새 코드는
@@ -170,8 +175,10 @@ ros2 service call /vision/run_inspection std_srvs/srv/Trigger '{}'
 RQT Image View에서 `/vision/conveyor/stop_image/compressed`를 선택한다. 영상
 왼쪽→오른쪽을 기판 진행 방향으로 정의하며, 초록색은 조립 정지선, 하늘색은
 비전검사 정지선이다. 기판 후단(왼쪽 끝)이 선택한 선을 안정적으로 통과할 때 해당
-station trigger가 발생한다. 현재 조립선은 기존 실측값 `0.46055`, 검사선은 임시
-`0.82`이며 최종 S22·컨베이어 고정 후 반드시 재조정한다.
+station trigger가 발생한다. 현재 1.5배 S22 overview 기준 조립선은
+`0.18301061`, 검사선은 `0.50520833`이다. 카메라·컨베이어 고정 위치가 바뀌면
+두 값을 반드시 재조정하며, 외부 연동 코드는 값을 하드코딩하지 않고 station별
+`stop_line_normalized` 토픽을 구독한다.
 
 노드는 어두운 직사각형 contour를 여러 개 유지하므로 두 기판을 동시에 추적할 수
 있다. 두 선의 픽셀 간격이 `기판 진행축 길이 × 1.10 + 20 px`보다 작으면
@@ -206,6 +213,25 @@ station trigger가 발생한다. 현재 조립선은 기존 실측값 `0.46055`,
 각 명령은 선택한 한 정지선에서 종료된다. 아직 FR5 작업영역 interlock이 없으므로
 조립 완료 후 자동 재출발은 금지했고 두 번째 명령을 명시적으로 실행해야 한다.
 시험 속도는 최대 0.10 m/s로 제한한다.
+
+### Main Server/Unity 원격 제어
+
+상시 원격 제어 서버는 수동 단발 제어기와 동시에 실행하지 않는다.
+
+```bash
+# 상태/서비스 형식만 확인하며 이동은 거부
+~/KSMC/run_conveyor_remote_server.sh --monitor-only
+
+# 서비스 요청 시 실제 이동을 허용
+~/KSMC/run_conveyor_remote_server.sh --execute --confirm-motion
+```
+
+원격 이동은 S22 ready/trigger heartbeat와
+`/cell/fr5_clear_for_conveyor=True` heartbeat가 모두 fresh일 때만 허용한다.
+FR5 clear가 250 ms 이상 끊기거나 false가 되면 즉시 FAULT 정지한다. 서비스는
+`std_srvs/srv/Trigger` 타입의 `/conveyor/move_to_assembly`,
+`/conveyor/move_to_inspection`, `/conveyor/stop`, `/conveyor/reset`이다.
+상세 계약과 Unity 예시는 `docs/CONVEYOR_API_HANDOFF.md`에 있다.
 
 D435 3D 결과가 필요할 때는 RealSense에서 depth와 color alignment도 켜야 한다.
 RGB 전용 안정 실행 스크립트는 depth를 끄므로 그 상태에서는

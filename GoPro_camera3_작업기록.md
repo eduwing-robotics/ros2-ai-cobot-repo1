@@ -8,13 +8,13 @@
 
 ## 구성
 
-GoPro HERO11은 Linux에서 일반 V4L2 `/dev/video*` 장치가 아니라 USB 네트워크(NCM) 기반 OpenGoPro Webcam 스트림으로 연결한다.
+GoPro HERO11은 Linux에서 일반 V4L2 `/dev/video*` 장치가 아니다. 현재는 Wi-Fi Preview를 주 운용 방식으로 사용하고 USB 네트워크(NCM) 기반 Webcam 스트림을 백업으로 남긴다.
 
 영상 흐름:
 
 ```text
 GoPro HERO11
-  -> USB OpenGoPro Webcam (MPEG-TS/H.264 UDP)
+  -> Wi-Fi Preview 또는 USB OpenGoPro Webcam (MPEG-TS/H.264 UDP)
   -> FFmpeg 저지연 디코딩
   -> ROS2 camera3 노드
   -> /camera3/image_raw/compressed (주 관제 토픽)
@@ -24,6 +24,7 @@ GoPro HERO11
 ## 설치 및 생성 파일
 
 - 실행 스크립트: `/home/hc/KSMC/gopro_camera3/run_gopro_camera3.sh`
+- Wi-Fi 실행 스크립트: `/home/hc/KSMC/gopro_camera3/run_gopro_camera3_wifi.sh`
 - ROS2 노드: `/home/hc/KSMC/gopro_camera3/notebooks/gopro_camera3_node.py`
 - OpenGoPro 코드: `/home/hc/KSMC/gopro_camera3/third_party/open_gopro_multi_webcam`
 - 카메라 정보: `/home/hc/KSMC/GoPro_카메라_정보.txt`
@@ -41,9 +42,18 @@ Preferences -> Connections -> USB Connection -> GoPro Connect
 
 ## 실행
 
+주 운용 방식은 Quik 앱으로 전원만 켠 뒤 미리보기 화면에서 나오고, USB Wi-Fi 어댑터를 `GP27378198`에 연결한 다음 실행한다. GoPro의 USB 단자는 노트북이 아니라 전용 충전기에 연결한다.
+
 ```bash
-cd /home/hc/KSMC/gopro_camera3
-./run_gopro_camera3.sh
+cd /home/hc/KSMC
+./gopro_camera3/run_gopro_camera3_wifi.sh
+```
+
+USB 백업 실행:
+
+```bash
+cd /home/hc/KSMC
+./gopro_camera3/run_gopro_camera3.sh
 ```
 
 화면 확인:
@@ -63,14 +73,18 @@ ros2 topic hz /camera3/image_raw/compressed
 
 ## 현재 영상 설정
 
-- 출력 해상도: 1280x720
+- 카메라 입력 및 출력 해상도: 1280x720 (장시간 안정성과 발열 억제를 위해 네이티브 720p 사용)
 - 목표 프레임: 30Hz
 - 압축 품질: JPEG 75
+- 화면 오른쪽 아래에 노트북 현지 날짜와 시간을 표시
 - ROS QoS: Best Effort, Keep Last, depth 1
 - 압축 토픽: `/camera3/image_raw/compressed` (최대 30Hz)
 - 원본 토픽: `/camera3/image_raw` (구독자가 있을 때만 약 5Hz)
 - FFmpeg 입력: MPEG-TS 강제 지정, H.264 비디오 스트림만 선택
-- UDP FIFO: 패킷 손실 방지를 위해 충분히 확보
+- UDP FIFO: 저지연을 유지하는 범위에서 패킷 순간 변동을 흡수하도록 제한
+- 5초 동안 완전한 프레임이 없으면 Wi-Fi Preview 또는 USB Webcam/FFmpeg 파이프라인 자동 재시작
+- 5초마다 수신 FPS, 압축 발행 FPS, 재시작 횟수 출력
+- HTTP 연결/응답 시간 제한을 적용해 케이블 분리 시 무한 대기 방지
 
 ## 수정 이력과 원인
 

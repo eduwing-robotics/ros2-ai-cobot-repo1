@@ -1,5 +1,9 @@
 # FR5 로봇 작업 기록
 
+## 2026-09-08 numeric target validation
+
+- Added pure finite-number/shape guards before target freshness/quality comparisons and command construction in the existing approach, vertical descent and same-spot workflows. Existing finite tolerances, calibration/tool checks and execution confirmations retained.57robot/tray tests passed with mocked execution; no ROS device interaction or motion. See [grouped implementation and limits](vision.md#2026-09-08-parallel-subsystem-hardening-and-offline-regression-runner).
+
 ## 2026-08-13 — 소형 부품 안전 접근 경로 dry-run
 
 - 검출된 부품 상면 Base XYZ는 `[-313.664, -58.659, -10.061] mm`였다.
@@ -402,3 +406,25 @@
 - 이후 `move_object_approach.py`가 target에서 100 mm 위로 접근하고, 별도
   수직 하강 시험에서 100 mm + 마지막 5 mm를 내려간 뒤, `MoveGripper(1,5)`로
   닫고 상승한다. TCP는 toolcoord1에서 처리하며 Hand-Eye에 중복 가산하지 않는다.
+
+## 2026-09-04 — SMD 비접촉 접근 및 파지 이동 안전 게이트 보강
+
+- 50 mm 상공 접근은 최초 이동 뒤 RGB-D 추적 보정을 최대 두 번 수행하고 최종 위치 1.0 mm·자세 1.0°를 검증한다. 보정 이동은 1차 XY/Z 15 mm·회전 20°, 2차 5 mm·8°를 넘으면 명령하지 않는다.
+- 접근 전 tool, 정지, 비상정지, main error, collision 상태를 확인하고 각 `MoveCart` 후 실제 TCP 위치와 자세 도착을 확인한다. 검출 실패 시 이전처럼 임의 teaching point 복귀를 실행하지 않고 현재 위치에서 정지한다.
+- 실제 파지 직전 허용값을 XY 1.0 mm, Z 1.0 mm, 그리퍼 축 1.5°로 낮췄고 활성 Hand-eye fingerprint 불일치와 미설정 파지 Z offset을 차단한다.
+- `MoveGripper`는 별도 검증 노드를 통해 열림 상태 1, 닫힘 상태 2 및 `gripperfaultnum/grippererro=0`을 확인한다. 물체 보유 여부를 직접 나타내는 상태는 없어 빈 파지 자동 검출은 남은 제한사항이다.
+- 회귀/구문 검증만 수행했으며 로봇·그리퍼·컨베이어 실제 명령은 전송하지 않았다.
+
+## 2026-09-04 — 다품종 그리퍼 카메라 파지 경로 구현
+
+- 기존 SMD의 50 mm 폐루프 접근 및 제자리 파지/상승/놓기 경로를 GPU, HBM, VRM, Power Module, Inductor, SMD 프로파일에서 공통 사용하도록 연결했다. 비접촉 전용 실행기의 기본 속도는 수평 20%, 수직 15%, 회전 20%다.
+- 직사각형 부품은 Tool Y 장축 정렬을 기본으로 하고, 원형 Inductor는 검출 각도와 축 오차 검사를 사용하지 않은 채 현재 TCP 자세를 유지한다. 프로파일·치수·형상·자세 정책이 target과 다르면 이동 전 차단한다.
+- 새 부품의 실제 이동은 기본 금지다. 첫 50 mm 검증 접근에는 미검증 프로파일 명시 해제를 요구하며, 접촉 파지는 추가로 부품별 `gripper-close-position`, `grasp-z-offset-mm`와 기존 Hand-Eye 안전 게이트를 요구한다. 상위 실행기와 하위 전체 파지 스크립트 모두 같은 프로파일 게이트를 적용했다. 17개 회귀/합성 테스트와 구문 검사만 수행했으며 실제 로봇·그리퍼·컨베이어 명령은 보내지 않았다.
+
+## 2026-09-04 — 기본 트레이 비-SMD 50 mm 상공 전용 경로
+
+- `run_tray_part_hover_5cm.sh`가 live RGB-D/Base 목표를 5개 상태로 고정한 뒤 정확히 표면 Z+50 mm까지만 계획하도록 추가했다. 실제 이동 옵션은 `--execute --confirm-hover-only` 두 개를 모두 요구하고, SMD·50 mm 외 높이·30% 초과 속도·15초 지난 목표·트레이 작업공간 밖 좌표를 차단한다.
+- 경로는 현재 TCP에서 안전 Z 수직 상승, 필요 시 안전 Z에서 Tool Y 장축 정렬, 목표 XY 수평 이동, 50 mm 상공 수직 접근으로 끝난다. 접촉 하강, 그리퍼 열기/닫기, 파지, 상승, 배치, 복귀 단계는 생성하지 않는다. 기본 속도는 수평 20%, 수직 15%, 회전 20%다.
+- 현재 TCP dry-run 기준 자세는 약 `[-527.995,-60.960,337.878,180.000,0.000,90.000]`이었다. GPU/VRM/Power Module/HBM에는 각각 live 장축에 맞춘 ABC를 계산했고, 원형/정사각형 Inductor는 현재 ABC를 유지했다. 다섯 종류의 계산 목표 Z는 2.202~8.295 mm였으며 모두 표면 측정값보다 정확히 50 mm 높다.
+- Tool 1, 정지 상태, AUTO 모드(실행 시), 비상정지/main error/collision 해제, 최대 이동거리 650 mm를 확인한다. 0.05°를 넘는 정렬은 안전 Z에서 별도 완료하며, 모든 waypoint의 XYZ 1.5 mm 및 회전행렬 자세 1.0° 도착을 함께 검증한다. 목표와 안전 계약의 SHA-256이 달라져도 재수집 전에는 이동하지 않는다.
+- 실시간 검증은 모두 dry-run이었다. 로봇 서비스 호출, `SetSpeed`, `MoveCart`, `MoveGripper`, 그리퍼 및 컨베이어 실제 명령은 한 건도 전송하지 않았다. 실제 로봇 도착 오차와 물리 50 mm 간격, 충돌 여유는 감독하의 최초 저속 이동에서 확인해야 한다.

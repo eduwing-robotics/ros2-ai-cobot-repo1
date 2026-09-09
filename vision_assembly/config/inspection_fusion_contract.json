@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "contract_id": "s22_hybrid_aoi_v1",
+  "status": "DESIGN_LOCKED_HYBRID_RUNTIME_WIRED_VRM_STATE_V6_ADVISORY",
+  "objective": "Unattended inspection of all 25 assembly slots without requiring a teammate's D435-trained model.",
+  "vrm_inspection_scope": {
+    "approved_change": "2026-09-08 user accepts fully seated placement anywhere inside socket; right-wall 1mm process clearance is not an inspection defect criterion.",
+    "retained": "Missing, wrong orientation, actual socket exit and lip seating; uncertain evidence stays UNKNOWN.",
+    "robot_motion_safety_changed": false,
+    "restriction": "Removing RIGHT-only nomination does not certify socket containment, height, or overall PASS."
+  },
+  "implementation_entrypoint": "vision_assembly/hybrid_inspection/main.py",
+  "smd01_micro_seating_scope": {
+    "status": "DEFERRED_UNKNOWN",
+    "reason": "User agreed to defer micro lip seating after unstable normal warnings and ambiguous socket wall evidence.",
+    "retained": "Raw evidence, missing, rotation, and independent position checks; no PASS promotion.",
+    "limitation": "Small height-only defects may no longer receive a displayed seating candidate. This is scope reduction, not improved detection accuracy."
+  },
+  "hbm_pin_candidate_scope": {
+    "provider": "same-slot reference-relative long pin-band gap plus legacy per-pin near-absence evidence and candidate circles",
+    "authority": "ADVISORY_ONLY",
+    "reference_manifest": "vision_assembly/config/hbm_pin_reference.json",
+    "limitations": "Does not certify single-pin defects, total dark-band absence, height, or placement. Missing reference, uncertain presence or invalid alignment abstains. No candidate is not PASS.",
+    "validation": "Developmental same-session normal and partial-loss replay only; no production authority."
+  },
+  "sensor_contract": {
+    "primary_inspection_camera": "S22 optical still",
+    "rectified_board_roi_px": [1600, 1266],
+    "teammate_d435_segmentation_required": false,
+    "d435_role": "optional independent second view only"
+  },
+  "preprocessing_contract": {
+    "learned_provider_input": "registered original S22 color pixels without CLAHE",
+    "opencv_local_input": "grayscale CLAHE clipLimit=2.0 tileGridSize=8x8, with raw grayscale corroboration only when CLAHE saturation would erase physical contrast",
+    "restriction": "No preprocessing may normalize away slot-relative position or orientation defects."
+  },
+  "stages": [
+    {
+      "id": "capture_quality",
+      "required": true,
+      "purpose": "Reject stale, blurred, clipped, overexposed, or badly framed captures before inspection.",
+      "current_status": "PARTIALLY_IMPLEMENTED"
+    },
+    {
+      "id": "board_registration",
+      "required": true,
+      "purpose": "Perspective-rectify the fixture and board into the fixed 1600x1266 board frame.",
+      "current_provider": "S22 board contour and homography",
+      "failure_result": "UNKNOWN"
+    },
+    {
+      "id": "component_presence_and_pose",
+      "required": true,
+      "purpose": "Determine presence, slot-relative center, and in-plane angle for every expected component.",
+      "provider_order": [
+        "S22 fixed-slot state classifier (VRM: EMPTY/CORRECT/ROTATED; other types: PRESENT/EMPTY)",
+        "slot-relative geometry and independent orientation-feature checks",
+        "S22-trained segmentation advisory candidate",
+        "S22-trained OBB advisory candidate"
+      ],
+      "current_status": "VRM_STATE_V6_ADVISORY_ACTIVE_NON_VRM_PRESENCE_CANDIDATES_TRAINED_RUNTIME_WIRED",
+      "restriction": "Texture-ambiguous segmentation masks cannot independently assert PRESENT; an unvalidated slot classifier remains ADVISORY_ONLY.",
+      "external_d435_model_allowed": true,
+      "external_d435_model_required": false,
+      "low_confidence_result": "UNKNOWN"
+    },
+    {
+      "id": "orientation_features",
+      "required": true,
+      "purpose": "Confirm orientation independently from the component detector.",
+      "checks": [
+        "GPU and HBM white-dot corner",
+        "component long-axis angle",
+        "Inductor asymmetric black-mark direction",
+        "VRM fixed-slot CORRECT versus ROTATED state",
+        "type-specific asymmetric features where available"
+      ],
+      "low_confidence_result": "UNKNOWN"
+    },
+    {
+      "id": "pins_and_surface",
+      "required": true,
+      "purpose": "Inspect GPU/HBM white pins and fine local appearance using high-resolution slot ROIs.",
+      "provider_order": [
+        "explicit white-pin row and continuity check",
+        "slot-level PatchCore or FR-PatchCore appearance candidate"
+      ],
+      "current_status": "UNVERIFIED_CANDIDATES",
+      "low_confidence_result": "UNKNOWN"
+    },
+    {
+      "id": "whole_board_anomaly",
+      "required": false,
+      "purpose": "Screen for unexpected global appearance changes that the explicit slot checks did not describe.",
+      "provider_order": [
+        "strict-normal whole-board PatchCore",
+        "FR-PatchCore candidate"
+      ],
+      "authority": "ADVISORY_UNTIL_VALIDATED",
+      "restriction": "FR-PatchCore registration must not be used to excuse component position or orientation defects."
+    }
+  ],
+  "provider_contract": {
+    "required_output_fields": [
+      "stage_id",
+      "slot_id",
+      "status",
+      "confidence",
+      "calibration_id",
+      "evidence"
+    ],
+    "allowed_status": ["PASS", "FAIL", "UNKNOWN"],
+    "unverified_model_authority": "ADVISORY_ONLY",
+    "low_confidence_policy": "Return UNKNOWN; never convert a weak score into PASS."
+  },
+  "fusion_policy": {
+    "pass": "Every required stage for every expected slot is calibrated, available, and PASS.",
+    "fail": "At least one calibrated authoritative stage reports a confirmed FAIL.",
+    "unknown": "Any required stage is missing, stale, uncalibrated, contradictory, or low-confidence.",
+    "unknown_runtime_action": "Automatically recapture and rerun; after the configured retry limit, hold the board or route it as NG_UNCERTAIN without an operator PASS override.",
+    "model_degradation": "Continue all independent stages. A degraded or unavailable model removes only its own vote and cannot make the board PASS.",
+    "human_role": "Dataset review and threshold validation during development only; no human visual decision in the target production loop."
+  },
+  "data_policy": {
+    "normal_training_rule": "Only verified correctly assembled S22 captures may enter normal training.",
+    "forbidden_normal_variation": [
+      "missing component",
+      "slot-relative component shift outside socket tolerance",
+      "wrong component orientation",
+      "missing or collapsed white pin",
+      "known surface defect"
+    ],
+    "allowed_normal_variation": [
+      "verified print-to-print appearance variation",
+      "board-level camera pose variation removed by registration",
+      "lighting variation that has been separately validated"
+    ]
+  }
+}

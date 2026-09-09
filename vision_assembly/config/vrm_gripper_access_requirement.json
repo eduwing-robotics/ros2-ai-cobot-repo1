@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "status": "USER_REQUIREMENT_PENDING_METROLOGY",
+  "runtime_enabled": false,
+  "authority": "ADVISORY_ONLY",
+  "slots": ["vrm_01", "vrm_02", "vrm_03", "vrm_04", "vrm_05"],
+  "minimum_gap_mm": 1.0,
+  "gap_between": ["VRM outer boundary", "socket wall on gripper entry side"],
+  "side_context": "Right side toward Power Module 1 in the discussed upright inspection view; per-slot physical entry mapping uncalibrated",
+  "scope": "Entry side only, not all four walls simultaneously",
+  "user_reason": "Avoid gripper interference with Power Module 1",
+  "assembly_context": {
+    "order": "Power modules installed before VRMs",
+    "placement_intent": "Place all VRMs against the left side within their sockets to maximize clearance for the right gripper finger beside installed PM1",
+    "inspection_requirement": "Minimum right-side gap from VRM body to its own socket wall remains 1mm; not VRM-to-PM1 gap",
+    "physical_mockup": "3T foam board inserted between VRM row and PM1 represents a gripper finger, not a slot gap gauge",
+    "mockup_image": "runtime/inspection/s22_inspection_roi_20260906_151941.png",
+    "actual_finger_thickness_verified": false,
+    "collision_clearance_validated": false
+  },
+  "source": "2026-09-06 user specified 1mm for all VRMs and clarified socket wall, not Power Module boundary",
+  "cad_reference": "vision_assembly/config/unity_socket_clearance.json",
+  "cad_total_clearance_mm": 1.0,
+  "cad_centered_side_gap_mm": 0.5,
+  "user_reported_measurement": {
+    "date": "2026-09-06",
+    "part_width_height_mm": [11.0, 14.0],
+    "socket_width_height_mm": [12.5, 15.0],
+    "socket_measurement_location": "Initially top opening; user subsequently confirmed inside width is the same but cannot measure precisely",
+    "user_reported_inside_width_mm": 12.5,
+    "seated_contact_width_mm": null,
+    "derived_clearance_scope": "Opening dimensions minus body dimensions only; not verified usable travel or gap at seating/gripper height",
+    "total_clearance_xy_mm": [1.5, 1.0],
+    "centered_side_gap_xy_mm": [0.75, 0.5],
+    "scope": "User supplied representative dimensions; per-slot variation and measurement uncertainty not provided",
+    "nominal_center_x_for_right_gap_1mm": -0.25
+  },
+  "feasibility_note": "User reports equal inside and opening width, with precise measurement unavailable. Do not assume a narrower bottom explains observed travel. Nominal dimension arithmetic does not calibrate image clearance. Proceed with empirical left-seated versus right-shifted placement evidence, preserving UNKNOWN for ambiguous cases and without claiming1mm certification. Left-flush intent and1mm engineering requirement remain. No automatic motion or historical label rewrite.",
+  "measured_socket_wall": null,
+  "measurement_uncertainty_mm": null,
+  "failure_result_until_calibrated": "UNKNOWN",
+  "changes_existing_training_labels": false
+}

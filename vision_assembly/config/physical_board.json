@@ -34,5 +34,66 @@
       ]
     }
   },
+  "component_slot_overrides": {
+    "SMD Capacitor": {
+      "source": "D435 physical-slot measurements from 2026-08-13, renumbered to the agreed assembly convention",
+      "status": "physical measured candidate; S1 is the only horizontal slot and S2-S5 run bottom-to-top in the right column",
+      "slots": [
+        {
+          "slot_id": "smd_capacitor_01",
+          "x_mm": -40.95,
+          "y_mm": -39.21,
+          "long_axis_board_deg": 0.0,
+          "nominal_size_mm": {"x": 6.7527, "y": 3.8244, "height": 3.0238}
+        },
+        {
+          "slot_id": "smd_capacitor_02",
+          "x_mm": -60.43,
+          "y_mm": -17.97,
+          "long_axis_board_deg": 90.0,
+          "nominal_size_mm": {"x": 3.8087, "y": 6.7805, "height": 3.0238}
+        },
+        {
+          "slot_id": "smd_capacitor_03",
+          "x_mm": -59.98,
+          "y_mm": -1.38,
+          "long_axis_board_deg": 90.0,
+          "nominal_size_mm": {"x": 3.8087, "y": 6.7805, "height": 3.0238}
+        },
+        {
+          "slot_id": "smd_capacitor_04",
+          "x_mm": -60.39,
+          "y_mm": 15.59,
+          "long_axis_board_deg": 90.0,
+          "nominal_size_mm": {"x": 3.8087, "y": 6.7805, "height": 3.0238}
+        },
+        {
+          "slot_id": "smd_capacitor_05",
+          "x_mm": -60.25,
+          "y_mm": 32.47,
+          "long_axis_board_deg": 90.0,
+          "nominal_size_mm": {"x": 3.8087, "y": 6.7805, "height": 3.0238}
+        }
+      ]
+    },
+    "Inductor": {
+      "source": "current S22 empty-board socket image cross-checked against the assembled-board image on 2026-08-31",
+      "status": "physical image-registered candidate; I1 and I2 are the upper and lower round sockets at the board lower-right",
+      "slots": [
+        {
+          "slot_id": "inductor_01",
+          "x_mm": -59.674,
+          "y_mm": -32.872,
+          "long_axis_board_deg": 0.0
+        },
+        {
+          "slot_id": "inductor_02",
+          "x_mm": -59.674,
+          "y_mm": -44.297,
+          "long_axis_board_deg": 0.0
+        }
+      ]
+    }
+  },
   "status": "physical dimensions supplied by user; verify with calipers before precision placement"
 }

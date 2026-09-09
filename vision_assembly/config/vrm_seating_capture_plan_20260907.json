@@ -1,0 +1,22 @@
+{
+  "status": "AWAITING_PHYSICAL_PLACEMENT",
+  "purpose": "New VRM05 seating development scenes without consuming existing regression controls",
+  "authority": "ADVISORY_ONLY",
+  "training_ingestion": "MANUAL_REVIEW_REQUIRED",
+  "camera": "Existing S22 optical inspection configuration, flash off",
+  "constraints": [
+    "Do not change board registration, zoom, conveyor stops or other parts",
+    "Do not infer other slots are normal",
+    "Repeated shots of one placement belong to the same physical scene and split",
+    "Existing hard regression images remain excluded from training",
+    "No robot or conveyor motion"
+  ],
+  "steps": [
+    {"id": "normal_left", "split": "development", "slot": "vrm_05", "placement": "Fully seated against left wall; no edge on lip", "shots": 2},
+    {"id": "left_lower_lip", "split": "development", "slot": "vrm_05", "placement": "Lower-left corner visibly resting slightly on lip; similar direction to normal", "shots": 2},
+    {"id": "normal_reseat", "split": "development", "slot": "vrm_05", "placement": "Lift and independently reseat flat against left wall", "shots": 2},
+    {"id": "left_upper_lip", "split": "development", "slot": "vrm_05", "placement": "Upper-left corner slightly resting on lip", "shots": 2},
+    {"id": "fresh_validation_normal", "split": "validation", "slot": "vrm_05", "placement": "Independently reseated flat, not reused development placement", "shots": 2},
+    {"id": "fresh_validation_lip", "split": "validation", "slot": "vrm_05", "placement": "New subtle lip placement with explicit user physical confirmation", "shots": 2}
+  ]
+}

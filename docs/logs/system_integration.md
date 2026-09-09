@@ -13,6 +13,21 @@
 
 현재 단계는 D435 Camera-to-Robot 좌표 정확도 확보이며 자동 Pick/조립은 아직
 진행하지 않는다.
+
+## 2026-09-04 — 비전 검사 결과 DB 전달 계약
+
+- S22 25슬롯 하이브리드 보고서를 DB용 JSON과 증거 이미지 ZIP으로 만드는
+  `run_export_latest_inspection_for_db.sh`를 추가했다. production cycle, job, board
+  ID와 `assembly-r1` 슬롯 코드를 함께 보내고, 이미지에는 상대경로·SHA-256을
+  사용한다.
+- DB endpoint가 확정되기 전에는 outbox ZIP으로 전달하며, 이후 같은 실행기의
+  `--endpoint`로 multipart HTTP 전송한다. 안정적인 idempotency key로 재전송 중복을
+  막는다. 팀 적용 문서는 `team_handoff/vision_inspection_db/`에 있다.
+- 현재 검사 근거는 미검증 advisory이므로 DB 자동 대책서 발행은 차단한다. 실제
+  API 주소·인증과 생산 cycle ID 발급 주체는 DB/Main Server 담당자와 확정해야 한다.
+  컨베이어 자동 검사 실행기를 최신 하이브리드 경로로 바꾸는 작업은 아직 하지
+  않았다. 실제 DB 통신과 장비 명령은 수행하지 않았다.
+
 ## 2026-08-12 — 최종 파지 좌표 전략 확정
 
 - D435 RGB-D를 이용한 2단계 Eye-in-Hand visual servo 구조를 채택한다.
@@ -206,8 +221,8 @@
 - 다음 작업자가 프로젝트 구조와 안전 조건을 바로 이해할 수 있도록
   루트의 `CODEX_HANDOFF.md`에 장비 구성, 실행 순서, 검증 상태와 남은 작업을
   기록했다.
-- DroidCam 외부 소스는 저장소에 복제하지 않고 공식 저장소의 검증된 커밋
-  `cdc044bd74873c6b8750750aac42db8029dac5c1`을 설치 시 내려받도록 고정했다.
+- S22 카메라 의존성은 프로젝트 설치 스크립트로 재현할 수 있게 구성했고, 이후
+  운영 입력을 공식 scrcpy 4.1 USB 경로로 단일화했다.
 - 배포 브랜치 이름은 기능 범위를 나타내는
   `vision-robot-conveyor-control`로 정했다.
 - 배포 전 ROS 패키지 빌드, Python 문법 검사, shell 문법 검사, pytest 11개와
@@ -232,6 +247,20 @@
   하드코딩된 음수 속도와 분리했다.
 - 정지 시에는 방향과 관계없이 속도 0을 10회 발행하는 기존 안전 동작을 유지했다.
 - 실제 모터 구동 없이 단위 테스트와 빌드만 검증한다.
+
+## 2026-09-03 — 컨베이어 원격 API와 assembly-r1 연결
+
+- Main Server와 Unity가 `/cmd_vel`을 직접 발행하지 않고 station 단위 ROS 2
+  Trigger 서비스를 호출하도록 원격 컨베이어 제어 경계를 구현했다.
+- 공통 레시피의 `move_conveyor_to_assembly`와
+  `move_conveyor_to_inspection`을 원격 서비스에 연결하고, 각각
+  ASSEMBLY_STOP과 INSPECTION_STOP 상태 수신을 완료 조건으로 정했다.
+- S22 heartbeat, station trigger, FR5-clear heartbeat, 중복 속도 publisher,
+  이동 timeout을 하나의 fail-safe gate로 묶었다. FR5 executor의
+  `/cell/fr5_clear_for_conveyor` publisher는 남은 통합 항목이다.
+- 격리된 테스트 cmd topic에서 monitor-only 거절/정지와 ARMED 이동 수락,
+  비전 trigger의 ASSEMBLY_STOP 전이를 확인했으며 실제 컨베이어 또는 로봇 이동
+  명령은 전송하지 않았다.
 
 ## 2026-08-20 — 프로젝트 전수 정적 검사와 통합 재검증
 

@@ -1,0 +1,12 @@
+{
+  "frame": "base_to_flange",
+  "pose_mm_deg": [-533.32349, -39.82165, 434.87772, 179.99959, 0.00027, 89.99891],
+  "reference_to_live_homography": [
+    [1.1566109427, -0.0220045380, -208.6149749756],
+    [0.0131508205, 1.1513539894, -69.7724304199],
+    [0.0000068998, -0.0000092426, 1.0]
+  ],
+  "position_tolerance_mm": 1.0,
+  "rotation_tolerance_deg": 0.3,
+  "note": "Validated tray-overview waiting pose, captured 2026-08-21"
+}

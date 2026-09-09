@@ -1,0 +1,11 @@
+cameras:
+  d435:
+    enabled: true
+    source_topic: /camera/camera/color/image_raw/compressed
+    output_topic: /camera/camera/color/image_raw/compressed
+    transport: compressed
+    role: gpu_obb_pick_direct_fallback
+    run_yolo: true
+    required_for_ready: true
+    # Preserve the complete 15 FPS compressed camera stream when possible.
+    yolo_max_fps: 15.0

@@ -1,7 +1,23 @@
 conveyor_roi:
-  image_topic: /camera2/image_raw/compressed
+  # Use the network-safe 1280x720 stream for the live stop decision. The
+  # 1920x1080 analysis topic and lossless 4K inspection capture stay separate.
+  image_topic: /camera2/image_stream/compressed
   annotated_topic: /vision/conveyor/stop_image/compressed
-  jpeg_quality: 90
+  # Reject delayed control frames instead of allowing the belt to continue
+  # from an old image. The motion controller has an independent heartbeat
+  # cutoff as a second fail-safe.
+  max_frame_age_seconds: 0.15
+  # Keep /camera2/image_raw/compressed at 1920x1080 for stationary analysis.
+  # Exact inspection uses the separate 4000x3000 telephoto still capture.
+  # Detection, UI drawing, and transmitted overlay remain 960 px for low
+  # latency. Drawing directly at the final size avoids one full-frame UI pass
+  # and resize while retaining clean anti-aliased typography.
+  processing_max_width: 960
+  jpeg_quality: 86
+  annotated_max_width: 960
+  # Control runs at 30 FPS. The optional dashboard is capped separately so
+  # rqt/UI encoding cannot delay stop-trigger publication.
+  annotated_fps: 15
 
   # Image travel direction is left -> right. The TurtleBot wheel command used
   # to produce this physical direction is negative_x and is configured in the
@@ -12,48 +28,78 @@ conveyor_roi:
   stop_lines:
     assembly:
       axis: x
-      # Current tilted S22 pose: empty PCB body trailing edge ~= 565.94 px.
-      position: 0.29491513
-      span_start: 0.24
-      span_end: 0.86
+      # 2026-09-01 calibration after fixing the S22 overview at 1.5x. The
+      # manually placed assembly PCB trailing edge was x=175.69 at the 960 px
+      # control width. This is the desired physical assembly stop pose.
+      position: 0.18301061
+      span_start: 0.2470
+      span_end: 0.5805
     inspection:
       axis: x
-      # Current tilted S22 pose: assembled PCB body trailing edge ~= 1344 px.
-      position: 0.70036477
-      span_start: 0.24
-      span_end: 0.86
+      # Final inspection pose selected from the fixed 1.5x overview after the
+      # latest manual placement. The PCB trailing edge was x=485.0 at the
+      # 960 px control width. Apply by restarting the ROI node.
+      position: 0.50520833
+      span_start: 0.2470
+      span_end: 0.5805
 
   # The two stations must have room for one complete PCB plus clearance between
   # their trailing-edge stop poses. If the observed PCB is too long for the
   # configured spacing, stop_line_ready becomes false and motion is inhibited.
   station_spacing:
-    minimum_normalized_separation: 0.25
+    minimum_normalized_separation: 0.20
     minimum_board_lengths: 1.10
     minimum_clearance_px: 20
 
   board_detection:
     travel_direction: positive_x
     # Wide search range allows one PCB at each stop line to be tracked at once.
-    search_x_start: 0.02
-    search_x_end: 0.98
+    search_x_start: 0.04
+    search_x_end: 0.96
     # Fixed S22 conveyor belt band. Excluding the workspace above/below the
     # belt prevents the TurtleBot body, tripod, tools, and table objects from
     # being classified as PCBs.
-    search_y_start: 0.42
-    search_y_end: 0.76
-    dark_threshold: 105
-    close_kernel_px: 13
-    min_area_fraction: 0.03
-    max_area_fraction: 0.30
-    min_aspect_ratio: 1.25
-    max_aspect_ratio: 1.90
-    min_rectangularity: 0.78
+    search_y_start: 0.2470
+    search_y_end: 0.5805
+    # In the new view the belt is gray (about 125-150) while both PCB bodies
+    # remain below 40. The old value 105 merged the entire belt into one dark
+    # contour, so both valid PCBs were rejected by the shape filters.
+    dark_threshold: 55
+    close_kernel_px: 9
+    min_area_fraction: 0.010
+    max_area_fraction: 0.065
+    # Aspect is evaluated from minAreaRect, so in-plane board rotation does not
+    # change it. The wider range tolerates perspective and partial occlusion.
+    min_aspect_ratio: 1.00
+    max_aspect_ratio: 1.80
+    min_rectangularity: 0.58
     # Ignore the narrow fixture grip tab when estimating the PCB body centre.
-    body_span_ratio: 0.68
+    # A connected handle may protrude along either body axis, so the detector
+    # compares both scan-line profiles instead of relying on one orientation.
+    body_span_ratio: 0.75
+    # A span this much larger than the median body span is considered a
+    # connected fixture protrusion when it occupies at least the configured
+    # fraction of scan lines.
+    body_extension_ratio: 1.10
+    body_extension_fraction: 0.12
     # The latest-frame USB camera path and strict belt/shape filters make a
     # single crossing frame reliable. Waiting for five frames visibly delayed
     # the stop after the board edge had already crossed the line.
     stable_crossing_frames: 1
+    # The installed 1.5x S22 view still showed a small downstream overrun at
+    # 0.10 m/s with the previous 10 px lead. Trigger 20 px before the visible
+    # target so capture, DDS, Wi-Fi cmd_vel, and wheel response settle the PCB
+    # on the line. The displayed line remains the desired physical stop pose.
+    stop_trigger_lead_px: 20.0
+    # Stabilize the display rectangle without smoothing the control-critical
+    # trailing edge. A three-frame hold prevents one noisy mask from making a
+    # board blink out of the monitor.
+    tracking_center_alpha: 0.75
+    # Robust edge fitting already suppresses most contour noise, so the four
+    # corners can follow a newly rotated/stationary PCB without a long lag.
+    tracking_shape_alpha: 0.45
+    tracking_match_distance_px: 80.0
+    tracking_hold_frames: 3
     rearm_upstream_frames: 5
     rearm_margin_px: 30
     reset_missing_frames: 15

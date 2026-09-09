@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "status": "ADVISORY_ONLY",
+  "task": "gpu_black_package_surface_anomaly",
+  "input": "registered_original_s22_rgb",
+  "interior_bounds_xyxy_relative_to_gpu_crop": [
+    0.17,
+    0.12,
+    0.83,
+    0.88
+  ],
+  "output_size_wh": [
+    320,
+    512
+  ],
+  "counts": {
+    "train/good": 14,
+    "test/good": 9,
+    "test/crack": 2
+  },
+  "training_policy": "verified_normal_only",
+  "crack_policy": "physical_crack_images_are_blind_test_only",
+  "limitations": [
+    "Only two physical crack images are available.",
+    "No automatic PASS/FAIL authority is granted."
+  ]
+}

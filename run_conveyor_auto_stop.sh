@@ -3,7 +3,7 @@ set -Eeo pipefail
 
 # 사용 전 준비:
 # 1. TurtleBot에서 robot.launch.py를 실행한다 (ROS_DOMAIN_ID=5).
-# 2. 노트북의 다른 터미널에서 ~/KSMC/run_s22_conveyor.sh를 실행한다.
+# 2. 노트북의 다른 터미널에서 ~/KSMC/run_s22_conveyor_hq.sh를 실행한다.
 # 3. 기판을 선택한 정지선의 상류에 놓는다.
 # 4. 조립 위치로 보낼 때:
 #      ~/KSMC/run_conveyor_to_assembly.sh
@@ -16,6 +16,7 @@ set -Eeo pipefail
 # - 각 이동은 한 정지선까지만 담당한다. 조립 완료 확인 없이 검사선까지
 #   자동 재시작하지 않는다.
 # - Ctrl+C 또는 카메라 heartbeat 단절 시에도 정지한다.
+# - 0.15초 동안 새 비전 상태가 없으면 정지선을 기다리지 않고 fail-safe 정지한다.
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -39,6 +40,7 @@ exec "${PROJECT_DIR}/ros2_ws/run_conveyor_stop_test.sh" \
   --cmd-type twist_stamped \
   --speed 0.10 \
   --direction negative_x \
+  --heartbeat-timeout 0.15 \
   --timeout 0 \
   --execute \
   --confirm-motion \

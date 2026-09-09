@@ -16,6 +16,17 @@ sudo apt-get install -y \
   ros-jazzy-cv-bridge ros-jazzy-image-transport ros-jazzy-rqt-image-view \
   ros-jazzy-realsense2-camera ros-jazzy-realsense2-description
 
+if ! modinfo v4l2loopback >/dev/null 2>&1; then
+  sudo apt-get install -y v4l2loopback-dkms
+fi
+sudo install -m 0644 \
+  "${PROJECT_DIR}/camera2_scrcpy/v4l2loopback-ksmc.modules" \
+  /etc/modules-load.d/ksmc-s22-scrcpy.conf
+sudo install -m 0644 \
+  "${PROJECT_DIR}/camera2_scrcpy/v4l2loopback-ksmc.conf" \
+  /etc/modprobe.d/ksmc-s22-scrcpy.conf
+"${PROJECT_DIR}/camera2_scrcpy/install_scrcpy.sh"
+
 if [[ ! -f "${PROJECT_DIR}/config/ksmc.env" ]]; then
   cp "${PROJECT_DIR}/config/ksmc.env.example" \
     "${PROJECT_DIR}/config/ksmc.env"
@@ -29,5 +40,5 @@ fi
 "${PROJECT_DIR}/scripts/build_all.sh"
 
 echo
-echo "Base setup complete. DroidCam is optional; see camera2_droidcam/README.md."
+echo "Base setup complete. S22 uses USB scrcpy; see camera2_scrcpy/README.md."
 echo "Next: edit config/ksmc.env, then run scripts/doctor.sh."

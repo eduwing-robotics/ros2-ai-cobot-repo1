@@ -2,16 +2,27 @@
 """Explicitly confirmed same-position grasp, lift, place, and retreat test."""
 
 import argparse
+import hashlib
 import json
 import math
 import time
 from pathlib import Path
+from target_numeric_guard import finite_vector, validate_cli_floats, validate_target_numbers
 
 import rclpy
 import numpy as np
 from fairino_msgs.msg import RobotNonrtState
 from fairino_msgs.srv import RemoteCmdInterface
 from rclpy.node import Node
+from scipy.spatial.transform import Rotation
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+ACTIVE_HANDEYE = PROJECT_ROOT / 'calibration' / 'data' / 'handeye_result.json'
+
+
+def axis_delta_deg(target, current):
+    return (float(target) - float(current) + 90.0) % 180.0 - 90.0
 
 
 class Cycle(Node):
@@ -62,12 +73,18 @@ class Cycle(Node):
                 return
         raise RuntimeError('Robot motion completion/target verification timeout')
 
-    def wait_gripper_done(self, timeout=10.0):
+    def wait_gripper_done(self, expected_state, timeout=10.0):
         deadline = time.monotonic() + timeout
         while rclpy.ok() and time.monotonic() < deadline:
             rclpy.spin_once(self, timeout_sec=0.1)
-            if self.state is not None and int(self.state.grip_motion_done) in (1, 2):
-                return int(self.state.grip_motion_done)
+            if self.state is None:
+                continue
+            if int(self.state.gripperfaultnum) != 0 or int(self.state.grippererro) != 0:
+                raise RuntimeError(
+                    f'gripper fault={self.state.gripperfaultnum}, error={self.state.grippererro}'
+                )
+            if int(self.state.grip_motion_done) == expected_state:
+                return expected_state
         raise RuntimeError('Gripper completion timeout')
 
 
@@ -76,6 +93,15 @@ def main():
     parser.add_argument('--target-file', type=Path, required=True)
     parser.add_argument('--max-target-age-sec', type=float, default=900.0)
     parser.add_argument('--max-target-xy-error-mm', type=float, default=10.0)
+    parser.add_argument('--max-target-z-error-mm', type=float, default=1.0)
+    parser.add_argument('--max-axis-error-deg', type=float, default=1.5)
+    parser.add_argument('--grasp-z-offset-mm', type=float, default=None)
+    parser.add_argument(
+        '--orientation-mode', choices=('auto', 'long_axis', 'preserve'),
+        default='auto',
+        help='auto uses orientation_mode stored in the current target file',
+    )
+    parser.add_argument('--gripper-axis', choices=('tool_x', 'tool_y'), default='tool_y')
     parser.add_argument('--lift-mm', type=float, default=20.0)
     parser.add_argument('--retreat-mm', type=float, default=20.0)
     parser.add_argument('--motion-speed-percent', type=int, default=10)
@@ -93,11 +119,14 @@ def main():
         help='Current pose is already lifted with the part: lower, open, and retreat only.',
     )
     args = parser.parse_args()
+    validate_cli_floats(args, parser)
 
     if not 5.0 <= args.lift_mm <= 50.0 or not 5.0 <= args.retreat_mm <= 50.0:
         parser.error('--lift-mm and --retreat-mm must be between 5 and 50')
     if not 1 <= args.motion_speed_percent <= 50:
         parser.error('--motion-speed-percent must be between 1 and 50')
+    if min(args.max_target_xy_error_mm, args.max_target_z_error_mm, args.max_axis_error_deg) <= 0.0:
+        parser.error('target error limits must be positive')
     if not 0 <= args.open_position <= 100 or not 0 <= args.close_position <= 100:
         parser.error('gripper positions must be between 0 and 100')
     confirmations = (args.execute, args.confirm_gripper, args.confirm_cycle)
@@ -108,12 +137,49 @@ def main():
 
     try:
         payload = json.loads(args.target_file.read_text(encoding='utf-8'))
+        validate_target_numbers(payload)
         age = time.time() - float(payload['timestamp_unix'])
         part_base = [float(value) for value in payload['part_center_base_mm']]
+        target_orientation_mode = str(
+            payload.get('orientation_mode', 'long_axis')
+        )
+        raw_part_angle = payload.get('long_axis_angle_base_deg')
+        part_angle = (
+            float(raw_part_angle) if raw_part_angle is not None else None
+        )
+        quality = payload['depth_quality']
+        if quality.get('accepted') is not True:
+            raise ValueError('depth quality is not accepted')
+        if float(quality['support_plane_mad_max_mm']) > 2.0:
+            raise ValueError('support plane depth is unstable')
+        target_handeye_hash = str(payload['handeye']['sha256'])
     except (OSError, KeyError, ValueError, TypeError, json.JSONDecodeError) as exc:
         parser.error(f'cannot read target file: {exc}')
     if age < -5.0 or age > args.max_target_age_sec:
         parser.error(f'target file is stale ({age:.1f} s); detect the part again')
+    orientation_mode = (
+        target_orientation_mode
+        if args.orientation_mode == 'auto'
+        else args.orientation_mode
+    )
+    if orientation_mode not in ('long_axis', 'preserve'):
+        parser.error(f'unsupported target orientation mode: {orientation_mode!r}')
+    if (
+        args.orientation_mode != 'auto'
+        and args.orientation_mode != target_orientation_mode
+    ):
+        parser.error(
+            'requested orientation mode differs from the current target file'
+        )
+    if orientation_mode == 'long_axis' and part_angle is None:
+        parser.error('long-axis target has no valid Base-frame part angle')
+    if args.execute and args.grasp_z_offset_mm is None:
+        parser.error('--grasp-z-offset-mm is required for an actual grasp')
+    if args.grasp_z_offset_mm is not None and not -10.0 <= args.grasp_z_offset_mm <= 20.0:
+        parser.error('--grasp-z-offset-mm must be between -10 and 20')
+    active_handeye_hash = hashlib.sha256(ACTIVE_HANDEYE.read_bytes()).hexdigest()
+    if target_handeye_hash != active_handeye_hash:
+        parser.error('target Hand-Eye fingerprint differs from active calibration')
 
     rclpy.init()
     node = Cycle()
@@ -126,6 +192,8 @@ def main():
             raise RuntimeError('robot is not stationary')
         if int(state.emg) != 0 or int(state.main_error_code) != 0 or float(state.collision_err) != 0.0:
             raise RuntimeError('robot emergency/error/collision state is not clear')
+        if int(state.gripperfaultnum) != 0 or int(state.grippererro) != 0:
+            raise RuntimeError('gripper fault state is not clear')
         if args.execute and int(state.robot_mode) != 0:
             raise RuntimeError(f'robot_mode={state.robot_mode}; AUTO mode 0 required')
 
@@ -135,10 +203,32 @@ def main():
             float(state.cart_b_cur_pos), float(state.cart_c_cur_pos),
         ]
         xy_error = math.hypot(pick[0] - part_base[0], pick[1] - part_base[1])
+        finite_vector(pick, 6, 'current TCP pose')
         if xy_error > args.max_target_xy_error_mm:
             raise RuntimeError(
                 f'TCP is not at detected part XY: difference={xy_error:.1f} mm'
             )
+        expected_z = None if args.grasp_z_offset_mm is None else part_base[2] + args.grasp_z_offset_mm
+        z_error = 0.0 if expected_z is None else abs(pick[2] - expected_z)
+        if z_error > args.max_target_z_error_mm:
+            raise RuntimeError(
+                f'TCP is not at calibrated grasp Z: error={z_error:.3f} mm'
+            )
+        axis_error = None
+        if orientation_mode == 'long_axis':
+            current_rotation = Rotation.from_euler(
+                'xyz', pick[3:], degrees=True
+            ).as_matrix()
+            axis_index = 0 if args.gripper_axis == 'tool_x' else 1
+            axis_xy = current_rotation[:2, axis_index]
+            if np.linalg.norm(axis_xy) < 0.5:
+                raise RuntimeError(f'{args.gripper_axis} is nearly vertical')
+            current_axis = math.degrees(math.atan2(axis_xy[1], axis_xy[0]))
+            axis_error = abs(axis_delta_deg(part_angle, current_axis))
+            if axis_error > args.max_axis_error_deg:
+                raise RuntimeError(
+                    f'gripper axis is not aligned: error={axis_error:.3f} deg'
+                )
         lifted = list(pick); lifted[2] += args.lift_mm
         retreated = list(pick); retreated[2] += args.retreat_mm
 
@@ -146,6 +236,16 @@ def main():
         print(f'Pick pose: {[round(v, 3) for v in pick]}')
         print(f'Detected part/Base: {[round(v, 3) for v in part_base]}')
         print(f'XY difference: {xy_error:.3f} mm')
+        if axis_error is None:
+            print(
+                f'Grasp Z error: {z_error:.3f} mm; '
+                'orientation preserved (axis-free profile)'
+            )
+        else:
+            print(
+                f'Grasp Z error: {z_error:.3f} mm; '
+                f'axis error: {axis_error:.3f} deg'
+            )
         if args.resume_after_lift:
             print(f'RESUME MODE: lower {-args.lift_mm:.1f} mm, open={args.open_position}, retreat=+{args.retreat_mm:.1f} mm')
         else:
@@ -177,20 +277,20 @@ def main():
             retreat = list(place); retreat[2] += args.retreat_mm
             move(place, 'Resume: return to place')
             node.command(f'MoveGripper({args.gripper_index},{args.open_position})')
-            node.wait_gripper_done()
+            node.wait_gripper_done(expected_state=1)
             print('Gripper open completed')
             move(retreat, 'Resume: retreat')
             print('Resumed place/retreat completed')
             return
 
         node.command(f'MoveGripper({args.gripper_index},{args.close_position})')
-        grip_state = node.wait_gripper_done()
+        grip_state = node.wait_gripper_done(expected_state=2)
         print(f'Gripper close completed: state={grip_state}')
 
         move(lifted, 'Lift')
         move(pick, 'Return to place')
         node.command(f'MoveGripper({args.gripper_index},{args.open_position})')
-        node.wait_gripper_done()
+        node.wait_gripper_done(expected_state=1)
         print('Gripper open completed')
         move(retreated, 'Retreat')
         print('Grasp/place cycle completed')

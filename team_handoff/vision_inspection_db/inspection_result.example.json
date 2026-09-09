@@ -1,0 +1,107 @@
+{
+  "schema_id": "ksmc.vision-inspection.v1",
+  "schema_version": 1,
+  "inspection_id": "INSP-20260904-153432-0123456789",
+  "idempotency_key": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+  "production_cycle_id": "CYCLE-20260904-0001",
+  "job_id": "22",
+  "board_id": "PCB-0001",
+  "recipe_version": "assembly-r1",
+  "station_id": "VISION_INSPECTION",
+  "camera_id": "S22_TELEPHOTO",
+  "captured_at": "2026-09-04T15:34:32+09:00",
+  "overall": {
+    "decision": "UNKNOWN",
+    "reason": "ONE_OR_MORE_SLOTS_UNKNOWN",
+    "route": "RECAPTURE_THEN_HOLD_NG_UNCERTAIN",
+    "formal_defect_report_allowed": false,
+    "alignment_score": 0.98,
+    "alignment_valid": true
+  },
+  "summary": {
+    "expected_slots": 25,
+    "slot_decisions": {
+      "PASS": 0,
+      "FAIL": 0,
+      "UNKNOWN": 25
+    },
+    "finding_count": 1,
+    "confirmed_defect_count": 0,
+    "advisory_candidate_count": 1
+  },
+  "findings": [
+    {
+      "finding_id": "INSP-20260904-153432-0123456789-PM-01",
+      "slot_id": "power_module_01",
+      "slot_code": "PM-01",
+      "part_id": "PM",
+      "part_type": "Power Module",
+      "part_name": "TPSM84424MOLR Power Module",
+      "product_code": "TPSM84424MOLR",
+      "decision": "UNKNOWN",
+      "authority": "ADVISORY_ONLY",
+      "confirmed_defect": false,
+      "primary_defect_code": "POSITION_ERROR",
+      "primary_defect_name_ko": "위치 오류",
+      "defect_codes": [
+        {
+          "source_code": "POSE?",
+          "defect_code": "POSITION_ERROR",
+          "defect_name_ko": "위치 오류"
+        }
+      ],
+      "details": [
+        "AUXILIARY_POSE_OUTSIDE_LIMIT"
+      ],
+      "measurements": {
+        "presence_state": "PRESENT",
+        "presence_confidence": 0.97,
+        "registered_image_x_error_mm": 1.2,
+        "registered_image_y_error_mm": -0.4,
+        "position_error_mm": 1.26,
+        "axis_angle_error_deg": 1.1,
+        "surface_score": 0.42
+      },
+      "evidence_image_roles": [
+        "source_roi",
+        "annotated_report",
+        "candidate_heatmap",
+        "candidate_heatmap_overlay"
+      ]
+    }
+  ],
+  "slots": [
+    {
+      "slot_id": "power_module_01",
+      "slot_code": "PM-01",
+      "part_id": "PM",
+      "part_type": "Power Module",
+      "part_name": "TPSM84424MOLR Power Module",
+      "product_code": "TPSM84424MOLR",
+      "decision": "UNKNOWN",
+      "reason": "REQUIRED_STAGE_UNVERIFIED_OR_UNKNOWN"
+    }
+  ],
+  "images": [
+    {
+      "role": "source_roi",
+      "file": "images/01_source_roi.png",
+      "mime_type": "image/png",
+      "sha256": "replace-with-real-sha256",
+      "authority": "EVIDENCE"
+    },
+    {
+      "role": "annotated_report",
+      "file": "images/02_annotated_report.png",
+      "mime_type": "image/png",
+      "sha256": "replace-with-real-sha256",
+      "authority": "EVIDENCE"
+    }
+  ],
+  "source": {
+    "inspection_contract": "s22_hybrid_aoi_v1",
+    "hybrid_report_file": "raw/hybrid_report.json",
+    "robot_command_sent": false,
+    "conveyor_command_sent": false
+  }
+}
