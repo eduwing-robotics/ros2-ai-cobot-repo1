@@ -641,7 +641,6 @@ def run_local_worker(dsn: str, path: Path, template: Path, output_dir: Path,
     image_root = Path(os.environ.get("DEFECT_IMAGE_ROOT", str(DEFAULT_IMAGE_ROOT)))
     max_image_bytes = _positive_setting(os.environ, "DEFECT_IMAGE_MAX_BYTES", 10 * 1024 * 1024)
     while True:
-        # ponytail: scans confirmed history; add persisted generation progress if scan cost becomes material.
         try:
             candidates = queries.defect_reports(unit_defect_id=unit_defect_id, dsn=dsn)
         except queries.DatabaseUnavailable as error:

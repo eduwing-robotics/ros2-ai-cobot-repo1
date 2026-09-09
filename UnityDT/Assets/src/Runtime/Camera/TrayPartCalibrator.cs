@@ -1,4 +1,4 @@
-// 역할: Real 비전의 트레이 부품 상태를 base_link 기준 Unity 프리팹 배치로 반영한다.
+// 역할: Real 트레이 객체 수명, callback 부착 상태와 시각화 저장·복원을 소유한다.
 
 using System;
 using System.Collections;
@@ -94,6 +94,7 @@ namespace MainUnity.Runtime.Camera
         [Serializable]
         sealed class Attachment
         {
+            // Names are persisted JSON keys. Job is the robot execution UUID, not a production Job UUID.
             public string Job, PickOperation, PlaceOperation, Registration, Observation, Slot, Part, Server, Plan, Cycle;
             public readonly HashSet<long> Seen = new();
             public long Sequence;
@@ -117,9 +118,12 @@ namespace MainUnity.Runtime.Camera
         System.Threading.Tasks.Task<TriggerResponse> statusRequest;
         bool wasConnected;
         readonly List<string> bufferedEvents = new();
-        bool buffering, bufferOverflow, needsSync = true, restoredLayout;
+        bool isBufferingRobotEvents;
+        bool robotEventBufferOverflow;
+        bool needsStatusReconciliation = true;
+        bool hasUnverifiedRestoredLayout;
         string storagePath;
-        bool savePending;
+        bool layoutSavePending;
         internal string SyncDetail { get; private set; } = "현재 상태 확인 대기";
         internal string StorageDetail { get; private set; } = "";
 
@@ -231,9 +235,9 @@ namespace MainUnity.Runtime.Camera
         {
             SaveLayout();
             StopAllCoroutines();
-            buffering = false;
+            isBufferingRobotEvents = false;
             bufferedEvents.Clear();
-            needsSync = true;
+            needsStatusReconciliation = true;
             if (connection != null && robotSubscribed) connection.Unsubscribe(RobotEventTopic);
             robotSubscribed = false;
             wasConnected = false;
@@ -249,13 +253,13 @@ namespace MainUnity.Runtime.Camera
             double nextQuery = 0d;
             while (isActiveAndEnabled)
             {
-                if (savePending) SaveLayout();
+                if (layoutSavePending) SaveLayout();
                 bool connected = connection.HasConnectionThread && !connection.HasConnectionError;
                 if (!connected)
                 {
                     if (wasConnected)
                         foreach (Attachment value in attachments.Values) value.Uncertain = true;
-                    needsSync = true;
+                    needsStatusReconciliation = true;
                     SyncDetail = "연결 대기 · 마지막 화면 미확인";
                 }
                 if (statusRequest != null && statusRequest.IsCompleted)
@@ -263,10 +267,10 @@ namespace MainUnity.Runtime.Camera
                     _ = statusRequest.Exception;
                     statusRequest = null;
                 }
-                if (connected && needsSync && statusRequest == null && Time.realtimeSinceStartupAsDouble >= nextQuery)
+                if (connected && needsStatusReconciliation && statusRequest == null && Time.realtimeSinceStartupAsDouble >= nextQuery)
                 {
-                    buffering = true;
-                    bufferOverflow = false;
+                    isBufferingRobotEvents = true;
+                    robotEventBufferOverflow = false;
                     bufferedEvents.Clear();
                     SyncDetail = "◌ 로봇 상태 동기화 중";
                     statusRequest = connection.SendServiceMessage<TriggerResponse>(RobotStatusService, new TriggerRequest());
@@ -275,7 +279,7 @@ namespace MainUnity.Runtime.Camera
                         yield return null;
                     if (statusRequest.IsCompleted)
                     {
-                        if (!bufferOverflow && !statusRequest.IsFaulted && !statusRequest.IsCanceled && statusRequest.Result.success &&
+                        if (!robotEventBufferOverflow && !statusRequest.IsFaulted && !statusRequest.IsCanceled && statusRequest.Result.success &&
                             connection.HasConnectionThread && !connection.HasConnectionError)
                             ReconcileSnapshot(statusRequest.Result.message);
                         else
@@ -286,7 +290,7 @@ namespace MainUnity.Runtime.Camera
                         statusRequest = null;
                     }
                     else SyncDetail = "동기화 지연 · 조회 5초 초과 · 마지막 화면 미확인";
-                    buffering = false;
+                    isBufferingRobotEvents = false;
                     // Matching snapshot rows set a per-part sequence floor. Unknown
                     // rows stay uncertain; never discard their failure/control events.
                     foreach (string json in bufferedEvents) ProcessRobotEvent(json);
@@ -301,13 +305,13 @@ namespace MainUnity.Runtime.Camera
         void ReceiveRobotEvent(StringMsg message)
         {
             if (!isActiveAndEnabled) return;
-            if (buffering)
+            if (isBufferingRobotEvents)
             {
                 LastRobotReceiveTime = Time.realtimeSinceStartupAsDouble;
                 if (bufferedEvents.Count < 1024) bufferedEvents.Add(message?.data);
                 else
                 {
-                    bufferOverflow = true;
+                    robotEventBufferOverflow = true;
                     foreach (Attachment value in attachments.Values) value.Uncertain = true;
                     SyncDetail = "이벤트 수집 한도 초과 · 재대조 필요";
                 }
@@ -325,9 +329,9 @@ namespace MainUnity.Runtime.Camera
             {
                 JObject envelope = JObject.Parse(json ?? "");
                 string action = (string)envelope["action"];
-                string kind = (string)envelope["event"];
-                if (kind == "REQUEST_REJECTED") return;
-                if (kind is "OPERATION_FAILED" or "PAUSED" or "CONTROL_FAILED")
+                string eventKind = (string)envelope["event"];
+                if (eventKind == "REQUEST_REJECTED") return;
+                if (eventKind is "OPERATION_FAILED" or "PAUSED" or "CONTROL_FAILED")
                 {
                     // Failure/control messages can have plain-text context. Do not lose
                     // the stop boundary just because no source ID can be decoded.
@@ -335,7 +339,7 @@ namespace MainUnity.Runtime.Camera
                     if (Guid.TryParse(failedJob, out _))
                         foreach (Attachment value in attachments.Values)
                             if (value.Job == failedJob) value.Uncertain = true;
-                    needsSync = true;
+                    needsStatusReconciliation = true;
                     SyncDetail = "로봇 정지/실패 · 상태 재대조 필요";
                     RobotDetail = "로봇 정지/실패 · 마지막 부착 유지 · 재확인 필요";
                     return;
@@ -349,79 +353,76 @@ namespace MainUnity.Runtime.Camera
                     !Guid.TryParse((string)context["server_instance_id"], out _) ||
                     context["event_sequence"]?.Type != JTokenType.Integer || (long)context["event_sequence"] < 0)
                     throw new FormatException("이벤트 식별 정보 누락");
-                string id = (string)context["source_id"];
-                string job = (string)envelope["job_id"];
-                string operation = (string)envelope["operation_id"];
-                string server = (string)context["server_instance_id"];
-                long sequence = (long)context["event_sequence"];
+                string sourceId = (string)context["source_id"];
+                string executionId = (string)envelope["job_id"];
+                string operationId = (string)envelope["operation_id"];
+                string serverInstanceId = (string)context["server_instance_id"];
+                long eventSequence = (long)context["event_sequence"];
                 string phase = (string)envelope["phase"];
-                attachments.TryGetValue(id ?? "", out Attachment record);
+                attachments.TryGetValue(sourceId ?? "", out Attachment record);
                 affected = record;
-                if (record != null && record.Server == server && record.Job == job && sequence <= record.SnapshotFloor) return;
-                if (record != null && record.Job == job && record.Server == server && record.Seen.Contains(sequence)) return;
-                if (record != null && (record.Job != job || record.Server != server))
+                if (record != null && record.Server == serverInstanceId && record.Job == executionId && eventSequence <= record.SnapshotFloor) return;
+                if (record != null && record.Job == executionId && record.Server == serverInstanceId && record.Seen.Contains(eventSequence)) return;
+                if (record != null && (record.Job != executionId || record.Server != serverInstanceId))
                     throw new FormatException("다른 실행 또는 API 재시작 · 부착 복원 미확인");
                 if (context["attachment_binding_valid"]?.Type != JTokenType.Boolean ||
-                    !(bool)context["attachment_binding_valid"] || string.IsNullOrWhiteSpace(id) ||
-                    !instancesById.TryGetValue(id, out GameObject instance) || instance == null)
+                    !(bool)context["attachment_binding_valid"] || string.IsNullOrWhiteSpace(sourceId) ||
+                    !instancesById.TryGetValue(sourceId, out GameObject instance) || instance == null)
                 {
                     if (record != null) record.Uncertain = true;
                     throw new FormatException("부품 식별 불명확 또는 원래 객체 없음");
                 }
-                string reg = (string)context["tray_registration_id"];
-                string observation = (string)context["source_observation_id"];
-                string slot = (string)context["slot_code"];
-                string part = (string)context["part_id"];
-                string plan = (string)context["plan_sha256"];
-                string cycle = (string)context["source_cycle_id"];
-                if (string.IsNullOrWhiteSpace(slot) || string.IsNullOrWhiteSpace(part) ||
-                    string.IsNullOrWhiteSpace(reg) || string.IsNullOrWhiteSpace(observation) ||
-                    string.IsNullOrWhiteSpace(plan) || string.IsNullOrWhiteSpace(cycle))
+                string trayRegistrationId = (string)context["tray_registration_id"];
+                string sourceObservationId = (string)context["source_observation_id"];
+                string slotCode = (string)context["slot_code"];
+                string partId = (string)context["part_id"];
+                string planSha256 = (string)context["plan_sha256"];
+                string sourceCycleId = (string)context["source_cycle_id"];
+                if (string.IsNullOrWhiteSpace(slotCode) || string.IsNullOrWhiteSpace(partId) ||
+                    string.IsNullOrWhiteSpace(trayRegistrationId) || string.IsNullOrWhiteSpace(sourceObservationId) ||
+                    string.IsNullOrWhiteSpace(planSha256) || string.IsNullOrWhiteSpace(sourceCycleId))
                     throw new FormatException("부품·슬롯·관측 식별 누락");
                 if (record == null)
                 {
-                    if (restoredLayout || action != "robot.pick" || kind != "PHASE_STARTED" || reg != registration ||
-                        !observations.Contains((reg, observation, id)) || !instanceRegistrations.TryGetValue(id, out string sourceReg) || sourceReg != reg ||
-                        !instanceTypes.TryGetValue(id, out string type) || PartCode(type) != part)
+                    if (hasUnverifiedRestoredLayout || action != "robot.pick" || eventKind != "PHASE_STARTED" || trayRegistrationId != registration ||
+                        !observations.Contains((trayRegistrationId, sourceObservationId, sourceId)) || !instanceRegistrations.TryGetValue(sourceId, out string sourceReg) || sourceReg != trayRegistrationId ||
+                        !instanceTypes.TryGetValue(sourceId, out string type) || PartCode(type) != partId)
                         throw new FormatException("Pick 시작·원래 관측 미수신 · 부착 복원 미확인");
-                    record = new Attachment { Job = job, PickOperation = operation, Registration = reg,
-                        Observation = observation, Slot = slot, Part = part, Server = server, Plan = plan, Cycle = cycle,
+                    record = new Attachment { Job = executionId, PickOperation = operationId, Registration = trayRegistrationId,
+                        Observation = sourceObservationId, Slot = slotCode, Part = partId, Server = serverInstanceId, Plan = planSha256, Cycle = sourceCycleId,
                         Board = boardCalibration != null ? boardCalibration.AttachmentBoard : null };
-                    attachments.Add(id, record);
+                    attachments.Add(sourceId, record);
                     affected = record;
                 }
-                if (record.Registration != reg || record.Observation != observation || record.Slot != slot || record.Part != part || record.Plan != plan || record.Cycle != cycle ||
-                    (action == "robot.pick" && record.PickOperation != operation))
+                if (record.Registration != trayRegistrationId || record.Observation != sourceObservationId || record.Slot != slotCode || record.Part != partId || record.Plan != planSha256 || record.Cycle != sourceCycleId ||
+                    (action == "robot.pick" && record.PickOperation != operationId))
                 {
                     record.Uncertain = true;
                     throw new FormatException("실행 중 부품 대응 변경");
                 }
                 if (action == "robot.place")
                 {
-                    if (record.PlaceOperation == null) record.PlaceOperation = operation;
-                    else if (record.PlaceOperation != operation)
+                    if (record.PlaceOperation == null) record.PlaceOperation = operationId;
+                    else if (record.PlaceOperation != operationId)
                         throw new FormatException("다른 Place 동작 ID");
                 }
-                record.Sequence = Math.Max(record.Sequence, sequence);
+                record.Sequence = Math.Max(record.Sequence, eventSequence);
                 if (record.Seen.Count >= 4096) throw new FormatException("이벤트 추적 한도 초과 · 상태 확인 필요");
-                record.Seen.Add(sequence);
+                record.Seen.Add(eventSequence);
                 if (!string.IsNullOrEmpty((string)envelope["error_code"]))
                 {
                     record.Uncertain = true;
-                    needsSync = true;
+                    needsStatusReconciliation = true;
                     SyncDetail = "일부 부품 미확인 · 상태 재대조 필요";
-                    RobotDetail = $"{slot} · 정지/실패 · 마지막 부착 유지";
+                    RobotDetail = $"{slotCode} · 정지/실패 · 마지막 부착 유지";
                     return;
                 }
                 bool grasp = action == "robot.pick" && phase == "GRASP";
                 bool release = action == "robot.place" && phase == "RELEASE";
-                if (kind == "PHASE_COMPLETED" && (grasp || release))
+                if (eventKind == "PHASE_COMPLETED" && (grasp || release))
                 {
                     JObject feedback = context["feedback"] as JObject;
-                    if (feedback?["continuous_feedback_verified"]?.Type != JTokenType.Boolean ||
-                        !(bool)feedback["continuous_feedback_verified"] ||
-                        feedback["gripper_feedback_valid"]?.Type != JTokenType.Boolean || !(bool)feedback["gripper_feedback_valid"] ||
-                        (string)feedback["phase"] != phase)
+                    if (!HasVerifiedGripperFeedback(feedback, phase))
                     {
                         record.Uncertain = true;
                         throw new FormatException("파지/놓기 연속 피드백 검증 누락");
@@ -431,7 +432,7 @@ namespace MainUnity.Runtime.Camera
                     {
                         if (measuredGripper == null) throw new FormatException("실측 그리퍼 참조 없음");
                         foreach (var other in attachments)
-                            if (other.Key != id && other.Value.State == "attached")
+                            if (other.Key != sourceId && other.Value.State == "attached")
                                 throw new FormatException("다른 부품 보유 표시 중");
                         instance.transform.SetParent(measuredGripper, true);
                         record.State = "attached";
@@ -439,7 +440,7 @@ namespace MainUnity.Runtime.Camera
                     else if (release && record.State == "attached")
                     {
                         if (record.Board == null || boardCalibration == null || boardCalibration.AttachmentBoard != record.Board ||
-                            record.Board.Find(slot) == null)
+                            record.Board.Find(slotCode) == null)
                         {
                             record.Uncertain = true;
                             throw new FormatException("원래 기판·슬롯 연결 미확인");
@@ -453,18 +454,25 @@ namespace MainUnity.Runtime.Camera
                         throw new FormatException("파지 확인 없이 놓기 수신");
                     }
                 }
-                RobotDetail = $"{slot} · {record.State} · {phase} / {kind} · 컨트롤러 피드백 기준";
+                RobotDetail = $"{slotCode} · {record.State} · {phase} / {eventKind} · 컨트롤러 피드백 기준";
             }
             catch (Exception error) when (error is Newtonsoft.Json.JsonException || error is ArgumentException ||
                 error is FormatException || error is InvalidCastException || error is OverflowException)
             {
                 if (affected != null) affected.Uncertain = true;
-                needsSync = true;
+                needsStatusReconciliation = true;
                 SyncDetail = "일부 부품 미확인 · 상태 재대조 필요";
                 RobotDetail = "로봇 시각화 미확인 · " + error.Message;
             }
-            finally { savePending = true; SaveLayout(); }
+            finally { layoutSavePending = true; SaveLayout(); }
         }
+
+        static bool HasVerifiedGripperFeedback(JObject feedback, string phase) =>
+            feedback?["continuous_feedback_verified"]?.Type == JTokenType.Boolean &&
+            (bool)feedback["continuous_feedback_verified"] &&
+            feedback["gripper_feedback_valid"]?.Type == JTokenType.Boolean &&
+            (bool)feedback["gripper_feedback_valid"] &&
+            (string)feedback["phase"] == phase;
 
         void ReconcileSnapshot(string json)
         {
@@ -516,15 +524,19 @@ namespace MainUnity.Runtime.Camera
                 }
                 foreach (Attachment value in attachments.Values)
                     if (value.Uncertain) unresolved++;
-                if (restoredLayout && attachments.Count == instancesById.Count && unresolved == 0) restoredLayout = false;
-                needsSync = unresolved > 0 || restoredLayout;
-                SyncDetail = needsSync ? "일부 복원 미확인 · 전체 부품 자세 snapshot 필요" : "부착 상태 대조 완료 · callback 수신 중";
-                savePending = true;
+                if (hasUnverifiedRestoredLayout && attachments.Count == instancesById.Count && unresolved == 0) hasUnverifiedRestoredLayout = false;
+                needsStatusReconciliation = unresolved > 0 || hasUnverifiedRestoredLayout;
+                SyncDetail = needsStatusReconciliation ? "일부 복원 미확인 · 전체 부품 자세 snapshot 필요" : "부착 상태 대조 완료 · callback 수신 중";
+                layoutSavePending = true;
                 RobotDetail = unresolved > 0 ? $"부착 snapshot {unresolved}건 복원 미확인 · 임의 배치 안 함" : "부착 snapshot 대조 완료";
             }
             catch (Exception error) when (error is Newtonsoft.Json.JsonException || error is ArgumentException ||
                 error is InvalidCastException || error is FormatException)
-            { needsSync = true; SyncDetail = "동기화 미확인 · " + error.Message; RobotDetail = "부착 snapshot 미확인 · " + error.Message; }
+            {
+                needsStatusReconciliation = true;
+                SyncDetail = "동기화 미확인 · " + error.Message;
+                RobotDetail = "부착 snapshot 미확인 · " + error.Message;
+            }
         }
 
         void SaveLayout()
@@ -563,7 +575,7 @@ namespace MainUnity.Runtime.Camera
                 }
                 if (File.Exists(storagePath)) File.Replace(storagePath + ".tmp", storagePath, storagePath + ".bak");
                 else File.Move(storagePath + ".tmp", storagePath);
-                savePending = false;
+                layoutSavePending = false;
                 StorageDetail = "";
             }
             catch (Exception error) when (error is IOException || error is UnauthorizedAccessException || error is ArgumentException)
@@ -633,8 +645,8 @@ namespace MainUnity.Runtime.Camera
             }
             foreach (SavedObservation observation in saved.Observations)
                 observations.Add((observation.Registration, observation.Observation, observation.Source));
-            restoredLayout = saved.Parts.Count > 0;
-            needsSync = true;
+            hasUnverifiedRestoredLayout = saved.Parts.Count > 0;
+            needsStatusReconciliation = true;
             SyncDetail = "◌ 저장 화면 · 현재 상태 확인 중 (" + saved.SavedUtc + ")";
             SetProgress(ProgressState.Preparing, "저장된 마지막 배치 · 실물 확인 전");
         }
@@ -706,7 +718,7 @@ namespace MainUnity.Runtime.Camera
                 SetProgress(ProgressState.Preparing, "트레이 등록 세대 변경 · 기존 배치 유지 · 명시적 재생성 필요");
                 return;
             }
-            if (attachments.Count > 0 || restoredLayout)
+            if (attachments.Count > 0 || hasUnverifiedRestoredLayout)
             {
                 SetProgress(ProgressState.Preparing, "로봇 실행 배치 고정 · 관측으로 부품을 변경하지 않음");
                 return;
@@ -719,7 +731,7 @@ namespace MainUnity.Runtime.Camera
                     foreach (PartPose pose in poses)
                         if (observations.Count < 16384 && !pose.Id.StartsWith("display-only:", StringComparison.Ordinal))
                             observations.Add((registration, state.source_observation_id, pose.Id));
-                savePending = true;
+                layoutSavePending = true;
                 LastAppliedTime = Time.realtimeSinceStartupAsDouble;
             }
             lastRejectedReason = null;
@@ -879,7 +891,7 @@ namespace MainUnity.Runtime.Camera
                         observations.Add((registration, latestObservation, pose.Id));
             hasSequence = false;
             LastAppliedTime = Time.realtimeSinceStartupAsDouble;
-            restoredLayout = false;
+            hasUnverifiedRestoredLayout = false;
             SaveLayout();
             SetProgress(ProgressState.Applied, "명시적 트레이 재생성 완료");
         }

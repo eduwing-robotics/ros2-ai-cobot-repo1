@@ -89,8 +89,10 @@ Mock에서는 `start`를 거절하고 기존 observations와 영속 Job 결합 �
 이 요청은 Job을 생성하지 않습니다. `recipe_version`은 비어 있지 않은 문자열이어야 하며
 로컬 YAML과 대조하지 않습니다. 현재는 전체 조립·컨베이어·PCB 이송 계약이 미연결이므로 `accepted=false`, `error_code=NOT_READY`를 반환합니다.
 이 실패는 DB Job을 `FAILED`로 전이하지 않습니다.
-상태 조회에는 `runtime_mode=real`, `command_service_available`, `robot_state_fresh`,
-`equipment_ready=false`가 포함되며 개별 통신 정상도 셀 준비 완료를 뜻하지 않습니다.
+상태 조회에는 `runtime_mode=real`, `command_service_available`,
+`equipment_ready=false`가 포함됩니다. 로봇 상태 조회가 성공하면 원본 응답을
+`robot_api_status`에 넣으며 freshness는 그 안의 `state_fresh`로 확인합니다.
+개별 통신 정상도 셀 준비 완료를 뜻하지 않습니다.
 
 ### observations
 

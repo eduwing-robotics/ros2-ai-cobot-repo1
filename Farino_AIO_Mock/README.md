@@ -170,7 +170,7 @@ SDK 연결 전에 종료합니다. MainServer는 `MAIN_SERVER_MODE=real`과 관�
 명시할 때만 `ASSEMBLY_SEQUENCER_MODE=real`로 Sequencer와 ROS TCP endpoint를 추가합니다.
 기본값은 `false`이며 `start_endpoint:=false`로 이미 실행 중인 endpoint를 재사용할 수 있습니다.
 Real Sequencer도 `PRODUCTION_DB_DSN`을 요구하고 관리자 설정이 Real인 DB만 사용합니다.
-`recipe` 인자의 기본값은 설치된 공통 `assembly-r1.yaml`입니다.
+Real Sequencer는 로컬 YAML을 사용하지 않으며 이 launch는 `recipe` 인자를 제공하지 않습니다.
 이 선택은 기존 Real MoveIt 실행에 프로세스를 추가하는 옵션이며 전체 스택 실행기를 새로 만들지 않습니다.
 현재 Real 실행 준비는 항상 미완료로 판정되므로 이 옵션으로 로봇 자동조립이 활성화되지는 않습니다.
 

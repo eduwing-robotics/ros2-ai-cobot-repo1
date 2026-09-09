@@ -1,19 +1,5 @@
-// 역할: QUALITY 페이지(FR5Quality.uxml)의 슬롯 파레토와 선택 슬롯 상세를 그린다.
-//
-//   실연결 : assemblies/current → jobs/{job_id} → products/{product_id}/quality/slot-rates
-//            (슬롯 집계는 제품 전체 누적이며 현재 Job은 화면의 기준정보다.)
-//   미연결 : 임계(defect_report.thresholds) · 불량 유형별 집계
-//
-// Unity 는 DB 에 직접 접속하지 않고 MainServer HTTP 조회만 쓴다.
-//
-// 화면이 답하는 두 질문과 그 분업 (Docs/ui/mock-05-quality-pareto.svg).
-//   좌 파레토는 "어디부터"를 정한다. 누적 %가 성립하려면 반드시 건수로 그려야 한다.
-//   우 상세는 "그게 뭔지"를 말한다. 여기서 분모가 나온다.
-//   둘을 나눈 이유: 슬롯마다 검사 수가 같아도 부품마다 슬롯 수가 달라, 건수 순위와
-//   부품 불량률 순위가 어긋난다. 한쪽 화면에 섞으면 둘 중 하나가 반드시 거짓말을 한다.
-//
-// 색을 주지 않는 이유. 임계 조회 계약이 없어 "넘었다"를 판정할 근거가 없다. 대신
-// 누적 80% 안에 드는 막대만 밝게 둔다 — 이건 임계가 아니라 데이터에서 바로 나온다.
+// 역할: MainServer 품질 조회로 슬롯 파레토와 부품·슬롯 상세를 표시한다.
+// 파레토 누적 비율은 불량 건수 기준이다. 부품별 슬롯 수가 달라 부품 불량률 순위와 구분한다.
 
 using System;
 using System.Collections;
@@ -84,8 +70,7 @@ namespace MainUnity.UI
         const float PlotWidth = 918f;
         const float PlotHeight = 370f;
 
-        // 막대를 몇 개까지 세울지. 넘는 것은 "나머지 N 슬롯" 한 칸으로 접는다.
-        // 25 슬롯을 전부 세우면 칸이 36px 이라 슬롯 코드가 들어가지 않는다.
+        // 모든 슬롯을 표시하면 슬롯 코드 너비가 부족하므로 초과분은 하나로 묶는다.
         const int MaxBars = 8;
 
         // 막대 머리 위 건수 라벨이 차지하는 높이. 막대에서 이만큼 빼야 라벨을 포함한

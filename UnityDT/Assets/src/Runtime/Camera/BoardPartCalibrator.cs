@@ -17,9 +17,9 @@ namespace MainUnity.Runtime.Camera
         const string TopicName = "/vision/board/unity_state";
         const double ObservationLifetimeSeconds = 2.5d;
         const double StaleAfterSeconds = 3d;
-        // 표시 전용 지수 보간의 시간 상수. 0.2초에 오차의 약 63%를 따라가며
+        // 표시 전용 지수 보간의 시간 상수. 0.4초에 오차의 약 63%를 따라가며
         // 실제 기울기와 ROS 원본 자세는 유지한다. 로봇 제어 목표에는 사용하지 않는다.
-        const float DisplaySmoothingSeconds = 0.2f;
+        const float DisplaySmoothingSeconds = 0.4f;
 
         [Tooltip("트레이와 동일한 ROS 기준 Transform(최상위 ArticulationBody). 기준 계층의 스케일은 1이어야 합니다.")]
         [SerializeField] Transform baseLink;

@@ -1,12 +1,4 @@
-// 역할: RUN 페이지(FR5Run.uxml)를 채운다.
-//
-//   실연결 : 모드 · 로봇 상태 · 링크 2개 · 관절 6개 · TCP · RPY · 그리퍼 · 워치독
-//            (TCP · RPY · SAFETY 는 Real 전용이라 Mock 에서는 접는다)
-//            조립 진행 — 하단 패널과 JOB 패널의 phase · 슬롯 줄
-//   미연결 : 작업(jobs) · 수량 · 사이클 — 값을 지어내지 않고
-//            FR5EmptyState 로 "연결 없음 + 필요한 조회"를 적는다  [TODO(API)]
-//
-// 트윈과 카메라는 좌우에 같은 크기로 두고, 진행 상태와 계기는 하단 띠에 표시한다.
+// 역할: 운전 상태·조립 진행을 표시하고 트윈 관찰과 카메라 화면을 연결한다.
 
 using System.Collections.Generic;
 using MainUnity.Runtime.Camera;
@@ -25,10 +17,7 @@ namespace MainUnity.UI
     {
         const int JointCount = 6;
 
-        // 진행 칸 치수 — FR5Theme.uss 의 .cell 과 맞춘다
-        // MinHeadWidth 는 이름과 개수가 맞닿지 않을 만큼만이다. 이름(최대 4자 · 11px 굵게)
-        // 34 + 홈통 10 + 개수 두 자리 14 = 58. 96 이던 동안, 칸이 한둘뿐인 묶음(GPU 1 ·
-        // IND 2)에서 개수가 제 칸에서 80px 떨어진 허공에 떠 어느 묶음의 수인지 흐려졌다.
+        // FR5Theme.uss의 셀 치수와 맞추며 이름·간격·개수에 최소 58px이 필요하다.
         const int CellWidth = 15, CellGap = 4, MinHeadWidth = 60;
         static readonly float[] LimitLow  = { -175f, -265f, -162f, -265f, -175f, -175f };
         static readonly float[] LimitHigh = {  175f,   85f,  162f,   85f,  175f,  175f };
@@ -84,10 +73,7 @@ namespace MainUnity.UI
         bool warnedStepCount;
         VisualElement gripperChip, gripperFill, watchdogDot, realStatus, poseBlock, safetyBlock;
 
-        // 추세 (Docs/ui-design.md 3.1절). 값 하나만으로는 방향을 알 수 없어서,
-        // 운전자가 이상을 알람이 뜬 뒤에야 알아채게 된다.
-        // 4Hz × 120 표본 = 30초 창이다. 매 프레임 표본을 넣으면 30초가 1800 표본이 되어
-        // 가로 340px 에 그릴 수 없고, 다시 그리는 비용만 늘어난다.
+        // 4Hz × 120표본으로 30초 추세를 표시한다. 매 프레임 수집하지 않는다.
         const float SampleHz = 4f;
         const int SampleCapacity = 120;
         Sparkline gripperSpark, watchdogSpark;
@@ -525,15 +511,8 @@ namespace MainUnity.UI
                 }
                 else
                 {
-                    // 칸마다 수신기를 하나씩 붙인다. 하나로 돌려 쓰면 칸을 바꿀 때마다
-                    // 구독을 갈아타야 하고, 그러면 여러 칸을 동시에 볼 수 없다.
-                    //
-                    // CamVisionReceiver 는 DisallowMultipleComponent 라 한 오브젝트에
-                    // 둘을 못 붙인다. 칸마다 자식 오브젝트를 만들어 하나씩 얹는다.
-                    //
-                    // 이름으로 먼저 찾는다. 도메인 리로드로 바인더 인스턴스가 새로 생기면
-                    // 필드는 비지만 앞서 만든 자식 오브젝트는 씬에 남아 있다. 확인 없이
-                    // 만들면 실행할수록 수신기가 늘어 같은 토픽을 여러 번 구독하게 된다.
+                    // 수신기는 DisallowMultipleComponent이므로 칸별 자식에 둔다.
+                    // 도메인 리로드 뒤에도 기존 자식을 재사용해 중복 구독을 막는다.
                     if (tile.Receiver == null)
                     {
                         string hostName = "CamReceiver " + tile.Index;

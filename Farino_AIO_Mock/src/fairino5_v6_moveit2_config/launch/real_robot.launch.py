@@ -1,10 +1,9 @@
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, GroupAction, SetEnvironmentVariable
 from launch.conditions import IfCondition
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
-from launch_ros.substitutions import FindPackageShare
 from moveit_configs_utils import MoveItConfigsBuilder
 from moveit_configs_utils.launches import generate_demo_launch
 
@@ -37,13 +36,6 @@ def generate_launch_description():
             DeclareLaunchArgument("start_endpoint", default_value="true"),
             DeclareLaunchArgument("endpoint_ip", default_value="0.0.0.0"),
             DeclareLaunchArgument("endpoint_port", default_value="10000"),
-            DeclareLaunchArgument(
-                "recipe",
-                default_value=PathJoinSubstitution([
-                    FindPackageShare("assembly_sequencer"),
-                    "config", "recipes", "assembly-r1.yaml",
-                ]),
-            ),
             Node(
                 package="ros_tcp_endpoint",
                 executable="default_server_endpoint",
@@ -62,7 +54,6 @@ def generate_launch_description():
                 executable="sequencer_node",
                 name="assembly_sequencer_real",
                 output="screen",
-                parameters=[{"recipe": LaunchConfiguration("recipe")}],
             ),
         ],
     ))
