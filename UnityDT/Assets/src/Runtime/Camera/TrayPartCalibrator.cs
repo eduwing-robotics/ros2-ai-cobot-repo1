@@ -181,7 +181,7 @@ namespace MainUnity.Runtime.Camera
             lastRejectedReason = null;
             lastSequence = state.sequence;
             hasSequence = true;
-            SetProgress(ProgressState.Applied, "트레이 좌표 검증 및 Unity 배치 반영됨");
+            SetProgress(ProgressState.Applied, error ?? "트레이 좌표 검증 및 Unity 배치 반영됨");
         }
 
         bool TryBuildBindingLookup(out string error)
@@ -231,16 +231,28 @@ namespace MainUnity.Runtime.Camera
 
             var ids = new HashSet<string>(StringComparer.Ordinal);
             var result = new List<PartPose>(state.parts.Length);
+            int skippedParts = 0;
             foreach (TrayPart part in state.parts)
             {
-                if (part == null || string.IsNullOrWhiteSpace(part.id) || !ids.Add(part.id) ||
+                if (part == null || string.IsNullOrWhiteSpace(part.part_type) ||
                     part.instance_index < 1 || part.base_xyz_mm == null || part.base_xyz_mm.Length != 3 ||
                     !IsFinite(part.base_xyz_mm[0]) || !IsFinite(part.base_xyz_mm[1]) ||
                     !IsFinite(part.base_xyz_mm[2]) || !IsFinite(part.angle_base_deg) ||
                     !bindingsByType.TryGetValue(part.part_type, out PrefabBinding binding))
                 {
-                    error = "Rejected a tray state containing an invalid, duplicate, or unsupported part.";
-                    return false;
+                    skippedParts++;
+                    continue;
+                }
+
+                // ID 누락 시 타입·순번은 화면 객체 추적에만 사용한다. ROS 원본 ID를
+                // 채우거나 생산 요청에 전달하지 않는다. 정상 ID 수신 시 Apply가 임시 객체를 제거한다.
+                string displayId = string.IsNullOrWhiteSpace(part.id)
+                    ? $"display-only:{part.part_type}:{part.instance_index}"
+                    : part.id;
+                if (!ids.Add(displayId))
+                {
+                    skippedParts++;
+                    continue;
                 }
 
                 Vector3 rosPositionMeters = new Vector3(
@@ -254,7 +266,7 @@ namespace MainUnity.Runtime.Camera
 
                 result.Add(new PartPose
                 {
-                    Id = part.id,
+                    Id = displayId,
                     Binding = binding,
                     Position = baseLink.TransformPoint(localPosition) +
                         detectedRotation * binding.PositionOffsetMeters,
@@ -263,7 +275,8 @@ namespace MainUnity.Runtime.Camera
             }
 
             poses = result;
-            error = null;
+            error = skippedParts == 0 ? null :
+                $"트레이 {result.Count}개 배치 반영 · 무효/중복/미지원 부품 {skippedParts}개 제외";
             return true;
         }
 
@@ -289,7 +302,12 @@ namespace MainUnity.Runtime.Camera
 
             foreach (string id in staleIds)
             {
-                if (instancesById[id] != null) Destroy(instancesById[id]);
+                if (instancesById[id] != null)
+                {
+                    // Destroy는 프레임 끝에 실행되므로 ID 복구 시 이전 표시를 즉시 숨긴다.
+                    instancesById[id].SetActive(false);
+                    Destroy(instancesById[id]);
+                }
                 instancesById.Remove(id);
             }
         }
