@@ -995,6 +995,11 @@ namespace MainUnity.Tests.PlayMode
         [TestCase("plain_failure")]
         [TestCase("rejected_request")]
         [TestCase("observation_dropout")]
+        [TestCase("restore_held")]
+        [TestCase("restore_released")]
+        [TestCase("restore_corrupt")]
+        [TestCase("restore_tray")]
+        [TestCase("restore_server_changed")]
         public void IdleRobotCallbacksPreserveIdentityAndNeverRequireProduction(string variant)
         {
             Transform Child(string name, Transform parent)
@@ -1104,6 +1109,69 @@ namespace MainUnity.Tests.PlayMode
                 Assert.That(part.transform.position, Is.EqualTo(heldPosition));
                 apply.Invoke(calibration, new[] { emptyPoses });
                 Assert.That(part.activeSelf, Is.True);
+                if (variant.StartsWith("restore_", StringComparison.Ordinal))
+                {
+                    string path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "unity-recovery-" + Guid.NewGuid() + ".json");
+                    Component restored = null;
+                    try
+                    {
+                        Field(calibration, "baseLink").SetValue(calibration, root.transform);
+                        Field(calibration, "storagePath").SetValue(calibration, path);
+                        if (variant == "restore_tray") ((IDictionary)Field(calibration, "attachments").GetValue(calibration)).Clear();
+                        Invoke(calibration, "SaveLayout");
+                        Invoke(calibration, "SaveLayout"); // Exercise atomic replacement and backup.
+                        Assert.That(System.IO.File.Exists(path + ".bak"), Is.True);
+                        if (variant == "restore_corrupt") System.IO.File.WriteAllText(path, "invalid json");
+                        restored = Child("Restored receiver", root.transform).gameObject.AddComponent(calibration.GetType());
+                        Field(restored, "baseLink").SetValue(restored, root.transform);
+                        Field(restored, "storagePath").SetValue(restored, path);
+                        var binding = ((Array)Field(restored, "prefabBindings").GetValue(restored)).GetValue(0);
+                        Field(binding, "prefab").SetValue(binding, part);
+                        ((IDictionary)Field(restored, "bindingsByType").GetValue(restored)).Add("black_block", binding);
+                        Invoke(restored, "InitializeAttachments", gripper, boardCalibration);
+                        Invoke(restored, "RestoreLayout");
+                        var restoredPart = (GameObject)((IDictionary)Field(restored, "instancesById").GetValue(restored))[source];
+                        Assert.That(restoredPart, Is.Not.Null);
+                        Assert.That(restoredPart.transform.parent, Is.EqualTo(restored.transform), "Saved poses remain detached until verified.");
+                        Assert.That(StringProperty(restored, "SyncDetail"), Does.Contain("확인 중"));
+                        if (variant == "restore_tray")
+                        {
+                            Assert.That(((IDictionary)Field(restored, "attachments").GetValue(restored)).Count, Is.Zero);
+                            Assert.That(restoredPart.transform.position, Is.EqualTo(part.transform.position));
+                            return;
+                        }
+                        Vector3 savedRelative = part.transform.localPosition;
+                        gripper.position += Vector3.up * 2f;
+                        string state = variant == "restore_released" ? "placed" : "attached";
+                        string snapshot = "{\"schema\":\"fr5.robot_api_status/v1\",\"state_fresh\":true,\"event_context\":{\"server_instance_id\":\"07a9c41f-d6d8-4e91-9059-6c659a1cab83\",\"event_sequence\":604,\"attachments\":[{" +
+                            "\"source_id\":\"" + source + "\",\"tray_registration_id\":\"" + registration + "\",\"source_observation_id\":\"" + observation + "\"," +
+                            "\"job_id\":\"fa9140a8-8252-4fca-a333-201f1a7c9fe2\",\"operation_id\":\"bb5e4ea4-13eb-44d0-a5d9-48aed366bbc5\",\"server_instance_id\":\"07a9c41f-d6d8-4e91-9059-6c659a1cab83\"," +
+                            "\"slot_code\":\"VRM-01\",\"state\":\"" + state + "\",\"event_sequence\":604,\"uncertain\":false,\"attachment_binding_valid\":true," +
+                            "\"plan_sha256\":\"82c7202f43762158575d972b3777be1a03d3afba08ab0d4d23952e0106da3fe0\",\"source_cycle_id\":\"20260909-134237\"}]}}";
+                        if (variant == "restore_server_changed") snapshot = snapshot.Replace("07a9c41f-d6d8-4e91-9059-6c659a1cab83", "11111111-1111-4111-8111-111111111111");
+                        Invoke(restored, "ReconcileSnapshot", snapshot);
+                        if (variant is "restore_released" or "restore_server_changed")
+                        {
+                            Assert.That(restoredPart.transform.parent, Is.EqualTo(restored.transform));
+                            Assert.That(StringProperty(restored, "SyncDetail"), Does.Contain("미확인"));
+                        }
+                        else
+                        {
+                            Assert.That(restoredPart.transform.parent, Is.EqualTo(gripper));
+                            Assert.That(restoredPart.transform.localPosition, Is.EqualTo(savedRelative));
+                            Assert.That(StringProperty(restored, "SyncDetail"), Does.Contain("대조 완료"));
+                            Invoke(restored, "ProcessRobotEvent", grasp);
+                            Assert.That(restoredPart.transform.localPosition, Is.EqualTo(savedRelative));
+                        }
+                        return;
+                    }
+                    finally
+                    {
+                        Field(calibration, "storagePath").SetValue(calibration, null);
+                        if (restored != null) Field(restored, "storagePath").SetValue(restored, null);
+                        foreach (string suffix in new[] { "", ".tmp", ".bak" }) System.IO.File.Delete(path + suffix);
+                    }
+                }
                 if (variant == "other_place")
                 {
                     Receive(release.Replace("RELEASE", "APPROACH").Replace("627", "626"));

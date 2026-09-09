@@ -3,6 +3,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using Newtonsoft.Json.Linq;
 using RosMessageTypes.Std;
 using Unity.Robotics.ROSTCPConnector;
@@ -90,12 +91,17 @@ namespace MainUnity.Runtime.Camera
 
         // The tray owns these objects even after reparenting. Reservation prevents a
         // subsequent detector frame or manual recreation from moving/deleting them.
+        [Serializable]
         sealed class Attachment
         {
             public string Job, PickOperation, PlaceOperation, Registration, Observation, Slot, Part, Server, Plan, Cycle;
             public readonly HashSet<long> Seen = new();
             public long Sequence;
-            public Transform Board;
+            [NonSerialized] public Transform Board;
+            public long SnapshotFloor = -1;
+            public bool Restored;
+            public Vector3 LocalPosition;
+            public Quaternion LocalRotation;
             public string State = "reserved";
             public bool Uncertain;
         }
@@ -110,7 +116,33 @@ namespace MainUnity.Runtime.Camera
         bool robotSubscribed;
         System.Threading.Tasks.Task<TriggerResponse> statusRequest;
         bool wasConnected;
-        int eventRevision;
+        readonly List<string> bufferedEvents = new();
+        bool buffering, bufferOverflow, needsSync = true, restoredLayout;
+        string storagePath;
+        bool savePending;
+        internal string SyncDetail { get; private set; } = "현재 상태 확인 대기";
+        internal string StorageDetail { get; private set; } = "";
+
+        [Serializable]
+        sealed class SavedPart
+        {
+            public string Id, Type, Registration;
+            public Vector3 Position, Scale;
+            public Quaternion Rotation;
+            public bool HasAttachment;
+            public Attachment Attachment;
+        }
+        [Serializable]
+        sealed class SavedObservation { public string Registration, Observation, Source; }
+        [Serializable]
+        sealed class SavedLayout
+        {
+            public int Version;
+            public string Registration, SavedUtc;
+            public List<SavedPart> Parts = new();
+            public List<SavedObservation> Observations = new();
+        }
+
         internal string RobotDetail { get; private set; } = "로봇 동작 이벤트 대기";
         internal double LastRobotReceiveTime { get; private set; } = -1d;
 
@@ -169,6 +201,14 @@ namespace MainUnity.Runtime.Camera
                 }
 
             connection = ROSConnection.GetOrCreateInstance();
+            // Separate Real caches by scene and configured ROS endpoint, never by Mock data.
+            using (var hash = System.Security.Cryptography.SHA256.Create())
+            {
+                string key = gameObject.scene.path + "|" + name + "|" + connection.RosIPAddress + ":" + connection.RosPort;
+                string suffix = BitConverter.ToString(hash.ComputeHash(System.Text.Encoding.UTF8.GetBytes(key))).Replace("-", "");
+                storagePath = Path.Combine(Application.persistentDataPath, "real-visualization-" + suffix + ".json");
+            }
+            RestoreLayout();
             connection.Subscribe<StringMsg>(TopicName, ReceiveState);
             ConnectRobotEvents();
         }
@@ -189,7 +229,11 @@ namespace MainUnity.Runtime.Camera
 
         void OnDisable()
         {
+            SaveLayout();
             StopAllCoroutines();
+            buffering = false;
+            bufferedEvents.Clear();
+            needsSync = true;
             if (connection != null && robotSubscribed) connection.Unsubscribe(RobotEventTopic);
             robotSubscribed = false;
             wasConnected = false;
@@ -199,43 +243,55 @@ namespace MainUnity.Runtime.Camera
 
         IEnumerator ReconcileConnection()
         {
-            // No network work in Update. At most one service request remains pending;
-            // ROSConnection cannot cancel a pending service Future safely.
+            // A timed-out ROS service Future cannot be cancelled. Keep at most one
+            // outstanding request; retry only after it has completed.
             var delay = new WaitForSecondsRealtime(1f);
+            double nextQuery = 0d;
             while (isActiveAndEnabled)
             {
+                if (savePending) SaveLayout();
                 bool connected = connection.HasConnectionThread && !connection.HasConnectionError;
-                if (!connected && wasConnected)
+                if (!connected)
                 {
-                    foreach (Attachment value in attachments.Values) value.Uncertain = true;
-                    RobotDetail = "로봇 연결 중단 · 마지막 부착 유지";
+                    if (wasConnected)
+                        foreach (Attachment value in attachments.Values) value.Uncertain = true;
+                    needsSync = true;
+                    SyncDetail = "연결 대기 · 마지막 화면 미확인";
                 }
-                if (connected && !wasConnected && statusRequest == null)
+                if (statusRequest != null && statusRequest.IsCompleted)
                 {
+                    _ = statusRequest.Exception;
+                    statusRequest = null;
+                }
+                if (connected && needsSync && statusRequest == null && Time.realtimeSinceStartupAsDouble >= nextQuery)
+                {
+                    buffering = true;
+                    bufferOverflow = false;
+                    bufferedEvents.Clear();
+                    SyncDetail = "◌ 로봇 상태 동기화 중";
                     statusRequest = connection.SendServiceMessage<TriggerResponse>(RobotStatusService, new TriggerRequest());
-                    int revision = eventRevision;
                     double deadline = Time.realtimeSinceStartupAsDouble + 5d;
                     while (!statusRequest.IsCompleted && Time.realtimeSinceStartupAsDouble < deadline)
                         yield return null;
                     if (statusRequest.IsCompleted)
                     {
-                        if (!statusRequest.IsFaulted && !statusRequest.IsCanceled && statusRequest.Result.success &&
-                            revision == eventRevision && connection.HasConnectionThread && !connection.HasConnectionError)
+                        if (!bufferOverflow && !statusRequest.IsFaulted && !statusRequest.IsCanceled && statusRequest.Result.success &&
+                            connection.HasConnectionThread && !connection.HasConnectionError)
                             ReconcileSnapshot(statusRequest.Result.message);
                         else
                         {
                             _ = statusRequest.Exception;
-                            RobotDetail = "로봇 상태 조회 미확정 · 이벤트 확인 필요";
+                            SyncDetail = "상태 조회 미확정 · 마지막 화면 미확인";
                         }
                         statusRequest = null;
                     }
-                    else RobotDetail = "로봇 상태 조회 시간초과 · 복원 미확인";
-                }
-                if (statusRequest != null && statusRequest.IsCompleted)
-                {
-                    // A late reply cannot overwrite newer live events.
-                    _ = statusRequest.Exception;
-                    statusRequest = null;
+                    else SyncDetail = "동기화 지연 · 조회 5초 초과 · 마지막 화면 미확인";
+                    buffering = false;
+                    // Matching snapshot rows set a per-part sequence floor. Unknown
+                    // rows stay uncertain; never discard their failure/control events.
+                    foreach (string json in bufferedEvents) ProcessRobotEvent(json);
+                    bufferedEvents.Clear();
+                    nextQuery = Time.realtimeSinceStartupAsDouble + 5d;
                 }
                 wasConnected = connected;
                 yield return delay;
@@ -245,13 +301,25 @@ namespace MainUnity.Runtime.Camera
         void ReceiveRobotEvent(StringMsg message)
         {
             if (!isActiveAndEnabled) return;
+            if (buffering)
+            {
+                LastRobotReceiveTime = Time.realtimeSinceStartupAsDouble;
+                if (bufferedEvents.Count < 1024) bufferedEvents.Add(message?.data);
+                else
+                {
+                    bufferOverflow = true;
+                    foreach (Attachment value in attachments.Values) value.Uncertain = true;
+                    SyncDetail = "이벤트 수집 한도 초과 · 재대조 필요";
+                }
+                return;
+            }
             ProcessRobotEvent(message?.data);
         }
 
         void ProcessRobotEvent(string json)
         {
             LastRobotReceiveTime = Time.realtimeSinceStartupAsDouble;
-            eventRevision++;
+
             Attachment affected = null;
             try
             {
@@ -267,6 +335,8 @@ namespace MainUnity.Runtime.Camera
                     if (Guid.TryParse(failedJob, out _))
                         foreach (Attachment value in attachments.Values)
                             if (value.Job == failedJob) value.Uncertain = true;
+                    needsSync = true;
+                    SyncDetail = "로봇 정지/실패 · 상태 재대조 필요";
                     RobotDetail = "로봇 정지/실패 · 마지막 부착 유지 · 재확인 필요";
                     return;
                 }
@@ -287,6 +357,7 @@ namespace MainUnity.Runtime.Camera
                 string phase = (string)envelope["phase"];
                 attachments.TryGetValue(id ?? "", out Attachment record);
                 affected = record;
+                if (record != null && record.Server == server && record.Job == job && sequence <= record.SnapshotFloor) return;
                 if (record != null && record.Job == job && record.Server == server && record.Seen.Contains(sequence)) return;
                 if (record != null && (record.Job != job || record.Server != server))
                     throw new FormatException("다른 실행 또는 API 재시작 · 부착 복원 미확인");
@@ -309,7 +380,7 @@ namespace MainUnity.Runtime.Camera
                     throw new FormatException("부품·슬롯·관측 식별 누락");
                 if (record == null)
                 {
-                    if (action != "robot.pick" || kind != "PHASE_STARTED" || reg != registration ||
+                    if (restoredLayout || action != "robot.pick" || kind != "PHASE_STARTED" || reg != registration ||
                         !observations.Contains((reg, observation, id)) || !instanceRegistrations.TryGetValue(id, out string sourceReg) || sourceReg != reg ||
                         !instanceTypes.TryGetValue(id, out string type) || PartCode(type) != part)
                         throw new FormatException("Pick 시작·원래 관측 미수신 · 부착 복원 미확인");
@@ -337,6 +408,8 @@ namespace MainUnity.Runtime.Camera
                 if (!string.IsNullOrEmpty((string)envelope["error_code"]))
                 {
                     record.Uncertain = true;
+                    needsSync = true;
+                    SyncDetail = "일부 부품 미확인 · 상태 재대조 필요";
                     RobotDetail = $"{slot} · 정지/실패 · 마지막 부착 유지";
                     return;
                 }
@@ -386,12 +459,16 @@ namespace MainUnity.Runtime.Camera
                 error is FormatException || error is InvalidCastException || error is OverflowException)
             {
                 if (affected != null) affected.Uncertain = true;
+                needsSync = true;
+                SyncDetail = "일부 부품 미확인 · 상태 재대조 필요";
                 RobotDetail = "로봇 시각화 미확인 · " + error.Message;
             }
+            finally { savePending = true; SaveLayout(); }
         }
 
         void ReconcileSnapshot(string json)
         {
+            foreach (Attachment value in attachments.Values) value.Uncertain = true;
             try
             {
                 JObject status = JObject.Parse(json);
@@ -400,7 +477,6 @@ namespace MainUnity.Runtime.Camera
                     throw new FormatException("부착 snapshot 없음");
                 if (status["state_fresh"]?.Type != JTokenType.Boolean || !(bool)status["state_fresh"])
                     throw new FormatException("실측 freshness 미확인");
-                foreach (Attachment value in attachments.Values) value.Uncertain = true;
                 int unresolved = 0;
                 foreach (JObject row in rows)
                 {
@@ -417,20 +493,155 @@ namespace MainUnity.Runtime.Camera
                         (string)status["event_context"]?["server_instance_id"] == record.Server &&
                         row["event_sequence"]?.Type == JTokenType.Integer && (long)row["event_sequence"] >= record.Sequence &&
                         instancesById.TryGetValue(id, out GameObject instance) && instance != null &&
-                        (record.State == "attached" ? instance.transform.parent == measuredGripper :
+                        (record.State == "attached" ? measuredGripper != null &&
+                            (record.Restored || instance.transform.parent == measuredGripper) :
                             record.State == "placed" && record.Board != null && instance.transform.parent == record.Board) &&
                         row["uncertain"]?.Type == JTokenType.Boolean && !(bool)row["uncertain"] &&
                         row["attachment_binding_valid"]?.Type == JTokenType.Boolean && (bool)row["attachment_binding_valid"];
+                    if (matches && record.Restored)
+                    {
+                        // Only the same uninterrupted Pick may reuse a saved TCP-relative pose.
+                        matches = (string)row["operation_id"] == record.PickOperation;
+                        if (matches)
+                        {
+                            Transform partTransform = instancesById[id].transform;
+                            partTransform.SetParent(measuredGripper, true);
+                            partTransform.localPosition = record.LocalPosition;
+                            partTransform.localRotation = record.LocalRotation;
+                            record.Restored = false;
+                        }
+                    }
                     record.Uncertain = !matches;
+                    if (matches) record.Sequence = record.SnapshotFloor = (long)row["event_sequence"];
                 }
                 foreach (Attachment value in attachments.Values)
                     if (value.Uncertain) unresolved++;
+                if (restoredLayout && attachments.Count == instancesById.Count && unresolved == 0) restoredLayout = false;
+                needsSync = unresolved > 0 || restoredLayout;
+                SyncDetail = needsSync ? "일부 복원 미확인 · 전체 부품 자세 snapshot 필요" : "부착 상태 대조 완료 · callback 수신 중";
+                savePending = true;
                 RobotDetail = unresolved > 0 ? $"부착 snapshot {unresolved}건 복원 미확인 · 임의 배치 안 함" : "부착 snapshot 대조 완료";
             }
             catch (Exception error) when (error is Newtonsoft.Json.JsonException || error is ArgumentException ||
                 error is InvalidCastException || error is FormatException)
-            { RobotDetail = "부착 snapshot 미확인 · " + error.Message; }
+            { needsSync = true; SyncDetail = "동기화 미확인 · " + error.Message; RobotDetail = "부착 snapshot 미확인 · " + error.Message; }
         }
+
+        void SaveLayout()
+        {
+            if (storagePath == null || baseLink == null || instancesById.Count == 0) return;
+            try
+            {
+                var saved = new SavedLayout { Version = 1, Registration = registration, SavedUtc = DateTime.UtcNow.ToString("O") };
+                foreach (var pair in instancesById)
+                {
+                    if (pair.Value == null) continue;
+                    Transform part = pair.Value.transform;
+                    attachments.TryGetValue(pair.Key, out Attachment record);
+                    if (record != null && !record.Restored)
+                    {
+                        record.LocalPosition = part.localPosition;
+                        record.LocalRotation = part.localRotation;
+                    }
+                    saved.Parts.Add(new SavedPart { Id = pair.Key, Type = instanceTypes[pair.Key],
+                        Registration = instanceRegistrations[pair.Key], Position = baseLink.InverseTransformPoint(part.position),
+                        Rotation = Quaternion.Inverse(baseLink.rotation) * part.rotation, Scale = part.lossyScale,
+                        HasAttachment = record != null, Attachment = record });
+                }
+                foreach (var observation in observations)
+                    saved.Observations.Add(new SavedObservation { Registration = observation.Registration,
+                        Observation = observation.Observation, Source = observation.Source });
+                string json = JsonUtility.ToJson(saved);
+                // A same-directory replace leaves the previous complete file intact
+                // if writing the temporary file fails or Unity exits during the write.
+                Directory.CreateDirectory(Path.GetDirectoryName(storagePath));
+                using (var stream = new FileStream(storagePath + ".tmp", FileMode.Create, FileAccess.Write))
+                {
+                    byte[] bytes = System.Text.Encoding.UTF8.GetBytes(json);
+                    stream.Write(bytes, 0, bytes.Length);
+                    stream.Flush(true);
+                }
+                if (File.Exists(storagePath)) File.Replace(storagePath + ".tmp", storagePath, storagePath + ".bak");
+                else File.Move(storagePath + ".tmp", storagePath);
+                savePending = false;
+                StorageDetail = "";
+            }
+            catch (Exception error) when (error is IOException || error is UnauthorizedAccessException || error is ArgumentException)
+            { StorageDetail = "시각화 저장 실패 · " + error.Message; }
+        }
+
+        void RestoreLayout()
+        {
+            if (storagePath == null || baseLink == null || instancesById.Count != 0 ||
+                !Finite(SpawnRoot.lossyScale) || SpawnRoot.lossyScale.x <= 0f || SpawnRoot.lossyScale.y <= 0f || SpawnRoot.lossyScale.z <= 0f) return;
+            SavedLayout saved = null;
+            foreach (string path in new[] { storagePath, storagePath + ".bak" })
+            {
+                if (!File.Exists(path)) continue;
+                try
+                {
+                    if (new FileInfo(path).Length > 8 * 1024 * 1024) throw new FormatException("저장 크기 초과");
+                    var candidate = JsonUtility.FromJson<SavedLayout>(File.ReadAllText(path));
+                    if (candidate == null || candidate.Version != 1 || candidate.Parts == null || candidate.Parts.Count > 1024 ||
+                        candidate.Observations == null || candidate.Observations.Count > 16384)
+                        throw new FormatException("저장 형식 불일치");
+                    var ids = new HashSet<string>(StringComparer.Ordinal);
+                    foreach (SavedPart part in candidate.Parts)
+                    {
+                        if (part == null || string.IsNullOrWhiteSpace(part.Id) || !ids.Add(part.Id) || part.Type == null ||
+                            !bindingsByType.TryGetValue(part.Type, out PrefabBinding binding) || binding.Prefab == null ||
+                            !Finite(part.Position) || !Finite(part.Scale) || part.Scale.x <= 0f || part.Scale.y <= 0f || part.Scale.z <= 0f ||
+                            !Finite(part.Rotation)) throw new FormatException("저장 부품 또는 프리팹 불일치");
+                        if (!part.HasAttachment) part.Attachment = null;
+                        Attachment record = part.Attachment;
+                        if (record != null && (!Guid.TryParse(record.Job, out _) || !Guid.TryParse(record.Server, out _) ||
+                            !Guid.TryParse(record.PickOperation, out _) || record.Sequence < 0 ||
+                            record.State is not ("reserved" or "attached" or "placed") ||
+                            record.Registration != part.Registration || string.IsNullOrWhiteSpace(record.Slot) ||
+                            !Finite(record.LocalPosition) || !Finite(record.LocalRotation)))
+                            throw new FormatException("저장 부착 정보 불일치");
+                    }
+                    foreach (SavedObservation observation in candidate.Observations)
+                        if (observation == null || !ids.Contains(observation.Source ?? "") ||
+                            string.IsNullOrWhiteSpace(observation.Registration) || string.IsNullOrWhiteSpace(observation.Observation))
+                            throw new FormatException("저장 관측 정보 불일치");
+                    saved = candidate;
+                    break;
+                }
+                catch (Exception error) when (error is IOException || error is UnauthorizedAccessException ||
+                    error is ArgumentException || error is FormatException)
+                { StorageDetail = "저장 화면 복원 미확인 · " + error.Message; }
+            }
+            if (saved == null) return;
+            registration = saved.Registration;
+            foreach (SavedPart part in saved.Parts)
+            {
+                GameObject instance = Instantiate(bindingsByType[part.Type].Prefab, SpawnRoot);
+                instance.name = part.Id;
+                instance.transform.SetPositionAndRotation(baseLink.TransformPoint(part.Position), baseLink.rotation * part.Rotation);
+                Vector3 parentScale = SpawnRoot.lossyScale;
+                instance.transform.localScale = new Vector3(part.Scale.x / parentScale.x, part.Scale.y / parentScale.y, part.Scale.z / parentScale.z);
+                instancesById.Add(part.Id, instance);
+                instanceRegistrations.Add(part.Id, part.Registration);
+                instanceTypes.Add(part.Id, part.Type);
+                if (part.Attachment != null)
+                {
+                    part.Attachment.Uncertain = true;
+                    part.Attachment.Restored = true;
+                    attachments.Add(part.Id, part.Attachment);
+                }
+            }
+            foreach (SavedObservation observation in saved.Observations)
+                observations.Add((observation.Registration, observation.Observation, observation.Source));
+            restoredLayout = saved.Parts.Count > 0;
+            needsSync = true;
+            SyncDetail = "◌ 저장 화면 · 현재 상태 확인 중 (" + saved.SavedUtc + ")";
+            SetProgress(ProgressState.Preparing, "저장된 마지막 배치 · 실물 확인 전");
+        }
+
+        static bool Finite(Vector3 value) => IsFinite(value.x) && IsFinite(value.y) && IsFinite(value.z);
+        static bool Finite(Quaternion value) => IsFinite(value.x) && IsFinite(value.y) && IsFinite(value.z) &&
+            IsFinite(value.w) && Mathf.Abs(Quaternion.Dot(value, value) - 1f) < 0.01f;
 
         static string PartCode(string type) => type switch
         {
@@ -495,7 +706,7 @@ namespace MainUnity.Runtime.Camera
                 SetProgress(ProgressState.Preparing, "트레이 등록 세대 변경 · 기존 배치 유지 · 명시적 재생성 필요");
                 return;
             }
-            if (attachments.Count > 0)
+            if (attachments.Count > 0 || restoredLayout)
             {
                 SetProgress(ProgressState.Preparing, "로봇 실행 배치 고정 · 관측으로 부품을 변경하지 않음");
                 return;
@@ -508,6 +719,7 @@ namespace MainUnity.Runtime.Camera
                     foreach (PartPose pose in poses)
                         if (observations.Count < 16384 && !pose.Id.StartsWith("display-only:", StringComparison.Ordinal))
                             observations.Add((registration, state.source_observation_id, pose.Id));
+                savePending = true;
                 LastAppliedTime = Time.realtimeSinceStartupAsDouble;
             }
             lastRejectedReason = null;
@@ -667,6 +879,8 @@ namespace MainUnity.Runtime.Camera
                         observations.Add((registration, latestObservation, pose.Id));
             hasSequence = false;
             LastAppliedTime = Time.realtimeSinceStartupAsDouble;
+            restoredLayout = false;
+            SaveLayout();
             SetProgress(ProgressState.Applied, "명시적 트레이 재생성 완료");
         }
 

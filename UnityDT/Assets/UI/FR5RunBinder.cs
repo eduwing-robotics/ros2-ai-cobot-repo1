@@ -1145,7 +1145,8 @@ namespace MainUnity.UI
             calibrationState.text = state;
             SetTone(calibrationState, error ? "bad" : "none");
             if (!mock && source != null)
-                detail += "\n로봇 시각화: " + source.RobotDetail +
+                detail += "\n" + source.SyncDetail + (string.IsNullOrEmpty(source.StorageDetail) ? "" : "\n" + source.StorageDetail) +
+                    "\n로봇 시각화: " + source.RobotDetail +
                     (source.LastRobotReceiveTime >= 0d ? " · 수신 " + Age(source.LastRobotReceiveTime) : "");
             calibrationDetail.text = detail;
             calibrationDetail.tooltip = !mock && source != null ? source.ProgressDetail : detail;
