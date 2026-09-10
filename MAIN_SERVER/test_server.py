@@ -134,6 +134,12 @@ class MainServerApiTest(unittest.TestCase):
                                       reports.OUTPUT_DIR, reports.DEFAULT_IMAGE_ROOT, 10485760)
             write.assert_not_called()
 
+    def test_paused_job_filter_reaches_query(self):
+        with patch.object(server.queries, "jobs", return_value=[]) as query:
+            status, body = self.request("/api/v1/jobs?status=PAUSED")
+            self.assertEqual(status, 200)
+            query.assert_called_once_with("PAUSED", 12)
+
     def test_documented_routes_are_registered_once(self):
         document = (Path(__file__).parent / "Main_serverAPI.md").read_text(encoding="utf-8")
         marker = chr(96)
@@ -198,6 +204,17 @@ class MainServerApiTest(unittest.TestCase):
             status, body = self.request(f"/api/v1/jobs/{job_id}/units")
             self.assertEqual(status, 200)
             self.assertIsInstance(body["data"], list)
+
+    def test_requested_by_validation(self):
+        command = dict(command="start", job_id=str(uuid.uuid4()), product_code="p",
+                       product_version="v", recipe_version="r", requested_quantity=1)
+        for invalid in (None, "", "   ", 42, "x" * 129):
+            with self.assertRaises(server.ValidationError):
+                server.ApiHandler._validate_start_command(command | {"requested_by": invalid})
+        valid = command | {"requested_by": "  요청자  "}
+        server.ApiHandler._validate_start_command(valid)
+        self.assertEqual(valid["requested_by"], "요청자")
+        server.ApiHandler._validate_start_command(command)
 
     def test_execution_routes_with_fake_gateway(self):
         job_id = "12345678-1234-5678-1234-567812345678"
@@ -273,12 +290,18 @@ class MainServerApiTest(unittest.TestCase):
             "product_version": "hbm-pkg-r1",
             "requested_quantity": 1,
             "recipe_version": "assembly-r1",
+            "requested_by": "현장 요청자",
         }
         try:
             first = server.queries.create_job(command)
             second = server.queries.create_job(command)
             self.assertEqual(first["status"], "PENDING")
             self.assertEqual(second, first)
+            self.assertEqual(server.queries.job(job_id)["requested_by"], "현장 요청자")
+            listed = next(row for row in server.queries.jobs(limit=100) if str(row["job_id"]) == job_id)
+            self.assertEqual(listed["requested_by"], "현장 요청자")
+            with self.assertRaises(server.queries.DuplicateRequest):
+                server.queries.create_job(command | {"requested_by": "다른 요청자"})
 
             changed = dict(command)
             changed["requested_quantity"] = 2

@@ -37,7 +37,7 @@ if len({(method, path) for method, path, _ in ROUTES}) != len(ROUTES):
     raise RuntimeError("duplicate API method/path")
 
 VALID_RUNTIME_MODES = ("mock", "real")
-VALID_JOB_STATUSES = ("PENDING", "RUNNING", "COMPLETED", "FAILED", "CANCELLED")
+VALID_JOB_STATUSES = ("PENDING", "RUNNING", "PAUSED", "COMPLETED", "FAILED", "CANCELLED")
 MAX_REQUEST_BODY_BYTES = 1_000_000
 assembly_gateway = AssemblyGateway()
 _started_mode = None
@@ -357,10 +357,8 @@ class ApiHandler(BaseHTTPRequestHandler):
 
     @staticmethod
     def _validate_start_command(command):
-        if set(command) != {
-            "command", "job_id", "product_code", "product_version",
-            "requested_quantity", "recipe_version",
-        }:
+        required = {"command", "job_id", "product_code", "product_version", "requested_quantity", "recipe_version"}
+        if not required <= set(command) or set(command) - required - {"requested_by"}:
             raise ValidationError(
                 "command, job_id, product_code, product_version, "
                 "requested_quantity and recipe_version are required"
@@ -371,6 +369,11 @@ class ApiHandler(BaseHTTPRequestHandler):
         for field in ("product_code", "product_version", "recipe_version"):
             if not isinstance(command[field], str) or not command[field].strip():
                 raise ValidationError(f"{field} must be a nonblank string")
+        if "requested_by" in command:
+            requester = command["requested_by"]
+            if not isinstance(requester, str) or not 1 <= len(requester.strip()) <= 128:
+                raise ValidationError("requested_by must be a nonblank string of at most 128 characters")
+            command["requested_by"] = requester.strip()
         quantity = command["requested_quantity"]
         if isinstance(quantity, bool) or not isinstance(quantity, int) or quantity <= 0:
             raise ValidationError("requested_quantity must be a positive integer")

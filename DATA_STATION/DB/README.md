@@ -7,7 +7,7 @@
 production 데이터는 다음 사실을 보존합니다.
 
 - 생산 대상 제품과 부품 구성
-- 사용자가 요청한 PASS 목표 수량
+- 사용자가 요청한 PASS 목표 수량과 Job 요청자
 - 각 생산 시도의 조립·검사 결과
 - 검사된 제품 슬롯과 확정 불량 여부
 - 실제 생산에 따른 재고 변동 원인
@@ -78,3 +78,14 @@ DB 관리자 설정 `app.runtime_mode`가 DB 환경을 식별합니다. Job·Uni
 MainServer와 Sequencer는 DB 전체 설정을 카탈로그에서 읽고 연결마다 기대 모드와 비교합니다.
 미설정·불일치는 생산 데이터 작업 전에 차단합니다. 배포 절차는
 [Mock 올인원 실행](../../Farino_AIO_Mock/README.md#mock-올인원-실행)을 따릅니다.
+
+Job의 `requested_by`는 생산 명령을 생성한 요청자의 자유 입력 식별자입니다.
+실행 준비 확인자·관리자 인증 계정과 구분하며 Unit마다 복제하지 않습니다.
+과거 기록과 요청자 정보가 없는 자동 호출은 NULL을 유지합니다.
+기준 SQL의 `ADD COLUMN IF NOT EXISTS`로 기존 테이블에도 비파괴적으로 추가합니다.
+
+검사 FAIL Unit의 전체 공정 완료 시 Unit은 `COMPLETED`, Job은 `PAUSED`로 같은
+트랜잭션에서 전환됩니다. `RUNNING` 또는 `PAUSED` Job은 합쳐서 최대 하나입니다.
+재개 결정 전에는 다음 Unit을 생성하지 않습니다. `PAUSED`는 신규 컬럼이 아닌
+`jobs.job_status`의 값이며 기존 DB의 CHECK·유일성 인덱스 갱신은
+`production_schema.sql`에 포함되어 있습니다.

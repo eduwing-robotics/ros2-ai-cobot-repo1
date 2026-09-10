@@ -73,6 +73,7 @@ namespace MainUnity.UI
             public int failed_quantity;
             public int inspection_failed_quantity;
             public string requested_at;
+            public string requested_by;
         }
 
         [Serializable] sealed class StartCommand
@@ -83,6 +84,7 @@ namespace MainUnity.UI
             public string product_version;
             public int requested_quantity;
             public string recipe_version;
+            public string requested_by;
         }
 
         [Serializable] sealed class AssemblyResult
@@ -121,6 +123,8 @@ namespace MainUnity.UI
         Job[] jobs = Array.Empty<Job>();
 
         bool cached, requirementsLoaded, jobsLoading, jobsLoaded, registerInFlight;
+        TextField requestedBy;
+        string pendingRequestedBy;
         string productError, selectedFilter = "ALL", interlockSignature, pendingJobId, actionJobId;
 
         void OnEnable()
@@ -154,53 +158,73 @@ namespace MainUnity.UI
             sceneDialog = null;
         }
 
-        async Task<AssemblySceneConfirmation> ConfirmSceneAsync(string executionId)
+        async Task<AssemblySceneConfirmation> ConfirmSceneAsync(string executionId, string requester)
         {
             if (!isActiveAndEnabled || sceneConfirmation != null)
                 throw new InvalidOperationException("현장 준비 확인 화면을 열 수 없습니다.");
+            if (string.IsNullOrWhiteSpace(requester))
+                throw new InvalidOperationException("요청자가 기록되지 않은 작업입니다. 요청자를 입력해 새 작업을 등록하세요.");
+            var host = GetComponent<UIDocument>().rootVisualElement.Q<VisualElement>("job-detail");
+            if (host == null) throw new InvalidOperationException("작업 상세 영역을 찾을 수 없습니다.");
             var completion = new TaskCompletionSource<AssemblySceneConfirmation>();
             sceneConfirmation = completion;
-            var overlay = new VisualElement();
-            sceneDialog = overlay;
-            overlay.style.position = Position.Absolute;
-            overlay.style.left = 0; overlay.style.right = 0;
-            overlay.style.top = 0; overlay.style.bottom = 0;
-            overlay.style.backgroundColor = new Color(0, 0, 0, 0.85f);
-            overlay.style.alignItems = Align.Center;
-            overlay.style.justifyContent = Justify.Center;
             var panel = new VisualElement();
-            panel.style.width = 520;
-            panel.style.paddingLeft = 24; panel.style.paddingRight = 24;
-            panel.style.paddingTop = 24; panel.style.paddingBottom = 24;
-            panel.style.backgroundColor = new Color(0.10f, 0.13f, 0.17f);
-            panel.Add(new Label("실제 설비 실행 · 현장 준비 확인"));
-            panel.Add(new Label("이번 PCB 한 장의 준비 상태를 직접 확인하세요."));
-            var operatorId = new TextField("운영자 ID") { maxLength = 128 };
-            var gripper = new Toggle("그리퍼가 비어 있습니다");
-            var pcb = new Toggle("PCB의 조립 슬롯이 비어 있습니다");
-            var tray = new Toggle("트레이에 부품 25개가 준비되어 있습니다");
-            var fixture = new Toggle("고정 지그와 작업영역을 확인했습니다");
-            panel.Add(operatorId); panel.Add(gripper); panel.Add(pcb); panel.Add(tray); panel.Add(fixture);
+            sceneDialog = panel;
+            panel.AddToClassList("scene-confirmation");
+            panel.AddToClassList("scene-confirmation--inline");
+            var title = new Label("현장 준비 확인 · 작업 " + ShortJobId(actionJobId));
+            title.AddToClassList("scene-confirmation__title");
+            panel.Add(title);
+            var instruction = new Label("요청자 " + requester + " · 이번 PCB의 준비 상태를 직접 확인한 뒤 실행하세요.") { enableRichText = false };
+            instruction.AddToClassList("scene-confirmation__instruction");
+            panel.Add(instruction);
+            var gripper = new Toggle { text = "그리퍼가 비어 있습니다" };
+            var pcb = new Toggle { text = "PCB의 조립 슬롯이 비어 있습니다" };
+            var tray = new Toggle { text = "트레이에 부품 25개가 준비되어 있습니다" };
+            var fixture = new Toggle { text = "고정 지그와 작업영역을 확인했습니다" };
+            var checks = new VisualElement();
+            checks.AddToClassList("scene-confirmation__checks");
+            checks.Add(gripper); checks.Add(pcb); checks.Add(tray); checks.Add(fixture);
+            panel.Add(checks);
             var confirm = new Button(() => completion.TrySetResult(new AssemblySceneConfirmation
             {
-                operator_id = operatorId.value.Trim(), execution_id = executionId,
+                operator_id = requester.Trim(), execution_id = executionId,
                 confirmed_unix = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000d
             })) { text = "확인하고 실행 요청" };
-            void Refresh() => confirm.SetEnabled(!string.IsNullOrWhiteSpace(operatorId.value) &&
-                gripper.value && pcb.value && tray.value && fixture.value);
-            operatorId.RegisterValueChangedCallback(_ => Refresh());
+            confirm.AddToClassList("scene-confirmation__submit");
+            var progress = new Label();
+            progress.AddToClassList("scene-confirmation__progress");
+            void Refresh()
+            {
+                int count = (gripper.value ? 1 : 0) + (pcb.value ? 1 : 0) +
+                    (tray.value ? 1 : 0) + (fixture.value ? 1 : 0);
+                progress.text = $"준비 확인 {count} / 4";
+                confirm.SetEnabled(count == 4);
+            }
             foreach (var toggle in new[] { gripper, pcb, tray, fixture })
-                toggle.RegisterValueChangedCallback(_ => Refresh());
+            {
+                toggle.AddToClassList("scene-confirmation__check");
+                toggle.RegisterValueChangedCallback(_ =>
+                {
+                    toggle.EnableInClassList("scene-confirmation__check--checked", toggle.value);
+                    Refresh();
+                });
+            }
             Refresh();
-            panel.Add(confirm);
-            panel.Add(new Button(() => completion.TrySetCanceled()) { text = "취소" });
-            overlay.Add(panel);
-            GetComponent<UIDocument>().rootVisualElement.Add(overlay);
-            operatorId.Focus();
+            panel.Add(progress);
+            var actions = new VisualElement();
+            actions.AddToClassList("scene-confirmation__actions");
+            actions.Add(confirm);
+            var cancel = new Button(() => completion.TrySetCanceled()) { text = "취소" };
+            cancel.AddToClassList("scene-confirmation__cancel");
+            actions.Add(cancel);
+            panel.Add(actions);
+            host.Add(panel);
+            gripper.Focus();
             try { return await completion.Task; }
             finally
             {
-                overlay.RemoveFromHierarchy();
+                panel.RemoveFromHierarchy();
                 if (sceneConfirmation == completion) { sceneConfirmation = null; sceneDialog = null; }
             }
         }
@@ -237,6 +261,7 @@ namespace MainUnity.UI
             previewSource = root.Q<Label>("preview-source");
             previewDesc = root.Q<Label>("product-preview-desc");
             qtyValue = root.Q<Label>("qty-value");
+            requestedBy = root.Q<TextField>("requested-by");
             startReason = root.Q<Label>("start-reason");
             start = root.Q<Button>("start-button");
             filterAll = root.Q<Button>("filter-all");
@@ -401,7 +426,7 @@ namespace MainUnity.UI
 
         VisualElement JobRow(Job job)
         {
-            var row = new Button(() => { selectedJobId = job.job_id; BuildJobs(); });
+            var row = new Button(() => { if (sceneConfirmation != null) return; selectedJobId = job.job_id; BuildJobs(); });
             row.userData = job.job_id;
             row.AddToClassList("jobs-row");
             row.EnableInClassList("jobs-row--selected", job.job_id == selectedJobId);
@@ -441,7 +466,7 @@ namespace MainUnity.UI
                         job != null && string.Equals(job.job_status, state, StringComparison.OrdinalIgnoreCase));
             }
             if (selectedName != null) { selectedName.text = job == null ? "목록에서 작업을 선택하세요" : ProductText(job); selectedName.tooltip = selectedName.text; }
-            if (selectedId != null) { selectedId.text = job == null ? "—" : "작업 " + ShortJobId(job.job_id) + " · 등록 " + FormatTime(job.requested_at); selectedId.tooltip = job?.job_id ?? ""; }
+            if (selectedId != null) { selectedId.text = job == null ? "—" : "작업 " + ShortJobId(job.job_id) + " · 등록 " + FormatTime(job.requested_at); selectedId.tooltip = job == null ? "" : job.job_id + " · 요청자 " + (string.IsNullOrEmpty(job.requested_by) ? "기록 없음" : job.requested_by); }
             if (selectedProgress != null) selectedProgress.text = job == null ? "—" : job.completed_quantity + " / " + job.requested_quantity;
             if (selectedAttempts != null) selectedAttempts.text = job == null ? "—" : job.attempted_quantity + "회";
             if (selectedResults != null) selectedResults.text = job == null ? "—" : job.inspection_failed_quantity + "건 · " + job.failed_quantity + "건";
@@ -455,7 +480,7 @@ namespace MainUnity.UI
             string blocked = job == null ? "작업을 선택하세요." : StartBlockedReason(job);
             selectedStart?.SetEnabled(blocked == null);
             selectedCancel?.SetEnabled(pending && string.IsNullOrEmpty(actionJobId) && string.IsNullOrEmpty(jobQueryError));
-            selectedMonitor?.SetEnabled(job?.job_status == "RUNNING" && pageRouter != null);
+            selectedMonitor?.SetEnabled((job?.job_status == "RUNNING" || job?.job_status == "PAUSED") && pageRouter != null);
             selectedInspect?.SetEnabled(job != null && job.attempted_quantity > 0 && pageRouter != null);
             if (selectedStart != null) { selectedStart.text = job != null && actionJobId == job.job_id ? "요청 처리 중…" : "작업 실행"; selectedStart.tooltip = blocked ?? "선택한 대기 작업을 실행합니다."; }
             if (selectedInspect != null) selectedInspect.tooltip = job != null && job.attempted_quantity > 0 ? "선택한 작업의 검사 기록을 엽니다." : "생산 시도가 있는 작업에서 확인할 수 있습니다.";
@@ -468,7 +493,7 @@ namespace MainUnity.UI
 
         static string StatusText(string status) => status switch
         {
-            "PENDING" => "실행 대기", "RUNNING" => "실행 중", "COMPLETED" => "완료",
+            "PENDING" => "실행 대기", "RUNNING" => "실행 중", "PAUSED" => "불량 확인 대기", "COMPLETED" => "완료",
             "FAILED" => "실행 실패", "CANCELLED" => "취소", _ => "상태 확인 필요"
         };
 
@@ -481,7 +506,7 @@ namespace MainUnity.UI
             BuildJobs();
             try
             {
-                await uiMaster.Scenario.RunQueuedAsync(job.job_id, ConfirmSceneAsync);
+                await uiMaster.Scenario.RunQueuedAsync(job.job_id, executionId => ConfirmSceneAsync(executionId, job.requested_by));
             }
             catch (Exception exception)
             {
@@ -533,7 +558,7 @@ namespace MainUnity.UI
         static bool MatchesJob(Job job, string filter)
         {
             return filter == "ALL"
-                || filter == "QUEUE" && (job.job_status == "PENDING" || job.job_status == "RUNNING")
+                || filter == "QUEUE" && (job.job_status == "PENDING" || job.job_status == "RUNNING" || job.job_status == "PAUSED")
                 || filter == "ATTENTION" && IsAttention(job)
                 || filter == "DONE" && (job.job_status == "COMPLETED" || job.job_status == "CANCELLED");
         }
@@ -562,11 +587,12 @@ namespace MainUnity.UI
 
         string StartBlockedReason(Job job)
         {
+            if (job.job_status == "PAUSED") return "불량 확인 대기 · 운전 화면에서 재개 또는 취소하세요.";
             if (job.job_status != "PENDING" && job.job_status != "RUNNING") return "완료된 작업은 실행할 수 없습니다.";
             if (!string.IsNullOrEmpty(jobQueryError)) return "작업 상태를 다시 조회한 뒤 실행하세요.";
             if (!string.IsNullOrEmpty(actionJobId))
                 return actionJobId == job.job_id ? "요청 처리 중" : "다른 요청 처리 중";
-            Job runningJob = Array.Find(jobs, item => item.job_status == "RUNNING");
+            Job runningJob = Array.Find(jobs, item => item.job_status == "RUNNING" || item.job_status == "PAUSED");
             if (runningJob != null && runningJob.job_id != job.job_id)
                 return "JOB " + ShortJobId(runningJob.job_id) + " 실행 중";
             if (uiMaster?.Scenario == null) return "실행 경로 없음";
@@ -822,7 +848,9 @@ namespace MainUnity.UI
 
         void ApplyRegisterState(bool productReady, bool stockReady, bool modeKnown)
         {
-            bool ready = productReady && stockReady && modeKnown && !registerInFlight;
+            bool hasRequester = !string.IsNullOrWhiteSpace(pendingRequestedBy ?? requestedBy?.value);
+            requestedBy?.SetEnabled(!registerInFlight && pendingJobId == null);
+            bool ready = productReady && stockReady && modeKnown && hasRequester && !registerInFlight;
             start?.SetEnabled(ready);
             if (start != null) start.text = registerInFlight ? "등록 중…" : "작업 등록";
             if (startReason == null || registerInFlight) return;
@@ -832,6 +860,7 @@ namespace MainUnity.UI
                 ? "목표 수량에 필요한 재고가 부족합니다."
                 : !modeKnown
                 ? "요청 모드를 확인할 수 없습니다."
+                : !hasRequester ? "요청자 이름을 입력하세요."
                 : "등록한 작업은 실행 대기 상태로 추가됩니다.";
             if (!string.IsNullOrEmpty(registrationResult))
                 startReason.text = registrationResult + "\n" + startReason.text;
@@ -845,6 +874,9 @@ namespace MainUnity.UI
 
         IEnumerator RegisterJob()
         {
+            string requester = pendingRequestedBy ?? requestedBy?.value?.Trim();
+            if (string.IsNullOrWhiteSpace(requester)) yield break;
+            pendingRequestedBy = requester;
             registerInFlight = true;
             registrationResult = null;
             if (startReason != null) startReason.text = "작업 등록 중…";
@@ -855,6 +887,7 @@ namespace MainUnity.UI
             {
                 command = "start",
                 job_id = pendingJobId,
+                requested_by = pendingRequestedBy,
                 product_code = selectedProduct.product_code,
                 product_version = selectedProduct.product_version,
                 requested_quantity = quantity,
@@ -881,6 +914,7 @@ namespace MainUnity.UI
                         registrationResult = "작업 등록 완료 · " + ShortJobId(result.job_id) + " · " + result.status;
                         uiMaster?.RecordEvent("작업", registrationResult, false);
                         pendingJobId = null;
+                        pendingRequestedBy = null;
                         StartCoroutine(LoadJobs());
                     }
                     catch (Exception)

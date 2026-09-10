@@ -33,6 +33,8 @@ class RealBackend:
         self._execution_response = None
         self._execution_server = None
         self._execution_sequence = -1
+        self._pending_control = None
+        self._control_sequence = 0
         self._assembly_status_client = node.create_client(
             Trigger, "/real/assembly/status", callback_group=ReentrantCallbackGroup())
         self._assembly_command = node.create_publisher(String, "/real/assembly/command", 10)
@@ -219,11 +221,68 @@ class RealBackend:
                 pass
             raise RuntimeError("SAFETY_STOP: " + str(error)) from error
 
+    async def request_control(self, execution_id, action):
+        from std_msgs.msg import String
+
+        if action not in {"pause", "resume", "cancel"}:
+            raise ValueError("Unsupported production control")
+        with self._lock:
+            if self._execution_id != execution_id or self._pending_control is not None:
+                raise RuntimeError("No matching execution, or control confirmation is pending")
+        status = await self._read_status(self._assembly_status_client)
+        data = status.get("production_contract", {})
+        if (data.get("execution_id") != execution_id or
+                data.get("server_instance_id") != self._execution_server or
+                data.get("capabilities", {}).get(action) is not True or
+                data.get("recovery_required") is not False):
+            raise RuntimeError("Production control unavailable for this execution")
+        if action == "resume" and (data.get("status") != "paused" or
+                data.get("resume_available") is not True or not data.get("pause_control_id")):
+            raise RuntimeError("Matching confirmed pause is required before resume")
+        with self._lock:
+            if self._execution_id != execution_id or self._pending_control is not None:
+                raise RuntimeError("Execution changed while preparing control")
+            self._control_sequence += 1
+            request = dict(schema="fr5.assembly_execution/v2", action="assembly." + action,
+                execution_id=execution_id, control_id=str(uuid.uuid4()), control_sequence=self._control_sequence)
+            if action == "resume":
+                request["pause_control_id"] = data["pause_control_id"]
+            self._pending_control = dict(request=request, sent_at=time.monotonic(), rejection=None)
+        # Keep the identity on an uncertain send. Never create a second control implicitly.
+        self._assembly_command.publish(String(data=json.dumps(request)))
+        return request
+
+    def control_progress(self, data):
+        with self._lock:
+            pending = self._pending_control
+            if pending is None:
+                return data
+            request = pending["request"]
+            last = data.get("last_control") or {}
+            identity = data.get("control_id") or (last.get("control_id") if isinstance(last, dict) else None)
+            action = request["action"]
+            matches = identity == request["control_id"]
+            if action == "assembly.pause":
+                matches = matches or data.get("pause_control_id") == request["control_id"]
+            confirmed = matches and (
+                action == "assembly.pause" and data.get("status") == "paused" and
+                data.get("stop_verified") is True and data.get("resume_available") is True or
+                action == "assembly.resume" and data.get("status") == "running" or
+                action == "assembly.cancel" and data.get("status") == "cancelled" and
+                data.get("stop_verified") is True and data.get("recovery_required") is False)
+            if confirmed:
+                self._pending_control = None
+                return data
+            rejection = pending.get("rejection")
+            if rejection or time.monotonic() - pending["sent_at"] > 60:
+                return dict(data, control_error=(rejection or {}).get("message", "Control confirmation timed out; state is unconfirmed"))
+            return dict(data, control_pending=action)
+
     @staticmethod
     def _terminal(data):
         return (data.get("request_accepted") is False or
                 data.get("event") in {"EXECUTION_COMPLETED", "EXECUTION_FAILED", "REQUEST_REJECTED", "EXECUTION_CANCELLED"} or
-                data.get("status") in {"request_rejected", "failed_before_motion", "failed_recovered", "recovery_required"})
+                data.get("status") in {"request_rejected", "failed_before_motion", "failed_recovered", "recovery_required", "cancelled"})
 
     def _receive_execution(self, message):
         try:
@@ -232,6 +291,9 @@ class RealBackend:
                 return
             with self._lock:
                 if self._execution_id is None or data.get("execution_id") != self._execution_id:
+                    return
+                if data.get("request_accepted") is False and self._pending_control is not None:
+                    self._pending_control["rejection"] = data
                     return
                 if self._execution_response is not None and self._terminal(self._execution_response):
                     return
@@ -331,10 +393,20 @@ class RealBackend:
                     with (directory / "events.jsonl").open("a", encoding="utf-8") as stream:
                         stream.write(json.dumps(data) + "\n")
                     previous = data
+                    data = self.control_progress(data)
                     if data.get("event") == "EXECUTION_COMPLETED":
+                        if self._pending_control is not None:
+                            raise RuntimeError("SAFETY_STOP: assembly ended before control reconciliation")
                         self._validate_completion(data, request, slot_codes)
                         on_progress(data)
                         return data
+                    if data.get("event") == "EXECUTION_CANCELLED" or data.get("status") == "cancelled":
+                        if (self._pending_control is not None or data.get("stop_verified") is not True or
+                                data.get("recovery_required") is not False):
+                            raise RuntimeError("SAFETY_STOP: cancellation stop is unconfirmed")
+                        error = RuntimeError("Production execution cancelled and stopped")
+                        error.error_code = "EXECUTION_CANCELLED"
+                        raise error
                     if self._terminal(data):
                         failure = data.get("failure") or {}
                         code = data.get("error_code") or failure.get("code") or "ASSEMBLY_FAILED"
@@ -368,6 +440,7 @@ class RealBackend:
         finally:
             with self._lock:
                 self._execution_id = None
+                self._pending_control = None
 
     async def inspect_unit(self, job_id, unit_id, slot_codes):
         from rclpy.task import Future

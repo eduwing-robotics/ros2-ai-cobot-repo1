@@ -251,7 +251,7 @@ def get_next_runnable_job(
                     AND (%s::uuid[] IS NULL OR j.job_id = ANY(%s::uuid[]))
                     AND NOT EXISTS (
                         SELECT 1 FROM production.jobs active
-                        WHERE active.job_status = 'RUNNING'
+                        WHERE active.job_status IN ('RUNNING', 'PAUSED')
                     )
               )
               AND j.recipe_version = %s
@@ -681,6 +681,35 @@ def complete_unit(unit_id):
                 "UPDATE production.units SET unit_status = 'COMPLETED' WHERE unit_id = %s",
                 (unit_id,),
             )
+            if unit["inspection_result"] == "FAIL":
+                # Commit the completed defective Unit and its production gate together.
+                cursor.execute("UPDATE production.jobs SET job_status = 'PAUSED' "
+                               "WHERE job_id = (SELECT job_id FROM production.units WHERE unit_id = %s)", (unit_id,))
+
+
+def resume_quality_job(job_id):
+    job_id = _job_id(job_id)
+    with _connect() as connection, connection.transaction():
+        row = connection.execute("SELECT job_status, product_id FROM production.jobs WHERE job_id = %s FOR UPDATE", (job_id,)).fetchone()
+        if row is None or row["job_status"] != "PAUSED":
+            raise RuntimeError("Job is not awaiting a quality decision")
+        with connection.cursor() as cursor:
+            requirements = _lock_requirements(cursor, row["product_id"])
+            if any(item["stock_quantity"] < item["quantity_per_product"] for item in requirements):
+                raise RuntimeError("insufficient stock for the next Unit")
+        connection.execute("UPDATE production.jobs SET job_status = 'RUNNING' WHERE job_id = %s", (job_id,))
+
+
+def get_quality_hold():
+    with _connect() as connection:
+        return connection.execute("""
+            SELECT j.job_id::text, j.recipe_version, u.unit_id
+            FROM production.jobs j JOIN LATERAL (
+                SELECT unit_id FROM production.units WHERE job_id = j.job_id
+                AND unit_status = 'COMPLETED' AND inspection_result = 'FAIL'
+                ORDER BY unit_sequence_in_job DESC LIMIT 1
+            ) u ON true WHERE j.job_status = 'PAUSED'
+        """).fetchone()
 
 
 def finish_job(job_id, final_status):

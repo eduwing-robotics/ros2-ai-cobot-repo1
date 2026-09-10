@@ -1141,3 +1141,42 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
 .run-alarm-space { position: absolute; left: 88px; right: 0; top: 64px; height: 48px; background-color: rgb(28, 42, 52); }
 .run-view-gutter { position: absolute; left: 996px; width: 16px; top: 112px; height: 698px; background-color: rgb(28, 42, 52); }
 .page--focus .run-view-gutter { display: none; }
+
+/* 실행 확인 창에만 적용해 다른 입력·토글의 크기를 유지한다. */
+.scene-confirmation { color: rgb(242, 246, 250); border-width: 1px; border-color: rgb(105, 126, 147); border-radius: 8px; }
+.scene-confirmation__title { font-size: 25px; -unity-font-style: bold; margin-bottom: 10px; }
+.scene-confirmation__instruction { font-size: 16px; white-space: normal; color: rgb(205, 217, 230); margin-bottom: 20px; }
+.scene-confirmation__operator { flex-direction: column; align-items: stretch; margin-bottom: 18px; }
+.scene-confirmation__operator > .unity-base-field__label { font-size: 17px; color: rgb(242, 246, 250); margin-bottom: 8px; min-width: 0; }
+.scene-confirmation__operator .unity-base-text-field__input { min-height: 46px; font-size: 21px; color: rgb(255, 255, 255); background-color: rgb(13, 22, 31); border-width: 2px; border-color: rgb(130, 153, 175); padding-left: 12px; }
+.scene-confirmation__operator .unity-base-text-field__input:focus { border-color: rgb(105, 196, 255); }
+.scene-confirmation__check { min-height: 52px; margin-top: 4px; margin-bottom: 4px; padding-left: 12px; padding-right: 12px; background-color: rgb(38, 51, 66); border-width: 1px; border-color: rgb(94, 115, 137); border-radius: 5px; }
+.scene-confirmation__check .unity-toggle__input { flex-grow: 1; }
+.scene-confirmation__check .unity-toggle__text { color: rgb(245, 248, 252); font-size: 18px; white-space: normal; }
+.scene-confirmation__check .unity-toggle__checkmark { width: 26px; height: 26px; min-width: 26px; margin-right: 12px; border-width: 2px; border-color: rgb(173, 192, 210); background-color: rgb(15, 25, 35); }
+.scene-confirmation__check--checked { border-color: rgb(105, 196, 255); background-color: rgb(33, 61, 80); }
+.scene-confirmation__check:focus { border-color: rgb(255, 255, 255); }
+.scene-confirmation__progress { font-size: 16px; color: rgb(218, 229, 239); margin-top: 14px; margin-bottom: 10px; }
+.scene-confirmation__submit { height: 48px; font-size: 19px; -unity-font-style: bold; color: rgb(12, 25, 35); background-color: rgb(105, 196, 255); }
+.scene-confirmation__submit:disabled { color: rgb(170, 185, 199); background-color: rgb(52, 66, 81); }
+.scene-confirmation__cancel { height: 40px; margin-top: 8px; font-size: 17px; color: rgb(237, 243, 249); background-color: rgb(48, 61, 76); }
+
+/* 선택 작업 안에서 준비를 확인한다. 이름 입력은 신규 Job 등록에만 둔다. */
+.scene-confirmation--inline { margin-top: 12px; padding: 12px; background-color: rgb(25, 34, 44); }
+.scene-confirmation--inline .scene-confirmation__title { font-size: 18px; margin-bottom: 4px; }
+.scene-confirmation--inline .scene-confirmation__instruction { font-size: 14px; margin-bottom: 6px; }
+.scene-confirmation__checks { flex-direction: row; flex-wrap: wrap; justify-content: space-between; }
+.scene-confirmation--inline .scene-confirmation__check { width: 49%; min-height: 42px; }
+.scene-confirmation--inline .unity-toggle__text { font-size: 15px; }
+.scene-confirmation--inline .scene-confirmation__progress { margin-top: 6px; margin-bottom: 6px; font-size: 14px; }
+.scene-confirmation__actions { flex-direction: row; }
+.scene-confirmation__actions .scene-confirmation__submit { flex-grow: 1; height: 40px; font-size: 16px; }
+.scene-confirmation__actions .scene-confirmation__cancel { width: 110px; margin-top: 0; margin-left: 8px; }
+
+.page--jobs #slot-list { flex-direction: row; flex-wrap: wrap; justify-content: flex-start; }
+.page--jobs .parttile--compact { width: 31%; height: 132px; flex-shrink: 0; margin-right: 2%; margin-bottom: 10px; padding-top: 8px; padding-bottom: 8px; }
+.page--jobs .parttile--compact .parttile__icon { width: 88px; height: 66px; flex-shrink: 0; -unity-background-scale-mode: scale-to-fit; }
+.page--jobs .parttile--compact .parttile__line { margin-top: 8px; justify-content: center; }
+.page--jobs .parttile--compact .parttile__name,
+.page--jobs .parttile--compact .parttile__count { font-size: 14px; }
+.page--jobs .parttile--compact .parttile__stock { font-size: 11px; margin-top: 6px; }

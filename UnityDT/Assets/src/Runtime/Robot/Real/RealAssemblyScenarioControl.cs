@@ -62,6 +62,7 @@ namespace MainUnity.Runtime.Robot.Real
         {
             public string command = "start";
             public string job_id;
+            public string requested_by;
             public string product_code = "HBM-ACCELERATOR-PACKAGE-BOARD";
             public string product_version = "hbm-pkg-r1";
             public int requested_quantity = 1;
@@ -114,8 +115,14 @@ namespace MainUnity.Runtime.Robot.Real
             public int held_step_order;
             public string held_part_id;
             public string held_slot_code;
+            public string current_part_id;
+            public string current_slot_code;
+            public string current_action;
+            public string current_phase;
+            public string current_event;
             public string error_code;
             public string message;
+            public bool control_pending;
             public string db_sync_state;
         }
 
@@ -221,44 +228,46 @@ namespace MainUnity.Runtime.Robot.Real
             }
         }
 
-        public Task PauseAsync() => SetPausedAsync(true);
-        public Task ResumeAsync() => Task.FromException(new InvalidOperationException(
-            "Real robot pause cancels the operation; retained resume is unavailable. Physical reconciliation is required."));
+        public Task PauseAsync() => SendControlAsync("pause");
+        public Task ResumeAsync() => SendControlAsync("resume");
+        public Task CancelAsync() => SendControlAsync("cancel");
 
-        async Task SetPausedAsync(bool paused)
+        async Task SendControlAsync(string action)
         {
             RequireEnabled(generation);
             if (controlPending)
-                throw new InvalidOperationException("A Real pause or resume request is already pending.");
+                throw new InvalidOperationException("제어 요청의 실제 결과를 확인 중입니다.");
             controlPending = true;
             int currentGeneration = generation;
             try
             {
                 AssemblySnapshot snapshot = await ReadStatusAsync(currentGeneration);
                 if (!snapshot.available || !snapshot.active || snapshot.job_id != activeJobId)
-                    throw new InvalidOperationException("No matching Real assembly is running.");
-                if ((snapshot.state == "PAUSED") == paused)
-                    throw new InvalidOperationException(paused
-                        ? "Real assembly is already paused." : "Real assembly is not paused.");
+                    throw new InvalidOperationException("일치하는 실행 중 작업이 없습니다.");
                 string jobId = snapshot.job_id;
-                await SendCommandAsync(paused ? "pause" : "resume", jobId, currentGeneration);
+                await SendCommandAsync(action, jobId, currentGeneration);
                 double deadline = Time.realtimeSinceStartupAsDouble + 60d;
                 while (Time.realtimeSinceStartupAsDouble < deadline)
                 {
                     snapshot = await ReadStatusAsync(currentGeneration);
                     if (!snapshot.available || snapshot.job_id != jobId)
-                        throw new InvalidOperationException("Real assembly changed while confirming pause or resume.");
+                        throw new InvalidOperationException("제어 확인 중 작업 상태를 잃었습니다.");
                     ApplySnapshot(snapshot);
-                    if (snapshot.state == "FAILED")
+                    if (action == "cancel" && snapshot.error_code == "EXECUTION_CANCELLED" &&
+                        !snapshot.active && snapshot.db_sync_state == "SYNCED")
+                        return;
+                    if (action == "resume" && snapshot.state == "PAUSED" && snapshot.error_code == "SCENE_CONFIRMATION_REQUIRED")
+                        return;
+                    if (snapshot.state == "FAILED" || !string.IsNullOrEmpty(snapshot.error_code))
                         throw Failure(snapshot.error_code, snapshot.message);
                     if (!snapshot.active)
-                        throw new InvalidOperationException("Real assembly ended before pause or resume was confirmed.");
-                    if ((snapshot.state == "PAUSED") == paused)
+                        throw new InvalidOperationException("제어 확인 전에 작업이 종료되었습니다.");
+                    if (!snapshot.control_pending && (action == "pause" && snapshot.state == "PAUSED" ||
+                        action == "resume" && (snapshot.state == "STARTED" || snapshot.state == "PLACED")))
                         return;
                     await Task.Delay(100);
                 }
-                throw new TimeoutException(paused
-                    ? "Real assembly pause was not confirmed." : "Real assembly resume was not confirmed.");
+                throw new TimeoutException("제어 결과가 확인되지 않았습니다. 현재 상태를 확인하세요.");
             }
             finally
             {
@@ -305,7 +314,8 @@ namespace MainUnity.Runtime.Robot.Real
             double deadline = Time.realtimeSinceStartupAsDouble + CompletionTimeoutSeconds;
             bool observed = false;
             long confirmedAfterUnit = 0;
-            while (Time.realtimeSinceStartupAsDouble < deadline)
+            double qualityPausedAt = -1d;
+            while (qualityPausedAt >= 0d || Time.realtimeSinceStartupAsDouble < deadline)
             {
                 refreshRequested = false;
                 AssemblySnapshot snapshot = await ReadStatusAsync(currentGeneration);
@@ -313,7 +323,18 @@ namespace MainUnity.Runtime.Robot.Real
                 {
                     observed = true;
                     ApplySnapshot(snapshot);
-                    if (snapshot.state == "PAUSED")
+                    if (snapshot.state == "PAUSED" && snapshot.error_code == "QUALITY_HOLD")
+                    {
+                        if (qualityPausedAt < 0d) qualityPausedAt = Time.realtimeSinceStartupAsDouble;
+                        await Task.Delay(100);
+                        continue;
+                    }
+                    if (qualityPausedAt >= 0d)
+                    {
+                        deadline += Time.realtimeSinceStartupAsDouble - qualityPausedAt;
+                        qualityPausedAt = -1d;
+                    }
+                    if (snapshot.state == "PAUSED" && !string.IsNullOrEmpty(snapshot.error_code))
                     {
                         if (snapshot.error_code != "SCENE_CONFIRMATION_REQUIRED" || confirmScene == null)
                             throw Failure(snapshot.error_code, snapshot.message);
@@ -401,7 +422,14 @@ namespace MainUnity.Runtime.Robot.Real
                 snapshot.job_id, snapshot.recipe_version, state, snapshot.held_step_order,
                 snapshot.expected_step_count, snapshot.placed_count,
                 snapshot.held_part_id, snapshot.held_slot_code, snapshot.error_code, snapshot.message,
-                Time.realtimeSinceStartupAsDouble));
+                Time.realtimeSinceStartupAsDouble)
+            {
+                CurrentPartId = snapshot.current_part_id,
+                CurrentSlotCode = snapshot.current_slot_code,
+                CurrentAction = snapshot.current_action,
+                CurrentPhase = snapshot.current_phase,
+                CurrentEvent = snapshot.current_event
+            });
         }
 
         void ReceiveFeedback(StringMsg message)
@@ -470,7 +498,7 @@ namespace MainUnity.Runtime.Robot.Real
             RequireEnabled(currentGeneration);
             using var request = new UnityWebRequest(MainServerBaseUrl + "/api/v1/assemblies", UnityWebRequest.kHttpVerbPOST);
             request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(
-                JsonUtility.ToJson(new JobRequest { job_id = jobId })));
+                JsonUtility.ToJson(new JobRequest { job_id = jobId, requested_by = pendingConfirmation.operator_id })));
             request.downloadHandler = new DownloadHandlerBuffer();
             request.SetRequestHeader("Content-Type", "application/json");
             request.SetRequestHeader("X-Runtime-Mode", "real");

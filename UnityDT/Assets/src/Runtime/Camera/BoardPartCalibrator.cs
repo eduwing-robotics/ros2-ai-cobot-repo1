@@ -39,7 +39,106 @@ namespace MainUnity.Runtime.Camera
 
         ROSConnection connection;
         Transform currentBoard;
-        internal Transform AttachmentBoard => LastAppliedTime >= 0d ? currentBoard : null;
+        internal Transform AttachmentBoard => LastAppliedTime >= 0d || restoredDisplay ? currentBoard : null;
+        internal string DisplayId { get; private set; }
+        bool restoredDisplay;
+
+        // Local display identity is not a physical PCB identifier. Production binding
+        // is checked against ItemManager; a saved file must never start a Unit.
+        [Serializable]
+        internal sealed class DisplaySnapshot
+        {
+            public string Id, JobId, Calibration;
+            public long UnitId;
+            public Vector3 Position, Scale;
+            public Quaternion Rotation;
+            public List<SlotSnapshot> Slots = new();
+        }
+
+        [Serializable]
+        internal sealed class SlotSnapshot
+        {
+            public string Code;
+            public Vector3 Position;
+            public Quaternion Rotation;
+        }
+
+        internal DisplaySnapshot CaptureDisplay()
+        {
+            if (currentBoard == null || baseLink == null || itemManager == null || currentBoard != itemManager.ObservationBoard || string.IsNullOrEmpty(DisplayId)) return null;
+            var saved = new DisplaySnapshot { Id = DisplayId, JobId = itemManager.CurrentBoard == currentBoard ? itemManager.JobId : null,
+                UnitId = itemManager.CurrentBoard == currentBoard ? itemManager.UnitId : 0, Calibration = CalibrationId,
+                Position = baseLink.InverseTransformPoint(currentBoard.position),
+                Rotation = Quaternion.Inverse(baseLink.rotation) * currentBoard.rotation, Scale = currentBoard.lossyScale };
+            foreach (var group in itemManager.PrefabSlots)
+                foreach (Transform template in group.Slots)
+                {
+                    Transform slot = currentBoard.Find(template.name);
+                    if (slot == null) return null;
+                    saved.Slots.Add(new SlotSnapshot { Code = slot.name, Position = slot.localPosition, Rotation = slot.localRotation });
+                }
+            return ValidSnapshot(saved) ? saved : null;
+        }
+
+        internal static bool ValidSnapshot(DisplaySnapshot saved)
+        {
+            if (saved == null || !Guid.TryParse(saved.Id, out _) || !Finite(saved.Position) || !Finite(saved.Scale) ||
+                saved.Scale.x <= 0f || saved.Scale.y <= 0f || saved.Scale.z <= 0f || !ValidRotation(saved.Rotation) ||
+                saved.Slots == null || saved.Slots.Count != 25 ||
+                (string.IsNullOrEmpty(saved.JobId) ? saved.UnitId != 0 : !Guid.TryParse(saved.JobId, out _) || saved.UnitId <= 0)) return false;
+            var codes = new HashSet<string>(StringComparer.Ordinal);
+            foreach (SlotSnapshot slot in saved.Slots)
+                if (slot == null || string.IsNullOrWhiteSpace(slot.Code) || !codes.Add(slot.Code) ||
+                    !Finite(slot.Position) || !ValidRotation(slot.Rotation)) return false;
+            return true;
+        }
+
+        internal bool TryRestoreDisplay(DisplaySnapshot saved)
+        {
+            if (!ConfigurationValid() || !ValidSnapshot(saved) || itemManager.ObservationAwaitingUnit) return false;
+            if (!string.IsNullOrEmpty(saved.JobId))
+            {
+                if (itemManager.CurrentBoard == null || itemManager.JobId != saved.JobId || itemManager.UnitId != saved.UnitId) return false;
+            }
+            else if (itemManager.CurrentBoard != null) return false;
+            if (DisplayId == saved.Id && currentBoard != null && currentBoard == itemManager.ObservationBoard) return true;
+            if (!string.IsNullOrEmpty(DisplayId) && currentBoard == itemManager.ObservationBoard) return false;
+            try { itemManager.ValidateConfiguration(); }
+            catch (InvalidOperationException) { return false; }
+            var codes = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var group in itemManager.PrefabSlots)
+                foreach (Transform slot in group.Slots) codes.Add(slot.name);
+            if (codes.Count != 25 || !codes.SetEquals(saved.Slots.ConvertAll(slot => slot.Code))) return false;
+            Transform board = itemManager.EnsureObservationBoard();
+            if (board == null || !Finite(board.parent.lossyScale) || board.parent.lossyScale.x <= 0f ||
+                board.parent.lossyScale.y <= 0f || board.parent.lossyScale.z <= 0f) return false;
+            foreach (SlotSnapshot slot in saved.Slots)
+                if (board.Find(slot.Code) == null) return false;
+            currentBoard = board;
+            Vector3 parentScale = board.parent.lossyScale;
+            board.localScale = new Vector3(saved.Scale.x / parentScale.x, saved.Scale.y / parentScale.y, saved.Scale.z / parentScale.z);
+            board.SetPositionAndRotation(baseLink.TransformPoint(saved.Position), baseLink.rotation * saved.Rotation);
+            slots.Clear();
+            foreach (SlotSnapshot slot in saved.Slots)
+            {
+                Transform target = board.Find(slot.Code);
+                target.localPosition = slot.Position;
+                target.localRotation = slot.Rotation;
+                slots.Add(slot.Code, target);
+            }
+            targetSlotPoses = null;
+            displayedSlotPoses.Clear();
+            DisplayId = saved.Id;
+            CalibrationId = saved.Calibration;
+            restoredDisplay = true;
+            LastAppliedTime = -1d;
+            waitingForNewFrame = true;
+            SetProgress(ProgressState.Preparing, "저장 기판·슬롯 복원 · 실물 관측 미확인");
+            return true;
+        }
+
+        static bool ValidRotation(Quaternion rotation) => float.IsFinite(rotation.x) && float.IsFinite(rotation.y) &&
+            float.IsFinite(rotation.z) && float.IsFinite(rotation.w) && Mathf.Abs(Quaternion.Dot(rotation, rotation) - 1f) < 0.01f;
         readonly Dictionary<string, Transform> slots = new(StringComparer.Ordinal);
         Dictionary<string, Pose> targetSlotPoses;
         readonly Dictionary<string, Pose> displayedSlotPoses = new(StringComparer.Ordinal);
@@ -66,6 +165,8 @@ namespace MainUnity.Runtime.Camera
         {
             itemManager?.ReleaseObservationBoard();
             currentBoard = null;
+            DisplayId = null;
+            restoredDisplay = false;
             slots.Clear();
             targetSlotPoses = null;
             displayedSlotPoses.Clear();
@@ -96,6 +197,8 @@ namespace MainUnity.Runtime.Camera
             Transform board = itemManager != null ? itemManager.ObservationBoard : null;
             if (ReferenceEquals(board, currentBoard)) return;
             currentBoard = board;
+            DisplayId = null;
+            restoredDisplay = false;
             slots.Clear();
             targetSlotPoses = null;
             displayedSlotPoses.Clear();
@@ -220,6 +323,8 @@ namespace MainUnity.Runtime.Camera
                 lastFrame = frame;
                 LastAppliedTime = Time.realtimeSinceStartupAsDouble;
                 CalibrationId = calibration;
+                DisplayId ??= Guid.NewGuid().ToString();
+                restoredDisplay = false;
                 SetProgress(ProgressState.Applied, "기판 자세 및 25개 슬롯 배치 반영됨");
             }
             catch (Exception error) when (error is Newtonsoft.Json.JsonException ||

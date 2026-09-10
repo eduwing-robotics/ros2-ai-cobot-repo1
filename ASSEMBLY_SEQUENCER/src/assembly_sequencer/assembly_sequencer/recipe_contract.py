@@ -324,7 +324,7 @@ def parse_command(raw, expected_recipe_version, runtime_mode="mock"):
         raise ValueError("cmd_str must be a JSON object")
 
     command_name = command.get("command")
-    allowed = ({"start", "pause", "resume"} if runtime_mode == "real" else {
+    allowed = ({"start", "pause", "resume", "cancel"} if runtime_mode == "real" else {
         "observations", "conveyor_arrived", "conveyor_failed",
         "transfer_assembled_pcb", "pause", "resume",
     })
@@ -339,7 +339,7 @@ def parse_command(raw, expected_recipe_version, runtime_mode="mock"):
         if not isinstance(command["recipe_version"], str) or not command["recipe_version"].strip():
             raise ValueError("recipe_version must be a nonblank string")
         command_type = command_name
-    elif command_name in {"pause", "resume"}:
+    elif command_name in {"pause", "resume", "cancel"}:
         if set(command) != {"command", "job_id"}:
             raise ValueError("command and job_id are required")
         command_type = command_name
@@ -486,6 +486,7 @@ def assembly_snapshot(
     completed = state == "COMPLETED"
     placed_count = active["expected_step_count"] if completed else active["placed_count"]
     return {
+        "control_pending": bool(active.get("control_pending")),
         "available": True,
         "active": state in RELAY_STATES,
         "job_id": active["job_id"],
@@ -500,6 +501,10 @@ def assembly_snapshot(
         "held_step_order": active["held_step_order"],
         "held_part_id": active["held_part_id"],
         "held_slot_code": active["held_slot_code"],
+        # Optional display context: a target is not proof that the gripper holds it.
+        **{key: active.get(key, "") if state in {"STARTED", "PLACED"} and
+           active.get("message") in {"assemble_non-smd", "assemble_smd"} else ""
+           for key in ("current_part_id", "current_slot_code", "current_action", "current_phase", "current_event")},
         "error_code": error_code or active.get("error_code", ""),
         "message": (message or active.get("message", ""))[:512],
         "db_sync_state": db_sync_state,

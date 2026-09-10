@@ -55,7 +55,7 @@ REVOKE ALL ON ALL FUNCTIONS IN SCHEMA production
 GRANT USAGE ON SCHEMA production TO job_submitter;
 -- Both application roles can read all production facts; writes remain separated.
 GRANT SELECT ON ALL TABLES IN SCHEMA production TO job_submitter;
-GRANT INSERT (job_id, product_id, requested_quantity, recipe_version)
+GRANT INSERT (job_id, product_id, requested_quantity, recipe_version, requested_by)
     ON production.jobs TO job_submitter;
 GRANT UPDATE (
     delivery_status,

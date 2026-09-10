@@ -66,6 +66,13 @@ namespace MainUnity.Runtime.Scenario
             return robot.PauseAsync();
         }
 
+        public Task CancelAsync()
+        {
+            if (!IsRunning || robot == null)
+                throw new InvalidOperationException("Scenario is not running.");
+            return robot.CancelAsync();
+        }
+
         public Task ResumeAsync()
         {
             if (!IsRunning || robot == null)

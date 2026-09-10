@@ -1058,6 +1058,9 @@ namespace MainUnity.UI
                     AssemblyState.Paused => string.IsNullOrEmpty(frame.Message) ? "일시정지 중 · 재개 확인 필요" : frame.Message,
                     _ => string.IsNullOrEmpty(frame.Message) ? "다음 진행 피드백 대기" : DescribeStage(frame.Message)
                 };
+                if (frame != null && !frame.IsTerminal && frame.State != AssemblyState.Paused &&
+                    !string.IsNullOrEmpty(frame.CurrentPhase))
+                    detail = DescribeOperation(frame);
                 if (statusManager != null && statusManager.State == RobotRunState.Error)
                     detail = "로봇 오류 · 상단 알람 확인";
                 else if (statusManager != null && statusManager.State == RobotRunState.Disconnected)
@@ -1082,13 +1085,13 @@ namespace MainUnity.UI
         {
             if (nowSlot != null)
             {
-                bool has = frame != null && !string.IsNullOrEmpty(frame.SlotCode);
-                nowSlot.text = has ? frame.SlotCode : "—";
+                string slot = !string.IsNullOrEmpty(frame?.CurrentSlotCode) ? frame.CurrentSlotCode : frame?.SlotCode;
+                nowSlot.text = string.IsNullOrEmpty(slot) ? "—" : slot;
                 // 실패한 슬롯만 색을 얻는다. 진행 중은 색을 얻지 않는다.
                 SetTone(nowSlot, frame != null && frame.State == AssemblyState.Failed ? "bad" : "none");
             }
             if (nowPart != null)
-                nowPart.text = frame != null && !string.IsNullOrEmpty(frame.PartId) ? frame.PartId : "";
+                nowPart.text = !string.IsNullOrEmpty(frame?.CurrentPartId) ? frame.CurrentPartId : frame?.PartId ?? "";
 
             if (recipeVersion != null)
                 FR5EmptyState.Present(recipeVersion,
@@ -1096,6 +1099,53 @@ namespace MainUnity.UI
             if (requestId != null)
                 FR5EmptyState.Present(requestId,
                     frame != null && !string.IsNullOrEmpty(frame.JobId) ? frame.JobId : "—");
+        }
+
+        static string DescribeOperation(AssemblyProgressFrame frame)
+        {
+            string phase = frame.CurrentPhase;
+            // 경유점 번호는 레시피마다 달라진다. 동작 이름과 실제 이벤트로 표시한다.
+            int separator = phase.IndexOf('_');
+            if (separator > 0 && int.TryParse(phase.Substring(0, separator), out _))
+                phase = phase.Substring(separator + 1);
+            string operation = phase switch
+            {
+                "pre_pick_safe_vertical" => "집기 전 안전 높이 이동",
+                "pick_via_trayhome_high" => "트레이 상공 경유",
+                "pick_combined_xy_abc" => "집기 위치로 이동",
+                "pick_hover_100mm_vertical" => "집기 위치 상공 접근",
+                "PREOPEN" => "그리퍼 벌리기",
+                "pick_approach_50mm_vertical" => "집기 위치 접근",
+                "pick_final_50mm_vertical" => "집기 위해 하강",
+                "GRASP" => "그리퍼 닫기",
+                "post_grasp_lift_50mm_vertical" => "집기 후 들어 올리기",
+                "tray_after_raise" => "트레이 안전 높이로 상승",
+                "CONTINUOUS_TRANSFER" => "이송 경로 이동",
+                "tray_after_travel" => "트레이 확인 위치로 이동",
+                "tray_after_inspect" => "트레이 확인 위치 접근",
+                "TRAY_REMOVAL_INSPECTION" => "트레이 부품 제거 확인",
+                "tray_after_depart" => "트레이에서 배치 위치로 출발",
+                "place_hover_100mm_vertical" => "배치 위치 상공 접근",
+                "place_approach_50mm_vertical" => "배치 위치 접근",
+                "place_final_50mm_vertical" => "배치 위해 하강",
+                "RELEASE" => "그리퍼 열기",
+                "post_release_lift_50mm_vertical" => "놓기 후 상승",
+                "post_release_lift_100mm_vertical" => "배치 위치에서 안전 높이로 상승",
+                _ => phase
+            };
+            if (frame.CurrentEvent == "OPERATION_COMPLETED")
+                return frame.CurrentAction switch
+                {
+                    "robot.pick" => "집기 동작 완료",
+                    "robot.place" => "배치 동작 완료",
+                    _ => operation + " · 동작 완료"
+                };
+            return frame.CurrentEvent switch
+            {
+                "PHASE_STARTED" => operation + " 중",
+                "PHASE_COMPLETED" => operation + " 완료",
+                _ => operation + " · " + frame.CurrentEvent
+            };
         }
 
         // 제공자가 보고한 단계만 번역한다. 후속 촬영은 불량검사 PASS를 뜻하지 않는다.

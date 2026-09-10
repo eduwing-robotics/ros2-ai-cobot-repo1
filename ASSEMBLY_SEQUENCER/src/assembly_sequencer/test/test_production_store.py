@@ -366,6 +366,24 @@ class ProductionStoreIntegrationTest(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "PASS quantity"):
             store.finish_job(job_id, "COMPLETED")
 
+        self.assertEqual(store.get_job_state(job_id)["job_status"], "PAUSED")
+        self.assertEqual(store.get_quality_hold()["unit_id"], first["unit_id"])
+        with self.assertRaises(RuntimeError):
+            self.claim(job_id)
+        queued = self.create_job()
+        self.assertIsNone(store.get_next_runnable_job(self.product_code, self.product_version, "assembly-r1", [queued]))
+        store.recover_interrupted_units()
+        self.assertEqual(store.get_job_state(job_id)["job_status"], "PAUSED")
+        with psycopg.connect(TEST_DSN) as connection:
+            connection.execute("UPDATE production.parts SET stock_quantity=0 WHERE part_id=%s", (self.part_id,))
+        with self.assertRaisesRegex(RuntimeError, "insufficient stock"):
+            store.resume_quality_job(job_id)
+        self.assertEqual(store.get_job_state(job_id)["job_status"], "PAUSED")
+        with psycopg.connect(TEST_DSN) as connection:
+            connection.execute("UPDATE production.parts SET stock_quantity=6 WHERE part_id=%s", (self.part_id,))
+        store.resume_quality_job(job_id)
+        with self.assertRaises(RuntimeError):
+            store.resume_quality_job(job_id)
         second = self.claim(job_id)
         self.assertNotEqual(first["unit_id"], second["unit_id"])
         self.complete(second["unit_id"])
@@ -443,6 +461,7 @@ class ProductionStoreIntegrationTest(unittest.TestCase):
         self.complete(first["unit_id"], "FAIL", ({
             "slot_code": "SLOT-A-01", "defect_type": "MISSING"
         },))
+        store.resume_quality_job(job_id)
         with psycopg.connect(TEST_DSN) as connection:
             connection.execute(
                 "UPDATE production.parts SET stock_quantity = 1 WHERE part_id = %s",

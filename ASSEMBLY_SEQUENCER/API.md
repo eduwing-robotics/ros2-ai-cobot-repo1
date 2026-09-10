@@ -21,6 +21,30 @@ Mock 자동조립은 YAML 실행 경로를 사용합니다. Real은 등록된 Jo
 
 Service는 모드 접두사와 요청 JSON을 `cmd_str`, 응답 JSON을 `cmd_res`에 넣습니다. 접두사 규칙은 실행 모드 검증 절을 따릅니다. Feedback topic은 JSON을 `data`에 넣으며 queue depth는 10입니다.
 
+## Real에서 소비하는 설비 API
+
+아래는 `real_backend.py`가 실제 사용하는 외부 경계입니다. Sequencer가 제공하는 API와 구분하며, 제공자 전체 API 목록을 뜻하지 않습니다.
+
+| 제공자 | Endpoint | 타입·방식 | 사용 목적 |
+|---|---|---|---|
+| 로봇 | `/real/robot/status` | `std_srvs/srv/Trigger` | AUTO·정지·오류·복구·파지 상태 조회 |
+| 조립 실행기 | `/real/assembly/status` | `std_srvs/srv/Trigger` | 생산 v2 준비·진행·결과 조회 |
+| 조립 실행기 | `/real/assembly/command` | `std_msgs/msg/String`, 발행 | `assembly.start`, `assembly.pause`, `assembly.resume`, `assembly.cancel` |
+| 조립 실행기 | `/real/assembly/event` | `std_msgs/msg/String`, 구독 | 실행 ID가 일치하는 진행·종료 수신 |
+| 컨베이어 | `/conveyor/state` | `std_msgs/msg/String`, 구독 | 상태 freshness·이동·도착 확인 |
+| 컨베이어 | `/conveyor/move_to_assembly` | `std_srvs/srv/Trigger` | 조립 위치 이동 요청 |
+| 컨베이어 | `/conveyor/move_to_inspection` | `std_srvs/srv/Trigger` | 검사 위치 이동 요청 |
+| 컨베이어 | `/conveyor/stop` | `std_srvs/srv/Trigger` | 이동 오류 이후 정지 요청 |
+| Vision | `/api/v1/inspections` | HTTP POST | Job·Unit·검사 ID로 검사 요청 |
+| Vision | `/api/v1/inspections/{inspection_id}` | HTTP GET | 동일 검사 진행·결과 조회 |
+| Vision | 검사 결과의 `image.path` | HTTP GET | 제공 origin에서 결과 이미지 조회·검증 |
+
+ROS 서비스 응답 한도는 5초입니다. 컨베이어 도착 대기는 35초, 상태 수신 freshness는 1초입니다. 로봇 전체 완료 대기는 1800초이며 2초마다 status로 보완합니다. Vision은 기본 전체 330초·개별 요청 10초 한도를 사용합니다. HTTP 인증은 서버 환경의 Bearer 토큰을 사용하며 문서·로그에 값을 남기지 않습니다.
+
+컨베이어 Trigger에는 Job·Unit을 전송하지 않습니다. `operation_id`는 Sequencer 내부 공정 식별자이며 제공자의 `motion_id`와 동일하지 않습니다. 현재 구현은 매번 새 이동을 요청하고 수락된 motion_id의 도착을 기다립니다. 이미 목적지인 상태의 재사용, 외부 이동의 현재 Job·Unit 연결, 도착의 명령 속도 0 검증은 구현되어 있지 않습니다. `ASSEMBLY_STOP`만으로 새 Unit의 도착 완료를 확정하지 않습니다.
+
+`/real/robot/control`과 개별 MoveJoint·Pick·Place API는 이 경로에서 사용하지 않습니다. 생산 제어는 중첩 production v2 capability를 기준으로 하며 진단 v1의 저수준 제어 capability와 구분합니다.
+
 ## Service 명령
 
 | `command` | 필수 데이터 | 의미 |
@@ -33,11 +57,14 @@ Service는 모드 접두사와 요청 JSON을 `cmd_str`, 응답 JSON을 `cmd_res
 | `transfer_assembled_pcb` | `job_id`, `unit_id`, `operation_id`, `assembled_pcb` | 검사 위치 이송 좌표 등록과 workflow 재개 |
 | `pause` | `job_id` | 활성 작업 일시정지 요청 |
 | `resume` | `job_id` | 활성 작업 재개 요청 |
+| `cancel` | `job_id` | 로봇 조립 중 작업 취소 요청 (Real) |
 
 `observations`, `conveyor_arrived`, `conveyor_failed`, `transfer_assembled_pcb`는 Mock 전용입니다.
 Real은 이 명령들을 `INVALID_REQUEST`로 거절하며 Unity 신호를 물리 설비 완료로 사용하지 않습니다.
 Mock에서는 `start`를 거절하고 기존 observations와 영속 Job 결합 방식을 유지합니다.
-`pause`·`resume`은 활성 Job과 대조하며 Real 설비의 해당 동작은 아직 연결되지 않았습니다.
+`pause`·`resume`·`cancel`은 활성 Job과 대조합니다. Real에서는 로봇 조립 중 production v2 제어로 전달하며 컨베이어 이동·검사 단계에서는 거절합니다. 일시정지는 `after_dispatched_motion` 방식입니다. 제어마다 새 `control_id`와 증가하는 `control_sequence`를 사용하고 재개에는 확인된 `pause_control_id`를 포함합니다.
+
+응답 성공은 요청 전달이며 완료가 아닙니다. status의 `control_pending`이 해제되고 해당 제어 ID와 실제 상태가 일치해야 완료입니다. pause는 `paused`·`stop_verified=true`·`resume_available=true`, resume은 `running`, cancel은 `cancelled`·`stop_verified=true`·`recovery_required=false`를 확인합니다. 취소 완료는 Job `CANCELLED`와 Unit 실패로 기록하고, 기존 상태 계약의 `FAILED`·`EXECUTION_CANCELLED`로 반환합니다. 제어 거절·60초 확인 만료는 `CONTROL_UNCONFIRMED`이며 실제 실행을 완료 처리하지 않습니다. Mock 취소는 미지원입니다.
 
 알 수 없는 필드와 누락된 필드는 `INVALID_REQUEST`입니다. `job_id`는 UUID 문자열이며 status를 제외한 모든 명령에서 현재 Job과 대조합니다.
 
@@ -227,6 +254,9 @@ status 이외의 명령은 다음 형식을 반환합니다.
 | `BUSY` | 현재 상태에서 명령을 받을 수 없음 |
 | `DB_ERROR` | Job 조회·정리 실패 |
 | `INTERNAL_ERROR` | backend 요청 또는 내부 처리 실패 |
+| `CONTROL_REJECTED` | 생산 제어 요청 전 검증 또는 전달 실패 |
+| `CONTROL_UNCONFIRMED` | 제어 거절·시간 초과로 실제 상태 미확인 (status) |
+| `EXECUTION_CANCELLED` | 실제 취소 확인 후 생산 취소 반영 |
 
 ## Feedback topic
 
@@ -273,10 +303,10 @@ status 이외의 명령은 다음 형식을 반환합니다.
 | `STARTED` | backend 실행 시작 | N |
 | `PICKED` | 부품 Pick 완료 | N |
 | `PLACED` | 부품 Place 완료 | N |
-| `ASSEMBLY_COMPLETED` | 부품 조립 완료, PCB 이송 요청 대기 | N |
+| `ASSEMBLY_COMPLETED` | 조립 완료 후 검사 위치 이동·검사 진행; Mock에서는 PCB 이송 요청 대기 | N |
 | `PCB_PICKED` | 조립 PCB Pick 완료 | N |
 | `PCB_PLACED` | 조립 PCB Place 완료 | N |
-| `PAUSED` | backend 일시정지 확인 | N |
+| `PAUSED` | 일시정지 확인 또는 오류·현장 확인·검사 판정 보류; error_code와 함께 해석 | N |
 | `COMPLETED` | 목표 PASS 수량 생산 완료 | Y |
 | `FAILED` | 실행 또는 기록 실패 | Y |
 
@@ -305,3 +335,22 @@ Real 실행의 `message`는 컨베이어 목적지 이동, 로봇이 보고한 `
 `message`는 표시용 설명이며 설비 제어 명령이나 완료 판정의 근거가 아닙니다.
 후속 촬영 단계는 검사 PASS가 아니며, 검사 FAIL 이후 새 PCB 확인 대기와 UNKNOWN 판정 보류는
 기존 `PAUSED` 상태와 오류 의미를 유지합니다. Real Unity는 feedback 수신 후 status를 조회합니다.
+
+Real status의 선택적 표시 필드 `current_part_id`, `current_slot_code`, `current_action`,
+`current_phase`, `current_event`는 로봇 callback의 현재 대상과 마지막 세부 동작 이벤트입니다.
+현재 실행 ID와 생산 슬롯·부품에 일치하는 context만 표시하며, 해당 context 변경도 feedback으로
+상태 재조회를 알립니다. `PHASE_STARTED`는 진행 중, `PHASE_COMPLETED`는 해당 단계 완료,
+`OPERATION_COMPLETED`는 해당 동작 완료이며 전체 생산 완료나 물리 파지·품질 검증을 뜻하지 않습니다.
+촬영·컨베이어·검사·종료 상태에는 빈 문자열을 반환하며, 미지원 제공자의 필드 누락은 상세 정보 없음입니다.
+`held_*`의 파지 의미, 기존 feedback `part_id`·`slot_code`와 완료 판정은 변경하지 않습니다.
+
+### 검사 불량의 생산 대기
+
+검사 FAIL Unit의 완료와 `jobs.job_status=PAUSED`를 함께 저장한 뒤,
+기존 status/feedback에 `state=PAUSED`, `error_code=QUALITY_HOLD`를 반환합니다.
+다른 Unit·Job을 자동으로 시작하지 않으며 재시작 시 DB에서 대기를 복원합니다.
+기존 `resume`은 불량 대기를 해제합니다. Real은 설비 준비 확인 후
+`SCENE_CONFIRMATION_REQUIRED`로 전환하고 새 현장 확인을 포함한 `start`를 기다립니다.
+Mock은 기존 다음 Unit 흐름을 재개합니다. Real의 `cancel`은 해당 Job을 CANCELLED로
+종료하며 완료된 로봇 실행에 제어 명령을 보내지 않습니다. 취소 이후 영속적인 라인 잠금은 제공하지 않습니다.
+이 분기는 관리자 인증이나 결정 이력을 추가하지 않으며 기존 버튼의 권한 체계를 따릅니다.

@@ -96,6 +96,7 @@ namespace MainUnity.Runtime.Camera
         {
             // Names are persisted JSON keys. Job is the robot execution UUID, not a production Job UUID.
             public string Job, PickOperation, PlaceOperation, Registration, Observation, Slot, Part, Server, Plan, Cycle;
+            public string BoardDisplayId;
             public readonly HashSet<long> Seen = new();
             public long Sequence;
             [NonSerialized] public Transform Board;
@@ -123,6 +124,7 @@ namespace MainUnity.Runtime.Camera
         bool needsStatusReconciliation = true;
         bool hasUnverifiedRestoredLayout;
         string storagePath;
+        BoardPartCalibrator.DisplaySnapshot savedBoard;
         bool layoutSavePending;
         internal string SyncDetail { get; private set; } = "현재 상태 확인 대기";
         internal string StorageDetail { get; private set; } = "";
@@ -145,6 +147,8 @@ namespace MainUnity.Runtime.Camera
             public string Registration, SavedUtc;
             public List<SavedPart> Parts = new();
             public List<SavedObservation> Observations = new();
+            public bool HasBoard;
+            public BoardPartCalibrator.DisplaySnapshot Board;
         }
 
         internal string RobotDetail { get; private set; } = "로봇 동작 이벤트 대기";
@@ -261,9 +265,14 @@ namespace MainUnity.Runtime.Camera
             // outstanding request; retry only after it has completed.
             var delay = new WaitForSecondsRealtime(1f);
             double nextQuery = 0d;
+            double savedBoardTime = -1d;
             while (isActiveAndEnabled)
             {
-                if (layoutSavePending) SaveLayout();
+                if (layoutSavePending || (boardCalibration != null && boardCalibration.LastAppliedTime > savedBoardTime))
+                {
+                    SaveLayout();
+                    if (boardCalibration != null && string.IsNullOrEmpty(StorageDetail)) savedBoardTime = boardCalibration.LastAppliedTime;
+                }
                 bool connected = connection.HasConnectionThread && !connection.HasConnectionError;
                 if (!connected)
                 {
@@ -416,7 +425,8 @@ namespace MainUnity.Runtime.Camera
                         throw new FormatException("Pick 시작·원래 관측 미수신 · 부착 복원 미확인");
                     record = new Attachment { Job = executionId, PickOperation = operationId, Registration = trayRegistrationId,
                         Observation = sourceObservationId, Slot = slotCode, Part = partId, Server = serverInstanceId, Plan = planSha256, Cycle = sourceCycleId,
-                        Board = boardCalibration != null ? boardCalibration.AttachmentBoard : null };
+                        Board = boardCalibration != null ? boardCalibration.AttachmentBoard : null,
+                        BoardDisplayId = boardCalibration != null ? boardCalibration.DisplayId : null };
                     attachments.Add(sourceId, record);
                     affected = record;
                 }
@@ -462,7 +472,7 @@ namespace MainUnity.Runtime.Camera
                         foreach (var other in attachments)
                             if (other.Key != sourceId && other.Value.State == "attached")
                                 throw new FormatException("다른 부품 보유 표시 중");
-                        instance.transform.SetParent(measuredGripper, true);
+                        SnapToGripper(instance.transform);
                         record.State = "attached";
                     }
                     else if (release && record.State == "attached")
@@ -495,6 +505,45 @@ namespace MainUnity.Runtime.Camera
             finally { layoutSavePending = true; SaveLayout(); }
         }
 
+        void SnapToGripper(Transform part)
+        {
+            // Snap the rendered geometry, not its imported pivot. TCP uses a 0.005
+            // scene scale, so work in world metres and preserve the part's world scale.
+            Quaternion relative = Quaternion.Inverse(measuredGripper.rotation) * part.rotation;
+            Quaternion aligned = Quaternion.identity;
+            float closest = float.PositiveInfinity;
+            for (int turn = 0; turn < 4; turn++)
+            {
+                // These tray meshes use +Y as their top; tool +Y points into the PCB.
+                Quaternion candidate = Quaternion.Euler(180f, turn * 90f, 0f);
+                float angle = Quaternion.Angle(relative, candidate);
+                if (angle >= closest) continue;
+                closest = angle;
+                aligned = candidate;
+            }
+            Renderer[] renderers = part.GetComponentsInChildren<Renderer>();
+            bool hasBounds = false;
+            Bounds localBounds = default;
+            foreach (Renderer renderer in renderers)
+            {
+                if (!renderer.enabled) continue;
+                Bounds bounds = renderer.localBounds;
+                for (int corner = 0; corner < 8; corner++)
+                {
+                    Vector3 point = bounds.center + Vector3.Scale(bounds.extents,
+                        new Vector3((corner & 1) == 0 ? -1 : 1, (corner & 2) == 0 ? -1 : 1, (corner & 4) == 0 ? -1 : 1));
+                    point = part.InverseTransformPoint(renderer.transform.TransformPoint(point));
+                    if (!Finite(point)) throw new FormatException("파지 모델 bounds 무효");
+                    if (hasBounds) localBounds.Encapsulate(point);
+                    else { localBounds = new Bounds(point, Vector3.zero); hasBounds = true; }
+                }
+            }
+            if (!hasBounds) throw new FormatException("파지 모델 Renderer 없음 · 중앙 정렬 불가");
+            part.rotation = measuredGripper.rotation * aligned;
+            part.position += measuredGripper.position - part.TransformPoint(localBounds.center);
+            part.SetParent(measuredGripper, true);
+        }
+
         static bool HasVerifiedGripperFeedback(JObject feedback, string phase) =>
             feedback?["continuous_feedback_verified"]?.Type == JTokenType.Boolean &&
             (bool)feedback["continuous_feedback_verified"] &&
@@ -513,13 +562,17 @@ namespace MainUnity.Runtime.Camera
                     throw new FormatException("부착 snapshot 없음");
                 if (status["state_fresh"]?.Type != JTokenType.Boolean || !(bool)status["state_fresh"])
                     throw new FormatException("실측 freshness 미확인");
+                bool boardRestored = savedBoard != null && boardCalibration != null && boardCalibration.TryRestoreDisplay(savedBoard);
                 int unresolved = 0;
                 foreach (JObject row in rows)
                 {
                     string id = (string)row["source_id"];
                     if (id == null || !attachments.TryGetValue(id, out Attachment record)) { unresolved++; continue; }
-                    // Captured snapshots contain identity/state, not an object-to-gripper
-                    // pose. Never attach an old tray pose at the current robot position.
+                    // The server confirms identity/state. Relative poses must come
+                    // from this same locally saved attachment, never from a new tray.
+                    Transform board = record.Board;
+                    if (board == null && boardRestored && record.BoardDisplayId == savedBoard.Id)
+                        board = boardCalibration.AttachmentBoard;
                     bool matches = (string)row["job_id"] == record.Job &&
                         (string)row["server_instance_id"] == record.Server &&
                         (string)row["tray_registration_id"] == record.Registration &&
@@ -531,22 +584,28 @@ namespace MainUnity.Runtime.Camera
                         instancesById.TryGetValue(id, out GameObject instance) && instance != null &&
                         (record.State == "attached" ? measuredGripper != null &&
                             (record.Restored || instance.transform.parent == measuredGripper) :
-                            record.State == "placed" && record.Board != null && instance.transform.parent == record.Board) &&
+                            record.State == "placed" && board != null && board.Find(record.Slot) != null &&
+                            (record.Restored || instance.transform.parent == board)) &&
                         row["uncertain"]?.Type == JTokenType.Boolean && !(bool)row["uncertain"] &&
                         row["attachment_binding_valid"]?.Type == JTokenType.Boolean && (bool)row["attachment_binding_valid"];
                     if (matches && record.Restored)
                     {
-                        // Only the same uninterrupted Pick may reuse a saved TCP-relative pose.
-                        matches = (string)row["operation_id"] == record.PickOperation;
+                        // A held part requires confirmed recovery clearance. A placed
+                        // part can reconnect to its saved board while motion is stopped.
+                        matches = (string)row["operation_id"] == (record.State == "attached" ? record.PickOperation : record.PlaceOperation);
+                        if (record.State == "attached")
+                            matches &= status["recovery_required"]?.Type == JTokenType.Boolean && !(bool)status["recovery_required"];
                         if (matches)
                         {
+                            record.Board = board;
                             Transform partTransform = instancesById[id].transform;
-                            partTransform.SetParent(measuredGripper, true);
+                            partTransform.SetParent(record.State == "attached" ? measuredGripper : board, true);
                             partTransform.localPosition = record.LocalPosition;
                             partTransform.localRotation = record.LocalRotation;
                             record.Restored = false;
                         }
                     }
+                    if (matches && board != null) record.Board = board;
                     record.Uncertain = !matches;
                     if (matches) record.Sequence = record.SnapshotFloor = (long)row["event_sequence"];
                 }
@@ -572,7 +631,9 @@ namespace MainUnity.Runtime.Camera
             if (storagePath == null || baseLink == null || instancesById.Count == 0) return;
             try
             {
-                var saved = new SavedLayout { Version = 1, Registration = registration, SavedUtc = DateTime.UtcNow.ToString("O") };
+                BoardPartCalibrator.DisplaySnapshot board = boardCalibration != null ? boardCalibration.CaptureDisplay() : null;
+                if (board != null) savedBoard = board;
+                var saved = new SavedLayout { Version = 2, Registration = registration, SavedUtc = DateTime.UtcNow.ToString("O"), HasBoard = savedBoard != null, Board = savedBoard };
                 foreach (var pair in instancesById)
                 {
                     if (pair.Value == null) continue;
@@ -622,9 +683,12 @@ namespace MainUnity.Runtime.Camera
                 {
                     if (new FileInfo(path).Length > 8 * 1024 * 1024) throw new FormatException("저장 크기 초과");
                     var candidate = JsonUtility.FromJson<SavedLayout>(File.ReadAllText(path));
-                    if (candidate == null || candidate.Version != 1 || candidate.Parts == null || candidate.Parts.Count > 1024 ||
+                    if (candidate == null || candidate.Version is not (1 or 2) || candidate.Parts == null || candidate.Parts.Count > 1024 ||
                         candidate.Observations == null || candidate.Observations.Count > 16384)
                         throw new FormatException("저장 형식 불일치");
+                    if (!candidate.HasBoard) candidate.Board = null;
+                    if (candidate.HasBoard && !BoardPartCalibrator.ValidSnapshot(candidate.Board))
+                        throw new FormatException("저장 기판·슬롯 형식 불일치");
                     var ids = new HashSet<string>(StringComparer.Ordinal);
                     foreach (SavedPart part in candidate.Parts)
                     {
@@ -654,6 +718,8 @@ namespace MainUnity.Runtime.Camera
             }
             if (saved == null) return;
             registration = saved.Registration;
+            savedBoard = saved.Board;
+            boardCalibration?.TryRestoreDisplay(savedBoard);
             foreach (SavedPart part in saved.Parts)
             {
                 GameObject instance = Instantiate(bindingsByType[part.Type].Prefab, SpawnRoot);

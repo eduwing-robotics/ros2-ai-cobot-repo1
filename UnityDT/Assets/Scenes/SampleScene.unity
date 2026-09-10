@@ -15899,6 +15899,10 @@ PrefabInstance:
       propertyPath: m_RosPort
       value: 10000
       objectReference: {fileID: 0}
+    - target: {fileID: 7937580268837813603, guid: a0b855b9be022a33fa77e4c342a91d56, type: 3}
+      propertyPath: m_RosIPAddress
+      value: 192.168.11.5
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

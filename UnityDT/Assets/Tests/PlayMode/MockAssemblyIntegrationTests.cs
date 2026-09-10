@@ -587,6 +587,29 @@ namespace MainUnity.Tests.PlayMode
                 Assert.That(first.localScale, Is.EqualTo(Vector3.one * 0.01f));
                 Assert.That(first.parent, Is.SameAs(parent));
                 Assert.That(first.childCount, Is.EqualTo(26), "Reuse the existing 25 slots; do not generate anchors.");
+                object savedDisplay = Invoke(calibration, "CaptureDisplay");
+                Assert.That(savedDisplay, Is.Not.Null);
+                var restoredCalibration = Child("Restored board calibration").gameObject.AddComponent(calibration.GetType());
+                Field(restoredCalibration, "baseLink").SetValue(restoredCalibration, origin);
+                Field(restoredCalibration, "itemManager").SetValue(restoredCalibration, owner);
+                Vector3 savedBoardPosition = first.position, savedSlotPosition = firstSlot.localPosition;
+                first.position += Vector3.one;
+                firstSlot.localPosition += Vector3.one;
+                Assert.That(Invoke(restoredCalibration, "TryRestoreDisplay", savedDisplay), Is.True);
+                Assert.That(Vector3.Distance(first.position, savedBoardPosition), Is.LessThan(1e-5f));
+                Assert.That(firstSlot.localPosition, Is.EqualTo(savedSlotPosition));
+                Assert.That((double)GetProperty(restoredCalibration, "LastAppliedTime"), Is.EqualTo(-1d));
+                Assert.That(GetProperty(owner, "JobId"), Is.EqualTo(jobId));
+                Field(savedDisplay, "UnitId").SetValue(savedDisplay, 2L);
+                Assert.That(Invoke(restoredCalibration, "TryRestoreDisplay", savedDisplay), Is.False);
+                Assert.That(GetProperty(owner, "UnitId"), Is.EqualTo(1L));
+                Field(savedDisplay, "UnitId").SetValue(savedDisplay, 1L);
+                var savedSlots = (IList)Field(savedDisplay, "Slots").GetValue(savedDisplay);
+                savedSlots.RemoveAt(24);
+                Assert.That(Invoke(restoredCalibration, "TryRestoreDisplay", savedDisplay), Is.False);
+                // Avoid a second calibrator owning this board for the rest of the test.
+                Field(restoredCalibration, "itemManager").SetValue(restoredCalibration, null);
+                UnityEngine.Object.DestroyImmediate(restoredCalibration);
                 Vector3 retainedBoard = first.position, retainedSlot = firstSlot.position;
                 double appliedAt = (double)GetProperty(calibration, "LastAppliedTime");
                 Receive(Payload(3, 13000000000));
@@ -983,6 +1006,43 @@ namespace MainUnity.Tests.PlayMode
             }
         }
 
+#if UNITY_EDITOR
+        [TestCase("sk_hynix 1")]
+        [TestCase("cap_small")]
+        [TestCase("yellowBar")]
+        [TestCase("cap_Big")]
+        [TestCase("nvidia")]
+        [TestCase("BlackBox")]
+        public void GripperSnapCentersImportedGeometryAndPreservesScale(string prefabName)
+        {
+            var root = new GameObject("Offline snap geometry");
+            root.SetActive(false);
+            try
+            {
+                var receiver = root.AddComponent(RuntimeType("MainUnity.Runtime.Camera.TrayPartCalibrator"));
+                var tcp = new GameObject("Scaled TCP").transform;
+                tcp.SetParent(root.transform, false);
+                tcp.localScale = Vector3.one * 0.005f;
+                tcp.SetPositionAndRotation(new Vector3(0.3f, 0.4f, -0.5f), Quaternion.Euler(8f, 70f, 175f));
+                Field(receiver, "measuredGripper").SetValue(receiver, tcp);
+                var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/prefab/" + prefabName + ".prefab");
+                Assert.That(prefab, Is.Not.Null);
+                var part = UnityEngine.Object.Instantiate(prefab, root.transform).transform;
+                part.rotation = tcp.rotation * Quaternion.Euler(173f, 86f, 3f);
+                Vector3 scale = part.lossyScale;
+                Invoke(receiver, "SnapToGripper", part);
+                var renderers = part.GetComponentsInChildren<Renderer>();
+                Bounds bounds = renderers[0].bounds;
+                foreach (var renderer in renderers.Skip(1)) bounds.Encapsulate(renderer.bounds);
+                Assert.That(Vector3.Distance(bounds.center, tcp.position), Is.LessThan(1e-5f));
+                Assert.That(Vector3.Distance(part.lossyScale, scale), Is.LessThan(1e-5f));
+                Assert.That(Quaternion.Angle(part.localRotation, Quaternion.Euler(180f, 90f, 0f)), Is.LessThan(0.05f));
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+#endif
+
+
         // Recorded VRM-01 events from 2026-09-10; adversarial variants below are synthetic.
         [TestCase("normal")]
         [TestCase("ambiguous")]
@@ -995,11 +1055,13 @@ namespace MainUnity.Tests.PlayMode
         [TestCase("plain_failure")]
         [TestCase("rejected_request")]
         [TestCase("observation_dropout")]
+        [TestCase("restore_placed")]
         [TestCase("restore_held")]
         [TestCase("restore_released")]
         [TestCase("restore_corrupt")]
         [TestCase("restore_tray")]
         [TestCase("restore_server_changed")]
+        [TestCase("restore_recovery_required")]
         [TestCase("candidate_registration")]
         [TestCase("candidate_restored")]
         [TestCase("candidate_missing")]
@@ -1027,8 +1089,36 @@ namespace MainUnity.Tests.PlayMode
                 Child("VRM-01", board);
                 Field(boardCalibration, "currentBoard").SetValue(boardCalibration, board);
                 Field(boardCalibration, "<LastAppliedTime>k__BackingField").SetValue(boardCalibration, 1d);
+                Component boardOwner = null;
+                if (variant == "restore_placed")
+                {
+                    boardOwner = Child("Board owner", root.transform).gameObject.AddComponent(RuntimeType("MainUnity.Static.ItemManager"));
+                    Child("Picker", board);
+                    var targets = new List<Transform> { board.Find("VRM-01") };
+                    for (int i = 2; i <= 25; i++) targets.Add(Child("SLOT-" + i, board));
+                    Type groupType = boardOwner.GetType().GetNestedType("AssemblySlot");
+                    object group = Activator.CreateInstance(groupType);
+                    Field(group, "slots").SetValue(group, targets.ToArray());
+                    Field(group, "requiredItemType").SetValue(group, "VRM");
+                    Array groups = Array.CreateInstance(groupType, 1);
+                    groups.SetValue(group, 0);
+                    Field(boardOwner, "assemblySlots").SetValue(boardOwner, groups);
+                    var boardPrefab = UnityEngine.Object.Instantiate(board.gameObject, root.transform);
+                    Field(boardOwner, "motherboardPrefab").SetValue(boardOwner, boardPrefab);
+                    Field(group, "slots").SetValue(group, targets.Select(slot => boardPrefab.transform.Find(slot.name)).ToArray());
+                    Field(boardOwner, "spawnPoint").SetValue(boardOwner, root.transform);
+                    Field(boardOwner, "spawnRoot").SetValue(boardOwner, root.transform);
+                    Field(boardOwner, "completedRoot").SetValue(boardOwner, Child("Completed", root.transform));
+                    Field(boardOwner, "observedBoard").SetValue(boardOwner, board);
+                    Field(boardCalibration, "baseLink").SetValue(boardCalibration, root.transform);
+                    Field(boardCalibration, "itemManager").SetValue(boardCalibration, boardOwner);
+                    Field(boardCalibration, "<DisplayId>k__BackingField").SetValue(boardCalibration, Guid.NewGuid().ToString());
+                    root.SetActive(true);
+                }
                 Invoke(calibration, "InitializeAttachments", gripper, boardCalibration);
-                var part = new GameObject("Recorded source");
+                var part = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                part.name = "Recorded source";
+                gripper.localScale = Vector3.one * 0.005f;
                 part.transform.SetParent(root.transform);
                 part.transform.position = new Vector3(1f, 2f, 3f);
                 string source = "black_block:8881a668-32d6-436e-8a04-6beefd4d74eb";
@@ -1184,7 +1274,9 @@ namespace MainUnity.Tests.PlayMode
                     return;
                 }
                 Assert.That(part.transform.parent, Is.EqualTo(gripper));
-                Assert.That(Vector3.Distance(part.transform.position, new Vector3(1f, 2f, 3f)), Is.LessThan(0.00001f));
+                Assert.That(Vector3.Distance(part.transform.position, gripper.position), Is.LessThan(0.00001f));
+                Assert.That(Vector3.Distance(part.transform.lossyScale, Vector3.one), Is.LessThan(0.00001f));
+                Assert.That(Vector3.Dot(part.transform.up, gripper.up), Is.LessThan(-0.9999f));
                 gripper.position += Vector3.right;
                 Vector3 heldPosition = part.transform.position;
                 Receive(grasp);
@@ -1200,6 +1292,7 @@ namespace MainUnity.Tests.PlayMode
                         Field(calibration, "baseLink").SetValue(calibration, root.transform);
                         Field(calibration, "storagePath").SetValue(calibration, path);
                         if (variant == "restore_tray") ((IDictionary)Field(calibration, "attachments").GetValue(calibration)).Clear();
+                        if (variant == "restore_placed") Receive(release);
                         Invoke(calibration, "SaveLayout");
                         Invoke(calibration, "SaveLayout"); // Exercise atomic replacement and backup.
                         Assert.That(System.IO.File.Exists(path + ".bak"), Is.True);
@@ -1211,6 +1304,12 @@ namespace MainUnity.Tests.PlayMode
                         Field(binding, "prefab").SetValue(binding, part);
                         ((IDictionary)Field(restored, "bindingsByType").GetValue(restored)).Add("black_block", binding);
                         Invoke(restored, "InitializeAttachments", gripper, boardCalibration);
+                        if (variant == "restore_placed")
+                        {
+                            Field(boardOwner, "observedBoard").SetValue(boardOwner, null);
+                            Field(boardCalibration, "currentBoard").SetValue(boardCalibration, null);
+                            Field(boardCalibration, "<DisplayId>k__BackingField").SetValue(boardCalibration, null);
+                        }
                         Invoke(restored, "RestoreLayout");
                         var restoredPart = (GameObject)((IDictionary)Field(restored, "instancesById").GetValue(restored))[source];
                         Assert.That(restoredPart, Is.Not.Null);
@@ -1224,18 +1323,32 @@ namespace MainUnity.Tests.PlayMode
                         }
                         Vector3 savedRelative = part.transform.localPosition;
                         gripper.position += Vector3.up * 2f;
-                        string state = variant == "restore_released" ? "placed" : "attached";
-                        string snapshot = "{\"schema\":\"fr5.robot_api_status/v1\",\"state_fresh\":true,\"event_context\":{\"server_instance_id\":\"7184ba72-ca00-4b70-bbc0-7d35bfc9bb1f\",\"event_sequence\":606,\"attachments\":[{" +
+                        string state = variant is "restore_released" or "restore_placed" ? "placed" : "attached";
+                        string snapshot = "{\"schema\":\"fr5.robot_api_status/v1\",\"recovery_required\":false,\"state_fresh\":true,\"event_context\":{\"server_instance_id\":\"7184ba72-ca00-4b70-bbc0-7d35bfc9bb1f\",\"event_sequence\":606,\"attachments\":[{" +
                             "\"source_id\":\"" + source + "\",\"tray_registration_id\":\"" + registration + "\",\"source_observation_id\":\"" + observation + "\"," +
                             "\"job_id\":\"0bf5780c-d6bf-4d01-b949-1365c6614164\",\"operation_id\":\"96488522-5d89-4b70-a046-44db144ea3f3\",\"server_instance_id\":\"7184ba72-ca00-4b70-bbc0-7d35bfc9bb1f\"," +
                             "\"slot_code\":\"VRM-01\",\"state\":\"" + state + "\",\"event_sequence\":606,\"uncertain\":false,\"attachment_binding_valid\":true," +
                             "\"plan_sha256\":\"bb9ca7b86cbf41ef1a4575f4070b0cf41d4421b9544aa53613ab593bbd4e5340\",\"source_cycle_id\":\"20260910-133247\"}]}}";
+                        if (variant == "restore_placed") snapshot = snapshot.Replace("96488522-5d89-4b70-a046-44db144ea3f3", "ec91a09c-0f2c-4e1c-b733-9f6c19952398").Replace("606", "629");
                         if (variant == "restore_server_changed") snapshot = snapshot.Replace("7184ba72-ca00-4b70-bbc0-7d35bfc9bb1f", "11111111-1111-4111-8111-111111111111");
+                        if (variant == "restore_recovery_required") snapshot = snapshot.Replace("\"recovery_required\":false", "\"recovery_required\":true");
                         Invoke(restored, "ReconcileSnapshot", snapshot);
-                        if (variant is "restore_released" or "restore_server_changed")
+                        if (variant is "restore_released" or "restore_server_changed" or "restore_recovery_required")
                         {
                             Assert.That(restoredPart.transform.parent, Is.EqualTo(restored.transform));
                             Assert.That(StringProperty(restored, "SyncDetail"), Does.Contain("미확인"));
+                        }
+                        else if (variant == "restore_placed")
+                        {
+                            Transform recoveredBoard = (Transform)GetProperty(boardOwner, "ObservationBoard");
+                            Assert.That(recoveredBoard, Is.Not.Null, StringProperty(restored, "StorageDetail") + " / " + StringProperty(restored, "SyncDetail"));
+                            Assert.That(recoveredBoard, Is.Not.SameAs(board));
+                            Assert.That(restoredPart.transform.parent, Is.EqualTo(recoveredBoard));
+                            Assert.That(Vector3.Distance(restoredPart.transform.localPosition, savedRelative), Is.LessThan(1e-5f));
+                            Vector3 before = restoredPart.transform.position;
+                            recoveredBoard.position += Vector3.right;
+                            Assert.That(Vector3.Distance(restoredPart.transform.position, before + Vector3.right), Is.LessThan(1e-5f));
+                            Assert.That((Transform)GetProperty(boardOwner, "CurrentBoard") == null, Is.True);
                         }
                         else
                         {

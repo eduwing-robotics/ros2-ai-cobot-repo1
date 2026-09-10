@@ -821,6 +821,48 @@ class RealWorkflowTest(unittest.IsolatedAsyncioTestCase):
         backend.execute_assembly.side_effect = assembly
         return node, active
 
+    def test_detail_changes_notify_without_claiming_a_held_part(self):
+        node, active = self.sequencer()
+        original = dict(job_id=OPERATION_ID, operation_id="pick-1", action="robot.pick",
+                        phase="05_pick_final_50mm_vertical", event="PHASE_STARTED")
+        metadata = dict(server_instance_id="robot", event_sequence=1, part_id="GPU", slot_code="GPU-01")
+        payload = dict(execution_id=OPERATION_ID, production_job_id=JOB_ID, unit_id=22,
+                       completed_slots=[], current_stage="assemble_non-smd",
+                       last_robot_event=dict(original=original, metadata=metadata))
+        node.real_progress(active, payload)
+        node.real_progress(active, payload)
+        self.assertEqual(node.publish.call_count, 1)
+        snapshot = assembly_snapshot(active, active["state"])
+        self.assertEqual(snapshot["current_slot_code"], "GPU-01")
+        self.assertEqual(snapshot["current_phase"], "05_pick_final_50mm_vertical")
+        self.assertEqual(snapshot["held_slot_code"], "")
+        original["event"] = "PHASE_COMPLETED"
+        metadata["event_sequence"] = 2
+        node.real_progress(active, payload)
+        self.assertEqual(node.publish.call_count, 2)
+        self.assertEqual(active["current_event"], "PHASE_COMPLETED")
+        payload["current_stage"] = "capture_smd_view"
+        node.real_progress(active, payload)
+        self.assertEqual(assembly_snapshot(active, active["state"])["current_phase"], "")
+        payload["current_stage"] = "assemble_smd"
+        node.real_progress(active, payload)
+        node.real_progress(active, payload)
+        self.assertEqual(active["current_slot_code"], "", "Old non-SMD event must not leak into SMD.")
+        metadata.update(event_sequence=3, part_id="CAP", slot_code="CAP-01")
+        node.real_progress(active, payload)
+        self.assertEqual(active["current_slot_code"], "CAP-01")
+        active.update(state="ASSEMBLY_COMPLETED", message="검사 진행 중")
+        self.assertEqual(assembly_snapshot(active, active["state"])["current_phase"], "")
+
+    def test_foreign_or_invalid_detail_is_not_displayed(self):
+        for job, part, slot in (("foreign", "GPU", "GPU-01"), (OPERATION_ID, "HBM", "GPU-01")):
+            node, active = self.sequencer()
+            node.real_progress(active, dict(execution_id=OPERATION_ID, production_job_id=JOB_ID, unit_id=22,
+                completed_slots=[], current_stage="assemble_non-smd", last_robot_event=dict(
+                    original=dict(job_id=job, action="robot.pick", phase="GRASP", event="PHASE_STARTED"),
+                    metadata=dict(part_id=part, slot_code=slot))))
+            self.assertEqual(active["current_slot_code"], "")
+
     def test_stage_changes_without_placement_notify_and_restore(self):
         node, active = self.sequencer()
         payload = dict(execution_id=OPERATION_ID, production_job_id=JOB_ID, unit_id=22,
@@ -872,6 +914,7 @@ class RealWorkflowTest(unittest.IsolatedAsyncioTestCase):
         node, _ = self.sequencer()
         node.active = None
         node.set_response = AssemblySequencer.set_response
+        node.recipe_version = "assembly-r1"
         node.backend.prepare_execution = AsyncMock(return_value="deployed-r1")
         node.db_writer.get_job.return_value = dict(job_status="PENDING")
         node.db_writer.get_product_slots.return_value = [dict(slot_code=s, part_id=p) for s, p in PRODUCTION_SLOTS]
@@ -894,6 +937,7 @@ class RealWorkflowTest(unittest.IsolatedAsyncioTestCase):
         node, _ = self.sequencer()
         node.active = None
         node.set_response = AssemblySequencer.set_response
+        node.recipe_version = "assembly-r1"
         node.backend.prepare_execution = AsyncMock(side_effect=RuntimeError("not ready"))
         command = dict(job_id=JOB_ID, recipe_version="assembly-r1", scene_confirmation=dict(
             operator_id="test", execution_id=OPERATION_ID, confirmed_unix=time.time(),
@@ -939,7 +983,50 @@ class RealWorkflowTest(unittest.IsolatedAsyncioTestCase):
         node.db_writer.finish.assert_not_called()
         node.db_writer.claim.assert_not_called()
         self.assertTrue(active["awaiting_next_unit"])
+        self.assertEqual(active["error_code"], "QUALITY_HOLD")
+
+    async def test_quality_resume_does_not_resume_completed_robot_execution(self):
+        node, active = self.sequencer("FAIL", False)
+        await AssemblySequencer.run_real_workflow(node, active)
+        node.set_response = AssemblySequencer.set_response
+        node.recipe_version = "assembly-r1"
+        node.backend.prepare_execution = AsyncMock(return_value="revision")
+        node.backend.request_control = AsyncMock()
+        response = await AssemblySequencer.on_external_request(node,
+            SimpleNamespace(cmd_str="real\n" + json.dumps({"command": "resume", "job_id": JOB_ID})), SimpleNamespace())
+        self.assertTrue(json.loads(response.cmd_res)["accepted"])
+        node.db_writer.resume_quality.assert_called_once_with(JOB_ID)
+        node.backend.request_control.assert_not_called()
+        node.db_writer.claim.assert_not_called()
         self.assertEqual(active["error_code"], "SCENE_CONFIRMATION_REQUIRED")
+
+    async def test_quality_hold_is_restored_without_starting_a_unit(self):
+        node, active = self.sequencer("FAIL", False)
+        node.active = None
+        node.recipe_version = "assembly-r1"
+        node.recipe = None
+        node.set_response = AssemblySequencer.set_response
+        node.db_writer.get_quality_hold.return_value = dict(job_id=JOB_ID, unit_id=22, recipe_version="assembly-r1")
+        response = await AssemblySequencer.on_external_request(node,
+            SimpleNamespace(cmd_str="real\n" + json.dumps({"command": "status"})), SimpleNamespace())
+        snapshot = json.loads(response.cmd_res)
+        self.assertEqual(snapshot["error_code"], "QUALITY_HOLD")
+        self.assertEqual(snapshot["state"], "PAUSED")
+        node.db_writer.claim.assert_not_called()
+        node.backend.execute_assembly.assert_not_called()
+
+    async def test_quality_cancel_finalizes_job_without_robot_command(self):
+        node, active = self.sequencer("FAIL", False)
+        await AssemblySequencer.run_real_workflow(node, active)
+        node.set_response = AssemblySequencer.set_response
+        node.recipe_version = "assembly-r1"
+        node.backend.request_control = AsyncMock()
+        response = await AssemblySequencer.on_external_request(node,
+            SimpleNamespace(cmd_str="real\n" + json.dumps({"command": "cancel", "job_id": JOB_ID})), SimpleNamespace())
+        self.assertTrue(json.loads(response.cmd_res)["accepted"])
+        node.db_writer.finish.assert_called_once_with(JOB_ID, "CANCELLED")
+        node.backend.request_control.assert_not_called()
+        self.assertIsNone(node.active)
 
     async def test_uncertain_robot_completion_blocks_inspection_and_db_finalization(self):
         node, active = self.sequencer()
@@ -1071,6 +1158,55 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
         backend._receive_execution(SimpleNamespace(data=json.dumps(completed)))
         backend._receive_execution(SimpleNamespace(data=json.dumps(completed | {"event": "ROBOT_EVENT"})))
         self.assertEqual(backend._execution_response, completed)
+
+    async def test_control_requests_preserve_execution_and_pause_identity(self):
+        backend, node = self.backend()
+        backend._execution_id = OPERATION_ID
+        backend._execution_server = "server-a"
+        status = dict(execution_id=OPERATION_ID, server_instance_id="server-a",
+                      capabilities=dict(pause=True, resume=True, cancel=True), recovery_required=False,
+                      status="running")
+        backend._read_status = AsyncMock(return_value={"production_contract": status})
+        request = await backend.request_control(OPERATION_ID, "pause")
+        self.assertEqual(request["action"], "assembly.pause")
+        self.assertEqual(request["execution_id"], OPERATION_ID)
+        self.assertIn("control_pending", backend.control_progress(status))
+        paused = dict(status, status="paused", stop_verified=True, resume_available=True,
+                      pause_control_id=request["control_id"])
+        self.assertNotIn("control_pending", backend.control_progress(paused))
+        backend._read_status.return_value = {"production_contract": paused}
+        resume = await backend.request_control(OPERATION_ID, "resume")
+        self.assertEqual(resume["pause_control_id"], request["control_id"])
+        self.assertGreater(resume["control_sequence"], request["control_sequence"])
+        self.assertIn("control_pending", backend.control_progress(dict(status, control_id="unrelated")))
+        self.assertNotIn("control_pending", backend.control_progress(dict(status, control_id=resume["control_id"])))
+
+    async def test_cancel_needs_matching_control_and_verified_stop(self):
+        backend, node = self.backend()
+        backend._execution_id = OPERATION_ID
+        backend._execution_server = "server-a"
+        status = dict(execution_id=OPERATION_ID, server_instance_id="server-a",
+                      capabilities=dict(cancel=True), recovery_required=False, status="running")
+        backend._read_status = AsyncMock(return_value={"production_contract": status})
+        request = await backend.request_control(OPERATION_ID, "cancel")
+        result = dict(status, status="cancelled", control_id=request["control_id"], stop_verified=False)
+        self.assertIn("control_pending", backend.control_progress(result))
+        self.assertNotIn("control_pending", backend.control_progress(dict(result, stop_verified=True)))
+
+    async def test_control_rejection_does_not_replace_assembly_result(self):
+        backend, node = self.backend()
+        backend._execution_id = OPERATION_ID
+        backend._execution_server = "server-a"
+        status = dict(execution_id=OPERATION_ID, server_instance_id="server-a",
+                      capabilities=dict(pause=True), recovery_required=False, status="running")
+        backend._read_status = AsyncMock(return_value={"production_contract": status})
+        await backend.request_control(OPERATION_ID, "pause")
+        backend._execution_response = status
+        backend._receive_execution(SimpleNamespace(data=json.dumps(dict(
+            schema="fr5.assembly_execution/v2", execution_id=OPERATION_ID,
+            request_accepted=False, message="control rejected"))))
+        self.assertEqual(backend._execution_response, status)
+        self.assertEqual(backend.control_progress(status)["control_error"], "control rejected")
 
     def completion_fixture(self):
         from assembly_sequencer.recipe_contract import PRODUCTION_SLOTS

@@ -38,7 +38,7 @@ namespace MainUnity.UI
         VisualElement modeMock, modeReal, robotChip, linkJointDot, linkImageDot,
             linkApiDot, linkSequencerDot, alarmBanner;
         VisualElement pageRoot;
-        Button modeMockButton, modeRealButton, stopAllButton, viewFocusButton, alarmCloseButton;
+        Button modeMockButton, modeRealButton, stopAllButton, cancelButton, viewFocusButton, alarmCloseButton;
         VisualElement viewFocusRule;
         Label robotText, linkJointAge, linkImageAge, linkApiLabel, linkSequencerLabel,
             alarmLabel, alarmDetail, alarmTime, commandResult;
@@ -94,6 +94,13 @@ namespace MainUnity.UI
             modeMockButton = root.Q<Button>("mode-mock");
             modeRealButton = root.Q<Button>("mode-real");
             stopAllButton = root.Q<Button>("stop-all-button");
+            cancelButton = root.Q<Button>("cancel-job-button");
+            if (cancelButton == null && stopAllButton?.parent != null)
+            {
+                cancelButton = new Button { name = "cancel-job-button", text = "작업 취소" };
+                cancelButton.AddToClassList("chip");
+                stopAllButton.parent.Add(cancelButton);
+            }
             robotChip = root.Q<VisualElement>("robot-state-chip");
             robotText = root.Q<Label>("robot-state-text");
             linkJointDot = root.Q<VisualElement>("link-joint-dot");
@@ -148,6 +155,7 @@ namespace MainUnity.UI
             if (modeMockButton != null) modeMockButton.clicked += SelectMockMode;
             if (modeRealButton != null) modeRealButton.clicked += SelectRealMode;
             if (stopAllButton != null) stopAllButton.clicked += TogglePause;
+            if (cancelButton != null) cancelButton.clicked += CancelJob;
             if (viewFocusButton != null) viewFocusButton.clicked += ToggleFocus;
             if (alarmCloseButton != null) alarmCloseButton.clicked += DismissAlarm;
         }
@@ -157,6 +165,7 @@ namespace MainUnity.UI
             if (modeMockButton != null) modeMockButton.clicked -= SelectMockMode;
             if (modeRealButton != null) modeRealButton.clicked -= SelectRealMode;
             if (stopAllButton != null) stopAllButton.clicked -= TogglePause;
+            if (cancelButton != null) cancelButton.clicked -= CancelJob;
             if (viewFocusButton != null) viewFocusButton.clicked -= ToggleFocus;
             if (alarmCloseButton != null) alarmCloseButton.clicked -= DismissAlarm;
         }
@@ -211,20 +220,41 @@ namespace MainUnity.UI
             AssemblyProgressFrame frame = uiMaster?.AssemblyProgress?.Latest;
             bool paused = frame?.State == AssemblyState.Paused;
             bool conveyorMoving = frame?.State == AssemblyState.ConveyorMoving;
-            bool pauseSupported = uiMaster?.IsSimulated == true;
+            bool pauseSupported = uiMaster != null;
+            cancelButton?.SetEnabled(uiMaster?.IsSimulated == false && !stopRequestInFlight &&
+                frame != null && !frame.IsTerminal && !conveyorMoving && uiMaster?.Scenario?.IsRunning == true);
+            if (cancelButton != null) cancelButton.tooltip = "로봇 조립 중 취소를 요청하고 실제 결과와 DB 반영을 확인합니다.";
             if (stopAllButton != null)
             {
                 stopAllButton.text = !pauseSupported ? "일시정지 미지원" : stopRequestInFlight ? "처리 중…" : paused ? "▶ 재개" : "Ⅱ 일시정지";
                 stopAllButton.SetEnabled(pauseSupported && !stopRequestInFlight && frame != null &&
                     !frame.IsTerminal && !conveyorMoving && uiMaster?.Scenario?.IsRunning == true);
                 stopAllButton.tooltip = !pauseSupported
-                    ? "Real 일시정지는 아직 지원하지 않습니다."
+                    ? "시나리오 연결을 확인하세요."
                     : conveyorMoving
                         ? "컨베이어 이동 중에는 일시정지할 수 없습니다."
                     : paused
                         ? "일시정지된 조립을 재개합니다."
-                        : "현재 로봇 동작을 정지 확인 뒤 일시정지합니다.";
+                        : "이미 전달된 로봇 동작이 끝난 뒤 일시정지합니다.";
             }
+        }
+
+        async void CancelJob()
+        {
+            if (stopRequestInFlight || uiMaster?.Scenario == null) return;
+            stopRequestInFlight = true;
+            if (commandResult != null) commandResult.text = "취소 요청 · 실제 취소 확인 중";
+            try
+            {
+                await uiMaster.Scenario.CancelAsync();
+                if (commandResult != null) commandResult.text = "작업 취소 완료";
+            }
+            catch (Exception exception)
+            {
+                if (commandResult != null) commandResult.text = "취소 미완료 · " + exception.Message;
+                uiMaster?.RecordEvent("조작", "취소 미완료 · " + exception.Message, true);
+            }
+            finally { stopRequestInFlight = false; }
         }
 
         async void TogglePause()

@@ -50,6 +50,13 @@ namespace MainUnity.Runtime.Robot.Assembly
             ReceiveTimeSeconds = receiveTimeSeconds;
         }
 
+        // 표시 대상은 파지 상태와 별개다. 설비 제어·IsHolding 판정에 사용하지 않는다.
+        internal string CurrentPartId { get; set; }
+        internal string CurrentSlotCode { get; set; }
+        internal string CurrentAction { get; set; }
+        internal string CurrentPhase { get; set; }
+        internal string CurrentEvent { get; set; }
+
         public string JobId { get; }
         public string RecipeVersion { get; }
         public AssemblyState State { get; }

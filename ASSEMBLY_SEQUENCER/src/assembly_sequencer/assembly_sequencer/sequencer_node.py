@@ -136,6 +136,20 @@ class AssemblySequencer(Node):
                 error_code="INVALID_REQUEST", message=str(error)
             )
 
+        if command_type in {"status", "resume", "cancel"} and self.active is None:
+            try:
+                hold = self.db_writer.get_quality_hold()
+                if isinstance(hold, dict):
+                    slots = [slot for slot, _ in PRODUCTION_SLOTS] if self.runtime_mode == "real" else [step["slot_code"] for step in self.recipe["steps"]]
+                    self.active = dict(hold, state="PAUSED", quality_hold=True,
+                        inspection_result="FAIL", awaiting_next_unit=True, backend_started=False,
+                        placed_count=len(slots), expected_step_count=len(slots), slot_codes=slots,
+                        held_step_order=0, held_part_id="", held_slot_code="",
+                        error_code="QUALITY_HOLD", message="검사 결과 · FAIL · 생산 일시정지 · 재개 또는 취소를 선택하세요.")
+                    self.terminal_snapshot = None
+            except Exception as error:
+                return self.set_response(response, False, "", "DB_ERROR", str(error))
+
         # While active, status uses only feedback already committed by this bridge.
         if command_type == "status":
             if self.terminal_snapshot is not None:
@@ -175,17 +189,57 @@ class AssemblySequencer(Node):
         if command_type == "conveyor_failed":
             return self.conveyor_failed(command, response)
 
-        if command_type in {"pause", "resume"}:
+        if command_type in {"pause", "resume", "cancel"}:
             job_id = command["job_id"]
             if self.active is None or self.active["job_id"] != job_id:
                 return self.set_response(
                     response, False, job_id, "NOT_ACTIVE",
                     "matching assembly is not active",
                 )
+            if self.active.get("quality_hold"):
+                active = self.active
+                try:
+                    if command_type == "pause":
+                        return self.set_response(response, True, job_id)
+                    if command_type == "cancel":
+                        self.db_writer.finish(job_id, "CANCELLED")
+                        self.db_writer.flush(DB_SYNC_TIMEOUT_SECONDS)
+                        self.terminal_snapshot = assembly_snapshot(active, "FAILED",
+                            error_code="EXECUTION_CANCELLED", message="불량 확인 후 생산 취소",
+                            db_sync_state=self.db_writer.sync_state)
+                        self.active = None
+                    else:
+                        if self.runtime_mode == "real":
+                            await self.backend.prepare_execution(active["recipe_version"])
+                        elif not self.backend.is_available():
+                            raise RuntimeError("Equipment is not ready")
+                        elif not active.get("resolved_steps"):
+                            observed = self.pending_requests.get(job_id, {})
+                            if not observed.get("resolved_steps"):
+                                raise RuntimeError("재시작 후 새 Mock 현장 관측을 등록하세요.")
+                            active.update(resolved_steps=observed["resolved_steps"], observations=observed["observations"])
+                        self.db_writer.resume_quality(job_id)
+                        active.update(quality_hold=False, quality_resumed=True, error_code="", message="")
+                        self.finish_active_unit(active)
+                except Exception as error:
+                    return self.set_response(response, False, job_id, "CONTROL_REJECTED", str(error))
+                return self.set_response(response, True, job_id)
+            if self.active.get("awaiting_next_unit"):
+                return self.set_response(response, False, job_id, "NOT_READY", "새 현장 확인으로 다음 Unit을 시작하세요.")
             if self.active.get("inspection_hold"):
                 return self.set_response(response, False, job_id, "BUSY", "inspection resolution is required")
             if self.runtime_mode == "real":
-                return self.set_response(response, False, job_id, "NOT_READY", RealBackend._connection_error())
+                if not self.active.get("backend_started") or self.active["state"] not in {"STARTED", "PLACED", "PAUSED"}:
+                    return self.set_response(response, False, job_id, "BUSY", "Control is available during robot assembly only")
+                try:
+                    await self.backend.request_control(self.active["execution_id"], command_type)
+                except Exception as error:
+                    return self.set_response(response, False, job_id, "CONTROL_REJECTED", str(error))
+                self.active["control_pending"] = True
+                self.active["message"] = command_type + " 요청 · 실제 상태 확인 중"
+                return self.set_response(response, True, job_id)
+            if command_type == "cancel":
+                return self.set_response(response, False, job_id, "NOT_READY", "Mock cancel is unsupported")
             try:
                 await self.backend.set_paused(job_id, command_type == "pause")
             except Exception as error:
@@ -228,11 +282,11 @@ class AssemblySequencer(Node):
             return self.set_response(
                 response, False, job_id, "DB_ERROR", str(error)
             )
-        if job["job_status"] not in {"PENDING", "RUNNING"}:
+        if job["job_status"] not in {"PENDING", "RUNNING", "PAUSED"}:
             return self.set_response(
                 response, False, job_id, "NOT_ACTIVE", "Job is already finalized"
             )
-        if self.active is None or self.active["job_id"] != job_id:
+        if job["job_status"] == "PAUSED" or self.active is None or self.active["job_id"] != job_id:
             self.pending_requests[job_id] = command
         return self.set_response(response, True, job_id)
 
@@ -250,6 +304,8 @@ class AssemblySequencer(Node):
         if previous is not None:
             if previous["job_id"] != job_id:
                 return self.set_response(response, False, job_id, "BUSY", "Another Job is active.")
+            if previous.get("quality_hold"):
+                return self.set_response(response, False, job_id, "QUALITY_HOLD", "불량 확인 후 재개를 선택하세요.")
             if not previous.get("awaiting_next_unit"):
                 if previous.get("execution_id") == execution_id:
                     return self.set_response(response, True, job_id)
@@ -294,10 +350,44 @@ class AssemblySequencer(Node):
         if not set(active["placed_slot_codes"]).issubset(completed):
             return
         message = str(data.get("current_stage") or "Robot assembly running")
-        changed = completed != active["placed_slot_codes"] or message != active.get("message")
+        # Display context is separate from held-part state and never acknowledges a motion.
+        detail = {key: "" for key in ("current_part_id", "current_slot_code", "current_action", "current_phase", "current_event")}
+        context = data.get("last_robot_event")
+        if isinstance(context, dict):
+            original, metadata = context.get("original"), context.get("metadata")
+            if isinstance(original, dict) and isinstance(metadata, dict):
+                identity = (metadata.get("server_instance_id"), metadata.get("event_sequence"),
+                            original.get("operation_id"), original.get("phase"), original.get("event"))
+                # Repeated snapshots can retain an event from the previous top-level stage.
+                if identity != active.get("last_display_event"):
+                    active["last_display_event"] = identity
+                    slot, part = metadata.get("slot_code"), metadata.get("part_id")
+                    if (message in {"assemble_non-smd", "assemble_smd"} and
+                            original.get("job_id") == active["execution_id"] and
+                            isinstance(slot, str) and isinstance(part, str) and
+                            (slot, part) in PRODUCTION_SLOTS and slot in active["slot_codes"] and
+                            all(isinstance(original.get(k), str) for k in ("action", "phase", "event"))):
+                        detail.update(current_part_id=part, current_slot_code=slot,
+                                      current_action=original["action"], current_phase=original["phase"],
+                                      current_event=original["event"])
+                elif message == active.get("message"):
+                    detail = {key: active.get(key, "") for key in detail}
+        changed = (completed != active["placed_slot_codes"] or message != active.get("message") or
+                   any(value != active.get(key, "") for key, value in detail.items()))
+        active.update(detail)
         active["placed_slot_codes"] = list(completed)
         active["placed_count"] = len(completed)
-        active["state"] = "PLACED" if completed else "STARTED"
+        paused = data.get("status") == "paused" and data.get("stop_verified") is True
+        active["control_pending"] = bool(data.get("control_pending") or data.get("control_error"))
+        changed = changed or paused != (active["state"] == "PAUSED")
+        active["state"] = "PAUSED" if paused else ("PLACED" if completed else "STARTED")
+        active["error_code"] = "CONTROL_UNCONFIRMED" if data.get("control_error") else ""
+        if data.get("control_error"):
+            message = data["control_error"]
+        elif data.get("control_pending"):
+            message = data["control_pending"] + " 요청 · 현재 동작 종료 및 상태 확인 대기"
+        elif paused:
+            message = "일시정지 확인 · 같은 실행에서 재개 가능"
         active["message"] = message
         if changed:
             self.publish(dict(job_id=active["job_id"], state=active["state"], step_order=len(completed),
@@ -668,6 +758,12 @@ class AssemblySequencer(Node):
     def finish_active_unit(self, active):
         self.db_writer.unit_completed(active["unit_id"])
         self.db_writer.flush(DB_SYNC_TIMEOUT_SECONDS)
+        if active["inspection_result"] == "FAIL" and not active.get("quality_resumed"):
+            active.update(state="PAUSED", quality_hold=True, awaiting_next_unit=True,
+                          error_code="QUALITY_HOLD", message="검사 결과 · FAIL · 생산 일시정지 · 재개 또는 취소를 선택하세요.")
+            self.publish(failed_feedback(active["job_id"], active["error_code"], active["message"],
+                                         self.db_writer.sync_state) | {"state": "PAUSED"})
+            return
         state = self.db_writer.get_job(active["job_id"])
         if state["completed_quantity"] < state["requested_quantity"]:
             if self.runtime_mode == "real":
@@ -696,6 +792,8 @@ class AssemblySequencer(Node):
                 "inspection_result": "",
             })
             active.pop("assembled_pcb", None)
+            active.pop("quality_resumed", None)
+            active.pop("awaiting_next_unit", None)
             self.executor.create_task(self.run_assembly_workflow(active))
             return
 
@@ -747,6 +845,17 @@ class AssemblySequencer(Node):
             self.publish(failed_feedback(active["job_id"], error_code, str(error),
                                          self.db_writer.sync_state) | {"state": "PAUSED"})
             return
+        if self.runtime_mode == "real" and error_code == "EXECUTION_CANCELLED":
+            try:
+                self.db_writer.finish(active["job_id"], "CANCELLED")
+                self.db_writer.flush(DB_SYNC_TIMEOUT_SECONDS)
+                active["control_pending"] = False
+                self.terminal_snapshot = assembly_snapshot(active, "FAILED", error_code, str(error), self.db_writer.sync_state)
+                self.active = None
+                self.publish(failed_feedback(active["job_id"], error_code, str(error), self.db_writer.sync_state))
+                return
+            except Exception as cancel_error:
+                error_code, error = "DB_ERROR", cancel_error
         cleanup_error = self.fail_job(active["job_id"], immediate)
         if cleanup_error is not None:
             error_code = "DB_ERROR"

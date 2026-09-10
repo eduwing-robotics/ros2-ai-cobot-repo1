@@ -35,7 +35,8 @@ Job·Unit, 수량, 검사 FAIL, 재시작과 안전정지의 공통 의미는 [�
 공통 요청·상태 검증과 Mock 레시피 검증을 소유합니다.
 `mock_backend.py`는 Mock 동작 완료와 Unity 컨베이어 신호 대기·난수 검사를 소유합니다.
 Mock YAML의 `before_all`·`per_step`·`after_all`은 필수 동작과 순서까지 검증합니다.
-컨베이어는 이동마다 Job·Unit·이동 UUID를 대조합니다.
+Mock 컨베이어 피드백은 이동마다 Job·Unit·이동 UUID를 대조합니다.
+Real 컨베이어는 수락된 motion_id와 서버 instance·도착 상태를 대조합니다. 외부에서 이미 완료된 이동을 현재 Job·Unit에 연결하거나 재사용하는 기능은 없습니다.
 
 `real_backend.py`는 `/real/robot/status`와 `/real/assembly/status`의 생산 v2 capability를
 조회하고 컨베이어 이동·도착 대기, 로봇 전체 Start와 Vision HTTP 검사 경계를 소유합니다.
@@ -47,7 +48,7 @@ Sequencer가 `execute_assembly()`를 호출하면 단일 Start를 발행하고 �
 수락·개별 동작 완료는 전체 완료가 아니며, event 없는 거절과 서버 변경도 처리합니다.
 1800초 전체 완료 timeout 또는 전송 후 불명확한 결과는 `SAFETY_STOP`으로 전달합니다.
 로봇 개별 동작 publisher, 동작별 재전송, 취소형 Pause 연결과 로컬 파지 상태는 없습니다.
-생산 Pause/Resume은 미연결이며 취소를 상태 보존형 일시정지로 표현하지 않습니다.
+생산 v2 Pause/Resume/Cancel은 로봇 조립 중 연결되어 있습니다. 일시정지는 전달된 동작 종료 후 확인하며, 제어 ID와 실제 상태를 대조합니다. 취소를 상태 보존형 일시정지로 표현하지 않습니다.
 Unity의 실측·Ghost·부품 이벤트 수신과 수동 로봇 조작은 이 제거 범위에 포함되지 않습니다.
 
 ### Runner의 SDK·저수준 제어 금지

@@ -37,6 +37,8 @@ namespace MainUnity.Runtime.Robot.Interface
         Task PauseAsync();
         /// <summary>일시정지된 자동 조립을 재개한다.</summary>
         Task ResumeAsync();
+        /// <summary>실제 취소와 생산 상태 반영을 확인한다.</summary>
+        Task CancelAsync();
     }
 
     /// <summary>Backend의 저수준 이동 및 수동 제어 명령을 정의한다.</summary>

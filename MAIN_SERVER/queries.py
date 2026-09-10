@@ -89,9 +89,9 @@ def create_job(command):
                 cursor.execute(
                     """
                     INSERT INTO production.jobs (
-                        job_id, product_id, requested_quantity, recipe_version
+                        job_id, product_id, requested_quantity, recipe_version, requested_by
                     )
-                    SELECT %s, product_id, %s, %s
+                    SELECT %s, product_id, %s, %s, %s
                     FROM production.products
                     WHERE product_code = %s
                       AND product_version = %s
@@ -101,7 +101,7 @@ def create_job(command):
                     """,
                     (
                         command["job_id"], command["requested_quantity"],
-                        command["recipe_version"], command["product_code"],
+                        command["recipe_version"], command.get("requested_by"), command["product_code"],
                         command["product_version"],
                     ),
                 )
@@ -111,7 +111,7 @@ def create_job(command):
                 else:
                     cursor.execute(
                         """
-                        SELECT j.job_status, j.requested_quantity,
+                        SELECT j.job_status, j.requested_quantity, j.requested_by,
                                j.recipe_version, p.product_code,
                                p.product_version
                         FROM production.jobs j
@@ -125,6 +125,7 @@ def create_job(command):
                         raise ResourceNotFound("selectable product was not found")
                     expected = {
                         "requested_quantity": command["requested_quantity"],
+                        "requested_by": command.get("requested_by"),
                         "recipe_version": command["recipe_version"],
                         "product_code": command["product_code"],
                         "product_version": command["product_version"],
@@ -252,13 +253,13 @@ def job(job_id):
                ROUND(100.0 * COUNT(u.unit_id) FILTER (
                          WHERE u.unit_status = 'COMPLETED' AND u.inspection_result = 'PASS')
                      / j.requested_quantity, 2) AS progress_percent,
-               j.requested_at, j.job_started_at, j.job_finished_at
+               j.requested_by, j.requested_at, j.job_started_at, j.job_finished_at
         FROM production.jobs j JOIN production.products pr ON pr.product_id = j.product_id
         LEFT JOIN production.units u ON u.job_id = j.job_id
         WHERE j.job_id = %s
         GROUP BY j.job_id, j.product_id, pr.product_code, pr.product_version,
                  j.recipe_version, j.job_status, j.requested_quantity,
-                 j.requested_at, j.job_started_at, j.job_finished_at
+                 j.requested_by, j.requested_at, j.job_started_at, j.job_finished_at
     """, (job_id,))
     if row is None:
         raise ResourceNotFound("job was not found")
@@ -292,13 +293,13 @@ def jobs(status=None, limit=12):
                ROUND(100.0 * COUNT(u.unit_id) FILTER (
                          WHERE u.unit_status = 'COMPLETED' AND u.inspection_result = 'PASS')
                      / j.requested_quantity, 2) AS progress_percent,
-               j.requested_at, j.job_started_at, j.job_finished_at
+               j.requested_by, j.requested_at, j.job_started_at, j.job_finished_at
         FROM selected_jobs j
         JOIN production.products pr ON pr.product_id = j.product_id
         LEFT JOIN production.units u ON u.job_id = j.job_id
         GROUP BY j.job_id, j.product_id, pr.product_code, pr.product_name,
                  pr.product_version, j.recipe_version, j.job_status,
-                 j.requested_quantity, j.requested_at, j.job_started_at,
+                 j.requested_quantity, j.requested_by, j.requested_at, j.job_started_at,
                  j.job_finished_at
         ORDER BY CASE j.job_status
                      WHEN 'RUNNING' THEN 0

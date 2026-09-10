@@ -64,6 +64,7 @@ JSON 성공:
   "product_code": "HBM-ACCELERATOR-PACKAGE-BOARD",
   "product_version": "hbm-pkg-r1",
   "requested_quantity": 1,
+  "requested_by": "홍길동",
   "recipe_version": "assembly-r1"
 }
 ```
@@ -139,3 +140,15 @@ Mock에서 필요한 runtime 좌표는 이 HTTP API가 아니라 [Assembly Seque
 `Content-Length`와 `X-Content-SHA256`을 제공하며 최대 25 MiB입니다.
 확정 불량이 없으면 404, 문서 미준비·허용 루트 이탈·잘못된 파일이면
 `409 report_unavailable`입니다. 조회와 다운로드는 문서 생성·이메일 발송을 하지 않습니다.
+
+### Job 요청자
+
+Job 생성의 선택적 `requested_by`는 요청자 이름·식별자이며 관리자 인증 정보가 아닙니다.
+지정할 때는 앞뒤 공백 제거 후 1~128자 문자열이어야 합니다. Job에 한 번 저장하고
+상세·목록 조회에서도 반환하며, 같은 UUID로 다른 요청자를 제출하면 `409 duplicate_request`입니다.
+미지정 자동 호출과 과거 Job은 `null`로 남기며 실제 요청자를 추정하지 않습니다.
+Unity 작업 등록 화면은 요청자 입력을 필수로 받습니다. Unit에 요청자를 중복 저장하지 않습니다.
+
+`GET /api/v1/jobs?status=PAUSED`는 검사 불량으로 다음 생산이 차단된 Job을 조회합니다.
+해당 상태는 Sequencer가 소유하며 HTTP Job 등록이나 대기 Job 삭제 API로 재개하지 않습니다.
+기존 Sequencer resume/cancel 제어를 사용합니다.

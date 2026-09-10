@@ -112,6 +112,13 @@ class DbWriter:
     def get_job(self, job_id):
         return self._store.get_job_state(self._job_id(job_id))
 
+    def resume_quality(self, job_id):
+        self.flush(5.0)
+        return self._store.resume_quality_job(self._job_id(job_id))
+
+    def get_quality_hold(self):
+        return self._store.get_quality_hold()
+
     def get_product_slots(self, job_id):
         return self._store.get_product_slots(self._job_id(job_id))
 
