@@ -20,19 +20,21 @@ namespace MainUnity.Runtime.Robot.Real
         const string RecipeVersion = "assembly-r1";
         const string MainServerBaseUrl = "http://127.0.0.1:8000";
         const double CompletionTimeoutSeconds = 1800d;
+        const double ServiceTimeoutSeconds = 5d;
 
         [SerializeField] ItemManager itemManager;
 
         AssemblyProgressManager progress;
         ROSConnection connection;
         AssemblySnapshot latest;
-        Task recoveryTask = Task.CompletedTask;
         string activeJobId;
         string pendingJobId;
         bool serviceRegistered;
         bool feedbackSubscribed;
         bool executionPending;
         bool controlPending;
+        string controlWaitLabel;
+        double controlDeadline;
         AssemblySceneConfirmation pendingConfirmation;
         string confirmationJobId;
         bool refreshRequested;
@@ -123,6 +125,7 @@ namespace MainUnity.Runtime.Robot.Real
             public string error_code;
             public string message;
             public bool controls_available;
+            public bool force_cancel_available;
             public string pause_reason;
             public string resume_reason;
             public string cancel_reason;
@@ -134,7 +137,7 @@ namespace MainUnity.Runtime.Robot.Real
         {
             realStatusConfirmed = false;
             EnsureRosConnection();
-            recoveryTask = RestoreProgressAsync(++generation);
+            _ = RestoreProgressAsync(++generation);
         }
 
         void OnDisable()
@@ -187,7 +190,6 @@ namespace MainUnity.Runtime.Robot.Real
             int currentGeneration = generation;
             try
             {
-                await recoveryTask;
                 AssemblySnapshot snapshot = await ReadStatusAsync(currentGeneration);
                 if (snapshot.active && !(snapshot.job_id == queuedJobId && snapshot.error_code == "SCENE_CONFIRMATION_REQUIRED"))
                     throw new InvalidOperationException("A Real assembly is already running.");
@@ -236,6 +238,10 @@ namespace MainUnity.Runtime.Robot.Real
 
         public string GetControlBlockReason(string action)
         {
+            if (controlPending) return "제어 요청의 실제 결과를 확인 중입니다.";
+            if (action == "force_cancel")
+                return latest != null && latest.force_cancel_available && Time.realtimeSinceStartupAsDouble - controlsReceivedAt <= 3d
+                    ? "" : "서버의 강제 취소 지원 또는 활성 Job을 확인하지 못했습니다.";
             if (latest == null || !latest.controls_available || !latest.available ||
                 Time.realtimeSinceStartupAsDouble - controlsReceivedAt > 3d)
                 return "최신 조작 가능 상태를 확인 중입니다.";
@@ -252,24 +258,72 @@ namespace MainUnity.Runtime.Robot.Real
         public Task ResumeAsync() => SendControlAsync("resume");
         public Task CancelAsync() => SendControlAsync("cancel");
 
+        public async Task ForceCancelAsync(string jobId)
+        {
+            RequireEnabled(generation);
+            if (!Guid.TryParse(jobId, out _)) throw new ArgumentException("Job ID must be a UUID.");
+            if (controlPending) throw new InvalidOperationException("기존 제어 요청의 결과 확인 중입니다.");
+            controlPending = true;
+            int currentGeneration = generation;
+            try
+            {
+                try { await SendCommandAsync("force_cancel", jobId, currentGeneration); }
+                catch (TimeoutException) { /* Reconcile the same Job without repeating the command. */ }
+                controlDeadline = Time.realtimeSinceStartupAsDouble + 60d;
+                controlWaitLabel = "생산 기록 강제 취소 확인 중 · 설비 정지 미확인";
+                while (Time.realtimeSinceStartupAsDouble < controlDeadline)
+                {
+                    AssemblySnapshot snapshot;
+                    try { snapshot = await ReadStatusAsync(currentGeneration); }
+                    catch (TimeoutException) { await Task.Delay(100); continue; }
+                    if (snapshot.job_id != jobId) throw new InvalidOperationException("강제 취소 대상 Job의 결과를 확인할 수 없습니다.");
+                    ApplySnapshot(snapshot);
+                    if (!snapshot.active && snapshot.error_code == "EXECUTION_FORCE_CANCELLED" && snapshot.db_sync_state == "SYNCED") return;
+                    if (snapshot.db_sync_state == "FAILED") throw Failure(snapshot.error_code, snapshot.message);
+                    await Task.Delay(100);
+                }
+                throw new TimeoutException("강제 취소의 DB 반영 미확인 · 현재 기록을 다시 확인하세요.");
+            }
+            finally
+            {
+                controlPending = false;
+                controlWaitLabel = null;
+                if (progress?.Latest != null) progress.Latest.PendingRequest = null;
+            }
+        }
+
         async Task SendControlAsync(string action)
         {
             RequireEnabled(generation);
             if (controlPending)
                 throw new InvalidOperationException("제어 요청의 실제 결과를 확인 중입니다.");
             controlPending = true;
+            string expectedJobId = activeJobId;
             int currentGeneration = generation;
             try
             {
                 AssemblySnapshot snapshot = await ReadStatusAsync(currentGeneration);
-                if (!snapshot.available || !snapshot.active || snapshot.job_id != activeJobId)
+                if (!snapshot.available || !snapshot.active || snapshot.job_id != expectedJobId)
                     throw new InvalidOperationException("일치하는 실행 중 작업이 없습니다.");
                 string jobId = snapshot.job_id;
-                await SendCommandAsync(action, jobId, currentGeneration);
+                string previousError = snapshot.error_code;
+                try { await SendCommandAsync(action, jobId, currentGeneration); }
+                catch (TimeoutException)
+                {
+                    // An absent acknowledgement cannot prove rejection. Observe without resending control.
+                }
                 double deadline = Time.realtimeSinceStartupAsDouble + 60d;
+                controlDeadline = deadline;
+                controlWaitLabel = action == "cancel" ? "취소 · 설비 정지 및 DB 반영 확인 중" :
+                    action == "pause" ? "일시정지 확인 대기 중" : "재개 확인 대기 중";
                 while (Time.realtimeSinceStartupAsDouble < deadline)
                 {
-                    snapshot = await ReadStatusAsync(currentGeneration);
+                    try { snapshot = await ReadStatusAsync(currentGeneration); }
+                    catch (TimeoutException)
+                    {
+                        await Task.Delay(100);
+                        continue;
+                    }
                     if (!snapshot.available || snapshot.job_id != jobId)
                         throw new InvalidOperationException("제어 확인 중 작업 상태를 잃었습니다.");
                     ApplySnapshot(snapshot);
@@ -278,6 +332,13 @@ namespace MainUnity.Runtime.Robot.Real
                         return;
                     if (action == "resume" && snapshot.state == "PAUSED" && snapshot.error_code == "SCENE_CONFIRMATION_REQUIRED")
                         return;
+                    if (action == "cancel" && snapshot.active && snapshot.db_sync_state != "FAILED" &&
+                        (string.IsNullOrEmpty(snapshot.error_code) || snapshot.error_code == previousError ||
+                         snapshot.error_code == "EXECUTION_CANCELLED"))
+                    {
+                        await Task.Delay(100);
+                        continue;
+                    }
                     if (snapshot.state == "FAILED" || !string.IsNullOrEmpty(snapshot.error_code))
                         throw Failure(snapshot.error_code, snapshot.message);
                     if (!snapshot.active)
@@ -292,6 +353,8 @@ namespace MainUnity.Runtime.Robot.Real
             finally
             {
                 controlPending = false;
+                controlWaitLabel = null;
+                if (progress?.Latest != null) progress.Latest.PendingRequest = null;
             }
         }
 
@@ -360,6 +423,8 @@ namespace MainUnity.Runtime.Robot.Real
                             confirmedAfterUnit = snapshot.unit_id;
                         }
                     }
+                    if ((snapshot.error_code == "EXECUTION_CANCELLED" || snapshot.error_code == "EXECUTION_FORCE_CANCELLED") && !snapshot.active && snapshot.db_sync_state == "SYNCED")
+                        throw new OperationCanceledException("작업 취소 완료");
                     if (snapshot.state == "FAILED" || snapshot.db_sync_state == "FAILED")
                         throw Failure(snapshot.error_code, snapshot.message);
                     // A feedback message or accepted response is not completion. The authoritative status must
@@ -434,6 +499,9 @@ namespace MainUnity.Runtime.Robot.Real
                 snapshot.held_part_id, snapshot.held_slot_code, snapshot.error_code, snapshot.message,
                 Time.realtimeSinceStartupAsDouble)
             {
+                CancellationConfirmed = !snapshot.active && snapshot.error_code == "EXECUTION_CANCELLED" && snapshot.db_sync_state == "SYNCED",
+                PendingRequest = controlWaitLabel,
+                RequestDeadline = controlDeadline,
                 CurrentPartId = snapshot.current_part_id,
                 CurrentSlotCode = snapshot.current_slot_code,
                 CurrentAction = snapshot.current_action,
@@ -474,6 +542,9 @@ namespace MainUnity.Runtime.Robot.Real
                     command = command, job_id = jobId, recipe_version = RecipeVersion, scene_confirmation = pendingConfirmation
                 })
                 : JsonUtility.ToJson(new ControlRequest { command = command, job_id = jobId });
+            if (progress != null && progress.Latest?.JobId != jobId)
+                progress.Apply(new AssemblyProgressFrame(jobId, RecipeVersion, AssemblyState.Idle,
+                    0, 0, 0, "", "", "", "실행 요청 중 · 설비 상태 확인 대기", double.NegativeInfinity));
             string responseJson = await SendServiceAsync("real\n" + json, currentGeneration);
             CommandResponse response = JsonUtility.FromJson<CommandResponse>(responseJson);
             if (response == null || response.job_id != jobId)
@@ -494,8 +565,26 @@ namespace MainUnity.Runtime.Robot.Real
             EnsureRosConnection();
             Task<RemoteCmdInterfaceResponse> request = connection
                 .SendServiceMessage<RemoteCmdInterfaceResponse>(StartService, new RemoteCmdInterfaceRequest(payload));
-            if (await Task.WhenAny(request, Task.Delay(TimeSpan.FromSeconds(5))) != request)
-                throw new TimeoutException("Real assembly service timed out; execution state is unconfirmed.");
+            var frame = progress?.Latest;
+            bool command = payload.StartsWith("real\n", StringComparison.Ordinal);
+            if (command && frame != null)
+            {
+                frame.PendingRequest = "작업 명령 요청 대기 중";
+                frame.RequestDeadline = Time.realtimeSinceStartupAsDouble + ServiceTimeoutSeconds;
+            }
+            try
+            {
+                if (await Task.WhenAny(request, Task.Delay(TimeSpan.FromSeconds(ServiceTimeoutSeconds))) != request)
+                    throw new TimeoutException("요청 응답 시간 초과 · 실제 실행 결과는 상태 재조회로 확인해야 합니다.");
+            }
+            finally
+            {
+                if (command && frame != null)
+                {
+                    frame.PendingRequest = null;
+                    if (progress?.Latest != null) progress.Latest.PendingRequest = null;
+                }
+            }
             RequireEnabled(currentGeneration);
             RemoteCmdInterfaceResponse response = await request;
             if (response == null || string.IsNullOrWhiteSpace(response.cmd_res))

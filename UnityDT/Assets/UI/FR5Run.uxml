@@ -59,6 +59,12 @@
                     <ui:Label name="cam-title-4" text="조립" class="run-cam-tile__title" />
                     <ui:Label name="cam-age-4" text="—" class="run-cam-tile__age" />
                 </ui:VisualElement>
+                <ui:VisualElement name="cam-tile-5" class="run-cam-tile">
+                    <ui:Image name="cam-image-5" class="run-cam-tile__img" />
+                    <ui:Label text="NO SIGNAL" class="run-cam-tile__no-signal" picking-mode="Ignore" />
+                    <ui:Label name="cam-title-5" text="CAMERA 3" class="run-cam-tile__title" />
+                    <ui:Label name="cam-age-5" text="—" class="run-cam-tile__age" />
+                </ui:VisualElement>
             </ui:VisualElement>
 
             <!--
@@ -71,6 +77,7 @@
                 <ui:Button name="cam-chip-2" class="chip" style="margin-left:6px;"><ui:Label text="PARTS" class="chip__text" /></ui:Button>
                 <ui:Button name="cam-chip-3" class="chip" style="margin-left:6px;"><ui:Label text="컨베이어" class="chip__text" /></ui:Button>
                 <ui:Button name="cam-chip-4" class="chip" style="margin-left:6px;"><ui:Label text="조립" class="chip__text" /></ui:Button>
+                <ui:Button name="cam-chip-5" class="chip" style="margin-left:6px;"><ui:Label text="CAMERA 3" class="chip__text" /></ui:Button>
                 <ui:VisualElement class="spacer" />
                 <ui:Button name="cam-split" text="분할" class="chip" style="margin-right:12px;" />
                 <ui:Label name="cam-badge" text="—" class="run-cam__bar-badge" />
@@ -83,17 +90,20 @@
           열 다섯으로 나누고, Real 전용 열은 Mock 에서 접힌다.
         -->
         <ui:VisualElement name="progress-panel" class="run-deck panel--aux">
+            <ui:VisualElement class="run-command-strip">
+                <ui:Label text="작업 상태" class="run-sect__title" />
+                <ui:Label name="operation-detail" text="진행 정보 대기" class="run-operation-detail" />
+                <ui:Label name="operation-age" text="수신 기록 없음" class="run-sub" />
+            </ui:VisualElement>
 
             <!-- 1. 지금 -->
-            <ui:VisualElement class="run-col" style="left:32px; width:300px;">
+            <ui:VisualElement class="run-col run-current" style="left:32px; width:300px;">
                 <ui:Label name="unit-phase" text="—" class="run-now__phase" />
                 <ui:VisualElement class="row" style="margin-top:2px;">
                     <ui:Label name="now-slot" text="—" class="run-now__slot" />
                     <ui:Label name="now-part" text="" class="run-now__part" />
                 </ui:VisualElement>
                 <ui:Label name="unit-step" text="—" class="run-sub" style="margin-top:6px;" />
-                <ui:Label name="operation-detail" text="진행 정보 대기" class="run-operation-detail" />
-                <ui:Label name="operation-age" text="수신 기록 없음" class="run-sub" />
                 <ui:VisualElement class="spacer" />
                 <ui:Label name="recipe-version" text="—" class="run-sect__unit" />
                 <ui:Label name="request-id" text="—" class="run-sect__unit" style="margin-top:2px;" />

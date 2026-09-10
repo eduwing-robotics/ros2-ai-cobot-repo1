@@ -380,6 +380,8 @@ namespace MainUnity.Runtime.Robot.Mock
             catch (Exception error) { return error.Message; }
         }
 
+        public Task ForceCancelAsync(string jobId) => Task.FromException(new NotSupportedException("Mock 강제 취소는 지원하지 않습니다."));
+
         public Task CancelAsync() => Task.FromException(new NotSupportedException("Mock 취소는 지원하지 않습니다."));
 
         public async Task PauseAsync()

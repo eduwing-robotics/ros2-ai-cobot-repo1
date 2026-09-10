@@ -5,6 +5,8 @@ import os
 import json
 import sys
 import uuid
+import time
+import math
 
 import rclpy
 from fairino_msgs.srv import RemoteCmdInterface
@@ -168,6 +170,12 @@ class AssemblySequencer(Node):
                 snapshot.update({action + "_reason": AssemblySequencer.control_reason(self, action)
                     for action in ("pause", "resume", "cancel")})
                 snapshot["controls_available"] = True
+                snapshot["force_cancel_available"] = self.active is not None
+                # Presentation uses the executing backend's monotonic deadline, not a new UI timer.
+                waiting = getattr(self.backend, "_display_wait", None)
+                if self.active is not None and waiting and not snapshot.get("error_code"):
+                    remaining = max(0, math.ceil(waiting[1] - time.monotonic()))
+                    snapshot["message"] = snapshot.get("message", "") + f" · {waiting[0]} · 제한까지 {remaining}초"
             snapshot["runtime_mode"] = self.runtime_mode
             response.cmd_res = json.dumps(snapshot, separators=(",", ":"))
             return response
@@ -185,6 +193,24 @@ class AssemblySequencer(Node):
 
         if command_type == "conveyor_failed":
             return self.conveyor_failed(command, response)
+
+        if command_type == "force_cancel":
+            job_id = command["job_id"]
+            terminal = self.terminal_snapshot or {}
+            if self.active is None:
+                if (terminal.get("job_id") == job_id and terminal.get("error_code") == "EXECUTION_FORCE_CANCELLED"
+                        and terminal.get("db_sync_state") == "SYNCED"):
+                    return self.set_response(response, True, job_id)
+                return self.set_response(response, False, job_id, "NOT_ACTIVE", "일치하는 활성 Job이 없습니다.")
+            if self.active["job_id"] != job_id:
+                return self.set_response(response, False, job_id, "NOT_ACTIVE", "다른 Job은 강제 취소할 수 없습니다.")
+            active = self.active
+            active["force_cancel_requested"] = True
+            self.finalize_cancel(active, "생산 기록 강제 취소 · 설비 정지 미확인")
+            if self.active is active:
+                return self.set_response(response, False, job_id, "DB_ERROR", active["message"])
+            self.get_logger().warning(f"FORCE_CANCEL job_id={job_id} unit_id={active['unit_id']} equipment_stop=unconfirmed")
+            return self.set_response(response, True, job_id)
 
         if command_type in {"pause", "resume", "cancel"}:
             job_id = command["job_id"]
@@ -300,6 +326,8 @@ class AssemblySequencer(Node):
 
     async def start_real_job(self, command, response):
         job_id = command["job_id"]
+        if getattr(self, "_workflow_inflight", None) is not None and self.active is None:
+            return self.set_response(response, False, job_id, "BUSY", "이전 설비 요청의 결과를 추적 중입니다.")
         try:
             validate_scene_confirmation(command.get("scene_confirmation"))
             if command["recipe_version"] != PRODUCTION_RECIPE_VERSION:
@@ -345,7 +373,7 @@ class AssemblySequencer(Node):
         return self.set_response(response, True, job_id)
 
     def real_progress(self, active, data):
-        if self.active is not active:
+        if self.active is not active or active.get("force_cancel_requested"):
             return
         for key, expected in (("execution_id", active["execution_id"]), ("production_job_id", active["job_id"]),
                               ("unit_id", active["unit_id"])):
@@ -418,6 +446,8 @@ class AssemblySequencer(Node):
         active = self.active
         if active is None:
             return "활성 작업이 없습니다."
+        if active.get("force_cancel_requested"):
+            return "강제 취소의 DB 반영 확인 중입니다."
         if self.db_writer.sync_state == "FAILED":
             return "DB 반영 결과 확인이 필요합니다."
         if active.get("quality_hold"):
@@ -455,10 +485,14 @@ class AssemblySequencer(Node):
                     message="취소 DB 반영 미확인: " + str(error))
                 return
         active["control_pending"] = False
-        self.terminal_snapshot = assembly_snapshot(active, "FAILED", "EXECUTION_CANCELLED",
+        code = "EXECUTION_FORCE_CANCELLED" if active.get("force_cancel_requested") else "EXECUTION_CANCELLED"
+        if active.get("force_cancel_requested"):
+            message = "생산 기록 강제 취소 · 설비 정지 미확인"
+        self.pending_requests.pop(active["job_id"], None)
+        self.terminal_snapshot = assembly_snapshot(active, "FAILED", code,
             message, self.db_writer.sync_state)
         self.active = None
-        self.publish(failed_feedback(active["job_id"], "EXECUTION_CANCELLED", message, self.db_writer.sync_state))
+        self.publish(failed_feedback(active["job_id"], code, message, self.db_writer.sync_state))
 
     async def cancel_before_assembly(self, active):
         try:
@@ -474,12 +508,17 @@ class AssemblySequencer(Node):
                     self.db_writer.sync_state) | {"state": "PAUSED"})
 
     async def run_real_workflow(self, active):
+        if self.active is not active or active.get("force_cancel_requested"):
+            return
+        self._workflow_inflight = active
         stage = "CONVEYOR_FAILED"
         try:
             active.update(state="CONVEYOR_MOVING", conveyor_operation_id=str(uuid.uuid4()), message="조립 위치 이동 중")
             self.publish(dict(job_id=active["job_id"], state=active["state"], step_order=0,
                 part_id="", slot_code="", error_code="", message=active["message"], db_sync_state=self.db_writer.sync_state))
             await self.backend.move_conveyor("ASSEMBLY")
+            if self.active is not active or active.get("force_cancel_requested"):
+                return
             stage = "ASSEMBLY_FAILED"
             active.update(state="STARTED", backend_started=True, message="전체 조립 실행 중")
             self.publish(dict(job_id=active["job_id"], state=active["state"], step_order=0,
@@ -487,6 +526,8 @@ class AssemblySequencer(Node):
             await self.backend.execute_assembly(active["job_id"], active["unit_id"], active["recipe_version"],
                 active["robot_recipe_revision"], active["scene_confirmation"], active["slot_codes"],
                 lambda data: self.real_progress(active, data))
+            if self.active is not active or active.get("force_cancel_requested"):
+                return
             stage = "DB_ERROR"
             self.db_writer.assembly_completed(active["unit_id"])
             self.db_writer.flush(DB_SYNC_TIMEOUT_SECONDS)
@@ -495,12 +536,16 @@ class AssemblySequencer(Node):
             self.publish(dict(job_id=active["job_id"], state=active["state"], step_order=0,
                 part_id="", slot_code="", error_code="", message=active["message"], db_sync_state=self.db_writer.sync_state))
             await self.backend.move_conveyor("INSPECTION")
+            if self.active is not active or active.get("force_cancel_requested"):
+                return
             stage = "INSPECTION_FAILED"
             active["message"] = "검사 진행 중"
             # Real consumes this notification by re-reading status; it never drives a conveyor from feedback.
             self.publish(dict(job_id=active["job_id"], state=active["state"], step_order=0,
                 part_id="", slot_code="", error_code="", message=active["message"], db_sync_state=self.db_writer.sync_state))
             inspection = await self.backend.inspect_unit(active["job_id"], active["unit_id"], active["slot_codes"])
+            if self.active is not active or active.get("force_cancel_requested"):
+                return
             stage = "DB_ERROR"
             self.db_writer.inspection_recorded(active["unit_id"], **inspection)
             self.db_writer.flush(DB_SYNC_TIMEOUT_SECONDS)
@@ -514,8 +559,11 @@ class AssemblySequencer(Node):
                 return
             self.finish_active_unit(active)
         except Exception as error:
-            if self.active is active:
+            if self.active is active and not active.get("force_cancel_requested"):
                 self.fail_active(getattr(error, "error_code", stage), error)
+        finally:
+            if getattr(self, "_workflow_inflight", None) is active:
+                self._workflow_inflight = None
 
     async def conveyor_arrived(self, command, response):
         active = self.active

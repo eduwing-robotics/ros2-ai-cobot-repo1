@@ -27,6 +27,40 @@ namespace MainUnity.Tests.PlayMode
         }
 
         [Test]
+        public void QualityAlertPreservesExactUnitAndDeliveryCounts()
+        {
+            var root = new GameObject("Offline quality alert");
+            root.SetActive(false);
+            try
+            {
+                var shell = root.AddComponent(RuntimeType("MainUnity.UI.FR5ShellBinder"));
+                var banner = new UnityEngine.UIElements.VisualElement();
+                var label = new UnityEngine.UIElements.Label();
+                Field(shell, "qualityBanner").SetValue(shell, banner);
+                Field(shell, "qualityDetail").SetValue(shell, label);
+                var apply = shell.GetType().GetMethod("ApplyQuality", BindingFlags.Instance | BindingFlags.NonPublic);
+                var snapshot = JsonUtility.FromJson("{\"job_id\":\"12345678-1234-5678-1234-567812345678\",\"unit_id\":22,\"error_code\":\"QUALITY_HOLD\"}", apply.GetParameters()[0].ParameterType);
+                var envelopeType = shell.GetType().GetNestedType("QualityUnitsEnvelope", BindingFlags.NonPublic);
+                var envelope = JsonUtility.FromJson("{\"data\":[{\"unit_id\":22,\"inspection_result\":\"FAIL\",\"defects\":[{\"slot_code\":\"VRM-01\",\"defect_type\":\"MISSING\",\"delivery_status\":\"SENT\"},{\"slot_code\":\"VRM-02\",\"defect_type\":\"MISSING\",\"delivery_status\":\"FAILED\"}]},{\"unit_id\":23,\"inspection_result\":\"PASS\"}]}", envelopeType);
+                var units = Field(envelope, "data").GetValue(envelope);
+                apply.Invoke(shell, new[] { snapshot, units });
+                Assert.That(label.text, Does.Contain("생산 일시정지"));
+                Assert.That(label.text, Does.Contain("완료 1").And.Contain("실패 1"));
+                Assert.That(Field(shell, "qualityUnitId").GetValue(shell), Is.EqualTo(22));
+                string text = label.text;
+                apply.Invoke(shell, new[] { snapshot, units });
+                Assert.That(label.text, Is.EqualTo(text));
+                Invoke(shell, "QualityUnavailable");
+                Invoke(shell, "QualityUnavailable");
+                Assert.That(label.text, Is.EqualTo(text + " · 상태 재확인 필요"));
+                var inspect = root.AddComponent(RuntimeType("MainUnity.UI.FR5InspectBinder"));
+                Invoke(inspect, "ShowJob", "12345678-1234-5678-1234-567812345678", 22);
+                Assert.That(Field(inspect, "requestedUnitId").GetValue(inspect), Is.EqualTo(22));
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        [Test]
         public void CommandsRejectStaleStateBeforeUpdateAndAcceptFreshRecovery()
         {
             var root = new GameObject("Command freshness regression");

@@ -75,6 +75,7 @@ namespace MainUnity.UI
         string evidenceStats;
         string evidenceMessage;
         string requestedJobId;
+        int requestedUnitId;
 
         void OnEnable() => cached = false;
 
@@ -149,10 +150,11 @@ namespace MainUnity.UI
             if (loadRoutine == null && isActiveAndEnabled) loadRoutine = StartCoroutine(Load());
         }
 
-        internal void ShowJob(string jobId)
+        internal void ShowJob(string jobId, int unitId = 0)
         {
             if (string.IsNullOrEmpty(jobId)) return;
             requestedJobId = jobId;
+            requestedUnitId = unitId;
             if (loadRoutine != null) StopCoroutine(loadRoutine);
             loadRoutine = null;
             if (cached) BeginLoad();
@@ -166,7 +168,7 @@ namespace MainUnity.UI
             try
             {
                 string jobId = requestedJobId;
-                int unitId = 0;
+                int unitId = requestedUnitId;
                 if (string.IsNullOrEmpty(jobId))
                 {
                     AssemblySnapshot snapshot = null;
@@ -193,6 +195,11 @@ namespace MainUnity.UI
                     });
                 if (!isActiveAndEnabled || queryFailed) yield break;
                 Unit selected = Array.Find(units, unit => unit.unit_id == unitId);
+                if (selected == null && requestedUnitId > 0)
+                {
+                    ShowState("검사 기록 없음", "알림에 해당하는 Unit을 찾지 못했습니다. 새로고침하세요.", true);
+                    yield break;
+                }
                 if (selected == null && units.Length > 0) selected = units[units.Length - 1];
                 if (selected == null)
                     ShowState("생산 기록 없음", "선택한 작업에 아직 생산 시도가 없습니다. 실행 후 새로고침하세요.");

@@ -319,8 +319,10 @@ def units(job_id):
         FROM production.units WHERE job_id = %s ORDER BY unit_sequence_in_job
     """, (job_id,))
     defects = _all("""
-        SELECT ud.unit_id, ud.unit_defect_id, ps.slot_code, ud.defect_type
+        SELECT ud.unit_id, ud.unit_defect_id, ps.slot_code, ud.defect_type,
+               delivery.delivery_status, delivery.sent_at
         FROM production.unit_defects ud
+        LEFT JOIN production.defect_report_deliveries delivery USING (unit_defect_id)
         JOIN production.product_slots ps ON ps.product_slot_id = ud.product_slot_id
         JOIN production.units u ON u.unit_id = ud.unit_id
         WHERE u.job_id = %s ORDER BY ud.unit_id, ps.slot_code

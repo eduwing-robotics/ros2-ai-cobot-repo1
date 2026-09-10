@@ -57,6 +57,30 @@ namespace MainUnity.Runtime.Robot.Assembly
         internal string CurrentPhase { get; set; }
         internal string CurrentEvent { get; set; }
 
+        // Local response waits never replace the last equipment state or its receive time.
+        internal bool CancellationConfirmed { get; set; }
+        internal string PendingRequest { get; set; }
+        internal double RequestDeadline { get; set; }
+        internal string DisplayStatus
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(PendingRequest))
+                {
+                    double remaining = RequestDeadline - Time.realtimeSinceStartupAsDouble;
+                    return PendingRequest + (remaining > 0 ? $" · 응답 제한까지 {System.Math.Ceiling(remaining):0}초" : " · 응답 시간 초과 · 실행 결과 확인 필요");
+                }
+                string label = ErrorCode == "EXECUTION_FORCE_CANCELLED" ? "기록 강제 취소 · 설비 정지 미확인" : ErrorCode == "EXECUTION_CANCELLED" ? (CancellationConfirmed ? "취소 완료" : "취소 기록 확인 중") :
+                    !string.IsNullOrEmpty(ErrorCode) && ErrorCode != "QUALITY_HOLD" && ErrorCode != "SCENE_CONFIRMATION_REQUIRED"
+                        ? "오류로 중단" : State == AssemblyState.Paused ? "확인 대기 / 일시정지" :
+                    State == AssemblyState.Failed ? "실행 실패" : State == AssemblyState.Completed ? "완료" : "진행 중";
+                string text = label + " · " + Message;
+                if (!IsTerminal && Time.realtimeSinceStartupAsDouble - ReceiveTimeSeconds > 3d)
+                    text = "최신 상태 확인 불가 · 마지막 확인: " + text;
+                return text;
+            }
+        }
+
         public string JobId { get; }
         public string RecipeVersion { get; }
         public AssemblyState State { get; }

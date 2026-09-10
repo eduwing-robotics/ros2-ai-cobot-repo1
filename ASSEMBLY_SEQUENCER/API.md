@@ -50,6 +50,7 @@ ROS 서비스 응답 한도는 5초입니다. 컨베이어 도착 대기는 35�
 | `command` | 필수 데이터 | 의미 |
 |---|---|---|
 | `status` | 없음 | 활성 작업 또는 최근 terminal snapshot 조회 |
+| `force_cancel` | `job_id` | 일치하는 활성 Job의 생산 기록 강제 취소. 설비 정지 확인 없이 수행 |
 | `start` | `job_id`, `recipe_version`, `scene_confirmation` | Real 전용: 등록된 Job의 실행 준비 검증과 실행 요청 |
 | `observations` | `job_id`, `recipe_version`, `observations` | 현재 Scene의 부품·슬롯 좌표 등록 |
 | `conveyor_arrived` | `job_id`, `unit_id`, `operation_id` | 조립 위치 도착 확인 후 workflow 재개 |
@@ -69,6 +70,8 @@ Mock에서는 `start`를 거절하고 기존 observations와 영속 Job 결합 �
 알 수 없는 필드와 누락된 필드는 `INVALID_REQUEST`입니다. `job_id`는 UUID 문자열이며 status를 제외한 모든 명령에서 현재 Job과 대조합니다.
 
 ### status
+
+활성 상태의 `message`에는 실행 중인 Backend의 실제 deadline을 기준으로 컨베이어 요청 응답·도착 및 로봇 조립 완료 대기의 남은 초가 포함됩니다. 이는 표시 정보이며 제어 판정에 사용하지 않습니다. 오류·취소·동작 종료 후에는 해당 카운트다운을 표시하지 않습니다. 통신이 끊긴 UI는 마지막 메시지를 최신 상태처럼 표시하면 안 됩니다.
 
 요청:
 
@@ -370,3 +373,5 @@ Real status는 `controls_available=true`와 `pause_reason`, `resume_reason`, `ca
 실행 대기가 불명확하게 종료돼도 같은 프로세스 안에서는 실행·제어 ID를 보존합니다. 기존 0.5초 주기 처리가 동일 서버·실행의 원격 결과를 재확인합니다. 같은 callback group에서 이전 주기 완료 전 중복 실행을 막으며 status 요청은 이 처리를 시작하거나 취소를 확정하지 않습니다. control_id가 일치하는 확정 거절만 대기를 해제하며 식별자 없는 거절은 임의 해제하지 않습니다. 공정 추적이 끝난 실행은 자동 재개하지 않고 지원되는 취소만 허용합니다. 실제 취소·정지·DB 반영 이후 연결을 해제합니다. 프로세스 재시작은 기존 Unit 복구 정책을 따르며 이 메모리 추적을 복원하지 않습니다.
 
 취소의 생산 종료 반영은 조립 전·로봇·품질 보류 경로 모두 같은 Sequencer 확정 경계를 사용합니다. DB 응답 유실 시 Job의 실제 CANCELLED·실행 Unit 없음 상태를 읽어 확인하며 다른 종료 상태를 쓰지 않습니다. Writer의 전체 DB 오류 상태는 임의로 해제하지 않습니다. 장비 취소와 DB commit은 하나의 트랜잭션이 아니므로 미확인 단계에서는 보류를 유지합니다. 원격 조회 응답은 적용 직전에 현재 실행·서버·제어 식별자와 event sequence를 잠금 안에서 다시 대조합니다.
+
+`status.force_cancel_available`은 강제 취소 지원과 활성 Job 존재 여부를 표시합니다. 설비 준비 판정과는 별개입니다. `force_cancel`은 Real의 활성 Job에만 적용하며 기존 설비 요청의 정지·복구 완료를 보장하지 않습니다. DB 취소가 확인되면 `FAILED` / `EXECUTION_FORCE_CANCELLED`를 반환하고 Job은 `CANCELLED`로 보존합니다. 지연된 설비 응답은 다음 공정이나 완료 기록으로 이어지지 않습니다. 기존 실행 요청을 추적하는 동안 새 Job 시작은 제한하며, 이후 시작도 기존 설비 준비 검증을 거칩니다. 같은 terminal Job의 재요청은 중복 기록하지 않습니다. DB 실패는 성공으로 반환하지 않습니다.

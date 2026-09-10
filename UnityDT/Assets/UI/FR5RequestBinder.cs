@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using MainUnity.Runtime.Robot.Interface;
+using MainUnity.Runtime.Robot.Assembly;
 using MainUnity.Runtime.Robot;
 using MainUnity.Runtime.Robot.Status;
 using UnityEngine;
@@ -113,8 +114,9 @@ namespace MainUnity.UI
         Button start, filterAll, filterQueue, filterAttention, filterDone;
         FR5PageRouter pageRouter;
         Label queryState, selectedStatus, selectedName, selectedId, selectedProgress, selectedAttempts, selectedResults, selectedReason;
-        Button refreshJobs, selectedStart, selectedCancel, selectedMonitor, selectedInspect;
+        Button refreshJobs, selectedStart, selectedCancel, selectedMonitor, selectedInspect, selectedForceCancel;
         string selectedJobId, lastJobsResponse;
+        readonly Dictionary<string, Label> jobStatusLabels = new Dictionary<string, Label>();
 
         Product[] products = Array.Empty<Product>();
         ProductDetail selectedProduct;
@@ -229,6 +231,8 @@ namespace MainUnity.UI
             }
         }
 
+        double nextStatusRefresh;
+
         void Update()
         {
             if (!cached)
@@ -237,6 +241,24 @@ namespace MainUnity.UI
                 if (!cached) return;
             }
             RefreshInterlocks();
+            if (Time.realtimeSinceStartupAsDouble >= nextStatusRefresh)
+            {
+                nextStatusRefresh = Time.realtimeSinceStartupAsDouble + 0.25d;
+                RefreshSelectedActions();
+                var frame = uiMaster?.AssemblyProgress?.Latest;
+                foreach (var job in jobs)
+                    if (jobStatusLabels.TryGetValue(job.job_id, out var label))
+                    {
+                        bool live = frame?.JobId == job.job_id && (job.job_status == "RUNNING" || job.job_status == "PAUSED");
+                        string text = live ? frame.DisplayStatus : StatusText(job.job_status);
+                        int separator = text.IndexOf('·');
+                        label.text = separator < 0 ? text : text.Substring(0, separator).Trim();
+                        label.tooltip = text;
+                        label.EnableInClassList("job-status--failed", live ? !string.IsNullOrEmpty(frame.ErrorCode) &&
+                            frame.ErrorCode != "QUALITY_HOLD" && frame.ErrorCode != "SCENE_CONFIRMATION_REQUIRED" &&
+                            frame.ErrorCode != "EXECUTION_CANCELLED" : job.job_status == "FAILED");
+                    }
+            }
         }
 
         void Build()
@@ -280,6 +302,11 @@ namespace MainUnity.UI
             refreshJobs = root.Q<Button>("job-refresh");
             selectedStart = root.Q<Button>("selected-job-start");
             selectedCancel = root.Q<Button>("selected-job-cancel");
+            selectedForceCancel = root.Q<Button>("selected-job-force-cancel");
+            if (selectedForceCancel != null) selectedForceCancel.clicked += () =>
+            {
+                if (selectedJobId != null) ForceCancelJob(selectedJobId);
+            };
             selectedMonitor = root.Q<Button>("selected-job-monitor");
             selectedInspect = root.Q<Button>("selected-job-inspect");
             foreach (Label label in new[] { jobError, selectedName, selectedId, selectedReason, productName, productMeta })
@@ -295,7 +322,9 @@ namespace MainUnity.UI
             if (selectedStart != null) selectedStart.clicked += () => { var job = SelectedJob(); if (job != null) StartJob(job); };
             if (selectedCancel != null) selectedCancel.clicked += () =>
             {
-                if (selectedJobId != null) StartCoroutine(CancelJob(selectedJobId));
+                if (selectedJobId == null) return;
+                if (SelectedJob()?.job_status == "PENDING") StartCoroutine(CancelJob(selectedJobId));
+                else CancelActiveJob(selectedJobId);
             };
             if (selectedMonitor != null) selectedMonitor.clicked += () => pageRouter?.OpenMonitor();
             if (selectedInspect != null) selectedInspect.clicked += () => pageRouter?.OpenInspect(selectedJobId);
@@ -399,6 +428,7 @@ namespace MainUnity.UI
             if (jobList == null) return;
             string focusedJobId = (jobList.panel?.focusController?.focusedElement as VisualElement)?.userData as string;
             jobList.Clear();
+            jobStatusLabels.Clear();
             if (!Array.Exists(jobs, job => job.job_id == selectedJobId && MatchesJob(job, selectedFilter)))
                 selectedJobId = null;
             int visible = 0;
@@ -436,6 +466,7 @@ namespace MainUnity.UI
             status.AddToClassList("job-status");
             status.AddToClassList("job-status--" + job.job_status.ToLowerInvariant());
             status.style.width = 110;
+            jobStatusLabels[job.job_id] = status;
             row.Add(status);
             var product = new VisualElement();
             product.AddToClassList("jobs-product-cell");
@@ -479,7 +510,24 @@ namespace MainUnity.UI
             bool pending = job?.job_status == "PENDING";
             string blocked = job == null ? "작업을 선택하세요." : StartBlockedReason(job);
             selectedStart?.SetEnabled(blocked == null);
-            selectedCancel?.SetEnabled(pending && string.IsNullOrEmpty(actionJobId) && string.IsNullOrEmpty(jobQueryError));
+            string forceReason = uiMaster?.Scenario?.GetControlBlockReason("force_cancel") ?? "실행 경로 없음";
+            selectedForceCancel?.SetEnabled(!cancelInFlight && string.IsNullOrEmpty(jobQueryError) &&
+                (job?.job_status == "RUNNING" || job?.job_status == "PAUSED") && string.IsNullOrEmpty(forceReason));
+            if (selectedForceCancel != null) selectedForceCancel.tooltip = string.IsNullOrEmpty(forceReason)
+                ? "생산 기록만 종료합니다. 설비 정지는 보장하지 않습니다." : forceReason;
+            var frame = uiMaster?.AssemblyProgress?.Latest;
+            bool matching = job != null && frame?.JobId == job.job_id;
+            string cancelReason = pending ? "" : !matching ? "선택한 작업의 실행 상태를 확인 중입니다." :
+                uiMaster?.Scenario?.GetControlBlockReason("cancel") ?? "실행 경로 없음";
+            selectedCancel?.SetEnabled(string.IsNullOrEmpty(cancelReason) && !cancelInFlight &&
+                (pending ? string.IsNullOrEmpty(actionJobId) : true) && string.IsNullOrEmpty(jobQueryError));
+            if (selectedCancel != null)
+            {
+                selectedCancel.text = cancelInFlight ? "취소 결과 확인 중…" : "작업 취소";
+                selectedCancel.tooltip = string.IsNullOrEmpty(cancelReason) ? "취소를 요청하고 실제 정지와 기록 반영을 확인합니다." : cancelReason;
+            }
+            if (selectedStatus != null && matching && (job.job_status == "RUNNING" || job.job_status == "PAUSED"))
+                selectedStatus.text = frame.DisplayStatus;
             selectedMonitor?.SetEnabled((job?.job_status == "RUNNING" || job?.job_status == "PAUSED") && pageRouter != null);
             selectedInspect?.SetEnabled(job != null && job.attempted_quantity > 0 && pageRouter != null);
             if (selectedStart != null) { selectedStart.text = job != null && actionJobId == job.job_id ? "요청 처리 중…" : "작업 실행"; selectedStart.tooltip = blocked ?? "선택한 대기 작업을 실행합니다."; }
@@ -487,7 +535,8 @@ namespace MainUnity.UI
             if (selectedReason != null) selectedReason.text = job == null ? "선택한 작업의 진행과 가능한 동작을 확인합니다."
                 : !string.IsNullOrEmpty(jobQueryError) ? "갱신 실패 · 마지막 조회 기록입니다. 새로고침 후 상태를 확인하세요."
                 : pending ? blocked ?? "실행 요청 가능 · 설비 준비 미확인"
-                : job.job_status == "RUNNING" ? "현재 실행 중입니다. 운전 현황에서 진행을 확인하세요."
+                : matching ? frame.DisplayStatus + (string.IsNullOrEmpty(cancelReason) ? " · 취소 가능" : " · 취소: " + cancelReason)
+                : job.job_status == "RUNNING" ? "실행 상태 확인 중 · DB에는 실행 중으로 기록되어 있습니다."
                 : "PASS만 목표 달성에 포함됩니다. 불합격과 실행 실패도 생산 시도 횟수에 포함됩니다.";
         }
 
@@ -508,6 +557,11 @@ namespace MainUnity.UI
             {
                 await uiMaster.Scenario.RunQueuedAsync(job.job_id, executionId => ConfirmSceneAsync(executionId, job.requested_by));
             }
+            catch (OperationCanceledException)
+            {
+                jobActionError = null;
+                RefreshJobError();
+            }
             catch (Exception exception)
             {
                 jobActionError = "작업 실행 실패 · " + ShortJobId(job.job_id) + " · " + exception.Message;
@@ -517,6 +571,55 @@ namespace MainUnity.UI
             finally
             {
                 actionJobId = null;
+                if (isActiveAndEnabled) StartCoroutine(LoadJobs());
+            }
+        }
+
+        bool cancelInFlight;
+
+        async void ForceCancelJob(string jobId)
+        {
+            if (cancelInFlight || uiMaster?.Scenario == null || SelectedJob()?.job_id != jobId) return;
+            cancelInFlight = true;
+            jobActionError = null;
+            RefreshJobError();
+            try
+            {
+                await uiMaster.Scenario.ForceCancelAsync(jobId);
+                uiMaster.RecordEvent("작업", "생산 기록 강제 취소 · 설비 정지 미확인 · " + ShortJobId(jobId), true);
+            }
+            catch (Exception error)
+            {
+                jobActionError = "강제 취소 미확정 · " + error.Message;
+                RefreshJobError();
+            }
+            finally
+            {
+                cancelInFlight = false;
+                if (isActiveAndEnabled) StartCoroutine(LoadJobs());
+            }
+        }
+
+        async void CancelActiveJob(string jobId)
+        {
+            if (cancelInFlight || uiMaster?.AssemblyProgress?.Latest?.JobId != jobId ||
+                uiMaster?.Scenario == null || !string.IsNullOrEmpty(uiMaster.Scenario.GetControlBlockReason("cancel"))) return;
+            cancelInFlight = true;
+            jobActionError = null;
+            RefreshJobError();
+            try
+            {
+                await uiMaster.Scenario.CancelAsync();
+                uiMaster.RecordEvent("작업", "작업 취소 완료 · " + ShortJobId(jobId), false);
+            }
+            catch (Exception error)
+            {
+                jobActionError = "취소 미확정 · " + ShortJobId(jobId) + " · " + error.Message;
+                RefreshJobError();
+            }
+            finally
+            {
+                cancelInFlight = false;
                 if (isActiveAndEnabled) StartCoroutine(LoadJobs());
             }
         }

@@ -107,6 +107,7 @@ namespace MainUnity.UI
             new CamTile { Index = 2, Title = "PCB",      Topic = "/vision/board/image/compressed" },
             new CamTile { Index = 3, Title = "컨베이어", Topic = "/vision/conveyor/stop_image/compressed", On = true },
             new CamTile { Index = 4, Title = "조립", Topic = "/vision/assembly/image/compressed", On = true },
+            new CamTile { Index = 5, Title = "CAMERA 3", Topic = "/camera3/image_raw/compressed" },
         };
 
         // 이 시간을 넘겨 프레임이 없으면 그 칸만 늦은 것으로 표시한다.
@@ -492,7 +493,7 @@ namespace MainUnity.UI
             camSplitButton = root.Q<Button>("cam-split");
             bool mock = uiMaster == null || uiMaster.IsSimulated;
             SetMockCameras(false, false);
-            if (mock ? selectedCamIndex < 1 || selectedCamIndex > 2 : selectedCamIndex < 3 || selectedCamIndex > 4)
+            if (mock ? selectedCamIndex < 1 || selectedCamIndex > 2 : selectedCamIndex < 3 || selectedCamIndex > camTiles.Length)
                 selectedCamIndex = mock ? 1 : 3;
             foreach (CamTile tile in camTiles)
             {
@@ -594,18 +595,11 @@ namespace MainUnity.UI
         {
             bool mock = uiMaster == null || uiMaster.IsSimulated;
             if (mock ? tile.Index > 2 : tile.Index <= 2) return;
-            if (camSplit)
-            {
-                selectedCamIndex = mock ? (tile.Index == 1 ? 2 : 1) : (tile.Index == 3 ? 4 : 3);
-                camSplit = false;
-            }
-            else if (tile.Index != selectedCamIndex)
-            {
-                camSplit = true;
-            }
+            selectedCamIndex = tile.Index;
+            camSplit = false;
         }
 
-        // 두 영상은 위아래로 배치해 기본 비교 영역에서도 가로 영상의 폭을 확보한다.
+        // 분할 영상은 위아래로 배치하고 표시 개수에 맞춰 높이를 나눈다.
         void RefreshCamera()
         {
             if (camGrid == null) return;
@@ -624,7 +618,7 @@ namespace MainUnity.UI
             int visible = 0;
             foreach (CamTile t in camTiles) if (t.On) visible++;
             float w = 100f;
-            float h = visible <= 1 ? 100f : 50f;
+            float h = 100f / Mathf.Max(1, visible);
 
             double now = Time.realtimeSinceStartupAsDouble;
             int live = 0;
@@ -1065,6 +1059,8 @@ namespace MainUnity.UI
                     detail = "로봇 오류 · 상단 알람 확인";
                 else if (statusManager != null && statusManager.State == RobotRunState.Disconnected)
                     detail = "로봇 상태 수신 중단 · 운전 상태 확인 필요";
+                if (frame != null)
+                    detail = frame.DisplayStatus + (!string.IsNullOrEmpty(frame.CurrentPhase) ? " · " + DescribeOperation(frame) : "");
                 operationDetail.text = detail;
                 operationDetail.tooltip = detail;
                 SetTone(operationDetail, frame?.State == AssemblyState.Failed ||

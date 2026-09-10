@@ -76,6 +76,12 @@ namespace MainUnity.Runtime.Scenario
             return robot.CancelAsync();
         }
 
+        public Task ForceCancelAsync(string jobId)
+        {
+            if (robot == null) throw new InvalidOperationException("Scenario is not connected.");
+            return robot.ForceCancelAsync(jobId);
+        }
+
         public Task ResumeAsync()
         {
             if (!IsRunning || robot == null)

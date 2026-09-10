@@ -67,6 +67,7 @@
                     <ui:VisualElement class="row jobs-actions">
                         <ui:Button name="selected-job-start" text="작업 실행" class="btn btn--accent" />
                         <ui:Button name="selected-job-cancel" text="대기 작업 취소" class="btn" />
+                        <ui:Button name="selected-job-force-cancel" text="강제 취소 · 기록 종료" tooltip="설비 상태 확인 없이 Job을 종료합니다. 설비 정지는 보장하지 않습니다." class="btn" />
                         <ui:VisualElement class="spacer" />
                         <ui:Button name="selected-job-monitor" text="운전 현황" class="btn" />
                         <ui:Button name="selected-job-inspect" text="검사 기록" class="btn" />

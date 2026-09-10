@@ -26,6 +26,7 @@ class RealBackend:
             raise RuntimeError("MODE_REJECTED stage=real_backend expected=real/domain5 result=blocked")
         self._node = node
         self._closed = False
+        self._display_wait = None
         self._inspection_future = None
         self._pending_calls = set()
         self._lock = threading.RLock()
@@ -197,11 +198,13 @@ class RealBackend:
         # Trigger success only accepts a move. Never retry a move with an unknown
         # response: Trigger has no caller-supplied idempotency key.
         try:
+            self._display_wait = ("컨베이어 이동 요청 응답 대기", time.monotonic() + api.SERVICE_TIMEOUT_SECONDS)
             accepted = await self._read_status(client)
             motion_id = accepted.get("motion_id")
             if not isinstance(motion_id, str) or not motion_id or motion_id == before.get("motion_id"):
                 raise RuntimeError("Conveyor acceptance has no new motion_id.")
             deadline = time.monotonic() + api.CONVEYOR_TIMEOUT_SECONDS
+            self._display_wait = ("컨베이어 도착 대기", deadline)
             while time.monotonic() < deadline:
                 with self._lock:
                     state = self._conveyor_state
@@ -225,6 +228,8 @@ class RealBackend:
             except Exception:
                 pass
             raise RuntimeError("SAFETY_STOP: " + str(error)) from error
+        finally:
+            self._display_wait = None
 
     async def confirm_conveyor_stopped(self):
         # Cancellation observes stop directly; motion readiness is not required.
@@ -490,6 +495,7 @@ class RealBackend:
             sent = True
             self._assembly_command.publish(String(data=encoded))
             deadline = time.monotonic() + api.ASSEMBLY_TIMEOUT_SECONDS
+            self._display_wait = ("로봇 조립 완료 대기", deadline)
             next_query = time.monotonic() + api.ASSEMBLY_POLL_SECONDS
             previous = None
             while time.monotonic() < deadline:
@@ -544,6 +550,7 @@ class RealBackend:
                     raise RuntimeError("SAFETY_STOP: " + str(error)) from error
             raise
         finally:
+            self._display_wait = None
             with self._lock:
                 response = self._execution_response
                 unresolved = sent and not (response and self._terminal(response) and

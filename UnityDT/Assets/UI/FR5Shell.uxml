@@ -79,6 +79,10 @@
           rgba(240,71,90,0.16) 을 패널색 위에 미리 합성한 것이다 — 보이는 색은 같고
           배경에만 의존하지 않는다.
         -->
+        <ui:VisualElement name="quality-banner" class="alarm-banner" style="position:absolute; left:100px; top:112px; right:12px; min-height:48px; display:none; flex-direction:row; align-items:center; padding:10px;">
+            <ui:Label name="quality-detail" class="wrap bad" style="flex-grow:1; flex-shrink:1; font-size:13px;" />
+            <ui:Button name="quality-inspect" text="불량 상세 보기" class="chip" style="margin-left:12px; flex-shrink:0;" />
+        </ui:VisualElement>
         <ui:VisualElement name="alarm-banner" class="alarm-banner" style="position:absolute; left:88px; top:64px; right:0; height:44px; display:none; border-top-width:2px; flex-direction:row; align-items:center; padding-left:24px; padding-right:24px;">
             <ui:VisualElement name="alarm-dot" class="dot dot--bad" />
             <ui:Label name="alarm-label" text="—" class="bad" style="margin-left:12px; font-size:14px; letter-spacing:1.2px;" />

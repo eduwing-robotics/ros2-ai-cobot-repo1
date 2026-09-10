@@ -184,10 +184,10 @@ namespace MainUnity.UI
         }
 
         /// <summary>JOBS 행에서 선택한 Job의 검사 이력을 연다.</summary>
-        internal void OpenInspect(string jobId)
+        internal void OpenInspect(string jobId, int unitId = 0)
         {
             if (string.IsNullOrEmpty(jobId) || IsAvailable(FR5Page.Inspect) == false) return;
-            inspectBinder?.ShowJob(jobId);
+            inspectBinder?.ShowJob(jobId, unitId);
             Go(FR5Page.Inspect);
         }
 

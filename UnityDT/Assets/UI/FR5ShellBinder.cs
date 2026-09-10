@@ -50,6 +50,24 @@ namespace MainUnity.UI
         bool cached;
         bool stopRequestInFlight;
         bool hasAuxPanels;
+        VisualElement qualityBanner;
+        Label qualityDetail;
+        Button qualityInspect;
+        FR5PageRouter pageRouter;
+        string qualityJobId;
+        int qualityUnitId;
+
+        [Serializable] sealed class QualitySnapshotEnvelope { public QualitySnapshot data; }
+        [Serializable] sealed class QualitySnapshot { public string job_id, state, error_code; public int unit_id; }
+        [Serializable] sealed class QualityUnitsEnvelope { public QualityUnit[] data; }
+        [Serializable] sealed class QualityUnit
+        {
+            public int unit_id;
+            public string inspection_result, inspected_at;
+            public QualityDefect[] defects;
+        }
+        [Serializable] sealed class QualityDefect { public string slot_code, defect_type, delivery_status; }
+
 
         // 페이지마다 셸 인스턴스가 하나씩이라 인스턴스 필드로 두면 화면을 옮길 때마다
         // 집중이 풀린다. 접어 둔 것은 접어 둔 채로 있어야 하므로 static 이다.
@@ -119,6 +137,11 @@ namespace MainUnity.UI
             alarmTime = root.Q<Label>("alarm-time");
             alarmCloseButton = root.Q<Button>("alarm-close");
             commandResult = root.Q<Label>("command-result");
+            qualityBanner = root.Q<VisualElement>("quality-banner");
+            qualityDetail = root.Q<Label>("quality-detail");
+            qualityInspect = root.Q<Button>("quality-inspect");
+            pageRouter = GetComponentInParent<FR5PageRouter>();
+            if (qualityDetail != null) qualityDetail.enableRichText = false;
             viewFocusButton = root.Q<Button>("view-focus");
             viewFocusRule = root.Q<VisualElement>("view-focus-rule");
             pageRoot = root.Q<VisualElement>(className: "page");
@@ -158,6 +181,7 @@ namespace MainUnity.UI
             if (cancelButton != null) cancelButton.clicked += CancelJob;
             if (viewFocusButton != null) viewFocusButton.clicked += ToggleFocus;
             if (alarmCloseButton != null) alarmCloseButton.clicked += DismissAlarm;
+            if (qualityInspect != null) qualityInspect.clicked += OpenQualityInspection;
         }
 
         void UnbindCommands()
@@ -168,6 +192,7 @@ namespace MainUnity.UI
             if (cancelButton != null) cancelButton.clicked -= CancelJob;
             if (viewFocusButton != null) viewFocusButton.clicked -= ToggleFocus;
             if (alarmCloseButton != null) alarmCloseButton.clicked -= DismissAlarm;
+            if (qualityInspect != null) qualityInspect.clicked -= OpenQualityInspection;
         }
 
         static void ToggleFocus() => focusMode = !focusMode;
@@ -409,10 +434,88 @@ namespace MainUnity.UI
                 sequencer.result == UnityWebRequest.Result.Success
                     ? "AssemblySequencer 응답 정상"
                     : "AssemblySequencer 응답 실패 · HTTP " + sequencer.responseCode);
+            if (qualityBanner != null)
+            {
+                if (sequencer.result == UnityWebRequest.Result.Success) yield return RefreshQuality(sequencer.downloadHandler.text);
+                else QualityUnavailable();
+            }
+        }
+
+        void OpenQualityInspection() => pageRouter?.OpenInspect(qualityJobId, qualityUnitId);
+
+        void QualityUnavailable()
+        {
+            if (qualityBanner == null || qualityDetail == null) return;
+            if (qualityUnitId > 0 && !qualityDetail.text.EndsWith(" · 상태 재확인 필요", StringComparison.Ordinal))
+                qualityDetail.text += " · 상태 재확인 필요";
+        }
+
+        IEnumerator RefreshQuality(string snapshotJson)
+        {
+            QualitySnapshot snapshot = null;
+            try { snapshot = JsonUtility.FromJson<QualitySnapshotEnvelope>(snapshotJson)?.data; }
+            catch (ArgumentException) { }
+            if (snapshot == null) { QualityUnavailable(); yield break; }
+            if (string.IsNullOrEmpty(snapshot.job_id))
+            {
+                qualityUnitId = 0;
+                qualityBanner.style.display = DisplayStyle.None;
+                yield break;
+            }
+            using var request = UnityWebRequest.Get(mainServerBaseUrl.TrimEnd('/') + "/api/v1/jobs/" + Uri.EscapeDataString(snapshot.job_id) + "/units");
+            request.SetRequestHeader("X-Runtime-Mode", uiMaster == null ? "" : uiMaster.OperatingMode.ToString().ToLowerInvariant());
+            request.timeout = 3;
+            yield return request.SendWebRequest();
+            if (request.result != UnityWebRequest.Result.Success) { QualityUnavailable(); yield break; }
+            QualityUnit[] units = null;
+            try { units = JsonUtility.FromJson<QualityUnitsEnvelope>(request.downloadHandler.text)?.data; }
+            catch (ArgumentException) { }
+            if (units == null || Array.Exists(units, unit => unit == null)) { QualityUnavailable(); yield break; }
+            ApplyQuality(snapshot, units);
+        }
+
+        void ApplyQuality(QualitySnapshot snapshot, QualityUnit[] units)
+        {
+            QualityUnit selected = null;
+            foreach (QualityUnit unit in units)
+                if (unit.inspection_result == "FAIL" && (selected == null || unit.unit_id > selected.unit_id)) selected = unit;
+            if (selected == null)
+            {
+                qualityUnitId = 0;
+                qualityBanner.style.display = DisplayStyle.None;
+                return;
+            }
+            qualityJobId = snapshot.job_id;
+            qualityUnitId = selected.unit_id;
+            string detail = "검사 불량 발생" + (snapshot.error_code == "QUALITY_HOLD" && snapshot.unit_id == selected.unit_id ? " · 생산 일시정지" : "");
+            detail += " · Job " + snapshot.job_id.Substring(0, Math.Min(8, snapshot.job_id.Length)) + " · Unit " + selected.unit_id;
+            int sent = 0, failed = 0, processing = 0, pending = 0, unknown = 0;
+            var defects = selected.defects ?? Array.Empty<QualityDefect>();
+            foreach (QualityDefect defect in defects)
+            {
+                if (defect == null) { unknown++; continue; }
+                switch (defect.delivery_status)
+                {
+                    case "SENT": sent++; break;
+                    case "FAILED": failed++; break;
+                    case "PROCESSING": processing++; break;
+                    case "PENDING": pending++; break;
+                    default: unknown++; break;
+                }
+            }
+            if (defects.Length > 0 && defects[0] != null)
+                detail += " · " + defects[0].slot_code + " / " + defects[0].defect_type + (defects.Length > 1 ? " 외 " + (defects.Length - 1) + "건" : "");
+            detail += "\n대책서: 완료 " + sent + " · 발송 중 " + processing + " · 대기 " + pending + " · 실패 " + failed;
+            if (unknown > 0 || defects.Length == 0) detail += " · 발송 상태 미확인";
+            qualityDetail.text = detail;
+            qualityDetail.tooltip = "Job " + qualityJobId + " · 검사 시각 " + selected.inspected_at;
+            qualityInspect?.SetEnabled(pageRouter != null);
+            qualityBanner.style.display = DisplayStyle.Flex;
         }
 
         void SetLinkState(VisualElement dot, Label label, bool? connected, string detail)
         {
+            if (connected == false) QualityUnavailable();
             dot?.EnableInClassList("dot--ok", connected == true);
             dot?.EnableInClassList("dot--bad", connected == false);
             if (dot != null) dot.tooltip = detail;

@@ -140,6 +140,16 @@ class MainServerApiTest(unittest.TestCase):
             self.assertEqual(status, 200)
             query.assert_called_once_with("PAUSED", 12)
 
+    def test_units_keep_delivery_status_on_the_matching_defect(self):
+        rows = [{"unit_id": 22, "inspection_result": "FAIL"}]
+        defects = [{"unit_id": 22, "unit_defect_id": 3, "slot_code": "VRM-01", "defect_type": "MISSING", "delivery_status": "SENT", "sent_at": "2026-09-10"}]
+        with patch.object(server.queries, "_one", return_value={}), \
+                patch.object(server.queries, "_all", side_effect=[rows, defects]), \
+                patch.object(server.queries, "_load_inspection", return_value=None):
+            result = server.queries.units("12345678-1234-5678-1234-567812345678")
+        self.assertEqual(result[0]["defects"][0]["delivery_status"], "SENT")
+        self.assertEqual(result[0]["defects"][0]["unit_defect_id"], 3)
+
     def test_documented_routes_are_registered_once(self):
         document = (Path(__file__).parent / "Main_serverAPI.md").read_text(encoding="utf-8")
         marker = chr(96)

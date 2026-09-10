@@ -324,7 +324,7 @@ def parse_command(raw, expected_recipe_version, runtime_mode="mock"):
         raise ValueError("cmd_str must be a JSON object")
 
     command_name = command.get("command")
-    allowed = ({"start", "pause", "resume", "cancel"} if runtime_mode == "real" else {
+    allowed = ({"start", "pause", "resume", "cancel", "force_cancel"} if runtime_mode == "real" else {
         "observations", "conveyor_arrived", "conveyor_failed",
         "transfer_assembled_pcb", "pause", "resume",
     })
@@ -339,7 +339,7 @@ def parse_command(raw, expected_recipe_version, runtime_mode="mock"):
         if not isinstance(command["recipe_version"], str) or not command["recipe_version"].strip():
             raise ValueError("recipe_version must be a nonblank string")
         command_type = command_name
-    elif command_name in {"pause", "resume", "cancel"}:
+    elif command_name in {"pause", "resume", "cancel", "force_cancel"}:
         if set(command) != {"command", "job_id"}:
             raise ValueError("command and job_id are required")
         command_type = command_name
