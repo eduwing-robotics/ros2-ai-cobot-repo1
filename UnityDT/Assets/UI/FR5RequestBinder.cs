@@ -5,6 +5,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
+using MainUnity.Runtime.Robot.Interface;
 using MainUnity.Runtime.Robot;
 using MainUnity.Runtime.Robot.Status;
 using UnityEngine;
@@ -140,7 +142,68 @@ namespace MainUnity.UI
             interlockSignature = null;
         }
 
-        void OnDisable() => StopAllCoroutines();
+        TaskCompletionSource<AssemblySceneConfirmation> sceneConfirmation;
+        VisualElement sceneDialog;
+
+        void OnDisable()
+        {
+            StopAllCoroutines();
+            sceneConfirmation?.TrySetCanceled();
+            sceneConfirmation = null;
+            sceneDialog?.RemoveFromHierarchy();
+            sceneDialog = null;
+        }
+
+        async Task<AssemblySceneConfirmation> ConfirmSceneAsync(string executionId)
+        {
+            if (!isActiveAndEnabled || sceneConfirmation != null)
+                throw new InvalidOperationException("현장 준비 확인 화면을 열 수 없습니다.");
+            var completion = new TaskCompletionSource<AssemblySceneConfirmation>();
+            sceneConfirmation = completion;
+            var overlay = new VisualElement();
+            sceneDialog = overlay;
+            overlay.style.position = Position.Absolute;
+            overlay.style.left = 0; overlay.style.right = 0;
+            overlay.style.top = 0; overlay.style.bottom = 0;
+            overlay.style.backgroundColor = new Color(0, 0, 0, 0.85f);
+            overlay.style.alignItems = Align.Center;
+            overlay.style.justifyContent = Justify.Center;
+            var panel = new VisualElement();
+            panel.style.width = 520;
+            panel.style.paddingLeft = 24; panel.style.paddingRight = 24;
+            panel.style.paddingTop = 24; panel.style.paddingBottom = 24;
+            panel.style.backgroundColor = new Color(0.10f, 0.13f, 0.17f);
+            panel.Add(new Label("실제 설비 실행 · 현장 준비 확인"));
+            panel.Add(new Label("이번 PCB 한 장의 준비 상태를 직접 확인하세요."));
+            var operatorId = new TextField("운영자 ID") { maxLength = 128 };
+            var gripper = new Toggle("그리퍼가 비어 있습니다");
+            var pcb = new Toggle("PCB의 조립 슬롯이 비어 있습니다");
+            var tray = new Toggle("트레이에 부품 25개가 준비되어 있습니다");
+            var fixture = new Toggle("고정 지그와 작업영역을 확인했습니다");
+            panel.Add(operatorId); panel.Add(gripper); panel.Add(pcb); panel.Add(tray); panel.Add(fixture);
+            var confirm = new Button(() => completion.TrySetResult(new AssemblySceneConfirmation
+            {
+                operator_id = operatorId.value.Trim(), execution_id = executionId,
+                confirmed_unix = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000d
+            })) { text = "확인하고 실행 요청" };
+            void Refresh() => confirm.SetEnabled(!string.IsNullOrWhiteSpace(operatorId.value) &&
+                gripper.value && pcb.value && tray.value && fixture.value);
+            operatorId.RegisterValueChangedCallback(_ => Refresh());
+            foreach (var toggle in new[] { gripper, pcb, tray, fixture })
+                toggle.RegisterValueChangedCallback(_ => Refresh());
+            Refresh();
+            panel.Add(confirm);
+            panel.Add(new Button(() => completion.TrySetCanceled()) { text = "취소" });
+            overlay.Add(panel);
+            GetComponent<UIDocument>().rootVisualElement.Add(overlay);
+            operatorId.Focus();
+            try { return await completion.Task; }
+            finally
+            {
+                overlay.RemoveFromHierarchy();
+                if (sceneConfirmation == completion) { sceneConfirmation = null; sceneDialog = null; }
+            }
+        }
 
         void Update()
         {
@@ -418,7 +481,7 @@ namespace MainUnity.UI
             BuildJobs();
             try
             {
-                await uiMaster.Scenario.RunQueuedAsync(job.job_id);
+                await uiMaster.Scenario.RunQueuedAsync(job.job_id, ConfirmSceneAsync);
             }
             catch (Exception exception)
             {

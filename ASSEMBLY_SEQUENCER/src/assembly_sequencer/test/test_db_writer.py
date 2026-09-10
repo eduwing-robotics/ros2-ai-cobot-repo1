@@ -825,15 +825,16 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
             load.assert_not_called()
             parameter.assert_not_called()
 
-    async def test_retired_motion_api_has_no_publishers_or_subscriptions(self):
+    async def test_real_api_does_not_publish_individual_motion(self):
         backend, node = self.backend()
         for method in ("prepare", "start", "move_joint", "pick", "place", "_execute",
                        "resolve_targets", "transfer_assembled_pcb", "set_paused", "accept_operation_feedback"):
             self.assertFalse(hasattr(backend, method), method)
         node.create_client.return_value.call_async.assert_not_called()
-        node.create_publisher.assert_not_called()
-        node.create_subscription.assert_not_called()
-        self.assertEqual(node.create_client.call_args.args[1], "/real/robot/status")
+        node.create_publisher.return_value.publish.assert_not_called()
+        self.assertEqual(node.create_publisher.call_args.args[1], "/real/assembly/command")
+        self.assertEqual({call.args[1] for call in node.create_subscription.call_args_list},
+                         {"/real/assembly/event", "/conveyor/state"})
 
     async def test_real_start_and_pending_poll_never_claim_without_cycle_contract(self):
         backend, node = self.backend()
@@ -859,6 +860,54 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(snapshot["robot_api_status"]["hardware_execution_enabled"])
         self.assertFalse(backend._pending_calls)
 
+    async def test_v2_capability_is_read_from_nested_contract(self):
+        backend, node = self.backend()
+        robot = dict(hardware_execution_enabled=True, state_fresh=True,
+                     robot_health_clear=True, recovery_required=False,
+                     active_operation=None, held_candidate=None)
+        assembly = dict(hardware_execution_enabled=True,
+                        supported_actions=["assembly.check", "assembly.stop"],
+                        production_contract=dict(schema="fr5.assembly_execution/v2",
+                            capabilities=dict(start=True), current_recipe_revision="deployed-r1",
+                            equipment_busy_or_unresolved=False))
+        backend._read_status = AsyncMock(side_effect=[robot, assembly])
+        backend._ready_conveyor = Mock()
+        backend._vision_url = "http://vision:8766"
+        snapshot = await backend.status()
+        self.assertTrue(snapshot["production_contract"]["capabilities"]["start"])
+        self.assertFalse(snapshot["equipment_ready"])
+        self.assertIn("completion", snapshot["message"])
+        node.create_publisher.return_value.publish.assert_not_called()
+
+    def test_scene_confirmation_requires_actual_fresh_confirmation(self):
+        from assembly_sequencer.recipe_contract import validate_scene_confirmation
+        confirmation = dict(operator_id="operator-1", execution_id=OPERATION_ID,
+                            confirmed_unix=1000.0,
+                            scope="empty_gripper_empty_pcb_full_tray_fixed_fixture")
+        with patch("assembly_sequencer.recipe_contract.time.time", return_value=1050.0):
+            validate_scene_confirmation(confirmation)
+            for changed in ({"confirmed_unix": 0}, {"confirmed_unix": 1051},
+                            {"confirmed_unix": float("nan")}, {"confirmed_unix": True},
+                            {"operator_id": " "}, {"execution_id": "not-a-uuid"}, {"scope": "true"}):
+                with self.subTest(changed=changed), self.assertRaises(ValueError):
+                    validate_scene_confirmation(confirmation | changed)
+            command = dict(command="start", job_id=JOB_ID, recipe_version="assembly-r1",
+                           scene_confirmation=confirmation)
+            self.assertEqual(parse_command(json.dumps(command), None, "real")[0], "start")
+            with self.assertRaises(ValueError):
+                parse_command(json.dumps(command), "assembly-r1", "mock")
+
+    def test_old_or_unrelated_execution_events_cannot_replace_terminal(self):
+        backend, node = self.backend()
+        backend._execution_id = OPERATION_ID
+        completed = dict(schema="fr5.assembly_execution/v2", execution_id=OPERATION_ID,
+                         event="EXECUTION_COMPLETED")
+        backend._receive_execution(SimpleNamespace(data=json.dumps(completed | {"execution_id": JOB_ID})))
+        self.assertIsNone(backend._execution_response)
+        backend._receive_execution(SimpleNamespace(data=json.dumps(completed)))
+        backend._receive_execution(SimpleNamespace(data=json.dumps(completed | {"event": "ROBOT_EVENT"})))
+        self.assertEqual(backend._execution_response, completed)
+
     def test_wrong_mode_is_rejected_before_any_ros_connections(self):
         for mode, domain in (("mock",42),("real",42),("mock",5),("real",43)):
             node = Mock(runtime_mode=mode)
@@ -874,7 +923,9 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
         tree = ast.parse(source)
         allowed_imports = {"hashlib", "http", "json", "math", "os", "threading", "time", "uuid",
                            "urllib", "rclpy", "std_msgs", "std_srvs", "recipe_contract", "copy", "unittest"}
-        endpoints = {"/real/robot/status"}
+        endpoints = {"/real/robot/status", "/real/assembly/status", "/real/assembly/command",
+                     "/real/assembly/event", "/conveyor/state", "/conveyor/move_to_assembly",
+                     "/conveyor/move_to_inspection", "/conveyor/stop"}
         for item in ast.walk(tree):
             if isinstance(item, ast.Import):
                 for alias in item.names:

@@ -8,7 +8,7 @@
 Mock 자동조립은 연결되어 있습니다. Real은 상태 조회와 시작 요청의 검증 경계가 연결되었지만,
 설비 실행 경계가 미완성이므로 `start`를 `NOT_READY`로 거절하며 Job claim·이동을 수행하지 않습니다.
 Real 상태의 `available`과 `equipment_ready`는 현재 `false`입니다. 이는 노드 통신 실패와 구분됩니다.
-개별 로봇 연결이나 진단 `check_completed`는 전체 조립 준비·완료가 아닙니다. 전체 조립 계약과 컨베이어·PCB 이송 연결이 없으면 Job claim 전에 `NOT_READY`로 거절합니다.
+개별 로봇 연결이나 진단 `check_completed`는 전체 조립 준비·완료가 아닙니다. 현재 컨베이어 이동·로봇 전체 Start와 완료·검사의 공정 연결이 미완료여서 Job claim 전에 `NOT_READY`로 거절합니다.
 
 내부 `/mock_db_mvp/internal/*` service와 topic은 Sequencer와 Mock runner 사이의 구현 세부사항이므로 public API에 포함하지 않습니다.
 
@@ -87,12 +87,22 @@ Mock에서는 `start`를 거절하고 기존 observations와 영속 Job 결합 �
 ```
 
 이 요청은 Job을 생성하지 않습니다. `recipe_version`은 비어 있지 않은 문자열이어야 하며
-로컬 YAML과 대조하지 않습니다. 현재는 전체 조립·컨베이어·PCB 이송 계약이 미연결이므로 `accepted=false`, `error_code=NOT_READY`를 반환합니다.
+로컬 YAML과 대조하지 않습니다. 현재는 컨베이어 이동·전체 조립·검사의 공정 연결이 미완료이므로 `accepted=false`, `error_code=NOT_READY`를 반환합니다.
 이 실패는 DB Job을 `FAILED`로 전이하지 않습니다.
-상태 조회에는 `runtime_mode=real`, `command_service_available`,
+상태 조회에는 `runtime_mode=real`, `command_service_available`, `production_contract`,
 `equipment_ready=false`가 포함됩니다. 로봇 상태 조회가 성공하면 원본 응답을
 `robot_api_status`에 넣으며 freshness는 그 안의 `state_fresh`로 확인합니다.
 개별 통신 정상도 셀 준비 완료를 뜻하지 않습니다.
+로봇 생산 Start 지원은 `/real/assembly/status`의 `production_contract.schema`가
+`fr5.assembly_execution/v2`이고 `production_contract.capabilities.start=true`인지로
+확인합니다. 최상위 진단 v1의 `supported_actions`와 구분합니다. 컨베이어 도착·전체 조립 완료·검사
+연결이 끝나지 않은 상태에서는 이 capability만으로 `equipment_ready`를 올리지 않습니다.
+
+`start`는 선택적으로 `scene_confirmation`을 받습니다. 필드는 `operator_id`(공백이 아닌
+최대 128자), `execution_id`(UUID), `confirmed_unix`(운영자의 실제 확인 Unix 초),
+`scope`(`empty_gripper_empty_pcb_full_tray_fixed_fixture`)입니다. 확인은 미래 시각이 아니며
+120초 이내여야 합니다. 확인이 있어도 현재 미연결 생산 실행은 `NOT_READY`로 거절합니다.
+
 
 ### observations
 

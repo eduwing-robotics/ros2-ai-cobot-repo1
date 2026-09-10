@@ -2,6 +2,7 @@
 
 import json
 import math
+import time
 import uuid
 from pathlib import Path
 
@@ -277,6 +278,27 @@ def resolve_observations(recipe, observations):
     return resolved
 
 
+def validate_scene_confirmation(confirmation):
+    if not isinstance(confirmation, dict) or set(confirmation) != {
+            "operator_id", "execution_id", "confirmed_unix", "scope"}:
+        raise ValueError("scene_confirmation requires operator_id, execution_id, confirmed_unix and scope")
+    operator = confirmation["operator_id"]
+    if not isinstance(operator, str) or not operator.strip() or len(operator) > 128:
+        raise ValueError("operator_id must be a nonblank string of at most 128 characters")
+    try:
+        uuid.UUID(confirmation["execution_id"])
+    except (ValueError, TypeError, AttributeError) as error:
+        raise ValueError("execution_id must be a UUID") from error
+    if confirmation["scope"] != "empty_gripper_empty_pcb_full_tray_fixed_fixture":
+        raise ValueError("scene_confirmation scope is invalid")
+    confirmed = _finite_number(confirmation["confirmed_unix"], "confirmed_unix")
+    # The provider binds confirmation to one execution and rejects confirmations
+    # older than 120 seconds. Recheck at dispatch after conveyor movement too.
+    age = time.time() - confirmed
+    if age < 0 or age > 120:
+        raise ValueError("scene_confirmation must be an actual confirmation within the last 120 seconds")
+
+
 def parse_command(raw, expected_recipe_version, runtime_mode="mock"):
     if runtime_mode not in {"mock", "real"}:
         raise ValueError("runtime_mode must be mock or real")
@@ -297,8 +319,11 @@ def parse_command(raw, expected_recipe_version, runtime_mode="mock"):
     if command_name not in allowed:
         raise ValueError(f"unsupported {runtime_mode} assembly command: {command_name}")
     if command_name == "start":
-        if set(command) != {"command", "job_id", "recipe_version"}:
-            raise ValueError("command, job_id and recipe_version are required")
+        if set(command) not in ({"command", "job_id", "recipe_version"},
+                                {"command", "job_id", "recipe_version", "scene_confirmation"}):
+            raise ValueError("start requires command, job_id, recipe_version and optional scene_confirmation")
+        if "scene_confirmation" in command:
+            validate_scene_confirmation(command["scene_confirmation"])
         if not isinstance(command["recipe_version"], str) or not command["recipe_version"].strip():
             raise ValueError("recipe_version must be a nonblank string")
         command_type = command_name

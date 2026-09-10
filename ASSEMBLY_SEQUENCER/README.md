@@ -17,8 +17,11 @@ Unity UI, HTTP 요청 수신, 좌표 변환, Raw ROS 메시지와 하드웨어 �
 
 Sequencer는 생산 공정을 조정하고 로봇 실행기는 조립 내부 순서를 소유합니다.
 Real은 YAML을 읽거나 개별 MoveJoint·Pick·Place를 실행하지 않습니다.
-전체 조립 계약과 컨베이어·PCB 이송 연결이 없으므로 시작 요청은 Job claim 전에
-`NOT_READY`로 거절합니다. Mock으로 자동 대체하지 않습니다.
+공정 책임은 **컨베이어 조립 위치 이동 → 로봇 전체 Start → 컨베이어 검사 위치 이동 → 검사**입니다.
+로봇의 준비 촬영·계획 생성·Pick/Place는 전체 Start 내부 책임이며, 외부 단계로 재실행하지 않습니다.
+검사 후 로봇 PCB 이송·배출은 이 공정의 필수 조건이 아닙니다.
+현재 Real 구현은 이 네 단계의 실행·완료 연결이 미완료여서 시작 요청을 Job claim 전에
+`NOT_READY`로 거절합니다. 이 설명은 실행 연결 완료를 뜻하지 않습니다.
 Mock은 기존 YAML 실행 경로를 사용하며, 통신·timeout·실제 완료 판정은 backend가 완결합니다.
 
 Job·Unit, 수량, 검사 FAIL, 재시작과 안전정지의 공통 의미는 [시스템 아키텍처](../docs/architecture/index.md)가 소유합니다.
@@ -33,7 +36,11 @@ Job·Unit, 수량, 검사 FAIL, 재시작과 안전정지의 공통 의미는 [�
 Mock YAML의 `before_all`·`per_step`·`after_all`은 필수 동작과 순서까지 검증합니다.
 컨베이어는 이동마다 Job·Unit·이동 UUID를 대조합니다.
 
-`real_backend.py`에는 `/real/robot/status` 조회와 Vision HTTP 검사 경계가 있습니다.
+`real_backend.py`는 `/real/robot/status`와 `/real/assembly/status`의 생산 v2 capability를
+조회하고 Vision HTTP 검사 경계를 소유합니다. 컨베이어 이동 요청·도착 대기와
+`/conveyor/state`·`/real/assembly/event` 수신 경계가 있지만 Sequencer의 전체 실행
+workflow에는 아직 연결되지 않았습니다. 전체 Start publisher는 생성되지만 요청 발행과
+전체 조립 완료 대기는 구현되지 않았습니다.
 로봇 개별 동작 publisher, 동작별 재전송, 취소형 Pause 연결과 로컬 파지 상태는 없습니다.
 생산 Pause/Resume은 미연결이며 취소를 상태 보존형 일시정지로 표현하지 않습니다.
 Unity의 실측·Ghost·부품 이벤트 수신과 수동 로봇 조작은 이 제거 범위에 포함되지 않습니다.
@@ -42,8 +49,8 @@ Unity의 실측·Ghost·부품 이벤트 수신과 수동 로봇 조작은 이 �
 
 Real runner와 Real backend는 로봇 SDK, 드라이버 서비스, 직접 IO, 장비 소켓 또는
 외부 프로세스를 통한 저수준 제어를 사용하지 않습니다. TCP·IK·그리퍼 세부 동작은
-로봇 PC가 소유합니다. Sequencer의 Real backend는 로봇 상태만 조회하며 동작을 발행하지 않습니다.
-컨베이어 실행 어댑터는 아직 연결되지 않았습니다.
+로봇 PC가 소유합니다. 현재 Sequencer의 Real backend는 로봇 상태를 조회하며 전체 Start를 발행하지 않습니다.
+컨베이어 실행 메서드는 존재하지만 Real 생산 workflow에서 호출되지 않습니다.
 API 부재·실패·timeout 시 직접 제어로 우회하지 않고 실행을 거절하거나 보류합니다.
 기존 Mock 내부 서비스는 이 Real 장비 제어 경로와 별개입니다.
 기존 테스트에서 Real backend의 import·ROS endpoint 허용 목록과 저수준 호출 부재를 검사합니다.

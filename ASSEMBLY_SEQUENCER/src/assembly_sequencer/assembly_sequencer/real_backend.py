@@ -17,6 +17,7 @@ class RealBackend:
     def __init__(self, node):
         from rclpy.callback_groups import ReentrantCallbackGroup
         from std_srvs.srv import Trigger
+        from std_msgs.msg import String
 
         if node.runtime_mode != "real" or node.context.get_domain_id() != 5:
             raise RuntimeError("MODE_REJECTED stage=real_backend expected=real/domain5 result=blocked")
@@ -24,6 +25,26 @@ class RealBackend:
         self._closed = False
         self._inspection_future = None
         self._pending_calls = set()
+        self._lock = threading.Lock()
+        self._conveyor_state = None
+        self._conveyor_received = 0.0
+        self._execution_id = None
+        self._execution_response = None
+        self._assembly_status_client = node.create_client(
+            Trigger, "/real/assembly/status", callback_group=ReentrantCallbackGroup())
+        self._assembly_command = node.create_publisher(String, "/real/assembly/command", 10)
+        self._assembly_subscription = node.create_subscription(
+            String, "/real/assembly/event", self._receive_execution, 100,
+            callback_group=ReentrantCallbackGroup())
+        self._conveyor_subscription = node.create_subscription(
+            String, "/conveyor/state", self._receive_conveyor, 10,
+            callback_group=ReentrantCallbackGroup())
+        self._conveyor_assembly = node.create_client(
+            Trigger, "/conveyor/move_to_assembly", callback_group=ReentrantCallbackGroup())
+        self._conveyor_inspection = node.create_client(
+            Trigger, "/conveyor/move_to_inspection", callback_group=ReentrantCallbackGroup())
+        self._conveyor_stop = node.create_client(
+            Trigger, "/conveyor/stop", callback_group=ReentrantCallbackGroup())
         self._vision_url = node.declare_parameter("vision_base_url", "").value
         self._status_client = node.create_client(
             Trigger, "/real/robot/status", callback_group=ReentrantCallbackGroup()
@@ -34,44 +55,165 @@ class RealBackend:
 
     @staticmethod
     def _connection_error():
-        return (
-            "NOT_READY: production assembly start/stop and correlated cycle results "
-            "are not connected; individual robot operations or diagnostic check_completed "
-            "cannot substitute for assembly completion; conveyor and PCB transfer are not connected"
-        )
+        return "Production readiness or a required equipment completion contract is unavailable."
 
     async def status(self):
         from .recipe_contract import unavailable_snapshot
 
-        snapshot = unavailable_snapshot(self._connection_error())
-        snapshot.update(runtime_mode="real", equipment_ready=False, error_code="NOT_READY",
+        snapshot = unavailable_snapshot("")
+        snapshot.update(runtime_mode="real", equipment_ready=False,
                         command_service_available=self.is_available())
-        if not self.is_available():
-            return snapshot
-        snapshot["robot_api_status"] = await self._read_robot_status()
+        robot = await self._read_status(self._status_client)
+        assembly = await self._read_status(self._assembly_status_client)
+        snapshot["robot_api_status"] = robot
+        snapshot["production_contract"] = assembly.get("production_contract")
+        try:
+            self._validate_readiness(robot, assembly)
+            snapshot.update(error_code="NOT_READY", message="Robot v2 Start is available; conveyor arrival, whole-assembly completion and inspection workflow are not yet connected.")
+        except RuntimeError as error:
+            snapshot.update(error_code="NOT_READY", message=str(error))
         return snapshot
 
-    async def _read_robot_status(self):
+    def _validate_readiness(self, robot, assembly):
+        production = assembly.get("production_contract", {})
+        if (production.get("schema") != "fr5.assembly_execution/v2" or
+                production.get("capabilities", {}).get("start") is not True):
+            raise RuntimeError("Robot production v2 Start is unavailable.")
+        if (assembly.get("hardware_execution_enabled") is not True or
+                robot.get("hardware_execution_enabled") is not True or
+                robot.get("state_fresh") is not True or robot.get("robot_health_clear") is not True or
+                robot.get("recovery_required") is not False or robot.get("active_operation") is not None or
+                robot.get("held_candidate") is not None or
+                production.get("equipment_busy_or_unresolved") is not False):
+            raise RuntimeError("Robot is busy, stale, holding a part, or requires recovery.")
+        if not isinstance(production.get("current_recipe_revision"), str) or not production["current_recipe_revision"]:
+            raise RuntimeError("Robot production recipe revision is missing.")
+        self._ready_conveyor()
+        if not self._vision_url:
+            raise RuntimeError("vision_base_url must identify the Real inspection service.")
+        return production["current_recipe_revision"]
+
+    async def prepare_execution(self, recipe_version):
+        if recipe_version != "assembly-r1":
+            raise RuntimeError("Production recipe has no deployed robot binding.")
+        robot = await self._read_status(self._status_client)
+        assembly = await self._read_status(self._assembly_status_client)
+        return self._validate_readiness(robot, assembly)
+
+    async def _read_status(self, client):
         from std_srvs.srv import Trigger
 
-        if not self.is_available():
-            raise RuntimeError("NOT_READY: robot status service unavailable")
-        future = self._status_client.call_async(Trigger.Request())
+        if self._closed or not client.wait_for_service(timeout_sec=0.0):
+            raise RuntimeError("Equipment status service unavailable.")
+        future = client.call_async(Trigger.Request())
         self._pending_calls.add(future)
         timer = self._node.create_timer(5.0, future.cancel)
         try:
             response = await future
             if future.cancelled():
-                raise TimeoutError("robot API status response timed out")
+                raise TimeoutError("Equipment service response timed out; execution is unconfirmed.")
             if not response.success:
-                raise RuntimeError(f"robot API status failed: {response.message}")
+                raise RuntimeError(f"Equipment request rejected: {response.message}")
             data = json.loads(response.message)
             if not isinstance(data, dict):
-                raise ValueError("robot API status must be a JSON object")
+                raise ValueError("Equipment response must be a JSON object.")
             return data
         finally:
             self._pending_calls.discard(future)
             self._node.destroy_timer(timer)
+
+    def _receive_conveyor(self, message):
+        try:
+            state = json.loads(message.data)
+            if not isinstance(state, dict) or state.get("schema_version") != 1:
+                return
+            with self._lock:
+                self._conveyor_state = state
+                self._conveyor_received = time.monotonic()
+        except (ValueError, TypeError):
+            return
+
+    def _ready_conveyor(self):
+        with self._lock:
+            state = self._conveyor_state
+            age = time.monotonic() - self._conveyor_received
+        if state is None or age > 1.0:
+            raise RuntimeError("Conveyor state heartbeat is unavailable or stale.")
+        if (state.get("state") not in {"IDLE", "ASSEMBLY_STOP", "INSPECTION_STOP"} or
+                state.get("moving") is not False or state.get("armed") is not True or
+                state.get("fr5_clear") is not True or state.get("fr5_clear_fresh") is not True or
+                state.get("vision_ready_fresh") is not True or state.get("vision_ready") is not True):
+            raise RuntimeError("Conveyor interlocks or stationary state are not ready.")
+        if not state.get("server_instance_id"):
+            raise RuntimeError("Conveyor server identity is missing.")
+        return state
+
+    async def _wait_tick(self):
+        from rclpy.task import Future
+
+        future = Future(executor=self._node.executor)
+        def wake():
+            if not future.done():
+                future.set_result(None)
+        timer = self._node.create_timer(0.1, wake)
+        try:
+            await future
+            if self._closed:
+                raise RuntimeError("SAFETY_STOP: backend closed; equipment state is unconfirmed.")
+        finally:
+            self._node.destroy_timer(timer)
+
+    async def move_conveyor(self, station):
+        if station not in {"ASSEMBLY", "INSPECTION"}:
+            raise ValueError("Unknown conveyor station.")
+        before = self._ready_conveyor()
+        client = self._conveyor_assembly if station == "ASSEMBLY" else self._conveyor_inspection
+        # Trigger success only accepts a move. Never retry a move with an unknown
+        # response: Trigger has no caller-supplied idempotency key.
+        try:
+            accepted = await self._read_status(client)
+            motion_id = accepted.get("motion_id")
+            if not isinstance(motion_id, str) or not motion_id or motion_id == before.get("motion_id"):
+                raise RuntimeError("Conveyor acceptance has no new motion_id.")
+            deadline = time.monotonic() + 35.0
+            while time.monotonic() < deadline:
+                with self._lock:
+                    state = self._conveyor_state
+                    age = time.monotonic() - self._conveyor_received
+                if age > 1.0 or state.get("server_instance_id") != before["server_instance_id"]:
+                    raise RuntimeError("Conveyor heartbeat lost or server restarted.")
+                if state.get("state") in {"FAULT", "MANUAL_STOP"}:
+                    raise RuntimeError("Conveyor stopped: " + str(state.get("reason", "")))
+                arrival = state.get("arrival") or {}
+                if (state.get("motion_id") == motion_id and arrival.get("motion_id") == motion_id and
+                        arrival.get("station") == station.lower() and state.get("state") == station + "_STOP" and
+                        state.get("moving") is False):
+                    return state
+                await self._wait_tick()
+            raise TimeoutError("Conveyor arrival timed out.")
+        except Exception as error:
+            # Best-effort HOLD uses the provider's existing safety endpoint. Its
+            # acceptance is not encoder-based physical stop verification.
+            try:
+                await self._read_status(self._conveyor_stop)
+            except Exception:
+                pass
+            raise RuntimeError("SAFETY_STOP: " + str(error)) from error
+
+    def _receive_execution(self, message):
+        try:
+            data = json.loads(message.data)
+            if not isinstance(data, dict) or data.get("schema") != "fr5.assembly_execution/v2":
+                return
+            with self._lock:
+                if self._execution_id is None or data.get("execution_id") != self._execution_id:
+                    return
+                # Completion/rejection cannot be overwritten by delayed progress.
+                if self._execution_response is None or self._execution_response.get("event") not in {
+                        "EXECUTION_COMPLETED", "EXECUTION_FAILED", "REQUEST_REJECTED"}:
+                    self._execution_response = data
+        except (ValueError, TypeError):
+            return
 
     async def inspect_unit(self, job_id, unit_id, slot_codes):
         from rclpy.task import Future
@@ -115,7 +257,12 @@ class RealBackend:
             future.cancel()
         if self._inspection_future is not None:
             self._inspection_future.cancel()
-        self._node.destroy_client(self._status_client)
+        for client in (self._status_client, self._assembly_status_client,
+                       self._conveyor_assembly, self._conveyor_inspection, self._conveyor_stop):
+            self._node.destroy_client(client)
+        self._node.destroy_subscription(self._assembly_subscription)
+        self._node.destroy_subscription(self._conveyor_subscription)
+        self._node.destroy_publisher(self._assembly_command)
 
 
 def inspect(inspection_id, job_id, unit_id, *, base_url, token=None,

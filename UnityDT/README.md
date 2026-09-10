@@ -90,3 +90,10 @@ Mock 피드백의 `unit_id`로 투입·완료를 연결합니다. Real의 `Begin
 - [HMI 설계 원칙](Docs/ui-design.md)
 - [전체 시스템 아키텍처](../docs/architecture/index.md)
 - [공개 API 목록](../docs/API.md)
+
+JOBS의 작업 실행은 공통 Scenario 계약으로 현장 확인 UI를 전달합니다. Real에서는 운영자 ID와
+그리퍼 비움·빈 PCB·트레이 25개·고정 지그 확인을 기본 미선택 상태로 받고, 해당 실행 UUID와
+실제 확인 시각을 `scene_confirmation`으로 보냅니다. 취소·화면 비활성화는 확인 성공이 아닙니다.
+Mock은 이 확인 UI를 호출하지 않습니다. 전송 결과가 불명확하면 기존 실행 식별자를 유지하며,
+명시적으로 거절되면 다음 시도에서 새 확인을 받습니다. 이것은 로봇 v2 전체 실행 연결 완료를
+뜻하지 않으며 현재 Sequencer의 `NOT_READY` 차단은 유지됩니다.

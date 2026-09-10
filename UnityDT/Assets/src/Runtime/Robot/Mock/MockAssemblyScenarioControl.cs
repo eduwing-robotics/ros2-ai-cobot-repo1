@@ -268,9 +268,9 @@ namespace MainUnity.Runtime.Robot.Mock
             RefreshReferences();
         }
 
-        public Task ExecuteAsync() => ExecuteCoreAsync(null);
+        public Task ExecuteAsync(Func<string, Task<AssemblySceneConfirmation>> confirmScene = null) => ExecuteCoreAsync(null);
 
-        public Task ExecuteQueuedAsync(string jobId)
+        public Task ExecuteQueuedAsync(string jobId, Func<string, Task<AssemblySceneConfirmation>> confirmScene = null)
         {
             if (!Guid.TryParse(jobId, out _))
                 return Task.FromException(new ArgumentException("Job ID must be a UUID.", nameof(jobId)));

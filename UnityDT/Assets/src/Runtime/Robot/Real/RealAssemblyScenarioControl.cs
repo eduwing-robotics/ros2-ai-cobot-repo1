@@ -33,6 +33,8 @@ namespace MainUnity.Runtime.Robot.Real
         bool feedbackSubscribed;
         bool executionPending;
         bool controlPending;
+        AssemblySceneConfirmation pendingConfirmation;
+        string confirmationJobId;
         bool refreshRequested;
         bool realStatusConfirmed;
         int generation;
@@ -45,6 +47,7 @@ namespace MainUnity.Runtime.Robot.Real
             public string command;
             public string job_id;
             public string recipe_version;
+            public AssemblySceneConfirmation scene_confirmation;
         }
 
         [Serializable]
@@ -155,16 +158,16 @@ namespace MainUnity.Runtime.Robot.Real
             itemManager.CompleteUnit(jobId, unitId);
         }
 
-        public Task ExecuteAsync() => ExecuteCoreAsync(null);
+        public Task ExecuteAsync(Func<string, Task<AssemblySceneConfirmation>> confirmScene = null) => ExecuteCoreAsync(null, confirmScene);
 
-        public Task ExecuteQueuedAsync(string jobId)
+        public Task ExecuteQueuedAsync(string jobId, Func<string, Task<AssemblySceneConfirmation>> confirmScene = null)
         {
             if (!Guid.TryParse(jobId, out Guid parsed))
                 return Task.FromException(new ArgumentException("Job ID must be a UUID.", nameof(jobId)));
-            return ExecuteCoreAsync(parsed.ToString());
+            return ExecuteCoreAsync(parsed.ToString(), confirmScene);
         }
 
-        async Task ExecuteCoreAsync(string queuedJobId)
+        async Task ExecuteCoreAsync(string queuedJobId, Func<string, Task<AssemblySceneConfirmation>> confirmationProvider)
         {
             RequireEnabled(generation);
             if (executionPending)
@@ -180,9 +183,29 @@ namespace MainUnity.Runtime.Robot.Real
                 if (itemManager == null)
                     throw new InvalidOperationException("Assign the shared ItemManager.");
                 itemManager.ValidateConfiguration();
+                var confirmScene = confirmationProvider ?? throw new InvalidOperationException("운영자의 현장 준비 확인이 필요합니다. JOBS 화면에서 실행하세요.");
+                string requestedJobId = queuedJobId ?? (pendingJobId ??= Guid.NewGuid().ToString());
+                if (pendingConfirmation != null && confirmationJobId != requestedJobId)
+                    throw new InvalidOperationException("이전 실행 요청 상태를 먼저 확인하세요. 다른 Job에 현장 확인을 재사용할 수 없습니다.");
+                if (pendingConfirmation == null)
+                {
+                    string executionId = Guid.NewGuid().ToString();
+                    pendingConfirmation = await confirmScene(executionId);
+                    confirmationJobId = requestedJobId;
+                    if (pendingConfirmation == null || pendingConfirmation.execution_id != executionId ||
+                        string.IsNullOrWhiteSpace(pendingConfirmation.operator_id) ||
+                        pendingConfirmation.scope != "empty_gripper_empty_pcb_full_tray_fixed_fixture")
+                        throw new InvalidOperationException("현장 준비 확인이 유효하지 않습니다.");
+                }
+                double age = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000d - pendingConfirmation.confirmed_unix;
+                if (double.IsNaN(age) || double.IsInfinity(age) || age < 0 || age > 120)
+                {
+                    pendingConfirmation = null;
+                    throw new InvalidOperationException("현장 준비 확인이 만료되었습니다. 다시 확인하세요.");
+                }
 
                 // Keep the same UUID after an uncertain HTTP/start response so a retry cannot add a second Job.
-                string jobId = queuedJobId ?? (pendingJobId ??= Guid.NewGuid().ToString());
+                string jobId = requestedJobId;
                 activeJobId = jobId;
                 if (queuedJobId == null)
                     await PostJobAsync(jobId, currentGeneration);
@@ -190,6 +213,7 @@ namespace MainUnity.Runtime.Robot.Real
                 if (jobId == pendingJobId)
                     pendingJobId = null;
                 await MonitorAsync(jobId, currentGeneration);
+                pendingConfirmation = null;
             }
             finally
             {
@@ -390,7 +414,7 @@ namespace MainUnity.Runtime.Robot.Real
             string json = command == "start"
                 ? JsonUtility.ToJson(new AssemblyRequest
                 {
-                    command = command, job_id = jobId, recipe_version = RecipeVersion
+                    command = command, job_id = jobId, recipe_version = RecipeVersion, scene_confirmation = pendingConfirmation
                 })
                 : JsonUtility.ToJson(new ControlRequest { command = command, job_id = jobId });
             string responseJson = await SendServiceAsync("real\n" + json, currentGeneration);
@@ -398,7 +422,13 @@ namespace MainUnity.Runtime.Robot.Real
             if (response == null || response.job_id != jobId)
                 throw new InvalidOperationException($"Real assembly {command} response job_id did not match.");
             if (!response.accepted)
+            {
+                // A definitive rejection permits a new operator confirmation;
+                // an uncertain transport result retains the original identity.
+                pendingConfirmation = null;
+                confirmationJobId = null;
                 throw Failure(response.error_code, response.message);
+            }
         }
 
         async Task<string> SendServiceAsync(string payload, int currentGeneration)
