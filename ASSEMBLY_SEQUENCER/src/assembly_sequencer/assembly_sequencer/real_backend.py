@@ -163,10 +163,19 @@ class RealBackend:
             age = time.monotonic() - self._conveyor_received
         if state is None or age > api.CONVEYOR_FRESHNESS_SECONDS:
             raise RuntimeError("Conveyor state heartbeat is unavailable or stale.")
-        if (state.get("state") not in {"IDLE", "ASSEMBLY_STOP", "INSPECTION_STOP"} or
-                state.get("moving") is not False or state.get("armed") is not True or
-                state.get("vision_ready_fresh") is not True or state.get("vision_ready") is not True):
-            raise RuntimeError("Conveyor interlocks or stationary state are not ready.")
+        phase = state.get("state")
+        if phase == "MANUAL_STOP":
+            raise RuntimeError("컨베이어 정지 상태 · 컨베이어 서버에서 정지 해제(reset) 후 다시 시도하세요. 사유: " + str(state.get("reason", "")))
+        if phase == "FAULT":
+            raise RuntimeError("컨베이어 오류 · 원인 확인 후 정지 해제(reset)가 필요합니다. 사유: " + str(state.get("reason", "")))
+        if phase not in {"IDLE", "ASSEMBLY_STOP", "INSPECTION_STOP"} or state.get("moving") is not False:
+            raise RuntimeError("컨베이어 이동 중 또는 상태 미확인 · 정지 상태를 기다리세요.")
+        if state.get("armed") is not True:
+            raise RuntimeError("컨베이어 제어가 비활성화되어 있습니다 (armed=false).")
+        if state.get("vision_ready_fresh") is not True:
+            raise RuntimeError("S22 비전 준비 신호 수신이 지연되거나 끊겼습니다.")
+        if state.get("vision_ready") is not True:
+            raise RuntimeError("S22 비전이 준비되지 않았습니다 (vision_ready=false).")
         required = state.get("fr5_interlock_required")
         if type(required) is not bool or (required and
                 (state.get("fr5_clear") is not True or state.get("fr5_clear_fresh") is not True)):

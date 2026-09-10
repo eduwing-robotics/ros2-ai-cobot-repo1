@@ -370,7 +370,16 @@ namespace MainUnity.Runtime.Robot.Real
                         AssemblySnapshot snapshot = await ReadStatusAsync(currentGeneration);
                         activeJobId = snapshot.job_id;
                         if (snapshot.available && snapshot.state != "IDLE") ApplySnapshot(snapshot);
-                        else { latest = snapshot; controlsReceivedAt = Time.realtimeSinceStartupAsDouble; }
+                        else
+                        {
+                            latest = snapshot;
+                            controlsReceivedAt = Time.realtimeSinceStartupAsDouble;
+                            if (!snapshot.active && snapshot.state == "IDLE")
+                                progress?.Apply(new AssemblyProgressFrame("", RecipeVersion, AssemblyState.Idle,
+                                    0, 0, 0, "", "", snapshot.error_code,
+                                    string.IsNullOrEmpty(snapshot.message) ? "작업 요청 대기" : snapshot.message,
+                                    controlsReceivedAt));
+                        }
                     }
                     catch (Exception)
                     {

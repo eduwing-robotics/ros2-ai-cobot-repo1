@@ -599,7 +599,7 @@ namespace MainUnity.UI
             camSplit = false;
         }
 
-        // 분할 영상은 위아래로 배치하고 표시 개수에 맞춰 높이를 나눈다.
+        // 분할은 두 열을 사용한다. 세 영상은 2×2 격자의 세 칸을 차지한다.
         void RefreshCamera()
         {
             if (camGrid == null) return;
@@ -617,8 +617,10 @@ namespace MainUnity.UI
 
             int visible = 0;
             foreach (CamTile t in camTiles) if (t.On) visible++;
-            float w = 100f;
-            float h = 100f / Mathf.Max(1, visible);
+            int columns = visible <= 1 ? 1 : 2;
+            int rows = Mathf.Max(1, (visible + columns - 1) / columns);
+            float w = 100f / columns;
+            float h = 100f / rows;
 
             double now = Time.realtimeSinceStartupAsDouble;
             int live = 0;

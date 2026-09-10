@@ -1336,6 +1336,26 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
         backend._conveyor_state.update(fr5_interlock_required=True, fr5_clear=True, fr5_clear_fresh=True)
         backend._ready_conveyor()
 
+    def test_conveyor_readiness_reports_specific_stop_and_vision_reasons(self):
+        import time
+        backend, _ = self.backend()
+        ready = dict(state="IDLE", moving=False, armed=True, vision_ready=True,
+                     vision_ready_fresh=True, fr5_interlock_required=False, server_instance_id="server-a")
+        for change, message in ((dict(state="MANUAL_STOP", reason="remote stop"), "정지 해제"),
+                                (dict(state="FAULT", reason="heartbeat missing"), "heartbeat missing"),
+                                (dict(state="MOVING_TO_ASSEMBLY", moving=True), "이동 중"),
+                                (dict(armed=False), "armed=false"),
+                                (dict(vision_ready_fresh=False), "신호 수신"),
+                                (dict(vision_ready=False), "vision_ready=false")):
+            with self.subTest(change=change):
+                backend._conveyor_state = ready | change
+                backend._conveyor_received = time.monotonic()
+                with self.assertRaisesRegex(RuntimeError, message):
+                    backend._ready_conveyor()
+        backend._conveyor_state = ready
+        backend._conveyor_received = time.monotonic()
+        self.assertEqual(backend._ready_conveyor(), ready)
+
     async def test_whole_start_persists_request_and_waits_for_matching_completion(self):
         import tempfile
         import time

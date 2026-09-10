@@ -70,7 +70,7 @@ namespace MainUnity.Runtime.Robot.Assembly
                     double remaining = RequestDeadline - Time.realtimeSinceStartupAsDouble;
                     return PendingRequest + (remaining > 0 ? $" · 응답 제한까지 {System.Math.Ceiling(remaining):0}초" : " · 응답 시간 초과 · 실행 결과 확인 필요");
                 }
-                string label = ErrorCode == "EXECUTION_FORCE_CANCELLED" ? "기록 강제 취소 · 설비 정지 미확인" : ErrorCode == "EXECUTION_CANCELLED" ? (CancellationConfirmed ? "취소 완료" : "취소 기록 확인 중") :
+                string label = State == AssemblyState.Idle ? (string.IsNullOrEmpty(ErrorCode) ? "실행 대기" : "실행 준비 필요") : ErrorCode == "EXECUTION_FORCE_CANCELLED" ? "기록 강제 취소 · 설비 정지 미확인" : ErrorCode == "EXECUTION_CANCELLED" ? (CancellationConfirmed ? "취소 완료" : "취소 기록 확인 중") :
                     !string.IsNullOrEmpty(ErrorCode) && ErrorCode != "QUALITY_HOLD" && ErrorCode != "SCENE_CONFIRMATION_REQUIRED"
                         ? "오류로 중단" : State == AssemblyState.Paused ? "확인 대기 / 일시정지" :
                     State == AssemblyState.Failed ? "실행 실패" : State == AssemblyState.Completed ? "완료" : "진행 중";

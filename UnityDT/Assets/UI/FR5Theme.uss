@@ -1144,8 +1144,9 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
 .run-twin-source { position: absolute; left: 14px; top: 60px; font-size: 12px; }
 .run-twin-help { position: absolute; left: 14px; bottom: 12px; font-size: 12px; }
 .page--run.page--focus .run-pane--twin { width: auto; right: 0; height: auto; bottom: 64px; }
+/* 하단 run-deck의 342px 영역을 비워 카메라 조작 바가 가려지지 않게 한다. */
 .page--run .run-pane--cam.run-cam-panel--expanded {
-    left: 88px; right: 0; width: auto; top: 112px; height: 698px; bottom: auto;
+    left: 88px; right: 0; width: auto; top: 112px; height: auto; bottom: 342px;
 }
 
 .run-alarm-space { position: absolute; left: 88px; right: 0; top: 64px; height: 48px; background-color: rgb(28, 42, 52); }
