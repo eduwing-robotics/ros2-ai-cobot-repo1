@@ -71,6 +71,8 @@ namespace MainUnity.UI
         readonly List<SlotGroup> slotGroups = new();
         int planTotal;
         bool warnedStepCount;
+        AssemblyProgressManager observedProgress;
+        bool progressDirty = true;
         VisualElement gripperChip, gripperFill, watchdogDot, realStatus, poseBlock, safetyBlock;
 
         // 4Hz × 120표본으로 30초 추세를 표시한다. 매 프레임 수집하지 않는다.
@@ -133,6 +135,7 @@ namespace MainUnity.UI
         {
             cached = false;
             slotGroups.Clear();
+            progressDirty = true;
         }
 
         void Update()
@@ -142,6 +145,22 @@ namespace MainUnity.UI
 
             // UIDocument 는 활성화된 뒤에야 rootVisualElement 를 만든다.
             if (!cached) { Build(); if (!cached) return; }
+
+            var progress = uiMaster != null ? uiMaster.AssemblyProgress : null;
+            if (observedProgress != progress)
+            {
+                if (observedProgress != null) observedProgress.ProgressChanged -= OnProgressChanged;
+                observedProgress = progress;
+                if (observedProgress != null) observedProgress.ProgressChanged += OnProgressChanged;
+                progressDirty = true;
+            }
+            // Apply/Clear 알림은 갱신을 예약하고 UI는 Unity 프레임에서 최신 상태를 표시한다.
+            // 최초 연결과 페이지 재진입도 이미 수신한 Latest를 표시해야 한다.
+            if (progressDirty)
+            {
+                progressDirty = false;
+                RefreshAssembly();
+            }
 
             RefreshJoints();
             RefreshPose();
@@ -160,7 +179,8 @@ namespace MainUnity.UI
                 string viewHint = observed ? "현재 기판 위치" : hasBoardView ? "기판 투입 기준 위치 · 기판 미표시" : "기판 위치 설정을 확인하세요";
                 if (twinBoardButton != null) twinBoardButton.tooltip = viewHint;
                 if (twinAssemblyButton != null) twinAssemblyButton.tooltip = viewHint;
-                RefreshAssembly();
+                if (slotGroups.Count == 0 && EnsureSlotGroups()) RefreshAssembly();
+                RefreshOperationStatus(observedProgress != null ? observedProgress.Latest : null);
                 RefreshCalibration();
                 RefreshEvents();
             }
@@ -552,8 +572,15 @@ namespace MainUnity.UI
             if (camSplitButton != null) camSplitButton.clicked -= ToggleCamSplit;
         }
 
+        void OnProgressChanged(AssemblyProgressFrame frame)
+        {
+            progressDirty = true;
+        }
+
         void OnDisable()
         {
+            if (observedProgress != null) observedProgress.ProgressChanged -= OnProgressChanged;
+            observedProgress = null;
             UnbindTwin();
             UnbindCamera();
             SetMockCameras(false, false);
@@ -984,7 +1011,7 @@ namespace MainUnity.UI
         {
             if (unitPhase != null)
             {
-                unitPhase.text = "조립 수신 · " + (frame == null ? "피드백 없음" : frame.State switch
+                unitPhase.text = "현재 공정 · " + (frame == null ? "피드백 없음" : frame.State switch
                 {
                     AssemblyState.Idle => "대기",
                     AssemblyState.Started => "시작",
@@ -1002,9 +1029,25 @@ namespace MainUnity.UI
             }
 
             RefreshNow(frame);
+            RefreshOperationStatus(frame);
+
+            if (unitStep == null) return;
+            if (frame == null)
+            {
+                unitStep.text = $"계획 슬롯 {planTotal}개 · 진행 미확인";
+                return;
+            }
+
+            unitStep.text = frame.ExpectedStepCount > 0
+                ? $"장착 완료 {frame.PlacedCount} / {frame.ExpectedStepCount}"
+                : "조립 단계 수 미확인";
+        }
+
+        void RefreshOperationStatus(AssemblyProgressFrame frame)
+        {
             if (operationDetail != null)
             {
-                string detail = frame == null ? "조립 진행 피드백 대기" : frame.State switch
+                string detail = frame == null ? "생산 공정 피드백 대기" : frame.State switch
                 {
                     AssemblyState.Idle => "실행 요청 대기",
                     AssemblyState.Completed => "목표 PASS 달성 여부는 작업 화면에서 확인",
@@ -1022,19 +1065,9 @@ namespace MainUnity.UI
                     statusManager?.State == RobotRunState.Error ? "bad" : "none");
             }
             if (operationAge != null)
-                operationAge.text = frame == null ? "조립 수신 기록 없음" :
-                    "조립 수신 " + Age(frame.ReceiveTimeSeconds);
+                operationAge.text = frame == null ? "공정 수신 기록 없음" :
+                    "공정 수신 " + Age(frame.ReceiveTimeSeconds);
 
-            if (unitStep == null) return;
-            if (frame == null)
-            {
-                unitStep.text = $"계획 슬롯 {planTotal}개 · 진행 미확인";
-                return;
-            }
-
-            unitStep.text = frame.ExpectedStepCount > 0
-                ? $"마지막 수신 단계 {frame.StepOrder} / {frame.ExpectedStepCount}"
-                : "조립 단계 수 미확인";
         }
 
         /// <summary>

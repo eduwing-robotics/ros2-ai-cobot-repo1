@@ -28,6 +28,8 @@ from .recipe_contract import (
     parse_feedback,
     self_check,
     unavailable_snapshot,
+    validate_scene_confirmation,
+    PRODUCTION_SLOTS, PRODUCTION_RECIPE_VERSION,
 )
 
 
@@ -47,7 +49,7 @@ class AssemblySequencer(Node):
         if expected_domain is None or self.context.get_domain_id() != expected_domain:
             raise RuntimeError("MODE_REJECTED stage=startup: runtime mode and ROS domain disagree")
         self.recipe = None
-        self.recipe_version = None
+        self.recipe_version = PRODUCTION_RECIPE_VERSION if self.runtime_mode == "real" else None
         self.recipe_slots = []
         if self.runtime_mode == "mock":
             recipe_path = self.declare_parameter("recipe", "").value
@@ -218,8 +220,8 @@ class AssemblySequencer(Node):
             return self.set_response(response, True, job_id)
 
         job_id = command["job_id"]
-        if command_type == "start":
-            return self.set_response(response, False, job_id, "NOT_READY", RealBackend._connection_error())
+        if command_type == "start" and self.runtime_mode == "real":
+            return await self.start_real_job(command, response)
         try:
             job = self.db_writer.get_job(job_id)
         except Exception as error:
@@ -233,6 +235,111 @@ class AssemblySequencer(Node):
         if self.active is None or self.active["job_id"] != job_id:
             self.pending_requests[job_id] = command
         return self.set_response(response, True, job_id)
+
+    async def start_real_job(self, command, response):
+        job_id = command["job_id"]
+        try:
+            validate_scene_confirmation(command.get("scene_confirmation"))
+            if command["recipe_version"] != PRODUCTION_RECIPE_VERSION:
+                raise ValueError("No production recipe binding for this request.")
+        except ValueError as error:
+            return self.set_response(response, False, job_id, "NOT_READY", str(error))
+        previous = self.active
+        confirmation = command["scene_confirmation"]
+        execution_id = str(uuid.UUID(confirmation["execution_id"]))
+        if previous is not None:
+            if previous["job_id"] != job_id:
+                return self.set_response(response, False, job_id, "BUSY", "Another Job is active.")
+            if not previous.get("awaiting_next_unit"):
+                if previous.get("execution_id") == execution_id:
+                    return self.set_response(response, True, job_id)
+                return self.set_response(response, False, job_id, "BUSY", "Current Unit must finish or recover before a new execution.")
+            if previous.get("execution_id") == execution_id:
+                return self.set_response(response, False, job_id, "NOT_READY", "The next Unit needs a new execution and scene confirmation.")
+        try:
+            revision = await self.backend.prepare_execution(command["recipe_version"])
+        except Exception as error:
+            return self.set_response(response, False, job_id, "NOT_READY", str(error))
+        try:
+            job = self.db_writer.get_job(job_id)
+            if job["job_status"] not in {"PENDING", "RUNNING"}:
+                return self.set_response(response, False, job_id, "NOT_ACTIVE", "Job is already finalized.")
+            slots = self.db_writer.get_product_slots(job_id)
+            if len(slots) != len(PRODUCTION_SLOTS) or {(s["slot_code"], s["part_id"]) for s in slots} != set(PRODUCTION_SLOTS):
+                raise ValueError("Product slots do not match the production recipe binding.")
+            validate_scene_confirmation(confirmation)
+            work = self.db_writer.claim(job_id, PRODUCT_CODE, PRODUCT_VERSION, PRODUCTION_RECIPE_VERSION)
+        except Exception as error:
+            return self.set_response(response, False, job_id, "DB_ERROR", str(error))
+        self.active = dict(job_id=job_id, unit_id=work["unit_id"], recipe_version=PRODUCTION_RECIPE_VERSION,
+            execution_id=execution_id, robot_recipe_revision=revision, scene_confirmation=dict(confirmation),
+            state="STARTED", placed_count=0, placed_slot_codes=[], expected_step_count=len(PRODUCTION_SLOTS),
+            slot_codes=[s for s, _ in PRODUCTION_SLOTS], held_step_order=0, held_part_id="", held_slot_code="",
+            backend_started=False, inspection_result="", error_code="", message="")
+        self.terminal_snapshot = None
+        self.executor.create_task(self.run_real_workflow(self.active))
+        return self.set_response(response, True, job_id)
+
+    def real_progress(self, active, data):
+        if self.active is not active:
+            return
+        for key, expected in (("execution_id", active["execution_id"]), ("production_job_id", active["job_id"]),
+                              ("unit_id", active["unit_id"])):
+            if data.get(key) != expected:
+                raise ValueError("Robot progress identity mismatch: " + key)
+        completed = data.get("completed_slots", [])
+        if (not isinstance(completed, list) or any(not isinstance(s, str) for s in completed) or
+                len(set(completed)) != len(completed) or not set(completed).issubset(active["slot_codes"])):
+            raise ValueError("Robot progress contains invalid completed slots.")
+        if not set(active["placed_slot_codes"]).issubset(completed):
+            return
+        changed = completed != active["placed_slot_codes"]
+        active["placed_slot_codes"] = list(completed)
+        active["placed_count"] = len(completed)
+        active["state"] = "PLACED" if completed else "STARTED"
+        active["message"] = str(data.get("current_stage") or "Robot assembly running")
+        if changed and completed:
+            self.publish(dict(job_id=active["job_id"], state=active["state"], step_order=len(completed),
+                part_id=completed[-1].split("-")[0], slot_code=completed[-1], error_code="",
+                message=active["message"], db_sync_state=self.db_writer.sync_state))
+
+    async def run_real_workflow(self, active):
+        stage = "CONVEYOR_FAILED"
+        try:
+            active.update(state="CONVEYOR_MOVING", conveyor_operation_id=str(uuid.uuid4()), message="조립 위치 이동 중")
+            self.publish(dict(job_id=active["job_id"], state=active["state"], step_order=0,
+                part_id="", slot_code="", error_code="", message=active["message"], db_sync_state=self.db_writer.sync_state))
+            await self.backend.move_conveyor("ASSEMBLY")
+            stage = "ASSEMBLY_FAILED"
+            active.update(state="STARTED", backend_started=True, message="전체 조립 실행 중")
+            await self.backend.execute_assembly(active["job_id"], active["unit_id"], active["recipe_version"],
+                active["robot_recipe_revision"], active["scene_confirmation"], active["slot_codes"],
+                lambda data: self.real_progress(active, data))
+            stage = "DB_ERROR"
+            self.db_writer.assembly_completed(active["unit_id"])
+            self.db_writer.flush(DB_SYNC_TIMEOUT_SECONDS)
+            stage = "CONVEYOR_FAILED"
+            active.update(state="ASSEMBLY_COMPLETED", conveyor_operation_id=str(uuid.uuid4()), message="검사 위치 이동 중")
+            self.publish(dict(job_id=active["job_id"], state=active["state"], step_order=0,
+                part_id="", slot_code="", error_code="", message=active["message"], db_sync_state=self.db_writer.sync_state))
+            await self.backend.move_conveyor("INSPECTION")
+            stage = "INSPECTION_FAILED"
+            active["message"] = "검사 진행 중"
+            inspection = await self.backend.inspect_unit(active["job_id"], active["unit_id"], active["slot_codes"])
+            stage = "DB_ERROR"
+            self.db_writer.inspection_recorded(active["unit_id"], **inspection)
+            self.db_writer.flush(DB_SYNC_TIMEOUT_SECONDS)
+            active["inspection_result"] = inspection["result"]
+            if inspection["result"] == "UNKNOWN":
+                active.update(state="PAUSED", inspection_hold=True, error_code="INSPECTION_UNKNOWN",
+                              message="검사 완료 · 판정 보류. 결과 자료를 확인하세요.")
+                self.publish(failed_feedback(active["job_id"], active["error_code"], active["message"],
+                                             self.db_writer.sync_state) | {"state": "PAUSED"})
+                return
+            self.finish_active_unit(active)
+        except Exception as error:
+            if self.active is active:
+                self.fail_active(getattr(error, "error_code", stage), error)
 
     async def conveyor_arrived(self, command, response):
         active = self.active
@@ -320,7 +427,7 @@ class AssemblySequencer(Node):
     async def start_job(self, command, response):
         job_id = command["job_id"]
         if self.runtime_mode == "real":
-            return self.set_response(response, False, job_id, "NOT_READY", RealBackend._connection_error())
+            return await self.start_real_job(command, response)
         if self.active is not None:
             if self.active["job_id"] == job_id:
                 return self.set_response(response, True, job_id)
@@ -555,6 +662,13 @@ class AssemblySequencer(Node):
         self.db_writer.flush(DB_SYNC_TIMEOUT_SECONDS)
         state = self.db_writer.get_job(active["job_id"])
         if state["completed_quantity"] < state["requested_quantity"]:
+            if self.runtime_mode == "real":
+                # A replacement PCB needs a new confirmation; do not reuse the previous Unit's.
+                active.update(state="PAUSED", awaiting_next_unit=True, error_code="SCENE_CONFIRMATION_REQUIRED",
+                              message="다음 PCB 준비 후 새 현장 확인이 필요합니다.")
+                self.publish(failed_feedback(active["job_id"], active["error_code"], active["message"],
+                                             self.db_writer.sync_state) | {"state": "PAUSED"})
+                return
             work = self.db_writer.claim(
                 active["job_id"], PRODUCT_CODE, PRODUCT_VERSION,
                 self.recipe_version,
@@ -621,8 +735,8 @@ class AssemblySequencer(Node):
         if self.runtime_mode == "real" and str(error).startswith("SAFETY_STOP:"):
             # Unknown physical completion must not finalize the Unit or advance
             # the recipe. Recovery starts a new Unit after equipment reset.
-            active["state"] = "PAUSED"
-            self.publish(failed_feedback(active["job_id"], "SAFETY_STOP", str(error),
+            active.update(state="PAUSED", error_code=error_code, message=str(error))
+            self.publish(failed_feedback(active["job_id"], error_code, str(error),
                                          self.db_writer.sync_state) | {"state": "PAUSED"})
             return
         cleanup_error = self.fail_job(active["job_id"], immediate)

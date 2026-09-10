@@ -34,6 +34,18 @@ WORKFLOW_ACTIONS = {
 }
 
 
+# Product semantics only; robot motion and pick order stay on the execution server.
+PRODUCTION_PRODUCT_CODE = "HBM-ACCELERATOR-PACKAGE-BOARD"
+PRODUCTION_PRODUCT_VERSION = "hbm-pkg-r1"
+PRODUCTION_RECIPE_VERSION = "assembly-r1"
+PRODUCTION_SLOTS = tuple(
+    (f"{part}-{index:02}", part)
+    for part, quantity in (("GPU", 1), ("HBM", 8), ("PM", 4),
+                           ("VRM", 5), ("IND", 2), ("CAP", 5))
+    for index in range(1, quantity + 1)
+)
+
+
 def _finite_number(value, label):
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise ValueError(f"{label} must be a number")
@@ -482,14 +494,14 @@ def assembly_snapshot(
         "recipe_version": active["recipe_version"],
         "state": state,
         "placed_count": placed_count,
-        # Sequential YAML execution makes this prefix the confirmed placed slots.
-        "placed_slot_codes": active["slot_codes"][:placed_count],
+        # Real supplies observed slots; Mock YAML confirms a sequential prefix.
+        "placed_slot_codes": list(active.get("placed_slot_codes", active["slot_codes"][:placed_count])),
         "expected_step_count": active["expected_step_count"],
         "held_step_order": active["held_step_order"],
         "held_part_id": active["held_part_id"],
         "held_slot_code": active["held_slot_code"],
-        "error_code": error_code,
-        "message": message[:512],
+        "error_code": error_code or active.get("error_code", ""),
+        "message": (message or active.get("message", ""))[:512],
         "db_sync_state": db_sync_state,
     }
 

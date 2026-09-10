@@ -39,7 +39,7 @@ namespace MainUnity.Runtime.Robot.Real
         bool realStatusConfirmed;
         int generation;
 
-        public bool IsRunning => executionPending || (latest != null && latest.active);
+        public bool IsRunning => executionPending || (latest != null && latest.active && latest.error_code != "SCENE_CONFIRMATION_REQUIRED");
 
         [Serializable]
         sealed class AssemblyRequest
@@ -178,7 +178,7 @@ namespace MainUnity.Runtime.Robot.Real
             {
                 await recoveryTask;
                 AssemblySnapshot snapshot = await ReadStatusAsync(currentGeneration);
-                if (snapshot.active)
+                if (snapshot.active && !(snapshot.job_id == queuedJobId && snapshot.error_code == "SCENE_CONFIRMATION_REQUIRED"))
                     throw new InvalidOperationException("A Real assembly is already running.");
                 if (itemManager == null)
                     throw new InvalidOperationException("Assign the shared ItemManager.");
@@ -212,8 +212,8 @@ namespace MainUnity.Runtime.Robot.Real
                 await SendCommandAsync("start", jobId, currentGeneration);
                 if (jobId == pendingJobId)
                     pendingJobId = null;
-                await MonitorAsync(jobId, currentGeneration);
                 pendingConfirmation = null;
+                await MonitorAsync(jobId, currentGeneration, confirmScene);
             }
             finally
             {
@@ -273,7 +273,7 @@ namespace MainUnity.Runtime.Robot.Real
             try
             {
                 AssemblySnapshot snapshot = await ReadStatusAsync(currentGeneration);
-                if (!snapshot.available)
+                if (!snapshot.available || snapshot.state == "IDLE")
                     return;
                 activeJobId = snapshot.job_id;
                 ApplySnapshot(snapshot);
@@ -300,10 +300,11 @@ namespace MainUnity.Runtime.Robot.Real
             }
         }
 
-        async Task MonitorAsync(string jobId, int currentGeneration)
+        async Task MonitorAsync(string jobId, int currentGeneration, Func<string, Task<AssemblySceneConfirmation>> confirmScene = null)
         {
             double deadline = Time.realtimeSinceStartupAsDouble + CompletionTimeoutSeconds;
             bool observed = false;
+            long confirmedAfterUnit = 0;
             while (Time.realtimeSinceStartupAsDouble < deadline)
             {
                 refreshRequested = false;
@@ -312,6 +313,23 @@ namespace MainUnity.Runtime.Robot.Real
                 {
                     observed = true;
                     ApplySnapshot(snapshot);
+                    if (snapshot.state == "PAUSED")
+                    {
+                        if (snapshot.error_code != "SCENE_CONFIRMATION_REQUIRED" || confirmScene == null)
+                            throw Failure(snapshot.error_code, snapshot.message);
+                        if (confirmedAfterUnit != snapshot.unit_id)
+                        {
+                            string executionId = Guid.NewGuid().ToString();
+                            pendingConfirmation = await confirmScene(executionId);
+                            confirmationJobId = jobId;
+                            RequireEnabled(currentGeneration);
+                            if (pendingConfirmation == null || pendingConfirmation.execution_id != executionId)
+                                throw new InvalidOperationException("다음 Unit의 현장 확인이 취소되었거나 유효하지 않습니다.");
+                            await SendCommandAsync("start", jobId, currentGeneration);
+                            pendingConfirmation = null;
+                            confirmedAfterUnit = snapshot.unit_id;
+                        }
+                    }
                     if (snapshot.state == "FAILED" || snapshot.db_sync_state == "FAILED")
                         throw Failure(snapshot.error_code, snapshot.message);
                     // A feedback message or accepted response is not completion. The authoritative status must
@@ -321,8 +339,7 @@ namespace MainUnity.Runtime.Robot.Real
                 }
                 else if (observed)
                     throw new InvalidOperationException("Real assembly status lost the requested Job.");
-                // Accepted Jobs are claimed by the Sequencer queue timer. Until then status can still
-                // describe the previous Job; wait for this UUID without treating acceptance as execution.
+                // Request acceptance alone is not completion; wait for the matching Unit status.
                 double nextPoll = Time.realtimeSinceStartupAsDouble + 1d;
                 do
                 {
@@ -342,6 +359,8 @@ namespace MainUnity.Runtime.Robot.Real
             if (!realStatusConfirmed)
                 throw new InvalidOperationException("MODE_REJECTED expected=real stage=assembly_status");
             if (!snapshot.available)
+                return snapshot;
+            if (!snapshot.active && snapshot.state == "IDLE" && string.IsNullOrEmpty(snapshot.job_id) && snapshot.unit_id == 0)
                 return snapshot;
             AssemblyState state = ToState(snapshot.state);
             if (!Guid.TryParse(snapshot.job_id, out _) || snapshot.unit_id <= 0 ||
@@ -371,7 +390,7 @@ namespace MainUnity.Runtime.Robot.Real
                     itemManager.DiscardCurrentUnit();
                 BeginUnit(snapshot.job_id, snapshot.unit_id);
                 if (snapshot.state == "PCB_PLACED" ||
-                    snapshot.state == "COMPLETED" && snapshot.db_sync_state == "SYNCED")
+                    (snapshot.state == "COMPLETED" || snapshot.error_code == "SCENE_CONFIRMATION_REQUIRED") && snapshot.db_sync_state == "SYNCED")
                     CompleteUnit(snapshot.job_id, snapshot.unit_id);
             }
             AssemblyState state = ToState(snapshot.state);

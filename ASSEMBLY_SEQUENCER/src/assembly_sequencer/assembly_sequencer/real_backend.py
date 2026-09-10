@@ -9,6 +9,7 @@ import threading
 import time
 import uuid
 from urllib.parse import urlsplit
+from pathlib import Path
 
 
 class RealBackend:
@@ -30,6 +31,8 @@ class RealBackend:
         self._conveyor_received = 0.0
         self._execution_id = None
         self._execution_response = None
+        self._execution_server = None
+        self._execution_sequence = -1
         self._assembly_status_client = node.create_client(
             Trigger, "/real/assembly/status", callback_group=ReentrantCallbackGroup())
         self._assembly_command = node.create_publisher(String, "/real/assembly/command", 10)
@@ -45,7 +48,7 @@ class RealBackend:
             Trigger, "/conveyor/move_to_inspection", callback_group=ReentrantCallbackGroup())
         self._conveyor_stop = node.create_client(
             Trigger, "/conveyor/stop", callback_group=ReentrantCallbackGroup())
-        self._vision_url = node.declare_parameter("vision_base_url", "").value
+        self._vision_url = node.declare_parameter("vision_base_url", os.environ.get("VISION_BASE_URL", "")).value
         self._status_client = node.create_client(
             Trigger, "/real/robot/status", callback_group=ReentrantCallbackGroup()
         )
@@ -69,7 +72,7 @@ class RealBackend:
         snapshot["production_contract"] = assembly.get("production_contract")
         try:
             self._validate_readiness(robot, assembly)
-            snapshot.update(error_code="NOT_READY", message="Robot v2 Start is available; conveyor arrival, whole-assembly completion and inspection workflow are not yet connected.")
+            snapshot.update(available=True, equipment_ready=True, error_code="", message="")
         except RuntimeError as error:
             snapshot.update(error_code="NOT_READY", message=str(error))
         return snapshot
@@ -82,15 +85,25 @@ class RealBackend:
         if (assembly.get("hardware_execution_enabled") is not True or
                 robot.get("hardware_execution_enabled") is not True or
                 robot.get("state_fresh") is not True or robot.get("robot_health_clear") is not True or
+                robot.get("robot_mode") != 0 or robot.get("robot_motion_done") != 1 or
                 robot.get("recovery_required") is not False or robot.get("active_operation") is not None or
-                robot.get("held_candidate") is not None or
-                production.get("equipment_busy_or_unresolved") is not False):
+                ("held_candidate" not in robot or robot["held_candidate"] is not None and robot["held_candidate"] is not False) or
+                production.get("equipment_busy_or_unresolved") is True or
+                production.get("recovery_required") is True or
+                production.get("status", "idle") not in {"idle", "failed_recovered", "failed_before_motion",
+                    "motion_complete_awaiting_physical_verification"}):
             raise RuntimeError("Robot is busy, stale, holding a part, or requires recovery.")
         if not isinstance(production.get("current_recipe_revision"), str) or not production["current_recipe_revision"]:
             raise RuntimeError("Robot production recipe revision is missing.")
         self._ready_conveyor()
-        if not self._vision_url:
-            raise RuntimeError("vision_base_url must identify the Real inspection service.")
+        origin = urlsplit(self._vision_url)
+        if origin.scheme not in {"http", "https"} or not origin.hostname or origin.username or origin.password or origin.path not in {"", "/"} or origin.query or origin.fragment:
+            raise RuntimeError("vision_base_url must identify the Real inspection HTTP origin.")
+        token = os.environ.get("KSMC_VISION_API_TOKEN", "")
+        if len(token) < 32 or not token.isascii() or any(c.isspace() or ord(c) < 32 or ord(c) == 127 for c in token):
+            raise RuntimeError("KSMC_VISION_API_TOKEN must be configured on the Sequencer.")
+        if not os.environ.get("DEFECT_IMAGE_ROOT", "").strip():
+            raise RuntimeError("DEFECT_IMAGE_ROOT must identify shared execution and inspection storage.")
         return production["current_recipe_revision"]
 
     async def prepare_execution(self, recipe_version):
@@ -101,13 +114,16 @@ class RealBackend:
         return self._validate_readiness(robot, assembly)
 
     async def _read_status(self, client):
+        from rclpy.callback_groups import ReentrantCallbackGroup
         from std_srvs.srv import Trigger
 
         if self._closed or not client.wait_for_service(timeout_sec=0.0):
             raise RuntimeError("Equipment status service unavailable.")
         future = client.call_async(Trigger.Request())
         self._pending_calls.add(future)
-        timer = self._node.create_timer(5.0, future.cancel)
+        # The start service holds its default callback group while awaiting this response.
+        # Its timeout must be able to run independently in that interval.
+        timer = self._node.create_timer(5.0, future.cancel, callback_group=ReentrantCallbackGroup())
         try:
             response = await future
             if future.cancelled():
@@ -141,9 +157,12 @@ class RealBackend:
             raise RuntimeError("Conveyor state heartbeat is unavailable or stale.")
         if (state.get("state") not in {"IDLE", "ASSEMBLY_STOP", "INSPECTION_STOP"} or
                 state.get("moving") is not False or state.get("armed") is not True or
-                state.get("fr5_clear") is not True or state.get("fr5_clear_fresh") is not True or
                 state.get("vision_ready_fresh") is not True or state.get("vision_ready") is not True):
             raise RuntimeError("Conveyor interlocks or stationary state are not ready.")
+        required = state.get("fr5_interlock_required")
+        if type(required) is not bool or (required and
+                (state.get("fr5_clear") is not True or state.get("fr5_clear_fresh") is not True)):
+            raise RuntimeError("Conveyor FR5 interlock requirement is unknown or not satisfied.")
         if not state.get("server_instance_id"):
             raise RuntimeError("Conveyor server identity is missing.")
         return state
@@ -200,6 +219,12 @@ class RealBackend:
                 pass
             raise RuntimeError("SAFETY_STOP: " + str(error)) from error
 
+    @staticmethod
+    def _terminal(data):
+        return (data.get("request_accepted") is False or
+                data.get("event") in {"EXECUTION_COMPLETED", "EXECUTION_FAILED", "REQUEST_REJECTED", "EXECUTION_CANCELLED"} or
+                data.get("status") in {"request_rejected", "failed_before_motion", "failed_recovered", "recovery_required"})
+
     def _receive_execution(self, message):
         try:
             data = json.loads(message.data)
@@ -208,12 +233,141 @@ class RealBackend:
             with self._lock:
                 if self._execution_id is None or data.get("execution_id") != self._execution_id:
                     return
-                # Completion/rejection cannot be overwritten by delayed progress.
-                if self._execution_response is None or self._execution_response.get("event") not in {
-                        "EXECUTION_COMPLETED", "EXECUTION_FAILED", "REQUEST_REJECTED"}:
-                    self._execution_response = data
+                if self._execution_response is not None and self._terminal(self._execution_response):
+                    return
+                # Rejections can omit both event_sequence and server identity.
+                server = data.get("server_instance_id")
+                if server and self._execution_server and server != self._execution_server:
+                    self._execution_response = dict(data, event="EXECUTION_FAILED", recovery_required=True,
+                        error_code="SERVER_RESTARTED", error_message="Robot execution server changed.")
+                    return
+                sequence = data.get("event_sequence")
+                if type(sequence) is int:
+                    if sequence < self._execution_sequence:
+                        return
+                    self._execution_sequence = sequence
+                self._execution_response = data
         except (ValueError, TypeError):
             return
+
+    @staticmethod
+    def _validate_completion(data, request, slot_codes):
+        identities = ("execution_id", "production_job_id", "unit_id", "product_id",
+                      "production_recipe_version", "robot_recipe_revision")
+        if type(data.get("unit_id")) is not int or any(data.get(k) != request[k] for k in identities):
+            raise ValueError("Assembly completion identity does not match its request.")
+        expected, completed = data.get("expected_slots"), data.get("completed_slots")
+        if (not isinstance(expected, list) or not isinstance(completed, list) or
+                any(not isinstance(s, str) for s in expected + completed) or
+                len(expected) != len(slot_codes) or len(completed) != len(slot_codes) or
+                set(expected) != set(slot_codes) or set(completed) != set(slot_codes)):
+            raise ValueError("Assembly completion slots do not match the production recipe.")
+        hashes = data.get("plan_hashes", {})
+        if (data.get("event") != "EXECUTION_COMPLETED" or
+                data.get("status") != "motion_complete_awaiting_physical_verification" or
+                data.get("stop_verified") is not True or data.get("recovery_required") is not False or
+                "held_candidate" not in data or
+                (data["held_candidate"] is not None and data["held_candidate"] is not False) or
+                data.get("plan_complete") is not True or not isinstance(hashes, dict)):
+            raise ValueError("Assembly completion has no verified stop/plan/empty-gripper evidence.")
+        for kind in ("non-smd", "smd"):
+            value = hashes.get(kind)
+            if not isinstance(value, str) or len(value) != 64 or any(c not in "0123456789abcdef" for c in value):
+                raise ValueError("Assembly completion plan hash is invalid.")
+
+    async def execute_assembly(self, job_id, unit_id, recipe_version, revision,
+                               confirmation, slot_codes, on_progress):
+        from std_msgs.msg import String
+        from .recipe_contract import validate_scene_confirmation, PRODUCTION_PRODUCT_CODE
+
+        if type(unit_id) is not int or unit_id <= 0 or str(uuid.UUID(job_id)) != job_id:
+            raise ValueError("Execution requires a canonical Job UUID and positive Unit ID.")
+        validate_scene_confirmation(confirmation)
+        robot = await self._read_status(self._status_client)
+        assembly = await self._read_status(self._assembly_status_client)
+        if self._validate_readiness(robot, assembly) != revision:
+            raise RuntimeError("Robot recipe revision changed after Job preparation.")
+        validate_scene_confirmation(confirmation)
+        request = dict(schema="fr5.assembly_execution/v2", action="assembly.start",
+            execution_id=str(uuid.UUID(confirmation["execution_id"])), production_job_id=job_id,
+            unit_id=unit_id, product_id=PRODUCTION_PRODUCT_CODE,
+            production_recipe_version=recipe_version, robot_recipe_revision=revision,
+            scene_confirmation=dict(confirmation))
+        request["scene_confirmation"]["execution_id"] = request["execution_id"]
+        directory = Path(os.environ["DEFECT_IMAGE_ROOT"]) / "executions" / str(unit_id)
+        directory.mkdir(parents=True, exist_ok=True)
+        path = directory / "request.json"
+        # Save before publication. Restart recovery fails this Unit instead of
+        # constructing a new identity for a possibly executed request.
+        encoded = json.dumps(request, sort_keys=True)
+        try:
+            with path.open("x", encoding="utf-8") as stream:
+                stream.write(encoded)
+                stream.flush()
+                os.fsync(stream.fileno())
+        except FileExistsError:
+            if path.read_text(encoding="utf-8") != encoded:
+                raise RuntimeError("An execution request already exists for this Unit.")
+        if self._assembly_command.get_subscription_count() == 0:
+            raise RuntimeError("Robot Start command subscriber unavailable.")
+        with self._lock:
+            if self._execution_id is not None:
+                raise RuntimeError("Another robot execution is already pending.")
+            self._execution_id = request["execution_id"]
+            self._execution_response = None
+            self._execution_server = assembly["production_contract"].get("server_instance_id")
+            self._execution_sequence = -1
+        sent = False
+        try:
+            sent = True
+            self._assembly_command.publish(String(data=encoded))
+            deadline = time.monotonic() + 1800.0
+            next_query = time.monotonic() + 2.0
+            previous = None
+            while time.monotonic() < deadline:
+                with self._lock:
+                    data = self._execution_response
+                if data is not None and data is not previous:
+                    with (directory / "events.jsonl").open("a", encoding="utf-8") as stream:
+                        stream.write(json.dumps(data) + "\n")
+                    previous = data
+                    if data.get("event") == "EXECUTION_COMPLETED":
+                        self._validate_completion(data, request, slot_codes)
+                        on_progress(data)
+                        return data
+                    if self._terminal(data):
+                        failure = data.get("failure") or {}
+                        code = data.get("error_code") or failure.get("code") or "ASSEMBLY_FAILED"
+                        stage = data.get("failed_stage") or failure.get("stage") or data.get("current_stage") or ""
+                        message = data.get("error_message") or data.get("message") or failure.get("message") or "Robot execution failed."
+                        detail = f"{code} stage={stage}: {message}"
+                        if data.get("recovery_required") is True:
+                            detail = "SAFETY_STOP: " + detail
+                        error = RuntimeError(detail)
+                        error.error_code = code
+                        raise error
+                    on_progress(data)
+                if time.monotonic() >= next_query:
+                    status = await self._read_status(self._assembly_status_client)
+                    production = status.get("production_contract", {})
+                    if production.get("execution_id") not in (None, request["execution_id"]):
+                        raise RuntimeError("Robot status changed to another execution.")
+                    self._receive_execution(String(data=json.dumps(production)))
+                    next_query = time.monotonic() + 2.0
+                await self._wait_tick()
+            raise TimeoutError("Robot completion timed out; remote execution may continue.")
+        except Exception as error:
+            with self._lock:
+                response = self._execution_response
+            if sent and not (response and self._terminal(response) and
+                             response.get("event") != "EXECUTION_COMPLETED" and
+                             response.get("recovery_required") is not True):
+                if not str(error).startswith("SAFETY_STOP:"):
+                    raise RuntimeError("SAFETY_STOP: " + str(error)) from error
+            raise
+        finally:
+            with self._lock:
+                self._execution_id = None
 
     async def inspect_unit(self, job_id, unit_id, slot_codes):
         from rclpy.task import Future

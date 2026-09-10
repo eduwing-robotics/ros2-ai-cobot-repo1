@@ -763,6 +763,7 @@ class ModeIsolationTest(unittest.IsolatedAsyncioTestCase):
             recipe={"joint_points":{},"frame":"base_link"},
             backend=SimpleNamespace(prepare=AsyncMock(side_effect=RuntimeError("reset is unverified"))),
             set_response=AssemblySequencer.set_response,db_writer=Mock())
+        sequencer.start_real_job = MethodType(AssemblySequencer.start_real_job, sequencer)
         for command in ("observations","conveyor_arrived","conveyor_failed","transfer_assembled_pcb"):
             response=await AssemblySequencer.on_external_request(sequencer,
                 SimpleNamespace(cmd_str="real\n"+json.dumps({"command":command,"job_id":JOB_ID})),SimpleNamespace())
@@ -798,6 +799,122 @@ class ModeIsolationTest(unittest.IsolatedAsyncioTestCase):
             connect.assert_not_called()
 
 
+class RealWorkflowTest(unittest.IsolatedAsyncioTestCase):
+    def sequencer(self, decision="PASS", reached=True):
+        from assembly_sequencer.recipe_contract import PRODUCTION_SLOTS
+        slots = [slot for slot, _ in PRODUCTION_SLOTS]
+        active = dict(job_id=JOB_ID, unit_id=22, recipe_version="assembly-r1", execution_id=OPERATION_ID,
+            robot_recipe_revision="deployed-r1", scene_confirmation={}, slot_codes=slots,
+            placed_slot_codes=[], placed_count=0, expected_step_count=25, held_step_order=0,
+            held_part_id="", held_slot_code="", state="STARTED", inspection_result="")
+        db = Mock(sync_state="SYNCED")
+        db.get_job.return_value = dict(completed_quantity=1 if reached else 0, requested_quantity=1)
+        backend = SimpleNamespace(move_conveyor=AsyncMock(), execute_assembly=AsyncMock(),
+                                  inspect_unit=AsyncMock(return_value=dict(result=decision, defects=None)))
+        node = SimpleNamespace(runtime_mode="real", active=active, backend=backend, db_writer=db,
+            terminal_snapshot=None, publish=Mock(), get_logger=lambda: Mock())
+        for name in ("real_progress", "finish_active_unit", "fail_active", "fail_job"):
+            setattr(node, name, MethodType(getattr(AssemblySequencer, name), node))
+        async def assembly(*args):
+            args[-1](dict(execution_id=OPERATION_ID, production_job_id=JOB_ID, unit_id=22,
+                          completed_slots=slots, current_stage="complete"))
+        backend.execute_assembly.side_effect = assembly
+        return node, active
+
+    async def test_start_claims_once_and_duplicate_never_starts_another_unit(self):
+        import time
+        from assembly_sequencer.recipe_contract import PRODUCTION_SLOTS
+        node, _ = self.sequencer()
+        node.active = None
+        node.set_response = AssemblySequencer.set_response
+        node.backend.prepare_execution = AsyncMock(return_value="deployed-r1")
+        node.db_writer.get_job.return_value = dict(job_status="PENDING")
+        node.db_writer.get_product_slots.return_value = [dict(slot_code=s, part_id=p) for s, p in PRODUCTION_SLOTS]
+        node.db_writer.claim.return_value = dict(job_id=JOB_ID, unit_id=23)
+        node.run_real_workflow = Mock(return_value="workflow-task")
+        node.executor = Mock()
+        command = dict(job_id=JOB_ID, recipe_version="assembly-r1", scene_confirmation=dict(
+            operator_id="test", execution_id=OPERATION_ID, confirmed_unix=time.time(),
+            scope="empty_gripper_empty_pcb_full_tray_fixed_fixture"))
+        for _ in range(2):
+            response = await AssemblySequencer.start_real_job(node, command, SimpleNamespace())
+            self.assertTrue(json.loads(response.cmd_res)["accepted"])
+        node.db_writer.claim.assert_called_once()
+        node.executor.create_task.assert_called_once()
+        self.assertEqual(node.active["unit_id"], 23)
+        node.backend.move_conveyor.assert_not_awaited()
+
+    async def test_preflight_failure_never_claims_job(self):
+        import time
+        node, _ = self.sequencer()
+        node.active = None
+        node.set_response = AssemblySequencer.set_response
+        node.backend.prepare_execution = AsyncMock(side_effect=RuntimeError("not ready"))
+        command = dict(job_id=JOB_ID, recipe_version="assembly-r1", scene_confirmation=dict(
+            operator_id="test", execution_id=OPERATION_ID, confirmed_unix=time.time(),
+            scope="empty_gripper_empty_pcb_full_tray_fixed_fixture"))
+        response = await AssemblySequencer.start_real_job(node, command, SimpleNamespace())
+        self.assertEqual(json.loads(response.cmd_res)["error_code"], "NOT_READY")
+        node.db_writer.claim.assert_not_called()
+        node.backend.move_conveyor.assert_not_awaited()
+
+    async def test_pass_advances_only_after_completion_and_db_sync(self):
+        node, active = self.sequencer()
+        sequence = Mock()
+        sequence.attach_mock(node.backend.move_conveyor, "move")
+        sequence.attach_mock(node.backend.execute_assembly, "assembly")
+        sequence.attach_mock(node.backend.inspect_unit, "inspect")
+        sequence.attach_mock(node.db_writer.assembly_completed, "assembled")
+        sequence.attach_mock(node.db_writer.flush, "flush")
+        sequence.attach_mock(node.db_writer.inspection_recorded, "record")
+        sequence.attach_mock(node.db_writer.unit_completed, "complete")
+        sequence.attach_mock(node.db_writer.finish, "finish")
+        await AssemblySequencer.run_real_workflow(node, active)
+        self.assertEqual([c[0] for c in sequence.mock_calls],
+            ["move", "assembly", "assembled", "flush", "move", "inspect", "record", "flush",
+             "complete", "flush", "finish", "flush"])
+        self.assertEqual([c.args[0] for c in node.backend.move_conveyor.await_args_list], ["ASSEMBLY", "INSPECTION"])
+        self.assertIsNone(node.active)
+        self.assertEqual(node.terminal_snapshot["state"], "COMPLETED")
+        self.assertEqual(node.terminal_snapshot["placed_count"], 25)
+
+    async def test_unknown_keeps_unit_running_and_preserves_reason_in_status(self):
+        node, active = self.sequencer("UNKNOWN", False)
+        await AssemblySequencer.run_real_workflow(node, active)
+        node.db_writer.inspection_recorded.assert_called_once()
+        node.db_writer.unit_completed.assert_not_called()
+        node.db_writer.finish.assert_not_called()
+        self.assertEqual(assembly_snapshot(active, active["state"])["error_code"], "INSPECTION_UNKNOWN")
+        self.assertTrue(active["inspection_hold"])
+
+    async def test_fail_inspection_completes_attempt_but_waits_for_new_confirmation(self):
+        node, active = self.sequencer("FAIL", False)
+        await AssemblySequencer.run_real_workflow(node, active)
+        node.db_writer.unit_completed.assert_called_once_with(22)
+        node.db_writer.finish.assert_not_called()
+        node.db_writer.claim.assert_not_called()
+        self.assertTrue(active["awaiting_next_unit"])
+        self.assertEqual(active["error_code"], "SCENE_CONFIRMATION_REQUIRED")
+
+    async def test_uncertain_robot_completion_blocks_inspection_and_db_finalization(self):
+        node, active = self.sequencer()
+        node.backend.execute_assembly.side_effect = RuntimeError("SAFETY_STOP: completion unconfirmed")
+        await AssemblySequencer.run_real_workflow(node, active)
+        node.backend.move_conveyor.assert_awaited_once_with("ASSEMBLY")
+        node.backend.inspect_unit.assert_not_awaited()
+        node.db_writer.assembly_completed.assert_not_called()
+        node.db_writer.finish.assert_not_called()
+        self.assertEqual(active["state"], "PAUSED")
+
+    async def test_db_failure_after_assembly_never_moves_to_inspection(self):
+        node, active = self.sequencer()
+        node.db_writer.flush.side_effect = RuntimeError("DB unavailable")
+        await AssemblySequencer.run_real_workflow(node, active)
+        node.backend.move_conveyor.assert_awaited_once_with("ASSEMBLY")
+        node.backend.inspect_unit.assert_not_awaited()
+        self.assertEqual(node.terminal_snapshot["error_code"], "DB_ERROR")
+
+
 class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
     def backend(self):
         node = Mock(runtime_mode="real", executor=None)
@@ -821,7 +938,7 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
             writer.return_value.recover_interrupted.return_value = 0
             node = AssemblySequencer()
             self.assertIsNone(node.recipe)
-            self.assertIsNone(node.recipe_version)
+            self.assertEqual(node.recipe_version, "assembly-r1")
             load.assert_not_called()
             parameter.assert_not_called()
 
@@ -840,6 +957,7 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
         backend, node = self.backend()
         sequencer = SimpleNamespace(runtime_mode="real", recipe=None, recipe_version=None,
             backend=backend, active=None, db_writer=Mock(), set_response=AssemblySequencer.set_response)
+        sequencer.start_real_job = MethodType(AssemblySequencer.start_real_job, sequencer)
         command = dict(command="start", job_id=JOB_ID, recipe_version="robot-owned-r2")
         response = await AssemblySequencer.on_external_request(sequencer,
             SimpleNamespace(cmd_str="real\n" + json.dumps(command)), SimpleNamespace())
@@ -863,7 +981,7 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
     async def test_v2_capability_is_read_from_nested_contract(self):
         backend, node = self.backend()
         robot = dict(hardware_execution_enabled=True, state_fresh=True,
-                     robot_health_clear=True, recovery_required=False,
+                     robot_health_clear=True, robot_mode=0, robot_motion_done=1, recovery_required=False,
                      active_operation=None, held_candidate=None)
         assembly = dict(hardware_execution_enabled=True,
                         supported_actions=["assembly.check", "assembly.stop"],
@@ -873,10 +991,11 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
         backend._read_status = AsyncMock(side_effect=[robot, assembly])
         backend._ready_conveyor = Mock()
         backend._vision_url = "http://vision:8766"
-        snapshot = await backend.status()
+        with patch.dict(os.environ, {"KSMC_VISION_API_TOKEN": "test-token-" * 4, "DEFECT_IMAGE_ROOT": "/tmp/test-evidence"}):
+            snapshot = await backend.status()
         self.assertTrue(snapshot["production_contract"]["capabilities"]["start"])
-        self.assertFalse(snapshot["equipment_ready"])
-        self.assertIn("completion", snapshot["message"])
+        self.assertTrue(snapshot["equipment_ready"])
+        self.assertTrue(snapshot["available"])
         node.create_publisher.return_value.publish.assert_not_called()
 
     def test_scene_confirmation_requires_actual_fresh_confirmation(self):
@@ -908,6 +1027,128 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
         backend._receive_execution(SimpleNamespace(data=json.dumps(completed | {"event": "ROBOT_EVENT"})))
         self.assertEqual(backend._execution_response, completed)
 
+    def completion_fixture(self):
+        from assembly_sequencer.recipe_contract import PRODUCTION_SLOTS
+        slots = [slot for slot, _ in PRODUCTION_SLOTS]
+        request = dict(execution_id=OPERATION_ID, production_job_id=JOB_ID, unit_id=22,
+                       product_id="HBM-ACCELERATOR-PACKAGE-BOARD", production_recipe_version="assembly-r1",
+                       robot_recipe_revision="deployed-r1")
+        complete = dict(request, schema="fr5.assembly_execution/v2", event="EXECUTION_COMPLETED",
+                        status="motion_complete_awaiting_physical_verification", expected_slots=list(slots),
+                        completed_slots=list(slots), stop_verified=True, recovery_required=False,
+                        held_candidate=False, plan_complete=True,
+                        plan_hashes={"non-smd": "a" * 64, "smd": "b" * 64}, inspection_pass=None)
+        return request, complete, slots
+
+    def test_completion_requires_identity_exact_slots_and_execution_evidence(self):
+        request, complete, slots = self.completion_fixture()
+        RealBackend._validate_completion(complete, request, slots)
+        RealBackend._validate_completion(complete | {"held_candidate": None}, request, slots)
+        for change in ({"unit_id": 23}, {"execution_id": JOB_ID}, {"completed_slots": slots[:-1]},
+                       {"completed_slots": slots[:-1] + [slots[0]]}, {"expected_slots": []},
+                       {"stop_verified": False}, {"recovery_required": True}, {"held_candidate": {}},
+                       {"held_candidate": 0}, {"plan_complete": False}, {"plan_hashes": {}},
+                       {"event": "EXECUTION_STARTED"}, {"status": "running"}):
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                RealBackend._validate_completion(complete | change, request, slots)
+        missing = dict(complete)
+        del missing["held_candidate"]
+        with self.assertRaises(ValueError):
+            RealBackend._validate_completion(missing, request, slots)
+
+    def test_eventless_rejection_and_failure_survive_late_progress(self):
+        backend, _ = self.backend()
+        for terminal in (dict(status="request_rejected", request_accepted=False, error_code="SAFETY_STOP"),
+                         dict(event="EXECUTION_FAILED", recovery_required=True,
+                              error_code="MOTION_PLAN_REJECTED", failure={"stage": "preflight_non-smd"})):
+            backend._execution_id = OPERATION_ID
+            backend._execution_response = None
+            terminal = dict(terminal, schema="fr5.assembly_execution/v2", execution_id=OPERATION_ID)
+            backend._receive_execution(SimpleNamespace(data=json.dumps(terminal)))
+            backend._receive_execution(SimpleNamespace(data=json.dumps(dict(
+                schema="fr5.assembly_execution/v2", execution_id=OPERATION_ID, event="EXECUTION_PROGRESS"))))
+            self.assertEqual(backend._execution_response, terminal)
+
+    def test_execution_sequence_and_server_restart_are_not_success(self):
+        backend, _ = self.backend()
+        backend._execution_id = OPERATION_ID
+        backend._execution_server = "server-a"
+        progress = dict(schema="fr5.assembly_execution/v2", execution_id=OPERATION_ID,
+                        server_instance_id="server-a", event="EXECUTION_PROGRESS", event_sequence=20)
+        backend._receive_execution(SimpleNamespace(data=json.dumps(progress)))
+        backend._receive_execution(SimpleNamespace(data=json.dumps(progress | {"event_sequence": 19})))
+        self.assertEqual(backend._execution_response["event_sequence"], 20)
+        backend._receive_execution(SimpleNamespace(data=json.dumps(progress | {"server_instance_id": "server-b"})))
+        self.assertTrue(backend._execution_response["recovery_required"])
+        self.assertEqual(backend._execution_response["error_code"], "SERVER_RESTARTED")
+
+    def test_conveyor_honors_deployed_interlock_requirement(self):
+        import time
+        backend, _ = self.backend()
+        backend._conveyor_state = dict(state="IDLE", moving=False, armed=True, vision_ready=True,
+            vision_ready_fresh=True, fr5_clear=False, fr5_clear_fresh=False, server_instance_id="server-a")
+        backend._conveyor_received = time.monotonic()
+        for required in (None, True, "false", 0):
+            backend._conveyor_state["fr5_interlock_required"] = required
+            with self.assertRaisesRegex(RuntimeError, "interlock"):
+                backend._ready_conveyor()
+        backend._conveyor_state["fr5_interlock_required"] = False
+        backend._ready_conveyor()
+        backend._conveyor_state.update(fr5_interlock_required=True, fr5_clear=True, fr5_clear_fresh=True)
+        backend._ready_conveyor()
+
+    async def test_whole_start_persists_request_and_waits_for_matching_completion(self):
+        import tempfile
+        import time
+        backend, node = self.backend()
+        request, completed, slots = self.completion_fixture()
+        confirmation = dict(operator_id="test-operator", execution_id=OPERATION_ID,
+            confirmed_unix=time.time(), scope="empty_gripper_empty_pcb_full_tray_fixed_fixture")
+        backend._read_status = AsyncMock(side_effect=[{}, {"production_contract": {"server_instance_id": "server-a"}}])
+        backend._validate_readiness = Mock(return_value="deployed-r1")
+        backend._assembly_command.get_subscription_count.return_value = 1
+        progress = Mock()
+        async def tick():
+            backend._receive_execution(SimpleNamespace(data=json.dumps(completed)))
+        backend._wait_tick = tick
+        with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, {"DEFECT_IMAGE_ROOT": directory}):
+            def publish(message):
+                saved = json.loads((Path(directory) / "executions/22/request.json").read_text())
+                self.assertEqual(saved, json.loads(message.data))
+                backend._receive_execution(SimpleNamespace(data=json.dumps(dict(
+                    completed, event="EXECUTION_STARTED", status="running", completed_slots=[]))))
+            backend._assembly_command.publish.side_effect = publish
+            result = await backend.execute_assembly(JOB_ID, 22, "assembly-r1", "deployed-r1",
+                                                     confirmation, slots, progress)
+            self.assertEqual(result["event"], "EXECUTION_COMPLETED")
+            backend._assembly_command.publish.assert_called_once()
+            self.assertEqual(progress.call_args.args[0]["completed_slots"], slots)
+            self.assertIsNone(backend._execution_id)
+            self.assertTrue((Path(directory) / "executions/22/events.jsonl").is_file())
+
+    async def test_whole_start_does_not_retry_an_uncertain_execution(self):
+        import tempfile
+        import time
+        backend, _ = self.backend()
+        _, _, slots = self.completion_fixture()
+        confirmation = dict(operator_id="test-operator", execution_id=OPERATION_ID,
+            confirmed_unix=time.time(), scope="empty_gripper_empty_pcb_full_tray_fixed_fixture")
+        backend._read_status = AsyncMock(side_effect=[{}, {"production_contract": {"server_instance_id": "server-a"}}])
+        backend._validate_readiness = Mock(return_value="deployed-r1")
+        backend._assembly_command.get_subscription_count.return_value = 1
+        backend._wait_tick = AsyncMock(side_effect=TimeoutError("connection lost"))
+        with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, {"DEFECT_IMAGE_ROOT": directory}):
+            with self.assertRaisesRegex(RuntimeError, "SAFETY_STOP: connection lost"):
+                await backend.execute_assembly(JOB_ID, 22, "assembly-r1", "deployed-r1", confirmation, slots, Mock())
+        backend._assembly_command.publish.assert_called_once()
+        self.assertIsNone(backend._execution_id)
+
+    async def test_invalid_confirmation_never_publishes_start(self):
+        backend, _ = self.backend()
+        with self.assertRaises(ValueError):
+            await backend.execute_assembly(JOB_ID, 22, "assembly-r1", "deployed-r1", None, [], Mock())
+        backend._assembly_command.publish.assert_not_called()
+
     def test_wrong_mode_is_rejected_before_any_ros_connections(self):
         for mode, domain in (("mock",42),("real",42),("mock",5),("real",43)):
             node = Mock(runtime_mode=mode)
@@ -922,7 +1163,7 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
         source = Path(sys.modules[RealBackend.__module__].__file__).read_text()
         tree = ast.parse(source)
         allowed_imports = {"hashlib", "http", "json", "math", "os", "threading", "time", "uuid",
-                           "urllib", "rclpy", "std_msgs", "std_srvs", "recipe_contract", "copy", "unittest"}
+                           "urllib", "rclpy", "std_msgs", "std_srvs", "recipe_contract", "copy", "unittest", "pathlib"}
         endpoints = {"/real/robot/status", "/real/assembly/status", "/real/assembly/command",
                      "/real/assembly/event", "/conveyor/state", "/conveyor/move_to_assembly",
                      "/conveyor/move_to_inspection", "/conveyor/stop"}

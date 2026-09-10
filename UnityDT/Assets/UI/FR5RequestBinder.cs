@@ -453,7 +453,7 @@ namespace MainUnity.UI
             Job job = SelectedJob();
             bool pending = job?.job_status == "PENDING";
             string blocked = job == null ? "작업을 선택하세요." : StartBlockedReason(job);
-            selectedStart?.SetEnabled(pending && blocked == null);
+            selectedStart?.SetEnabled(blocked == null);
             selectedCancel?.SetEnabled(pending && string.IsNullOrEmpty(actionJobId) && string.IsNullOrEmpty(jobQueryError));
             selectedMonitor?.SetEnabled(job?.job_status == "RUNNING" && pageRouter != null);
             selectedInspect?.SetEnabled(job != null && job.attempted_quantity > 0 && pageRouter != null);
@@ -562,12 +562,12 @@ namespace MainUnity.UI
 
         string StartBlockedReason(Job job)
         {
-            if (job.job_status != "PENDING") return "실행 대기 작업만 시작할 수 있습니다.";
+            if (job.job_status != "PENDING" && job.job_status != "RUNNING") return "완료된 작업은 실행할 수 없습니다.";
             if (!string.IsNullOrEmpty(jobQueryError)) return "작업 상태를 다시 조회한 뒤 실행하세요.";
             if (!string.IsNullOrEmpty(actionJobId))
                 return actionJobId == job.job_id ? "요청 처리 중" : "다른 요청 처리 중";
             Job runningJob = Array.Find(jobs, item => item.job_status == "RUNNING");
-            if (runningJob != null)
+            if (runningJob != null && runningJob.job_id != job.job_id)
                 return "JOB " + ShortJobId(runningJob.job_id) + " 실행 중";
             if (uiMaster?.Scenario == null) return "실행 경로 없음";
             if (uiMaster.Scenario.IsRunning) return "다른 작업 실행 중";
