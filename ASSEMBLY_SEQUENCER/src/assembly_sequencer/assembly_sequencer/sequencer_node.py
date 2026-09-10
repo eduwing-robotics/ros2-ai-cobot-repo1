@@ -191,6 +191,10 @@ class AssemblySequencer(Node):
 
         if command_type in {"pause", "resume", "cancel"}:
             job_id = command["job_id"]
+            terminal = (self.terminal_snapshot or {}) if command_type == "cancel" and self.active is None else {}
+            if (command_type == "cancel" and self.active is None and terminal.get("job_id") == job_id and
+                    terminal.get("error_code") == "EXECUTION_CANCELLED" and terminal.get("db_sync_state") == "SYNCED"):
+                return self.set_response(response, True, job_id)
             if self.active is None or self.active["job_id"] != job_id:
                 return self.set_response(
                     response, False, job_id, "NOT_ACTIVE",
@@ -229,6 +233,14 @@ class AssemblySequencer(Node):
             if self.active.get("inspection_hold"):
                 return self.set_response(response, False, job_id, "BUSY", "inspection resolution is required")
             if self.runtime_mode == "real":
+                if (command_type == "cancel" and not self.active.get("backend_started") and
+                        self.active["state"] == "PAUSED"):
+                    active = self.active
+                    if active.get("control_pending"):
+                        return self.set_response(response, True, job_id)
+                    active.update(control_pending=True, error_code="", message="컨베이어 정지 확인 후 취소 처리 중")
+                    self.executor.create_task(self.cancel_before_assembly(active))
+                    return self.set_response(response, True, job_id)
                 if not self.active.get("backend_started") or self.active["state"] not in {"STARTED", "PLACED", "PAUSED"}:
                     return self.set_response(response, False, job_id, "BUSY", "Control is available during robot assembly only")
                 try:
@@ -394,6 +406,26 @@ class AssemblySequencer(Node):
                 part_id=completed[-1].split("-")[0] if completed else "",
                 slot_code=completed[-1] if completed else "", error_code="",
                 message=active["message"], db_sync_state=self.db_writer.sync_state))
+
+    async def cancel_before_assembly(self, active):
+        try:
+            await self.backend.confirm_conveyor_stopped()
+            if self.active is not active:
+                return
+            self.db_writer.finish(active["job_id"], "CANCELLED")
+            self.db_writer.flush(DB_SYNC_TIMEOUT_SECONDS)
+            active["control_pending"] = False
+            self.terminal_snapshot = assembly_snapshot(active, "FAILED", "EXECUTION_CANCELLED",
+                "조립 전 컨베이어 정지 확인 · 작업 취소 완료", self.db_writer.sync_state)
+            self.active = None
+            self.publish(failed_feedback(active["job_id"], "EXECUTION_CANCELLED",
+                "조립 전 컨베이어 정지 확인 · 작업 취소 완료", self.db_writer.sync_state))
+        except Exception as error:
+            if self.active is active:
+                active.update(control_pending=False, state="PAUSED", error_code="CONTROL_UNCONFIRMED",
+                    message="취소 미확인: " + str(error))
+                self.publish(failed_feedback(active["job_id"], active["error_code"], active["message"],
+                    self.db_writer.sync_state) | {"state": "PAUSED"})
 
     async def run_real_workflow(self, active):
         stage = "CONVEYOR_FAILED"

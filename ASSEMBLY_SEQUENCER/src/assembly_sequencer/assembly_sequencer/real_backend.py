@@ -223,14 +223,43 @@ class RealBackend:
                 pass
             raise RuntimeError("SAFETY_STOP: " + str(error)) from error
 
+    async def confirm_conveyor_stopped(self):
+        # Cancellation observes stop directly; motion readiness is not required.
+        with self._lock:
+            before = self._conveyor_state
+        if not before or not before.get("server_instance_id"):
+            raise RuntimeError("Conveyor identity is unavailable")
+        sent_at = time.monotonic()
+        await self._read_status(self._conveyor_stop)
+        deadline = sent_at + api.CONTROL_TIMEOUT_SECONDS
+        while time.monotonic() < deadline:
+            with self._lock:
+                state, received = self._conveyor_state, self._conveyor_received
+            if state and state.get("server_instance_id") != before["server_instance_id"]:
+                raise RuntimeError("Conveyor server changed during cancellation")
+            if (state and received > sent_at and
+                    time.monotonic() - received <= api.CONVEYOR_FRESHNESS_SECONDS and
+                    state.get("state") in {"IDLE", "ASSEMBLY_STOP", "INSPECTION_STOP", "MANUAL_STOP"} and
+                    state.get("moving") is False and
+                    type(state.get("command_linear_x_mps")) in (int, float) and
+                    state["command_linear_x_mps"] == 0):
+                return state
+            await self._wait_tick()
+        raise TimeoutError("Conveyor stop remains unconfirmed")
+
     async def request_control(self, execution_id, action):
         from std_msgs.msg import String
 
         if action not in {"pause", "resume", "cancel"}:
             raise ValueError("Unsupported production control")
         with self._lock:
-            if self._execution_id != execution_id or self._pending_control is not None:
-                raise RuntimeError("No matching execution, or control confirmation is pending")
+            if self._execution_id != execution_id:
+                raise RuntimeError("No matching execution")
+            pending = self._pending_control
+            if pending is not None:
+                if pending["request"]["action"] == "assembly." + action:
+                    return pending["request"]
+                raise RuntimeError("Another control confirmation is pending")
         status = await self._read_status(self._assembly_status_client)
         data = status.get("production_contract", {})
         if (data.get("execution_id") != execution_id or

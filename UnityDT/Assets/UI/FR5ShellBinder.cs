@@ -223,7 +223,7 @@ namespace MainUnity.UI
             bool pauseSupported = uiMaster != null;
             cancelButton?.SetEnabled(uiMaster?.IsSimulated == false && !stopRequestInFlight &&
                 frame != null && !frame.IsTerminal && !conveyorMoving && uiMaster?.Scenario?.IsRunning == true);
-            if (cancelButton != null) cancelButton.tooltip = "로봇 조립 중 취소를 요청하고 실제 결과와 DB 반영을 확인합니다.";
+            if (cancelButton != null) cancelButton.tooltip = "로봇 조립 중 또는 조립 전 보류 작업의 취소를 요청하고 정지·DB 반영을 확인합니다.";
             if (stopAllButton != null)
             {
                 stopAllButton.text = !pauseSupported ? "일시정지 미지원" : stopRequestInFlight ? "처리 중…" : paused ? "▶ 재개" : "Ⅱ 일시정지";

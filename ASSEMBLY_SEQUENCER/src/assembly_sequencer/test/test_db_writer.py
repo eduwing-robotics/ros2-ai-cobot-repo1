@@ -1340,6 +1340,51 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
             node.create_client.assert_not_called()
             node.create_publisher.assert_not_called()
 
+    async def test_cancel_before_assembly_requires_new_stopped_feedback(self):
+        import time
+        backend, _ = self.backend()
+        backend._conveyor_state = dict(server_instance_id="server-a", state="MANUAL_STOP",
+            moving=False, command_linear_x_mps=0)
+        backend._conveyor_received = time.monotonic() - 10
+        backend._read_status = AsyncMock(return_value={})
+        async def feedback():
+            backend._conveyor_received = time.monotonic()
+        backend._wait_tick = AsyncMock(side_effect=feedback)
+        result = await backend.confirm_conveyor_stopped()
+        self.assertFalse(result["moving"])
+        backend._wait_tick.assert_awaited_once()
+        backend._read_status.assert_awaited_once_with(backend._conveyor_stop)
+
+    async def test_cancel_before_assembly_keeps_job_when_stop_fails(self):
+        active = dict(job_id=JOB_ID, state="PAUSED", control_pending=True)
+        node = SimpleNamespace(active=active, backend=SimpleNamespace(
+            confirm_conveyor_stopped=AsyncMock(side_effect=RuntimeError("stale state"))),
+            db_writer=Mock(sync_state="NOT_STARTED"), publish=Mock())
+        await AssemblySequencer.cancel_before_assembly(node, active)
+        node.db_writer.finish.assert_not_called()
+        self.assertIs(node.active, active)
+        self.assertEqual(active["error_code"], "CONTROL_UNCONFIRMED")
+        self.assertFalse(active["control_pending"])
+
+    async def test_cancel_before_assembly_commits_only_after_stop(self):
+        active = dict(job_id=JOB_ID, state="PAUSED", control_pending=True)
+        writer = Mock(sync_state="SYNCED")
+        node = SimpleNamespace(active=active, backend=SimpleNamespace(
+            confirm_conveyor_stopped=AsyncMock()), db_writer=writer, publish=Mock())
+        with patch("assembly_sequencer.sequencer_node.assembly_snapshot", return_value={"active": False}):
+            await AssemblySequencer.cancel_before_assembly(node, active)
+        writer.finish.assert_called_once_with(JOB_ID, "CANCELLED")
+        writer.flush.assert_called_once()
+        self.assertIsNone(node.active)
+
+    async def test_same_robot_cancel_reuses_pending_identity(self):
+        backend, node = self.backend()
+        backend._execution_id = OPERATION_ID
+        request = dict(action="assembly.cancel", control_id="existing")
+        backend._pending_control = dict(request=request)
+        self.assertEqual(await backend.request_control(OPERATION_ID, "cancel"), request)
+        node.create_publisher.return_value.publish.assert_not_called()
+
     def test_real_contracts_are_declarations_without_duplicate_runtime_literals(self):
         import ast
         module = Path(api_contracts.__file__)
