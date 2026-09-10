@@ -112,3 +112,7 @@ DB rollback 뒤 파일은 삭제하지 않고 같은 요청으로 복구합니�
 `SEATING_ERROR`, `UNCLASSIFIED_ANOMALY`는 같은 이름으로 저장합니다.
 원본 코드는 JSON에 유지하며 미지원 코드·한 슬롯의 여러 확정 유형은 자동 축약하지 않고 거절합니다.
 이미지 미준비 FAIL은 결과를 보존하지만 대책서 발행 대기는 생성하지 않습니다.
+
+## Real API 선언 관리
+
+`src/assembly_sequencer/assembly_sequencer/api_contracts.py`는 Real에서 소비하는 endpoint·schema·통신 대기 시간과 조회 주기의 단일 원본입니다. RealBackend가 직접 참조하며 동작·완료 판정은 기존 backend에 유지합니다. 같은 책임의 APIManager·Registry·별도 설정 원본을 추가하지 않습니다. 계약 교체 시 대체된 참조·호환 분기와 문서를 함께 제거합니다. 제공자가 사용하는 버전 문자열은 유지하며 버전 번호만으로 레거시를 판단하지 않습니다.

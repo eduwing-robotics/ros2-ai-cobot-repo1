@@ -23,7 +23,7 @@ Service는 모드 접두사와 요청 JSON을 `cmd_str`, 응답 JSON을 `cmd_res
 
 ## Real에서 소비하는 설비 API
 
-아래는 `real_backend.py`가 실제 사용하는 외부 경계입니다. Sequencer가 제공하는 API와 구분하며, 제공자 전체 API 목록을 뜻하지 않습니다.
+아래는 `real_backend.py`가 실제 사용하는 외부 경계입니다. 코드의 주소·schema·대기 시간 선언 원본은 `api_contracts.py`이며 실제 호출은 이 선언을 참조합니다. Sequencer가 제공하는 API와 구분하며, 제공자 전체 API 목록을 뜻하지 않습니다.
 
 | 제공자 | Endpoint | 타입·방식 | 사용 목적 |
 |---|---|---|---|

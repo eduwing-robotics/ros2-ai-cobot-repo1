@@ -23,6 +23,7 @@ from assembly_sequencer.sequencer_node import AssemblySequencer
 from assembly_sequencer.recipe_contract import assembly_snapshot, load_recipe, resolve_observations, parse_command, validate_recipe
 from assembly_sequencer.db import production_store as store
 from assembly_sequencer.real_backend import RealBackend
+from assembly_sequencer import api_contracts
 
 
 JOB_ID = "12345678-1234-5678-1234-567812345678"
@@ -1339,6 +1340,26 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
             node.create_client.assert_not_called()
             node.create_publisher.assert_not_called()
 
+    def test_real_contracts_are_declarations_without_duplicate_runtime_literals(self):
+        import ast
+        module = Path(api_contracts.__file__)
+        declarations = ast.parse(module.read_text())
+        values = []
+        for statement in declarations.body[1:]:
+            self.assertIsInstance(statement, ast.Assign)
+            self.assertIsInstance(statement.value, ast.Constant)
+            if isinstance(statement.value.value, str):
+                values.append(statement.value.value)
+        self.assertEqual(len(values), len(set(values)))
+        for path in module.parent.rglob("*.py"):
+            if path == module:
+                continue
+            for node in ast.walk(ast.parse(path.read_text())):
+                if isinstance(node, ast.Constant) and isinstance(node.value, str):
+                    self.assertFalse(any(node.value.startswith(prefix) for prefix in
+                        ("/real/", "/conveyor/", "/api/v1/inspections", "fr5.assembly_execution/")),
+                        f"Duplicate or legacy API declaration: {path}:{node.lineno}")
+
     def test_real_backend_has_only_reviewed_imports_and_ros_endpoints(self):
         import ast
         source = Path(sys.modules[RealBackend.__module__].__file__).read_text()
@@ -1353,15 +1374,20 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
                 for alias in item.names:
                     self.assertIn(alias.name.split(".")[0], allowed_imports)
             elif isinstance(item, ast.ImportFrom):
-                self.assertIn(item.module.split(".")[0], allowed_imports)
+                if item.module is None:
+                    self.assertEqual([(a.name, a.asname) for a in item.names], [("api_contracts", "api")])
+                else:
+                    self.assertIn(item.module.split(".")[0], allowed_imports)
             elif isinstance(item, ast.Call):
                 if isinstance(item.func, ast.Name):
                     self.assertNotIn(item.func.id, {"eval", "exec", "__import__"})
                 if isinstance(item.func, ast.Attribute):
                     self.assertNotIn(item.func.attr, {"system", "popen", "execv", "spawnv", "import_module"})
                     if item.func.attr in {"create_client", "create_publisher", "create_subscription"}:
-                        self.assertIsInstance(item.args[1], ast.Constant)
-                        self.assertIn(item.args[1].value, endpoints)
+                        self.assertIsInstance(item.args[1], ast.Attribute)
+                        self.assertIsInstance(item.args[1].value, ast.Name)
+                        self.assertEqual(item.args[1].value.id, "api")
+                        self.assertIn(getattr(api_contracts, item.args[1].attr), endpoints)
         for forbidden in ("fairino_remote_command_service", "nonrt_state_data", "MoveJ(", "MoveL(",
                           "MoveGripper(", "SetDO(", "GetDI(", "CARTPoint(", "JNTPoint("):
             self.assertNotIn(forbidden, source)

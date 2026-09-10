@@ -11,6 +11,8 @@ import uuid
 from urllib.parse import urlsplit
 from pathlib import Path
 
+from . import api_contracts as api
+
 
 class RealBackend:
     """Use documented equipment APIs only; never fall back to raw robot commands."""
@@ -36,23 +38,23 @@ class RealBackend:
         self._pending_control = None
         self._control_sequence = 0
         self._assembly_status_client = node.create_client(
-            Trigger, "/real/assembly/status", callback_group=ReentrantCallbackGroup())
-        self._assembly_command = node.create_publisher(String, "/real/assembly/command", 10)
+            Trigger, api.ASSEMBLY_STATUS, callback_group=ReentrantCallbackGroup())
+        self._assembly_command = node.create_publisher(String, api.ASSEMBLY_COMMAND, 10)
         self._assembly_subscription = node.create_subscription(
-            String, "/real/assembly/event", self._receive_execution, 100,
+            String, api.ASSEMBLY_EVENT, self._receive_execution, 100,
             callback_group=ReentrantCallbackGroup())
         self._conveyor_subscription = node.create_subscription(
-            String, "/conveyor/state", self._receive_conveyor, 10,
+            String, api.CONVEYOR_STATE, self._receive_conveyor, 10,
             callback_group=ReentrantCallbackGroup())
         self._conveyor_assembly = node.create_client(
-            Trigger, "/conveyor/move_to_assembly", callback_group=ReentrantCallbackGroup())
+            Trigger, api.CONVEYOR_ASSEMBLY, callback_group=ReentrantCallbackGroup())
         self._conveyor_inspection = node.create_client(
-            Trigger, "/conveyor/move_to_inspection", callback_group=ReentrantCallbackGroup())
+            Trigger, api.CONVEYOR_INSPECTION, callback_group=ReentrantCallbackGroup())
         self._conveyor_stop = node.create_client(
-            Trigger, "/conveyor/stop", callback_group=ReentrantCallbackGroup())
+            Trigger, api.CONVEYOR_STOP, callback_group=ReentrantCallbackGroup())
         self._vision_url = node.declare_parameter("vision_base_url", os.environ.get("VISION_BASE_URL", "")).value
         self._status_client = node.create_client(
-            Trigger, "/real/robot/status", callback_group=ReentrantCallbackGroup()
+            Trigger, api.ROBOT_STATUS, callback_group=ReentrantCallbackGroup()
         )
 
     def is_available(self):
@@ -81,7 +83,7 @@ class RealBackend:
 
     def _validate_readiness(self, robot, assembly):
         production = assembly.get("production_contract", {})
-        if (production.get("schema") != "fr5.assembly_execution/v2" or
+        if (production.get("schema") != api.ASSEMBLY_SCHEMA or
                 production.get("capabilities", {}).get("start") is not True):
             raise RuntimeError("Robot production v2 Start is unavailable.")
         if (assembly.get("hardware_execution_enabled") is not True or
@@ -125,7 +127,7 @@ class RealBackend:
         self._pending_calls.add(future)
         # The start service holds its default callback group while awaiting this response.
         # Its timeout must be able to run independently in that interval.
-        timer = self._node.create_timer(5.0, future.cancel, callback_group=ReentrantCallbackGroup())
+        timer = self._node.create_timer(api.SERVICE_TIMEOUT_SECONDS, future.cancel, callback_group=ReentrantCallbackGroup())
         try:
             response = await future
             if future.cancelled():
@@ -143,7 +145,7 @@ class RealBackend:
     def _receive_conveyor(self, message):
         try:
             state = json.loads(message.data)
-            if not isinstance(state, dict) or state.get("schema_version") != 1:
+            if not isinstance(state, dict) or state.get("schema_version") != api.CONVEYOR_SCHEMA_VERSION:
                 return
             with self._lock:
                 self._conveyor_state = state
@@ -155,7 +157,7 @@ class RealBackend:
         with self._lock:
             state = self._conveyor_state
             age = time.monotonic() - self._conveyor_received
-        if state is None or age > 1.0:
+        if state is None or age > api.CONVEYOR_FRESHNESS_SECONDS:
             raise RuntimeError("Conveyor state heartbeat is unavailable or stale.")
         if (state.get("state") not in {"IDLE", "ASSEMBLY_STOP", "INSPECTION_STOP"} or
                 state.get("moving") is not False or state.get("armed") is not True or
@@ -176,7 +178,7 @@ class RealBackend:
         def wake():
             if not future.done():
                 future.set_result(None)
-        timer = self._node.create_timer(0.1, wake)
+        timer = self._node.create_timer(api.WAIT_TICK_SECONDS, wake)
         try:
             await future
             if self._closed:
@@ -196,12 +198,12 @@ class RealBackend:
             motion_id = accepted.get("motion_id")
             if not isinstance(motion_id, str) or not motion_id or motion_id == before.get("motion_id"):
                 raise RuntimeError("Conveyor acceptance has no new motion_id.")
-            deadline = time.monotonic() + 35.0
+            deadline = time.monotonic() + api.CONVEYOR_TIMEOUT_SECONDS
             while time.monotonic() < deadline:
                 with self._lock:
                     state = self._conveyor_state
                     age = time.monotonic() - self._conveyor_received
-                if age > 1.0 or state.get("server_instance_id") != before["server_instance_id"]:
+                if age > api.CONVEYOR_FRESHNESS_SECONDS or state.get("server_instance_id") != before["server_instance_id"]:
                     raise RuntimeError("Conveyor heartbeat lost or server restarted.")
                 if state.get("state") in {"FAULT", "MANUAL_STOP"}:
                     raise RuntimeError("Conveyor stopped: " + str(state.get("reason", "")))
@@ -243,7 +245,7 @@ class RealBackend:
             if self._execution_id != execution_id or self._pending_control is not None:
                 raise RuntimeError("Execution changed while preparing control")
             self._control_sequence += 1
-            request = dict(schema="fr5.assembly_execution/v2", action="assembly." + action,
+            request = dict(schema=api.ASSEMBLY_SCHEMA, action="assembly." + action,
                 execution_id=execution_id, control_id=str(uuid.uuid4()), control_sequence=self._control_sequence)
             if action == "resume":
                 request["pause_control_id"] = data["pause_control_id"]
@@ -274,7 +276,7 @@ class RealBackend:
                 self._pending_control = None
                 return data
             rejection = pending.get("rejection")
-            if rejection or time.monotonic() - pending["sent_at"] > 60:
+            if rejection or time.monotonic() - pending["sent_at"] > api.CONTROL_TIMEOUT_SECONDS:
                 return dict(data, control_error=(rejection or {}).get("message", "Control confirmation timed out; state is unconfirmed"))
             return dict(data, control_pending=action)
 
@@ -287,7 +289,7 @@ class RealBackend:
     def _receive_execution(self, message):
         try:
             data = json.loads(message.data)
-            if not isinstance(data, dict) or data.get("schema") != "fr5.assembly_execution/v2":
+            if not isinstance(data, dict) or data.get("schema") != api.ASSEMBLY_SCHEMA:
                 return
             with self._lock:
                 if self._execution_id is None or data.get("execution_id") != self._execution_id:
@@ -350,7 +352,7 @@ class RealBackend:
         if self._validate_readiness(robot, assembly) != revision:
             raise RuntimeError("Robot recipe revision changed after Job preparation.")
         validate_scene_confirmation(confirmation)
-        request = dict(schema="fr5.assembly_execution/v2", action="assembly.start",
+        request = dict(schema=api.ASSEMBLY_SCHEMA, action="assembly.start",
             execution_id=str(uuid.UUID(confirmation["execution_id"])), production_job_id=job_id,
             unit_id=unit_id, product_id=PRODUCTION_PRODUCT_CODE,
             production_recipe_version=recipe_version, robot_recipe_revision=revision,
@@ -383,8 +385,8 @@ class RealBackend:
         try:
             sent = True
             self._assembly_command.publish(String(data=encoded))
-            deadline = time.monotonic() + 1800.0
-            next_query = time.monotonic() + 2.0
+            deadline = time.monotonic() + api.ASSEMBLY_TIMEOUT_SECONDS
+            next_query = time.monotonic() + api.ASSEMBLY_POLL_SECONDS
             previous = None
             while time.monotonic() < deadline:
                 with self._lock:
@@ -425,7 +427,7 @@ class RealBackend:
                     if production.get("execution_id") not in (None, request["execution_id"]):
                         raise RuntimeError("Robot status changed to another execution.")
                     self._receive_execution(String(data=json.dumps(production)))
-                    next_query = time.monotonic() + 2.0
+                    next_query = time.monotonic() + api.ASSEMBLY_POLL_SECONDS
                 await self._wait_tick()
             raise TimeoutError("Robot completion timed out; remote execution may continue.")
         except Exception as error:
@@ -493,7 +495,8 @@ class RealBackend:
 
 
 def inspect(inspection_id, job_id, unit_id, *, base_url, token=None,
-            timeout=330.0, request_timeout=10.0, poll_interval=1.0):
+            timeout=api.VISION_TIMEOUT_SECONDS, request_timeout=api.VISION_REQUEST_TIMEOUT_SECONDS,
+            poll_interval=api.VISION_POLL_SECONDS):
     """Run or retrieve one inspection and return ``{data: dict, image_bytes: bytes | None}``.
 
     The caller owns persistent inspection IDs and UNKNOWN/reinspection policy.
@@ -522,7 +525,7 @@ def inspect(inspection_id, job_id, unit_id, *, base_url, token=None,
     port = url.port
     connection_type = http.client.HTTPSConnection if url.scheme == "https" else http.client.HTTPConnection
     identity = {"inspection_id": inspection_id, "job_id": job_id, "unit_id": unit_id}
-    path = f"/api/v1/inspections/{inspection_id}"
+    path = f"{api.VISION_INSPECTIONS}/{inspection_id}"
     deadline = time.monotonic() + timeout
 
     def remaining():
@@ -546,7 +549,7 @@ def inspect(inspection_id, job_id, unit_id, *, base_url, token=None,
         finally:
             connection.close()
 
-    method, target, payload = "POST", "/api/v1/inspections", identity
+    method, target, payload = "POST", api.VISION_INSPECTIONS, identity
     while True:
         remaining()
         try:
@@ -557,7 +560,7 @@ def inspect(inspection_id, job_id, unit_id, *, base_url, token=None,
             time.sleep(min(poll_interval, remaining()))
             continue
         if code == 404 and method == "GET":
-            method, target, payload = "POST", "/api/v1/inspections", identity
+            method, target, payload = "POST", api.VISION_INSPECTIONS, identity
             time.sleep(min(poll_interval, remaining()))
             continue
         if code != (202 if method == "POST" else 200):
@@ -620,7 +623,7 @@ def _self_check():
     png = b"\x89PNG\r\n\x1a\ncheck"
     digest = hashlib.sha256(png).hexdigest()
     data = dict(identity, status="COMPLETED", result={"decision": "UNKNOWN", "defects": []},
-                image={"ready": True, "path": f"/api/v1/inspections/{identity['inspection_id']}/image",
+                image={"ready": True, "path": f"{api.VISION_INSPECTIONS}/{identity['inspection_id']}/image",
                        "filename": "02_annotated_report.png", "mime_type": "image/png",
                        "size_bytes": len(png), "sha256": digest})
     headers = {"Content-Type": "image/png", "Content-Length": str(len(png)),
