@@ -821,6 +821,51 @@ class RealWorkflowTest(unittest.IsolatedAsyncioTestCase):
         backend.execute_assembly.side_effect = assembly
         return node, active
 
+    def test_stage_changes_without_placement_notify_and_restore(self):
+        node, active = self.sequencer()
+        payload = dict(execution_id=OPERATION_ID, production_job_id=JOB_ID, unit_id=22,
+                       completed_slots=[], current_stage="capture_board")
+        node.real_progress(active, payload)
+        node.real_progress(active, payload)
+        self.assertEqual(node.publish.call_count, 1)
+        self.assertEqual(node.publish.call_args.args[0]["slot_code"], "")
+        payload["current_stage"] = "capture_tray"
+        node.real_progress(active, payload)
+        self.assertEqual(node.publish.call_count, 2)
+        self.assertEqual(assembly_snapshot(active, active["state"])["message"], "capture_tray")
+        payload["completed_slots"] = active["slot_codes"][:1]
+        node.real_progress(active, payload)
+        payload["current_stage"] = "after_photo"
+        node.real_progress(active, payload)
+        self.assertEqual(node.publish.call_count, 4)
+        self.assertEqual(active["placed_count"], 1)
+        # A stale snapshot must not replace a newer placement or its stage.
+        payload.update(completed_slots=[], current_stage="capture_board")
+        node.real_progress(active, payload)
+        self.assertEqual(node.publish.call_count, 4)
+        self.assertEqual(active["message"], "after_photo")
+
+    async def test_inspection_notification_precedes_result_and_preserves_decision(self):
+        for decision, reached in (("PASS", True), ("FAIL", False), ("UNKNOWN", False)):
+            node, active = self.sequencer(decision, reached)
+            async def inspect(*args):
+                self.assertEqual(node.publish.call_args.args[0]["message"], "검사 진행 중")
+                self.assertEqual(assembly_snapshot(active, active["state"])["message"], "검사 진행 중")
+                return dict(result=decision, defects=None)
+            node.backend.inspect_unit.side_effect = inspect
+            await AssemblySequencer.run_real_workflow(node, active)
+            messages = [call.args[0]["message"] for call in node.publish.call_args_list]
+            self.assertLess(messages.index("조립 위치 이동 중"), messages.index("전체 조립 실행 중"))
+            self.assertLess(messages.index("검사 위치 이동 중"), messages.index("검사 진행 중"))
+            if decision == "UNKNOWN":
+                self.assertIn("판정 보류", messages[-1])
+            else:
+                self.assertIn("검사 결과 · " + decision, messages[-1])
+            if decision == "PASS":
+                self.assertEqual(node.terminal_snapshot["message"], messages[-1])
+            else:
+                self.assertEqual(active["state"], "PAUSED")
+
     async def test_start_claims_once_and_duplicate_never_starts_another_unit(self):
         import time
         from assembly_sequencer.recipe_contract import PRODUCTION_SLOTS

@@ -296,3 +296,12 @@ DB는 같은 모드의 관리자 설정을 확인하고 실행 중 모드 변경
 검사 결과 `UNKNOWN`은 자료 저장·flush 후 `PAUSED`와 `INSPECTION_UNKNOWN`으로 표시합니다.
 Job·Unit은 RUNNING을 유지하고 기판 이송·다음 Unit·일반 resume는 진행하지 않습니다.
 검사 판정 해소·재검사 API는 제공하지 않습니다.
+
+### 진행 설명 표시
+
+Real 실행의 `message`는 컨베이어 목적지 이동, 로봇이 보고한 `current_stage`, 검사 진행과
+확인된 검사 결과를 전달합니다. 로봇 단계가 바뀌면 완료 슬롯 증가가 없어도 feedback을 발행하며,
+같은 완료 슬롯 목록·단계의 반복 callback은 추가 발행하지 않습니다. status에도 최신 설명을 보존합니다.
+`message`는 표시용 설명이며 설비 제어 명령이나 완료 판정의 근거가 아닙니다.
+후속 촬영 단계는 검사 PASS가 아니며, 검사 FAIL 이후 새 PCB 확인 대기와 UNKNOWN 판정 보류는
+기존 `PAUSED` 상태와 오류 의미를 유지합니다. Real Unity는 feedback 수신 후 status를 조회합니다.

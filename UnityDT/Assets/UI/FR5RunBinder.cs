@@ -1023,6 +1023,9 @@ namespace MainUnity.UI
                     AssemblyState.Failed => "실패",
                     _ => "확인 필요"
                 });
+                if (frame != null && !frame.IsTerminal && frame.State != AssemblyState.Paused &&
+                    !string.IsNullOrWhiteSpace(frame.Message))
+                    unitPhase.text = "현재 공정 · " + DescribeStage(frame.Message);
                 // FAILED 가 RUNNING·IDLE 과 같은 무게로 보이면 실패를 못 알아본다.
                 // 진행 중은 색을 얻지 않는다 — 이상만 색을 얻는다(Docs/ui-design.md 1절).
                 SetTone(unitPhase, frame != null && frame.State == AssemblyState.Failed ? "bad" : "none");
@@ -1050,10 +1053,10 @@ namespace MainUnity.UI
                 string detail = frame == null ? "생산 공정 피드백 대기" : frame.State switch
                 {
                     AssemblyState.Idle => "실행 요청 대기",
-                    AssemblyState.Completed => "목표 PASS 달성 여부는 작업 화면에서 확인",
+                    AssemblyState.Completed => string.IsNullOrEmpty(frame.Message) ? "목표 PASS 달성 여부는 작업 화면에서 확인" : frame.Message,
                     AssemblyState.Failed => string.IsNullOrEmpty(frame.Message) ? "실패 원인은 최근 이벤트에서 확인" : frame.Message,
-                    AssemblyState.Paused => "일시정지 중 · 재개 확인 필요",
-                    _ => string.IsNullOrEmpty(frame.Message) ? "다음 진행 피드백 대기" : frame.Message
+                    AssemblyState.Paused => string.IsNullOrEmpty(frame.Message) ? "일시정지 중 · 재개 확인 필요" : frame.Message,
+                    _ => string.IsNullOrEmpty(frame.Message) ? "다음 진행 피드백 대기" : DescribeStage(frame.Message)
                 };
                 if (statusManager != null && statusManager.State == RobotRunState.Error)
                     detail = "로봇 오류 · 상단 알람 확인";
@@ -1094,6 +1097,26 @@ namespace MainUnity.UI
                 FR5EmptyState.Present(requestId,
                     frame != null && !string.IsNullOrEmpty(frame.JobId) ? frame.JobId : "—");
         }
+
+        // 제공자가 보고한 단계만 번역한다. 후속 촬영은 불량검사 PASS를 뜻하지 않는다.
+        static string DescribeStage(string stage) => stage switch
+        {
+            "stack_check" => "조립 실행 환경 확인 중",
+            "step_api_check" => "로봇 동작 준비 확인 중",
+            "capture_board" => "기판 촬영 중",
+            "capture_tray" => "트레이 촬영 중",
+            "refine_vrm" => "VRM 위치 보정 중",
+            "preflight_non-smd" => "일반 부품 조립 계획 검증 중",
+            "assemble_non-smd" => "일반 부품 조립 중",
+            "capture_smd_view" => "SMD 촬영 중",
+            "measure_smd" => "SMD 측정 중",
+            "merge_smd" => "SMD 측정 결과 통합 중",
+            "preflight_smd" => "SMD 조립 계획 검증 중",
+            "assemble_smd" => "SMD 조립 중",
+            "after_photo" => "조립 후 확인 촬영 중",
+            "Robot assembly running" => "로봇 조립 실행 중",
+            _ => stage
+        };
 
         static string Describe(AssemblyProgressFrame frame)
         {

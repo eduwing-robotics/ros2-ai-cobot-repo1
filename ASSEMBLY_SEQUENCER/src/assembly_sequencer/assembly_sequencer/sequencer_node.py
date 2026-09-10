@@ -293,14 +293,16 @@ class AssemblySequencer(Node):
             raise ValueError("Robot progress contains invalid completed slots.")
         if not set(active["placed_slot_codes"]).issubset(completed):
             return
-        changed = completed != active["placed_slot_codes"]
+        message = str(data.get("current_stage") or "Robot assembly running")
+        changed = completed != active["placed_slot_codes"] or message != active.get("message")
         active["placed_slot_codes"] = list(completed)
         active["placed_count"] = len(completed)
         active["state"] = "PLACED" if completed else "STARTED"
-        active["message"] = str(data.get("current_stage") or "Robot assembly running")
-        if changed and completed:
+        active["message"] = message
+        if changed:
             self.publish(dict(job_id=active["job_id"], state=active["state"], step_order=len(completed),
-                part_id=completed[-1].split("-")[0], slot_code=completed[-1], error_code="",
+                part_id=completed[-1].split("-")[0] if completed else "",
+                slot_code=completed[-1] if completed else "", error_code="",
                 message=active["message"], db_sync_state=self.db_writer.sync_state))
 
     async def run_real_workflow(self, active):
@@ -312,6 +314,8 @@ class AssemblySequencer(Node):
             await self.backend.move_conveyor("ASSEMBLY")
             stage = "ASSEMBLY_FAILED"
             active.update(state="STARTED", backend_started=True, message="전체 조립 실행 중")
+            self.publish(dict(job_id=active["job_id"], state=active["state"], step_order=0,
+                part_id="", slot_code="", error_code="", message=active["message"], db_sync_state=self.db_writer.sync_state))
             await self.backend.execute_assembly(active["job_id"], active["unit_id"], active["recipe_version"],
                 active["robot_recipe_revision"], active["scene_confirmation"], active["slot_codes"],
                 lambda data: self.real_progress(active, data))
@@ -325,11 +329,15 @@ class AssemblySequencer(Node):
             await self.backend.move_conveyor("INSPECTION")
             stage = "INSPECTION_FAILED"
             active["message"] = "검사 진행 중"
+            # Real consumes this notification by re-reading status; it never drives a conveyor from feedback.
+            self.publish(dict(job_id=active["job_id"], state=active["state"], step_order=0,
+                part_id="", slot_code="", error_code="", message=active["message"], db_sync_state=self.db_writer.sync_state))
             inspection = await self.backend.inspect_unit(active["job_id"], active["unit_id"], active["slot_codes"])
             stage = "DB_ERROR"
             self.db_writer.inspection_recorded(active["unit_id"], **inspection)
             self.db_writer.flush(DB_SYNC_TIMEOUT_SECONDS)
             active["inspection_result"] = inspection["result"]
+            active["message"] = "검사 결과 · " + inspection["result"]
             if inspection["result"] == "UNKNOWN":
                 active.update(state="PAUSED", inspection_hold=True, error_code="INSPECTION_UNKNOWN",
                               message="검사 완료 · 판정 보류. 결과 자료를 확인하세요.")
@@ -665,7 +673,7 @@ class AssemblySequencer(Node):
             if self.runtime_mode == "real":
                 # A replacement PCB needs a new confirmation; do not reuse the previous Unit's.
                 active.update(state="PAUSED", awaiting_next_unit=True, error_code="SCENE_CONFIRMATION_REQUIRED",
-                              message="다음 PCB 준비 후 새 현장 확인이 필요합니다.")
+                              message="검사 결과 · " + active["inspection_result"] + " · 다음 PCB 준비 후 새 현장 확인이 필요합니다.")
                 self.publish(failed_feedback(active["job_id"], active["error_code"], active["message"],
                                              self.db_writer.sync_state) | {"state": "PAUSED"})
                 return
@@ -700,7 +708,7 @@ class AssemblySequencer(Node):
             "part_id": "",
             "slot_code": "",
             "error_code": "",
-            "message": "",
+            "message": active.get("message", ""),
             "db_sync_state": self.db_writer.sync_state,
         }
         self.terminal_snapshot = assembly_snapshot(
