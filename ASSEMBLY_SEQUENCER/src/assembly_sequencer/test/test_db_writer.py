@@ -1164,7 +1164,7 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
         backend, node = self.backend()
         backend._execution_id = OPERATION_ID
         backend._execution_server = "server-a"
-        status = dict(execution_id=OPERATION_ID, server_instance_id="server-a",
+        status = dict(schema=api_contracts.ASSEMBLY_SCHEMA, execution_id=OPERATION_ID, server_instance_id="server-a",
                       capabilities=dict(pause=True, resume=True, cancel=True), recovery_required=False,
                       status="running")
         backend._read_status = AsyncMock(return_value={"production_contract": status})
@@ -1186,7 +1186,7 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
         backend, node = self.backend()
         backend._execution_id = OPERATION_ID
         backend._execution_server = "server-a"
-        status = dict(execution_id=OPERATION_ID, server_instance_id="server-a",
+        status = dict(schema=api_contracts.ASSEMBLY_SCHEMA, execution_id=OPERATION_ID, server_instance_id="server-a",
                       capabilities=dict(cancel=True), recovery_required=False, status="running")
         backend._read_status = AsyncMock(return_value={"production_contract": status})
         request = await backend.request_control(OPERATION_ID, "cancel")
@@ -1198,7 +1198,7 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
         backend, node = self.backend()
         backend._execution_id = OPERATION_ID
         backend._execution_server = "server-a"
-        status = dict(execution_id=OPERATION_ID, server_instance_id="server-a",
+        status = dict(schema=api_contracts.ASSEMBLY_SCHEMA, execution_id=OPERATION_ID, server_instance_id="server-a",
                       capabilities=dict(pause=True), recovery_required=False, status="running")
         backend._read_status = AsyncMock(return_value={"production_contract": status})
         await backend.request_control(OPERATION_ID, "pause")
@@ -1323,7 +1323,8 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
             with self.assertRaisesRegex(RuntimeError, "SAFETY_STOP: connection lost"):
                 await backend.execute_assembly(JOB_ID, 22, "assembly-r1", "deployed-r1", confirmation, slots, Mock())
         backend._assembly_command.publish.assert_called_once()
-        self.assertIsNone(backend._execution_id)
+        self.assertEqual(backend._execution_id, OPERATION_ID)
+        self.assertTrue(backend.execution_tracking_stopped)
 
     async def test_invalid_confirmation_never_publishes_start(self):
         backend, _ = self.backend()
@@ -1382,8 +1383,37 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
         backend._execution_id = OPERATION_ID
         request = dict(action="assembly.cancel", control_id="existing")
         backend._pending_control = dict(request=request)
+        backend.reconcile_control = AsyncMock(return_value={})
         self.assertEqual(await backend.request_control(OPERATION_ID, "cancel"), request)
         node.create_publisher.return_value.publish.assert_not_called()
+
+    def test_control_permissions_match_paused_work_and_db_failure(self):
+        backend = Mock()
+        node = SimpleNamespace(active=dict(state="PAUSED", backend_started=False),
+            db_writer=Mock(sync_state="SYNCED"), backend=backend)
+        self.assertEqual(AssemblySequencer.control_reason(node, "cancel"), "")
+        self.assertTrue(AssemblySequencer.control_reason(node, "resume"))
+        node.db_writer.sync_state = "FAILED"
+        self.assertTrue(AssemblySequencer.control_reason(node, "cancel"))
+        backend.control_reason.assert_not_called()
+
+    async def test_matching_rejection_releases_control_but_wrong_server_does_not(self):
+        backend, _ = self.backend()
+        backend._execution_id = OPERATION_ID
+        backend._execution_server = "server-a"
+        pending = dict(request=dict(action="assembly.pause", control_id="control-a"),
+            sent_at=0, rejection=dict(control_id="control-a", message="rejected"))
+        backend._pending_control = pending
+        data = dict(schema=api_contracts.ASSEMBLY_SCHEMA, execution_id=OPERATION_ID,
+            server_instance_id="server-b", status="running")
+        backend._read_status = AsyncMock(return_value={"production_contract": data})
+        with self.assertRaises(RuntimeError):
+            await backend.reconcile_control()
+        self.assertIs(backend._pending_control, pending)
+        data["server_instance_id"] = "server-a"
+        result = await backend.reconcile_control()
+        self.assertEqual(result["control_error"], "rejected")
+        self.assertIsNone(backend._pending_control)
 
     def test_real_contracts_are_declarations_without_duplicate_runtime_literals(self):
         import ast

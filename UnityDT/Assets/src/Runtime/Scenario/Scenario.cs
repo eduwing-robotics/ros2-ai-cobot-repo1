@@ -59,6 +59,9 @@ namespace MainUnity.Runtime.Scenario
             }
         }
 
+        public string GetControlBlockReason(string action) =>
+            robot?.GetControlBlockReason(action) ?? "시나리오가 연결되지 않았습니다.";
+
         public Task PauseAsync()
         {
             if (!IsRunning || robot == null)

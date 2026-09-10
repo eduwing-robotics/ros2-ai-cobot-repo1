@@ -39,6 +39,8 @@ namespace MainUnity.Runtime.Robot.Interface
         Task ResumeAsync();
         /// <summary>실제 취소와 생산 상태 반영을 확인한다.</summary>
         Task CancelAsync();
+        /// <summary>빈 문자열이면 조작 가능하며, 그 외에는 불가 사유다.</summary>
+        string GetControlBlockReason(string action);
     }
 
     /// <summary>Backend의 저수준 이동 및 수동 제어 명령을 정의한다.</summary>

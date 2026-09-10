@@ -372,6 +372,14 @@ namespace MainUnity.Runtime.Robot.Mock
             }
         }
 
+        public string GetControlBlockReason(string action)
+        {
+            if (action == "cancel") return "Mock 취소는 지원하지 않습니다.";
+            if (action != "pause" && action != "resume") return "지원하지 않는 조작입니다.";
+            try { ValidateControl(action == "resume"); return ""; }
+            catch (Exception error) { return error.Message; }
+        }
+
         public Task CancelAsync() => Task.FromException(new NotSupportedException("Mock 취소는 지원하지 않습니다."));
 
         public async Task PauseAsync()

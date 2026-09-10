@@ -36,6 +36,9 @@ class RealBackend:
         self._execution_server = None
         self._execution_sequence = -1
         self._pending_control = None
+        self._execution_detached = False
+        self._control_status = None
+        self._control_status_received = 0.0
         self._control_sequence = 0
         self._assembly_status_client = node.create_client(
             Trigger, api.ASSEMBLY_STATUS, callback_group=ReentrantCallbackGroup())
@@ -252,9 +255,12 @@ class RealBackend:
 
         if action not in {"pause", "resume", "cancel"}:
             raise ValueError("Unsupported production control")
+        await self.reconcile_control()
         with self._lock:
             if self._execution_id != execution_id:
                 raise RuntimeError("No matching execution")
+            if self._execution_detached and action != "cancel":
+                raise RuntimeError("Execution tracking stopped; only cancellation is available")
             pending = self._pending_control
             if pending is not None:
                 if pending["request"]["action"] == "assembly." + action:
@@ -283,6 +289,65 @@ class RealBackend:
         self._assembly_command.publish(String(data=json.dumps(request)))
         return request
 
+    def release_cancelled_execution(self):
+        with self._lock:
+            data = self._control_status or {}
+            if (data.get("execution_id") != self._execution_id or data.get("status") != "cancelled" or
+                    data.get("stop_verified") is not True or data.get("recovery_required") is not False):
+                raise RuntimeError("Confirmed cancellation is required before releasing execution")
+            self._execution_id = None
+            self._pending_control = None
+            self._execution_detached = False
+
+    @property
+    def execution_tracking_stopped(self):
+        return self._execution_detached
+
+    def control_reason(self, execution_id, action, paused):
+        with self._lock:
+            if self._execution_id != execution_id:
+                return "원격 실행 연결을 확인할 수 없습니다."
+            if self._execution_detached and action != "cancel":
+                return "실행 추적 중단 후에는 취소만 가능합니다."
+            data = self._control_status
+            if data is None or time.monotonic() - self._control_status_received > api.CONTROL_STATUS_FRESHNESS_SECONDS:
+                return "최신 원격 제어 상태를 확인 중입니다."
+            if data.get("capabilities", {}).get(action) is not True or data.get("recovery_required") is not False:
+                return "장비가 해당 제어를 지원하지 않거나 복구가 필요합니다."
+            if action == "resume" and (data.get("status") != "paused" or data.get("resume_available") is not True):
+                return "장비가 재개 가능한 일시정지를 확인하지 않았습니다."
+            pending = self._pending_control
+            if pending:
+                return "" if pending["request"]["action"] == "assembly." + action else "이전 제어 결과를 확인 중입니다."
+            if action == "resume" and not paused:
+                return "일시정지된 작업이 아닙니다."
+            if action == "pause" and paused:
+                return "이미 보류 또는 일시정지 상태입니다."
+            return ""
+
+    async def reconcile_control(self):
+        with self._lock:
+            execution_id = self._execution_id
+            pending = self._pending_control
+        if execution_id is None:
+            return None
+        self._control_status = None
+        status = await self._read_status(self._assembly_status_client)
+        data = status.get("production_contract", {})
+        if (data.get("schema") != api.ASSEMBLY_SCHEMA or data.get("execution_id") != execution_id or
+                data.get("server_instance_id") != self._execution_server):
+            raise RuntimeError("Execution identity changed during control reconciliation")
+        with self._lock:
+            sequence = data.get("event_sequence")
+            if type(sequence) is int and sequence < self._execution_sequence:
+                raise RuntimeError("Control status predates the latest execution event")
+            self._control_status = data
+            self._control_status_received = time.monotonic()
+        result = self.control_progress(data)
+        from std_msgs.msg import String
+        self._receive_execution(String(data=json.dumps(data)))
+        return result
+
     def control_progress(self, data):
         with self._lock:
             pending = self._pending_control
@@ -305,6 +370,11 @@ class RealBackend:
                 self._pending_control = None
                 return data
             rejection = pending.get("rejection")
+            # Only a rejection attributable to this exact control can release its lock.
+            last_rejected = matches and isinstance(last, dict) and last.get("request_accepted") is False
+            if (rejection and rejection.get("control_id") == request["control_id"]) or last_rejected:
+                self._pending_control = None
+                return dict(data, control_error=(rejection or last).get("message", "Control rejected"))
             if rejection or time.monotonic() - pending["sent_at"] > api.CONTROL_TIMEOUT_SECONDS:
                 return dict(data, control_error=(rejection or {}).get("message", "Control confirmation timed out; state is unconfirmed"))
             return dict(data, control_pending=action)
@@ -470,8 +540,13 @@ class RealBackend:
             raise
         finally:
             with self._lock:
-                self._execution_id = None
-                self._pending_control = None
+                response = self._execution_response
+                unresolved = sent and not (response and self._terminal(response) and
+                    response.get("recovery_required") is not True)
+                self._execution_detached = unresolved
+                if not unresolved:
+                    self._execution_id = None
+                    self._pending_control = None
 
     async def inspect_unit(self, job_id, unit_id, slot_codes):
         from rclpy.task import Future

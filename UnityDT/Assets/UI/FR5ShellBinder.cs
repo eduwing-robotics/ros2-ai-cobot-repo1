@@ -219,23 +219,19 @@ namespace MainUnity.UI
 
             AssemblyProgressFrame frame = uiMaster?.AssemblyProgress?.Latest;
             bool paused = frame?.State == AssemblyState.Paused;
-            bool conveyorMoving = frame?.State == AssemblyState.ConveyorMoving;
-            bool pauseSupported = uiMaster != null;
-            cancelButton?.SetEnabled(uiMaster?.IsSimulated == false && !stopRequestInFlight &&
-                frame != null && !frame.IsTerminal && !conveyorMoving && uiMaster?.Scenario?.IsRunning == true);
-            if (cancelButton != null) cancelButton.tooltip = "로봇 조립 중 또는 조립 전 보류 작업의 취소를 요청하고 정지·DB 반영을 확인합니다.";
+            string pauseAction = paused ? "resume" : "pause";
+            string pauseReason = uiMaster?.Scenario?.GetControlBlockReason(pauseAction) ?? "시나리오 연결 없음";
+            string cancelReason = uiMaster?.Scenario?.GetControlBlockReason("cancel") ?? "시나리오 연결 없음";
+            cancelButton?.SetEnabled(!stopRequestInFlight && string.IsNullOrEmpty(cancelReason));
+            if (cancelButton != null) cancelButton.tooltip = string.IsNullOrEmpty(cancelReason)
+                ? "작업 취소를 요청하고 실제 결과를 확인합니다." : cancelReason;
             if (stopAllButton != null)
             {
-                stopAllButton.text = !pauseSupported ? "일시정지 미지원" : stopRequestInFlight ? "처리 중…" : paused ? "▶ 재개" : "Ⅱ 일시정지";
-                stopAllButton.SetEnabled(pauseSupported && !stopRequestInFlight && frame != null &&
-                    !frame.IsTerminal && !conveyorMoving && uiMaster?.Scenario?.IsRunning == true);
-                stopAllButton.tooltip = !pauseSupported
-                    ? "시나리오 연결을 확인하세요."
-                    : conveyorMoving
-                        ? "컨베이어 이동 중에는 일시정지할 수 없습니다."
-                    : paused
-                        ? "일시정지된 조립을 재개합니다."
-                        : "이미 전달된 로봇 동작이 끝난 뒤 일시정지합니다.";
+                stopAllButton.text = stopRequestInFlight ? "처리 중…" : paused ? "▶ 재개" : "Ⅱ 일시정지";
+                stopAllButton.SetEnabled(!stopRequestInFlight && string.IsNullOrEmpty(pauseReason));
+                stopAllButton.tooltip = string.IsNullOrEmpty(pauseReason)
+                    ? paused ? "일시정지된 작업을 재개합니다." : "전달된 동작이 끝난 뒤 일시정지합니다."
+                    : pauseReason;
             }
         }
 

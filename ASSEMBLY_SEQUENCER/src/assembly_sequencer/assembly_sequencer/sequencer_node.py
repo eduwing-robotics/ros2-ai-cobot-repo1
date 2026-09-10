@@ -152,6 +152,20 @@ class AssemblySequencer(Node):
 
         # While active, status uses only feedback already committed by this bridge.
         if command_type == "status":
+            if self.runtime_mode == "real" and self.active and self.active.get("backend_started"):
+                try:
+                    data = await self.backend.reconcile_control()
+                    if data and self.backend.execution_tracking_stopped:
+                        if (data.get("status") == "cancelled" and data.get("stop_verified") is True and
+                                data.get("recovery_required") is False and not data.get("control_pending") and not data.get("control_error")):
+                            self.fail_active("EXECUTION_CANCELLED", RuntimeError("원격 취소·정지 확인"))
+                            if self.active is None:
+                                self.backend.release_cancelled_execution()
+                        elif self.active:
+                            self.active["message"] = data.get("control_error") or "실행 추적 중단 · 원격 상태 확인됨 · 취소 가능"
+                except Exception as error:
+                    if self.active:
+                        self.active["message"] = "제어 상태 확인 실패: " + str(error)
             if self.terminal_snapshot is not None:
                 snapshot = self.sync_snapshot(self.terminal_snapshot)
             elif self.active is not None:
@@ -171,6 +185,10 @@ class AssemblySequencer(Node):
                     snapshot["db_sync_state"] = self.db_writer.sync_state
                 except Exception as error:
                     snapshot = unavailable_snapshot(str(error))
+            if self.runtime_mode == "real":
+                snapshot.update({action + "_reason": AssemblySequencer.control_reason(self, action)
+                    for action in ("pause", "resume", "cancel")})
+                snapshot["controls_available"] = True
             snapshot["runtime_mode"] = self.runtime_mode
             response.cmd_res = json.dumps(snapshot, separators=(",", ":"))
             return response
@@ -200,6 +218,10 @@ class AssemblySequencer(Node):
                     response, False, job_id, "NOT_ACTIVE",
                     "matching assembly is not active",
                 )
+            if self.runtime_mode == "real":
+                reason = AssemblySequencer.control_reason(self, command_type)
+                if reason:
+                    return self.set_response(response, False, job_id, "CONTROL_REJECTED", reason)
             if self.active.get("quality_hold"):
                 active = self.active
                 try:
@@ -406,6 +428,26 @@ class AssemblySequencer(Node):
                 part_id=completed[-1].split("-")[0] if completed else "",
                 slot_code=completed[-1] if completed else "", error_code="",
                 message=active["message"], db_sync_state=self.db_writer.sync_state))
+
+    def control_reason(self, action):
+        active = self.active
+        if active is None:
+            return "활성 작업이 없습니다."
+        if self.db_writer.sync_state == "FAILED":
+            return "DB 반영 결과 확인이 필요합니다."
+        if active.get("quality_hold"):
+            return "" if action in {"resume", "cancel"} else "이미 생산 보류 중입니다."
+        if active.get("awaiting_next_unit"):
+            return "새 현장 확인이 필요합니다."
+        if active.get("inspection_hold"):
+            return "검사 판정 해소가 필요합니다."
+        if not active.get("backend_started"):
+            if action == "cancel" and active["state"] == "PAUSED":
+                return ""
+            return "로봇 조립 전에는 보류 작업 취소만 지원합니다."
+        if active["state"] not in {"STARTED", "PLACED", "PAUSED"}:
+            return "현재 공정에서는 제어를 지원하지 않습니다."
+        return self.backend.control_reason(active.get("execution_id"), action, active["state"] == "PAUSED")
 
     async def cancel_before_assembly(self, active):
         try:

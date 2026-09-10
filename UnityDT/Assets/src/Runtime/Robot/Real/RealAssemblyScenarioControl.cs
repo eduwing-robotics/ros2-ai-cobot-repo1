@@ -122,6 +122,10 @@ namespace MainUnity.Runtime.Robot.Real
             public string current_event;
             public string error_code;
             public string message;
+            public bool controls_available;
+            public string pause_reason;
+            public string resume_reason;
+            public string cancel_reason;
             public bool control_pending;
             public string db_sync_state;
         }
@@ -228,6 +232,22 @@ namespace MainUnity.Runtime.Robot.Real
             }
         }
 
+        double controlsReceivedAt = double.NegativeInfinity;
+
+        public string GetControlBlockReason(string action)
+        {
+            if (latest == null || !latest.controls_available || !latest.available ||
+                Time.realtimeSinceStartupAsDouble - controlsReceivedAt > 3d)
+                return "최신 조작 가능 상태를 확인 중입니다.";
+            return action switch
+            {
+                "pause" => latest.pause_reason ?? "서버 판정 누락",
+                "resume" => latest.resume_reason ?? "서버 판정 누락",
+                "cancel" => latest.cancel_reason ?? "서버 판정 누락",
+                _ => "지원하지 않는 조작입니다."
+            };
+        }
+
         public Task PauseAsync() => SendControlAsync("pause");
         public Task ResumeAsync() => SendControlAsync("resume");
         public Task CancelAsync() => SendControlAsync("cancel");
@@ -277,35 +297,24 @@ namespace MainUnity.Runtime.Robot.Real
 
         async Task RestoreProgressAsync(int currentGeneration)
         {
-            if (!Application.isPlaying)
-                return;
-            try
+            // Keep permission/status observation alive after a workflow wait has failed.
+            while (Application.isPlaying && isActiveAndEnabled && currentGeneration == generation)
             {
-                AssemblySnapshot snapshot = await ReadStatusAsync(currentGeneration);
-                if (!snapshot.available || snapshot.state == "IDLE")
-                    return;
-                activeJobId = snapshot.job_id;
-                ApplySnapshot(snapshot);
-                if (snapshot.active)
-                    _ = ObserveExistingAsync(snapshot.job_id, currentGeneration);
-            }
-            catch (Exception exception)
-            {
-                if (currentGeneration == generation && isActiveAndEnabled)
-                    Debug.LogWarning("Real assembly progress could not be restored: " + exception.Message, this);
-            }
-        }
-
-        async Task ObserveExistingAsync(string jobId, int currentGeneration)
-        {
-            try
-            {
-                await MonitorAsync(jobId, currentGeneration);
-            }
-            catch (Exception exception)
-            {
-                if (currentGeneration == generation && isActiveAndEnabled)
-                    Debug.LogWarning("Real assembly observation stopped: " + exception.Message, this);
+                if (!executionPending && !controlPending)
+                {
+                    try
+                    {
+                        AssemblySnapshot snapshot = await ReadStatusAsync(currentGeneration);
+                        activeJobId = snapshot.job_id;
+                        if (snapshot.available && snapshot.state != "IDLE") ApplySnapshot(snapshot);
+                        else { latest = snapshot; controlsReceivedAt = Time.realtimeSinceStartupAsDouble; }
+                    }
+                    catch (Exception)
+                    {
+                        controlsReceivedAt = double.NegativeInfinity;
+                    }
+                }
+                await Task.Delay(1000);
             }
         }
 
@@ -401,6 +410,7 @@ namespace MainUnity.Runtime.Robot.Real
             if (latest != null && latest.job_id == snapshot.job_id && snapshot.unit_id < latest.unit_id)
                 return;
             latest = snapshot;
+            controlsReceivedAt = Time.realtimeSinceStartupAsDouble;
             // Unit lifecycle is mirrored only from the backend's confirmed state. No Mock conveyor,
             // attachment or pose simulation is used to acknowledge physical completion.
             if (itemManager != null && !itemManager.IsUnitCompleted(snapshot.job_id, snapshot.unit_id) &&
