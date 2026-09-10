@@ -814,7 +814,7 @@ class RealWorkflowTest(unittest.IsolatedAsyncioTestCase):
                                   inspect_unit=AsyncMock(return_value=dict(result=decision, defects=None)))
         node = SimpleNamespace(runtime_mode="real", active=active, backend=backend, db_writer=db,
             terminal_snapshot=None, publish=Mock(), get_logger=lambda: Mock())
-        for name in ("real_progress", "finish_active_unit", "fail_active", "fail_job"):
+        for name in ("real_progress", "finish_active_unit", "fail_active", "fail_job", "finalize_cancel", "restore_quality_hold"):
             setattr(node, name, MethodType(getattr(AssemblySequencer, name), node))
         async def assembly(*args):
             args[-1](dict(execution_id=OPERATION_ID, production_job_id=JOB_ID, unit_id=22,
@@ -1008,6 +1008,7 @@ class RealWorkflowTest(unittest.IsolatedAsyncioTestCase):
         node.recipe = None
         node.set_response = AssemblySequencer.set_response
         node.db_writer.get_quality_hold.return_value = dict(job_id=JOB_ID, unit_id=22, recipe_version="assembly-r1")
+        await AssemblySequencer.on_pending_job(node)
         response = await AssemblySequencer.on_external_request(node,
             SimpleNamespace(cmd_str="real\n" + json.dumps({"command": "status"})), SimpleNamespace())
         snapshot = json.loads(response.cmd_res)
@@ -1097,8 +1098,10 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(json.loads(response.cmd_res)["error_code"], "NOT_READY")
         response = await AssemblySequencer.start_job(sequencer, command, SimpleNamespace())
         self.assertEqual(json.loads(response.cmd_res)["error_code"], "NOT_READY")
+        sequencer.restore_quality_hold = MethodType(AssemblySequencer.restore_quality_hold, sequencer)
         await AssemblySequencer.on_pending_job(sequencer)
-        self.assertEqual(sequencer.db_writer.mock_calls, [])
+        sequencer.db_writer.get_quality_hold.assert_called_once()
+        sequencer.db_writer.claim.assert_not_called()
         node.create_client.return_value.call_async.assert_not_called()
 
     async def test_status_uses_api_but_does_not_enable_unconnected_runner(self):
@@ -1372,6 +1375,7 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
         writer = Mock(sync_state="SYNCED")
         node = SimpleNamespace(active=active, backend=SimpleNamespace(
             confirm_conveyor_stopped=AsyncMock()), db_writer=writer, publish=Mock())
+        node.finalize_cancel = MethodType(AssemblySequencer.finalize_cancel, node)
         with patch("assembly_sequencer.sequencer_node.assembly_snapshot", return_value={"active": False}):
             await AssemblySequencer.cancel_before_assembly(node, active)
         writer.finish.assert_called_once_with(JOB_ID, "CANCELLED")
@@ -1414,6 +1418,52 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
         result = await backend.reconcile_control()
         self.assertEqual(result["control_error"], "rejected")
         self.assertIsNone(backend._pending_control)
+
+    async def test_late_reconciliation_cannot_change_replaced_execution(self):
+        backend, _ = self.backend()
+        backend._execution_id = OPERATION_ID
+        backend._execution_server = "server-a"
+        newer = {"status": "running", "execution_id": JOB_ID}
+        async def replace_execution(client):
+            backend._execution_id = JOB_ID
+            backend._execution_response = newer
+            return {"production_contract": dict(schema=api_contracts.ASSEMBLY_SCHEMA,
+                execution_id=OPERATION_ID, server_instance_id="server-a", status="cancelled")}
+        backend._read_status = AsyncMock(side_effect=replace_execution)
+        with self.assertRaisesRegex(RuntimeError, "Local execution/control changed"):
+            await backend.reconcile_control()
+        self.assertIs(backend._execution_response, newer)
+        self.assertIsNone(backend._control_status)
+
+    def test_cancel_commit_timeout_rechecks_without_resubmitting(self):
+        active = dict(job_id=JOB_ID)
+        writer = Mock(sync_state="FAILED")
+        writer.flush.side_effect = RuntimeError("commit response lost")
+        writer.get_job.return_value = dict(job_status="RUNNING", running_quantity=1)
+        node = SimpleNamespace(active=active, db_writer=writer, publish=Mock())
+        AssemblySequencer.finalize_cancel(node, active, "cancel")
+        self.assertIs(node.active, active)
+        self.assertEqual(active["error_code"], "DB_ERROR")
+        writer.get_job.return_value = dict(job_status="CANCELLED", running_quantity=0)
+        with patch("assembly_sequencer.sequencer_node.assembly_snapshot", return_value={}):
+            AssemblySequencer.finalize_cancel(node, active, "cancel")
+        self.assertIsNone(node.active)
+        writer.finish.assert_called_once_with(JOB_ID, "CANCELLED")
+        node.publish.assert_called_once()
+
+    async def test_periodic_reconciliation_finishes_cancel_without_status_request(self):
+        active = dict(job_id=JOB_ID, backend_started=True)
+        backend = SimpleNamespace(execution_tracking_stopped=True,
+            reconcile_control=AsyncMock(return_value=dict(status="cancelled", stop_verified=True, recovery_required=False)),
+            release_cancelled_execution=Mock())
+        node = SimpleNamespace(runtime_mode="real", active=active, backend=backend)
+        def finish(work, message):
+            self.assertIs(work, active)
+            node.active = None
+        node.finalize_cancel = Mock(side_effect=finish)
+        await AssemblySequencer.on_pending_job(node)
+        node.finalize_cancel.assert_called_once()
+        backend.release_cancelled_execution.assert_called_once()
 
     def test_real_contracts_are_declarations_without_duplicate_runtime_literals(self):
         import ast

@@ -28,7 +28,7 @@ class RealBackend:
         self._closed = False
         self._inspection_future = None
         self._pending_calls = set()
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
         self._conveyor_state = None
         self._conveyor_received = 0.0
         self._execution_id = None
@@ -326,27 +326,32 @@ class RealBackend:
             return ""
 
     async def reconcile_control(self):
+        from std_msgs.msg import String
+
         with self._lock:
-            execution_id = self._execution_id
-            pending = self._pending_control
-        if execution_id is None:
-            return None
-        self._control_status = None
+            execution_id, server = self._execution_id, self._execution_server
+            pending, generation = self._pending_control, self._control_sequence
+            if execution_id is None:
+                return None
         status = await self._read_status(self._assembly_status_client)
         data = status.get("production_contract", {})
-        if (data.get("schema") != api.ASSEMBLY_SCHEMA or data.get("execution_id") != execution_id or
-                data.get("server_instance_id") != self._execution_server):
-            raise RuntimeError("Execution identity changed during control reconciliation")
         with self._lock:
+            # Reentrant helpers below apply the response under this same lock. Never
+            # hold it across network I/O; a replaced execution/control invalidates the reply.
+            if (self._execution_id != execution_id or self._execution_server != server or
+                    self._pending_control is not pending or self._control_sequence != generation):
+                raise RuntimeError("Local execution/control changed during reconciliation")
+            if (data.get("schema") != api.ASSEMBLY_SCHEMA or data.get("execution_id") != execution_id or
+                    data.get("server_instance_id") != server):
+                raise RuntimeError("Execution identity changed during control reconciliation")
             sequence = data.get("event_sequence")
             if type(sequence) is int and sequence < self._execution_sequence:
                 raise RuntimeError("Control status predates the latest execution event")
             self._control_status = data
             self._control_status_received = time.monotonic()
-        result = self.control_progress(data)
-        from std_msgs.msg import String
-        self._receive_execution(String(data=json.dumps(data)))
-        return result
+            result = self.control_progress(data)
+            self._receive_execution(String(data=json.dumps(data)))
+            return result
 
     def control_progress(self, data):
         with self._lock:

@@ -136,36 +136,15 @@ class AssemblySequencer(Node):
                 error_code="INVALID_REQUEST", message=str(error)
             )
 
-        if command_type in {"status", "resume", "cancel"} and self.active is None:
+        if (command_type in {"resume", "cancel"} or
+                self.runtime_mode == "mock" and command_type == "status") and self.active is None:
             try:
-                hold = self.db_writer.get_quality_hold()
-                if isinstance(hold, dict):
-                    slots = [slot for slot, _ in PRODUCTION_SLOTS] if self.runtime_mode == "real" else [step["slot_code"] for step in self.recipe["steps"]]
-                    self.active = dict(hold, state="PAUSED", quality_hold=True,
-                        inspection_result="FAIL", awaiting_next_unit=True, backend_started=False,
-                        placed_count=len(slots), expected_step_count=len(slots), slot_codes=slots,
-                        held_step_order=0, held_part_id="", held_slot_code="",
-                        error_code="QUALITY_HOLD", message="검사 결과 · FAIL · 생산 일시정지 · 재개 또는 취소를 선택하세요.")
-                    self.terminal_snapshot = None
+                self.restore_quality_hold()
             except Exception as error:
                 return self.set_response(response, False, "", "DB_ERROR", str(error))
 
-        # While active, status uses only feedback already committed by this bridge.
+        # Status returns cached execution state; periodic work owns reconciliation.
         if command_type == "status":
-            if self.runtime_mode == "real" and self.active and self.active.get("backend_started"):
-                try:
-                    data = await self.backend.reconcile_control()
-                    if data and self.backend.execution_tracking_stopped:
-                        if (data.get("status") == "cancelled" and data.get("stop_verified") is True and
-                                data.get("recovery_required") is False and not data.get("control_pending") and not data.get("control_error")):
-                            self.fail_active("EXECUTION_CANCELLED", RuntimeError("원격 취소·정지 확인"))
-                            if self.active is None:
-                                self.backend.release_cancelled_execution()
-                        elif self.active:
-                            self.active["message"] = data.get("control_error") or "실행 추적 중단 · 원격 상태 확인됨 · 취소 가능"
-                except Exception as error:
-                    if self.active:
-                        self.active["message"] = "제어 상태 확인 실패: " + str(error)
             if self.terminal_snapshot is not None:
                 snapshot = self.sync_snapshot(self.terminal_snapshot)
             elif self.active is not None:
@@ -228,12 +207,7 @@ class AssemblySequencer(Node):
                     if command_type == "pause":
                         return self.set_response(response, True, job_id)
                     if command_type == "cancel":
-                        self.db_writer.finish(job_id, "CANCELLED")
-                        self.db_writer.flush(DB_SYNC_TIMEOUT_SECONDS)
-                        self.terminal_snapshot = assembly_snapshot(active, "FAILED",
-                            error_code="EXECUTION_CANCELLED", message="불량 확인 후 생산 취소",
-                            db_sync_state=self.db_writer.sync_state)
-                        self.active = None
+                        self.finalize_cancel(active, "불량 확인 후 생산 취소")
                     else:
                         if self.runtime_mode == "real":
                             await self.backend.prepare_execution(active["recipe_version"])
@@ -429,6 +403,17 @@ class AssemblySequencer(Node):
                 slot_code=completed[-1] if completed else "", error_code="",
                 message=active["message"], db_sync_state=self.db_writer.sync_state))
 
+    def restore_quality_hold(self):
+        hold = self.db_writer.get_quality_hold()
+        if isinstance(hold, dict):
+            slots = [slot for slot, _ in PRODUCTION_SLOTS] if self.runtime_mode == "real" else [step["slot_code"] for step in self.recipe["steps"]]
+            self.active = dict(hold, state="PAUSED", quality_hold=True,
+                inspection_result="FAIL", awaiting_next_unit=True, backend_started=False,
+                placed_count=len(slots), expected_step_count=len(slots), slot_codes=slots,
+                held_step_order=0, held_part_id="", held_slot_code="",
+                error_code="QUALITY_HOLD", message="검사 결과 · FAIL · 생산 일시정지 · 재개 또는 취소를 선택하세요.")
+            self.terminal_snapshot = None
+
     def control_reason(self, action):
         active = self.active
         if active is None:
@@ -449,19 +434,38 @@ class AssemblySequencer(Node):
             return "현재 공정에서는 제어를 지원하지 않습니다."
         return self.backend.control_reason(active.get("execution_id"), action, active["state"] == "PAUSED")
 
+    def finalize_cancel(self, active, message):
+        if self.active is not active:
+            return
+        active["cancel_confirmed"] = True
+        try:
+            if not active.get("cancel_db_submitted"):
+                self.db_writer.finish(active["job_id"], "CANCELLED")
+                active["cancel_db_submitted"] = True
+            self.db_writer.flush(DB_SYNC_TIMEOUT_SECONDS)
+        except Exception as error:
+            # A commit can outlive flush timeout. Read the durable outcome instead
+            # of queuing a different terminal status or submitting cancellation again.
+            try:
+                durable = self.db_writer.get_job(active["job_id"])
+            except Exception:
+                durable = None
+            if not isinstance(durable, dict) or durable.get("job_status") != "CANCELLED" or durable.get("running_quantity") != 0:
+                active.update(state="PAUSED", control_pending=False, error_code="DB_ERROR",
+                    message="취소 DB 반영 미확인: " + str(error))
+                return
+        active["control_pending"] = False
+        self.terminal_snapshot = assembly_snapshot(active, "FAILED", "EXECUTION_CANCELLED",
+            message, self.db_writer.sync_state)
+        self.active = None
+        self.publish(failed_feedback(active["job_id"], "EXECUTION_CANCELLED", message, self.db_writer.sync_state))
+
     async def cancel_before_assembly(self, active):
         try:
             await self.backend.confirm_conveyor_stopped()
             if self.active is not active:
                 return
-            self.db_writer.finish(active["job_id"], "CANCELLED")
-            self.db_writer.flush(DB_SYNC_TIMEOUT_SECONDS)
-            active["control_pending"] = False
-            self.terminal_snapshot = assembly_snapshot(active, "FAILED", "EXECUTION_CANCELLED",
-                "조립 전 컨베이어 정지 확인 · 작업 취소 완료", self.db_writer.sync_state)
-            self.active = None
-            self.publish(failed_feedback(active["job_id"], "EXECUTION_CANCELLED",
-                "조립 전 컨베이어 정지 확인 · 작업 취소 완료", self.db_writer.sync_state))
+            self.finalize_cancel(active, "조립 전 컨베이어 정지 확인 · 작업 취소 완료")
         except Exception as error:
             if self.active is active:
                 active.update(control_pending=False, state="PAUSED", error_code="CONTROL_UNCONFIRMED",
@@ -559,6 +563,34 @@ class AssemblySequencer(Node):
 
     async def on_pending_job(self):
         if self.runtime_mode == "real":
+            if self.active is None:
+                try:
+                    self.restore_quality_hold()
+                except Exception as error:
+                    self.get_logger().error("Quality hold restoration failed: " + str(error))
+                return
+            active = self.active
+            if active.get("cancel_confirmed"):
+                self.finalize_cancel(active, "작업 취소 완료")
+                if self.active is None and active.get("backend_started") and self.backend.execution_tracking_stopped:
+                    self.backend.release_cancelled_execution()
+            elif active is not None and active.get("backend_started"):
+                try:
+                    data = await self.backend.reconcile_control()
+                    if self.active is not active:
+                        return
+                    if data and self.backend.execution_tracking_stopped:
+                        if (data.get("status") == "cancelled" and data.get("stop_verified") is True and
+                                data.get("recovery_required") is False and not data.get("control_pending") and
+                                not data.get("control_error")):
+                            self.finalize_cancel(active, "원격 취소·정지 확인")
+                            if self.active is None:
+                                self.backend.release_cancelled_execution()
+                        else:
+                            active["message"] = data.get("control_error") or "실행 추적 중단 · 원격 상태 확인됨"
+                except Exception as error:
+                    if self.active is active:
+                        active["message"] = "제어 상태 확인 실패: " + str(error)
             return
         if self.active is not None or self.db_writer.sync_state in {"PENDING", "FAILED"}:
             return
@@ -920,16 +952,8 @@ class AssemblySequencer(Node):
                                          self.db_writer.sync_state) | {"state": "PAUSED"})
             return
         if self.runtime_mode == "real" and error_code == "EXECUTION_CANCELLED":
-            try:
-                self.db_writer.finish(active["job_id"], "CANCELLED")
-                self.db_writer.flush(DB_SYNC_TIMEOUT_SECONDS)
-                active["control_pending"] = False
-                self.terminal_snapshot = assembly_snapshot(active, "FAILED", error_code, str(error), self.db_writer.sync_state)
-                self.active = None
-                self.publish(failed_feedback(active["job_id"], error_code, str(error), self.db_writer.sync_state))
-                return
-            except Exception as cancel_error:
-                error_code, error = "DB_ERROR", cancel_error
+            self.finalize_cancel(active, str(error))
+            return
         cleanup_error = self.fail_job(active["job_id"], immediate)
         if cleanup_error is not None:
             error_code = "DB_ERROR"
