@@ -159,6 +159,13 @@ namespace MainUnity.Runtime.Camera
         List<PartPose> latestPoses;
         string latestRegistration;
         string latestObservation;
+        // Keep complete, validated observations until Pick selects one. The bounds
+        // limit memory during long idle sessions; an evicted observation fails closed.
+        const int MaxCandidateObservations = 1024;
+        const int MaxCandidateParts = 32768;
+        readonly Dictionary<(string Registration, string Observation), List<PartPose>> candidates = new();
+        readonly Queue<(string Registration, string Observation)> candidateOrder = new();
+        int candidatePartCount;
         double latestCandidateTime = -1d;
 
         ROSConnection connection;
@@ -237,6 +244,9 @@ namespace MainUnity.Runtime.Camera
             StopAllCoroutines();
             isBufferingRobotEvents = false;
             bufferedEvents.Clear();
+            candidates.Clear();
+            candidateOrder.Clear();
+            candidatePartCount = 0;
             needsStatusReconciliation = true;
             if (connection != null && robotSubscribed) connection.Unsubscribe(RobotEventTopic);
             robotSubscribed = false;
@@ -366,8 +376,7 @@ namespace MainUnity.Runtime.Camera
                 if (record != null && (record.Job != executionId || record.Server != serverInstanceId))
                     throw new FormatException("다른 실행 또는 API 재시작 · 부착 복원 미확인");
                 if (context["attachment_binding_valid"]?.Type != JTokenType.Boolean ||
-                    !(bool)context["attachment_binding_valid"] || string.IsNullOrWhiteSpace(sourceId) ||
-                    !instancesById.TryGetValue(sourceId, out GameObject instance) || instance == null)
+                    !(bool)context["attachment_binding_valid"] || string.IsNullOrWhiteSpace(sourceId))
                 {
                     if (record != null) record.Uncertain = true;
                     throw new FormatException("부품 식별 불명확 또는 원래 객체 없음");
@@ -384,7 +393,24 @@ namespace MainUnity.Runtime.Camera
                     throw new FormatException("부품·슬롯·관측 식별 누락");
                 if (record == null)
                 {
-                    if (hasUnverifiedRestoredLayout || action != "robot.pick" || eventKind != "PHASE_STARTED" || trayRegistrationId != registration ||
+                    // This is the observed entry phase, before any grasp. A later
+                    // phase or a snapshot cannot reconstruct a missed Pick start.
+                    if (action != "robot.pick" || eventKind != "PHASE_STARTED" || phase != "01_pre_pick_safe_vertical")
+                        throw new FormatException("Pick 시작 callback 미수신 · 소급 부착 차단");
+                    if (!string.IsNullOrEmpty((string)envelope["error_code"]))
+                        throw new FormatException("실패한 Pick 시작 · 배치 변경 차단");
+                    foreach (Attachment existing in attachments.Values)
+                        if (existing.Job != executionId || existing.Server != serverInstanceId || existing.Cycle != sourceCycleId)
+                            throw new FormatException("다른 실행의 부품 배치 보존 · 새 실행 연결 차단");
+                    if (attachments.Count == 0)
+                    {
+                        if (!candidates.TryGetValue((trayRegistrationId, sourceObservationId), out List<PartPose> candidate))
+                            throw new FormatException($"실행 관측 후보 없음 또는 보관 한도 초과 · 표시 {registration} / 실행 {trayRegistrationId} · {sourceObservationId}");
+                        PrepareExecutionObservation(trayRegistrationId, sourceObservationId, sourceId, partId, candidate);
+                    }
+                    if (trayRegistrationId != registration)
+                        throw new FormatException($"실행 트레이 관측 없음 · 표시 {registration} / 실행 {trayRegistrationId} · {sourceObservationId}");
+                    if (hasUnverifiedRestoredLayout ||
                         !observations.Contains((trayRegistrationId, sourceObservationId, sourceId)) || !instanceRegistrations.TryGetValue(sourceId, out string sourceReg) || sourceReg != trayRegistrationId ||
                         !instanceTypes.TryGetValue(sourceId, out string type) || PartCode(type) != partId)
                         throw new FormatException("Pick 시작·원래 관측 미수신 · 부착 복원 미확인");
@@ -394,6 +420,8 @@ namespace MainUnity.Runtime.Camera
                     attachments.Add(sourceId, record);
                     affected = record;
                 }
+                if (!instancesById.TryGetValue(sourceId, out GameObject instance) || instance == null)
+                    throw new FormatException("원래 부품 객체 없음 · 부착 차단");
                 if (record.Registration != trayRegistrationId || record.Observation != sourceObservationId || record.Slot != slotCode || record.Part != partId || record.Plan != planSha256 || record.Cycle != sourceCycleId ||
                     (action == "robot.pick" && record.PickOperation != operationId))
                 {
@@ -709,6 +737,24 @@ namespace MainUnity.Runtime.Camera
                 SetProgress(ProgressState.Preparing, "검출 부품 없음 · 이전 배치 유지");
                 return;
             }
+            if (error == null && attachments.Count == 0 && poses.Count <= MaxCandidateParts &&
+                !string.IsNullOrWhiteSpace(state.tray_registration_id) && !string.IsNullOrWhiteSpace(state.source_observation_id))
+            {
+                var key = (state.tray_registration_id, state.source_observation_id);
+                // Repeated delivery of one observation must not replace its original pose.
+                if (!candidates.ContainsKey(key))
+                {
+                    while (candidateOrder.Count >= MaxCandidateObservations || candidatePartCount + poses.Count > MaxCandidateParts)
+                    {
+                        var oldest = candidateOrder.Dequeue();
+                        candidatePartCount -= candidates[oldest].Count;
+                        candidates.Remove(oldest);
+                    }
+                    candidates.Add(key, poses);
+                    candidateOrder.Enqueue(key);
+                    candidatePartCount += poses.Count;
+                }
+            }
             latestPoses = poses;
             latestRegistration = state.tray_registration_id;
             latestObservation = state.source_observation_id;
@@ -834,6 +880,50 @@ namespace MainUnity.Runtime.Camera
             error = skippedParts == 0 ? null :
                 $"트레이 {result.Count}개 배치 반영 · 무효/중복/미지원 부품 {skippedParts}개 제외";
             return true;
+        }
+
+        void PrepareExecutionObservation(string selectedRegistration, string selectedObservation,
+            string sourceId, string partId, List<PartPose> poses)
+        {
+            PartPose selected = poses.Find(pose => pose.Id == sourceId);
+            if (selected == null || PartCode(selected.Binding.PartType) != partId)
+                throw new FormatException("실행 관측에 해당 부품 없음 · 배치 변경 차단");
+            foreach (PartPose pose in poses)
+                if (pose.Binding.Prefab == null ||
+                    (instanceTypes.TryGetValue(pose.Id, out string existingType) && existingType != pose.Binding.PartType))
+                    throw new FormatException("실행 관측 프리팹·부품 종류 불일치 · 배치 변경 차단");
+
+            // Only an unowned display may be replaced. Keep matching objects and
+            // remove surplus display parts without touching boards or other owners.
+            var selectedIds = new HashSet<string>();
+            foreach (PartPose pose in poses) selectedIds.Add(pose.Id);
+            var obsolete = new List<string>();
+            foreach (var pair in instancesById)
+                if (!selectedIds.Contains(pair.Key)) obsolete.Add(pair.Key);
+            foreach (string id in obsolete)
+            {
+                if (instancesById[id] != null)
+                {
+                    instancesById[id].SetActive(false);
+                    Destroy(instancesById[id]);
+                }
+                instancesById.Remove(id);
+                instanceRegistrations.Remove(id);
+                instanceTypes.Remove(id);
+            }
+            registration = selectedRegistration;
+            Apply(poses);
+            observations.Clear();
+            foreach (PartPose pose in poses)
+                if (!pose.Id.StartsWith("display-only:", StringComparison.Ordinal))
+                    observations.Add((selectedRegistration, selectedObservation, pose.Id));
+            hasUnverifiedRestoredLayout = false;
+            needsStatusReconciliation = false;
+            candidates.Clear();
+            candidateOrder.Clear();
+            candidatePartCount = 0;
+            LastAppliedTime = Time.realtimeSinceStartupAsDouble;
+            SetProgress(ProgressState.Applied, "실행 관측 배치 준비 완료 · Pick 기준 고정");
         }
 
         void Apply(List<PartPose> poses)

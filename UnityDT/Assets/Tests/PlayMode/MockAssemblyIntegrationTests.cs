@@ -983,7 +983,7 @@ namespace MainUnity.Tests.PlayMode
             }
         }
 
-        // Recorded VRM-01 events from 2026-09-09; adversarial variants below are synthetic.
+        // Recorded VRM-01 events from 2026-09-10; adversarial variants below are synthetic.
         [TestCase("normal")]
         [TestCase("ambiguous")]
         [TestCase("unverified")]
@@ -1000,6 +1000,14 @@ namespace MainUnity.Tests.PlayMode
         [TestCase("restore_corrupt")]
         [TestCase("restore_tray")]
         [TestCase("restore_server_changed")]
+        [TestCase("candidate_registration")]
+        [TestCase("candidate_restored")]
+        [TestCase("candidate_missing")]
+        [TestCase("candidate_evicted")]
+        [TestCase("candidate_late")]
+        [TestCase("candidate_other_execution")]
+        [TestCase("candidate_repeated")]
+        [TestCase("candidate_part_limit")]
         public void IdleRobotCallbacksPreserveIdentityAndNeverRequireProduction(string variant)
         {
             Transform Child(string name, Transform parent)
@@ -1023,17 +1031,32 @@ namespace MainUnity.Tests.PlayMode
                 var part = new GameObject("Recorded source");
                 part.transform.SetParent(root.transform);
                 part.transform.position = new Vector3(1f, 2f, 3f);
-                string source = "black_block:2557401a-4c94-4e96-831f-9a701ef5e912";
-                string registration = "4744f2bf-3505-4faf-8d16-1fb3f725f5ac:80";
-                string observation = "4744f2bf-3505-4faf-8d16-1fb3f725f5ac:80:1788928977718122559";
+                string source = "black_block:8881a668-32d6-436e-8a04-6beefd4d74eb";
+                string registration = "022111f9-b745-4d62-ab14-70bb7a6b8b71:5";
+                string observation = "022111f9-b745-4d62-ab14-70bb7a6b8b71:5:1789014788812035400";
                 ((IDictionary)Field(calibration, "instancesById").GetValue(calibration)).Add(source, part);
                 ((IDictionary)Field(calibration, "instanceRegistrations").GetValue(calibration)).Add(source, registration);
                 ((IDictionary)Field(calibration, "instanceTypes").GetValue(calibration)).Add(source, "black_block");
                 Field(calibration, "registration").SetValue(calibration, registration);
                 ((HashSet<(string, string, string)>)Field(calibration, "observations").GetValue(calibration)).Add((registration, observation, source));
-                string start = @"{""job_id"":""fa9140a8-8252-4fca-a333-201f1a7c9fe2"",""operation_id"":""bb5e4ea4-13eb-44d0-a5d9-48aed366bbc5"",""action"":""robot.pick"",""phase"":""01_pre_pick_safe_vertical"",""event"":""PHASE_STARTED"",""error_code"":"""",""message"":""{\""source_id\"": \""black_block:2557401a-4c94-4e96-831f-9a701ef5e912\"", \""tray_registration_id\"": \""4744f2bf-3505-4faf-8d16-1fb3f725f5ac:80\"", \""source_observation_id\"": \""4744f2bf-3505-4faf-8d16-1fb3f725f5ac:80:1788928977718122559\"", \""source_cycle_id\"": \""20260909-134237\"", \""plan_sha256\"": \""82c7202f43762158575d972b3777be1a03d3afba08ab0d4d23952e0106da3fe0\"", \""schema\"": \""fr5.robot_event_context/v1\"", \""part_id\"": \""VRM\"", \""source_index\"": 1, \""slot_code\"": \""VRM-01\"", \""order\"": 14, \""attachment_binding_valid\"": true, \""server_instance_id\"": \""07a9c41f-d6d8-4e91-9059-6c659a1cab83\"", \""event_sequence\"": 590}""}";
-                string grasp = @"{""job_id"":""fa9140a8-8252-4fca-a333-201f1a7c9fe2"",""operation_id"":""bb5e4ea4-13eb-44d0-a5d9-48aed366bbc5"",""action"":""robot.pick"",""phase"":""GRASP"",""event"":""PHASE_COMPLETED"",""error_code"":"""",""message"":""{\""source_id\"": \""black_block:2557401a-4c94-4e96-831f-9a701ef5e912\"", \""tray_registration_id\"": \""4744f2bf-3505-4faf-8d16-1fb3f725f5ac:80\"", \""source_observation_id\"": \""4744f2bf-3505-4faf-8d16-1fb3f725f5ac:80:1788928977718122559\"", \""source_cycle_id\"": \""20260909-134237\"", \""plan_sha256\"": \""82c7202f43762158575d972b3777be1a03d3afba08ab0d4d23952e0106da3fe0\"", \""schema\"": \""fr5.robot_event_context/v1\"", \""part_id\"": \""VRM\"", \""source_index\"": 1, \""slot_code\"": \""VRM-01\"", \""order\"": 14, \""attachment_binding_valid\"": true, \""feedback\"": {\""phase\"": \""GRASP\"", \""target_position\"": 24.0, \""actual_position\"": 24.0, \""grip_motion_done\"": 1, \""gripper_feedback_valid\"": true, \""robot_motion_done\"": 1, \""gripperfaultnum\"": 0, \""grippererro\"": 0, \""state_sequence\"": 68225, \""observed_unix\"": 1788929497.8718426, \""controller_object_detected\"": true, \""physical_holding_verified\"": false, \""continuous_feedback_verified\"": true}, \""server_instance_id\"": \""07a9c41f-d6d8-4e91-9059-6c659a1cab83\"", \""event_sequence\"": 603}""}";
-                string release = @"{""job_id"":""fa9140a8-8252-4fca-a333-201f1a7c9fe2"",""operation_id"":""7146f807-ec1b-428a-aa1f-08cce0a76728"",""action"":""robot.place"",""phase"":""RELEASE"",""event"":""PHASE_COMPLETED"",""error_code"":"""",""message"":""{\""source_id\"": \""black_block:2557401a-4c94-4e96-831f-9a701ef5e912\"", \""tray_registration_id\"": \""4744f2bf-3505-4faf-8d16-1fb3f725f5ac:80\"", \""source_observation_id\"": \""4744f2bf-3505-4faf-8d16-1fb3f725f5ac:80:1788928977718122559\"", \""source_cycle_id\"": \""20260909-134237\"", \""plan_sha256\"": \""82c7202f43762158575d972b3777be1a03d3afba08ab0d4d23952e0106da3fe0\"", \""schema\"": \""fr5.robot_event_context/v1\"", \""part_id\"": \""VRM\"", \""source_index\"": 1, \""slot_code\"": \""VRM-01\"", \""order\"": 14, \""attachment_binding_valid\"": true, \""feedback\"": {\""phase\"": \""RELEASE\"", \""target_position\"": 28.0, \""actual_position\"": 28.0, \""grip_motion_done\"": 1, \""gripper_feedback_valid\"": true, \""robot_motion_done\"": 1, \""gripperfaultnum\"": 0, \""grippererro\"": 0, \""state_sequence\"": 70385, \""observed_unix\"": 1788929519.7051322, \""controller_object_detected\"": true, \""physical_holding_verified\"": false, \""continuous_feedback_verified\"": true}, \""server_instance_id\"": \""07a9c41f-d6d8-4e91-9059-6c659a1cab83\"", \""event_sequence\"": 627}""}";
+                // Supply a validated, exact observation for the initial Pick. Later
+                // assertions exercise the live ReceiveState path and bounded history.
+                var sourceBinding = ((Array)Field(calibration, "prefabBindings").GetValue(calibration)).GetValue(0);
+                Field(sourceBinding, "prefab").SetValue(sourceBinding, part);
+                var poseType = calibration.GetType().GetNestedType("PartPose", BindingFlags.NonPublic);
+                object originalPose = Activator.CreateInstance(poseType);
+                Field(originalPose, "Id").SetValue(originalPose, source);
+                Field(originalPose, "Binding").SetValue(originalPose, sourceBinding);
+                Field(originalPose, "Position").SetValue(originalPose, part.transform.position);
+                Field(originalPose, "Rotation").SetValue(originalPose, Quaternion.identity);
+                var candidatePoses = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(poseType));
+                candidatePoses.Add(originalPose);
+                ((IDictionary)Field(calibration, "candidates").GetValue(calibration)).Add((registration, observation), candidatePoses);
+                ((Queue<(string, string)>)Field(calibration, "candidateOrder").GetValue(calibration)).Enqueue((registration, observation));
+                Field(calibration, "candidatePartCount").SetValue(calibration, 1);
+                string start = @"{""job_id"":""0bf5780c-d6bf-4d01-b949-1365c6614164"",""operation_id"":""96488522-5d89-4b70-a046-44db144ea3f3"",""action"":""robot.pick"",""phase"":""01_pre_pick_safe_vertical"",""event"":""PHASE_STARTED"",""error_code"":"""",""message"":""{\""source_id\"": \""black_block:8881a668-32d6-436e-8a04-6beefd4d74eb\"", \""tray_registration_id\"": \""022111f9-b745-4d62-ab14-70bb7a6b8b71:5\"", \""source_observation_id\"": \""022111f9-b745-4d62-ab14-70bb7a6b8b71:5:1789014788812035400\"", \""source_cycle_id\"": \""20260910-133247\"", \""plan_sha256\"": \""bb9ca7b86cbf41ef1a4575f4070b0cf41d4421b9544aa53613ab593bbd4e5340\"", \""schema\"": \""fr5.robot_event_context/v1\"", \""part_id\"": \""VRM\"", \""source_index\"": 1, \""slot_code\"": \""VRM-01\"", \""order\"": 14, \""attachment_binding_valid\"": true, \""server_instance_id\"": \""7184ba72-ca00-4b70-bbc0-7d35bfc9bb1f\"", \""event_sequence\"": 592}""}";
+                string grasp = @"{""job_id"":""0bf5780c-d6bf-4d01-b949-1365c6614164"",""operation_id"":""96488522-5d89-4b70-a046-44db144ea3f3"",""action"":""robot.pick"",""phase"":""GRASP"",""event"":""PHASE_COMPLETED"",""error_code"":"""",""message"":""{\""source_id\"": \""black_block:8881a668-32d6-436e-8a04-6beefd4d74eb\"", \""tray_registration_id\"": \""022111f9-b745-4d62-ab14-70bb7a6b8b71:5\"", \""source_observation_id\"": \""022111f9-b745-4d62-ab14-70bb7a6b8b71:5:1789014788812035400\"", \""source_cycle_id\"": \""20260910-133247\"", \""plan_sha256\"": \""bb9ca7b86cbf41ef1a4575f4070b0cf41d4421b9544aa53613ab593bbd4e5340\"", \""schema\"": \""fr5.robot_event_context/v1\"", \""part_id\"": \""VRM\"", \""source_index\"": 1, \""slot_code\"": \""VRM-01\"", \""order\"": 14, \""attachment_binding_valid\"": true, \""feedback\"": {\""phase\"": \""GRASP\"", \""target_position\"": 24.0, \""actual_position\"": 24.0, \""grip_motion_done\"": 1, \""gripper_feedback_valid\"": true, \""robot_motion_done\"": 1, \""gripperfaultnum\"": 0, \""grippererro\"": 0, \""state_sequence\"": 90089, \""observed_unix\"": 1789015307.7152622, \""controller_object_detected\"": true, \""physical_holding_verified\"": false, \""continuous_feedback_verified\"": true}, \""server_instance_id\"": \""7184ba72-ca00-4b70-bbc0-7d35bfc9bb1f\"", \""event_sequence\"": 605}""}";
+                string release = @"{""job_id"":""0bf5780c-d6bf-4d01-b949-1365c6614164"",""operation_id"":""ec91a09c-0f2c-4e1c-b733-9f6c19952398"",""action"":""robot.place"",""phase"":""RELEASE"",""event"":""PHASE_COMPLETED"",""error_code"":"""",""message"":""{\""source_id\"": \""black_block:8881a668-32d6-436e-8a04-6beefd4d74eb\"", \""tray_registration_id\"": \""022111f9-b745-4d62-ab14-70bb7a6b8b71:5\"", \""source_observation_id\"": \""022111f9-b745-4d62-ab14-70bb7a6b8b71:5:1789014788812035400\"", \""source_cycle_id\"": \""20260910-133247\"", \""plan_sha256\"": \""bb9ca7b86cbf41ef1a4575f4070b0cf41d4421b9544aa53613ab593bbd4e5340\"", \""schema\"": \""fr5.robot_event_context/v1\"", \""part_id\"": \""VRM\"", \""source_index\"": 1, \""slot_code\"": \""VRM-01\"", \""order\"": 14, \""attachment_binding_valid\"": true, \""feedback\"": {\""phase\"": \""RELEASE\"", \""target_position\"": 28.0, \""actual_position\"": 28.0, \""grip_motion_done\"": 1, \""gripper_feedback_valid\"": true, \""robot_motion_done\"": 1, \""gripperfaultnum\"": 0, \""grippererro\"": 0, \""state_sequence\"": 92284, \""observed_unix\"": 1789015329.6652358, \""controller_object_detected\"": true, \""physical_holding_verified\"": false, \""continuous_feedback_verified\"": true}, \""server_instance_id\"": \""7184ba72-ca00-4b70-bbc0-7d35bfc9bb1f\"", \""event_sequence\"": 629}""}";
                 void Receive(string data) => Invoke(calibration, "ProcessRobotEvent", data);
                 if (variant == "release_first")
                 {
@@ -1049,7 +1072,7 @@ namespace MainUnity.Tests.PlayMode
                     Assert.That(part.transform.parent, Is.EqualTo(root.transform));
                     return;
                 }
-                if (variant == "observation_dropout")
+                if (variant == "observation_dropout" || variant.StartsWith("candidate_", StringComparison.Ordinal))
                 {
                     Field(calibration, "baseLink").SetValue(calibration, root.transform);
                     var binding = ((Array)Field(calibration, "prefabBindings").GetValue(calibration)).GetValue(0);
@@ -1067,19 +1090,78 @@ namespace MainUnity.Tests.PlayMode
                     }
                     root.SetActive(true); // Synchronous test ends before Start/ROS subscription.
                     string observed = "[{\"id\":\"" + source + "\",\"part_type\":\"black_block\",\"instance_index\":1,\"base_xyz_mm\":[1000,2000,3000],\"angle_base_deg\":0}]";
-                    Tray(1, registration, observation, observed);
-                    Vector3 original = part.transform.position;
-                    Tray(2, registration, observation + ":empty", "[]");
-                    Assert.That(part.activeSelf, Is.True, "valid TRACKING with zero detections is not removal.");
-                    Assert.That(StringProperty(calibration, "ProgressDetail"), Does.Contain("이전 배치 유지"));
-                    Tray(3, registration, observation + ":partial", observed.Replace(source, "other-source"));
-                    Assert.That(part.activeSelf, Is.True, "Partial observation must preserve absent source.");
-                    Tray(4, registration + ":new", "new-observation", observed.Replace("1000", "9000"));
-                    Assert.That(part.transform.position, Is.EqualTo(original));
-                    Assert.That(Field(calibration, "registration").GetValue(calibration), Is.EqualTo(registration));
-                    Assert.That(StringProperty(calibration, "ProgressDetail"), Does.Contain("등록 세대 변경"));
-                    // The original execution's recorded frame is still accepted after newer detector frames.
-                    part.transform.position = new Vector3(1f, 2f, 3f);
+                    if (variant.StartsWith("candidate_", StringComparison.Ordinal))
+                    {
+                        ((IDictionary)Field(calibration, "candidates").GetValue(calibration)).Clear();
+                        ((Queue<(string, string)>)Field(calibration, "candidateOrder").GetValue(calibration)).Clear();
+                        Field(calibration, "candidatePartCount").SetValue(calibration, 0);
+                        Field(calibration, "registration").SetValue(calibration, registration + ":old");
+                        ((IDictionary)Field(calibration, "instanceRegistrations").GetValue(calibration))[source] = registration + ":old";
+                        ((HashSet<(string, string, string)>)Field(calibration, "observations").GetValue(calibration)).Clear();
+                        if (variant == "candidate_restored") Field(calibration, "hasUnverifiedRestoredLayout").SetValue(calibration, true);
+                        // FLU (3,-1,2)m maps to the existing world pose (1,2,3)m.
+                        string executionPose = observed.Replace("1000,2000,3000", "3000,-1000,2000");
+                        if (variant != "candidate_missing") Tray(1, registration, observation, executionPose);
+                        if (variant == "candidate_repeated")
+                            Tray(2, registration, observation, executionPose.Replace("3000", "9000"));
+                        int frames = variant == "candidate_evicted" ? 1024 : variant == "candidate_part_limit" ? 950 : 1;
+                        string newerParts = observed.Replace("1000", "9000");
+                        if (variant == "candidate_part_limit")
+                            newerParts = "[" + string.Join(",", Enumerable.Range(0, 35).Select(index =>
+                                newerParts.Trim('[', ']').Replace(source, source + ":" + index))) + "]";
+                        for (int i = 0; i < frames; i++)
+                            Tray(i + 3, registration + ":new", "new-observation-" + i, newerParts);
+                        Assert.That(((IDictionary)Field(calibration, "candidates").GetValue(calibration)).Count, Is.LessThanOrEqualTo(1024));
+                        Assert.That((int)Field(calibration, "candidatePartCount").GetValue(calibration), Is.LessThanOrEqualTo(32768));
+                        part.transform.position = Vector3.zero;
+                        if (variant == "candidate_late")
+                        {
+                            Receive(grasp);
+                            Receive(start.Replace("01_pre_pick_safe_vertical", "06_post_grasp_lift_50mm_vertical"));
+                            Assert.That(part.transform.position, Is.EqualTo(Vector3.zero));
+                            Assert.That(((IDictionary)Field(calibration, "attachments").GetValue(calibration)).Count, Is.Zero);
+                            return;
+                        }
+                        Receive(start);
+                        if (variant is "candidate_missing" or "candidate_evicted" or "candidate_part_limit")
+                        {
+                            Receive(grasp);
+                            Assert.That(part.transform.parent, Is.EqualTo(root.transform));
+                            Assert.That(part.transform.position, Is.EqualTo(Vector3.zero));
+                            Assert.That(((IDictionary)Field(calibration, "attachments").GetValue(calibration)).Count, Is.Zero);
+                            return;
+                        }
+                        Assert.That(Vector3.Distance(part.transform.position, new Vector3(1f, 2f, 3f)), Is.LessThan(0.00001f), "Use the execution observation, never the newest detection.");
+                        Assert.That(Field(calibration, "registration").GetValue(calibration), Is.EqualTo(registration));
+                        Assert.That((bool)Field(calibration, "hasUnverifiedRestoredLayout").GetValue(calibration), Is.False);
+                        Receive(start);
+                        Assert.That(((IDictionary)Field(calibration, "attachments").GetValue(calibration)).Count, Is.EqualTo(1));
+                        if (variant == "candidate_other_execution")
+                        {
+                            string other = start.Replace("0bf5780c-d6bf-4d01-b949-1365c6614164", "11111111-1111-4111-8111-111111111111").Replace(source, "other-source");
+                            Receive(other);
+                            Assert.That(StringProperty(calibration, "RobotDetail"), Does.Contain("다른 실행"));
+                            Assert.That(Vector3.Distance(part.transform.position, new Vector3(1f, 2f, 3f)), Is.LessThan(0.00001f));
+                            Assert.That(((IDictionary)Field(calibration, "attachments").GetValue(calibration)).Count, Is.EqualTo(1));
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        Tray(1, registration, observation, observed);
+                        Vector3 original = part.transform.position;
+                        Tray(2, registration, observation + ":empty", "[]");
+                        Assert.That(part.activeSelf, Is.True, "valid TRACKING with zero detections is not removal.");
+                        Assert.That(StringProperty(calibration, "ProgressDetail"), Does.Contain("이전 배치 유지"));
+                        Tray(3, registration, observation + ":partial", observed.Replace(source, "other-source"));
+                        Assert.That(part.activeSelf, Is.True, "Partial observation must preserve absent source.");
+                        Tray(4, registration + ":new", "new-observation", observed.Replace("1000", "9000"));
+                        Assert.That(part.transform.position, Is.EqualTo(original));
+                        Assert.That(Field(calibration, "registration").GetValue(calibration), Is.EqualTo(registration));
+                        Assert.That(StringProperty(calibration, "ProgressDetail"), Does.Contain("등록 세대 변경"));
+                        // The original execution's recorded frame is still accepted after newer detector frames.
+                        part.transform.position = new Vector3(1f, 2f, 3f);
+                    }
                 }
                 Receive(start);
                 // Detection updates must not delete a reserved or held source.
@@ -1092,7 +1174,7 @@ namespace MainUnity.Tests.PlayMode
                 if (variant == "reverse_phase")
                 {
                     // A later nonterminal phase must not discard an unseen GRASP.
-                    Receive(grasp.Replace("GRASP", "LIFT").Replace("603", "604"));
+                    Receive(grasp.Replace("GRASP", "LIFT").Replace("605", "606"));
                 }
                 Receive(grasp);
                 if (variant is "ambiguous" or "unverified")
@@ -1102,7 +1184,7 @@ namespace MainUnity.Tests.PlayMode
                     return;
                 }
                 Assert.That(part.transform.parent, Is.EqualTo(gripper));
-                Assert.That(part.transform.position, Is.EqualTo(new Vector3(1f, 2f, 3f)));
+                Assert.That(Vector3.Distance(part.transform.position, new Vector3(1f, 2f, 3f)), Is.LessThan(0.00001f));
                 gripper.position += Vector3.right;
                 Vector3 heldPosition = part.transform.position;
                 Receive(grasp);
@@ -1143,12 +1225,12 @@ namespace MainUnity.Tests.PlayMode
                         Vector3 savedRelative = part.transform.localPosition;
                         gripper.position += Vector3.up * 2f;
                         string state = variant == "restore_released" ? "placed" : "attached";
-                        string snapshot = "{\"schema\":\"fr5.robot_api_status/v1\",\"state_fresh\":true,\"event_context\":{\"server_instance_id\":\"07a9c41f-d6d8-4e91-9059-6c659a1cab83\",\"event_sequence\":604,\"attachments\":[{" +
+                        string snapshot = "{\"schema\":\"fr5.robot_api_status/v1\",\"state_fresh\":true,\"event_context\":{\"server_instance_id\":\"7184ba72-ca00-4b70-bbc0-7d35bfc9bb1f\",\"event_sequence\":606,\"attachments\":[{" +
                             "\"source_id\":\"" + source + "\",\"tray_registration_id\":\"" + registration + "\",\"source_observation_id\":\"" + observation + "\"," +
-                            "\"job_id\":\"fa9140a8-8252-4fca-a333-201f1a7c9fe2\",\"operation_id\":\"bb5e4ea4-13eb-44d0-a5d9-48aed366bbc5\",\"server_instance_id\":\"07a9c41f-d6d8-4e91-9059-6c659a1cab83\"," +
-                            "\"slot_code\":\"VRM-01\",\"state\":\"" + state + "\",\"event_sequence\":604,\"uncertain\":false,\"attachment_binding_valid\":true," +
-                            "\"plan_sha256\":\"82c7202f43762158575d972b3777be1a03d3afba08ab0d4d23952e0106da3fe0\",\"source_cycle_id\":\"20260909-134237\"}]}}";
-                        if (variant == "restore_server_changed") snapshot = snapshot.Replace("07a9c41f-d6d8-4e91-9059-6c659a1cab83", "11111111-1111-4111-8111-111111111111");
+                            "\"job_id\":\"0bf5780c-d6bf-4d01-b949-1365c6614164\",\"operation_id\":\"96488522-5d89-4b70-a046-44db144ea3f3\",\"server_instance_id\":\"7184ba72-ca00-4b70-bbc0-7d35bfc9bb1f\"," +
+                            "\"slot_code\":\"VRM-01\",\"state\":\"" + state + "\",\"event_sequence\":606,\"uncertain\":false,\"attachment_binding_valid\":true," +
+                            "\"plan_sha256\":\"bb9ca7b86cbf41ef1a4575f4070b0cf41d4421b9544aa53613ab593bbd4e5340\",\"source_cycle_id\":\"20260910-133247\"}]}}";
+                        if (variant == "restore_server_changed") snapshot = snapshot.Replace("7184ba72-ca00-4b70-bbc0-7d35bfc9bb1f", "11111111-1111-4111-8111-111111111111");
                         Invoke(restored, "ReconcileSnapshot", snapshot);
                         if (variant is "restore_released" or "restore_server_changed")
                         {
@@ -1174,8 +1256,8 @@ namespace MainUnity.Tests.PlayMode
                 }
                 if (variant == "other_place")
                 {
-                    Receive(release.Replace("RELEASE", "APPROACH").Replace("627", "626"));
-                    Receive(release.Replace("7146f807-ec1b-428a-aa1f-08cce0a76728", "11111111-1111-4111-8111-111111111111"));
+                    Receive(release.Replace("RELEASE", "APPROACH").Replace("629", "628"));
+                    Receive(release.Replace("ec91a09c-0f2c-4e1c-b733-9f6c19952398", "11111111-1111-4111-8111-111111111111"));
                     Assert.That(part.transform.parent, Is.EqualTo(gripper));
                     Assert.That(StringProperty(calibration, "RobotDetail"), Does.Contain("미확인"));
                     return;
@@ -1183,7 +1265,7 @@ namespace MainUnity.Tests.PlayMode
                 if (variant is "plain_failure" or "rejected_request")
                 {
                     string kind = variant == "plain_failure" ? "OPERATION_FAILED" : "REQUEST_REJECTED";
-                    Receive("{\"job_id\":\"fa9140a8-8252-4fca-a333-201f1a7c9fe2\",\"event\":\"" + kind +
+                    Receive("{\"job_id\":\"0bf5780c-d6bf-4d01-b949-1365c6614164\",\"event\":\"" + kind +
                         "\",\"action\":\"robot.place\",\"message\":\"plain failure\"}");
                     Receive(release);
                     Assert.That(part.transform.parent, Is.EqualTo(variant == "plain_failure" ? gripper : board));
@@ -1200,7 +1282,7 @@ namespace MainUnity.Tests.PlayMode
                 Receive(release);
                 Assert.That(part.transform.parent, Is.EqualTo(board));
                 Assert.That(part.transform.position, Is.EqualTo(heldPosition));
-                Receive(grasp.Replace("603", "650"));
+                Receive(grasp.Replace("605", "650"));
                 Receive(release);
                 Assert.That(part.transform.parent, Is.EqualTo(board), "A late GRASP cannot reattach a placed part.");
                 apply.Invoke(calibration, new[] { emptyPoses });

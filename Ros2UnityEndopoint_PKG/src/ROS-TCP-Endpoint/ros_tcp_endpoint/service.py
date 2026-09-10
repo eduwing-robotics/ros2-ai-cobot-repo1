@@ -15,7 +15,7 @@
 import rclpy
 import re
 
-from rclpy.serialization import deserialize_message
+from rclpy.serialization import deserialize_message, serialize_message
 
 from .communication import RosSender
 
@@ -52,6 +52,11 @@ class RosService(RosSender):
             service response
         """
         message_type = type(self.req)
+        # Unity emits only the CDR header for an empty request. Jazzy requires
+        # the generated empty-structure byte too; preserve strict decoding for
+        # every request with fields and for malformed/non-CDR input.
+        if not message_type.get_fields_and_field_types() and data in (b"\x00\x01\x00\x00", b"\x00\x00\x00\x00"):
+            data = serialize_message(message_type())
         message = deserialize_message(data, message_type)
 
         if not self.cli.service_is_ready():

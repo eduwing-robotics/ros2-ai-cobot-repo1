@@ -788,11 +788,11 @@ namespace MainUnity.UI
                 Array.TrueForAll(selectedProduct.slots, slot => slot != null && !string.IsNullOrEmpty(slot.part_id) &&
                     Array.Exists(requirements, item => item != null && string.Equals(item.part_id, slot.part_id, StringComparison.OrdinalIgnoreCase)));
             bool stockReady = productReady && Array.TrueForAll(requirements, item => item.shortage_quantity == 0);
-            bool mock = uiMaster != null && uiMaster.IsSimulated;
-            string signature = productReady + "|" + stockReady + "|" + mock + "|" + registerInFlight;
+            bool modeKnown = uiMaster != null;
+            string signature = productReady + "|" + stockReady + "|" + modeKnown + "|" + registerInFlight;
             if (signature == interlockSignature)
             {
-                ApplyRegisterState(productReady, stockReady, mock);
+                ApplyRegisterState(productReady, stockReady, modeKnown);
                 return;
             }
 
@@ -800,8 +800,8 @@ namespace MainUnity.UI
             interlockList.Clear();
             AddCheck("제품 · 요구 부품 조회", productReady);
             AddCheck("조회 당시 목표 수량분 재고", stockReady);
-            AddCheck("시뮬레이션 등록 모드", mock);
-            ApplyRegisterState(productReady, stockReady, mock);
+            AddCheck("요청 모드 확인", modeKnown);
+            ApplyRegisterState(productReady, stockReady, modeKnown);
         }
 
         void AddCheck(string label, bool ok)
@@ -820,9 +820,9 @@ namespace MainUnity.UI
             interlockList.Add(line);
         }
 
-        void ApplyRegisterState(bool productReady, bool stockReady, bool mock)
+        void ApplyRegisterState(bool productReady, bool stockReady, bool modeKnown)
         {
-            bool ready = productReady && stockReady && mock && !registerInFlight;
+            bool ready = productReady && stockReady && modeKnown && !registerInFlight;
             start?.SetEnabled(ready);
             if (start != null) start.text = registerInFlight ? "등록 중…" : "작업 등록";
             if (startReason == null || registerInFlight) return;
@@ -830,8 +830,8 @@ namespace MainUnity.UI
                 ? productError ?? "제품과 재고를 조회하고 있습니다."
                 : !stockReady
                 ? "목표 수량에 필요한 재고가 부족합니다."
-                : !mock
-                ? "현재 실제 설비 모드에서는 작업 등록을 지원하지 않습니다."
+                : !modeKnown
+                ? "요청 모드를 확인할 수 없습니다."
                 : "등록한 작업은 실행 대기 상태로 추가됩니다.";
             if (!string.IsNullOrEmpty(registrationResult))
                 startReason.text = registrationResult + "\n" + startReason.text;
