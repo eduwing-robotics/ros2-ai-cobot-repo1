@@ -625,3 +625,61 @@ def test_two_set_selection_is_preserved_in_inspection_reference():
         part['reference_center_pixel']=[100.+i*30,200.]
     plan=build_plan(snapshot,load(RECIPES_PATH),load(SLOTS_PATH),phase='non-smd')
     assert plan['tray_inspection_reference']['assembly_set_selection']==selection
+
+
+@pytest.mark.parametrize('slot_code,kind,pick_c,board_yaw,expected_rotation',[
+    ('PM-01','long_orange',86.71,2.82097528781514,96.11097528781514),
+    ('PM-02','long_orange',75.,15.,120.),
+    ('GPU-01','gpu',75.,15.,120.),
+    ('IND-01','marked_white',-15.,15.,210.),
+    ('IND-02','marked_white',-10.,0.,190.),
+])
+def test_successful_endpoint_tolerance_has_consistent_total_rotation(
+        slot_code,kind,pick_c,board_yaw,expected_rotation):
+    from full_cycle_plan import _plan_placement_orientation
+    from successful_gripper_directions import validate_item
+    from full_cycle_motion import DEFAULT_MAX_JOINT_STEP_DEG
+    policy=load(RECIPES_PATH)['parts'][kind]['placement_orientation_policy']
+    place,metadata=_plan_placement_orientation(slot_code=slot_code,part_type=kind,
+        policy=policy,slot={'long_axis_board_deg':90.},
+        board_rotation=Rotation.from_euler('z',board_yaw,degrees=True).as_matrix(),
+        pick_abc=[-180.,0.,pick_c])
+    assert metadata['rotation_delta_deg']==pytest.approx(expected_rotation)
+    validate_item({'slot_code':slot_code,'pick_final_tcp':[0.,0.,0.,-180.,0.,pick_c],
+                   'place_final_tcp':[0.,0.,0.,*place]})
+    assert DEFAULT_MAX_JOINT_STEP_DEG==95.
+
+
+def test_ind_positive_transfer_is_staged_with_endpoint_tolerance(planned_cycle):
+    from execute_full_fixed_cycle import build_tcp_route
+    from successful_gripper_directions import validate_item
+    item=copy.deepcopy(by_slot(planned_cycle[0],'IND-01'))
+    item['pick_final_tcp'][5]=-15.
+    item['place_final_tcp'][5]=-165.
+    validate_item(item)
+    route=build_tcp_route([item],[-527.997,-60.954,337.88,180.,0.,90.],350.,resume_after_grasp=False)
+    points=[w.tcp[5] for _,w in route if w.label.startswith('place_combined_xy_abc')]
+    assert len(points)>=4
+    assert all(0<((b-a+180)%360-180)<=60.000001 for a,b in zip(points,points[1:]))
+
+
+def test_endpoint_tolerance_still_rejects_outside_successful_direction(planned_cycle):
+    from successful_gripper_directions import validate_item
+    item=copy.deepcopy(by_slot(planned_cycle[0],'PM-01'))
+    item['pick_final_tcp'][5]=74.
+    with pytest.raises(RuntimeError,match='successful gripper direction'):validate_item(item)
+
+
+def test_failed_production_scene_generates_and_validates_all_non_smd():
+    from execute_full_fixed_cycle import validate_plan
+    snapshot=load(Path(__file__).parent/'fixtures/pm_rotation_96111_snapshot.json')
+    recipes=load(RECIPES_PATH)
+    old=copy.deepcopy(recipes)
+    old['parts']['long_orange']['placement_orientation_policy']['maximum_intentional_rotation_deg']=95.
+    with pytest.raises(RuntimeError,match='PM-01 rotation 96.111deg exceeds 95.000deg'):
+        build_plan(snapshot,old,load(SLOTS_PATH),phase='non-smd')
+    plan=build_plan(snapshot,recipes,load(SLOTS_PATH),phase='non-smd')
+    items=validate_plan(plan,maximum_age_sec=1800.)
+    assert len(items)==20
+    pm=by_slot(plan,'PM-01')
+    assert pm['placement_orientation']['rotation_delta_deg']==pytest.approx(96.11097528781514)

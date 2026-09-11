@@ -224,7 +224,7 @@ def resolve_placement(
                 symmetry, maximum_rotation, long_axis_board, target_axis_base
             )):
                 raise ValueError("non-finite orientation policy")
-            if not 0.0 < symmetry <= 360.0 or not 0.0 < maximum_rotation <= (185.0 if code.startswith("IND-") else 180.0):
+            if not 0.0 < symmetry <= 360.0 or not 0.0 < maximum_rotation <= (210.0 if code.startswith("IND-") else 180.0):
                 raise ValueError("orientation policy outside safe range")
             orientation = {
                 "mode": policy["mode"],

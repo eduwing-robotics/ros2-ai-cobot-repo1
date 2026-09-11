@@ -487,7 +487,7 @@ def build_tcp_route(
             # near-zero pick branch to the fixed near-180 place branch.
             # Allow both endpoints' already-validated fine-angle deviations;
             # every segment and J6 limit is still checked by controller IK.
-            maximum_transfer = 180.0 + 2 * MAX_FINE_ANGLE_DEG if item["slot_code"] == "CAP-01" else 185.0
+            maximum_transfer = 180.0 + 2 * MAX_FINE_ANGLE_DEG
             if delta > maximum_transfer:
                 raise MotionPlanError("Positive transfer exceeds successful endpoint envelope")
             for axis in (3, 4):

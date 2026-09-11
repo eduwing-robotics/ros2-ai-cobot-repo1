@@ -391,7 +391,7 @@ def _plan_placement_orientation(
             policy.get("skip_rotation_below_deg", 0.5),
             f"{slot_code} skip-rotation threshold",
         )
-        if not 0.0 < maximum_rotation <= (185.0 if part_type == "marked_white" else 180.0) or skip_threshold < 0.0:
+        if not 0.0 < maximum_rotation <= (210.0 if part_type == "marked_white" else 180.0) or skip_threshold < 0.0:
             raise RuntimeError(f"{slot_code} has an invalid rotation envelope")
         planned = plan_carried_part_orientation(
             pick_abc,

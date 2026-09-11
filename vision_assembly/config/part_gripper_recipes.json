@@ -151,9 +151,10 @@
         "mode": "align_actual_carried_axis_to_current_slot_axis",
         "gripper_axis": "tool_y",
         "symmetry_period_deg": 180.0,
-        "maximum_intentional_rotation_deg": 95.0,
+        "maximum_intentional_rotation_deg": 120.0,
         "source": "GPU actual pick C91.957 and successful place C180; compute from each cycle tray grasp and board pose",
-        "skip_rotation_below_deg": 0.5
+        "skip_rotation_below_deg": 0.5,
+        "total_rotation_envelope_basis": "Successful endpoint branches retain +/-15deg fine-angle tolerance each; nominal transfer plus30deg. Staged transfer, joint-step95deg and J6 limits remain independently checked."
       },
       "grasp_height": {
         "position_mode": "fixed_fixture_absolute",
@@ -340,10 +341,11 @@
         "mode": "align_actual_carried_axis_to_current_slot_axis",
         "gripper_axis": "tool_y",
         "symmetry_period_deg": 180.0,
-        "maximum_intentional_rotation_deg": 95.0,
+        "maximum_intentional_rotation_deg": 120.0,
         "preference_tie_threshold_deg": 5.0,
         "source": "PM-01 actual carried part required C180 on 2026-09-02; never use empty-gripper absolute C as a direct motion target",
-        "skip_rotation_below_deg": 3.0
+        "skip_rotation_below_deg": 3.0,
+        "total_rotation_envelope_basis": "Successful endpoint branches retain +/-15deg fine-angle tolerance each; nominal transfer plus30deg. Staged transfer, joint-step95deg and J6 limits remain independently checked."
       },
       "validated_placement_centers": {
         "PM-03": {
@@ -577,9 +579,10 @@
         "mode": "align_actual_carried_axis_to_current_slot_axis",
         "gripper_axis": "tool_y",
         "symmetry_period_deg": 180.0,
-        "maximum_intentional_rotation_deg": 185.0,
+        "maximum_intentional_rotation_deg": 210.0,
         "source": "2026-09-04 successful IND-01: pick C0.204, positive staged rotation to C180 before placement; total includes slot alignment, transfer segments at most 60deg, joint limits unchanged",
-        "skip_rotation_below_deg": 1.0
+        "skip_rotation_below_deg": 1.0,
+        "total_rotation_envelope_basis": "Successful endpoint branches retain +/-15deg fine-angle tolerance each; nominal transfer plus30deg. Staged transfer, joint-step95deg and J6 limits remain independently checked."
       }
     },
     "right_white_brown": {

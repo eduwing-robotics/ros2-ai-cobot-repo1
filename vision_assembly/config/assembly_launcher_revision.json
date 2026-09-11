@@ -2,7 +2,7 @@
   "schema": "fr5.assembly_launcher_revision/v1",
   "revision": "20260909_smd_restore_successful_gripper_profile",
   "reviewed_config_sha256": {
-    "vision_assembly/config/part_gripper_recipes.json": "41f3de3dab740b158811a788a80614c87d7d59840ec5327d749cfc3c44753a23"
+    "vision_assembly/config/part_gripper_recipes.json": "5543573eae24dd6cbde5c397e052e7f9f9661c0a4aa0a68eacee1dbb81d0e6ae"
   },
   "changes": [
     "PM03/04 observed board center plus carried pick offset; fresh board transform, no saved TCP replay",
@@ -26,7 +26,8 @@
     "Correct launcher displayed slot heights; unvalidated manual-reference XY/angle candidates remain excluded.",
     "Operator requested GPU fixed-fixture pick TCP Z -49.719mm from successful morning all25 run; replaces live surface-relative pick height. Other part recipes and GPU XY/ABC/gripper/place unchanged. Physical retrial pending.",
     "IND only: restore successful legacy driver velocity80/force50 for open21/grasp14/release20. API previously sent50/30. Keep object detection and TrayHome inspection gates; physical retest pending.",
-    "SMD CAP01..05: restore legacy successful driver80/50 for open18/grasp12/release17; previously API50/1. Positions and object-detection/inspection gates unchanged. Physical retest pending."
+    "SMD CAP01..05: restore legacy successful driver80/50 for open18/grasp12/release17; previously API50/1. Positions and object-detection/inspection gates unchanged. Physical retest pending.",
+    "2026-09-11: reconcile GPU/PM total TCP rotation120deg and positive IND210deg with existing +/-15deg successful endpoint tolerances; preserve branch locks, staged <=60deg turns, joint-step95deg, J6 and soft-limit checks. Latest failed-scene general20 controller IK433 waypoints passed maxstep93.254deg; no motion sent."
   ],
   "physical_evidence": [
     "runtime/assembly_cycles/pm34_test_20260907/validated_pm34_result.json",
