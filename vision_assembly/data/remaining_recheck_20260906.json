@@ -1,0 +1,695 @@
+{
+  "schema_version": 1,
+  "mode": "tray_detection_dry_run",
+  "timestamp_ros_ns": 1788675399700726074,
+  "tray_registration": "TRACKING",
+  "registration_matches": 0,
+  "registration_inliers": 0,
+  "registration_source": "shared_section_tracker",
+  "registration_age_ms": 133.4,
+  "detections": [
+    {
+      "center_pixel": [
+        576.09,
+        152.45
+      ],
+      "bbox_size_px": [
+        29.37,
+        21.95
+      ],
+      "angle_deg": -89.64,
+      "depth_m": 0.484,
+      "height_above_tray_mm": null,
+      "area_ratio": null,
+      "instance_estimate": 1,
+      "camera_xyz_m": [
+        -0.036518,
+        -0.121664,
+        0.484
+      ],
+      "cad_area_match_score": 0.9525,
+      "aspect_ratio": 1.338,
+      "mask_area_match_score": 0.9834,
+      "aspect_match_score": 0.9545,
+      "rectangularity": 0.9325,
+      "shape_score": 0.9566,
+      "mask_shape_score": 0.9566,
+      "segmentation_confidence": 0.9525,
+      "detector": "yolo26_seg",
+      "part_type": "black_block",
+      "display_name": "VRM (\uc804\uc555 \uc870\uc815 \ubaa8\ub4c8)",
+      "instance_index": 1,
+      "reference_center_pixel": [
+        878.15,
+        209.28
+      ]
+    },
+    {
+      "center_pixel": [
+        528.52,
+        154.8
+      ],
+      "bbox_size_px": [
+        21.86,
+        29.58
+      ],
+      "angle_deg": 89.27,
+      "depth_m": 0.484,
+      "height_above_tray_mm": null,
+      "area_ratio": null,
+      "instance_estimate": 1,
+      "camera_xyz_m": [
+        -0.061943,
+        -0.120404,
+        0.484
+      ],
+      "cad_area_match_score": 0.9473,
+      "aspect_ratio": 1.353,
+      "mask_area_match_score": 0.9691,
+      "aspect_match_score": 0.9545,
+      "rectangularity": 0.9463,
+      "shape_score": 0.9566,
+      "mask_shape_score": 0.9566,
+      "segmentation_confidence": 0.9473,
+      "detector": "yolo26_seg",
+      "part_type": "black_block",
+      "display_name": "VRM (\uc804\uc555 \uc870\uc815 \ubaa8\ub4c8)",
+      "instance_index": 2,
+      "reference_center_pixel": [
+        806.39,
+        213.22
+      ]
+    },
+    {
+      "center_pixel": [
+        434.2,
+        380.38
+      ],
+      "bbox_size_px": [
+        12.68,
+        16.63
+      ],
+      "angle_deg": 0.73,
+      "depth_m": 0.484,
+      "height_above_tray_mm": null,
+      "area_ratio": null,
+      "instance_estimate": 1,
+      "camera_xyz_m": [
+        -0.112356,
+        0.00029,
+        0.484
+      ],
+      "cad_area_match_score": 0.9007,
+      "aspect_ratio": 1.312,
+      "mask_area_match_score": 0.944,
+      "aspect_match_score": 0.76,
+      "rectangularity": 0.7979,
+      "shape_score": 0.8303,
+      "mask_shape_score": 0.8303,
+      "segmentation_confidence": 0.9007,
+      "detector": "yolo26_seg",
+      "part_type": "marked_white",
+      "display_name": "Inductor (\uc778\ub355\ud130)",
+      "instance_index": 1,
+      "reference_center_pixel": [
+        659.53,
+        552.8
+      ]
+    },
+    {
+      "center_pixel": [
+        395.46,
+        375.47
+      ],
+      "bbox_size_px": [
+        12.66,
+        17.25
+      ],
+      "angle_deg": 0.72,
+      "depth_m": 0.481,
+      "height_above_tray_mm": null,
+      "area_ratio": null,
+      "instance_estimate": 1,
+      "camera_xyz_m": [
+        -0.132233,
+        -0.002324,
+        0.481
+      ],
+      "cad_area_match_score": 0.8874,
+      "aspect_ratio": 1.362,
+      "mask_area_match_score": 0.9853,
+      "aspect_match_score": 0.7308,
+      "rectangularity": 0.8249,
+      "shape_score": 0.8406,
+      "mask_shape_score": 0.8406,
+      "segmentation_confidence": 0.8874,
+      "detector": "yolo26_seg",
+      "part_type": "marked_white",
+      "display_name": "Inductor (\uc778\ub355\ud130)",
+      "instance_index": 2,
+      "reference_center_pixel": [
+        600.84,
+        546.19
+      ]
+    },
+    {
+      "center_pixel": [
+        602.0,
+        369.18
+      ],
+      "bbox_size_px": [
+        9.33,
+        14.21
+      ],
+      "angle_deg": 89.23,
+      "depth_m": 0.482,
+      "height_above_tray_mm": null,
+      "area_ratio": null,
+      "instance_estimate": 1,
+      "camera_xyz_m": [
+        -0.022578,
+        -0.005679,
+        0.482
+      ],
+      "cad_area_match_score": 0.8355,
+      "aspect_ratio": 1.522,
+      "mask_area_match_score": 0.9576,
+      "aspect_match_score": 0.846,
+      "rectangularity": 0.8844,
+      "shape_score": 0.8948,
+      "mask_shape_score": 0.8948,
+      "segmentation_confidence": 0.8355,
+      "detector": "yolo26_seg",
+      "part_type": "right_white_brown",
+      "display_name": "SMD Capacitor (SMD \ucee4\ud328\uc2dc\ud130)",
+      "instance_index": 1,
+      "reference_center_pixel": [
+        912.72,
+        532.86
+      ]
+    },
+    {
+      "center_pixel": [
+        530.01,
+        369.43
+      ],
+      "bbox_size_px": [
+        8.63,
+        13.47
+      ],
+      "angle_deg": 89.27,
+      "depth_m": 0.482,
+      "height_above_tray_mm": null,
+      "area_ratio": null,
+      "instance_estimate": 1,
+      "camera_xyz_m": [
+        -0.060896,
+        -0.005548,
+        0.482
+      ],
+      "cad_area_match_score": 0.8289,
+      "aspect_ratio": 1.561,
+      "mask_area_match_score": 0.8287,
+      "aspect_match_score": 0.8677,
+      "rectangularity": 0.8654,
+      "shape_score": 0.8538,
+      "mask_shape_score": 0.8538,
+      "segmentation_confidence": 0.8289,
+      "detector": "yolo26_seg",
+      "part_type": "right_white_brown",
+      "display_name": "SMD Capacitor (SMD \ucee4\ud328\uc2dc\ud130)",
+      "instance_index": 2,
+      "reference_center_pixel": [
+        804.5,
+        534.58
+      ]
+    },
+    {
+      "center_pixel": [
+        577.89,
+        368.61
+      ],
+      "bbox_size_px": [
+        15.16,
+        9.01
+      ],
+      "angle_deg": -67.48,
+      "depth_m": 0.483,
+      "height_above_tray_mm": null,
+      "area_ratio": null,
+      "instance_estimate": 1,
+      "camera_xyz_m": [
+        -0.035484,
+        -0.005997,
+        0.483
+      ],
+      "cad_area_match_score": 0.8138,
+      "aspect_ratio": 1.682,
+      "mask_area_match_score": 0.8858,
+      "aspect_match_score": 0.9589,
+      "rectangularity": 0.7859,
+      "shape_score": 0.874,
+      "mask_shape_score": 0.874,
+      "segmentation_confidence": 0.8138,
+      "detector": "yolo26_seg",
+      "part_type": "right_white_brown",
+      "display_name": "SMD Capacitor (SMD \ucee4\ud328\uc2dc\ud130)",
+      "instance_index": 3,
+      "reference_center_pixel": [
+        876.54,
+        532.46
+      ]
+    },
+    {
+      "center_pixel": [
+        505.58,
+        370.01
+      ],
+      "bbox_size_px": [
+        9.28,
+        15.45
+      ],
+      "angle_deg": 89.28,
+      "depth_m": 0.483,
+      "height_above_tray_mm": null,
+      "area_ratio": null,
+      "instance_estimate": 1,
+      "camera_xyz_m": [
+        -0.074053,
+        -0.005251,
+        0.483
+      ],
+      "cad_area_match_score": 0.7654,
+      "aspect_ratio": 1.665,
+      "mask_area_match_score": 0.9855,
+      "aspect_match_score": 0.9266,
+      "rectangularity": 0.8556,
+      "shape_score": 0.921,
+      "mask_shape_score": 0.921,
+      "segmentation_confidence": 0.7654,
+      "detector": "yolo26_seg",
+      "part_type": "right_white_brown",
+      "display_name": "SMD Capacitor (SMD \ucee4\ud328\uc2dc\ud130)",
+      "instance_index": 4,
+      "reference_center_pixel": [
+        767.66,
+        535.91
+      ]
+    },
+    {
+      "center_pixel": [
+        554.0,
+        368.5
+      ],
+      "bbox_size_px": [
+        9.31,
+        14.13
+      ],
+      "angle_deg": 89.26,
+      "depth_m": 0.482,
+      "height_above_tray_mm": null,
+      "area_ratio": null,
+      "instance_estimate": 1,
+      "camera_xyz_m": [
+        -0.048129,
+        -0.006045,
+        0.482
+      ],
+      "cad_area_match_score": 0.3243,
+      "aspect_ratio": 1.519,
+      "mask_area_match_score": 0.8711,
+      "aspect_match_score": 0.846,
+      "rectangularity": 0.8044,
+      "shape_score": 0.8401,
+      "mask_shape_score": 0.8401,
+      "segmentation_confidence": 0.3243,
+      "detector": "yolo26_seg",
+      "part_type": "right_white_brown",
+      "display_name": "SMD Capacitor (SMD \ucee4\ud328\uc2dc\ud130)",
+      "instance_index": 5,
+      "reference_center_pixel": [
+        840.63,
+        532.74
+      ]
+    }
+  ],
+  "stable_detections": [
+    {
+      "part_type": "black_block",
+      "display_name": "VRM (\uc804\uc555 \uc870\uc815 \ubaa8\ub4c8)",
+      "center_pixel": [
+        528.52,
+        154.75
+      ],
+      "reference_center_pixel": [
+        806.4,
+        213.14
+      ],
+      "angle_deg": 89.27,
+      "depth_m": 0.483,
+      "camera_xyz_m": [
+        -0.061795,
+        -0.120149,
+        0.483
+      ],
+      "observation_frames": 27,
+      "median_cad_area_match_score": 0.95,
+      "median_detection_confidence": 0.95,
+      "median_mask_shape_score": 0.957,
+      "median_rectangularity": 0.947,
+      "instance_index": 1,
+      "base_xyz_mm": [
+        -743.451,
+        -156.455,
+        -43.633
+      ],
+      "long_axis_angle_base_deg": 1.657
+    },
+    {
+      "part_type": "black_block",
+      "display_name": "VRM (\uc804\uc555 \uc870\uc815 \ubaa8\ub4c8)",
+      "center_pixel": [
+        576.09,
+        152.41
+      ],
+      "reference_center_pixel": [
+        878.14,
+        209.22
+      ],
+      "angle_deg": -89.7,
+      "depth_m": 0.484,
+      "camera_xyz_m": [
+        -0.036541,
+        -0.121709,
+        0.484
+      ],
+      "observation_frames": 27,
+      "median_cad_area_match_score": 0.953,
+      "median_detection_confidence": 0.953,
+      "median_mask_shape_score": 0.957,
+      "median_rectangularity": 0.943,
+      "instance_index": 2,
+      "base_xyz_mm": [
+        -745.453,
+        -131.233,
+        -44.665
+      ],
+      "long_axis_angle_base_deg": -179.373
+    },
+    {
+      "part_type": "marked_white",
+      "display_name": "Inductor (\uc778\ub355\ud130)",
+      "center_pixel": [
+        395.31,
+        375.54
+      ],
+      "reference_center_pixel": [
+        600.61,
+        546.3
+      ],
+      "angle_deg": 0.72,
+      "depth_m": 0.481,
+      "camera_xyz_m": [
+        -0.132338,
+        -0.002248,
+        0.481
+      ],
+      "observation_frames": 27,
+      "median_cad_area_match_score": 0.882,
+      "median_detection_confidence": 0.882,
+      "median_mask_shape_score": 0.82,
+      "median_rectangularity": 0.793,
+      "instance_index": 1,
+      "base_xyz_mm": [
+        -624.413,
+        -225.073,
+        -45.158
+      ],
+      "long_axis_angle_base_deg": 90.213
+    },
+    {
+      "part_type": "marked_white",
+      "display_name": "Inductor (\uc778\ub355\ud130)",
+      "center_pixel": [
+        434.11,
+        380.24
+      ],
+      "reference_center_pixel": [
+        659.4,
+        552.59
+      ],
+      "angle_deg": 0.73,
+      "depth_m": 0.483,
+      "camera_xyz_m": [
+        -0.112175,
+        0.000228,
+        0.483
+      ],
+      "observation_frames": 27,
+      "median_cad_area_match_score": 0.848,
+      "median_detection_confidence": 0.848,
+      "median_mask_shape_score": 0.826,
+      "median_rectangularity": 0.819,
+      "instance_index": 2,
+      "base_xyz_mm": [
+        -622.33,
+        -204.881,
+        -47.301
+      ],
+      "long_axis_angle_base_deg": 90.203
+    },
+    {
+      "part_type": "right_white_brown",
+      "display_name": "SMD Capacitor (SMD \ucee4\ud328\uc2dc\ud130)",
+      "center_pixel": [
+        505.52,
+        369.92
+      ],
+      "reference_center_pixel": [
+        767.57,
+        535.78
+      ],
+      "angle_deg": 89.28,
+      "depth_m": 0.483,
+      "camera_xyz_m": [
+        -0.074093,
+        -0.005251,
+        0.483
+      ],
+      "observation_frames": 27,
+      "median_cad_area_match_score": 0.829,
+      "median_detection_confidence": 0.829,
+      "median_mask_shape_score": 0.921,
+      "median_rectangularity": 0.881,
+      "instance_index": 1,
+      "base_xyz_mm": [
+        -628.426,
+        -166.892,
+        -47.251
+      ],
+      "long_axis_angle_base_deg": 1.647
+    },
+    {
+      "part_type": "right_white_brown",
+      "display_name": "SMD Capacitor (SMD \ucee4\ud328\uc2dc\ud130)",
+      "center_pixel": [
+        529.93,
+        369.15
+      ],
+      "reference_center_pixel": [
+        804.39,
+        534.16
+      ],
+      "angle_deg": 89.27,
+      "depth_m": 0.483,
+      "camera_xyz_m": [
+        -0.060962,
+        -0.005602,
+        0.483
+      ],
+      "observation_frames": 27,
+      "median_cad_area_match_score": 0.793,
+      "median_detection_confidence": 0.793,
+      "median_mask_shape_score": 0.835,
+      "median_rectangularity": 0.876,
+      "instance_index": 2,
+      "base_xyz_mm": [
+        -628.991,
+        -153.769,
+        -47.282
+      ],
+      "long_axis_angle_base_deg": 1.657
+    },
+    {
+      "part_type": "right_white_brown",
+      "display_name": "SMD Capacitor (SMD \ucee4\ud328\uc2dc\ud130)",
+      "center_pixel": [
+        554.0,
+        368.53
+      ],
+      "reference_center_pixel": [
+        840.64,
+        532.78
+      ],
+      "angle_deg": 89.26,
+      "depth_m": 0.483,
+      "camera_xyz_m": [
+        -0.048222,
+        -0.005966,
+        0.483
+      ],
+      "observation_frames": 26,
+      "median_cad_area_match_score": 0.619,
+      "median_detection_confidence": 0.619,
+      "median_mask_shape_score": 0.844,
+      "median_rectangularity": 0.847,
+      "instance_index": 3,
+      "base_xyz_mm": [
+        -629.562,
+        -141.037,
+        -47.312
+      ],
+      "long_axis_angle_base_deg": 1.667
+    },
+    {
+      "part_type": "right_white_brown",
+      "display_name": "SMD Capacitor (SMD \ucee4\ud328\uc2dc\ud130)",
+      "center_pixel": [
+        577.98,
+        368.39
+      ],
+      "reference_center_pixel": [
+        876.68,
+        532.13
+      ],
+      "angle_deg": -89.29,
+      "depth_m": 0.483,
+      "camera_xyz_m": [
+        -0.035484,
+        -0.006016,
+        0.483
+      ],
+      "observation_frames": 27,
+      "median_cad_area_match_score": 0.678,
+      "median_detection_confidence": 0.678,
+      "median_mask_shape_score": 0.806,
+      "median_rectangularity": 0.804,
+      "instance_index": 4,
+      "base_xyz_mm": [
+        -629.819,
+        -128.301,
+        -47.352
+      ],
+      "long_axis_angle_base_deg": -179.782
+    },
+    {
+      "part_type": "right_white_brown",
+      "display_name": "SMD Capacitor (SMD \ucee4\ud328\uc2dc\ud130)",
+      "center_pixel": [
+        602.03,
+        369.18
+      ],
+      "reference_center_pixel": [
+        912.76,
+        532.85
+      ],
+      "angle_deg": 89.23,
+      "depth_m": 0.4825,
+      "camera_xyz_m": [
+        -0.022578,
+        -0.005622,
+        0.4825
+      ],
+      "observation_frames": 27,
+      "median_cad_area_match_score": 0.832,
+      "median_detection_confidence": 0.832,
+      "median_mask_shape_score": 0.874,
+      "median_rectangularity": 0.861,
+      "instance_index": 5,
+      "base_xyz_mm": [
+        -629.62,
+        -115.389,
+        -46.907
+      ],
+      "long_axis_angle_base_deg": 1.697
+    }
+  ],
+  "detected_total": 9,
+  "stable_detected_total": 9,
+  "display_counts": {
+    "black_block": 2,
+    "long_orange": 0,
+    "marked_white": 2,
+    "right_white_brown": 5,
+    "gpu": 0,
+    "hbm": 0
+  },
+  "robot_pose_span_mm": 0.0045,
+  "robot_rotation_span_deg": 0.00044,
+  "transform_chain": "p_base=T_base_flange@T_flange_camera@p_camera",
+  "euler_convention": "xyz",
+  "flange_pose_mm_deg": [
+    -525.99805,
+    -58.95383,
+    494.8764,
+    179.99959,
+    0.00025,
+    89.99978
+  ],
+  "T_base_flange": [
+    [
+      3.8616e-06,
+      1.0,
+      7.1905e-06,
+      -0.5259980469
+    ],
+    [
+      1.0,
+      -3.8616e-06,
+      -4.405e-06,
+      -0.0589538345
+    ],
+    [
+      -4.405e-06,
+      7.1905e-06,
+      -1.0,
+      0.4948764038
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "T_flange_camera": [
+    [
+      0.9998620265,
+      0.0161780032,
+      -0.003768318,
+      -0.0319488364
+    ],
+    [
+      -0.0162897112,
+      0.9993619132,
+      -0.0317869761,
+      -0.0830377908
+    ],
+    [
+      0.0032516636,
+      0.0318439751,
+      0.9994875627,
+      0.0597826301
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "handeye_file": "/home/juchan-yoon/FR5_robot_control/calibration/data/handeye_result.json",
+  "handeye_sha256": "f08dc2dd9a40523e3f0c69e9285d88c774d69553659c3d9be891da727877c558",
+  "base_transform_status": "VALID_COORDINATES_ONLY",
+  "robot_motion_authorized": false
+}

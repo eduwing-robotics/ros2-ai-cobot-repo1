@@ -40,19 +40,36 @@ if ss -ltn 2>/dev/null | grep -Eq '[:.]10000[[:space:]]'; then
 fi
 
 echo "Starting FAIRINO state server (ROS_DOMAIN_ID=$ROS_DOMAIN_ID)..."
-ros2 run fairino_hardware_v3_9_7 ros2_cmd_server &
+# A congested remote DDS send must not hold up local robot-state publication.
+# Apply the profile only to the driver child; preserve the endpoint environment.
+driver_dds_profile="${KSMC_FAIRINO_DDS_PROFILE:-$fr5_root/config/fairino_fastdds.xml}"
+if [[ ! -r "$driver_dds_profile" ]]; then
+  echo "FAIRINO DDS profile not readable: $driver_dds_profile" >&2
+  exit 1
+fi
+FASTDDS_BUILTIN_TRANSPORTS=UDPv4 \
+FASTRTPS_DEFAULT_PROFILES_FILE="$driver_dds_profile" \
+  ros2 run fairino_hardware_v3_9_7 ros2_cmd_server &
 driver_pid=$!
 
 ready=false
-for _ in $(seq 1 5); do
+state_deadline=$((SECONDS + 30))
+while (( SECONDS < state_deadline )); do
   if ! kill -0 "$driver_pid" 2>/dev/null; then
     echo "FAIRINO state server exited during startup." >&2
     wait "$driver_pid"
+    exit 1
   fi
-  if timeout 6 ros2 topic echo --once /nonrt_state_data >/dev/null 2>&1; then
+  remaining=$((state_deadline - SECONDS))
+  (( remaining > 0 )) || break
+  probe_timeout=$((remaining < 6 ? remaining : 6))
+  if timeout "$probe_timeout" ros2 topic echo --once /nonrt_state_data >/dev/null; then
     ready=true
     break
   fi
+  # Type discovery may fail immediately before the driver connects.
+  # Wait by elapsed time instead of exhausting a fixed number of attempts.
+  (( SECONDS >= state_deadline )) || sleep 0.5
 done
 if [[ "$ready" != true ]]; then
   echo "No /nonrt_state_data received within 30 seconds." >&2

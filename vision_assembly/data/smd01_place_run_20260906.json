@@ -1,0 +1,47 @@
+{
+  "slot_code": "CAP-01",
+  "board_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/smd_board_snapshot_final_20260906.json",
+  "board_captured_unix": 1788680549.6389773,
+  "physical_placement_verified": false,
+  "status": "motion_complete_awaiting_physical_verification",
+  "start_tcp": [
+    36.94768524169922,
+    -449.13330078125,
+    321.3403015136719,
+    179.99758911132812,
+    0.0014677955769002438,
+    180.0
+  ],
+  "final_tcp": [
+    88.212475,
+    -555.44143,
+    87.061646,
+    179.99758911132812,
+    0.0014677955768991034,
+    -179.32154877785118
+  ],
+  "operator_confirmed_held": true,
+  "preflight": {
+    "passed": true,
+    "waypoints": 7,
+    "minimum_joint_soft_limit_margin_deg": 52.862633,
+    "maximum_joint_step_deg": 23.511284000000003,
+    "minimum_j6_deg": -8.644827,
+    "maximum_j6_deg": -2.29416,
+    "j6_operational_bounds_deg": [
+      -178.0,
+      178.0
+    ]
+  },
+  "last_waypoint": "post_release_lift_100mm_vertical",
+  "release_feedback_settled": true,
+  "last_tcp": [
+    88.2070541381836,
+    -555.4542236328125,
+    186.8451690673828,
+    179.98985290527344,
+    0.0021483006421476603,
+    -179.32232666015625
+  ],
+  "completed_unix": 1788680597.3335497
+}

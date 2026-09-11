@@ -4,6 +4,7 @@ import uuid
 from tray_source_identity import TraySourceIdentity
 import argparse, hashlib, json, threading, time, traceback
 from collections import deque
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import cv2
 import numpy as np
@@ -107,6 +108,9 @@ class Detector(Node):
   self.registration_generation=0
   self.detector_session_id=str(uuid.uuid4())
   self.source_identity=TraySourceIdentity()
+  # Reuse the native GPU thread: per-frame threads accumulate host memory.
+  # processing_lock admits at most one job, so images cannot queue in the pool.
+  self.inference_pool=ThreadPoolExecutor(max_workers=1,thread_name_prefix="tray-inference")
   self.pub=self.create_publisher(CompressedImage,a.output_topic,self.image_qos)
   self.counts_pub=self.create_publisher(String,a.counts_topic,10)
   self.overlay_state_pub=self.create_publisher(String,a.overlay_state_topic,10)
@@ -629,7 +633,14 @@ class Detector(Node):
    self.last_display=now
    threading.Thread(target=self.display_worker,args=(m,),daemon=True).start()
   if not self.processing_lock.acquire(blocking=False):return
-  threading.Thread(target=self.inference_worker,args=(m,),daemon=True).start()
+  try:self.inference_pool.submit(self.inference_worker,m)
+  except Exception:
+   self.processing_lock.release()
+   raise
+ def destroy_node(self):
+  # Finish inference before destroying the publishers it uses.
+  self.inference_pool.shutdown(wait=True)
+  return super().destroy_node()
  def display_worker(self,m):
   try:self.publish_live_display(m)
   except Exception as exc:
@@ -784,7 +795,7 @@ class Detector(Node):
      found,poly,floor=self.find_segmented(item,canonical,image,depth_float,fx,fy,cx,cy,H,seg_results[part])
      if part in ('long_orange','black_block','hbm') and any(not passes_quality(d,self.seg_quality[part]) for d in found):
       primary_size=self.a.power_seg_image_size if part=='long_orange' else self.a.seg_image_size
-      alternate_size=640 if part=='long_orange' else 960
+      alternate_size=640 if primary_size!=640 else 960
       sx1,sy1,sx2,sy2=map(int,item['roi_px']);pad=self.a.seg_crop_padding
       crop=canonical[max(0,sy1-pad):min(self.rh,sy2+pad),max(0,sx1-pad):min(self.rw,sx2+pad)]
       alt_prediction=self.seg_model.predict(crop,imgsz=alternate_size,conf=self.a.power_seg_confidence if part=='long_orange' else self.a.seg_confidence,
@@ -912,7 +923,7 @@ def main():
  p.add_argument('--seg-confidence',type=float,default=.20)
  p.add_argument('--power-seg-confidence',type=float,default=.05)
  p.add_argument('--seg-image-size',type=int,default=640)
- p.add_argument('--power-seg-image-size',type=int,default=960)
+ p.add_argument('--power-seg-image-size',type=int,default=640)
  p.add_argument('--seg-device',default='0');p.add_argument('--seg-nms-iou',type=float,default=.99)
  p.add_argument('--seg-crop-padding',type=int,default=20)
  p.add_argument('--handeye-file',type=Path,default=root.parents[0]/'calibration/data/handeye_result.json')

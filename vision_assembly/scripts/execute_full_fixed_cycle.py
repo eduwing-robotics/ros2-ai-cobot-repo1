@@ -27,6 +27,8 @@ from execute_cached_hbm_remaining import Executor, atomic_write, init_executor_r
 from execution_safety import STATE_MAX_AGE_SEC, STOP_RPC_TIMEOUT_SEC, STOP_FEEDBACK_TIMEOUT_SEC
 from full_cycle_motion import (
     DEFAULT_J6_OPERATIONAL_BOUNDS_DEG,
+    DEFAULT_MAX_JOINT_STEP_DEG,
+    empty_pick_clearance_detour,
     MotionPlanError,
     MotionWaypoint,
     build_canonical_slot_waypoints,
@@ -388,10 +390,10 @@ def select_items(
 def waypoint_speed(label: str, speeds: dict) -> int:
     # Dedicated high-clearance speeds: never accelerate the contact zone.
     # Older camera/recovery callers keep their explicitly supplied speeds.
-    if label == 'tray_after_raise':
+    if label in ('tray_after_raise', 'camera_clearance_vertical'):
         return int(speeds.get('clearance_lift', speeds['vertical']))
     high_transfer = {
-        'pick_combined_xy_abc', 'pick_combined_xy_abc_midpoint',
+        'pick_combined_xy_abc', 'pick_combined_xy_abc_midpoint', 'pick_via_trayhome_high',
         'place_combined_xy_abc', 'place_combined_xy_abc_midpoint',
         'tray_after_mid_travel', 'tray_after_travel',
     }
@@ -399,7 +401,7 @@ def waypoint_speed(label: str, speeds: dict) -> int:
         return int(speeds['high_transfer'])
     if label.startswith('tray_'):
         return int(speeds['combined_rotation'] if label.endswith(('travel','return')) else speeds['vertical'])
-    if label in ("pick_combined_xy_abc", "pick_combined_xy_abc_midpoint", "place_combined_xy_abc", "place_combined_xy_abc_midpoint"):
+    if label in ("pick_via_trayhome_high", "pick_combined_xy_abc", "pick_combined_xy_abc_midpoint", "place_combined_xy_abc", "place_combined_xy_abc_midpoint"):
         return min(int(speeds["travel"]), int(speeds["combined_rotation"]))
     if label in (
         "pick_final_50mm_vertical",
@@ -430,7 +432,7 @@ def build_tcp_route(
             part_type=item.get("part_type"),
             orientation_policy_mode=policy.get("mode"),
         )
-        if item['slot_code'] in ('HBM-07', 'PM-03', 'PM-04', 'VRM-02', 'VRM-03', 'VRM-04', 'VRM-05', 'IND-01', 'IND-02') or item.get('part_type') == 'right_white_brown':
+        if item['slot_code'] in ('HBM-04', 'HBM-07', 'PM-03', 'PM-04', 'VRM-02', 'VRM-03', 'VRM-04', 'VRM-05', 'IND-01', 'IND-02') or item.get('part_type') == 'right_white_brown':
             origin=waypoints[0].tcp
             target=list(waypoints[1].tcp)
             for axis in (3,4,5):
@@ -536,7 +538,7 @@ def preflight_route(
     planned: list[PreflightWaypoint] = []
     target_joint_rows: list[tuple[float, ...]] = []
     minimum_margin = math.inf
-    for slot_code, waypoint in route:
+    def solve_waypoint(slot_code, waypoint, reference):
         target = list(normalize_controller_tcp(waypoint.tcp))
         j6_lower, j6_upper = DEFAULT_J6_OPERATIONAL_BOUNDS_DEG
 
@@ -569,7 +571,7 @@ def preflight_route(
         if (
             float(np.min(first_margins)) < 10.0
             or not j6_lower <= float(candidates[0][5]) <= j6_upper
-            or first_step > 95.0
+            or first_step > DEFAULT_MAX_JOINT_STEP_DEG
         ):
             for offset in (-360.0, -270.0, -180.0, -90.0, 90.0, 180.0, 270.0, 360.0):
                 seed = reference.copy()
@@ -583,7 +585,7 @@ def preflight_route(
             key=lambda candidate: (
                 float(np.min(np.minimum(candidate - negative, positive - candidate))) < 10.0,
                 not j6_lower <= float(candidate[5]) <= j6_upper,
-                float(np.max(np.abs(candidate - reference))) > 95.0,
+                float(np.max(np.abs(candidate - reference))) > DEFAULT_MAX_JOINT_STEP_DEG,
                 float(np.max(np.abs(candidate - reference))),
             ),
         )
@@ -595,21 +597,46 @@ def preflight_route(
                 f"{slot_code}:{waypoint.label} J{joint} soft-limit margin "
                 f"{margins[joint - 1]:.3f}deg is below 10deg"
             )
-        planned.append(
-            PreflightWaypoint(
-                slot_code=slot_code,
-                label=waypoint.label,
-                tcp=tuple(target),
-                linear=bool(waypoint.linear),
-                speed_percent=waypoint_speed(waypoint.label, speeds),
-                reference_joints=tuple(float(value) for value in reference),
-                target_joints=tuple(float(value) for value in joints),
-                minimum_soft_limit_margin_deg=waypoint_margin,
-            )
+        return PreflightWaypoint(
+            slot_code=slot_code, label=waypoint.label, tcp=tuple(target),
+            linear=bool(waypoint.linear), speed_percent=waypoint_speed(waypoint.label, speeds),
+            reference_joints=tuple(float(value) for value in reference),
+            target_joints=tuple(float(value) for value in joints),
+            minimum_soft_limit_margin_deg=waypoint_margin,
         )
-        target_joint_rows.append(tuple(float(value) for value in joints))
-        minimum_margin = min(minimum_margin, waypoint_margin)
-        reference = joints
+
+    adaptations = []
+    for index, (slot_code, waypoint) in enumerate(route):
+        solved = solve_waypoint(slot_code, waypoint, reference)
+        direct_step = float(np.max(np.abs(np.asarray(solved.target_joints)-reference)))
+        if direct_step > DEFAULT_MAX_JOINT_STEP_DEG and index > 0:
+            previous_slot, previous = route[index-1]
+            from tray_home_gate import HOME
+            via = (empty_pick_clearance_detour(previous, waypoint, HOME)
+                   if previous_slot == slot_code else None)
+            if via is not None:
+                try:
+                    via_solved = solve_waypoint(slot_code, via, reference)
+                    after_via = solve_waypoint(slot_code, waypoint, np.asarray(via_solved.target_joints))
+                    alternative = validate_joint_path(
+                        [via_solved.target_joints, after_via.target_joints],
+                        initial_joints_deg=reference.tolist())
+                except (MotionPlanError, RuntimeError) as error:
+                    raise MotionPlanError(
+                        f'{slot_code}:{waypoint.label} direct step {direct_step:.3f}deg exceeds '
+                        f'{DEFAULT_MAX_JOINT_STEP_DEG:.3f}deg; TrayHome alternative rejected: {error}') from error
+                planned.append(via_solved)
+                target_joint_rows.append(via_solved.target_joints)
+                minimum_margin = min(minimum_margin, via_solved.minimum_soft_limit_margin_deg)
+                adaptations.append(dict(slot_code=slot_code, before_label=waypoint.label,
+                    policy='empty_pick_via_trayhome_high_v1', direct_maximum_joint_step_deg=direct_step,
+                    alternative_maximum_joint_step_deg=alternative.maximum_step_deg,
+                    via_tcp=list(via_solved.tcp)))
+                solved = after_via
+        planned.append(solved)
+        target_joint_rows.append(solved.target_joints)
+        minimum_margin = min(minimum_margin, solved.minimum_soft_limit_margin_deg)
+        reference = np.asarray(solved.target_joints)
 
     joint_validation = validate_joint_path(
         target_joint_rows,
@@ -617,6 +644,7 @@ def preflight_route(
     )
     return planned, {
         "passed": True,
+        "route_adaptations": adaptations,
         "waypoints": len(planned),
         "minimum_joint_soft_limit_margin_deg": minimum_margin,
         "maximum_joint_step_deg": joint_validation.maximum_step_deg,

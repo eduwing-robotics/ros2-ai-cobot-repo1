@@ -1,0 +1,38 @@
+{
+  "schema": "fr5.smd_grasp_center_audit/v1",
+  "robot_commands_sent": 0,
+  "recipe_sha256": "75c47448edf389a3393e8953bbbdb76d4b514ce195f98af085e8d6ac3d8aa3c0",
+  "recipe_status": "physical_pick_and_CAP-01_place_revalidated_SMD-01_SMDView_XY_angle_close12_release17_2026-09-04",
+  "recorded_reference": {
+    "schema": "fr5.smd_grasp_center_diagnostic/v1",
+    "diagnostic_only": true,
+    "correction_frame": "base",
+    "formula": "planned_tcp_xy = detected_part_xy + fixed_base_correction_xy",
+    "detected_part_base_xy_mm": [
+      -626.338,
+      -164.944
+    ],
+    "fixed_base_correction_xy_mm": [
+      -2.089,
+      2.779
+    ],
+    "expected_tcp_base_xy_mm": [
+      -628.427,
+      -162.165
+    ],
+    "planned_tcp_base_xy_mm": [
+      -628.427,
+      -162.165
+    ],
+    "plan_minus_expected_xy_mm": [
+      0.0,
+      0.0
+    ],
+    "arithmetic_consistent": true,
+    "physical_alignment_verified": false,
+    "measured_remaining_error_xy_mm": null
+  },
+  "reference_is_independent_measurement": false,
+  "observations": null,
+  "missing_measurement": "Fresh detected Base XY paired with physically centered TCP XY at a recorded tool, view and calibration."
+}

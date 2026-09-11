@@ -336,3 +336,30 @@ def validate_joint_path(
         minimum_j6_deg=min(j6_values),
         maximum_j6_deg=max(j6_values),
     )
+
+
+def empty_pick_clearance_detour(previous, target, tray_home):
+    """One named alternative for a direct empty-gripper high pickup transfer.
+
+    Existing staged rotation policies, carried-part transfers and contact
+    segments are never rewritten. IK/soft-limit/step checks remain mandatory.
+    """
+    if (previous.label != 'pre_pick_safe_vertical' or not previous.linear
+            or target.label != 'pick_combined_xy_abc' or target.linear):
+        return None
+    start = _finite_six(previous.tcp, 'pickup transfer start')
+    end = _finite_six(target.tcp, 'pickup transfer end')
+    home = _finite_six(tray_home, 'TrayHome')
+    if start[2] < 350.0 or abs(start[2]-end[2]) > 1e-6:
+        return None
+    # Use the existing inspection clearance and known TrayHome pose only for
+    # downward-facing, near-TrayHome picks. IND/SMD branches stay exact.
+    def distance(a, b):
+        return abs((a-b+180.0) % 360.0-180.0)
+    if (any(distance(p[3], home[3]) > 1.0 or distance(p[4], home[4]) > 1.0
+            for p in (start, end)) or distance(end[5], home[5]) > 15.0):
+        return None
+    via = (home[0], home[1], start[2], *home[3:])
+    if any(math.dist(via[:3], p[:3]) < 1.0 for p in (start, end)):
+        return None
+    return MotionWaypoint('pick_via_trayhome_high', via, False)

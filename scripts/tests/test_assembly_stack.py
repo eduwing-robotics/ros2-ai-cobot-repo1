@@ -159,3 +159,37 @@ start_robot_api
     assert result.returncode == 0
     assert 'already running' in result.stdout
     assert 'UNEXPECTED_START' not in result.stdout
+
+
+def test_endpoint_wait_survives_early_discovery_failures(tmp_path):
+    source = (ROOT / "scripts/run_fairino_endpoint.sh").read_text()
+    wait_block = source.split("ready=false", 1)[1].split('echo "FAIRINO pose stream is ready."', 1)[0]
+    # Six immediate failures exceed the old five-attempt limit; time remains.
+    script = tmp_path / "wait.sh"
+    script.write_text("""#!/bin/bash
+set -euo pipefail
+driver_pid=$$
+ready=false
+attempt=0
+timeout() { attempt=$((attempt + 1)); (( attempt > 6 )); }
+sleep() { :; }
+""" + wait_block + '\necho "READY:$ready ATTEMPTS:$attempt"\n')
+    result = subprocess.run(["bash", str(script)], text=True, capture_output=True, timeout=5)
+    assert result.returncode == 0, result.stderr
+    assert "READY:true ATTEMPTS:7" in result.stdout
+
+
+def test_endpoint_wait_has_real_deadline(tmp_path):
+    source = (ROOT / "scripts/run_fairino_endpoint.sh").read_text()
+    wait_block = source.split("ready=false", 1)[1].split('echo "FAIRINO pose stream is ready."', 1)[0]
+    script = tmp_path / "deadline.sh"
+    script.write_text("""#!/bin/bash
+set -euo pipefail
+driver_pid=$$
+ready=false
+timeout() { SECONDS=$((SECONDS + 6)); return 124; }
+sleep() { :; }
+""" + wait_block)
+    result = subprocess.run(["bash", str(script)], text=True, capture_output=True, timeout=5)
+    assert result.returncode == 1
+    assert "No /nonrt_state_data received within 30 seconds" in result.stderr

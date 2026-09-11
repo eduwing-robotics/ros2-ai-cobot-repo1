@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "mode": "smd_close_relative_to_operator_validated_instance",
+  "timestamp_unix": 1788426779,
+  "robot_motion_authorized": false,
+  "part_type": "right_white_brown",
+  "display_name": "SMD Capacitor",
+  "instance_index": 5,
+  "part_center_base_mm": [
+    -621.473,
+    -120.866,
+    -46.525
+  ],
+  "long_axis_angle_base_deg": 69.249,
+  "position_derivation": {
+    "reference_instance_index": 2,
+    "reference_operator_validated_trayhome_xy_mm": [
+      -621.1,
+      -155.891
+    ],
+    "reference_close_xy_mm": [
+      -619.293,
+      -154.215
+    ],
+    "instance_close_xy_mm": [
+      -619.666,
+      -119.19
+    ],
+    "method": "instance_5_close_minus_instance_2_close_plus_operator_validated_instance_2",
+    "source": "smd_close_set1_terminal_median_repeat_24f_2026-09-03.json"
+  },
+  "angle_source": "three independent 8-frame median images, two white terminals colour-weighted axis",
+  "validation_passed": true
+}

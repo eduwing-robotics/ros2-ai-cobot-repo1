@@ -1,0 +1,79 @@
+{
+  "part": "SMD-01",
+  "status": "released_at_CAP01_and_retreated",
+  "operator_alignment_report": "appears aligned; requested proceeding through grasp",
+  "physical_alignment_independently_verified": false,
+  "physical_grasp_verified": true,
+  "part_held_candidate": false,
+  "recipe_sha256": "7dff0329c7d5d537afa291afc522d6bfe0b7edb7f4cb1c29cb11b7049d60a78e",
+  "started_unix": 1788679941.5427563,
+  "stages": [
+    "opening18_feedback_settled",
+    "descent_1",
+    "descent_2",
+    "close12_feedback_settled",
+    "vertical20mm_lift_complete"
+  ],
+  "start_tcp": [
+    -628.2669677734375,
+    -162.3049774169922,
+    -42.18252944946289,
+    179.99725341796875,
+    -0.0023619113489985466,
+    -2.3180065155029297
+  ],
+  "summary": {
+    "passed": true,
+    "waypoints": 3,
+    "minimum_joint_soft_limit_margin_deg": 62.241600000000005,
+    "maximum_joint_step_deg": 2.333373999999992,
+    "minimum_j6_deg": 97.98172760009766,
+    "maximum_j6_deg": 97.981728,
+    "j6_operational_bounds_deg": [
+      -178.0,
+      178.0
+    ]
+  },
+  "targets": [
+    [
+      -628.2669677734375,
+      -162.3049774169922,
+      -47.177,
+      179.99725341796875,
+      -0.0023619113489985466,
+      -2.3180065155029297
+    ],
+    [
+      -628.2669677734375,
+      -162.3049774169922,
+      -52.177,
+      179.99725341796875,
+      -0.0023619113489985466,
+      -2.3180065155029297
+    ],
+    [
+      -628.2669677734375,
+      -162.3049774169922,
+      -32.177,
+      179.99725341796875,
+      -0.0023619113489985466,
+      -2.3180065155029297
+    ]
+  ],
+  "last_tcp": [
+    -628.2529907226562,
+    -162.3011474609375,
+    -32.213783264160156,
+    179.99758911132812,
+    -0.004731789696961641,
+    -2.3182239532470703
+  ],
+  "last_gripper_position": 12,
+  "completed_unix": 1788679962.349866,
+  "physical_grasp_verification_source": "operator report: \uc5b4 \uc7a1\ud614\ub2e4",
+  "operator_hold_confirmed_unix": 1788680018.9473753,
+  "held_slot": "CAP-01",
+  "placement_completed": true,
+  "placement_record": "vision_assembly/data/smd01_place_run_20260906.json",
+  "placement_completed_unix": 1788680597.3338296
+}

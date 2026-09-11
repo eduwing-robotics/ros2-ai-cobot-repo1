@@ -6,6 +6,25 @@ import numpy as np
 SOURCE = 'vrm_four_edge_v1'
 
 
+def inner_end_peak(values, sign):
+    """Find the object/background transition before the outer cast shadow.
+
+    Keep local peaks with at least half the strongest contrast and >=3 gray
+    levels/pixel; reject weak texture. Top scans inward from the right, bottom
+    from the left. Geometry/residual validation still examines every column.
+    """
+    values=np.asarray(values,dtype=float)
+    if values.ndim!=1 or len(values)<3 or not np.isfinite(values).all() or sign not in (-1,1):
+        raise ValueError('invalid end-edge profile')
+    threshold=max(3.,.5*float(values.max()))
+    candidates=[i for i in range(1,len(values)-1)
+                if values[i]>=threshold and values[i]>values[i-1] and values[i]>=values[i+1]]
+    if not candidates:raise ValueError('no distinct end-edge peak')
+    index=max(candidates) if sign==-1 else min(candidates)
+    den=values[index-1]-2*values[index]+values[index+1]
+    return index+(.5*(values[index-1]-values[index+1])/den if abs(den)>1e-6 else 0)
+
+
 def measure(image, detection, k, transform):
     if image.shape[:2] != (720, 1280):
         raise ValueError('VRM edge fit requires calibrated 1280x720 image')
@@ -41,7 +60,7 @@ def measure(image, detection, k, transform):
     horizontal = []
     for lo,hi,sign in [(cy-23,cy-6,-1),(cy+6,cy+24,1)]:
         columns = np.arange(cx-6,cx+7)
-        rows = [lo+peak(sign*dy[lo:hi,x]) for x in columns]
+        rows = [lo+inner_end_peak(sign*dy[lo:hi,x],sign) for x in columns]
         slope,intercept = np.polyfit(columns,rows,1)
         if np.std(np.array(rows)-(slope*columns+intercept))>=.3:
             raise ValueError('end-edge residual too large')

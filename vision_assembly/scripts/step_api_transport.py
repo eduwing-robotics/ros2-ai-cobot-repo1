@@ -9,6 +9,7 @@ from std_msgs.msg import String
 from std_srvs.srv import Trigger
 from fr5_process_sequences.sequencer_robot_client import RosSequencerRobotClient
 from assembly_cycle_launcher import write
+from cycle_pause import clock as cycle_clock, checkpoint as cycle_checkpoint
 
 
 class StepApiSession:
@@ -37,9 +38,10 @@ class StepApiSession:
         write(self.path,self.record)
         print('API '+str(event.get('action'))+' '+str(event.get('phase'))+' '+str(event.get('event')),flush=True)
 
-    def spin_until(self,predicate,timeout,label):
-        deadline=time.monotonic()+timeout
-        while rclpy.ok() and time.monotonic()<deadline:
+    def spin_until(self,predicate,timeout,label,pause_aware=False):
+        clock=cycle_clock if pause_aware else time.monotonic
+        deadline=clock()+timeout
+        while rclpy.ok() and clock()<deadline:
             if predicate():return
             rclpy.spin_once(self.node,timeout_sec=.02)
         raise TimeoutError(label)
@@ -53,6 +55,7 @@ class StepApiSession:
         return json.loads(result.message)
 
     def ready(self):
+        cycle_checkpoint(lambda:rclpy.spin_once(self.node,timeout_sec=.02))
         self.spin_until(lambda:self.client._command_publisher.get_subscription_count()>0,8,'no robot API subscriber')
         state=self.status()
         if (state.get('api_capabilities_revision')!='step-cycle-20260908'
@@ -63,6 +66,7 @@ class StepApiSession:
         return state
 
     def publish_targets(self,payload):
+        cycle_checkpoint(lambda:rclpy.spin_once(self.node,timeout_sec=.02))
         self.spin_until(lambda:self.targets.get_subscription_count()>0,5,'no precision target subscriber')
         self.targets.publish(String(data=json.dumps(payload,allow_nan=False)))
         deadline=time.monotonic()+8
@@ -73,8 +77,9 @@ class StepApiSession:
 
     def call(self,method,*args,timeout=600,**kwargs):
         try:
+            cycle_checkpoint(lambda:rclpy.spin_once(self.node,timeout_sec=.02))
             self.active=method(*args,**kwargs)
-            self.spin_until(self.active.done,timeout,'operation outcome unknown; do not advance')
+            self.spin_until(self.active.done,timeout,'operation outcome unknown; do not advance',pause_aware=True)
             result=self.active.result()
             self.record['commands'][-1].update(status='completed',result=result)
             write(self.path,self.record)

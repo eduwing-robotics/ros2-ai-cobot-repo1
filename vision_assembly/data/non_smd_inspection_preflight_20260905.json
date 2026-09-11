@@ -1,0 +1,24 @@
+{
+  "summary": {
+    "passed": true,
+    "waypoints": 428,
+    "minimum_joint_soft_limit_margin_deg": 38.023849,
+    "maximum_joint_step_deg": 94.646304,
+    "minimum_j6_deg": -14.475519,
+    "maximum_j6_deg": 167.215668,
+    "j6_operational_bounds_deg": [
+      -178.0,
+      178.0
+    ]
+  },
+  "start_tcp": [
+    -628.9155883789062,
+    -149.4596710205078,
+    52.702579498291016,
+    179.99830627441406,
+    -0.0004637502133846283,
+    -3.6922764778137207
+  ],
+  "robot_moved": false,
+  "snapshot": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/fixed_cycle_full_restart_retry2_2026-09-02.json"
+}

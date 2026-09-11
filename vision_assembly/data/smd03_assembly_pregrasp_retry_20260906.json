@@ -1,0 +1,58 @@
+{
+  "part": "SMD-03",
+  "physical_alignment_verified": false,
+  "physical_contact_height_verified": false,
+  "part_held": false,
+  "measurement_timestamp": 1788683786.7923439,
+  "stages": [
+    "post_grasp_lift_50mm_vertical",
+    "place_combined_xy_abc_midpoint",
+    "place_combined_xy_abc_midpoint",
+    "place_combined_xy_abc_midpoint",
+    "place_final_50mm_vertical",
+    "place_final_50mm_vertical",
+    "place_final_50mm_vertical",
+    "place_final_50mm_vertical"
+  ],
+  "status": "at_pregrasp_alignment_and_contact_height_unverified",
+  "start_tcp": [
+    -527.9948120117188,
+    -120.95890045166016,
+    77.85863494873047,
+    179.99803161621094,
+    0.0001536229974590242,
+    89.9997787475586
+  ],
+  "summary": {
+    "passed": true,
+    "waypoints": 8,
+    "minimum_joint_soft_limit_margin_deg": 57.154304999999994,
+    "maximum_joint_step_deg": 32.169278,
+    "minimum_j6_deg": 1.86767578125,
+    "maximum_j6_deg": 98.191635,
+    "j6_operational_bounds_deg": [
+      -178.0,
+      178.0
+    ]
+  },
+  "rotation_delta_deg": -94.7987787475586,
+  "target": [
+    -629.422,
+    -136.986,
+    -42.177,
+    179.99803161621094,
+    0.0001536229974590242,
+    -4.799000000000007
+  ],
+  "recipe_sha256": "08fcbbe9138a5a47f54f0ad9f735d6122e3628172f43c0aeee0e2b945d67c3c9",
+  "last_tcp": [
+    -629.4044189453125,
+    -136.98446655273438,
+    -42.196990966796875,
+    179.99815368652344,
+    -0.0024632771965116262,
+    -4.798741340637207
+  ],
+  "gripper_position": 18,
+  "completed_unix": 1788683872.4537177
+}

@@ -1,0 +1,49 @@
+{
+  "schema": "fr5.full_fixed_cycle_run/v2",
+  "plan_sha256": "410ddbef1022d71a61f878cad0818c727eb926215d44f6b0316adfa20137bacd",
+  "started_unix": 1788490228.940111,
+  "cycle_id": "20260904-114936",
+  "plan_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/hbm_restart_plan_2026-09-04.json",
+  "motion_profile": "smooth_combined_transfer_v1",
+  "selected_slots": [
+    "HBM-01"
+  ],
+  "motion_completed_slots": [
+    "HBM-01"
+  ],
+  "grasp_verified_slots": [
+    "HBM-01"
+  ],
+  "placement_verified_slots": [],
+  "part_held_candidate": false,
+  "status": "motion_complete_awaiting_physical_verification",
+  "preflight": {
+    "passed": true,
+    "waypoints": 7,
+    "minimum_joint_soft_limit_margin_deg": 50.392838,
+    "maximum_joint_step_deg": 89.805237,
+    "minimum_j6_deg": -5.180537,
+    "maximum_j6_deg": -5.073943138122559,
+    "j6_operational_bounds_deg": [
+      -178.0,
+      178.0
+    ]
+  },
+  "gripper_current_samples_percent": {
+    "HBM-01": 0.0
+  },
+  "last_verified_tcp": [
+    55.256771087646484,
+    -543.5499877929688,
+    188.33615112304688,
+    179.99070739746094,
+    0.001061338814906776,
+    -179.9804229736328
+  ],
+  "last_gripper_position": 25,
+  "paused_unix": 1788490240.6258664,
+  "operator_confirmed_held_unix": 1788490423.9612336,
+  "controller_global_speed_percent": 50,
+  "controller_global_speed_set_unix": 1788490424.0015836,
+  "completed_unix": 1788490440.1071439
+}

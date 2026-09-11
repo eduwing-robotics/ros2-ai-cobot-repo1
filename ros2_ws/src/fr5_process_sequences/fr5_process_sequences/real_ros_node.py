@@ -12,6 +12,7 @@ import json
 import math
 import os
 from pathlib import Path
+from contextlib import nullcontext
 import threading
 import time
 from typing import Any, Mapping, Sequence
@@ -257,15 +258,23 @@ class FairinoRobotPort:
         self._state: RobotNonrtState | None = None
         self._state_sequence = 0
         self._state_received_at = 0.0
+        self._state_gap_sequence = 0
+        self._state_gap_sec = 0.0
         node.create_subscription(RobotNonrtState, state_topic, self._state_callback, 10)
         self._client = node.create_client(RemoteCmdInterface, command_service)
         self._driver_parameters = node.create_client(GetParameters, "/fr_command_server/get_parameters")
 
     def _state_callback(self, state: RobotNonrtState) -> None:
         with self._lock:
+            now = time.monotonic()
+            previous = self._state_received_at
             self._state = state
             self._state_sequence = getattr(self, "_state_sequence", 0) + 1
-            self._state_received_at = time.monotonic()
+            # Keep a sticky marker: later fresh frames cannot hide a receive gap.
+            if previous > 0 and now - previous > .25:
+                self._state_gap_sequence = self._state_sequence
+                self._state_gap_sec = now - previous
+            self._state_received_at = now
 
     def assert_continuous_driver(self):
         client = self._driver_parameters
@@ -282,7 +291,8 @@ class FairinoRobotPort:
         if len(values) != 1 or values[0].string_value != 'per-command-blend-v1':
             raise BackendFailure('SAFETY_STOP', 'driver lacks per-command blending; restart updated driver first')
 
-    def assert_ready(self) -> None:
+    def assert_motion_permitted(self):
+        """Fresh armed/healthy AUTO Tool1/User0 state, including an active queue."""
         if not self._enabled:
             raise BackendFailure(
                 "SAFETY_STOP",
@@ -294,6 +304,10 @@ class FairinoRobotPort:
             raise BackendFailure("SAFETY_STOP", "FR5 must be in AUTO mode")
         if int(state.tool_num) != 1 or int(state.work_num) != 0:
             raise BackendFailure("ROBOT_FAULT", "FR5 must use Tool1/User0")
+        return state
+
+    def assert_ready(self) -> None:
+        state = self.assert_motion_permitted()
         if int(state.robot_motion_done) != 1:
             raise BackendFailure("ROBOT_BUSY", "FR5 is not stationary")
 
@@ -526,13 +540,17 @@ class FairinoRobotPort:
             raise BackendFailure("ROBOT_TIMEOUT", "FR5 command service is unavailable")
         request = RemoteCmdInterface.Request()
         request.cmd_str = command
-        future = self._client.call_async(request)
+        whole = getattr(self, '_whole_control', None)
+        actuator = command.startswith(('MoveJ(', 'MoveL(', 'MoveGripper(', 'SetSpeed(', 'JNTPoint('))
+        with whole.dispatch() if whole is not None and actuator else nullcontext():
+            future = self._client.call_async(request)
+        clock = whole.clock if whole is not None and whole.applies() and actuator else time.monotonic
         timeout = self._service_timeout
         if command.startswith(('MoveJ(', 'MoveL(')): timeout = 90.0
         elif command.startswith('MoveGripper('): timeout = 30.0
         elif command in ('StopMotion()', 'PauseMotion()'): timeout = 4.0
-        deadline = time.monotonic() + timeout
-        while rclpy.ok() and not future.done() and time.monotonic() < deadline:
+        deadline = clock() + timeout
+        while rclpy.ok() and not future.done() and clock() < deadline:
             time.sleep(0.01)
         if not future.done() or future.result() is None:
             raise BackendFailure("ROBOT_TIMEOUT", f"FR5 command timed out: {command}")
@@ -639,6 +657,10 @@ class RealRobotApiNode(Node):
     def __init__(self) -> None:
         super().__init__("real_robot_api")
         self.declare_parameter("enable_hardware_execution", False)
+        self.declare_parameter("enable_production_assembly", False)
+        self.declare_parameter("whole_cycle_boundary_pause", False)
+        self.declare_parameter("enable_whole_cycle_pause", False)
+        self.declare_parameter("buffered_pause_verified", False)
         self.declare_parameter("enable_retained_resume", False)
         self.declare_parameter("enable_continuous_transfer", False)
         self.declare_parameter("command_topic", COMMAND_TOPIC)
@@ -758,7 +780,8 @@ class RealRobotApiNode(Node):
             status.update(state_fresh=True, robot_mode=int(state.robot_mode),
                 tool_num=int(state.tool_num), work_num=int(state.work_num),
                 robot_motion_done=int(state.robot_motion_done),
-                gripper_feedback_valid=bool(state.gripper_feedback_valid))
+                gripper_feedback_valid=bool(state.gripper_feedback_valid),
+                gripperfaultnum=int(state.gripperfaultnum), grippererro=int(state.grippererro))
         except BackendFailure as error:
             status["state_error"] = str(error)
         try:

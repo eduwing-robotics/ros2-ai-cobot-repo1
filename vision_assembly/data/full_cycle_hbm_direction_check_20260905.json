@@ -1,0 +1,1737 @@
+{
+  "schema": "fr5.full_fixed_cycle_plan/v1",
+  "created_unix": 1788605815.4988608,
+  "cycle_id": "20260902-211811",
+  "snapshot": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/fixed_cycle_full_restart_retry2_2026-09-02.json",
+  "transfer_z_mm": 350.0,
+  "speeds_percent": {
+    "travel": 25,
+    "combined_rotation": 25,
+    "vertical": 10
+  },
+  "board_place_common_z_raise_mm": 0.3,
+  "motion_profile": "smooth_combined_transfer_v1",
+  "robot_motion_authorized": false,
+  "plan_selection": {
+    "mode": "full_cycle",
+    "requested_only_slot": null,
+    "selected_slots": [
+      "GPU-01",
+      "HBM-01",
+      "HBM-02",
+      "HBM-03",
+      "HBM-04",
+      "HBM-05",
+      "HBM-06",
+      "HBM-07",
+      "HBM-08",
+      "PM-01",
+      "PM-02",
+      "PM-03",
+      "PM-04",
+      "VRM-01",
+      "VRM-02",
+      "VRM-03",
+      "VRM-04",
+      "VRM-05",
+      "IND-01",
+      "IND-02",
+      "CAP-01",
+      "CAP-02",
+      "CAP-03",
+      "CAP-04",
+      "CAP-05"
+    ]
+  },
+  "cycle_overrides": {
+    "GPU-01": {
+      "preferred_tcp_c_deg": 180.0,
+      "preference_tie_threshold_deg": 10.0
+    },
+    "PM-01": {
+      "pick_reference_tcp_c_deg": 85.185,
+      "locked_place_reference_tcp_c_deg": 180.0
+    },
+    "pick_symmetric_solution": {
+      "rule": "choose the 180-degree-equivalent pick TCP C nearest the previous planned place TCP C, except HBM and PM-01 use their recorded pick references"
+    },
+    "HBM": {
+      "pick_reference_tcp_c_deg": 90.0,
+      "locked_place_reference_tcp_c_deg": 180.0,
+      "orientation_mode": "align_actual_carried_axis_to_current_slot_axis"
+    }
+  },
+  "plan": [
+    {
+      "slot_code": "GPU-01",
+      "part_type": "gpu",
+      "tray_instance_index": 1,
+      "tray_surface_base_mm": [
+        -518.15,
+        -182.051,
+        -41.696
+      ],
+      "tray_long_axis_base_deg": 179.758,
+      "pick_correction_base_mm": [
+        0.0,
+        0.0
+      ],
+      "pick_z_mode": "detected_surface_relative",
+      "pick_final_tcp": [
+        -518.15,
+        -182.051,
+        -48.696,
+        -180.0,
+        0.0,
+        89.75800000000004
+      ],
+      "place_final_tcp": [
+        44.530949,
+        -519.835691,
+        88.46085,
+        180.0,
+        0.0,
+        -179.16523897463787
+      ],
+      "calibrated_place_final_tcp_z_mm": 88.16085,
+      "board_place_common_z_raise_mm": 0.3,
+      "tray_open_position": 70,
+      "grip_position": 65,
+      "release_position": 70,
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "target_axis_base_deg": 90.8347610253621,
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 10.0,
+        "skip_rotation_below_deg": 0.5,
+        "preferred_tcp_c_deg": 180.0,
+        "rotation_delta_deg": 91.07676102536209,
+        "rotation_skipped_in_plan": false,
+        "planned_from_pick": {
+          "current_axis_base_deg": -0.24199999999996014,
+          "target_axis_base_deg": 90.8347610253621,
+          "symmetry_period_deg": 180.0,
+          "rotation_delta_deg": 91.07676102536209,
+          "target_tcp_abc_deg": [
+            180.0,
+            0.0,
+            -179.16523897463787
+          ],
+          "preferred_tcp_c_deg": 180.0
+        }
+      }
+    },
+    {
+      "slot_code": "HBM-01",
+      "part_type": "hbm",
+      "tray_instance_index": 1,
+      "tray_surface_base_mm": [
+        -600.463,
+        -46.976,
+        -45.591
+      ],
+      "tray_long_axis_base_deg": 1.907,
+      "pick_correction_base_mm": [
+        -0.717,
+        1.253
+      ],
+      "pick_z_mode": "fixed_fixture_absolute",
+      "pick_final_tcp": [
+        -601.18,
+        -45.723,
+        -47.884,
+        -180.0,
+        0.0,
+        91.90699999999998
+      ],
+      "place_final_tcp": [
+        68.767731,
+        -543.867523,
+        88.91186499999999,
+        -179.99999999999997,
+        0.0,
+        -179.16523897463796
+      ],
+      "calibrated_place_final_tcp_z_mm": 88.611865,
+      "board_place_common_z_raise_mm": 0.3,
+      "tray_open_position": 25,
+      "grip_position": 18,
+      "release_position": 25,
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "target_axis_base_deg": 90.8347610253621,
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 10.0,
+        "skip_rotation_below_deg": 3.0,
+        "preferred_tcp_c_deg": 180.0,
+        "rotation_delta_deg": 88.92776102536209,
+        "rotation_skipped_in_plan": false,
+        "planned_from_pick": {
+          "current_axis_base_deg": 1.9069999999999645,
+          "target_axis_base_deg": 90.8347610253621,
+          "symmetry_period_deg": 180.0,
+          "rotation_delta_deg": 88.92776102536209,
+          "target_tcp_abc_deg": [
+            -179.99999999999997,
+            0.0,
+            -179.16523897463796
+          ],
+          "preferred_tcp_c_deg": 180.0
+        }
+      }
+    },
+    {
+      "slot_code": "HBM-02",
+      "part_type": "hbm",
+      "tray_instance_index": 2,
+      "tray_surface_base_mm": [
+        -598.799,
+        -21.403,
+        -47.741
+      ],
+      "tray_long_axis_base_deg": 1.917,
+      "pick_correction_base_mm": [
+        -0.717,
+        1.253
+      ],
+      "pick_z_mode": "fixed_fixture_absolute",
+      "pick_final_tcp": [
+        -599.516,
+        -20.15,
+        -47.884,
+        -180.0,
+        0.0,
+        91.91700000000003
+      ],
+      "place_final_tcp": [
+        68.391624,
+        -527.660362,
+        89.171583,
+        180.0,
+        0.0,
+        -179.16523897463787
+      ],
+      "calibrated_place_final_tcp_z_mm": 88.871583,
+      "board_place_common_z_raise_mm": 0.3,
+      "tray_open_position": 25,
+      "grip_position": 18,
+      "release_position": 25,
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "target_axis_base_deg": 90.8347610253621,
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 10.0,
+        "skip_rotation_below_deg": 3.0,
+        "preferred_tcp_c_deg": 180.0,
+        "rotation_delta_deg": 88.9177610253621,
+        "rotation_skipped_in_plan": false,
+        "planned_from_pick": {
+          "current_axis_base_deg": 1.9170000000000185,
+          "target_axis_base_deg": 90.8347610253621,
+          "symmetry_period_deg": 180.0,
+          "rotation_delta_deg": 88.9177610253621,
+          "target_tcp_abc_deg": [
+            180.0,
+            0.0,
+            -179.16523897463787
+          ],
+          "preferred_tcp_c_deg": 180.0
+        }
+      }
+    },
+    {
+      "slot_code": "HBM-03",
+      "part_type": "hbm",
+      "tray_instance_index": 3,
+      "tray_surface_base_mm": [
+        -572.182,
+        -47.132,
+        -46.49
+      ],
+      "tray_long_axis_base_deg": 1.917,
+      "pick_correction_base_mm": [
+        -0.717,
+        1.253
+      ],
+      "pick_z_mode": "fixed_fixture_absolute",
+      "pick_final_tcp": [
+        -572.899,
+        -45.879,
+        -47.884,
+        -180.0,
+        0.0,
+        91.91700000000003
+      ],
+      "place_final_tcp": [
+        69.782559,
+        -511.702621,
+        89.437947,
+        180.0,
+        0.0,
+        -179.16523897463787
+      ],
+      "calibrated_place_final_tcp_z_mm": 89.137947,
+      "board_place_common_z_raise_mm": 0.3,
+      "tray_open_position": 25,
+      "grip_position": 18,
+      "release_position": 25,
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "target_axis_base_deg": 90.8347610253621,
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 10.0,
+        "skip_rotation_below_deg": 3.0,
+        "preferred_tcp_c_deg": 180.0,
+        "rotation_delta_deg": 88.9177610253621,
+        "rotation_skipped_in_plan": false,
+        "planned_from_pick": {
+          "current_axis_base_deg": 1.9170000000000185,
+          "target_axis_base_deg": 90.8347610253621,
+          "symmetry_period_deg": 180.0,
+          "rotation_delta_deg": 88.9177610253621,
+          "target_tcp_abc_deg": [
+            180.0,
+            0.0,
+            -179.16523897463787
+          ],
+          "preferred_tcp_c_deg": 180.0
+        }
+      }
+    },
+    {
+      "slot_code": "HBM-04",
+      "part_type": "hbm",
+      "tray_instance_index": 4,
+      "tray_surface_base_mm": [
+        -569.842,
+        -21.288,
+        -45.661
+      ],
+      "tray_long_axis_base_deg": -179.842,
+      "pick_correction_base_mm": [
+        -0.717,
+        1.253
+      ],
+      "pick_z_mode": "fixed_fixture_absolute",
+      "pick_final_tcp": [
+        -570.559,
+        -20.035,
+        -47.884,
+        -180.0,
+        0.0,
+        90.15800000000002
+      ],
+      "place_final_tcp": [
+        67.989693,
+        -497.152703,
+        89.692871,
+        180.0,
+        0.0,
+        -179.16523897463787
+      ],
+      "calibrated_place_final_tcp_z_mm": 89.392871,
+      "board_place_common_z_raise_mm": 0.3,
+      "tray_open_position": 25,
+      "grip_position": 18,
+      "release_position": 25,
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "target_axis_base_deg": 90.8347610253621,
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 10.0,
+        "skip_rotation_below_deg": 3.0,
+        "preferred_tcp_c_deg": 180.0,
+        "rotation_delta_deg": 90.67676102536211,
+        "rotation_skipped_in_plan": false,
+        "planned_from_pick": {
+          "current_axis_base_deg": 0.15800000000001763,
+          "target_axis_base_deg": 90.8347610253621,
+          "symmetry_period_deg": 180.0,
+          "rotation_delta_deg": 90.67676102536211,
+          "target_tcp_abc_deg": [
+            180.0,
+            0.0,
+            -179.16523897463787
+          ],
+          "preferred_tcp_c_deg": 180.0
+        }
+      }
+    },
+    {
+      "slot_code": "HBM-05",
+      "part_type": "hbm",
+      "tray_instance_index": 5,
+      "tray_surface_base_mm": [
+        -535.269,
+        -49.296,
+        -43.653
+      ],
+      "tray_long_axis_base_deg": -179.942,
+      "pick_correction_base_mm": [
+        -0.717,
+        1.253
+      ],
+      "pick_z_mode": "fixed_fixture_absolute",
+      "pick_final_tcp": [
+        -535.986,
+        -48.043,
+        -47.884,
+        -180.0,
+        0.0,
+        90.05799999999999
+      ],
+      "place_final_tcp": [
+        21.242385,
+        -544.62088,
+        87.612595,
+        -179.99999999999997,
+        0.0,
+        -179.1652389746379
+      ],
+      "calibrated_place_final_tcp_z_mm": 87.312595,
+      "board_place_common_z_raise_mm": 0.3,
+      "tray_open_position": 25,
+      "grip_position": 18,
+      "release_position": 25,
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "target_axis_base_deg": 90.8347610253621,
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 10.0,
+        "skip_rotation_below_deg": 3.0,
+        "preferred_tcp_c_deg": 180.0,
+        "rotation_delta_deg": 90.77676102536213,
+        "rotation_skipped_in_plan": false,
+        "planned_from_pick": {
+          "current_axis_base_deg": 0.057999999999992086,
+          "target_axis_base_deg": 90.8347610253621,
+          "symmetry_period_deg": 180.0,
+          "rotation_delta_deg": 90.77676102536213,
+          "target_tcp_abc_deg": [
+            -179.99999999999997,
+            0.0,
+            -179.1652389746379
+          ],
+          "preferred_tcp_c_deg": 180.0
+        }
+      }
+    },
+    {
+      "slot_code": "HBM-06",
+      "part_type": "hbm",
+      "tray_instance_index": 6,
+      "tray_surface_base_mm": [
+        -535.179,
+        -21.056,
+        -46.764
+      ],
+      "tray_long_axis_base_deg": 1.917,
+      "pick_correction_base_mm": [
+        -0.717,
+        1.253
+      ],
+      "pick_z_mode": "fixed_fixture_absolute",
+      "pick_final_tcp": [
+        -535.896,
+        -19.803,
+        -47.884,
+        -180.0,
+        0.0,
+        91.91700000000003
+      ],
+      "place_final_tcp": [
+        21.017813,
+        -528.384579,
+        87.876901,
+        180.0,
+        0.0,
+        -179.16523897463787
+      ],
+      "calibrated_place_final_tcp_z_mm": 87.576901,
+      "board_place_common_z_raise_mm": 0.3,
+      "tray_open_position": 25,
+      "grip_position": 18,
+      "release_position": 25,
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "target_axis_base_deg": 90.8347610253621,
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 10.0,
+        "skip_rotation_below_deg": 3.0,
+        "preferred_tcp_c_deg": 180.0,
+        "rotation_delta_deg": 88.9177610253621,
+        "rotation_skipped_in_plan": false,
+        "planned_from_pick": {
+          "current_axis_base_deg": 1.9170000000000185,
+          "target_axis_base_deg": 90.8347610253621,
+          "symmetry_period_deg": 180.0,
+          "rotation_delta_deg": 88.9177610253621,
+          "target_tcp_abc_deg": [
+            180.0,
+            0.0,
+            -179.16523897463787
+          ],
+          "preferred_tcp_c_deg": 180.0
+        }
+      }
+    },
+    {
+      "slot_code": "HBM-07",
+      "part_type": "hbm",
+      "tray_instance_index": 7,
+      "tray_surface_base_mm": [
+        -509.641,
+        -49.137,
+        -44.469
+      ],
+      "tray_long_axis_base_deg": 1.907,
+      "pick_correction_base_mm": [
+        -0.717,
+        1.253
+      ],
+      "pick_z_mode": "fixed_fixture_absolute",
+      "pick_final_tcp": [
+        -510.358,
+        -47.884,
+        -47.884,
+        -180.0,
+        0.0,
+        91.90699999999998
+      ],
+      "place_final_tcp": [
+        20.783786,
+        -511.842422,
+        88.146044,
+        -179.99999999999997,
+        0.0,
+        -179.16523897463796
+      ],
+      "calibrated_place_final_tcp_z_mm": 87.846044,
+      "board_place_common_z_raise_mm": 0.3,
+      "tray_open_position": 25,
+      "grip_position": 18,
+      "release_position": 25,
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "target_axis_base_deg": 90.8347610253621,
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 10.0,
+        "skip_rotation_below_deg": 3.0,
+        "preferred_tcp_c_deg": 180.0,
+        "rotation_delta_deg": 88.92776102536209,
+        "rotation_skipped_in_plan": false,
+        "planned_from_pick": {
+          "current_axis_base_deg": 1.9069999999999645,
+          "target_axis_base_deg": 90.8347610253621,
+          "symmetry_period_deg": 180.0,
+          "rotation_delta_deg": 88.92776102536209,
+          "target_tcp_abc_deg": [
+            -179.99999999999997,
+            0.0,
+            -179.16523897463796
+          ],
+          "preferred_tcp_c_deg": 180.0
+        }
+      }
+    },
+    {
+      "slot_code": "HBM-08",
+      "part_type": "hbm",
+      "tray_instance_index": 8,
+      "tray_surface_base_mm": [
+        -507.976,
+        -20.511,
+        -46.63
+      ],
+      "tray_long_axis_base_deg": 1.917,
+      "pick_correction_base_mm": [
+        -0.717,
+        1.253
+      ],
+      "pick_z_mode": "fixed_fixture_absolute",
+      "pick_final_tcp": [
+        -508.693,
+        -19.258,
+        -47.884,
+        -180.0,
+        0.0,
+        91.91700000000003
+      ],
+      "place_final_tcp": [
+        20.57179,
+        -495.988932,
+        88.404315,
+        180.0,
+        0.0,
+        -179.16523897463787
+      ],
+      "calibrated_place_final_tcp_z_mm": 88.104315,
+      "board_place_common_z_raise_mm": 0.3,
+      "tray_open_position": 25,
+      "grip_position": 18,
+      "release_position": 25,
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "target_axis_base_deg": 90.8347610253621,
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 10.0,
+        "skip_rotation_below_deg": 3.0,
+        "preferred_tcp_c_deg": 180.0,
+        "rotation_delta_deg": 88.9177610253621,
+        "rotation_skipped_in_plan": false,
+        "planned_from_pick": {
+          "current_axis_base_deg": 1.9170000000000185,
+          "target_axis_base_deg": 90.8347610253621,
+          "symmetry_period_deg": 180.0,
+          "rotation_delta_deg": 88.9177610253621,
+          "target_tcp_abc_deg": [
+            180.0,
+            0.0,
+            -179.16523897463787
+          ],
+          "preferred_tcp_c_deg": 180.0
+        }
+      }
+    },
+    {
+      "slot_code": "PM-01",
+      "part_type": "long_orange",
+      "tray_instance_index": 1,
+      "tray_surface_base_mm": [
+        -746.609,
+        -66.709,
+        -45.872
+      ],
+      "tray_long_axis_base_deg": 178.329,
+      "pick_correction_base_mm": [
+        -0.8423214909484753,
+        0.8375314251659285
+      ],
+      "pick_z_mode": "fixed_fixture_absolute",
+      "pick_final_tcp": [
+        -747.4513214909485,
+        -65.87146857483407,
+        -51.029,
+        -180.0,
+        0.0,
+        88.32900000000001
+      ],
+      "place_final_tcp": [
+        -1.842737,
+        -522.095021,
+        87.728943,
+        -179.99999999999997,
+        0.0,
+        -179.16523897463796
+      ],
+      "calibrated_place_final_tcp_z_mm": 87.428943,
+      "board_place_common_z_raise_mm": 0.3,
+      "tray_open_position": 30,
+      "grip_position": 25,
+      "release_position": 30,
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "target_axis_base_deg": 90.8347610253621,
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 3.0,
+        "preferred_tcp_c_deg": 180.0,
+        "rotation_delta_deg": 92.50576102536206,
+        "rotation_skipped_in_plan": false,
+        "planned_from_pick": {
+          "current_axis_base_deg": -1.6710000000000005,
+          "target_axis_base_deg": 90.8347610253621,
+          "symmetry_period_deg": 180.0,
+          "rotation_delta_deg": 92.50576102536206,
+          "target_tcp_abc_deg": [
+            -179.99999999999997,
+            0.0,
+            -179.16523897463796
+          ],
+          "preferred_tcp_c_deg": 180.0
+        }
+      }
+    },
+    {
+      "slot_code": "PM-02",
+      "part_type": "long_orange",
+      "tray_instance_index": 2,
+      "tray_surface_base_mm": [
+        -747.192,
+        -23.413,
+        -45.017
+      ],
+      "tray_long_axis_base_deg": 1.917,
+      "pick_correction_base_mm": [
+        -0.8713697252481434,
+        0.689891813425912
+      ],
+      "pick_z_mode": "fixed_fixture_absolute",
+      "pick_final_tcp": [
+        -748.0633697252481,
+        -22.723108186574088,
+        -51.029,
+        -180.0,
+        0.0,
+        91.91700000000003
+      ],
+      "place_final_tcp": [
+        90.994109,
+        -518.844348,
+        90.29042799999999,
+        180.0,
+        0.0,
+        -179.16523897463787
+      ],
+      "calibrated_place_final_tcp_z_mm": 89.990428,
+      "board_place_common_z_raise_mm": 0.3,
+      "tray_open_position": 30,
+      "grip_position": 25,
+      "release_position": 30,
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "target_axis_base_deg": 90.8347610253621,
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 3.0,
+        "preferred_tcp_c_deg": null,
+        "rotation_delta_deg": 88.9177610253621,
+        "rotation_skipped_in_plan": false,
+        "planned_from_pick": {
+          "current_axis_base_deg": 1.9170000000000185,
+          "target_axis_base_deg": 90.8347610253621,
+          "symmetry_period_deg": 180.0,
+          "rotation_delta_deg": 88.9177610253621,
+          "target_tcp_abc_deg": [
+            180.0,
+            0.0,
+            -179.16523897463787
+          ],
+          "preferred_tcp_c_deg": null
+        }
+      }
+    },
+    {
+      "slot_code": "PM-03",
+      "part_type": "long_orange",
+      "tray_instance_index": 3,
+      "tray_surface_base_mm": [
+        -668.994,
+        -61.015,
+        -46.361
+      ],
+      "tray_long_axis_base_deg": 1.917,
+      "pick_correction_base_mm": [
+        -0.8713697252481434,
+        0.689891813425912
+      ],
+      "pick_z_mode": "fixed_fixture_absolute",
+      "pick_final_tcp": [
+        -669.8653697252481,
+        -60.32510818657409,
+        -51.029,
+        -180.0,
+        0.0,
+        91.91700000000003
+      ],
+      "place_final_tcp": [
+        44.99093,
+        -559.844895,
+        88.362126,
+        -180.0,
+        0.0,
+        91.91700000000003
+      ],
+      "calibrated_place_final_tcp_z_mm": 88.062126,
+      "board_place_common_z_raise_mm": 0.3,
+      "tray_open_position": 30,
+      "grip_position": 25,
+      "release_position": 30,
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "target_axis_base_deg": -179.19067424390985,
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 3.0,
+        "preferred_tcp_c_deg": null,
+        "rotation_delta_deg": -1.1076742439098552,
+        "rotation_skipped_in_plan": true,
+        "planned_from_pick": {
+          "current_axis_base_deg": 1.9170000000000185,
+          "target_axis_base_deg": -179.19067424390985,
+          "symmetry_period_deg": 180.0,
+          "rotation_delta_deg": -1.1076742439098552,
+          "target_tcp_abc_deg": [
+            -180.0,
+            0.0,
+            90.80932575609016
+          ],
+          "preferred_tcp_c_deg": null
+        }
+      }
+    },
+    {
+      "slot_code": "PM-04",
+      "part_type": "long_orange",
+      "tray_instance_index": 4,
+      "tray_surface_base_mm": [
+        -673.917,
+        -17.11,
+        -46.37
+      ],
+      "tray_long_axis_base_deg": 1.917,
+      "pick_correction_base_mm": [
+        -0.8713697252481434,
+        0.689891813425912
+      ],
+      "pick_z_mode": "fixed_fixture_absolute",
+      "pick_final_tcp": [
+        -674.7883697252481,
+        -16.420108186574087,
+        -51.029,
+        -180.0,
+        0.0,
+        91.91700000000003
+      ],
+      "place_final_tcp": [
+        43.649772,
+        -471.914695,
+        89.790132,
+        -180.0,
+        0.0,
+        91.91700000000003
+      ],
+      "calibrated_place_final_tcp_z_mm": 89.490132,
+      "board_place_common_z_raise_mm": 0.3,
+      "tray_open_position": 30,
+      "grip_position": 25,
+      "release_position": 30,
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "target_axis_base_deg": -179.19067424390985,
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 3.0,
+        "preferred_tcp_c_deg": null,
+        "rotation_delta_deg": -1.1076742439098552,
+        "rotation_skipped_in_plan": true,
+        "planned_from_pick": {
+          "current_axis_base_deg": 1.9170000000000185,
+          "target_axis_base_deg": -179.19067424390985,
+          "symmetry_period_deg": 180.0,
+          "rotation_delta_deg": -1.1076742439098552,
+          "target_tcp_abc_deg": [
+            -180.0,
+            0.0,
+            90.80932575609016
+          ],
+          "preferred_tcp_c_deg": null
+        }
+      }
+    },
+    {
+      "slot_code": "VRM-01",
+      "part_type": "black_block",
+      "tray_instance_index": 1,
+      "tray_surface_base_mm": [
+        -753.131,
+        -223.147,
+        -47.076
+      ],
+      "tray_long_axis_base_deg": 1.887,
+      "pick_correction_base_mm": [
+        -1.492,
+        0.09
+      ],
+      "pick_z_mode": "fixed_fixture_absolute",
+      "pick_final_tcp": [
+        -754.6229999999999,
+        -223.057,
+        -53.238,
+        -180.0,
+        0.0,
+        87.387
+      ],
+      "place_final_tcp": [
+        -16.389381,
+        -557.328084,
+        84.487146,
+        -180.0,
+        0.0,
+        0.8347610253620692
+      ],
+      "calibrated_place_final_tcp_z_mm": 84.187146,
+      "board_place_common_z_raise_mm": 0.3,
+      "tray_open_position": 28,
+      "grip_position": 24,
+      "release_position": 26,
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "target_axis_base_deg": 90.8347610253621,
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 2.0,
+        "preferred_tcp_c_deg": 180.0,
+        "rotation_delta_deg": -86.55223897463793,
+        "rotation_skipped_in_plan": false,
+        "planned_from_pick": {
+          "current_axis_base_deg": -2.6130000000000004,
+          "target_axis_base_deg": 90.8347610253621,
+          "symmetry_period_deg": 180.0,
+          "rotation_delta_deg": -86.55223897463793,
+          "target_tcp_abc_deg": [
+            -180.0,
+            0.0,
+            0.8347610253620692
+          ],
+          "preferred_tcp_c_deg": 180.0
+        }
+      }
+    },
+    {
+      "slot_code": "VRM-02",
+      "part_type": "black_block",
+      "tray_instance_index": 2,
+      "tray_surface_base_mm": [
+        -755.181,
+        -200.535,
+        -45.095
+      ],
+      "tray_long_axis_base_deg": -179.332,
+      "pick_correction_base_mm": [
+        -1.492,
+        0.09
+      ],
+      "pick_z_mode": "fixed_fixture_absolute",
+      "pick_final_tcp": [
+        -756.673,
+        -200.445,
+        -53.238,
+        -180.0,
+        0.0,
+        86.168
+      ],
+      "place_final_tcp": [
+        -16.683457,
+        -538.928835,
+        84.78559,
+        -180.0,
+        0.0,
+        0.83476102536212
+      ],
+      "calibrated_place_final_tcp_z_mm": 84.48559,
+      "board_place_common_z_raise_mm": 0.3,
+      "tray_open_position": 28,
+      "grip_position": 24,
+      "release_position": 26,
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "target_axis_base_deg": 90.8347610253621,
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 2.0,
+        "preferred_tcp_c_deg": 180.0,
+        "rotation_delta_deg": -85.33323897463788,
+        "rotation_skipped_in_plan": false,
+        "planned_from_pick": {
+          "current_axis_base_deg": -3.8319999999999936,
+          "target_axis_base_deg": 90.8347610253621,
+          "symmetry_period_deg": 180.0,
+          "rotation_delta_deg": -85.33323897463788,
+          "target_tcp_abc_deg": [
+            -180.0,
+            0.0,
+            0.83476102536212
+          ],
+          "preferred_tcp_c_deg": 180.0
+        }
+      }
+    },
+    {
+      "slot_code": "VRM-03",
+      "part_type": "black_block",
+      "tray_instance_index": 3,
+      "tray_surface_base_mm": [
+        -752.857,
+        -177.058,
+        -44.257
+      ],
+      "tray_long_axis_base_deg": -179.292,
+      "pick_correction_base_mm": [
+        -1.492,
+        0.09
+      ],
+      "pick_z_mode": "fixed_fixture_absolute",
+      "pick_final_tcp": [
+        -754.3489999999999,
+        -176.968,
+        -53.238,
+        -180.0,
+        0.0,
+        86.20799999999997
+      ],
+      "place_final_tcp": [
+        -16.969078,
+        -520.835457,
+        85.079169,
+        -180.0,
+        0.0,
+        0.8347610253621456
+      ],
+      "calibrated_place_final_tcp_z_mm": 84.779169,
+      "board_place_common_z_raise_mm": 0.3,
+      "tray_open_position": 28,
+      "grip_position": 24,
+      "release_position": 26,
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "target_axis_base_deg": 90.8347610253621,
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 2.0,
+        "preferred_tcp_c_deg": 180.0,
+        "rotation_delta_deg": -85.37323897463784,
+        "rotation_skipped_in_plan": false,
+        "planned_from_pick": {
+          "current_axis_base_deg": -3.79200000000003,
+          "target_axis_base_deg": 90.8347610253621,
+          "symmetry_period_deg": 180.0,
+          "rotation_delta_deg": -85.37323897463784,
+          "target_tcp_abc_deg": [
+            -180.0,
+            0.0,
+            0.8347610253621456
+          ],
+          "preferred_tcp_c_deg": 180.0
+        }
+      }
+    },
+    {
+      "slot_code": "VRM-04",
+      "part_type": "black_block",
+      "tray_instance_index": 4,
+      "tray_surface_base_mm": [
+        -752.2,
+        -153.731,
+        -44.366
+      ],
+      "tray_long_axis_base_deg": -179.332,
+      "pick_correction_base_mm": [
+        -1.492,
+        0.09
+      ],
+      "pick_z_mode": "fixed_fixture_absolute",
+      "pick_final_tcp": [
+        -753.692,
+        -153.641,
+        -53.238,
+        -180.0,
+        0.0,
+        86.168
+      ],
+      "place_final_tcp": [
+        -17.26317,
+        -502.435209,
+        85.377629,
+        -180.0,
+        0.0,
+        0.83476102536212
+      ],
+      "calibrated_place_final_tcp_z_mm": 85.077629,
+      "board_place_common_z_raise_mm": 0.3,
+      "tray_open_position": 28,
+      "grip_position": 24,
+      "release_position": 26,
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "target_axis_base_deg": 90.8347610253621,
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 2.0,
+        "preferred_tcp_c_deg": 180.0,
+        "rotation_delta_deg": -85.33323897463788,
+        "rotation_skipped_in_plan": false,
+        "planned_from_pick": {
+          "current_axis_base_deg": -3.8319999999999936,
+          "target_axis_base_deg": 90.8347610253621,
+          "symmetry_period_deg": 180.0,
+          "rotation_delta_deg": -85.33323897463788,
+          "target_tcp_abc_deg": [
+            -180.0,
+            0.0,
+            0.83476102536212
+          ],
+          "preferred_tcp_c_deg": 180.0
+        }
+      }
+    },
+    {
+      "slot_code": "VRM-05",
+      "part_type": "black_block",
+      "tray_instance_index": 5,
+      "tray_surface_base_mm": [
+        -751.676,
+        -129.467,
+        -44.474
+      ],
+      "tray_long_axis_base_deg": -179.342,
+      "pick_correction_base_mm": [
+        -1.492,
+        0.09
+      ],
+      "pick_z_mode": "fixed_fixture_absolute",
+      "pick_final_tcp": [
+        -753.168,
+        -129.377,
+        -53.238,
+        -180.0,
+        0.0,
+        86.15800000000002
+      ],
+      "place_final_tcp": [
+        -17.563502,
+        -483.881054,
+        85.678483,
+        -180.0,
+        0.0,
+        0.83476102536212
+      ],
+      "calibrated_place_final_tcp_z_mm": 85.378483,
+      "board_place_common_z_raise_mm": 0.3,
+      "tray_open_position": 28,
+      "grip_position": 24,
+      "release_position": 26,
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "target_axis_base_deg": 90.8347610253621,
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 2.0,
+        "preferred_tcp_c_deg": 180.0,
+        "rotation_delta_deg": -85.32323897463789,
+        "rotation_skipped_in_plan": false,
+        "planned_from_pick": {
+          "current_axis_base_deg": -3.841999999999985,
+          "target_axis_base_deg": 90.8347610253621,
+          "symmetry_period_deg": 180.0,
+          "rotation_delta_deg": -85.32323897463789,
+          "target_tcp_abc_deg": [
+            -180.0,
+            0.0,
+            0.83476102536212
+          ],
+          "preferred_tcp_c_deg": 180.0
+        }
+      }
+    },
+    {
+      "slot_code": "IND-01",
+      "part_type": "marked_white",
+      "tray_instance_index": 1,
+      "tray_surface_base_mm": [
+        -620.9,
+        -229.575,
+        -44.253
+      ],
+      "tray_long_axis_base_deg": 90.333,
+      "pick_correction_base_mm": [
+        0.746,
+        3.515
+      ],
+      "pick_z_mode": "fixed_fixture_absolute",
+      "pick_final_tcp": [
+        -620.154,
+        -226.06,
+        -51.194,
+        -180.0,
+        0.0,
+        0.33299999999997
+      ],
+      "place_final_tcp": [
+        104.445043,
+        -551.746261,
+        88.887684,
+        -180.0,
+        0.0,
+        -179.16523897463787
+      ],
+      "calibrated_place_final_tcp_z_mm": 88.587684,
+      "board_place_common_z_raise_mm": 0.3,
+      "tray_open_position": 21,
+      "grip_position": 14,
+      "release_position": 20,
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "target_axis_base_deg": -89.16523897463793,
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 185.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 1.0,
+        "preferred_tcp_c_deg": 180.0,
+        "rotation_delta_deg": 180.50176102536216,
+        "rotation_skipped_in_plan": false,
+        "planned_from_pick": {
+          "current_axis_base_deg": -89.66700000000003,
+          "target_axis_base_deg": -89.16523897463793,
+          "symmetry_period_deg": 180.0,
+          "rotation_delta_deg": 180.50176102536216,
+          "target_tcp_abc_deg": [
+            -180.0,
+            0.0,
+            -179.16523897463787
+          ],
+          "preferred_tcp_c_deg": 180.0
+        }
+      }
+    },
+    {
+      "slot_code": "IND-02",
+      "part_type": "marked_white",
+      "tray_instance_index": 2,
+      "tray_surface_base_mm": [
+        -622.066,
+        -205.573,
+        -47.308
+      ],
+      "tray_long_axis_base_deg": 90.343,
+      "pick_correction_base_mm": [
+        0.746,
+        3.515
+      ],
+      "pick_z_mode": "fixed_fixture_absolute",
+      "pick_final_tcp": [
+        -621.32,
+        -202.05800000000002,
+        -51.194,
+        -180.0,
+        0.0,
+        0.34300000000001774
+      ],
+      "place_final_tcp": [
+        104.514069,
+        -563.207914,
+        88.69868,
+        -180.0,
+        0.0,
+        -179.16523897463782
+      ],
+      "calibrated_place_final_tcp_z_mm": 88.39868,
+      "board_place_common_z_raise_mm": 0.3,
+      "tray_open_position": 21,
+      "grip_position": 14,
+      "release_position": 20,
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "target_axis_base_deg": 90.8347610253621,
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 185.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 1.0,
+        "preferred_tcp_c_deg": 180.0,
+        "rotation_delta_deg": 180.49176102536217,
+        "rotation_skipped_in_plan": false,
+        "planned_from_pick": {
+          "current_axis_base_deg": -89.657,
+          "target_axis_base_deg": 90.8347610253621,
+          "symmetry_period_deg": 180.0,
+          "rotation_delta_deg": 180.49176102536217,
+          "target_tcp_abc_deg": [
+            -180.0,
+            0.0,
+            -179.16523897463782
+          ],
+          "preferred_tcp_c_deg": 180.0
+        }
+      }
+    },
+    {
+      "slot_code": "CAP-01",
+      "part_type": "right_white_brown",
+      "tray_instance_index": 1,
+      "tray_surface_base_mm": [
+        -626.244,
+        -166.371,
+        -47.323
+      ],
+      "tray_long_axis_base_deg": 1.897,
+      "pick_correction_base_mm": [
+        -2.089,
+        2.779
+      ],
+      "pick_z_mode": "fixed_fixture_absolute",
+      "pick_final_tcp": [
+        -628.3330000000001,
+        -163.592,
+        -52.177,
+        -180.0,
+        0.0,
+        -178.103
+      ],
+      "place_final_tcp": [
+        85.974801,
+        -558.458969,
+        88.391824,
+        -180.0,
+        0.0,
+        -179.19067424390988
+      ],
+      "calibrated_place_final_tcp_z_mm": 88.091824,
+      "board_place_common_z_raise_mm": 0.3,
+      "tray_open_position": 18,
+      "grip_position": 12,
+      "release_position": 17,
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "target_axis_base_deg": -179.19067424390985,
+        "gripper_axis": "tool_x",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 0.5,
+        "preferred_tcp_c_deg": null,
+        "rotation_delta_deg": -1.0876742439098734,
+        "rotation_skipped_in_plan": false,
+        "planned_from_pick": {
+          "current_axis_base_deg": -178.103,
+          "target_axis_base_deg": -179.19067424390985,
+          "symmetry_period_deg": 180.0,
+          "rotation_delta_deg": -1.0876742439098734,
+          "target_tcp_abc_deg": [
+            -180.0,
+            0.0,
+            -179.19067424390988
+          ],
+          "preferred_tcp_c_deg": null
+        }
+      },
+      "grasp_center_diagnostic": {
+        "schema": "fr5.smd_grasp_center_diagnostic/v1",
+        "diagnostic_only": true,
+        "correction_frame": "base",
+        "formula": "planned_tcp_xy = detected_part_xy + fixed_base_correction_xy",
+        "detected_part_base_xy_mm": [
+          -626.244,
+          -166.371
+        ],
+        "fixed_base_correction_xy_mm": [
+          -2.089,
+          2.779
+        ],
+        "expected_tcp_base_xy_mm": [
+          -628.3330000000001,
+          -163.592
+        ],
+        "planned_tcp_base_xy_mm": [
+          -628.3330000000001,
+          -163.592
+        ],
+        "plan_minus_expected_xy_mm": [
+          0.0,
+          0.0
+        ],
+        "arithmetic_consistent": true,
+        "physical_alignment_verified": false,
+        "measured_remaining_error_xy_mm": null
+      }
+    },
+    {
+      "slot_code": "CAP-02",
+      "part_type": "right_white_brown",
+      "tray_instance_index": 2,
+      "tray_surface_base_mm": [
+        -626.399,
+        -153.359,
+        -49.368
+      ],
+      "tray_long_axis_base_deg": 1.897,
+      "pick_correction_base_mm": [
+        -2.089,
+        2.779
+      ],
+      "pick_z_mode": "fixed_fixture_absolute",
+      "pick_final_tcp": [
+        -628.488,
+        -150.58,
+        -52.177,
+        -180.0,
+        0.0,
+        -178.103
+      ],
+      "place_final_tcp": [
+        100.025083,
+        -536.627892,
+        89.135785,
+        -180.0,
+        0.0,
+        -89.16523897463793
+      ],
+      "calibrated_place_final_tcp_z_mm": 88.835785,
+      "board_place_common_z_raise_mm": 0.3,
+      "tray_open_position": 18,
+      "grip_position": 12,
+      "release_position": 17,
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "target_axis_base_deg": 90.8347610253621,
+        "gripper_axis": "tool_x",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 0.5,
+        "preferred_tcp_c_deg": null,
+        "rotation_delta_deg": 88.93776102536208,
+        "rotation_skipped_in_plan": false,
+        "planned_from_pick": {
+          "current_axis_base_deg": -178.103,
+          "target_axis_base_deg": 90.8347610253621,
+          "symmetry_period_deg": 180.0,
+          "rotation_delta_deg": 88.93776102536208,
+          "target_tcp_abc_deg": [
+            -180.0,
+            0.0,
+            -89.16523897463793
+          ],
+          "preferred_tcp_c_deg": null
+        }
+      },
+      "grasp_center_diagnostic": {
+        "schema": "fr5.smd_grasp_center_diagnostic/v1",
+        "diagnostic_only": true,
+        "correction_frame": "base",
+        "formula": "planned_tcp_xy = detected_part_xy + fixed_base_correction_xy",
+        "detected_part_base_xy_mm": [
+          -626.399,
+          -153.359
+        ],
+        "fixed_base_correction_xy_mm": [
+          -2.089,
+          2.779
+        ],
+        "expected_tcp_base_xy_mm": [
+          -628.488,
+          -150.58
+        ],
+        "planned_tcp_base_xy_mm": [
+          -628.488,
+          -150.58
+        ],
+        "plan_minus_expected_xy_mm": [
+          0.0,
+          0.0
+        ],
+        "arithmetic_consistent": true,
+        "physical_alignment_verified": false,
+        "measured_remaining_error_xy_mm": null
+      }
+    },
+    {
+      "slot_code": "CAP-03",
+      "part_type": "right_white_brown",
+      "tray_instance_index": 3,
+      "tray_surface_base_mm": [
+        -627.939,
+        -141.676,
+        -47.362
+      ],
+      "tray_long_axis_base_deg": 1.897,
+      "pick_correction_base_mm": [
+        -2.089,
+        2.779
+      ],
+      "pick_z_mode": "fixed_fixture_absolute",
+      "pick_final_tcp": [
+        -630.028,
+        -138.897,
+        -52.177,
+        -180.0,
+        0.0,
+        -178.103
+      ],
+      "place_final_tcp": [
+        101.587455,
+        -519.583374,
+        89.46193,
+        -180.0,
+        0.0,
+        -89.16523897463793
+      ],
+      "calibrated_place_final_tcp_z_mm": 89.16193,
+      "board_place_common_z_raise_mm": 0.3,
+      "tray_open_position": 18,
+      "grip_position": 12,
+      "release_position": 17,
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "target_axis_base_deg": 90.8347610253621,
+        "gripper_axis": "tool_x",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 0.5,
+        "preferred_tcp_c_deg": null,
+        "rotation_delta_deg": 88.93776102536208,
+        "rotation_skipped_in_plan": false,
+        "planned_from_pick": {
+          "current_axis_base_deg": -178.103,
+          "target_axis_base_deg": 90.8347610253621,
+          "symmetry_period_deg": 180.0,
+          "rotation_delta_deg": 88.93776102536208,
+          "target_tcp_abc_deg": [
+            -180.0,
+            0.0,
+            -89.16523897463793
+          ],
+          "preferred_tcp_c_deg": null
+        }
+      },
+      "grasp_center_diagnostic": {
+        "schema": "fr5.smd_grasp_center_diagnostic/v1",
+        "diagnostic_only": true,
+        "correction_frame": "base",
+        "formula": "planned_tcp_xy = detected_part_xy + fixed_base_correction_xy",
+        "detected_part_base_xy_mm": [
+          -627.939,
+          -141.676
+        ],
+        "fixed_base_correction_xy_mm": [
+          -2.089,
+          2.779
+        ],
+        "expected_tcp_base_xy_mm": [
+          -630.028,
+          -138.897
+        ],
+        "planned_tcp_base_xy_mm": [
+          -630.028,
+          -138.897
+        ],
+        "plan_minus_expected_xy_mm": [
+          0.0,
+          0.0
+        ],
+        "arithmetic_consistent": true,
+        "physical_alignment_verified": false,
+        "measured_remaining_error_xy_mm": null
+      }
+    },
+    {
+      "slot_code": "CAP-04",
+      "part_type": "right_white_brown",
+      "tray_instance_index": 4,
+      "tray_surface_base_mm": [
+        -628.871,
+        -131.463,
+        -47.371
+      ],
+      "tray_long_axis_base_deg": 1.897,
+      "pick_correction_base_mm": [
+        -2.089,
+        2.779
+      ],
+      "pick_z_mode": "fixed_fixture_absolute",
+      "pick_final_tcp": [
+        -630.96,
+        -128.684,
+        -52.177,
+        -180.0,
+        0.0,
+        -178.103
+      ],
+      "place_final_tcp": [
+        101.243192,
+        -503.16027,
+        89.726106,
+        -180.0,
+        0.0,
+        -89.16523897463793
+      ],
+      "calibrated_place_final_tcp_z_mm": 89.426106,
+      "board_place_common_z_raise_mm": 0.3,
+      "tray_open_position": 18,
+      "grip_position": 12,
+      "release_position": 17,
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "target_axis_base_deg": 90.8347610253621,
+        "gripper_axis": "tool_x",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 0.5,
+        "preferred_tcp_c_deg": null,
+        "rotation_delta_deg": 88.93776102536208,
+        "rotation_skipped_in_plan": false,
+        "planned_from_pick": {
+          "current_axis_base_deg": -178.103,
+          "target_axis_base_deg": 90.8347610253621,
+          "symmetry_period_deg": 180.0,
+          "rotation_delta_deg": 88.93776102536208,
+          "target_tcp_abc_deg": [
+            -180.0,
+            0.0,
+            -89.16523897463793
+          ],
+          "preferred_tcp_c_deg": null
+        }
+      },
+      "grasp_center_diagnostic": {
+        "schema": "fr5.smd_grasp_center_diagnostic/v1",
+        "diagnostic_only": true,
+        "correction_frame": "base",
+        "formula": "planned_tcp_xy = detected_part_xy + fixed_base_correction_xy",
+        "detected_part_base_xy_mm": [
+          -628.871,
+          -131.463
+        ],
+        "fixed_base_correction_xy_mm": [
+          -2.089,
+          2.779
+        ],
+        "expected_tcp_base_xy_mm": [
+          -630.96,
+          -128.684
+        ],
+        "planned_tcp_base_xy_mm": [
+          -630.96,
+          -128.684
+        ],
+        "plan_minus_expected_xy_mm": [
+          0.0,
+          0.0
+        ],
+        "arithmetic_consistent": true,
+        "physical_alignment_verified": false,
+        "measured_remaining_error_xy_mm": null
+      }
+    },
+    {
+      "slot_code": "CAP-05",
+      "part_type": "right_white_brown",
+      "tray_instance_index": 5,
+      "tray_surface_base_mm": [
+        -625.901,
+        -117.091,
+        -47.519
+      ],
+      "tray_long_axis_base_deg": 1.897,
+      "pick_correction_base_mm": [
+        -2.089,
+        2.779
+      ],
+      "pick_z_mode": "fixed_fixture_absolute",
+      "pick_final_tcp": [
+        -627.99,
+        -114.312,
+        -52.177,
+        -180.0,
+        0.0,
+        -178.103
+      ],
+      "place_final_tcp": [
+        100.993119,
+        -485.750068,
+        90.009271,
+        -180.0,
+        0.0,
+        -89.16523897463793
+      ],
+      "calibrated_place_final_tcp_z_mm": 89.709271,
+      "board_place_common_z_raise_mm": 0.3,
+      "tray_open_position": 18,
+      "grip_position": 12,
+      "release_position": 17,
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "target_axis_base_deg": 90.8347610253621,
+        "gripper_axis": "tool_x",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 0.5,
+        "preferred_tcp_c_deg": null,
+        "rotation_delta_deg": 88.93776102536208,
+        "rotation_skipped_in_plan": false,
+        "planned_from_pick": {
+          "current_axis_base_deg": -178.103,
+          "target_axis_base_deg": 90.8347610253621,
+          "symmetry_period_deg": 180.0,
+          "rotation_delta_deg": 88.93776102536208,
+          "target_tcp_abc_deg": [
+            -180.0,
+            0.0,
+            -89.16523897463793
+          ],
+          "preferred_tcp_c_deg": null
+        }
+      },
+      "grasp_center_diagnostic": {
+        "schema": "fr5.smd_grasp_center_diagnostic/v1",
+        "diagnostic_only": true,
+        "correction_frame": "base",
+        "formula": "planned_tcp_xy = detected_part_xy + fixed_base_correction_xy",
+        "detected_part_base_xy_mm": [
+          -625.901,
+          -117.091
+        ],
+        "fixed_base_correction_xy_mm": [
+          -2.089,
+          2.779
+        ],
+        "expected_tcp_base_xy_mm": [
+          -627.99,
+          -114.312
+        ],
+        "planned_tcp_base_xy_mm": [
+          -627.99,
+          -114.312
+        ],
+        "plan_minus_expected_xy_mm": [
+          0.0,
+          0.0
+        ],
+        "arithmetic_consistent": true,
+        "physical_alignment_verified": false,
+        "measured_remaining_error_xy_mm": null
+      }
+    }
+  ],
+  "status": "planned_not_executed"
+}

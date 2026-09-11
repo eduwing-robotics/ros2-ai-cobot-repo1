@@ -12,6 +12,7 @@ def validate_status(state):
             or not state.get('hardware_execution_enabled') or not state.get('state_fresh')
             or not state.get('robot_health_clear') or state.get('robot_motion_done')!=1
             or state.get('robot_mode')!=0 or state.get('tool_num')!=1 or state.get('work_num')!=0
+            or state.get('gripperfaultnum', 0) or state.get('grippererro', 0)
             or state.get('active_operation') or state.get('recovery_required')
             or state.get('held_candidate') is not None or not state.get('gripper_feedback_valid')):
         raise RuntimeError('API not ready for a new empty-gripper cycle: '+json.dumps(state))

@@ -102,8 +102,9 @@ def test_all25_individual_api_calls_or_stop_at_first_failure(tmp_path,plan,monke
         assert real._recovery_required
 
 
+@pytest.mark.parametrize('continuous',[False,True])
 @pytest.mark.parametrize('name',['PlaceCamera','TrayHome','SMDView'])
-def test_camera_api_uses_existing_safe_route_and_no_gripper(tmp_path,plan,monkeypatch,name):
+def test_camera_api_uses_existing_safe_route_and_no_gripper(tmp_path,plan,monkeypatch,name,continuous):
     from test_real_precision_steps import SimExecutor
     from tray_home_gate import HOME
     real,robot,executor,payload,_,_,events=setup_real(tmp_path,plan,monkeypatch)
@@ -112,8 +113,22 @@ def test_camera_api_uses_existing_safe_route_and_no_gripper(tmp_path,plan,monkey
     destination.parent.mkdir(parents=True);destination.write_bytes(base.read_bytes())
     (tmp_path/'vision_assembly/config/smd_section_view.json').write_bytes((ROOT/'vision_assembly/config/smd_section_view.json').read_bytes())
     baseline=json.loads(base.read_text())
+    commands=[]; moves=[]; groups=[]
+    real.continuous_transfer_enabled=continuous
+    def transfer(node, group, check):
+        from fr5_process_sequences.continuous_transfer import transfer_group
+        check()
+        assert transfer_group(group,0)==group
+        assert all(w.tcp[2]>=350 and w.speed_percent==40 for w in group)
+        groups.append(group)
+        node.waypoint=group[-1]
+        node.backend._robot.log.append(('arm',None,group[-1].label))
+        return node.wait_pose(group[-1].tcp,None),[]
+    monkeypatch.setattr('fr5_process_sequences.continuous_transfer.execute_transfer',transfer)
     class CameraExecutor(SimExecutor):
         def service(self,command,**kwargs):
+            commands.append(command)
+            if command.startswith(('MoveJ','MoveL')):moves.append(self.waypoint)
             if command.startswith('GetTCPOffset'):return '0,'+','.join(map(str,baseline['active_tcp_offset']))
             if command.startswith('GetRobotTeachingPoint'):
                 return '0,'+','.join(map(str,baseline['teaching_points'][name]))
@@ -125,3 +140,67 @@ def test_camera_api_uses_existing_safe_route_and_no_gripper(tmp_path,plan,monkey
     assert not [r for r in robot.log if r[0]=='gripper']
     phases=[r[2] for r in robot.log if r[0]=='arm']
     assert phases and any('combined_xy_abc' in phase for phase in phases)
+    assert 'SetSpeed(40)' in commands and 'SetSpeed(20)' not in commands
+    assert len(groups)==int(continuous)
+    assert moves[-1].linear and moves[-1].speed_percent==10
+    for w in moves:
+        expected=30 if w.label=='camera_clearance_vertical' else 10 if w.linear else 40
+        assert w.speed_percent==expected
+
+
+@pytest.mark.parametrize('failure',[None,'health','cancel'])
+def test_camera_queue_with_real_port_checks_while_robot_is_moving(tmp_path,plan,monkeypatch,failure):
+    from types import MethodType
+    from test_real_precision_steps import SimExecutor
+    from fr5_process_sequences.real_ros_node import FairinoRobotPort
+    real,robot,executor,payload,_,_,events=setup_real(tmp_path,plan,monkeypatch)
+    real.continuous_transfer_enabled=True
+    base=ROOT/'vision_assembly/checkpoints/full_cycle_success_20260906/runtime.json'
+    dest=tmp_path/'vision_assembly/checkpoints/full_cycle_success_20260906/runtime.json'
+    dest.parent.mkdir(parents=True);dest.write_bytes(base.read_bytes())
+    baseline=json.loads(base.read_text());commands=[]
+    robot._enabled=True
+    for key in ['emg','abnormal_stop','safetydoor_alarm','safetyplanealarm','main_error_code',
+                'sub_error_code','alarm','motionalarm','cmdpointerror','collision_err']:
+        setattr(robot.sim,key,0)
+    robot.sim.robot_mode=0;robot.sim.tool_num=1;robot.sim.work_num=0
+    robot._fresh_state=lambda:robot.sim
+    robot._assert_health=FairinoRobotPort._assert_health
+    robot.assert_motion_permitted=MethodType(FairinoRobotPort.assert_motion_permitted,robot)
+    robot.assert_ready=MethodType(FairinoRobotPort.assert_ready,robot)
+    robot.assert_continuous_driver=lambda:None
+    def send(command,code):
+        commands.append(command)
+        if command.startswith('MoveJ(JNT1'):
+            robot.sim.robot_motion_done=0
+            if failure=='health':robot.sim.emg=1
+            if failure=='cancel':real._paused.set()
+        elif command.startswith('MoveJ(JNT2'):
+            assert robot.sim.robot_motion_done==0
+        elif command.startswith('MoveJ(JNT3'):
+            robot.sim.robot_motion_done=1
+        return '0'
+    robot._service=send
+    robot.stop_motion=lambda:commands.append('STOP')
+    class CameraExecutor(SimExecutor):
+        def __init__(self,backend,op):
+            super().__init__(backend,op);self.robot=backend._robot
+        def service(self,command,**kwargs):
+            if command.startswith('GetTCPOffset'):return '0,'+','.join(map(str,baseline['active_tcp_offset']))
+            if command.startswith('GetRobotTeachingPoint'):return '0,'+','.join(map(str,baseline['teaching_points']['PlaceCamera']))
+            # Production PortExecutor guards point definitions and ordinary moves.
+            if command.startswith(('Move','SetSpeed','JNTPoint')):robot.assert_ready()
+            return super().service(command,**kwargs)
+    executor.executor_factory=CameraExecutor
+    req=dict(job_id=payload['job_id'],operation_id=str(uuid4()),action='robot.move_joint',
+             point_name='PlaceCamera',joint_point=[0]*6)
+    result=real.execute(req)
+    moves=[c for c in commands if c.startswith('MoveJ')]
+    if failure is None:
+        assert result.event is Event.OPERATION_COMPLETED,result
+        assert len(moves)==3 and moves[-1].endswith(',0)')
+        assert robot.sim.robot_motion_done==1
+    else:
+        assert result.event is Event.OPERATION_FAILED,result
+        assert len(moves)==1 and 'STOP' in commands and real._recovery_required
+    assert not [r for r in robot.log if r[0]=='gripper']

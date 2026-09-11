@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Driver/API transport: a congested remote DDS socket must not stall
+     local robot-state publication. Reliable DDS delivery remains enabled;
+     UDP datagrams dropped at a full socket are handled as network loss.
+     The API's independent 250 ms freshness gate remains unchanged. -->
+<dds>
+  <profiles xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
+    <transport_descriptors>
+      <transport_descriptor>
+        <transport_id>fairino_nonblocking_udp</transport_id>
+        <type>UDPv4</type>
+        <non_blocking_send>true</non_blocking_send>
+      </transport_descriptor>
+    </transport_descriptors>
+    <participant profile_name="fairino_feedback" is_default_profile="true">
+      <rtps>
+        <userTransports>
+          <transport_id>fairino_nonblocking_udp</transport_id>
+        </userTransports>
+        <useBuiltinTransports>false</useBuiltinTransports>
+      </rtps>
+    </participant>
+  </profiles>
+</dds>

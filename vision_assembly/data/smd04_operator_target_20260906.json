@@ -1,0 +1,58 @@
+{
+  "mode": "operator_confirmed_terminal_target",
+  "instance_index": 4,
+  "operator_confirmed_consumed_prefix_count": 3,
+  "operator_terminal_points_confirmed": true,
+  "automatic_detection_validation_passed": false,
+  "robot_motion_authorized": false,
+  "timestamp_unix": 1788684532.7566502,
+  "manual_source_timestamp": 1788684444.4908566,
+  "manual_source_sha256": "f46c48e8ddf6247b7724a1ddb70a284c704bf624bf43be5929973010ac89273c",
+  "handeye_sha256": "f08dc2dd9a40523e3f0c69e9285d88c774d69553659c3d9be891da727877c558",
+  "part_center_base_mm": [
+    -627.4820273110844,
+    -127.11379583256154,
+    -47.291
+  ],
+  "long_axis_angle_base_deg": -5.545950060307902,
+  "terminal_centers_base_mm": [
+    [
+      -630.9755439890347,
+      -126.77458051136986,
+      -47.291
+    ],
+    [
+      -623.9885106331341,
+      -127.45301115375321,
+      -47.291
+    ]
+  ],
+  "terminal_distance_mm": 7.019893393278318,
+  "reference_tcp": [
+    -527.9920654296875,
+    -120.96379852294922,
+    77.85702514648438,
+    179.99781799316406,
+    0.00036394328344613314,
+    89.99956512451172
+  ],
+  "reference_flange": [
+    -526.0004272460938,
+    -118.96125793457031,
+    234.85707092285156,
+    179.99801635742188,
+    0.0005884789279662073,
+    89.99956512451172
+  ],
+  "camera_k": [
+    905.5945434570312,
+    0.0,
+    644.4216918945312,
+    0.0,
+    904.6046142578125,
+    379.84027099609375,
+    0.0,
+    0.0,
+    1.0
+  ]
+}

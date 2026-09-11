@@ -1,0 +1,47 @@
+{
+  "slot_code": "HBM-02",
+  "board_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/hbm02_held_board_place_2026-09-05.json",
+  "board_captured_unix": 1788591204.1002343,
+  "physical_placement_verified": false,
+  "status": "motion_complete_awaiting_physical_verification",
+  "start_tcp": [
+    36.945682525634766,
+    -449.1353454589844,
+    321.34259033203125,
+    179.99801635742188,
+    0.0014023883268237114,
+    179.9995574951172
+  ],
+  "final_tcp": [
+    62.274727,
+    -526.204635,
+    91.64440499999999,
+    179.99801635742188,
+    0.0014023883268307372,
+    -179.85084666016056
+  ],
+  "operator_confirmed_held": true,
+  "preflight": {
+    "passed": true,
+    "waypoints": 7,
+    "minimum_joint_soft_limit_margin_deg": 48.011787,
+    "maximum_joint_step_deg": 23.072402999999994,
+    "minimum_j6_deg": -8.64482593536377,
+    "maximum_j6_deg": -4.70964,
+    "j6_operational_bounds_deg": [
+      -178.0,
+      178.0
+    ]
+  },
+  "last_waypoint": "post_release_lift_100mm_vertical",
+  "release_feedback_settled": true,
+  "last_tcp": [
+    62.264530181884766,
+    -526.1832275390625,
+    191.4398956298828,
+    179.98731994628906,
+    0.0023547529708594084,
+    -179.85227966308594
+  ],
+  "completed_unix": 1788591232.820671
+}

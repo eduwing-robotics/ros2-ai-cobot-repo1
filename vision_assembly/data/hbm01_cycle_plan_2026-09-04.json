@@ -1,0 +1,96 @@
+{
+  "schema": "fr5.full_fixed_cycle_plan/v1",
+  "created_unix": 1788489110.7055721,
+  "cycle_id": "20260904-112755",
+  "snapshot": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/hbm_cycle_snapshot_2026-09-04.json",
+  "transfer_z_mm": 350.0,
+  "speeds_percent": {
+    "travel": 20,
+    "combined_rotation": 15,
+    "vertical": 10
+  },
+  "motion_profile": "smooth_combined_transfer_v1",
+  "robot_motion_authorized": false,
+  "plan_selection": {
+    "mode": "single_slot",
+    "requested_only_slot": "HBM-01",
+    "selected_slots": [
+      "HBM-01"
+    ]
+  },
+  "cycle_overrides": {
+    "GPU-01": {
+      "preferred_tcp_c_deg": 180.0,
+      "preference_tie_threshold_deg": 10.0
+    },
+    "pick_symmetric_solution": {
+      "rule": "choose the 180-degree-equivalent pick TCP C nearest the previous planned place TCP C"
+    },
+    "HBM": {
+      "orientation_mode": "preserve_pick_tcp_orientation"
+    }
+  },
+  "plan": [
+    {
+      "slot_code": "HBM-01",
+      "part_type": "hbm",
+      "tray_instance_index": 1,
+      "tray_surface_base_mm": [
+        -595.645,
+        -50.349,
+        -47.733
+      ],
+      "tray_long_axis_base_deg": 173.642,
+      "pick_correction_base_mm": [
+        -0.717,
+        1.253
+      ],
+      "pick_z_mode": "detected_surface_relative",
+      "pick_final_tcp": [
+        -596.362,
+        -49.096,
+        -50.742999999999995,
+        -180.0,
+        0.0,
+        83.642
+      ],
+      "place_final_tcp": [
+        57.816525,
+        -544.018756,
+        88.381266,
+        -180.0,
+        0.0,
+        83.642
+      ],
+      "tray_open_position": 25,
+      "grip_position": 18,
+      "release_position": 25,
+      "placement_orientation": {
+        "mode": "preserve_pick_tcp_orientation",
+        "target_axis_base_deg": 90.7377346815219,
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 0.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 0.0,
+        "preferred_tcp_c_deg": 180.0,
+        "rotation_delta_deg": 0.0,
+        "rotation_skipped_in_plan": true,
+        "planned_from_pick": {
+          "current_axis_base_deg": -6.358000000000006,
+          "target_axis_base_deg": -6.358000000000006,
+          "diagnostic_slot_axis_base_deg": 90.7377346815219,
+          "symmetry_period_deg": 180.0,
+          "rotation_delta_deg": 0.0,
+          "target_tcp_abc_deg": [
+            -180.0,
+            0.0,
+            83.642
+          ],
+          "preferred_tcp_c_deg": 180.0
+        }
+      }
+    }
+  ],
+  "status": "planned_not_executed"
+}

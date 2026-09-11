@@ -42,7 +42,7 @@ def test_status_reports_cached_state_without_robot_commands():
     from types import SimpleNamespace
     from std_srvs.srv import Trigger
     from fr5_process_sequences.real_ros_node import RealRobotApiNode
-    state = SimpleNamespace(robot_mode=0,tool_num=1,work_num=0,robot_motion_done=1,gripper_feedback_valid=True)
+    state = SimpleNamespace(robot_mode=0,tool_num=1,work_num=0,robot_motion_done=1,gripper_feedback_valid=True,gripperfaultnum=0,grippererro=0)
     node = SimpleNamespace(_robot_port=SimpleNamespace(_enabled=False,_fresh_state=lambda:state,_assert_health=lambda _:None),
                            _backend=SimpleNamespace(held_part=None,_recovery_required=False,_state_lock=threading.Lock(),_active=None,
                            event_context=SimpleNamespace(snapshot=lambda: {}),

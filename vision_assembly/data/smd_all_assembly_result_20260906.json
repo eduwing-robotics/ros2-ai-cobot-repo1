@@ -1,0 +1,113 @@
+{
+  "status": "all_five_placed_released_and_retreated",
+  "timestamp_unix": 1788685314.0681734,
+  "parts": [
+    {
+      "instance": 1,
+      "slot": "CAP-01",
+      "operator_confirmed_grasp": true,
+      "release_feedback_verified": true,
+      "retreat_completed": true,
+      "pick_record": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/smd01_pick_attempt_20260906.json",
+      "place_record": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/smd01_place_run_20260906.json",
+      "final_place_tcp": [
+        88.212475,
+        -555.44143,
+        87.061646,
+        179.99758911132812,
+        0.0014677955768991034,
+        -179.32154877785118
+      ],
+      "physical_seating_precision_verified": false
+    },
+    {
+      "instance": 2,
+      "slot": "CAP-02",
+      "operator_confirmed_grasp": true,
+      "release_feedback_verified": true,
+      "retreat_completed": true,
+      "pick_record": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/smd02_pick_attempt_20260906.json",
+      "place_record": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/smd02_place_run_20260906.json",
+      "final_place_tcp": [
+        101.392245,
+        -533.461665,
+        88.673322,
+        179.99819946289062,
+        0.0011546234600212462,
+        90.34872858092545
+      ],
+      "physical_seating_precision_verified": false
+    },
+    {
+      "instance": 3,
+      "slot": "CAP-03",
+      "operator_confirmed_grasp": true,
+      "release_feedback_verified": true,
+      "retreat_completed": true,
+      "pick_record": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/smd03_pick_attempt_20260906.json",
+      "place_record": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/smd03_place_run_20260906.json",
+      "final_place_tcp": [
+        103.253329,
+        -516.393731,
+        88.931532,
+        179.99865722656253,
+        0.0013043014332695141,
+        90.36622686336104
+      ],
+      "physical_seating_precision_verified": false
+    },
+    {
+      "instance": 4,
+      "slot": "CAP-04",
+      "operator_confirmed_grasp": true,
+      "release_feedback_verified": true,
+      "retreat_completed": true,
+      "pick_record": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/smd04_pick_attempt_20260906.json",
+      "place_record": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/smd04_place_run_20260906.json",
+      "final_place_tcp": [
+        103.122065,
+        -499.913766,
+        89.02807299999999,
+        179.99819946289062,
+        0.0011546302121225572,
+        90.40872389655327
+      ],
+      "physical_seating_precision_verified": false
+    },
+    {
+      "instance": 5,
+      "slot": "CAP-05",
+      "operator_confirmed_grasp": true,
+      "release_feedback_verified": true,
+      "retreat_completed": true,
+      "pick_record": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/smd05_pick_attempt_20260906.json",
+      "place_record": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/smd05_place_run_20260906.json",
+      "final_place_tcp": [
+        102.850037,
+        -482.561673,
+        89.49264699999999,
+        179.99822998046875,
+        0.0013697094982468784,
+        90.36538164698241
+      ],
+      "physical_seating_precision_verified": false
+    }
+  ],
+  "final_robot_state": {
+    "tcp": [
+      36.94583511352539,
+      -449.1343688964844,
+      321.3421936035156,
+      179.997802734375,
+      0.001435095677152276,
+      179.99978637695312
+    ],
+    "gripper_position": 17,
+    "motion_done": 1,
+    "timestamp": 1788685314,
+    "safety_error": null
+  },
+  "final_image": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/smd_all_placed_final_20260906.jpg",
+  "visual_review": "Five SMD components visible: CAP01 transverse, CAP02-05 longitudinal; precision seating depth not independently measured.",
+  "remaining_smd_instances": []
+}

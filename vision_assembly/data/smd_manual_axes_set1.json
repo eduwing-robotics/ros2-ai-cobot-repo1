@@ -1,0 +1,172 @@
+{
+  "schema_version": 1,
+  "mode": "operator_two_terminal_axes",
+  "timestamp_unix": 1788434836.4384875,
+  "set_index": 1,
+  "canonical_size": [
+    1200,
+    720
+  ],
+  "reference_tcp_base": [
+    -527.998,
+    -120.961,
+    77.862,
+    180.0,
+    0.0,
+    89.999
+  ],
+  "source_image_sha256": "75a36b7d2c950c66dbe9fe76bf03b0a96b81eb930710d890c38896843a45362a",
+  "click_semantics": "terminal A first, terminal B second; arrow A-to-B",
+  "parts": [
+    {
+      "instance_index": 1,
+      "detection_center_canonical_pixel": [
+        299.1520080566406,
+        293.87200927734375
+      ],
+      "terminal_endpoints_canonical_pixel": [
+        [
+          299.0,
+          269.0
+        ],
+        [
+          299.0,
+          321.0
+        ]
+      ],
+      "terminal_endpoints_source_pixel": [
+        [
+          589.156005859375,
+          378.2340087890625
+        ],
+        [
+          588.4559936523438,
+          407.2380065917969
+        ]
+      ],
+      "directed_axis_canonical_deg": 90.0,
+      "long_axis_canonical_deg": -90.0,
+      "detection_confidence": 0.9222
+    },
+    {
+      "instance_index": 2,
+      "detection_center_canonical_pixel": [
+        441.656005859375,
+        277.552001953125
+      ],
+      "terminal_endpoints_canonical_pixel": [
+        [
+          441.0,
+          252.0
+        ],
+        [
+          443.0,
+          300.0
+        ]
+      ],
+      "terminal_endpoints_source_pixel": [
+        [
+          633.9520263671875,
+          368.6520080566406
+        ],
+        [
+          634.0430297851562,
+          395.3999938964844
+        ]
+      ],
+      "directed_axis_canonical_deg": 87.6141,
+      "long_axis_canonical_deg": 87.6141,
+      "detection_confidence": 0.8641
+    },
+    {
+      "instance_index": 3,
+      "detection_center_canonical_pixel": [
+        575.7620239257812,
+        265.7799987792969
+      ],
+      "terminal_endpoints_canonical_pixel": [
+        [
+          578.0,
+          240.0
+        ],
+        [
+          579.0,
+          292.0
+        ]
+      ],
+      "terminal_endpoints_source_pixel": [
+        [
+          677.14697265625,
+          361.8489990234375
+        ],
+        [
+          676.9920043945312,
+          390.8269958496094
+        ]
+      ],
+      "directed_axis_canonical_deg": 88.8983,
+      "long_axis_canonical_deg": 88.8983,
+      "detection_confidence": 0.8666
+    },
+    {
+      "instance_index": 4,
+      "detection_center_canonical_pixel": [
+        748.3209838867188,
+        256.2860107421875
+      ],
+      "terminal_endpoints_canonical_pixel": [
+        [
+          751.0,
+          231.0
+        ],
+        [
+          752.0,
+          284.0
+        ]
+      ],
+      "terminal_endpoints_source_pixel": [
+        [
+          731.7059936523438,
+          356.6709899902344
+        ],
+        [
+          731.6859741210938,
+          386.218994140625
+        ]
+      ],
+      "directed_axis_canonical_deg": 88.9191,
+      "long_axis_canonical_deg": 88.9191,
+      "detection_confidence": 0.8997
+    },
+    {
+      "instance_index": 5,
+      "detection_center_canonical_pixel": [
+        898.7520141601562,
+        252.24200439453125
+      ],
+      "terminal_endpoints_canonical_pixel": [
+        [
+          888.0,
+          226.0
+        ],
+        [
+          909.0,
+          276.0
+        ]
+      ],
+      "terminal_endpoints_source_pixel": [
+        [
+          774.9660034179688,
+          353.74798583984375
+        ],
+        [
+          781.4080200195312,
+          381.6159973144531
+        ]
+      ],
+      "directed_axis_canonical_deg": 67.2176,
+      "long_axis_canonical_deg": 67.2176,
+      "detection_confidence": 0.8924
+    }
+  ]
+}

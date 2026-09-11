@@ -80,4 +80,4 @@ Backend가 YAML/DB를 전혀 읽지 않으면서 정밀 파지하려면 Hand-Eye
 
 이 파라미터는 시작 시 내부 RobotPort에 복사되므로 `ros2 param set`만으로 전환하지 않는다. 실제 적용 여부는 `/real/robot/status` (`std_srvs/srv/Trigger`)의 `hardware_execution_enabled`로 확인한다. `api-start`는 이미 실행 중인 노드를 재설정하지 않는다.
 
-API 프로세스만 `FASTDDS_BUILTIN_TRANSPORTS=UDPv4`로 실행하여 검증된 SHM 333ms 연결 대기를 우회한다. `KSMC_REAL_API_TRANSPORT`로 명시 설정할 수 있다. 드라이버·카메라의 전송 설정은 그대로다. 활성화 자체는 이동 명령을 보내지 않으며 교시값·물리 경로 검증 완료를 뜻하지 않는다.
+드라이버와 API는 `config/fairino_fastdds.xml`의 UDPv4 비차단 송신 프로필을 사용한다. 2026-09-11 실측된 원격 DDS 송신 대기가 로컬 로봇 피드백을 막는 현상을 줄이기 위한 설정이며, API의 250ms 신선도 기준과 Reliable QoS는 유지한다. 송신 버퍼가 가득 차면 UDP 패킷이 유실될 수 있어 원격 수신 연속성을 보장하는 설정은 아니다. 프로필 경로는 드라이버 `KSMC_FAIRINO_DDS_PROFILE`, API `KSMC_REAL_API_DDS_PROFILE`로 지정한다. 사용자 프로필의 `useBuiltinTransports=false`가 전송을 결정하므로 기존 `KSMC_REAL_API_TRANSPORT`만 변경해 프로필을 덮어쓸 수 없다. Unity 엔드포인트·카메라의 환경은 유지한다. 활성화 자체는 이동 명령을 보내지 않으며 교시값·물리 경로 검증 완료를 뜻하지 않는다. 진단 및 검증: [피드백 지연 수정](FEEDBACK_SEND_STALL_FIX_KO_20260911.md).

@@ -1,0 +1,15 @@
+{
+  "status": "stopped_after_5mm_inspection_descent",
+  "actual_tcp": [
+    -626.1951293945312,
+    -165.01577758789062,
+    -32.248619079589844,
+    179.99830627441406,
+    0.0018154109129682183,
+    0.8358311653137207
+  ],
+  "completed_unix": 1788679043.133742,
+  "gripper_commands": 0,
+  "physical_alignment_verified": false,
+  "physical_grasp_validated": false
+}

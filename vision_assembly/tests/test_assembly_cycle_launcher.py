@@ -292,3 +292,33 @@ def test_direct_launcher_sets_udp_for_children(monkeypatch):
     monkeypatch.setattr(launcher,'check_installation',lambda: {})
     launcher.main()
     assert os.environ['FASTDDS_BUILTIN_TRANSPORTS']=='UDPv4'
+
+
+def test_camera_long_vertical_keeps_first_and_last_50mm_slow():
+    from execute_full_fixed_cycle import waypoint_speed
+    start=[100,-500,190,-180,0,90]
+    target=[-528,-121,78,180,0,90]
+    route=camera.camera_route(start,target,'SMDView')
+    assert route[0][1].tcp[2]==240
+    assert waypoint_speed(route[0][1].label,camera.CAMERA_SPEEDS_PERCENT)==10
+    previous=start
+    fast=[]
+    for _,w in route:
+        speed=waypoint_speed(w.label,camera.CAMERA_SPEEDS_PERCENT)
+        if w.label=='camera_clearance_vertical':
+            fast.append(w)
+            assert speed==30 and w.linear
+            if w.tcp[2]<previous[2]:assert w.tcp[2]>=target[2]+50
+        previous=w.tcp
+    assert fast
+    assert route[-2][1].tcp[2]==target[2]+50
+    assert waypoint_speed(route[-1][1].label,camera.CAMERA_SPEEDS_PERCENT)==10
+    assert route[-1][1].tcp==tuple(target)
+
+
+@pytest.mark.parametrize('profile', ['HBM', 'IND'])
+def test_part_alias_matches_profile_dry_run(profile):
+    command=[sys.executable,str(Path(launcher.__file__)), '--dry-run']
+    canonical=subprocess.run(command+['--profile',profile],capture_output=True,text=True,check=True)
+    alias=subprocess.run(command+['--part',profile],capture_output=True,text=True,check=True)
+    assert alias.stdout == canonical.stdout

@@ -227,16 +227,18 @@ def stop_child(process, record_path, error):
 
 
 def run_step(command, log_path, timeout=1800):
+    from cycle_pause import clock, checkpoint
+    checkpoint()
     # Separate process group allows SIGINT to reach the actual ROS executor.
     with log_path.open('wb') as log:
         process = subprocess.Popen(command, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                    start_new_session=True)
         try:
-            deadline = time.monotonic() + timeout
+            deadline = clock() + timeout
             with selectors.DefaultSelector() as selector:
                 selector.register(process.stdout, selectors.EVENT_READ)
                 while selector.get_map():
-                    if time.monotonic() >= deadline:
+                    if clock() >= deadline:
                         raise subprocess.TimeoutExpired(command, timeout)
                     for key, _ in selector.select(timeout=0.2):
                         data = os.read(key.fd, 65536)
@@ -247,7 +249,7 @@ def run_step(command, log_path, timeout=1800):
                         log.flush()
                         sys.stdout.write(data.decode('utf-8', errors='replace'))
                         sys.stdout.flush()
-            code = process.wait(timeout=max(0.01, deadline - time.monotonic()))
+            code = process.wait(timeout=max(0.01, deadline - clock()))
             if code:
                 raise RuntimeError(f'단계 실패(exit {code}), 로그: {log_path}')
         except BaseException as exc:
@@ -258,6 +260,7 @@ def run_step(command, log_path, timeout=1800):
 
 def run_cycle(directory, hashes, runner=run_step, profile="full"):
     from assembly_test_profiles import GROUPS, workflow as test_workflow
+    from cycle_pause import checkpoint
     expected_slots = None if profile == "full" else GROUPS[profile][1]
     record = {'schema': 'fr5.assembly_cycle_launcher/v1', 'started_unix': time.time(),
               'status': 'running', 'baseline_hashes': hashes, 'steps': [],
@@ -267,6 +270,7 @@ def run_cycle(directory, hashes, runner=run_step, profile="full"):
     try:
         steps = api_workflow(directory, profile)
         for index, (name, command) in enumerate(steps, 1):
+            checkpoint()
             entry = {'name': name, 'command': command, 'status': 'running', 'started_unix': time.time()}
             record['steps'].append(entry)
             write(record_path, record)
@@ -281,6 +285,7 @@ def run_cycle(directory, hashes, runner=run_step, profile="full"):
             entry.update(status='completed', completed_unix=time.time())
             write(record_path, record)
             print(f'[{index}/{len(steps)}] {name} 완료', flush=True)
+        checkpoint()
         record['status'] = 'motion_complete_awaiting_physical_verification'
         print(f'{25 if expected_slots is None else len(expected_slots)}개 동작 완료. 실제 안착 결과를 확인하세요.', flush=True)
     except BaseException as exc:
@@ -302,7 +307,7 @@ def main():
     mode.add_argument('--execute', action='store_true', help='현재 빈 그리퍼/빈 기판/트레이25개/고정 지그를 확인하고 전체 동작 시작')
     mode.add_argument('--check', action='store_true', help='설치 및 현재 로봇/티칭점/카메라 검사만 수행, 이동 없음')
     mode.add_argument('--dry-run', action='store_true', help='설정과 실행 순서 확인만, 로봇 접속/IK 검사 없음 (기본)')
-    parser.add_argument("--profile", choices=["full","GPU","HBM","PM","VRM","IND","SMD"], default="full")
+    parser.add_argument("--profile", "--part", dest="profile", choices=["full","GPU","HBM","PM","VRM","IND","SMD"], default="full")
     parser.add_argument("--expected-revision", help="Reject API request if reviewed settings changed before launch")
     parser.add_argument("--run-id", type=lambda value: str(UUID(value)), help="API correlation UUID; new directory only")
     args = parser.parse_args()
@@ -337,12 +342,25 @@ def main():
         lease_path = runtime/'step_api_owner.json'
         if lease_path.exists():
             raise RuntimeError('이전 API 사이클 소유권 기록이 남아 있습니다. 상태/기록 복구가 먼저 필요합니다.')
+        write(directory/'startup_safety.json', dict(execution_id=job_id,
+            assembly_motion_started=False, activation_outcome_unknown=False))
+        # Both local --execute and Unity's worker initialize the gripper here.
+        # launcher.lock blocks new operations; step_operation.lock also excludes
+        # an operation that entered before this launcher acquired its lock.
+        with (runtime/'step_operation.lock').open('a') as operation_lock:
+            fcntl.flock(operation_lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            run_step([sys.executable, str(SCRIPTS/'prepare_cycle_gripper.py'),
+                      '--safety-record', str(directory/'startup_safety.json')],
+                     directory/'prepare_gripper.log', timeout=30)
         # Check the API before publishing a lease or making any camera move.
         subprocess.run([sys.executable,str(SCRIPTS/'check_step_api.py')],check=True)
         write(directory/'api_recipe.json',frozen_api_recipe(args.profile))
         lease=dict(job_id=job_id,pid=os.getpid(),
             process_start=Path(f'/proc/{os.getpid()}/stat').read_text().split()[21],
             directory=str(directory),created_unix=time.time())
+        safety=read(directory/'startup_safety.json')
+        safety['assembly_motion_started']=True  # Durable barrier BEFORE any workflow/lease.
+        write(directory/'startup_safety.json',safety)
         write(lease_path,lease)
         os.environ['FR5_STEP_API_JOB_ID']=job_id
         print(f'전체 API 실행 기록: {directory}', flush=True)

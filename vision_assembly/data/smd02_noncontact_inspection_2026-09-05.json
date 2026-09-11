@@ -1,0 +1,10 @@
+{
+  "timestamp_unix": 1788586751.2654684,
+  "part_center_base_mm": [-627.1173647987521, -152.32744182016484, -47.291],
+  "long_axis_angle_base_deg": -0.9102403406248527,
+  "source": "smd02_edge_rotation_2026-09-05.json",
+  "inspection_only": true,
+  "physical_grasp_validated": false,
+  "authorized_scope": "operator-approved rotation and noncontact approach, minimum surface clearance 20 mm; no gripper command",
+  "center_correction_applied": false
+}

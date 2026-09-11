@@ -292,3 +292,26 @@ def test_depth_callback_owns_immutable_snapshot_data(detector):
     assert np.all(observation['depth'] == 500)
     with pytest.raises(ValueError):
         observation['depth'][0, 0] = 900
+
+
+@pytest.mark.parametrize('primary,alternate', [(640,960),(960,640)])
+def test_pm_retry_uses_other_resolution_and_keeps_quality_gate(detector, primary, alternate):
+    detector.a.power_seg_image_size=primary
+    detector.bins[0]['part_spec_id']='long_orange'
+    detector.seg_class_ids={'long_orange':3}
+    detector.seg_quality['long_orange']=dict(minimum_detection_confidence=.7,
+        minimum_mask_shape_score=.8,minimum_rectangularity=.8)
+    sizes=[]
+    def predict(*args,**kwargs):
+        sizes.append(kwargs['imgsz']);return [prediction()]
+    detector.seg_model.predict=predict
+    calls=[]
+    def find(*args):
+        calls.append(True)
+        if len(calls)==2:raise ValueError('alternate reached')
+        return [dict(segmentation_confidence=.69,mask_shape_score=.95,rectangularity=.95)],None,None
+    detector.find_segmented=find
+    ok,jpeg=cv2.imencode('.jpg',np.zeros((80,80,3),np.uint8));assert ok
+    with pytest.raises(ValueError,match='alternate reached'):
+        detector.process_color(SimpleNamespace(header=header(1_000_000_000),data=jpeg.tobytes()))
+    assert sizes==[640,primary,alternate]

@@ -16,6 +16,10 @@ from full_cycle_motion import MotionWaypoint, normalize_controller_tcp
 from tray_capture_retry import TrayCaptureRetry, RetryCaptureError
 
 
+CAMERA_GLOBAL_SPEED_PERCENT = 40
+CAMERA_SPEEDS_PERCENT = dict(travel=40, combined_rotation=40, vertical=10,
+                             high_transfer=40, clearance_lift=30)
+
 def finite_pose(pose):
     values = tuple(float(x) for x in pose)
     if len(values) != 6 or not all(math.isfinite(x) for x in values):
@@ -41,17 +45,69 @@ def camera_route(start, target, point):
     count = max(3, math.ceil(abs(mapped[5] - origin[5]) / 60))
     route = []
     if height > start[2] + 1e-6:
-        route.append((point, MotionWaypoint('post_grasp_lift_50mm_vertical', origin, True)))
+        near = (*start[:2], min(height, start[2] + 50), *start[3:])
+        route.append((point, MotionWaypoint('post_grasp_lift_50mm_vertical', near, True)))
+        if height > near[2] + 1e-6:
+            route.append((point, MotionWaypoint('camera_clearance_vertical', origin, True)))
     for index in range(1, count):
         mid = tuple(origin[k] + (mapped[k] - origin[k]) * index / count for k in range(6))
         route.append((point, MotionWaypoint('place_combined_xy_abc_midpoint', normalize_controller_tcp(mid), False)))
     route.append((point, MotionWaypoint('place_combined_xy_abc', destination, False)))
     distance = height - target[2]
-    for index in range(1, math.ceil(distance / 50) + 1):
-        z = max(target[2], height - index * 50)
+    # Keep the final 50 mm slow, including a boundary waypoint when needed.
+    far_distance = max(0.0, distance - 50.0)
+    for index in range(1, math.ceil(far_distance / 50) + 1):
+        z = max(target[2] + 50, height - index * 50)
         pose = (*target[:2], z, *target[3:])
-        route.append((point, MotionWaypoint('place_final_50mm_vertical', pose, True)))
+        route.append((point, MotionWaypoint('camera_clearance_vertical', pose, True)))
+    if distance > 1e-6:
+        route.append((point, MotionWaypoint('place_final_50mm_vertical', target, True)))
     return route
+
+
+
+def coalesce_smd_camera_descent(planned, point):
+    """Execute a preflighted collinear SMD camera descent as one slow MoveL.
+
+    Call only after every original sample passed IK and joint checks. This is
+    camera-only: no held-part, pick/place contact or other teaching-point route.
+    """
+    from dataclasses import asdict, replace
+    from full_cycle_motion import validate_joint_path, MotionPlanError
+    if point != 'SMDView' or len(planned) < 3:
+        return planned, None
+    end = planned[-1]
+    if end.label != 'place_final_50mm_vertical' or not end.linear:
+        return planned, None
+    first = len(planned)-1
+    while first > 0 and planned[first-1].linear and planned[first-1].label == 'camera_clearance_vertical':
+        first -= 1
+    if first == 0 or len(planned)-first < 2:
+        return planned, None
+    origin = planned[first-1]
+    tail = planned[first:]
+    previous_z = origin.tcp[2]
+    for w in [origin, *tail]:
+        if (w.slot_code != point or any(abs(w.tcp[k]-end.tcp[k]) > 1e-6 for k in (0,1))
+                or any(abs((w.tcp[k]-end.tcp[k]+180)%360-180) > 1e-6 for k in (3,4,5))):
+            return planned, None
+    for w in tail:
+        if not w.linear or w.tcp[2] >= previous_z:
+            return planned, None
+        previous_z = w.tcp[2]
+    try:
+        validate_joint_path([end.target_joints],initial_joints_deg=tail[0].reference_joints)
+    except MotionPlanError:
+        return planned, None  # Keep validated subdivisions if one command is inadmissible.
+    speed = min(w.speed_percent for w in tail)
+    merged = replace(end,label='camera_descent_continuous',
+        reference_joints=tail[0].reference_joints,speed_percent=speed,
+        minimum_soft_limit_margin_deg=min(w.minimum_soft_limit_margin_deg for w in tail))
+    evidence = dict(policy='smd_camera_single_slow_movel_v1',
+        validated_samples=[asdict(w) for w in tail],
+        previous_motion_commands=len(tail),motion_commands=1,
+        speed_percent=speed,start_tcp=list(origin.tcp),target_tcp=list(end.tcp))
+    return [*planned[:first],merged], evidence
 
 
 def require_fresh_frame(payload, after, now):
@@ -183,12 +239,12 @@ def run(args):
             evidence['mode'] = 'capture_only_no_motion'
         else:
             planned, summary = preflight_route(node, camera_route(start, target, args.point),
-                node.state_joints(state), dict(travel=25, combined_rotation=25, vertical=10))
+                node.state_joints(state), CAMERA_SPEEDS_PERCENT)
             evidence['preflight'] = summary
             if not args.execute:
                 print(json.dumps(evidence, indent=2), flush=True)
                 return
-            # Camera transit used global20 in the successful camera-stage script.
+            # Named API routes and diagnostic moves share the camera speed profile.
             motion_started = True
             evidence['motion_sent'] = True
             api_job = os.environ.get('FR5_STEP_API_JOB_ID')
@@ -199,7 +255,7 @@ def run(args):
                 evidence['execution_backend']='single_step_api'
                 evidence['api_result']=session.call(session.client.moveJoint,args.point,list(planned[-1].target_joints))
             else:
-                node.service('SetSpeed(20)')
+                node.service(f'SetSpeed({CAMERA_GLOBAL_SPEED_PERCENT})')
                 for waypoint in planned:
                     move_preflighted(node, waypoint)
         print(json.dumps(evidence, indent=2), flush=True)

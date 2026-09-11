@@ -29,7 +29,40 @@ def single_route(item, start, transfer_z, action):
     if action is Action.PICK:
         inspected = add_inspections(route, start)
         end = next(i for i, (_, w) in enumerate(inspected) if w.label == 'tray_after_inspect')
-        return inspected[:end + 1]
+        inspected = inspected[:end + 1]
+        # The API inspects removal at TrayHome, not at the legacy 100 mm
+        # diagnostic proof stop. Join only the two collinear upward segments;
+        # keep the first 50 mm contact-clearance lift and the high turn stop.
+        for index in range(1, len(inspected) - 1):
+            before, middle, after = [entry[1] for entry in inspected[index-1:index+2]]
+            if (before.label == 'post_grasp_lift_50mm_vertical'
+                    and middle.label == 'post_grasp_proof_lift_100mm_vertical'
+                    and after.label == 'tray_after_raise'
+                    and before.linear and middle.linear and after.linear
+                    and before.tcp[2] < middle.tcp[2] < after.tcp[2]
+                    and all(abs(before.tcp[k] - point.tcp[k]) < 1e-9
+                            for point in (middle, after) for k in (0, 1, 3, 4, 5))):
+                del inspected[index]
+                break
+        # Near TrayHome, millimetre-sized MoveJ subdivisions add unnecessary
+        # joins. Use one Cartesian segment, preserving height and endpoint.
+        # Longer transfers and larger reorientations retain their tested queue.
+        travel = next(i for i, (_, w) in enumerate(inspected)
+                      if w.label == 'tray_after_raise')
+        tail = [w for _, w in inspected[travel:]]
+        if (len(tail) == 5
+                and [w.label for w in tail] == ['tray_after_raise',
+                    'tray_after_mid_travel', 'tray_after_mid_travel',
+                    'tray_after_travel', 'tray_after_inspect']
+                and tail[0].tcp[2] >= 350
+                and all(abs(w.tcp[2] - tail[0].tcp[2]) < 1e-9 for w in tail[:4])
+                and math.dist(tail[0].tcp[:2], tail[3].tcp[:2]) <= 50
+                and all(abs((tail[3].tcp[k] - tail[0].tcp[k] + 180) % 360 - 180) <= 5
+                        for k in (3, 4, 5))):
+            endpoint = tail[3]
+            inspected[travel+1:travel+4] = [(inspected[travel][0],
+                MotionWaypoint('tray_after_travel', endpoint.tcp, True))]
+        return inspected
     # Same wrapped, two-midpoint board transfer as the tested inspection route,
     # rebased on the measured pose after the Sequencer's explicit joint moves.
     end = next(i for i, (_, w) in enumerate(route) if w.label == 'place_combined_xy_abc')
@@ -47,11 +80,20 @@ def single_route(item, start, transfer_z, action):
     return [(item['slot_code'], w) for w in outgoing] + route[end + 1:]
 
 
+def motion_plan_version(planned):
+    """Hash the actual preflighted command goals, including camera moves."""
+    return digest([dict(label=w.label, joints_deg=[float(v) for v in w.target_joints],
+        tcp_mm_deg=[float(v) for v in w.tcp], linear=bool(w.linear),
+        speed_percent=float(w.speed_percent)) for w in planned])
+
+
 class PortExecutor:
     """Use the API node's subscribed feedback; never spin a second ROS executor."""
     def __init__(self, backend, operation):
         self.backend = backend; self.operation = operation; self.robot = backend._robot
+        self.motion_plan_version = None
         self.waypoint = None; self.phase = ''; self.last_pose_verification = None
+        self._feedback_gap_sequence = getattr(self.robot, '_state_gap_sequence', 0)
 
     @property
     def state_sequence(self):
@@ -59,24 +101,49 @@ class PortExecutor:
             return self.robot._state_sequence
 
     def operation_clock(self):
+        whole = getattr(self.backend, 'whole_control', None)
+        if whole is not None and whole.applies():
+            return whole.clock()
         control = getattr(self.backend, 'control', None)
         return control.clock() if control is not None else time.monotonic()
 
     def spin_state(self, timeout_sec=.25, *, after_sequence=None):
         baseline = self.state_sequence if after_sequence is None else after_sequence
-        deadline = self.operation_clock() + timeout_sec
-        while self.operation_clock() < deadline:
+        started = time.monotonic()
+        deadline = started + timeout_sec
+        with self.robot._lock:
+            initial_stamp = self.robot._state_received_at
+        while True:
             self.backend._assert_not_paused()
             with self.robot._lock:
+                now = time.monotonic()
                 state = self.robot._state
                 sequence = self.robot._state_sequence
-                age = time.monotonic() - self.robot._state_received_at
-            if state is not None and sequence > baseline and 0 <= age <= .25:
+                age = now - self.robot._state_received_at
+                gap_sequence = getattr(self.robot, '_state_gap_sequence', None)
+                gap_sec = getattr(self.robot, '_state_gap_sec', None)
+            # Inspect feedback before the wait deadline. A delayed worker may
+            # resume after .25 s while the ROS receiver kept running normally.
+            # Only the receiver's sticky gap marker can prove that distinction.
+            gap_detected = (gap_sequence is not None
+                and gap_sequence > self._feedback_gap_sequence)
+            continuity_known = gap_sequence is not None and initial_stamp > 0
+            if gap_detected:
+                reason = 'FR5 feedback receive gap exceeded 250 ms'
+                break
+            if (state is not None and sequence > baseline and 0 <= age <= .25
+                    and (now < deadline or continuity_known)):
                 error = self.safety_error(state)
                 if error: raise BackendFailure('SAFETY_STOP', error)
                 return state
-            time.sleep(.005)
-        raise BackendFailure('ROBOT_TIMEOUT', 'no distinct fresh FR5 feedback within 250 ms')
+            if now >= deadline:
+                reason = 'no distinct fresh FR5 feedback within 250 ms'
+                break
+            time.sleep(min(.005, deadline - now))
+        raise BackendFailure('ROBOT_TIMEOUT',
+            f'{reason}; baseline_sequence={baseline}; current_sequence={sequence}; '
+            f'latest_age_ms={age * 1000:.3f}; wait_elapsed_ms={(now-started) * 1000:.3f}; '
+            f'receive_gap_sequence={gap_sequence}; receive_gap_sec={gap_sec}')
 
     @staticmethod
     def state_joints(state):
@@ -96,6 +163,17 @@ class PortExecutor:
         from execute_cached_hbm_remaining import Executor
         return Executor.response_values(response, count, label)
 
+    def publish_motion_target(self, waypoint, phase):
+        """Use the same preflight target for direct and buffered dispatch."""
+        try:
+            return self.backend._ghost.publish_stage_target(waypoint.target_joints,
+                job_id=self.operation.job_id, operation_id=self.operation.operation_id,
+                action=self.operation.action.value, phase=phase,
+                motion_plan_version=self.motion_plan_version,
+                point_name=self.operation.slot_code or self.operation.point_name)
+        except Exception:
+            return False  # Visualization transport is not an execution interlock.
+
     def service(self, command, *, state_validator=None, timeout_sec=None):
         self.backend._assert_not_paused()
         if command.startswith(('Move', 'SetSpeed', 'JNTPoint')):
@@ -105,13 +183,7 @@ class PortExecutor:
         if command.startswith(('MoveJ(', 'MoveL(')):
             w = self.waypoint
             if w is None: raise BackendFailure('SAFETY_STOP', 'motion without preflight target')
-            try:
-                self.backend._ghost.publish_stage_target(w.target_joints,
-                    job_id=self.operation.job_id, operation_id=self.operation.operation_id,
-                    action=self.operation.action.value, phase=self.phase,
-                    point_name=self.operation.slot_code or self.operation.point_name)
-            except Exception:
-                pass  # visualization delivery is never an execution permission
+            self.publish_motion_target(w, self.phase)
             self.robot.assert_ready()
             if state_validator is not None: state_validator(self.robot._fresh_state())
             self.backend._assert_not_paused()
@@ -215,7 +287,8 @@ class PrecisionSteps:
 
     def execute_camera(self, backend, operation):
         """One explicitly requested camera endpoint, using its taught safe route."""
-        from cycle_camera_stage import camera_route, finite_pose
+        from cycle_camera_stage import (camera_route, coalesce_smd_camera_descent, finite_pose, CAMERA_SPEEDS_PERCENT,
+                                        CAMERA_GLOBAL_SPEED_PERCENT)
         from execute_full_fixed_cycle import preflight_route, move_preflighted, pose_error
         from execute_cached_hbm_remaining import atomic_write
         if backend.held_part is not None:
@@ -239,20 +312,50 @@ class PrecisionSteps:
         state = node.spin_state()
         route = camera_route(node.state_tcp(state), target, name)
         planned, summary = preflight_route(node,route,node.state_joints(state),
-                                           dict(travel=25,combined_rotation=25,vertical=10))
+                                           CAMERA_SPEEDS_PERCENT)
         if not planned or max(abs(a-b) for a,b in zip(planned[-1].target_joints,operation.joint_point)) > 1.0:
             raise BackendFailure('INVALID_REQUEST', 'requested camera endpoint differs from current referenced route')
+        planned, descent = coalesce_smd_camera_descent(planned, name)
+        if descent is not None:
+            summary = dict(summary, camera_descent=descent, execution_waypoints=len(planned))
         # move_joint still ends at its requested joint target. Reject alternate
         # branches; retain linear vertical segments inside this named safe route.
-        record = dict(job_id=operation.job_id,operation_id=operation.operation_id,
-                      point_name=name,preflight=summary,phases=[])
+        node.motion_plan_version = motion_plan_version(planned)
+        record = dict(motion_plan_version=node.motion_plan_version,
+                      job_id=operation.job_id,operation_id=operation.operation_id,
+                      point_name=name,preflight=summary,phases=[],
+                      controller_global_speed_percent=CAMERA_GLOBAL_SPEED_PERCENT,
+                      speeds_percent=dict(CAMERA_SPEEDS_PERCENT))
         directory=self.root/'runtime/robot_step_evidence';directory.mkdir(parents=True,exist_ok=True)
         path=directory/(operation.operation_id+'.json')
-        node.service('SetSpeed(20)')
+        node.service(f'SetSpeed({CAMERA_GLOBAL_SPEED_PERCENT})')
         touched=False
         try:
+            skip_until = 0
             for index,w in enumerate(planned):
+                if index < skip_until:
+                    continue
                 backend._assert_phase_ready()
+                if getattr(backend, 'continuous_transfer_enabled', False):
+                    from .continuous_transfer import transfer_group, execute_transfer
+                    group = transfer_group(planned, index)
+                    if group:
+                        phase = f'{index+1:02d}_CAMERA_CONTINUOUS_TRANSFER'
+                        node.phase = phase
+                        entry = dict(phase=phase, status='intent',
+                            waypoints=[dict(label=q.label, tcp=list(q.tcp),
+                                joints=list(q.target_joints), speed_percent=q.speed_percent) for q in group])
+                        record['phases'].append(entry); atomic_write(path, record)
+                        backend._phase_event(operation, phase, Event.PHASE_STARTED)
+                        touched = True
+                        actual, accepted = execute_transfer(node, group, backend._assert_not_paused)
+                        entry.update(status='verified', actual_tcp=actual, accepted=accepted,
+                                     transfer_start_feedback=getattr(node, 'last_transfer_start_verification', None),
+                                     feedback=node.last_pose_verification)
+                        atomic_write(path, record)
+                        backend._phase_event(operation, phase, Event.PHASE_COMPLETED)
+                        skip_until = index + len(group)
+                        continue
                 phase=f'{index+1:02d}_{w.label}';node.waypoint=w;node.phase=phase
                 backend._phase_event(operation,phase,Event.PHASE_STARTED)
                 entry=dict(phase=phase,target_tcp=list(w.tcp),target_joints=list(w.target_joints),status='intent')
@@ -377,8 +480,15 @@ class PrecisionSteps:
             raise BackendFailure('GRIPPER_FAILED', 'gripper changed since completed Pick')
         route = single_route(item, start, plan['transfer_z_mm'], operation.action)
         planned, summary = preflight_route(node, route, node.state_joints(state), plan['speeds_percent'])
+        if pick:
+            from linear_tray_return import coalesce_tray_return
+            planned, arrival = coalesce_tray_return(node, planned, plan['speeds_percent'])
+            if arrival is not None:
+                summary = dict(summary, tray_return=arrival, execution_waypoints=len(planned))
         node.service('SetSpeed(40)')
-        record = dict(job_id=operation.job_id, operation_id=operation.operation_id,
+        node.motion_plan_version = motion_plan_version(planned)
+        record = dict(motion_plan_version=node.motion_plan_version,
+                      job_id=operation.job_id, operation_id=operation.operation_id,
                       slot=operation.slot_code, action=operation.action.value,
                       plan_sha256=payload['plan_sha256'], source_cycle_id=payload['source_cycle_id'], preflight=summary, phases=[])
         record_dir = self.root / 'runtime/robot_step_evidence'; record_dir.mkdir(parents=True, exist_ok=True)
@@ -403,6 +513,7 @@ class PrecisionSteps:
                         touched = True
                         actual, accepted = execute_transfer(node, group, check_age)
                         entry.update(status='verified', actual_tcp=actual, accepted=accepted,
+                                     transfer_start_feedback=getattr(node, 'last_transfer_start_verification', None),
                                      feedback=node.last_pose_verification)
                         atomic_write(path, record)
                         backend._phase_event(operation, phase, Event.PHASE_COMPLETED, feedback=node.last_pose_verification)
@@ -415,6 +526,11 @@ class PrecisionSteps:
                 entry = dict(phase=phase, target_tcp=list(w.tcp), target_joints=list(w.target_joints), status='intent')
                 record['phases'].append(entry); atomic_write(path, record)
                 touched = True
+                if w.label == 'tray_after_travel' and w.linear:
+                    # Preserve the queue's stricter clearance/settling gate
+                    # even though this short arrival is now a single MoveL.
+                    from .continuous_transfer import wait_transfer_start
+                    wait_transfer_start(node, [w], check_age)
                 actual = move_preflighted(node, w)
                 entry.update(status='verified', actual_tcp=actual, feedback=node.last_pose_verification)
                 atomic_write(path, record)

@@ -1,0 +1,418 @@
+{
+  "schema": "fr5.remaining_non_smd_tray/v1",
+  "timestamp_unix": 1788591775.866809,
+  "authorized_selected_slots": [
+    "HBM-03",
+    "HBM-04",
+    "HBM-05",
+    "HBM-06",
+    "HBM-07",
+    "HBM-08",
+    "PM-02",
+    "PM-03",
+    "PM-04",
+    "VRM-02",
+    "VRM-03",
+    "VRM-04",
+    "VRM-05",
+    "IND-02"
+  ],
+  "parts": [
+    {
+      "part_type": "black_block",
+      "instance_index": 2,
+      "consumed": false,
+      "base_xyz_mm": [
+        -744.429,
+        -201.362,
+        -46.434
+      ],
+      "long_axis_angle_base_deg": 174.541,
+      "observation_frames": 40,
+      "quality": {
+        "observation_frames": 40,
+        "median_detection_confidence": 0.958,
+        "median_mask_shape_score": 0.93,
+        "median_rectangularity": 0.88
+      }
+    },
+    {
+      "part_type": "black_block",
+      "instance_index": 3,
+      "consumed": false,
+      "base_xyz_mm": [
+        -742.681,
+        -177.377,
+        -45.58
+      ],
+      "long_axis_angle_base_deg": -179.433,
+      "observation_frames": 40,
+      "quality": {
+        "observation_frames": 40,
+        "median_detection_confidence": 0.93,
+        "median_mask_shape_score": 0.942,
+        "median_rectangularity": 0.902
+      }
+    },
+    {
+      "part_type": "black_block",
+      "instance_index": 4,
+      "consumed": false,
+      "base_xyz_mm": [
+        -742.293,
+        -156.033,
+        -43.671
+      ],
+      "long_axis_angle_base_deg": -179.383,
+      "observation_frames": 40,
+      "quality": {
+        "observation_frames": 40,
+        "median_detection_confidence": 0.935,
+        "median_mask_shape_score": 0.957,
+        "median_rectangularity": 0.93
+      }
+    },
+    {
+      "part_type": "black_block",
+      "instance_index": 5,
+      "consumed": false,
+      "base_xyz_mm": [
+        -743.23,
+        -131.307,
+        -43.735
+      ],
+      "long_axis_angle_base_deg": 1.677,
+      "observation_frames": 40,
+      "quality": {
+        "observation_frames": 40,
+        "median_detection_confidence": 0.943,
+        "median_mask_shape_score": 0.942,
+        "median_rectangularity": 0.912
+      }
+    },
+    {
+      "part_type": "hbm",
+      "instance_index": 3,
+      "consumed": false,
+      "base_xyz_mm": [
+        -562.054,
+        -39.858,
+        -45.839
+      ],
+      "long_axis_angle_base_deg": 1.777,
+      "observation_frames": 40,
+      "quality": {
+        "observation_frames": 40,
+        "median_detection_confidence": 0.958,
+        "median_mask_shape_score": 0.926,
+        "median_rectangularity": 0.974
+      }
+    },
+    {
+      "part_type": "hbm",
+      "instance_index": 4,
+      "consumed": false,
+      "base_xyz_mm": [
+        -564.214,
+        -14.146,
+        -45.867
+      ],
+      "long_axis_angle_base_deg": 1.797,
+      "observation_frames": 39,
+      "quality": {
+        "observation_frames": 39,
+        "median_detection_confidence": 0.75,
+        "median_mask_shape_score": 0.935,
+        "median_rectangularity": 0.978
+      }
+    },
+    {
+      "part_type": "hbm",
+      "instance_index": 5,
+      "consumed": false,
+      "base_xyz_mm": [
+        -536.247,
+        -40.541,
+        -43.655
+      ],
+      "long_axis_angle_base_deg": 1.767,
+      "observation_frames": 40,
+      "quality": {
+        "observation_frames": 40,
+        "median_detection_confidence": 0.952,
+        "median_mask_shape_score": 0.907,
+        "median_rectangularity": 0.97
+      }
+    },
+    {
+      "part_type": "hbm",
+      "instance_index": 6,
+      "consumed": false,
+      "base_xyz_mm": [
+        -537.163,
+        -13.29,
+        -46.731
+      ],
+      "long_axis_angle_base_deg": 170.453,
+      "observation_frames": 40,
+      "quality": {
+        "observation_frames": 40,
+        "median_detection_confidence": 0.971,
+        "median_mask_shape_score": 0.931,
+        "median_rectangularity": 0.866
+      }
+    },
+    {
+      "part_type": "hbm",
+      "instance_index": 7,
+      "consumed": false,
+      "base_xyz_mm": [
+        -507.227,
+        -39.567,
+        -45.582
+      ],
+      "long_axis_angle_base_deg": 1.767,
+      "observation_frames": 40,
+      "quality": {
+        "observation_frames": 40,
+        "median_detection_confidence": 0.957,
+        "median_mask_shape_score": 0.913,
+        "median_rectangularity": 0.98
+      }
+    },
+    {
+      "part_type": "hbm",
+      "instance_index": 8,
+      "consumed": false,
+      "base_xyz_mm": [
+        -507.965,
+        -12.565,
+        -46.661
+      ],
+      "long_axis_angle_base_deg": 1.797,
+      "observation_frames": 40,
+      "quality": {
+        "observation_frames": 40,
+        "median_detection_confidence": 0.921,
+        "median_mask_shape_score": 0.933,
+        "median_rectangularity": 0.953
+      }
+    },
+    {
+      "part_type": "long_orange",
+      "instance_index": 2,
+      "consumed": false,
+      "base_xyz_mm": [
+        -732.793,
+        -33.481,
+        -45.437
+      ],
+      "long_axis_angle_base_deg": 1.787,
+      "observation_frames": 40,
+      "quality": {
+        "observation_frames": 40,
+        "median_detection_confidence": 0.985,
+        "median_mask_shape_score": 0.942,
+        "median_rectangularity": 0.958
+      }
+    },
+    {
+      "part_type": "long_orange",
+      "instance_index": 3,
+      "consumed": false,
+      "base_xyz_mm": [
+        -654.937,
+        -63.739,
+        -44.796
+      ],
+      "long_axis_angle_base_deg": 177.769,
+      "observation_frames": 40,
+      "quality": {
+        "observation_frames": 40,
+        "median_detection_confidence": 0.983,
+        "median_mask_shape_score": 0.936,
+        "median_rectangularity": 0.916
+      }
+    },
+    {
+      "part_type": "long_orange",
+      "instance_index": 4,
+      "consumed": false,
+      "base_xyz_mm": [
+        -656.891,
+        -32.847,
+        -45.851
+      ],
+      "long_axis_angle_base_deg": 1.777,
+      "observation_frames": 40,
+      "quality": {
+        "observation_frames": 40,
+        "median_detection_confidence": 0.988,
+        "median_mask_shape_score": 0.938,
+        "median_rectangularity": 0.936
+      }
+    },
+    {
+      "part_type": "marked_white",
+      "instance_index": 2,
+      "consumed": false,
+      "base_xyz_mm": [
+        -622.191,
+        -204.936,
+        -47.306
+      ],
+      "long_axis_angle_base_deg": 90.203,
+      "observation_frames": 40,
+      "quality": {
+        "observation_frames": 40,
+        "median_detection_confidence": 0.899,
+        "median_mask_shape_score": 0.822,
+        "median_rectangularity": 0.83
+      }
+    }
+  ],
+  "bindings": [
+    {
+      "part_type": "black_block",
+      "detector_index": 1,
+      "physical_index": 2,
+      "reference_center_pixel": [
+        681.2,
+        207.95
+      ],
+      "method": "operator_confirmed_leading_empty_grid"
+    },
+    {
+      "part_type": "black_block",
+      "detector_index": 2,
+      "physical_index": 3,
+      "reference_center_pixel": [
+        748.28,
+        212.79
+      ],
+      "method": "operator_confirmed_leading_empty_grid"
+    },
+    {
+      "part_type": "black_block",
+      "detector_index": 3,
+      "physical_index": 4,
+      "reference_center_pixel": [
+        807.78,
+        213.06
+      ],
+      "method": "operator_confirmed_leading_empty_grid"
+    },
+    {
+      "part_type": "black_block",
+      "detector_index": 4,
+      "physical_index": 5,
+      "reference_center_pixel": [
+        877.66,
+        211.04
+      ],
+      "method": "operator_confirmed_leading_empty_grid"
+    },
+    {
+      "part_type": "hbm",
+      "detector_index": 1,
+      "physical_index": 3,
+      "reference_center_pixel": [
+        1119.72,
+        719.33
+      ],
+      "method": "operator_confirmed_leading_empty_grid"
+    },
+    {
+      "part_type": "hbm",
+      "detector_index": 2,
+      "physical_index": 4,
+      "reference_center_pixel": [
+        1192.01,
+        713.12
+      ],
+      "method": "operator_confirmed_leading_empty_grid"
+    },
+    {
+      "part_type": "hbm",
+      "detector_index": 3,
+      "physical_index": 5,
+      "reference_center_pixel": [
+        1116.41,
+        792.67
+      ],
+      "method": "operator_confirmed_leading_empty_grid"
+    },
+    {
+      "part_type": "hbm",
+      "detector_index": 4,
+      "physical_index": 6,
+      "reference_center_pixel": [
+        1191.99,
+        788.66
+      ],
+      "method": "operator_confirmed_leading_empty_grid"
+    },
+    {
+      "part_type": "hbm",
+      "detector_index": 5,
+      "physical_index": 7,
+      "reference_center_pixel": [
+        1116.38,
+        873.67
+      ],
+      "method": "operator_confirmed_leading_empty_grid"
+    },
+    {
+      "part_type": "hbm",
+      "detector_index": 6,
+      "physical_index": 8,
+      "reference_center_pixel": [
+        1191.87,
+        870.68
+      ],
+      "method": "operator_confirmed_leading_empty_grid"
+    },
+    {
+      "part_type": "long_orange",
+      "detector_index": 2,
+      "physical_index": 2,
+      "reference_center_pixel": [
+        1150.83,
+        243.63
+      ],
+      "method": "operator_confirmed_leading_empty_grid"
+    },
+    {
+      "part_type": "long_orange",
+      "detector_index": 3,
+      "physical_index": 3,
+      "reference_center_pixel": [
+        1060.24,
+        459.07
+      ],
+      "method": "operator_confirmed_leading_empty_grid"
+    },
+    {
+      "part_type": "long_orange",
+      "detector_index": 1,
+      "physical_index": 4,
+      "reference_center_pixel": [
+        1146.69,
+        454.2
+      ],
+      "method": "operator_confirmed_leading_empty_grid"
+    },
+    {
+      "part_type": "marked_white",
+      "detector_index": 1,
+      "physical_index": 2,
+      "reference_center_pixel": [
+        659.47,
+        549.48
+      ],
+      "method": "operator_confirmed_leading_empty_grid"
+    }
+  ],
+  "handeye_sha256": "f08dc2dd9a40523e3f0c69e9285d88c774d69553659c3d9be891da727877c558",
+  "robot_motion_authorized": false
+}

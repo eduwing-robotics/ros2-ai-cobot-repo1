@@ -112,3 +112,20 @@ def test_invalid_target_and_transport_failure_never_raise():
     assert failing.publish_joint_target((0, 0, 0, 0, 0, 0)) is False
     assert len(node.logger.warnings) == 2
     assert len(failing_node.logger.warnings) == 1
+
+
+def test_repeated_phase_has_unique_order_and_snapshot_invalidates():
+    publisher=RealGhostTargetPublisher(FakeNode(),backend='real')
+    context=dict(job_id='job',operation_id='op',action='robot.pick',phase='midpoint')
+    publisher.context_resolver=lambda job:dict(execution_id='execution',plan_sha256='hash')
+    publisher.publish_stage_target([0]*6,**context);first=publisher.snapshot()
+    publisher.publish_stage_target([1]*6,**context);second=publisher.snapshot()
+    assert first['target_id']!=second['target_id']
+    assert first['target_sequence']<second['target_sequence']
+    assert second['execution_id']=='execution' and second['frame_id']=='base_link'
+    publisher.invalidate('other','failure')
+    assert publisher.snapshot()==second
+    publisher.invalidate('op','OPERATION_FAILED')
+    assert publisher.snapshot()['target_state']=='invalid'
+    assert publisher.snapshot()['target_sequence']>second['target_sequence']
+    assert publisher.snapshot()['target_id']==second['target_id']

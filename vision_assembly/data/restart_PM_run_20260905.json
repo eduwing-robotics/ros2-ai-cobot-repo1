@@ -1,0 +1,120 @@
+{
+  "schema": "fr5.full_fixed_cycle_run/v2",
+  "started_unix": 1788608059.510936,
+  "cycle_id": "20260905-201721",
+  "plan_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/restart_PM_plan_20260905.json",
+  "plan_sha256": "614f488f1de902374d8c0c2f2379f24c1e711a23d288b3757d9426a4ec594617",
+  "motion_profile": "smooth_combined_transfer_v1",
+  "selected_slots": [
+    "PM-01",
+    "PM-02",
+    "PM-03",
+    "PM-04"
+  ],
+  "motion_completed_slots": [
+    "PM-01",
+    "PM-02",
+    "PM-03",
+    "PM-04"
+  ],
+  "grasp_verified_slots": [],
+  "placement_verified_slots": [],
+  "part_held_candidate": false,
+  "status": "motion_complete_awaiting_physical_verification",
+  "preflight": {
+    "passed": true,
+    "waypoints": 85,
+    "minimum_joint_soft_limit_margin_deg": 39.097527,
+    "maximum_joint_step_deg": 91.465795,
+    "minimum_j6_deg": -13.828725,
+    "maximum_j6_deg": 82.509544,
+    "j6_operational_bounds_deg": [
+      -178.0,
+      178.0
+    ]
+  },
+  "controller_global_speed_percent": 40,
+  "speed_contract": {
+    "command_percent": {
+      "travel": 25,
+      "combined_rotation": 25,
+      "vertical": 10
+    },
+    "effective_percent": {
+      "travel": 10.0,
+      "combined_rotation": 10.0,
+      "vertical": 4.0
+    },
+    "hover_clearance_mm": 100.0,
+    "slow_zone_mm": 50.0
+  },
+  "controller_global_speed_set_unix": 1788608060.1381443,
+  "gripper_current_samples_percent": {
+    "PM-01": 0.0,
+    "PM-02": 0.0,
+    "PM-03": 0.0,
+    "PM-04": 0.0
+  },
+  "tray_inspections": [
+    {
+      "slot": "PM-01",
+      "stage": "tray_after_inspect",
+      "timestamp_ros_ns": 1788608088740991699,
+      "picked_slot": "PM-01",
+      "removed_slots": [
+        "PM-01"
+      ],
+      "evidence": "picked_cell_absent_not_physical_holding_proof",
+      "distinct_consecutive_frames": 3
+    },
+    {
+      "slot": "PM-02",
+      "stage": "tray_after_inspect",
+      "timestamp_ros_ns": 1788608135107638916,
+      "picked_slot": "PM-02",
+      "removed_slots": [
+        "PM-01",
+        "PM-02"
+      ],
+      "evidence": "picked_cell_absent_not_physical_holding_proof",
+      "distinct_consecutive_frames": 3
+    },
+    {
+      "slot": "PM-03",
+      "stage": "tray_after_inspect",
+      "timestamp_ros_ns": 1788608181608504883,
+      "picked_slot": "PM-03",
+      "removed_slots": [
+        "PM-01",
+        "PM-02",
+        "PM-03"
+      ],
+      "evidence": "picked_cell_absent_not_physical_holding_proof",
+      "distinct_consecutive_frames": 3
+    },
+    {
+      "slot": "PM-04",
+      "stage": "tray_after_inspect",
+      "timestamp_ros_ns": 1788608227911007080,
+      "picked_slot": "PM-04",
+      "removed_slots": [
+        "PM-01",
+        "PM-02",
+        "PM-03",
+        "PM-04"
+      ],
+      "evidence": "picked_cell_absent_not_physical_holding_proof",
+      "distinct_consecutive_frames": 3
+    }
+  ],
+  "last_verified_tcp": [
+    36.88236618041992,
+    -470.27410888671875,
+    188.52200317382812,
+    179.99884033203125,
+    -0.006865253672003746,
+    91.77630615234375
+  ],
+  "last_gripper_position": 30,
+  "completed_unix": 1788608242.8792934
+}

@@ -1,8 +1,8 @@
 {
   "schema": "fr5.assembly_launcher_revision/v1",
-  "revision": "20260908_gpu_fixed_successful_pick_z",
+  "revision": "20260909_smd_restore_successful_gripper_profile",
   "reviewed_config_sha256": {
-    "vision_assembly/config/part_gripper_recipes.json": "9b4b223901a81fb2d02001d3cd2a33d9977d8fbfb8283317f6678f5c3af29580"
+    "vision_assembly/config/part_gripper_recipes.json": "41f3de3dab740b158811a788a80614c87d7d59840ec5327d749cfc3c44753a23"
   },
   "changes": [
     "PM03/04 observed board center plus carried pick offset; fresh board transform, no saved TCP replay",
@@ -24,7 +24,9 @@
     "Use Fast DDS UDPv4 for shell and direct Python cycle launch and inherited child processes.",
     "Promote physically tested shortest wrapped PlaceCamera return; remove extra full turn for negative yaw corrections.",
     "Correct launcher displayed slot heights; unvalidated manual-reference XY/angle candidates remain excluded.",
-    "Operator requested GPU fixed-fixture pick TCP Z -49.719mm from successful morning all25 run; replaces live surface-relative pick height. Other part recipes and GPU XY/ABC/gripper/place unchanged. Physical retrial pending."
+    "Operator requested GPU fixed-fixture pick TCP Z -49.719mm from successful morning all25 run; replaces live surface-relative pick height. Other part recipes and GPU XY/ABC/gripper/place unchanged. Physical retrial pending.",
+    "IND only: restore successful legacy driver velocity80/force50 for open21/grasp14/release20. API previously sent50/30. Keep object detection and TrayHome inspection gates; physical retest pending.",
+    "SMD CAP01..05: restore legacy successful driver80/50 for open18/grasp12/release17; previously API50/1. Positions and object-detection/inspection gates unchanged. Physical retest pending."
   ],
   "physical_evidence": [
     "runtime/assembly_cycles/pm34_test_20260907/validated_pm34_result.json",

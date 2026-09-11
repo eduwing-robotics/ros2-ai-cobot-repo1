@@ -30,14 +30,25 @@ def plan():
                       json.loads((ROOT/'vision_assembly/config/assembly_slots_r1.json').read_text()))
 
 
-@pytest.mark.parametrize('slot', ['HBM-01','HBM-07','PM-02','PM-04','GPU-01','CAP-01','CAP-05','IND-02','VRM-05'])
+@pytest.mark.parametrize('slot', ['GPU-01'] + [f'HBM-{i:02d}' for i in range(1,9)]
+    + [f'PM-{i:02d}' for i in range(1,5)] + [f'VRM-{i:02d}' for i in range(1,6)]
+    + ['IND-01','IND-02'] + [f'CAP-{i:02d}' for i in range(1,6)])
 def test_single_routes_preserve_tested_pick_and_home_to_place(plan,slot):
     item=next(i for i in plan['plan'] if i['slot_code']==slot)
     original=add_inspections(build_tcp_route([item],list(HOME),350,resume_after_grasp=False),HOME)
     cut=next(i for i,(_,w) in enumerate(original) if w.label=='tray_after_inspect')
     pick=single_route(item,HOME,350,Action.PICK)
     place=single_route(item,HOME,350,Action.PLACE)
-    assert pick==original[:cut+1]
+    expected = [(s,w) for s,w in original[:cut+1]
+                if w.label != 'post_grasp_proof_lift_100mm_vertical']
+    if len(pick) == len(expected) - 2:
+        # A short arrival replaces only the two intermediate points and uses
+        # Cartesian interpolation; every other target remains unchanged.
+        expected = [(s,w) for s,w in expected if w.label != 'tray_after_mid_travel']
+        assert [(s,w.label,w.tcp) for s,w in pick] == [(s,w.label,w.tcp) for s,w in expected]
+        assert next(w for _,w in pick if w.label == 'tray_after_travel').linear
+    else:
+        assert pick == expected
     assert place==original[cut+1:]
     assert pick[-1][1].tcp==HOME
     assert all(s==slot for s,_ in pick+place)
@@ -49,6 +60,7 @@ def test_single_routes_preserve_tested_pick_and_home_to_place(plan,slot):
 class SimExecutor:
     def __init__(self,backend,operation):
         self.backend=backend;self.operation=operation;self.state=backend._robot.sim
+        self.robot=backend._robot
         self.waypoint=None;self.phase='';self.last_pose_verification=None
     def spin_state(self,**_):
         self.backend._assert_not_paused();return self.state
@@ -74,7 +86,8 @@ class SimExecutor:
 
 def setup_real(tmp_path, plan, monkeypatch, slot='HBM-01'):
     _,vision,robot,ghost,events=backend()
-    robot.sim=SimpleNamespace(tcp=list(HOME),gripper_feedback_valid=True,robot_motion_done=1,gripper_position=25)
+    robot.sim=SimpleNamespace(tcp=list(HOME),gripper_feedback_valid=True,robot_motion_done=1,gripper_position=25,robot_mode=0,tool_num=1,work_num=0)
+    robot.assert_motion_permitted=robot.assert_ready
     robot.log.clear()
     calibration=tmp_path/'calibration/data/handeye_result.json';calibration.parent.mkdir(parents=True)
     calibration.write_text('{}')
@@ -211,3 +224,145 @@ def test_real_recipe_not_ready_is_rejected_before_any_handlers():
     client=object.__new__(RosSequencerRobotClient)
     client._real_transport=True;client.recipe={'real_execution_ready':False}
     with pytest.raises(ValueError,match='not commissioned'):client.runRecipe({})
+
+
+@pytest.mark.parametrize('case', ['worker_delay', 'receive_gap_recovered', 'stale',
+                                 'health_fault', 'cancel', 'between_waits_gap'])
+def test_feedback_wait_distinguishes_worker_delay_from_receive_loss(monkeypatch, case):
+    import threading
+    from fr5_process_sequences.real_precision_steps import PortExecutor
+    from fr5_process_sequences.real_ros_node import FairinoRobotPort
+    from fr5_process_sequences.real_backend import BackendFailure
+
+    clock = [1.0]
+    monkeypatch.setattr(time, 'monotonic', lambda: clock[0])
+    robot = FairinoRobotPort.__new__(FairinoRobotPort)
+    robot._lock = threading.Lock()
+    robot._state = None
+    robot._state_sequence = 0
+    robot._state_received_at = 0.
+    robot._state_gap_sequence = 0
+    robot._state_gap_sec = 0.
+    robot._state_callback(SimpleNamespace(fault=False))
+    cancelled = [False]
+    def check_cancel():
+        if cancelled[0]:
+            raise BackendFailure('CANCELLED', 'cancel requested')
+    waiter = PortExecutor(SimpleNamespace(_robot=robot, _assert_not_paused=check_cancel), None)
+    waiter.safety_error = lambda state: 'hardware fault' if state.fault else None
+
+    def delay_worker(_):
+        if case in ('receive_gap_recovered', 'between_waits_gap'):
+            clock[0] = 1.27
+            robot._state_callback(SimpleNamespace(fault=False))
+            clock[0] = 1.30
+            robot._state_callback(SimpleNamespace(fault=False))
+        elif case != 'stale':
+            for i in range(1, 31):
+                clock[0] = 1.0 + i * .01
+                robot._state_callback(SimpleNamespace(fault=case == 'health_fault'))
+        clock[0] = 1.31
+        cancelled[0] = case == 'cancel'
+    monkeypatch.setattr(time, 'sleep', delay_worker)
+    if case == 'between_waits_gap':
+        delay_worker(0)  # An intervening service must not hide a receive gap.
+    if case == 'worker_delay':
+        assert waiter.spin_state() is robot._state
+        assert robot._state_sequence == 31
+        assert robot._state_gap_sequence == 0
+    else:
+        expected = ('receive gap' if 'gap' in case else 'hardware fault'
+                    if case == 'health_fault' else 'cancel requested'
+                    if case == 'cancel' else 'distinct fresh')
+        with pytest.raises(BackendFailure, match=expected):
+            waiter.spin_state()
+        if 'gap' in case:
+            assert robot._state_gap_sequence == 2  # Recovery frames preserve it.
+            assert robot._state_gap_sec == pytest.approx(.27)
+
+
+@pytest.mark.parametrize('slot', ['HBM-01', 'GPU-01', 'PM-02', 'VRM-01', 'CAP-01', 'IND-01'])
+def test_pick_lift_removes_only_collinear_noninspection_stop(plan, slot):
+    from execute_full_fixed_cycle import waypoint_speed
+    item = next(i for i in plan['plan'] if i['slot_code'] == slot)
+    old = add_inspections(build_tcp_route([item], list(HOME), 350,
+                                         resume_after_grasp=False), HOME)
+    route = single_route(item, HOME, 350, Action.PICK)
+    idx = next(i for i, (_, w) in enumerate(route)
+               if w.label == 'post_grasp_lift_50mm_vertical')
+    low, high = route[idx][1], route[idx + 1][1]
+    middle = next(w for _, w in old if w.label == 'post_grasp_proof_lift_100mm_vertical')
+    assert high.label == 'tray_after_raise'
+    assert low.linear and high.linear
+    assert low.tcp[2] < middle.tcp[2] < high.tcp[2]
+    for k in (0, 1, 3, 4, 5):
+        assert low.tcp[k] == middle.tcp[k] == high.tcp[k]
+    assert high.tcp[2] >= 350
+    assert route[-1][1].label == 'tray_after_inspect'
+    assert route[-1][1].tcp == HOME
+    speeds = dict(vertical=10, travel=40, combined_rotation=40, clearance_lift=30)
+    assert waypoint_speed(low.label, speeds) == 10
+    assert waypoint_speed(high.label, speeds) == 30
+    # The standalone diagnostic still retains its explicit 100 mm proof stop.
+    assert any(w.label == 'post_grasp_proof_lift_100mm_vertical' for _, w in old)
+
+
+@pytest.mark.parametrize('slot', ['HBM-05', 'HBM-06'])
+def test_near_home_arrival_has_one_horizontal_segment_and_exact_inspection(plan, slot):
+    item = next(i for i in plan['plan'] if i['slot_code'] == slot)
+    route = single_route(item, HOME, 350, Action.PICK)
+    start = next(i for i, (_,w) in enumerate(route) if w.label == 'tray_after_raise')
+    tail = [w for _,w in route[start:]]
+    assert [w.label for w in tail] == ['tray_after_raise', 'tray_after_travel', 'tray_after_inspect']
+    assert all(w.linear for w in tail)
+    assert tail[0].tcp[2] == tail[1].tcp[2] == 350
+    assert tail[1].tcp[:2] == HOME[:2]
+    assert tail[1].tcp[3:] == HOME[3:]
+    assert tail[2].tcp == HOME
+    assert tail[1].tcp[2] - tail[2].tcp[2] == pytest.approx(12.12)
+
+
+def test_long_home_arrival_retains_original_high_queue(plan):
+    item = next(i for i in plan['plan'] if i['slot_code'] == 'HBM-01')
+    route = single_route(item, HOME, 350, Action.PICK)
+    mids = [w for _,w in route if w.label == 'tray_after_mid_travel']
+    assert len(mids) == 2
+    assert all(not w.linear and w.tcp[2] == 350 for w in mids)
+
+
+def test_short_home_arrival_cannot_bypass_clearance_gate(tmp_path, plan, monkeypatch):
+    real,robot,executor,payload,pick,place,events=setup_real(tmp_path,plan,monkeypatch,'HBM-05')
+    from fr5_process_sequences.real_backend import BackendFailure
+    checked=[]
+    def reject(node, group, check_context):
+        checked.append(group[0].label)
+        raise BackendFailure('SAFETY_STOP', 'test clearance not reached')
+    monkeypatch.setattr('fr5_process_sequences.continuous_transfer.wait_transfer_start',reject)
+    result=real.execute(pick)
+    assert result.event is Event.OPERATION_FAILED
+    assert 'clearance not reached' in result.message
+    assert checked == ['tray_after_travel']
+    assert not any(r[0]=='arm' and r[2] in ('tray_after_travel','tray_after_inspect') for r in robot.log)
+    assert real._recovery_required
+
+
+def test_hbm04_pick_splits_high_transfer_without_changing_pick(plan):
+    from execute_full_fixed_cycle import build_tcp_route
+    item=next(i for i in plan['plan'] if i['slot_code']=='HBM-04')
+    prior=next(i for i in plan['plan'] if i['slot_code']=='HBM-03')
+    start=list(prior['place_final_tcp']);start[2]+=100
+    full=build_tcp_route([item],start,350,resume_after_grasp=False)
+    api=single_route(item,start,350,Action.PICK)
+    for route in (full,api):
+        high=next(w for _,w in route if w.label=='pre_pick_safe_vertical')
+        mids=[w for _,w in route if w.label=='pick_combined_xy_abc_midpoint']
+        end=next(w for _,w in route if w.label=='pick_combined_xy_abc')
+        assert len(mids)==1
+        mid=mids[0]
+        assert high.tcp[2]==mid.tcp[2]==end.tcp[2]==350
+        assert mid.tcp[:2]==pytest.approx((np.asarray(high.tcp[:2])+end.tcp[:2])/2)
+        for axis in (3,4,5):
+            delta=(end.tcp[axis]-high.tcp[axis]+180)%360-180
+            assert mid.tcp[axis]==pytest.approx(high.tcp[axis]+delta/2)
+        final=next(w for _,w in route if w.label=='pick_final_50mm_vertical')
+        assert final.tcp==pytest.approx(item['pick_final_tcp'])

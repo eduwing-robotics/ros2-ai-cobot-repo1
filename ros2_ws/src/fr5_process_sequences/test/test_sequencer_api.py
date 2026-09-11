@@ -157,7 +157,8 @@ def test_ghost_stage_has_ids_units_and_legacy_jointstate():
     node=FakeNode();publisher=RealGhostTargetPublisher(node,backend='real')
     publisher.publish_stage_target([0,90,0,0,0,0],job_id=JOB,operation_id='op',action='robot.pick',phase='DESCEND')
     data=json.loads(node.publisher.messages[0].data)
-    assert data['target_id']=='op:DESCEND'
+    assert data['target_id']==f"{data['server_instance_id']}:{data['target_sequence']}"
+    assert data['stage_id']=='DESCEND' and data['target_sequence']==1
     assert data['positions_rad'][1]==pytest.approx(1.57079632679)
     assert data['positions_deg'][1]==90
     assert len(node.publisher.messages)==2
@@ -245,9 +246,35 @@ def test_adapter_with_actual_precision_planner_keeps_user_order_and_real_values(
     assert cap['part_id']=='CAP' and cap['source_index']==1
     assert cap['expected_gripper']==dict(pregrasp_opening_percent=18,grasp_opening_percent=12,release_opening_percent=17)
     assert cap['tcp_pose_mm_deg'][2]==-52.177
+    caps=[row for row in data['parts'] if row['part_id']=='CAP']
+    assert len(caps)==5
+    for cap in caps:
+        assert cap['expected_gripper']==dict(pregrasp_opening_percent=18,grasp_opening_percent=12,release_opening_percent=17)
+        port=object.__new__(FairinoRobotPort)
+        commands=[]
+        port._service=lambda command,code:commands.append(command)
+        for phase,position in [('PREOPEN',18),('GRASP',12),('RELEASE',17)]:
+            assert cap['gripper_profiles'][phase]==dict(velocity_percent=80,force_percent=50)
+            port.move_profiled_gripper(position,cap['gripper_profiles'][phase])
+        assert commands==['MoveGripper(1,18.0,80.0,50.0)',
+                          'MoveGripper(1,12.0,80.0,50.0)',
+                          'MoveGripper(1,17.0,80.0,50.0)']
+    # Legacy IND success used MoveGripper(1,position), i.e. driver80/50.
+    # Check the actual recipe through the adapter and transport, not a mock profile.
+    for ind in (row for row in data['parts'] if row['part_id']=='IND'):
+        assert ind['expected_gripper']==dict(pregrasp_opening_percent=21,grasp_opening_percent=14,release_opening_percent=20)
+        port=object.__new__(FairinoRobotPort)
+        commands=[]
+        port._service=lambda command,code:commands.append(command)
+        for phase,position in [('PREOPEN',21),('GRASP',14),('RELEASE',20)]:
+            assert ind['gripper_profiles'][phase]==dict(velocity_percent=80,force_percent=50)
+            port.move_profiled_gripper(position,ind['gripper_profiles'][phase])
+        assert commands==['MoveGripper(1,21.0,80.0,50.0)',
+                          'MoveGripper(1,14.0,80.0,50.0)',
+                          'MoveGripper(1,20.0,80.0,50.0)']
 
 
-def test_profiled_gripper_preserves_smd_force_in_driver_request():
+def test_profiled_gripper_preserves_explicit_low_force_in_driver_request():
     port=object.__new__(FairinoRobotPort)
     commands=[]
     port._service=lambda command,code:commands.append(command)

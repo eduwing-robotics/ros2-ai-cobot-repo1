@@ -613,6 +613,9 @@ class RealRobotBackend:
         self._phase_event(operation, phase, Event.PHASE_COMPLETED)
 
     def _assert_not_paused(self) -> None:
+        whole = getattr(self, 'whole_control', None)
+        if whole is not None:
+            whole.checkpoint()
         self.control.checkpoint()
         if self._paused.is_set():
             raise BackendFailure("SAFETY_STOP", "operation paused; no subsequent phase permitted")
@@ -680,6 +683,13 @@ class RealRobotBackend:
 
     def _emit(self, event: OperationEvent) -> None:
         self.event_context.observe(event)
+        if event.event in (Event.OPERATION_COMPLETED, Event.OPERATION_FAILED, Event.PAUSED, Event.PAUSE_CONFIRMED, Event.CONTROL_FAILED):
+            invalidate = getattr(self._ghost, 'invalidate', None)
+            if invalidate is not None:
+                try:
+                    invalidate(event.operation_id, event.event.value)
+                except Exception:
+                    pass
         if event.event in (Event.PHASE_STARTED, Event.PHASE_COMPLETED, Event.PAUSED):
             with self._state_lock:
                 if self._active is not None and self._active.operation_id == event.operation_id:

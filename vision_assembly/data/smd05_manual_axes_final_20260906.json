@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "mode": "operator_two_terminal_axes",
+  "robot_motion_authorized": false,
+  "operator_confirmed_consumed_prefix_count": 4,
+  "timestamp_unix": 1788684980.975694,
+  "set_index": 1,
+  "canonical_size": [
+    1200,
+    720
+  ],
+  "reference_tcp_base": [
+    -527.998,
+    -120.961,
+    77.862,
+    180.0,
+    0.0,
+    89.999
+  ],
+  "source_image_sha256": "a94de3ddb20da90afcf01b8e0eca36a88ce743321fc81b5b9c11546ebba54dcc",
+  "click_semantics": "terminal A first, terminal B second; arrow A-to-B",
+  "parts": [
+    {
+      "instance_index": 5,
+      "detection_center_canonical_pixel": [
+        958.02099609375,
+        193.91200256347656
+      ],
+      "terminal_endpoints_canonical_pixel": [
+        [
+          959.0,
+          170.0
+        ],
+        [
+          959.0,
+          220.0
+        ]
+      ],
+      "terminal_endpoints_source_pixel": [
+        [
+          797.572021484375,
+          322.59100341796875
+        ],
+        [
+          797.4210205078125,
+          350.3349914550781
+        ]
+      ],
+      "directed_axis_canonical_deg": 90.0,
+      "long_axis_canonical_deg": -90.0,
+      "detection_confidence": 0.8886
+    }
+  ]
+}
