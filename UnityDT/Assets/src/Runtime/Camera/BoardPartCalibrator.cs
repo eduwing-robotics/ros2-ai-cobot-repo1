@@ -118,6 +118,8 @@ namespace MainUnity.Runtime.Camera
             Vector3 parentScale = board.parent.lossyScale;
             board.localScale = new Vector3(saved.Scale.x / parentScale.x, saved.Scale.y / parentScale.y, saved.Scale.z / parentScale.z);
             board.SetPositionAndRotation(baseLink.TransformPoint(saved.Position), baseLink.rotation * saved.Rotation);
+            calibratedPositionZ = board.position.z;
+            conveyorOffsetZ = 0f;
             slots.Clear();
             foreach (SlotSnapshot slot in saved.Slots)
             {
@@ -144,6 +146,8 @@ namespace MainUnity.Runtime.Camera
         readonly Dictionary<string, Pose> displayedSlotPoses = new(StringComparer.Ordinal);
         Pose targetBoardPose;
         Pose displayedBoardPose;
+        float calibratedPositionZ;
+        float conveyorOffsetZ;
         string publisherId;
         long lastSequence = -1;
         long lastFrame;
@@ -171,6 +175,8 @@ namespace MainUnity.Runtime.Camera
             slots.Clear();
             targetSlotPoses = null;
             displayedSlotPoses.Clear();
+            calibratedPositionZ = 0f;
+            conveyorOffsetZ = 0f;
             LastAppliedTime = -1d;
             CalibrationId = null;
             waitingForNewFrame = true;
@@ -203,6 +209,8 @@ namespace MainUnity.Runtime.Camera
             slots.Clear();
             targetSlotPoses = null;
             displayedSlotPoses.Clear();
+            calibratedPositionZ = 0f;
+            conveyorOffsetZ = 0f;
             LastAppliedTime = -1d;
             CalibrationId = null;
             waitingForNewFrame = true;
@@ -260,6 +268,13 @@ namespace MainUnity.Runtime.Camera
                     return;
                 }
                 if (frame <= lastFrame) return;
+                if (LastAppliedTime >= 0d)
+                {
+                    lastFrame = frame;
+                    LastAppliedTime = Time.realtimeSinceStartupAsDouble;
+                    SetProgress(ProgressState.Applied, "최초 기판 calibration 기준 유지");
+                    return;
+                }
                 if (!ConfigurationValid()) throw new FormatException("Invalid board calibration configuration.");
                 if (itemManager.ObservationAwaitingUnit && currentBoard == null)
                 {
@@ -363,8 +378,10 @@ namespace MainUnity.Runtime.Camera
                 Vector3.Lerp(displayedBoardPose.position, targetBoardPose.position, blend),
                 blend >= 1f ? targetBoardPose.rotation : Quaternion.Slerp(displayedBoardPose.rotation, targetBoardPose.rotation, blend));
             currentBoard.SetPositionAndRotation(
-                displayedBoardPose.position + displayedBoardPose.rotation * modelPositionOffsetMeters,
+                displayedBoardPose.position + displayedBoardPose.rotation * modelPositionOffsetMeters + Vector3.forward * conveyorOffsetZ,
                 displayedBoardPose.rotation * Quaternion.Euler(modelRotationOffsetDegrees));
+            calibratedPositionZ = displayedBoardPose.position.z +
+                (displayedBoardPose.rotation * modelPositionOffsetMeters).z;
             foreach (var entry in targetSlotPoses)
             {
                 Pose pose = entry.Value;
@@ -373,10 +390,31 @@ namespace MainUnity.Runtime.Camera
                         Quaternion.Slerp(previous.rotation, pose.rotation, blend));
                 displayedSlotPoses[entry.Key] = pose;
                 slots[entry.Key].SetPositionAndRotation(
-                    displayedBoardPose.position + displayedBoardPose.rotation * pose.position,
+                    displayedBoardPose.position + displayedBoardPose.rotation * pose.position + Vector3.forward * conveyorOffsetZ,
                     displayedBoardPose.rotation * pose.rotation);
             }
         }
+
+        internal bool ApplyConveyorOffset(Transform board, float offsetZ)
+        {
+            if (board == null || board != currentBoard || (LastAppliedTime < 0d && !restoredDisplay) ||
+                !float.IsFinite(offsetZ))
+                return false;
+
+            // 최초 calibration은 조립 정지 위치의 절대 기준이다. 이후 벨트 이송 거리만
+            // 월드 Z로 합성하며 원본 보정 자세와 슬롯 배치는 다시 계산하지 않는다.
+            conveyorOffsetZ = offsetZ;
+            if (targetSlotPoses != null)
+                ApplyDisplayPose(1f);
+            else
+            {
+                Vector3 position = board.position;
+                position.z = calibratedPositionZ + conveyorOffsetZ;
+                board.position = position;
+            }
+            return true;
+        }
+
 
         bool ConfigurationValid() => baseLink != null && itemManager != null &&
             (baseLink.lossyScale - Vector3.one).sqrMagnitude <= 1e-8f &&
@@ -456,6 +494,8 @@ namespace MainUnity.Runtime.Camera
             slots.Clear();
             targetSlotPoses = null;
             displayedSlotPoses.Clear();
+            calibratedPositionZ = 0f;
+            conveyorOffsetZ = 0f;
             LastAppliedTime = -1d;
             CalibrationId = null;
             waitingForNewFrame = true;

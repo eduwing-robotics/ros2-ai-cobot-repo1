@@ -1,6 +1,7 @@
 using System;
 using System.Text;
 using System.Threading.Tasks;
+using MainUnity.Runtime.Camera;
 using MainUnity.Runtime.Robot.Assembly;
 using MainUnity.Runtime.Robot.Interface;
 using MainUnity.Static;
@@ -30,7 +31,7 @@ namespace MainUnity.Runtime.Robot.Real
         [SerializeField] Transform assemblyStopPoint;
         [SerializeField] Transform inspectionStopPoint;
         [SerializeField, InspectorName("Belt Speed (m/s)"), Min(0.01f)]
-        float conveyorSpeed = 0.11f;
+        float conveyorSpeed = 0.055f;
         [SerializeField, Min(0.001f)] float arrivalHoldDistance = 0.01f;
 
         AssemblyProgressManager progress;
@@ -52,6 +53,8 @@ namespace MainUnity.Runtime.Robot.Real
         Material beltMaterial;
         Transform conveyorBoard;
         Transform conveyorDestination;
+        BoardPartCalibrator boardCalibration;
+        float conveyorPositionZ;
         int generation;
 
         public bool IsRunning => executionPending || (latest != null && latest.active && latest.error_code != "SCENE_CONFIRMATION_REQUIRED");
@@ -161,16 +164,15 @@ namespace MainUnity.Runtime.Robot.Real
             if (conveyorBoard == null || conveyorDestination == null)
                 return;
 
-            float offset = conveyorDestination.position.z - conveyorBoard.position.z;
+            float offset = conveyorDestination.position.z - conveyorPositionZ;
             float remaining = Mathf.Abs(offset);
             float distance = Mathf.Min(conveyorSpeed * Time.deltaTime,
                 Mathf.Max(0f, remaining - arrivalHoldDistance));
             if (distance <= 0f)
                 return;
 
-            Vector3 position = conveyorBoard.position;
-            position.z += Mathf.Sign(offset) * distance;
-            conveyorBoard.position = position;
+            conveyorPositionZ += Mathf.Sign(offset) * distance;
+            SetBoardPosition(conveyorBoard, conveyorPositionZ);
             MoveBeltTexture(distance);
         }
 
@@ -600,6 +602,14 @@ namespace MainUnity.Runtime.Robot.Real
                 Debug.LogWarning("Real conveyor visualization references or motion values are invalid.", this);
                 return;
             }
+            if (conveyorBoard != board || conveyorDestination != destination)
+            {
+                bool calibratedAtAssembly = destination == assemblyStopPoint && boardCalibration != null &&
+                    boardCalibration.ApplyConveyorOffset(board, 0f);
+                conveyorPositionZ = calibratedAtAssembly || destination != assemblyStopPoint
+                    ? assemblyStopPoint.position.z
+                    : itemManager.IncomingBoardPosition.z;
+            }
             conveyorBoard = board;
             conveyorDestination = destination;
             if (beltRenderer != null && beltMaterial == null)
@@ -612,18 +622,28 @@ namespace MainUnity.Runtime.Robot.Real
             conveyorDestination = null;
         }
 
-        static void SnapBoard(Transform board, Transform destination)
+        void SnapBoard(Transform board, Transform destination)
         {
             if (destination != null)
-            {
-                Vector3 position = board.position;
-                position.z = destination.position.z;
-                board.position = position;
-            }
+                SetBoardPosition(board, destination.position.z);
         }
 
-        void RefreshConveyorReferences() =>
+        void SetBoardPosition(Transform board, float nominalPositionZ)
+        {
+            if (boardCalibration != null && assemblyStopPoint != null &&
+                boardCalibration.ApplyConveyorOffset(board, nominalPositionZ - assemblyStopPoint.position.z))
+                return;
+            Vector3 position = board.position;
+            position.z = nominalPositionZ;
+            board.position = position;
+        }
+
+
+        void RefreshConveyorReferences()
+        {
             beltRenderer = beltPlane == null ? null : beltPlane.GetComponent<Renderer>();
+            boardCalibration = GetComponent<BoardPartCalibrator>();
+        }
 
         void MoveBeltTexture(float distance)
         {
