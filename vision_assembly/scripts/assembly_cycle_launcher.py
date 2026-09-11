@@ -351,7 +351,7 @@ def main():
             fcntl.flock(operation_lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
             run_step([sys.executable, str(SCRIPTS/'prepare_cycle_gripper.py'),
                       '--safety-record', str(directory/'startup_safety.json')],
-                     directory/'prepare_gripper.log', timeout=30)
+                     directory/'prepare_gripper.log', timeout=45)
         # Check the API before publishing a lease or making any camera move.
         subprocess.run([sys.executable,str(SCRIPTS/'check_step_api.py')],check=True)
         write(directory/'api_recipe.json',frozen_api_recipe(args.profile))
@@ -371,7 +371,7 @@ def main():
             # status. Unknown/held outcomes retain the lease for reconciliation.
             try:
                 checked=subprocess.run([sys.executable,str(SCRIPTS/'check_step_api.py')],
-                    capture_output=True,text=True,timeout=12)
+                    capture_output=True,text=True,timeout=45)
                 write(directory/'api_release_check.json',dict(returncode=checked.returncode,
                     stdout=checked.stdout,stderr=checked.stderr))
                 if checked.returncode==0 and read(lease_path)==lease:

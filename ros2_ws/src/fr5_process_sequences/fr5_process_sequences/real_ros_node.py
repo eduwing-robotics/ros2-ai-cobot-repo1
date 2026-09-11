@@ -21,6 +21,8 @@ import rclpy
 from fairino_msgs.msg import RobotNonrtState
 from fairino_msgs.srv import RemoteCmdInterface
 from rclpy.node import Node
+from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
+from rclpy.executors import MultiThreadedExecutor
 from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from std_msgs.msg import Bool, String
 from std_srvs.srv import Trigger
@@ -260,9 +262,11 @@ class FairinoRobotPort:
         self._state_received_at = 0.0
         self._state_gap_sequence = 0
         self._state_gap_sec = 0.0
-        node.create_subscription(RobotNonrtState, state_topic, self._state_callback, 10)
-        self._client = node.create_client(RemoteCmdInterface, command_service)
-        self._driver_parameters = node.create_client(GetParameters, "/fr_command_server/get_parameters")
+        io_group = getattr(node, '_feedback_group', None)
+        options = {'callback_group': io_group} if io_group is not None else {}
+        node.create_subscription(RobotNonrtState, state_topic, self._state_callback, 10, **options)
+        self._client = node.create_client(RemoteCmdInterface, command_service, **options)
+        self._driver_parameters = node.create_client(GetParameters, "/fr_command_server/get_parameters", **options)
 
     def _state_callback(self, state: RobotNonrtState) -> None:
         with self._lock:
@@ -656,6 +660,10 @@ class RealRobotApiNode(Node):
 
     def __init__(self) -> None:
         super().__init__("real_robot_api")
+        # Keep state receipt and cached status available while command callbacks run.
+        # Commands remain mutually exclusive in the default callback group.
+        self._feedback_group = MutuallyExclusiveCallbackGroup()
+        self._status_group = MutuallyExclusiveCallbackGroup()
         self.declare_parameter("enable_hardware_execution", False)
         self.declare_parameter("enable_production_assembly", False)
         self.declare_parameter("whole_cycle_boundary_pause", False)
@@ -701,7 +709,7 @@ class RealRobotApiNode(Node):
         )
         self._vision_port = vision
         self._robot_port = robot
-        self._status_service = self.create_service(Trigger, "/real/robot/status", self._status_callback)
+        self._status_service = self.create_service(Trigger, "/real/robot/status", self._status_callback, callback_group=self._status_group)
         ghost = RealGhostTargetPublisher(self, backend="real")
         limits = ContractLimits(
             maximum_approach_dz_mm=float(
@@ -768,6 +776,7 @@ class RealRobotApiNode(Node):
 
     def _status_callback(self, request, response):
         """Read cached state only; never sends a FAIRINO command."""
+        callback_started = time.monotonic()
         status = {"schema": "fr5.robot_api_status/v1",
                   "hardware_execution_enabled": self._robot_port._enabled,
                   "state_fresh": False,
@@ -814,6 +823,7 @@ class RealRobotApiNode(Node):
         held = self._backend.held_part
         status["held_candidate"] = None if held is None else {
             "job_id": held.job_id, "part_id": held.part_id, "slot_code": held.slot_code}
+        status["status_callback_elapsed_ms"] = (time.monotonic() - callback_started) * 1000
         response.success = True  # API availability; not permission to move
         response.message = json.dumps(status)
         return response
@@ -853,11 +863,13 @@ def _wrapped_degrees(value: float) -> float:
 def main(args=None) -> None:
     rclpy.init(args=args)
     node = RealRobotApiNode()
+    executor = MultiThreadedExecutor(num_threads=4)
     try:
-        rclpy.spin(node)
+        rclpy.spin(node, executor=executor)
     except KeyboardInterrupt:
         pass
     finally:
+        executor.shutdown()
         if node._assembly_bridge is not None:
             node._assembly_bridge.controller.close()
         node.destroy_node()

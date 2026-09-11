@@ -7,6 +7,7 @@ import rclpy
 from std_srvs.srv import Trigger
 from fairino_msgs.srv import RemoteCmdInterface
 from check_step_api import validate_status
+from startup_service_client import (wait_for_startup_services, call_startup_service, call_readonly_service)
 
 
 def prepare(status, command, clock=time.monotonic, sleep=time.sleep):
@@ -58,24 +59,25 @@ def main():
     try:
         status_client = node.create_client(Trigger, '/real/robot/status')
         command_client = node.create_client(RemoteCmdInterface, '/fairino_remote_command_service')
-        def call(client, request):
-            if not client.wait_for_service(timeout_sec=3):
-                raise RuntimeError('gripper startup service unavailable')
-            future = client.call_async(request)
-            rclpy.spin_until_future_complete(node, future, timeout_sec=3)
-            if not future.done() or future.result() is None:
-                raise RuntimeError('gripper startup service timeout; outcome unknown')
-            return future.result()
+        startup_deadline = time.monotonic() + 35
+        wait_for_startup_services((status_client, command_client))
         def status():
-            response = call(status_client, Trigger.Request())
+            response = call_readonly_service(node, status_client, Trigger.Request(), deadline=startup_deadline)
             if not response.success:
                 raise RuntimeError(response.message)
             return json.loads(response.message)
+        def mark_activation_pending():
+            safety['activation_outcome_unknown']=True
+            write(args.safety_record,safety)
         def command(cmd):
-            if cmd == 'ActGripper(1,1)':
-                safety['activation_outcome_unknown']=True
-                write(args.safety_record,safety)
-            return call(command_client, RemoteCmdInterface.Request(cmd_str=cmd)).cmd_res
+            if cmd == 'GetGripperActivateStatus()':
+                return call_readonly_service(node, command_client,
+                    RemoteCmdInterface.Request(cmd_str=cmd), deadline=startup_deadline).cmd_res
+            return call_startup_service(
+                node, command_client, RemoteCmdInterface.Request(cmd_str=cmd),
+                before_send=mark_activation_pending if cmd == 'ActGripper(1,1)' else None,
+                deadline=startup_deadline,
+            ).cmd_res
         result = prepare(status, command)
         safety['activation_outcome_unknown']=False
         write(args.safety_record,safety)

@@ -5,6 +5,7 @@ import time
 import rclpy
 from std_srvs.srv import Trigger
 from rcl_interfaces.srv import GetParameters
+from startup_service_client import wait_for_startup_services, call_readonly_service
 
 
 def validate_status(state):
@@ -22,18 +23,16 @@ def main():
     rclpy.init();node=rclpy.create_node('cycle_step_api_readiness')
     try:
         client=node.create_client(Trigger,'/real/robot/status')
-        if not client.wait_for_service(timeout_sec=5):raise RuntimeError('step API unavailable')
-        future=client.call_async(Trigger.Request())
-        rclpy.spin_until_future_complete(node,future,timeout_sec=5)
-        if not future.done() or not future.result().success:raise RuntimeError('API status timeout/failure')
-        state=json.loads(future.result().message);validate_status(state)
+        deadline=time.monotonic()+35
+        wait_for_startup_services((client,))
+        response=call_readonly_service(node,client,Trigger.Request(),deadline=deadline)
+        if not response.success:raise RuntimeError('API status failure: '+response.message)
+        state=json.loads(response.message);validate_status(state)
         if state.get('continuous_transfer_enabled'):
             capability=node.create_client(GetParameters,'/fr_command_server/get_parameters')
-            if not capability.wait_for_service(timeout_sec=3):raise RuntimeError('continuous driver unavailable')
-            pending=capability.call_async(GetParameters.Request(names=['continuous_movej_revision']))
-            rclpy.spin_until_future_complete(node,pending,timeout_sec=3)
-            if (not pending.done() or pending.result() is None or len(pending.result().values)!=1
-                    or pending.result().values[0].string_value!='per-command-blend-v1'):
+            response=call_readonly_service(node,capability,
+                GetParameters.Request(names=['continuous_movej_revision']),deadline=deadline)
+            if (len(response.values)!=1 or response.values[0].string_value!='per-command-blend-v1'):
                 raise RuntimeError('continuous transfer needs the updated running driver')
             state['continuous_driver_revision']='per-command-blend-v1'
 
