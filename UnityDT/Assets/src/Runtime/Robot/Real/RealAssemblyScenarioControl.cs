@@ -161,14 +161,16 @@ namespace MainUnity.Runtime.Robot.Real
             if (conveyorBoard == null || conveyorDestination == null)
                 return;
 
-            Vector3 offset = conveyorDestination.position - conveyorBoard.position;
-            float remaining = offset.magnitude;
+            float offset = conveyorDestination.position.z - conveyorBoard.position.z;
+            float remaining = Mathf.Abs(offset);
             float distance = Mathf.Min(conveyorSpeed * Time.deltaTime,
                 Mathf.Max(0f, remaining - arrivalHoldDistance));
             if (distance <= 0f)
                 return;
 
-            conveyorBoard.position += offset / remaining * distance;
+            Vector3 position = conveyorBoard.position;
+            position.z += Mathf.Sign(offset) * distance;
+            conveyorBoard.position = position;
             MoveBeltTexture(distance);
         }
 
@@ -613,7 +615,11 @@ namespace MainUnity.Runtime.Robot.Real
         static void SnapBoard(Transform board, Transform destination)
         {
             if (destination != null)
-                board.position = destination.position;
+            {
+                Vector3 position = board.position;
+                position.z = destination.position.z;
+                board.position = position;
+            }
         }
 
         void RefreshConveyorReferences() =>

@@ -236,6 +236,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Robot.Real.RealAssemblyScenarioControl
   itemManager: {fileID: 0}
+  beltPlane: {fileID: 0}
+  assemblyStopPoint: {fileID: 0}
+  inspectionStopPoint: {fileID: 0}
+  conveyorSpeed: 0.11
+  arrivalHoldDistance: 0.01
 --- !u!114 &14890713
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -914,7 +919,7 @@ Transform:
   m_GameObject: {fileID: 108201411}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.5, y: 0.1218, z: 0.62}
+  m_LocalPosition: {x: 0.5, y: 0.1218, z: 0.5319}
   m_LocalScale: {x: 0.19892, y: 0.1, z: 0.1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7173,7 +7178,7 @@ Transform:
   m_GameObject: {fileID: 893280631}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.5, y: 0.1218, z: 0.129}
+  m_LocalPosition: {x: 0.5, y: 0.1218, z: -0.0208}
   m_LocalScale: {x: 0.19892, y: 0.1, z: 0.1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -9621,7 +9626,7 @@ Transform:
   m_GameObject: {fileID: 1240212560}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.7071068, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 0.4972, y: 0.09826766, z: -0.242}
+  m_LocalPosition: {x: 0.526, y: 0.09826766, z: -0.275}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
