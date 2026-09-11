@@ -73,6 +73,7 @@ def check_installation():
         'vision_assembly/scripts/cycle_camera_stage.py',
         'vision_assembly/scripts/tray_capture_retry.py',
         'vision_assembly/scripts/capture_vrm_refinement.py',
+        'vision_assembly/scripts/vrm_refinement_window.py',
         'vision_assembly/scripts/vrm_edge_refinement.py',
         'vision_assembly/scripts/pm_mask_selection.py',
         'vision_assembly/scripts/segmentation_scale_retry.py',
