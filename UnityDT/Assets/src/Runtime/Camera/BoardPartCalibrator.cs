@@ -475,11 +475,6 @@ namespace MainUnity.Runtime.Camera
                 reason = "기판 표시 소유자가 연결되지 않았습니다.";
                 return false;
             }
-            if (itemManager.CurrentBoard != null)
-            {
-                reason = "실행 중인 Unit PCB는 초기화할 수 없습니다.";
-                return false;
-            }
             reason = null;
             return true;
         }

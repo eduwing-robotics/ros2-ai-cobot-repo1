@@ -1279,11 +1279,6 @@ namespace MainUnity.Runtime.Camera
                 reason = "Play Mode에서만 초기화할 수 있습니다.";
                 return false;
             }
-            if (attachments.Count > 0)
-            {
-                reason = "로봇 소유 부품이 있어 calibration 표시를 초기화할 수 없습니다.";
-                return false;
-            }
             reason = null;
             return true;
         }
@@ -1297,6 +1292,9 @@ namespace MainUnity.Runtime.Camera
                     instance.SetActive(false);
                     Destroy(instance);
                 }
+            // 운영자가 실물과 표시의 불일치를 확인하고 초기화를 선택했으므로
+            // callback에서 남은 로봇 소유 기록도 같은 경계에서 폐기한다.
+            attachments.Clear();
             instancesById.Clear();
             instanceRegistrations.Clear();
             instanceTypes.Clear();
