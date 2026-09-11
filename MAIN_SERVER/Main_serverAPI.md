@@ -93,7 +93,7 @@ Mock에서 필요한 runtime 좌표는 이 HTTP API가 아니라 [Assembly Seque
 
 ## Job 취소
 
-`DELETE /api/v1/jobs/{job_id}`는 아직 claim되지 않은 `PENDING` Job만 취소합니다. 이미 Sequencer가 claim한 Job은 `409 job_not_cancellable`을 반환합니다.
+`DELETE /api/v1/jobs/{job_id}`는 아직 claim되지 않은 `PENDING` Job만 취소합니다. 이는 요청 계층의 대기 요청 철회이며 Sequencer나 설비를 호출하지 않습니다. DB의 제한된 원자 연산이 Sequencer claim과의 경합에서 하나만 성공하게 하며, 이미 claim한 Job은 `409 job_not_cancellable`을 반환합니다.
 
 ## 오류 코드
 

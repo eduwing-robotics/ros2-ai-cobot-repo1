@@ -25,6 +25,12 @@ BEGIN
        OR has_any_column_privilege('production_writer', 'production.jobs', 'INSERT') THEN
         RAISE EXCEPTION 'Job submission and execution write privileges must remain separate';
     END IF;
+
+    IF NOT has_function_privilege(
+        'job_submitter', 'production.cancel_pending_job(uuid)', 'EXECUTE'
+    ) THEN
+        RAISE EXCEPTION 'job_submitter must invoke the pre-claim cancellation boundary';
+    END IF;
 END
 $$;
 

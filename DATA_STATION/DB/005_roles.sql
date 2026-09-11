@@ -51,12 +51,14 @@ REVOKE ALL ON ALL SEQUENCES IN SCHEMA production
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA production
     FROM job_submitter, production_writer, datastation_reader;
 
--- MainServer may submit and read Jobs, but cannot transition them.
+-- MainServer may submit/read Jobs and invoke the single pre-claim withdrawal boundary.
 GRANT USAGE ON SCHEMA production TO job_submitter;
 -- Both application roles can read all production facts; writes remain separated.
 GRANT SELECT ON ALL TABLES IN SCHEMA production TO job_submitter;
 GRANT INSERT (job_id, product_id, requested_quantity, recipe_version, requested_by)
     ON production.jobs TO job_submitter;
+GRANT EXECUTE ON FUNCTION production.cancel_pending_job(uuid)
+    TO job_submitter;
 GRANT UPDATE (
     delivery_status,
     attempt_count,

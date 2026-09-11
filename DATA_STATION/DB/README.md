@@ -44,7 +44,7 @@ Job은 생산 요청이고 Unit은 실제 생산 시도입니다. 이 둘을 분
 
 ## 쓰기 권한
 
-MainServer는 새 Job 등록과 생산 조회를 담당합니다. Sequencer는 Job·Unit 실행 상태, 검사와 재고를 기록합니다. 조회 전용 사용자는 production 사실을 변경할 수 없습니다.
+MainServer는 새 Job 등록, 생산 조회와 미claim `PENDING` 요청 철회를 담당합니다. 철회는 일반 테이블 UPDATE 권한 없이 DB의 제한된 원자 연산으로만 수행합니다. Sequencer는 claim 이후 Job·Unit 실행 상태, 검사와 재고를 기록합니다. 조회 전용 사용자는 production 사실을 변경할 수 없습니다.
 
 Sequencer는 확정 불량과 자료가 준비된 품질 문서 전송 대기를 같은 transaction에 기록합니다. 정상·미확정 슬롯 행에는 전송 대기를 만들지 않습니다. MainServer는 대기 건의 발송 상태만 갱신하며 전송 실패로 확정된 검사 결과를 변경하지 않습니다.
 
