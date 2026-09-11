@@ -620,7 +620,7 @@ namespace MainUnity.UI
             try
             {
                 await uiMaster.Scenario.CancelAsync();
-                uiMaster.RecordEvent("작업", "작업 취소 완료 · " + ShortJobId(jobId), false);
+                uiMaster.RecordEvent("작업", "생산 기록 취소 완료 · 장비 상태 별도 · " + ShortJobId(jobId), false);
             }
             catch (Exception error)
             {

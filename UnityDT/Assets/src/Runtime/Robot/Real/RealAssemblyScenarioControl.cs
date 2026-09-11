@@ -273,6 +273,9 @@ namespace MainUnity.Runtime.Robot.Real
 
         public string GetControlBlockReason(string action)
         {
+            if (action == "cancel")
+                return latest != null && latest.available && latest.active && !string.IsNullOrEmpty(latest.job_id)
+                    ? "" : "활성 작업이 없습니다.";
             if (controlPending) return "제어 요청의 실제 결과를 확인 중입니다.";
             if (action == "force_cancel")
                 return latest != null && latest.force_cancel_available && Time.realtimeSinceStartupAsDouble - controlsReceivedAt <= 3d
@@ -291,7 +294,7 @@ namespace MainUnity.Runtime.Robot.Real
 
         public Task PauseAsync() => SendControlAsync("pause");
         public Task ResumeAsync() => SendControlAsync("resume");
-        public Task CancelAsync() => SendControlAsync("cancel");
+        public Task CancelAsync() => CancelViaMainServerAsync();
 
         public async Task ForceCancelAsync(string jobId)
         {
@@ -790,6 +793,60 @@ namespace MainUnity.Runtime.Robot.Real
             RefreshConveyorReferences();
             if (beltRenderer == null)
                 throw new InvalidOperationException("Real conveyor Belt Plane requires a Renderer.");
+        }
+
+        async Task CancelViaMainServerAsync()
+        {
+            RequireEnabled(generation);
+            AssemblySnapshot snapshot = latest;
+            if (snapshot == null || !snapshot.available || !snapshot.active || string.IsNullOrEmpty(snapshot.job_id))
+                throw new InvalidOperationException("일치하는 실행 중 작업이 없습니다.");
+
+            string jobId = snapshot.job_id;
+            int currentGeneration = generation;
+            controlPending = true;
+            controlWaitLabel = "생산 기록 취소 및 DB 반영 확인 중 · 장비 상태 별도";
+            try
+            {
+                using var request = new UnityWebRequest(MainServerBaseUrl + "/api/v1/assemblies", UnityWebRequest.kHttpVerbPOST);
+                request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(
+                    JsonUtility.ToJson(new ControlRequest { command = "cancel", job_id = jobId })));
+                request.downloadHandler = new DownloadHandlerBuffer();
+                request.SetRequestHeader("Content-Type", "application/json");
+                request.SetRequestHeader("X-Runtime-Mode", "real");
+                request.timeout = 5;
+                UnityWebRequestAsyncOperation operation = request.SendWebRequest();
+                while (!operation.isDone)
+                {
+                    RequireEnabled(currentGeneration);
+                    await Task.Yield();
+                }
+
+                ApiResponse response = string.IsNullOrWhiteSpace(request.downloadHandler.text)
+                    ? null : JsonUtility.FromJson<ApiResponse>(request.downloadHandler.text);
+                if (request.result != UnityWebRequest.Result.Success)
+                    throw Failure(response?.error?.code, response?.error?.message ??
+                        $"MainServer cancellation request failed ({request.responseCode}).");
+                if (response?.data == null || !response.data.accepted || response.data.job_id != jobId)
+                    throw Failure(response?.data?.error_code, response?.data?.message ?? "MainServer did not confirm cancellation.");
+
+                double deadline = Time.realtimeSinceStartupAsDouble + 10d;
+                while (Time.realtimeSinceStartupAsDouble < deadline)
+                {
+                    snapshot = await ReadStatusAsync(currentGeneration);
+                    ApplySnapshot(snapshot);
+                    if (!snapshot.active && snapshot.error_code == "EXECUTION_CANCELLED" &&
+                        snapshot.db_sync_state == "SYNCED")
+                        return;
+                    await Task.Delay(100);
+                }
+                throw new TimeoutException("생산 기록 취소의 DB 반영을 확인하지 못했습니다.");
+            }
+            finally
+            {
+                controlPending = false;
+                controlWaitLabel = null;
+            }
         }
     }
 }

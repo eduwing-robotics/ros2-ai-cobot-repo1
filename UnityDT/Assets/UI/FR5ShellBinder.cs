@@ -270,7 +270,7 @@ namespace MainUnity.UI
             string cancelReason = uiMaster?.Scenario?.GetControlBlockReason("cancel") ?? "시나리오 연결 없음";
             cancelButton?.SetEnabled(!stopRequestInFlight && string.IsNullOrEmpty(cancelReason));
             if (cancelButton != null) cancelButton.tooltip = string.IsNullOrEmpty(cancelReason)
-                ? "작업 취소를 요청하고 실제 결과를 확인합니다." : cancelReason;
+                ? "생산 기록을 취소합니다. 장비 정지·복구는 별도로 관리합니다." : cancelReason;
             if (stopAllButton != null)
             {
                 stopAllButton.text = stopRequestInFlight ? "처리 중…" : paused ? "▶ 재개" : "Ⅱ 일시정지";

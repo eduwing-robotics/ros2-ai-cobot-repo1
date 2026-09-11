@@ -32,6 +32,12 @@ class FakeGateway:
             raise self.error
         return self.snapshot
 
+    def command(self, command):
+        self.calls.append(command)
+        if self.error is not None:
+            raise self.error
+        return self.snapshot
+
 
 class MainServerApiTest(unittest.TestCase):
     @classmethod
@@ -259,6 +265,17 @@ class MainServerApiTest(unittest.TestCase):
             status, result = self.request("/api/v1/assemblies/current")
             self.assertEqual((status, result["data"]["state"]), (200, "STARTED"))
             self.assertEqual(gateway.calls[-1], '{"command":"status"}')
+
+    def test_active_cancel_is_forwarded_to_sequencer(self):
+        job_id = "12345678-1234-5678-1234-567812345678"
+        command = {"command": "cancel", "job_id": job_id}
+        gateway = FakeGateway(snapshot={"runtime_mode": "mock", "accepted": True, "job_id": job_id,
+                                        "error_code": "", "message": ""})
+        with patch.object(server, "assembly_gateway", gateway):
+            status, result = self.request("/api/v1/assemblies", "POST",
+                                          json.dumps(command).encode("utf-8"))
+        self.assertEqual((status, result["data"]["accepted"]), (202, True))
+        self.assertEqual(gateway.calls, [command])
 
     def test_execution_duplicate_and_unavailable(self):
         body = json.dumps({

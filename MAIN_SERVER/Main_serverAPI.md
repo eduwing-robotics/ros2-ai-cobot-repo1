@@ -151,6 +151,6 @@ Unity 작업 등록 화면은 요청자 입력을 필수로 받습니다. Unit�
 
 `GET /api/v1/jobs?status=PAUSED`는 검사 불량으로 다음 생산이 차단된 Job을 조회합니다.
 해당 상태는 Sequencer가 소유하며 HTTP Job 등록이나 대기 Job 삭제 API로 재개하지 않습니다.
-기존 Sequencer resume/cancel 제어를 사용합니다.
+활성 Job 취소는 `POST /api/v1/assemblies`의 `{"command":"cancel","job_id":"UUID"}`로 요청하며 MainServer가 Sequencer에 전달합니다. Sequencer의 DB 취소 확정은 장비 정지·복구 상태와 분리됩니다.
 
 Unit 조회의 `defects[]`는 해당 불량의 `delivery_status`와 `sent_at`을 포함합니다. 발송 기록이 없으면 null이며, 성공으로 추정하지 않습니다.

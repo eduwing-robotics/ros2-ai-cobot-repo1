@@ -329,6 +329,14 @@ class ApiHandler(BaseHTTPRequestHandler):
     def assembly_start(self, values, parameters):
         self._no_query(parameters)
         command = self._request_json()
+        if command.get("command") == "cancel":
+            if set(command) != {"command", "job_id"}:
+                raise ValidationError("cancel requires only command and job_id")
+            command["job_id"] = uuid_value(command["job_id"], "job_id")
+            result = assembly_gateway.command(command)
+            if result.get("accepted") is not True:
+                self._raise_rejection(result)
+            return result
         self._validate_start_command(command)
         try:
             return queries.create_job(command)

@@ -811,7 +811,8 @@ class RealWorkflowTest(unittest.IsolatedAsyncioTestCase):
         db = Mock(sync_state="SYNCED")
         db.get_job.return_value = dict(completed_quantity=1 if reached else 0, requested_quantity=1)
         backend = SimpleNamespace(move_conveyor=AsyncMock(), execute_assembly=AsyncMock(),
-                                  inspect_unit=AsyncMock(return_value=dict(result=decision, defects=None)))
+                                  inspect_unit=AsyncMock(return_value=dict(result=decision, defects=None)),
+                                  release_cancelled_execution=Mock())
         node = SimpleNamespace(runtime_mode="real", active=active, backend=backend, db_writer=db,
             terminal_snapshot=None, pending_requests={}, publish=Mock(), get_logger=lambda: Mock())
         for name in ("real_progress", "finish_active_unit", "fail_active", "fail_job", "finalize_cancel", "restore_quality_hold"):
@@ -821,6 +822,23 @@ class RealWorkflowTest(unittest.IsolatedAsyncioTestCase):
                           completed_slots=slots, current_stage="complete"))
         backend.execute_assembly.side_effect = assembly
         return node, active
+
+    async def test_cancel_immediately_finalizes_without_equipment_confirmation(self):
+        node, active = self.sequencer()
+        active["backend_started"] = True
+        node.recipe_version = "assembly-r1"
+        node.set_response = AssemblySequencer.set_response
+        request = SimpleNamespace(cmd_str="real\n" + json.dumps(
+            {"command": "cancel", "job_id": JOB_ID}))
+
+        with patch.dict(os.environ, {"ASSEMBLY_SEQUENCER_MODE": "real"}):
+            response = await AssemblySequencer.on_external_request(node, request, SimpleNamespace())
+        result = json.loads(response.cmd_res)
+
+        self.assertTrue(result["accepted"])
+        node.db_writer.finish.assert_called_once_with(JOB_ID, "CANCELLED")
+        node.backend.release_cancelled_execution.assert_called_once_with()
+        self.assertIsNone(node.active)
 
     async def test_force_cancel_is_rejected_and_keeps_active_job_running(self):
         node, active = self.sequencer()

@@ -23,6 +23,13 @@ class AssemblyGateway:
         """Return the current assembly snapshot."""
         return self._call('{"command":"status"}')
 
+    def command(self, command):
+        """Forward a validated production command to the Sequencer."""
+        mode = os.environ.get("MAIN_SERVER_MODE")
+        if mode not in {"mock", "real"}:
+            raise GatewayUnavailable("MAIN_SERVER_MODE is invalid")
+        return self._call(mode + "\n" + json.dumps(command, separators=(",", ":")))
+
     def _call(self, command_json):
         """Forward one original JSON command and return its JSON object response."""
         with self._lock:

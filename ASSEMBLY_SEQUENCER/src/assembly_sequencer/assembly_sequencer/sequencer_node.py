@@ -107,6 +107,7 @@ class AssemblySequencer(Node):
     @staticmethod
     def set_response(response, accepted, job_id="", error_code="", message=""):
         response.cmd_res = json.dumps({
+            "runtime_mode": os.environ.get("ASSEMBLY_SEQUENCER_MODE"),
             "accepted": accepted,
             "job_id": job_id,
             "error_code": error_code,
@@ -193,6 +194,22 @@ class AssemblySequencer(Node):
 
         if command_type == "conveyor_failed":
             return self.conveyor_failed(command, response)
+
+        if command_type == "cancel":
+            job_id = command["job_id"]
+            terminal = self.terminal_snapshot or {}
+            if self.active is None and terminal.get("job_id") == job_id and terminal.get("error_code") == "EXECUTION_CANCELLED" and terminal.get("db_sync_state") == "SYNCED":
+                return self.set_response(response, True, job_id)
+            if self.active is None or self.active["job_id"] != job_id:
+                return self.set_response(response, False, job_id, "NOT_ACTIVE", "matching assembly is not active")
+            active = self.active
+            backend_started = active.get("backend_started")
+            self.finalize_cancel(active, "생산 기록 취소 완료 · 장비 상태 별도 관리")
+            if self.active is None and backend_started:
+                self.backend.release_cancelled_execution()
+            return self.set_response(response, self.active is None, job_id,
+                                     "" if self.active is None else "DB_ERROR",
+                                     "" if self.active is None else self.active.get("message", "cancel DB commit failed"))
 
         if command_type == "force_cancel":
             return self.set_response(

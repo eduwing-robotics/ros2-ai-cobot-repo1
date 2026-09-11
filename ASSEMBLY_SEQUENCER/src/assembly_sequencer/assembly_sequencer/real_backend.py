@@ -354,11 +354,8 @@ class RealBackend:
         return request
 
     def release_cancelled_execution(self):
+        # Production cancellation is owned by the Sequencer; equipment recovery is external.
         with self._lock:
-            data = self._control_status or {}
-            if (data.get("execution_id") != self._execution_id or data.get("status") != "cancelled" or
-                    data.get("stop_verified") is not True or data.get("recovery_required") is not False):
-                raise RuntimeError("Confirmed cancellation is required before releasing execution")
             self._execution_id = None
             self._pending_control = None
             self._execution_detached = False
