@@ -25,8 +25,8 @@ namespace MainUnity.UI
 
         FR5ShellBinder shell;
         Label summary, reasons, mode, domain, robot, gripper, cameraStatus, conveyor, inspection, tray, board, recipe, product, slots;
-        Label jobId, jobNote;
-        Button refresh;
+        Label jobId, jobNote, resetResult;
+        Button refresh, resetCalibration;
         Coroutine observations;
         UnityWebRequest jobRequest;
         string loadedJobId;
@@ -46,6 +46,7 @@ namespace MainUnity.UI
                 jobRequest.Dispose();
                 jobRequest = null;
             }
+            if (resetCalibration != null) resetCalibration.clicked -= ClearCalibrationDisplay;
             if (refresh != null) refresh.clicked -= RefreshJob;
             loadedJob = null;
             loadedJobId = null;
@@ -74,14 +75,18 @@ namespace MainUnity.UI
             product = root.Q<Label>("setup-product");
             slots = root.Q<Label>("setup-slots");
             jobId = root.Q<Label>("setup-job");
+            resetResult = root.Q<Label>("setup-reset-result");
             jobNote = root.Q<Label>("setup-job-note");
             root.Query<Label>().ForEach(label => label.enableRichText = false);
             refresh = root.Q<Button>("setup-refresh");
+            resetCalibration = root.Q<Button>("setup-reset-calibration");
+            if (resetCalibration != null) resetCalibration.clicked += ClearCalibrationDisplay;
             if (refresh != null) refresh.clicked += RefreshJob;
             nextJobQuery = 0d;
             var interval = new WaitForSecondsRealtime(0.25f);
             while (true)
             {
+                RefreshResetAvailability();
                 RefreshObservations();
                 RefreshJobQuery();
                 yield return interval;
@@ -89,6 +94,61 @@ namespace MainUnity.UI
         }
 
         void RefreshJob() => nextJobQuery = 0d;
+
+        void RefreshResetAvailability()
+        {
+            if (resetCalibration == null) return;
+            if (uiMaster == null || uiMaster.IsSimulated)
+            {
+                resetCalibration.SetEnabled(false);
+                resetCalibration.tooltip = "Real 모드의 calibration 표시만 초기화할 수 있습니다.";
+                return;
+            }
+            var traySource = uiMaster.Calibration;
+            var boardSource = uiMaster.BoardCalibration;
+            if (traySource == null || boardSource == null)
+            {
+                resetCalibration.SetEnabled(false);
+                resetCalibration.tooltip = "PCB 또는 부품 calibration 소유자가 연결되지 않았습니다.";
+                return;
+            }
+            bool trayReady = traySource.CanClearCalibrationDisplay(out string trayReason);
+            bool boardReady = boardSource.CanClearCalibrationDisplay(out string boardReason);
+            resetCalibration.SetEnabled(trayReady && boardReady);
+            resetCalibration.tooltip = !trayReady ? trayReason : !boardReady ? boardReason :
+                "관측용 PCB와 부품 표시 및 저장된 calibration 표시 캐시를 지웁니다.";
+        }
+
+
+        void ClearCalibrationDisplay()
+        {
+            var traySource = uiMaster != null ? uiMaster.Calibration : null;
+            var boardSource = uiMaster != null ? uiMaster.BoardCalibration : null;
+            if (traySource == null || boardSource == null)
+            {
+                ShowResetBlocked("calibration 소유자가 연결되지 않았습니다.");
+                return;
+            }
+            if (!traySource.CanClearCalibrationDisplay(out string reason) ||
+                !boardSource.CanClearCalibrationDisplay(out reason))
+            {
+                ShowResetBlocked(reason);
+                return;
+            }
+
+            bool storageCleared = traySource.ClearCalibrationDisplay(out string storageError);
+            boardSource.ClearCalibrationDisplay();
+            string result = storageCleared
+                ? "초기화 완료 · 새 calibration ID 수신 전까지 표시하지 않습니다."
+                : storageError;
+            if (resetResult != null) resetResult.text = result;
+            uiMaster.RecordEvent("Calibration", result, !storageCleared);
+        }
+
+        void ShowResetBlocked(string reason)
+        {
+            if (resetResult != null) resetResult.text = "초기화 차단 · " + reason;
+        }
 
         void RefreshObservations()
         {

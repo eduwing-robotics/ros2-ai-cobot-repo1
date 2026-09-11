@@ -1088,6 +1088,7 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
 .setup-detail { color: var(--c-ink); font-size: 16px; white-space: normal; }
 .setup-detail.bad { color: var(--c-bad); }
 .setup-footnote { color: var(--c-ink-3); font-size: 13px; white-space: normal; margin-top: 14px; }
+.setup-reset-calibration { width: 190px; height: 40px; margin-left: 16px; }
 
 
 /* MANUAL: 트윈 시야를 왼쪽에 확보하고 모든 조작·관측을 오른쪽 한 열에 모은다. */

@@ -147,6 +147,7 @@ namespace MainUnity.Runtime.Camera
         string publisherId;
         long lastSequence = -1;
         long lastFrame;
+        string clearedCalibrationId;
         bool waitingForNewFrame = true;
 
         void Start()
@@ -306,6 +307,17 @@ namespace MainUnity.Runtime.Camera
                 Vector3 modelPosition = worldPosition + worldRotation * modelPositionOffsetMeters;
                 if (!Finite(modelPosition)) throw new FormatException("Non-finite board position.");
                 string calibration = (string)state["calibration_id"];
+
+                if (!string.IsNullOrEmpty(clearedCalibrationId))
+                {
+                    if (clearedCalibrationId == calibration)
+                    {
+                        lastFrame = frame;
+                        SetProgress(ProgressState.Waiting, "초기화됨 · 새 기판 calibration 대기");
+                        return;
+                    }
+                    clearedCalibrationId = null;
+                }
                 // 전부 검증한 다음 반영한다. 프리팹 스케일·계층은 유지하고 슬롯은 보정 완료된
                 // 표면 중심의 월드 자세로 갱신한다. 모델 축/원점 보정이나 잔차를 슬롯에 다시 더하지 않는다.
                 if (currentBoard == null)
@@ -410,6 +422,44 @@ namespace MainUnity.Runtime.Camera
             Progress = state;
             ProgressDetail = detail;
             ProgressChanged?.Invoke();
+        }
+
+
+        internal bool CanClearCalibrationDisplay(out string reason)
+        {
+            if (!Application.isPlaying)
+            {
+                reason = "Play Mode에서만 초기화할 수 있습니다.";
+                return false;
+            }
+            if (itemManager == null)
+            {
+                reason = "기판 표시 소유자가 연결되지 않았습니다.";
+                return false;
+            }
+            if (itemManager.CurrentBoard != null)
+            {
+                reason = "실행 중인 Unit PCB는 초기화할 수 없습니다.";
+                return false;
+            }
+            reason = null;
+            return true;
+        }
+
+        internal void ClearCalibrationDisplay()
+        {
+            clearedCalibrationId = CalibrationId;
+            itemManager.ReleaseObservationBoard();
+            currentBoard = null;
+            DisplayId = null;
+            restoredDisplay = false;
+            slots.Clear();
+            targetSlotPoses = null;
+            displayedSlotPoses.Clear();
+            LastAppliedTime = -1d;
+            CalibrationId = null;
+            waitingForNewFrame = true;
+            SetProgress(ProgressState.Waiting, "초기화됨 · 새 기판 calibration 대기");
         }
     }
 }

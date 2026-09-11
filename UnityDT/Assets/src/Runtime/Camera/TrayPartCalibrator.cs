@@ -186,6 +186,7 @@ namespace MainUnity.Runtime.Camera
 
         List<PartPose> latestPoses;
         string latestRegistration;
+        string clearedRegistration;
         string latestObservation;
         // Keep complete, validated observations until Pick selects one. The bounds
         // limit memory during long idle sessions; an evicted observation fails closed.
@@ -850,6 +851,18 @@ namespace MainUnity.Runtime.Camera
             latestPoses = poses;
             latestRegistration = state.tray_registration_id;
             latestObservation = state.source_observation_id;
+
+            if (!string.IsNullOrEmpty(clearedRegistration))
+            {
+                if (clearedRegistration == state.tray_registration_id)
+                {
+                    lastSequence = state.sequence;
+                    hasSequence = true;
+                    SetProgress(ProgressState.Waiting, "초기화됨 · 새 트레이 calibration 대기");
+                    return;
+                }
+                clearedRegistration = null;
+            }
             latestCandidateTime = Time.realtimeSinceStartupAsDouble;
 
             // Never replace a display until the robot confirms that no restored or live part is owned.
@@ -1256,6 +1269,72 @@ namespace MainUnity.Runtime.Camera
                 if (observations.Count < 16384 &&
                     !pose.Id.StartsWith("display-only:", StringComparison.Ordinal))
                     observations.Add((registration, observation, pose.Id));
+        }
+
+
+        internal bool CanClearCalibrationDisplay(out string reason)
+        {
+            if (!Application.isPlaying)
+            {
+                reason = "Play Mode에서만 초기화할 수 있습니다.";
+                return false;
+            }
+            if (attachments.Count > 0)
+            {
+                reason = "로봇 소유 부품이 있어 calibration 표시를 초기화할 수 없습니다.";
+                return false;
+            }
+            reason = null;
+            return true;
+        }
+
+        internal bool ClearCalibrationDisplay(out string error)
+        {
+            clearedRegistration = !string.IsNullOrEmpty(latestRegistration) ? latestRegistration : registration;
+            foreach (GameObject instance in instancesById.Values)
+                if (instance != null)
+                {
+                    instance.SetActive(false);
+                    Destroy(instance);
+                }
+            instancesById.Clear();
+            instanceRegistrations.Clear();
+            instanceTypes.Clear();
+            observations.Clear();
+            candidates.Clear();
+            candidateOrder.Clear();
+            candidatePartCount = 0;
+            latestPoses = null;
+            latestRegistration = null;
+            latestObservation = null;
+            latestCandidateTime = -1d;
+            registration = null;
+            pendingRegistration = null;
+            pendingRegistrationFrames = 0;
+            hasSequence = false;
+            lastSequence = -1;
+            hasUnverifiedRestoredLayout = false;
+            needsStatusReconciliation = false;
+            savedBoard = null;
+            layoutSavePending = false;
+            LastAppliedTime = -1d;
+            StorageDetail = "";
+            try
+            {
+                if (!string.IsNullOrEmpty(storagePath))
+                    foreach (string path in new[] { storagePath, storagePath + ".bak", storagePath + ".tmp" })
+                        if (File.Exists(path)) File.Delete(path);
+            }
+            catch (Exception exception) when (exception is IOException || exception is UnauthorizedAccessException || exception is ArgumentException)
+            {
+                error = "표시는 초기화했지만 저장 캐시 삭제 실패 · " + exception.Message;
+                StorageDetail = error;
+                SetProgress(ProgressState.Rejected, error);
+                return false;
+            }
+            error = null;
+            SetProgress(ProgressState.Waiting, "초기화됨 · 새 트레이 calibration 대기");
+            return true;
         }
     }
 }
