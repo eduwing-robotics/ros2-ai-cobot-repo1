@@ -840,6 +840,25 @@ class RealWorkflowTest(unittest.IsolatedAsyncioTestCase):
         node.backend.release_cancelled_execution.assert_called_once_with()
         self.assertIsNone(node.active)
 
+    async def test_cancel_finalizes_running_job_recovered_without_active_unit(self):
+        node, _ = self.sequencer()
+        node.active = None
+        node.recipe_version = "assembly-r1"
+        node.set_response = AssemblySequencer.set_response
+        node.db_writer.get_job.return_value = dict(job_status="RUNNING")
+        request = SimpleNamespace(cmd_str="real\n" + json.dumps(
+            {"command": "cancel", "job_id": JOB_ID}))
+
+        response = await AssemblySequencer.on_external_request(
+            node, request, SimpleNamespace())
+        result = json.loads(response.cmd_res)
+
+        self.assertTrue(result["accepted"])
+        node.db_writer.finish.assert_called_once_with(JOB_ID, "CANCELLED")
+        node.db_writer.flush.assert_called_once()
+        self.assertEqual(node.terminal_snapshot["error_code"], "EXECUTION_CANCELLED")
+        node.backend.release_cancelled_execution.assert_not_called()
+
     async def test_force_cancel_is_rejected_and_keeps_active_job_running(self):
         node, active = self.sequencer()
         node.recipe_version = "assembly-r1"

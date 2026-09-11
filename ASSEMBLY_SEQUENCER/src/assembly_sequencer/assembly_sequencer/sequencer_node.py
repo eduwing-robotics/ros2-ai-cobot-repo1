@@ -200,7 +200,24 @@ class AssemblySequencer(Node):
             terminal = self.terminal_snapshot or {}
             if self.active is None and terminal.get("job_id") == job_id and terminal.get("error_code") == "EXECUTION_CANCELLED" and terminal.get("db_sync_state") == "SYNCED":
                 return self.set_response(response, True, job_id)
-            if self.active is None or self.active["job_id"] != job_id:
+            if self.active is None:
+                try:
+                    job = self.db_writer.get_job(job_id)
+                    if job.get("job_status") not in {"RUNNING", "PAUSED"}:
+                        return self.set_response(response, False, job_id, "NOT_ACTIVE", "matching assembly is not active")
+                    self.db_writer.finish(job_id, "CANCELLED")
+                    self.db_writer.flush(DB_SYNC_TIMEOUT_SECONDS)
+                except Exception as error:
+                    return self.set_response(response, False, job_id, "DB_ERROR", str(error))
+                self.terminal_snapshot = {
+                    "job_id": job_id,
+                    "state": "FAILED",
+                    "error_code": "EXECUTION_CANCELLED",
+                    "message": "생산 기록 취소 완료 · 장비 상태 별도 관리",
+                    "db_sync_state": self.db_writer.sync_state,
+                }
+                return self.set_response(response, True, job_id)
+            if self.active["job_id"] != job_id:
                 return self.set_response(response, False, job_id, "NOT_ACTIVE", "matching assembly is not active")
             active = self.active
             backend_started = active.get("backend_started")
