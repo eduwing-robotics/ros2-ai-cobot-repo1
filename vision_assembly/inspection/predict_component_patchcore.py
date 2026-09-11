@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 from datetime import datetime
 import json
+import os
 from pathlib import Path
 
 import cv2
@@ -33,6 +34,26 @@ DEFAULT_OUTPUT = PROJECT_DIR / "runtime/inspection/patchcore/component_live_v3"
 DIR_TYPES = {directory: component_type for component_type, directory in TYPE_DIRS.items()}
 
 
+def resolve_accelerator(requested: str | None = None) -> str:
+    """Resolve the PatchCore execution backend.
+
+    ``auto`` keeps the GPU path on the inspection host while allowing a
+    development laptop without CUDA to run the same inference code on CPU.
+    Device selection never changes the threshold or authority policy.
+    """
+    value = requested
+    if value is None:
+        value = os.environ.get("KSMC_PATCHCORE_ACCELERATOR", "auto")
+    value = {"cuda": "gpu", "none": "cpu"}.get(str(value).strip().lower(), str(value).strip().lower())
+    if value not in {"auto", "cpu", "gpu"}:
+        raise ValueError("PatchCore accelerator must be one of: auto, cpu, gpu")
+    if value == "auto":
+        return "gpu" if torch.cuda.is_available() else "cpu"
+    if value == "gpu" and not torch.cuda.is_available():
+        raise RuntimeError("CUDA is unavailable; requested PatchCore GPU execution")
+    return value
+
+
 def _checkpoint(model_root: Path, component: str) -> Path:
     candidates = sorted(
         (model_root / component).glob(
@@ -44,9 +65,18 @@ def _checkpoint(model_root: Path, component: str) -> Path:
     return candidates[-1]
 
 
-def _predict_outputs(component: str, crop_dir: Path, checkpoint: Path, output: Path):
+def _predict_outputs(
+    component: str,
+    crop_dir: Path,
+    checkpoint: Path,
+    output: Path,
+    *,
+    accelerator: str | None = None,
+):
     from anomalib.engine import Engine
     from anomalib.models import Patchcore
+
+    resolved_accelerator = resolve_accelerator(accelerator)
 
     width, height = OUTPUT_SIZE[DIR_TYPES[component]]
     model = Patchcore(
@@ -61,10 +91,21 @@ def _predict_outputs(component: str, crop_dir: Path, checkpoint: Path, output: P
         pre_processor=Patchcore.configure_pre_processor(image_size=(height, width)),
         visualizer=False,
     )
-    engine = Engine(
-        accelerator="gpu", devices=1, default_root_dir=output,
-        logger=False, enable_model_summary=False,
+    engine_kwargs = dict(
+        accelerator=resolved_accelerator,
+        devices=1,
+        default_root_dir=output,
+        logger=False,
+        enable_model_summary=False,
     )
+    if resolved_accelerator == "cpu":
+        # mpi4py is installed for unrelated tools in the development venv.
+        # Lightning's auto detector imports it even for one local process;
+        # explicitly selecting its local environment avoids that side effect.
+        from lightning.fabric.plugins.environments.lightning import LightningEnvironment
+
+        engine_kwargs["plugins"] = [LightningEnvironment()]
+    engine = Engine(**engine_kwargs)
     predictions = engine.predict(
         model=model, ckpt_path=checkpoint, data_path=crop_dir,
         return_predictions=True,
@@ -175,9 +216,12 @@ def main() -> None:
         "--normal-calibration", type=Path, default=None,
         help="Held-out normal calibration JSON; defaults to MODELS/normal_calibration.json",
     )
+    parser.add_argument(
+        "--accelerator", choices=("auto", "cpu", "gpu"), default="auto",
+        help="PatchCore execution backend; auto selects GPU when available and otherwise CPU",
+    )
     args = parser.parse_args()
-    if not torch.cuda.is_available():
-        raise RuntimeError("CUDA is unavailable; component PatchCore requires the GPU")
+    resolved_accelerator = resolve_accelerator(args.accelerator)
     torch.set_float32_matmul_precision("high")
 
     config = _load_json(args.config.expanduser().resolve())
@@ -239,6 +283,7 @@ def main() -> None:
         predictions = _predict_outputs(
             component, crop_root / component,
             _checkpoint(args.models.expanduser().resolve(), component), run_dir / component,
+            accelerator=resolved_accelerator,
         )
         for placement in placements:
             slot_id = str(placement["slot_id"])

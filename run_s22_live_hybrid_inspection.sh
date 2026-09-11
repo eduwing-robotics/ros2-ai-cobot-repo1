@@ -28,6 +28,8 @@ Options:
   --skip-capture    Inspect the current latest ROI without taking a new photo.
   --skip-yolo       Forwarded to the hybrid inspector for a diagnostic run.
   --skip-patchcore  Forwarded to the hybrid inspector for a diagnostic run.
+  --patchcore-accelerator auto|cpu|gpu
+                    Select PatchCore execution device (auto is the default).
   -h, --help        Show this help.
 
 Full inspection is the default; do not pass either skip option for normal use.

@@ -1280,6 +1280,7 @@ def inspect_pcb(
     patchcore_models: str | Path = DEFAULT_PATCHCORE_MODELS,
     gpu_patchcore_models: str | Path | None = DEFAULT_GPU_PATCHCORE_MODELS,
     inductor_patchcore_models: str | Path | None = DEFAULT_INDUCTOR_PATCHCORE_MODELS,
+    patchcore_accelerator: str | None = None,
     run_yolo: bool = True,
     run_patchcore: bool = True,
 ) -> dict[str, Any]:
@@ -1385,7 +1386,9 @@ def inspect_pcb(
                 component_roots["inductor"] = inductor_root
         patchcore_component_roots = component_roots
         patchcore_provider = ComponentPatchCoreInspector(
-            Path(patchcore_models), component_model_roots=component_roots
+            Path(patchcore_models),
+            component_model_roots=component_roots,
+            accelerator=patchcore_accelerator,
         )
         patchcore_items = patchcore_provider.inspect(
             registered.image_bgr, slots, run_dir
@@ -1749,6 +1752,7 @@ def inspect_pcb(
                 "component_model_roots": {
                     key: str(value) for key, value in patchcore_component_roots.items()
                 },
+                "accelerator": patchcore_accelerator or "auto",
                 "surface_only_candidate_suppressed": sorted(
                     SURFACE_ONLY_CANDIDATE_SUPPRESSED
                 ),
@@ -1863,6 +1867,10 @@ def main() -> None:
         type=Path,
         default=DEFAULT_INDUCTOR_PATCHCORE_MODELS,
     )
+    parser.add_argument(
+        "--patchcore-accelerator", choices=("auto", "cpu", "gpu"), default="auto",
+        help="PatchCore backend; auto uses GPU when available and CPU otherwise",
+    )
     parser.add_argument("--skip-yolo", action="store_true")
     parser.add_argument("--skip-patchcore", action="store_true")
     args = parser.parse_args()
@@ -1874,6 +1882,7 @@ def main() -> None:
         patchcore_models=args.patchcore_models,
         gpu_patchcore_models=args.gpu_patchcore_models,
         inductor_patchcore_models=args.inductor_patchcore_models,
+        patchcore_accelerator=args.patchcore_accelerator,
         run_yolo=not args.skip_yolo,
         run_patchcore=not args.skip_patchcore,
     )

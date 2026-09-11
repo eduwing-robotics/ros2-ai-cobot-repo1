@@ -20,7 +20,10 @@ if str(INSPECTION_DIR) not in sys.path:
     sys.path.insert(0, str(INSPECTION_DIR))
 
 from build_component_patchcore_dataset import OUTPUT_SIZE, _crop_slot  # noqa: E402
-from predict_component_patchcore import _checkpoint, _predict_outputs  # noqa: E402
+from predict_component_patchcore import (  # noqa: E402
+    _checkpoint,
+    _predict_outputs,
+)
 
 
 @dataclass
@@ -92,6 +95,7 @@ class ComponentPatchCoreInspector:
         normal_calibration: Path | None = None,
         decision_thresholds: Path | None = None,
         component_model_roots: dict[str, Path] | None = None,
+        accelerator: str | None = None,
     ):
         self.model_root = model_root.expanduser().resolve()
         self.normal_calibration_path = (
@@ -118,6 +122,7 @@ class ComponentPatchCoreInspector:
             key: self._load_optional(root / "decision_thresholds.json")
             for key, root in self.component_model_roots.items()
         }
+        self.accelerator = accelerator
 
     @staticmethod
     def _load_optional(path: Path) -> dict[str, Any]:
@@ -202,11 +207,17 @@ class ComponentPatchCoreInspector:
                     raise ValueError("Normal calibration contains nonfinite values")
                 normal_p99, normal_pixel_p999 = values
                 checkpoint = _checkpoint(component_root, component)
+                prediction_kwargs = (
+                    {"accelerator": self.accelerator}
+                    if self.accelerator is not None
+                    else {}
+                )
                 predictions = _predict_outputs(
                     component,
                     crop_root / component,
                     checkpoint,
                     prediction_root / component,
+                    **prediction_kwargs,
                 )
                 if not isinstance(predictions, dict):
                     raise ValueError("PatchCore predictions must be keyed by slot ID")

@@ -28,6 +28,26 @@ GPU 1, HBM 8, Power Module 4, VRM 5, Inductor 2, SMD Capacitor 5를 한 번에
 ~/KSMC/run_s22_live_hybrid_inspection.sh
 ```
 
+개발용 GPU가 없는 노트북에서 동일한 판정 경로를 재현하려면 PatchCore만
+CPU로 지정할 수 있다. `auto`가 기본값이며 CUDA가 있으면 GPU, 없으면 CPU를
+선택한다. 장치 선택은 임계값·권한·융합 규칙을 바꾸지 않는다.
+
+```bash
+~/KSMC/run_s22_live_hybrid_inspection.sh \
+  --patchcore-accelerator cpu
+```
+
+모델 파일·25개 슬롯·필수 단계·권한·검사 보고서를 배포 전에 읽기 전용으로
+점검할 수 있다. `--strict`는 생산 준비 조건이 아직 남아 있으면 종료 코드
+2를 반환하며 모델을 승격하거나 장비를 호출하지 않는다.
+
+```bash
+python3 ~/KSMC/vision_assembly/hybrid_inspection/model_completion_gate.py \
+  --report ~/KSMC/runtime/inspection/hybrid_fixed_slot/hybrid_report_latest.json \
+  --output ~/KSMC/runtime/inspection/model_completion_gate.json \
+  --strict
+```
+
 기본 실행은 플래시를 끄고 새 사진인지 확인한 후 YOLO 보조 검출, 고정 슬롯
 상태·방향 검사, 부품별 PatchCore를 모두 실행한다. 이전 ROI를 재사용하려면
 진단 목적으로만 `--skip-capture`를 붙인다. 최신 결과는 다음 위치에 저장된다.

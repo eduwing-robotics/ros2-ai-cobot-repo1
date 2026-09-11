@@ -170,6 +170,21 @@ VRM, Inductor, and SMD Capacitor instead:
 ~/KSMC/vision_assembly/run_predict_component_patchcore.sh
 ```
 
+PatchCore 실행기는 `--accelerator auto|cpu|gpu`를 지원한다. `auto`는 CUDA가
+있으면 GPU를 사용하고, 개발용 CPU-only 환경에서는 같은 checkpoint를 CPU로
+실행한다. 이 옵션은 추론 장치만 선택하며 `ADVISORY_ONLY` 권한과 fail-safe
+융합은 그대로 유지한다.
+
+배포 전 전체 준비 상태는 다음 읽기 전용 게이트로 확인한다.
+
+```bash
+python3 ~/KSMC/vision_assembly/hybrid_inspection/model_completion_gate.py \
+  --report ~/KSMC/runtime/inspection/hybrid_fixed_slot/hybrid_report_latest.json
+```
+
+게이트가 모든 필수 모델과 독립 검증을 확인하기 전까지는 최종 결과를
+`UNKNOWN`으로 유지한다.
+
 The current SMD-present v3 dataset contains 975 reviewed-normal training crops
 from 53 board images (39 train and 14 held out). The crops from mixed-defect boards are stored under
 `unverified/mixed_defect`; they are never treated as slot-level defect ground

@@ -1,5 +1,40 @@
 # AI/Vision 작업 기록
 
+## 2026-09-11 Inspection runtime completion path and release gate
+
+- Re-read `vision_assembly/config/inspection_fusion_contract.json` before the
+  change. The S22 independent hybrid composition, slot-relative raw pixels and
+  fail-safe `PASS`/`FAIL`/`UNKNOWN` rules remain unchanged. No provider was
+  promoted and no contract field was edited.
+- Added an explicit PatchCore accelerator selector. `auto` uses CUDA on the
+  inspection host and selects CPU for a development machine without CUDA;
+  CPU runs pin Lightning to its local environment so an installed `mpi4py`
+  package cannot abort a single-process diagnostic before inference starts.
+  Thresholds, calibration and provider authority do not depend on this device
+  choice. The live launcher forwards `--patchcore-accelerator`.
+- Added the read-only `model_completion_gate.py`. It checks the exact 25-slot
+  roster, required model/checkpoint files, metadata authority, normal
+  calibration, controlled-defect thresholds, GPU/HBM pin references, capture
+  quality calibration and an optional hybrid report. It exits `2` in `--strict`
+  mode when any release evidence is missing and never edits model metadata or
+  calls robot/conveyor services.
+- Replayed the saved canonical S22 image
+  `/tmp/inspection_model_probe/20260911_103843_049131/aligned_board.png` through
+  all 25 slots with CPU PatchCore. All six component checkpoints completed and
+  produced finite maps/scores; PatchCore unavailable slots were `0` and the
+  provider reported `ADVISORY_ONLY`. The final board remained
+  `UNKNOWN/ONE_OR_MORE_SLOTS_UNKNOWN`, as required: all controlled-defect
+  `decision_thresholds.json` files are absent, capture quality is not yet
+  validated, and presence/pose/orientation providers remain advisory. The
+  replay report is `/tmp/inspection_model_cpu_complete/20260911_143832_605846/hybrid_report.json`.
+- The completion gate on that report returned `ready_for_production=false` and
+  listed the six missing PatchCore threshold sets, capture-quality validation,
+  and non-authoritative required stages. Focused regression validation passed
+  `51` tests. No image was captured, no model was trained or promoted, and no
+  robot/conveyor/API/DB command was sent. Production completion still needs
+  independently labelled normal and controlled-defect scenes for each required
+  slot/stage plus physical review of the resulting thresholds.
+
 ## 2026-09-11 Inspection model readiness audit
 
 - Re-read `vision_assembly/config/inspection_fusion_contract.json` before the

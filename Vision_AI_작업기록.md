@@ -1,6 +1,6 @@
 # Vision/AI 작업 기록
 
-Latest grouped record: [Conveyor retry after a manually returned board](docs/logs/vision.md#2026-09-11-conveyor-retry-after-a-manually-returned-board). Detailed entries are maintained there only; historical entries below are preserved.
+Latest grouped record: [Inspection runtime completion path and release gate](docs/logs/vision.md#2026-09-11-inspection-runtime-completion-path-and-release-gate). Detailed entries are maintained there only; historical entries below are preserved.
 
 ## 2026-09-05 정상 복귀 확인 및 사용자 충격 전후 재촬영 묶음
 
