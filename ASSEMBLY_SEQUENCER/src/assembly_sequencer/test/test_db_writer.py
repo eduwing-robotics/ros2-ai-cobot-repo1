@@ -1150,6 +1150,7 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(snapshot["readiness"]["assembly_status_available"])
         self.assertFalse(snapshot["readiness"]["conveyor_state_fresh"])
         self.assertFalse(snapshot["readiness"]["vision_http_configured"])
+        self.assertEqual(snapshot["message"], "Robot production v2 Start is unavailable.")
 
     async def test_v2_capability_is_read_from_nested_contract(self):
         backend, node = self.backend()
@@ -1170,6 +1171,27 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(snapshot["equipment_ready"])
         self.assertTrue(snapshot["available"])
         node.create_publisher.return_value.publish.assert_not_called()
+
+    def test_vision_configuration_reports_each_missing_value(self):
+        backend, _ = self.backend()
+        backend._vision_url = ""
+        with patch.dict(os.environ, {}, clear=True):
+            self.assertEqual(
+                backend._vision_configuration_error(),
+                "VISION_BASE_URL must identify the Real inspection HTTP origin.",
+            )
+            backend._vision_url = "http://192.168.11.4:8766"
+            self.assertEqual(
+                backend._vision_configuration_error(),
+                "KSMC_VISION_API_TOKEN must be configured on the Sequencer.",
+            )
+            os.environ["KSMC_VISION_API_TOKEN"] = "test-token-" * 4
+            self.assertEqual(
+                backend._vision_configuration_error(),
+                "DEFECT_IMAGE_ROOT must identify shared execution and inspection storage.",
+            )
+            os.environ["DEFECT_IMAGE_ROOT"] = "/tmp/test-evidence"
+            self.assertIsNone(backend._vision_configuration_error())
 
     def test_scene_confirmation_requires_actual_fresh_confirmation(self):
         from assembly_sequencer.recipe_contract import validate_scene_confirmation

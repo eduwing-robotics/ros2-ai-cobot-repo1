@@ -64,10 +64,6 @@ class RealBackend:
     def is_available(self):
         return not self._closed and self._status_client.wait_for_service(timeout_sec=0.0)
 
-    @staticmethod
-    def _connection_error():
-        return "Production readiness or a required equipment completion contract is unavailable."
-
     async def status(self):
         from .recipe_contract import unavailable_snapshot
 
@@ -120,46 +116,53 @@ class RealBackend:
             "conveyor_stopped": stopped,
             "vision_signal_fresh": state.get("vision_ready_fresh") is True if conveyor_fresh else False,
             "vision_ready": state.get("vision_ready") is True if conveyor_fresh else False,
-            "vision_http_configured": self._vision_configuration_valid(),
+            "vision_http_configured": self._vision_configuration_error() is None,
         }
 
-    def _vision_configuration_valid(self):
+    def _vision_configuration_error(self):
         origin = urlsplit(self._vision_url if isinstance(self._vision_url, str) else "")
-        origin_valid = (origin.scheme in {"http", "https"} and bool(origin.hostname) and
-                        not origin.username and not origin.password and origin.path in {"", "/"} and
-                        not origin.query and not origin.fragment)
+        if (origin.scheme not in {"http", "https"} or not origin.hostname or
+                origin.username or origin.password or origin.path not in {"", "/"} or
+                origin.query or origin.fragment):
+            return "VISION_BASE_URL must identify the Real inspection HTTP origin."
         token = os.environ.get("KSMC_VISION_API_TOKEN", "")
-        token_valid = (len(token) >= 32 and token.isascii() and
-                       not any(c.isspace() or ord(c) < 32 or ord(c) == 127 for c in token))
-        return origin_valid and token_valid and bool(os.environ.get("DEFECT_IMAGE_ROOT", "").strip())
+        if (len(token) < 32 or not token.isascii() or
+                any(c.isspace() or ord(c) < 32 or ord(c) == 127 for c in token)):
+            return "KSMC_VISION_API_TOKEN must be configured on the Sequencer."
+        if not os.environ.get("DEFECT_IMAGE_ROOT", "").strip():
+            return "DEFECT_IMAGE_ROOT must identify shared execution and inspection storage."
+        return None
 
     def _validate_readiness(self, robot, assembly):
         production = assembly.get("production_contract", {})
         if (production.get("schema") != api.ASSEMBLY_SCHEMA or
                 production.get("capabilities", {}).get("start") is not True):
             raise RuntimeError("Robot production v2 Start is unavailable.")
-        if (assembly.get("hardware_execution_enabled") is not True or
-                robot.get("hardware_execution_enabled") is not True or
-                robot.get("state_fresh") is not True or robot.get("robot_health_clear") is not True or
-                robot.get("robot_mode") != 0 or robot.get("robot_motion_done") != 1 or
-                robot.get("recovery_required") is not False or robot.get("active_operation") is not None or
-                ("held_candidate" not in robot or robot["held_candidate"] is not None and robot["held_candidate"] is not False) or
-                production.get("equipment_busy_or_unresolved") is True or
-                production.get("recovery_required") is True or
+        if assembly.get("hardware_execution_enabled") is not True or robot.get("hardware_execution_enabled") is not True:
+            raise RuntimeError("Robot hardware execution is disabled.")
+        if robot.get("state_fresh") is not True:
+            raise RuntimeError("Robot status is stale.")
+        if robot.get("robot_health_clear") is not True:
+            raise RuntimeError("Robot health is not clear.")
+        if robot.get("robot_mode") != 0:
+            raise RuntimeError("Robot must be in automatic mode.")
+        if robot.get("robot_motion_done") != 1 or robot.get("active_operation") is not None:
+            raise RuntimeError("Robot operation is still active.")
+        if robot.get("recovery_required") is not False or production.get("recovery_required") is True:
+            raise RuntimeError("Robot recovery is required.")
+        if ("held_candidate" not in robot or
+                robot["held_candidate"] is not None and robot["held_candidate"] is not False):
+            raise RuntimeError("Robot gripper state is unresolved or holding a part.")
+        if (production.get("equipment_busy_or_unresolved") is True or
                 production.get("status", "idle") not in {"idle", "failed_recovered", "failed_before_motion",
                     "motion_complete_awaiting_physical_verification"}):
-            raise RuntimeError("Robot is busy, stale, holding a part, or requires recovery.")
+            raise RuntimeError("Robot production execution is busy or unresolved.")
         if not isinstance(production.get("current_recipe_revision"), str) or not production["current_recipe_revision"]:
             raise RuntimeError("Robot production recipe revision is missing.")
         self._ready_conveyor()
-        origin = urlsplit(self._vision_url)
-        if origin.scheme not in {"http", "https"} or not origin.hostname or origin.username or origin.password or origin.path not in {"", "/"} or origin.query or origin.fragment:
-            raise RuntimeError("vision_base_url must identify the Real inspection HTTP origin.")
-        token = os.environ.get("KSMC_VISION_API_TOKEN", "")
-        if len(token) < 32 or not token.isascii() or any(c.isspace() or ord(c) < 32 or ord(c) == 127 for c in token):
-            raise RuntimeError("KSMC_VISION_API_TOKEN must be configured on the Sequencer.")
-        if not os.environ.get("DEFECT_IMAGE_ROOT", "").strip():
-            raise RuntimeError("DEFECT_IMAGE_ROOT must identify shared execution and inspection storage.")
+        vision_error = self._vision_configuration_error()
+        if vision_error is not None:
+            raise RuntimeError(vision_error)
         return production["current_recipe_revision"]
 
     async def prepare_execution(self, recipe_version):
