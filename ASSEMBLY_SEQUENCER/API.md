@@ -42,6 +42,10 @@ Service는 모드 접두사와 요청 JSON을 `cmd_str`, 응답 JSON을 `cmd_res
 
 ROS 서비스 응답 한도는 5초입니다. 컨베이어 도착 대기는 35초, 상태 수신 freshness는 1초입니다. 로봇 전체 완료 대기는 1800초이며 2초마다 status로 보완합니다. Vision은 기본 전체 330초·개별 요청 10초 한도를 사용합니다. 검사 서비스 타입은 `vision_interfaces/srv`를 사용합니다. submit/get 응답의 success는 요청 성공이며 record_json의 COMPLETED가 검사 완료입니다. health의 station_ready는 검사 접수 조건이며 생산 시작 조건이 아닙니다. PNG는 최대 65536바이트씩 수신하며 전체 상한은 64MiB입니다. HTTP 주소·인증 토큰은 사용하지 않습니다.
 
+Vision `record_json`은 `transport="ros2"`, 요청과 동일한 `inspection_id`·`job_id`·양의 int64 `unit_id`, `status`를 포함합니다. 완료 결과는 `result.decision=PASS|FAIL|UNKNOWN`과 `slots`·`findings`·`defects` 배열을 포함하며, `slots`는 해당 제품의 25개 슬롯과 정확히 일치해야 합니다. `image.ready=true`이면 `service=/vision/inspection/get_image`, 빈 `slot_code`, `filename=02_annotated_report.png`, `mime_type=image/png`, 양의 `size_bytes`, SHA-256과 최대 조각 크기를 제공합니다. Sequencer는 전체 조각을 재조립해 PNG signature·크기·SHA-256을 검증한 뒤 원본 JSON과 함께 DB writer에 전달합니다.
+
+`COMPLETED`는 검사 실행 완료이며 합격이 아닙니다. `UNKNOWN`도 원본 JSON과 가능한 이미지를 먼저 저장하지만 Unit을 완료하지 않고 Job을 실패 종료합니다. `FAIL`은 확정·권위 있는 finding과 대응하는 defects가 있을 때만 DB 불량으로 기록됩니다. API 응답의 진단·후보·provider health 추가 필드는 원본 JSON에 보존하되 생산 판정을 확장하지 않습니다.
+
 컨베이어 Trigger에는 Job·Unit을 전송하지 않습니다. `operation_id`는 Sequencer 내부 공정 식별자이며 제공자의 `motion_id`와 동일하지 않습니다. 현재 구현은 매번 새 이동을 요청하고 수락된 motion_id의 도착을 기다립니다. 이미 목적지인 상태의 재사용, 외부 이동의 현재 Job·Unit 연결, 도착의 명령 속도 0 검증은 구현되어 있지 않습니다. `ASSEMBLY_STOP`만으로 새 Unit의 도착 완료를 확정하지 않습니다.
 
 `/real/robot/control`과 개별 MoveJoint·Pick·Place API는 이 경로에서 사용하지 않습니다. 생산 제어는 중첩 production v2 capability를 기준으로 하며 진단 v1의 저수준 제어 capability와 구분합니다.

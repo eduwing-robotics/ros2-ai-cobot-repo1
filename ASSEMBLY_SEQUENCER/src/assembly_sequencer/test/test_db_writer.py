@@ -982,6 +982,10 @@ class RealWorkflowTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_pass_advances_only_after_completion_and_db_sync(self):
         node, active = self.sequencer()
+        inspection = dict(result="PASS", defects=None, image_path=None,
+            inspection={"inspection_id": "vision-id", "status": "COMPLETED"},
+            image_bytes=b"\x89PNG\r\n\x1a\nfixture")
+        node.backend.inspect_unit.return_value = inspection
         sequence = Mock()
         sequence.attach_mock(node.backend.move_conveyor, "move")
         sequence.attach_mock(node.backend.execute_assembly, "assembly")
@@ -996,6 +1000,7 @@ class RealWorkflowTest(unittest.IsolatedAsyncioTestCase):
             ["move", "assembly", "assembled", "flush", "move", "inspect", "record", "flush",
              "complete", "flush", "finish", "flush"])
         self.assertEqual([c.args[0] for c in node.backend.move_conveyor.await_args_list], ["ASSEMBLY", "INSPECTION"])
+        node.db_writer.inspection_recorded.assert_called_once_with(22, **inspection)
         self.assertIsNone(node.active)
         self.assertEqual(node.terminal_snapshot["state"], "COMPLETED")
         self.assertEqual(node.terminal_snapshot["placed_count"], 25)
@@ -1190,12 +1195,16 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
 
         backend, _ = self.backend()
         iid = str(uuid.uuid5(uuid.UUID(JOB_ID), "unit:22"))
+        from assembly_sequencer.recipe_contract import PRODUCTION_SLOTS
+        slot_codes = [code for code, _ in PRODUCTION_SLOTS]
         png = b"\x89PNG\r\n\x1a\nverified PNG fixture"
         info = dict(ready=True, service=api_contracts.VISION_IMAGE, slot_code="",
                     filename="02_annotated_report.png", mime_type="image/png",
                     size_bytes=len(png), max_chunk_bytes=8, sha256=hashlib.sha256(png).hexdigest())
         record = dict(inspection_id=iid, job_id=JOB_ID, unit_id=22, transport="ros2",
-                      status="COMPLETED", result=dict(decision="UNKNOWN"), image=info)
+                      status="COMPLETED", result=dict(decision="UNKNOWN",
+                          slots=[dict(slot_code=code, decision="UNKNOWN") for code in slot_codes],
+                          findings=[], defects=[]), image=info)
         submissions = 0
         async def call(client, request, deadline):
             nonlocal submissions
@@ -1215,7 +1224,7 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
                 eof=request.offset + len(chunk) == len(png), data=chunk)
         backend._vision_call = call
         backend._vision_poll = AsyncMock()
-        output = await backend.inspect_unit(JOB_ID, 22, [])
+        output = await backend.inspect_unit(JOB_ID, 22, slot_codes)
         self.assertEqual(output["image_bytes"], png)
         self.assertEqual(output["result"], "UNKNOWN")
         self.assertEqual(submissions, 2)
@@ -1228,14 +1237,18 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
             return response
         backend._vision_call = corrupt
         with self.assertRaisesRegex(ValueError, "chunk mismatch"):
-            await backend.inspect_unit(JOB_ID, 22, [])
+            await backend.inspect_unit(JOB_ID, 22, slot_codes)
+        backend._vision_call = call
+        record["result"]["slots"].pop()
+        with self.assertRaisesRegex(ValueError, "exactly match"):
+            await backend.inspect_unit(JOB_ID, 22, slot_codes)
 
     async def test_ros_inspection_timeout_is_bounded_and_releases_local_state(self):
         backend, _ = self.backend()
         backend._vision_call = AsyncMock(side_effect=TimeoutError("lost"))
         with patch.object(api_contracts, "VISION_TIMEOUT_SECONDS", 0):
             with self.assertRaises(TimeoutError):
-                await backend.inspect_unit(JOB_ID, 22, [])
+                await backend.inspect_unit(JOB_ID, 22, ["GPU-01"])
         self.assertFalse(backend._inspection_pending)
         self.assertIsNone(backend._display_wait)
 
@@ -1247,11 +1260,11 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
         backend._vision_call = AsyncMock(return_value=SimpleNamespace(
             success=True, record_json=json.dumps(record)))
         with self.assertRaisesRegex(ValueError, "identity"):
-            await backend.inspect_unit(JOB_ID, 22, [])
+            await backend.inspect_unit(JOB_ID, 22, ["GPU-01"])
         record.update(unit_id=22, status="FAILED", error=dict(code="capture_failed"))
         backend._vision_call.return_value.record_json = json.dumps(record)
         with self.assertRaisesRegex(RuntimeError, "capture_failed"):
-            await backend.inspect_unit(JOB_ID, 22, [])
+            await backend.inspect_unit(JOB_ID, 22, ["GPU-01"])
 
     def test_scene_confirmation_requires_actual_fresh_confirmation(self):
         from assembly_sequencer.recipe_contract import validate_scene_confirmation

@@ -667,6 +667,10 @@ class RealBackend:
 
         if str(uuid.UUID(job_id)) != job_id or type(unit_id) is not int or not 0 < unit_id < 2**63:
             raise ValueError("Inspection requires a canonical Job UUID and positive int64 Unit ID")
+        if (not isinstance(slot_codes, list) or not slot_codes
+                or any(not isinstance(code, str) or not code for code in slot_codes)
+                or len(slot_codes) != len(set(slot_codes))):
+            raise ValueError("Inspection requires unique expected product slot codes")
         if self._closed or self._inspection_pending:
             raise RuntimeError("Real backend is closed or another inspection is pending")
         self._inspection_pending = True
@@ -696,7 +700,7 @@ class RealBackend:
                     await self._vision_poll(deadline)
                     continue
                 data = json.loads(response.record_json)
-                if (not isinstance(data, dict) or data.get("transport") != "ros2" or
+                if (not isinstance(data, dict) or data.get("transport") != api.VISION_TRANSPORT or
                         any(data.get(k) != v for k, v in identity.items()) or
                         type(data.get("unit_id")) is not int):
                     raise ValueError("Vision response identity or transport mismatch")
@@ -705,21 +709,32 @@ class RealBackend:
                     raise RuntimeError(f"Vision inspection failed: {data.get('error')!r}")
                 if status == "COMPLETED" and not submit:
                     break
-                if status not in {"ACCEPTED", "RUNNING", "COMPLETED"}:
+                if status not in (api.VISION_STATUS_ACCEPTED, api.VISION_STATUS_RUNNING,
+                        api.VISION_STATUS_COMPLETED, api.VISION_STATUS_FAILED):
                     raise ValueError("Unexpected Vision inspection status")
                 submit = False
                 await self._vision_poll(deadline)
 
             result, info = data.get("result"), data.get("image")
-            if not isinstance(result, dict) or result.get("decision") not in {"PASS", "FAIL", "UNKNOWN"}:
+            if not isinstance(result, dict) or result.get("decision") not in (api.VISION_DECISION_PASS, api.VISION_DECISION_FAIL,
+                    api.VISION_DECISION_UNKNOWN):
                 raise ValueError("Vision must return an explicit decision")
+            slots, findings, defects = (result.get(key) for key in ("slots", "findings", "defects"))
+            if not all(isinstance(items, list) for items in (slots, findings, defects)):
+                raise ValueError("Vision completed result must contain slots, findings and defects arrays")
+            received_codes = [slot.get("slot_code") for slot in slots if isinstance(slot, dict)]
+            if (len(received_codes) != len(slots) or len(received_codes) != len(set(received_codes))
+                    or set(received_codes) != set(slot_codes)
+                    or any(slot.get("decision") not in (api.VISION_DECISION_PASS, api.VISION_DECISION_FAIL,
+                        api.VISION_DECISION_UNKNOWN) for slot in slots)):
+                raise ValueError("Vision slots must exactly match the requested product slots")
             if not isinstance(info, dict) or type(info.get("ready")) is not bool:
                 raise ValueError("Vision must return image.ready")
             png = None
             if info["ready"]:
                 if (info.get("service") != api.VISION_IMAGE or info.get("slot_code") != "" or
-                        info.get("filename") != "02_annotated_report.png" or
-                        info.get("mime_type") != "image/png" or
+                        info.get("filename") != api.VISION_IMAGE_FILENAME or
+                        info.get("mime_type") != api.VISION_IMAGE_MIME_TYPE or
                         type(info.get("size_bytes")) is not int or
                         not 0 < info["size_bytes"] <= api.VISION_MAX_IMAGE_BYTES or
                         type(info.get("max_chunk_bytes")) is not int or
@@ -742,7 +757,7 @@ class RealBackend:
                     end = len(content) + len(chunk)
                     if (response.inspection_id != identity["inspection_id"] or response.slot_code != "" or
                             response.offset != len(content) or response.filename != info["filename"] or
-                            response.mime_type != "image/png" or response.sha256 != info["sha256"] or
+                            response.mime_type != api.VISION_IMAGE_MIME_TYPE or response.sha256 != info["sha256"] or
                             response.total_bytes != info["size_bytes"] or
                             not 0 < len(chunk) <= request.max_bytes or end > info["size_bytes"] or
                             response.eof != (end == info["size_bytes"])):
