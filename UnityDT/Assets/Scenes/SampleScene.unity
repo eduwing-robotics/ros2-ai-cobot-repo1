@@ -16012,6 +16012,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainUnity.Runtime.Robot.Real.RealAssemblyScenarioControl
   itemManager: {fileID: 1917364535}
+  beltPlane: {fileID: 494232036}
+  assemblyStopPoint: {fileID: 893280632}
+  inspectionStopPoint: {fileID: 108201412}
+  conveyorSpeed: 0.11
+  arrivalHoldDistance: 0.01
 --- !u!114 &2494761539128691212
 MonoBehaviour:
   m_ObjectHideFlags: 0

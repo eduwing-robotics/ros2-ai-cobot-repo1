@@ -25,6 +25,14 @@ namespace MainUnity.Runtime.Robot.Real
 
         [SerializeField] ItemManager itemManager;
 
+        [Header("Conveyor Visualization")]
+        [SerializeField] GameObject beltPlane;
+        [SerializeField] Transform assemblyStopPoint;
+        [SerializeField] Transform inspectionStopPoint;
+        [SerializeField, InspectorName("Belt Speed (m/s)"), Min(0.01f)]
+        float conveyorSpeed = 0.11f;
+        [SerializeField, Min(0.001f)] float arrivalHoldDistance = 0.01f;
+
         AssemblyProgressManager progress;
         ROSConnection connection;
         AssemblySnapshot latest;
@@ -40,6 +48,10 @@ namespace MainUnity.Runtime.Robot.Real
         string confirmationJobId;
         bool refreshRequested;
         bool realStatusConfirmed;
+        Renderer beltRenderer;
+        Material beltMaterial;
+        Transform conveyorBoard;
+        Transform conveyorDestination;
         int generation;
 
         public bool IsRunning => executionPending || (latest != null && latest.active && latest.error_code != "SCENE_CONFIRMATION_REQUIRED");
@@ -137,14 +149,34 @@ namespace MainUnity.Runtime.Robot.Real
         void OnEnable()
         {
             realStatusConfirmed = false;
+            RefreshConveyorReferences();
             EnsureRosConnection();
             _ = RestoreProgressAsync(++generation);
+        }
+
+        void OnValidate() => RefreshConveyorReferences();
+
+        void Update()
+        {
+            if (conveyorBoard == null || conveyorDestination == null)
+                return;
+
+            Vector3 offset = conveyorDestination.position - conveyorBoard.position;
+            float remaining = offset.magnitude;
+            float distance = Mathf.Min(conveyorSpeed * Time.deltaTime,
+                Mathf.Max(0f, remaining - arrivalHoldDistance));
+            if (distance <= 0f)
+                return;
+
+            conveyorBoard.position += offset / remaining * distance;
+            MoveBeltTexture(distance);
         }
 
         void OnDisable()
         {
             generation++;
             realStatusConfirmed = false;
+            StopConveyorVisualization();
             if (feedbackSubscribed && connection != null)
             {
                 connection.Unsubscribe(FeedbackTopic);
@@ -490,6 +522,8 @@ namespace MainUnity.Runtime.Robot.Real
                 return;
             latest = snapshot;
             controlsReceivedAt = Time.realtimeSinceStartupAsDouble;
+            if (snapshot.state == "FAILED")
+                StopConveyorVisualization();
             // Unit lifecycle is mirrored only from the backend's confirmed state. No Mock conveyor,
             // attachment or pose simulation is used to acknowledge physical completion.
             if (itemManager != null && !itemManager.IsUnitCompleted(snapshot.job_id, snapshot.unit_id) &&
@@ -498,7 +532,8 @@ namespace MainUnity.Runtime.Robot.Real
                 if (itemManager.CurrentBoard != null &&
                     (itemManager.JobId != snapshot.job_id || itemManager.UnitId != snapshot.unit_id))
                     itemManager.DiscardCurrentUnit();
-                BeginUnit(snapshot.job_id, snapshot.unit_id);
+                Transform board = BeginUnit(snapshot.job_id, snapshot.unit_id);
+                ApplyConveyorVisualization(snapshot, board);
                 if (snapshot.state == "PCB_PLACED" ||
                     (snapshot.state == "COMPLETED" || snapshot.error_code == "SCENE_CONFIRMATION_REQUIRED") && snapshot.db_sync_state == "SYNCED")
                     CompleteUnit(snapshot.job_id, snapshot.unit_id);
@@ -522,6 +557,69 @@ namespace MainUnity.Runtime.Robot.Real
                 CurrentPhase = snapshot.current_phase,
                 CurrentEvent = snapshot.current_event
             });
+        }
+
+        void ApplyConveyorVisualization(AssemblySnapshot snapshot, Transform board)
+        {
+            if (board == null)
+                return;
+
+            if (snapshot.state == "CONVEYOR_MOVING")
+            {
+                StartConveyorVisualization(board, assemblyStopPoint);
+                return;
+            }
+            if (snapshot.state == "ASSEMBLY_COMPLETED")
+            {
+                StartConveyorVisualization(board, inspectionStopPoint);
+                return;
+            }
+
+            StopConveyorVisualization();
+            if (snapshot.state == "STARTED" || snapshot.state == "PLACED")
+                SnapBoard(board, assemblyStopPoint);
+            else if (snapshot.state == "PCB_PLACED" || snapshot.state == "COMPLETED" ||
+                     snapshot.error_code == "SCENE_CONFIRMATION_REQUIRED")
+                SnapBoard(board, inspectionStopPoint);
+        }
+
+        void StartConveyorVisualization(Transform board, Transform destination)
+        {
+            if (destination == null || conveyorSpeed <= 0f || arrivalHoldDistance <= 0f)
+            {
+                StopConveyorVisualization();
+                Debug.LogWarning("Real conveyor visualization references or motion values are invalid.", this);
+                return;
+            }
+            conveyorBoard = board;
+            conveyorDestination = destination;
+            if (beltRenderer != null && beltMaterial == null)
+                beltMaterial = beltRenderer.material;
+        }
+
+        void StopConveyorVisualization()
+        {
+            conveyorBoard = null;
+            conveyorDestination = null;
+        }
+
+        static void SnapBoard(Transform board, Transform destination)
+        {
+            if (destination != null)
+                board.position = destination.position;
+        }
+
+        void RefreshConveyorReferences() =>
+            beltRenderer = beltPlane == null ? null : beltPlane.GetComponent<Renderer>();
+
+        void MoveBeltTexture(float distance)
+        {
+            if (beltMaterial == null || beltRenderer == null || distance <= 0f)
+                return;
+            Vector3 size = beltRenderer.bounds.size;
+            Vector2 scale = beltMaterial.mainTextureScale;
+            if (size.z > 0f)
+                beltMaterial.mainTextureOffset += Vector2.up * distance * scale.y / size.z;
         }
 
         void ReceiveFeedback(StringMsg message)
