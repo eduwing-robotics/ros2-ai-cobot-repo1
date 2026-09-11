@@ -524,25 +524,18 @@ class Detector(Node):
       continue
     radius=radii.get(d['part_type'],self.a.track_radius_px)
     point=np.array(d['reference_center_pixel'],float);best=None;distance=1e9
+    # A cluster median changes only when that cluster receives a point.
+    # Restrict candidates to the same part type, as the fallback below used to.
     for cluster in clusters:
-     center=np.median(np.array(cluster['points']),axis=0)
-     value=float(np.linalg.norm(point-center))
+     if cluster['part_type']!=d['part_type']:continue
+     value=float(np.linalg.norm(point-cluster['_center']))
      if value<distance:best,distance=cluster,value
     if best is None or distance>radius:
      best={'part_type':d['part_type'],'display_name':d['display_name'],
            'points':[],'cameras':[],'angles':[],'frames':set(),'scores':[],
            'confidences':[],'shapes':[],'rectangularities':[]};clusters.append(best)
-    if best['part_type']!=d['part_type']:
-     same=[x for x in clusters if x['part_type']==d['part_type']]
-     best=None;distance=1e9
-     for cluster in same:
-      value=float(np.linalg.norm(point-np.median(np.array(cluster['points']),axis=0)))
-      if value<distance:best,distance=cluster,value
-     if best is None or distance>radius:
-      best={'part_type':d['part_type'],'display_name':d['display_name'],
-            'points':[],'cameras':[],'angles':[],'frames':set(),'scores':[],
-            'confidences':[],'shapes':[],'rectangularities':[]};clusters.append(best)
     best['points'].append(point);best['cameras'].append(d['camera_xyz_m'])
+    best['_center']=np.median(np.asarray(best['points']),axis=0)
     best['angles'].append(d['angle_deg'])
     best['frames'].add(frame_id);best['scores'].append(d['cad_area_match_score'])
     best['confidences'].append(d.get('segmentation_confidence',d['cad_area_match_score']))

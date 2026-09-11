@@ -682,6 +682,7 @@ def build_plan(
             inspection_reference = {
                 "handeye_sha256": snapshot["tray_capture"].get("handeye_sha256"),
                 "parts": reference_parts,
+                "assembly_set_selection": snapshot["tray_capture"].get("assembly_set_selection"),
                 "bindings": [{"part_type": p["part_type"],
                     "physical_index": p["instance_index"],
                     "reference_center_pixel": _finite_vector(p["reference_center_pixel"], 2, "inspection reference pixel").tolist()}

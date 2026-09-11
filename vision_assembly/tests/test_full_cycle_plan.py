@@ -616,3 +616,12 @@ def test_pm02_uses_operator_corrected_camera_facing_branch(planned_cycle):
     item=by_slot(planned_cycle[0], 'PM-02')
     assert distance(item['pick_final_tcp'][5],90)<15
     assert distance(item['place_final_tcp'][5],180)<15
+
+def test_two_set_selection_is_preserved_in_inspection_reference():
+    snapshot=copy.deepcopy(load(SNAPSHOT_PATH))
+    selection={'set_index':1,'config':{'schema':'fr5.tray_set_selection/v1'}}
+    snapshot['tray_capture']['assembly_set_selection']=selection
+    for i,part in enumerate(snapshot['tray_capture']['parts']):
+        part['reference_center_pixel']=[100.+i*30,200.]
+    plan=build_plan(snapshot,load(RECIPES_PATH),load(SLOTS_PATH),phase='non-smd')
+    assert plan['tray_inspection_reference']['assembly_set_selection']==selection

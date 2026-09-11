@@ -594,6 +594,7 @@ def capture_tray(args: argparse.Namespace, payload: dict) -> dict:
         "handeye_sha256": handeye_sha256,
         "counts": counts,
         "part_count": len(frozen),
+        "assembly_set_selection": tray.get("assembly_set_selection"),
         "quality_gate": quality_config,
         "capture_scope": capture_scope,
         "parts": frozen,

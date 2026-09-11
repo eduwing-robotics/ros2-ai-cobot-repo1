@@ -14,6 +14,7 @@ from types import SimpleNamespace
 from assembly_cycle_launcher import BASELINE, ROOT, read, write
 from full_cycle_motion import MotionWaypoint, normalize_controller_tcp
 from tray_capture_retry import TrayCaptureRetry, RetryCaptureError
+from tray_set_selection import select_cycle_tray_set
 
 
 CAMERA_GLOBAL_SPEED_PERCENT = 40
@@ -297,6 +298,8 @@ def run(args):
                 if stamp is None:
                     continue
                 last_stamp = stamp
+                if phase == 'tray':
+                    payload = select_cycle_tray_set(payload)
                 if retry is not None:
                     merged = retry.observe(payload, now)
                     report = retry.report()

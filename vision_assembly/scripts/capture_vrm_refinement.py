@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Read-only TrayHome VRM refinement; write snapshot only after all five pass."""
+from tray_set_selection import select_cycle_tray_set
 import argparse
 import hashlib
 import json
@@ -53,6 +54,7 @@ def main():
             if not 0<=now-payload['timestamp_ros_ns']/1e9<2:continue
             if payload['handeye_sha256']!=expected_hash:raise RuntimeError('live handeye changed')
             if payload['tray_registration']!='TRACKING' or payload['base_transform_status'] not in ('OK','VALID_COORDINATES_ONLY'):continue
+            payload=select_cycle_tray_set(payload, (snapshot['tray_capture'].get('assembly_set_selection') or {}).get('config'))
             ds={d['instance_index']:d for d in payload['stable_detections'] if d['part_type']=='black_block'}
             if set(ds)!=set(coarse):continue
             im=cv2.imdecode(np.frombuffer(msg.data,np.uint8),1)

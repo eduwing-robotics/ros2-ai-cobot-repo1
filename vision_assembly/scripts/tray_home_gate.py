@@ -10,6 +10,7 @@ from scipy.optimize import linear_sum_assignment
 from full_cycle_motion import MotionWaypoint
 from fixed_cycle_snapshot import validate_tray_detection_quality
 from execution_safety import STATE_MAX_AGE_SEC
+from tray_set_selection import select_cycle_tray_set
 
 HOME = (-527.997, -60.954, 337.88, -180., 0., 90.)
 INSPECTION_Z = 350.0
@@ -76,6 +77,13 @@ def add_inspections(route, start):
     return output
 
 
+def selected_inventory(live, reference):
+    selection=reference.get('assembly_set_selection')
+    if selection is None:
+        return live['stable_detections']
+    return select_cycle_tray_set(live, selection['config'])['stable_detections']
+
+
 def check_pick_removal(live, reference, removed, slot, now, after):
     """Check only picked section/cell, without recalculating any pick pose."""
     stamp=float(live['timestamp_ros_ns'])/1e9
@@ -89,7 +97,7 @@ def check_pick_removal(live, reference, removed, slot, now, after):
     code=slot.split('-')[0]
     bindings=[b for b in reference['bindings'] if b['part_type']==kind]
     target=next(b for b in bindings if b['physical_index']==int(slot.split('-')[1]))
-    actual=[d for d in live['stable_detections'] if d['part_type']==kind]
+    actual=[d for d in selected_inventory(live,reference) if d['part_type']==kind]
     # Even a weak detection in the picked cell blocks absence inference.
     for d in live.get('detections',[])+actual:
         if d['part_type']==kind and np.linalg.norm(np.array(d['reference_center_pixel'])-np.array(target['reference_center_pixel']))<20:
@@ -140,7 +148,7 @@ def check_inventory(live, reference, removed, quality, now, after):
     for kind,code in prefix.items():
         expected=[p for p in reference['parts'] if p['part_type']==kind
                   and f"{code}-{p['instance_index']:02d}" not in removed]
-        actual=[p for p in live['stable_detections'] if p['part_type']==kind]
+        actual=[p for p in selected_inventory(live,reference) if p['part_type']==kind]
         if len(actual)!=len(expected):
             raise RuntimeError(f'{kind} inventory mismatch: {len(actual)} != {len(expected)}')
         if not expected:continue
