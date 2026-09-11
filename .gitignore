@@ -37,3 +37,27 @@ yolo26n-seg.pt
 
 # Blender-rendered synthetic datasets are reproducible and can be regenerated locally.
 vision_assembly/synthetic/output/
+
+# Local-only tooling, teammate endpoint, diagrams, and generated datasets
+/AGENTS.md
+/CODEX_HANDOFF.md
+/PROJECT_GOAL.md
+/Ros2UnityEndopoint_PKG_0.2/
+/bridge/
+/다이어그램/
+/docs/architecture/
+/docs/logs/portfolio_evidence.md
+/docs/logs/presentation_notes.md
+/vision_assembly/config/board_layout_from_unity.svg
+/calibration/archive/
+/vision_assembly/synthetic/unity_native_dataset/
+/vision_assembly/synthetic/unity_native_preview/
+/vision_assembly/obb/multiclass_dataset/
+/vision_assembly/obb/real_multiclass/
+/vision_assembly/segmentation/vrm_boundary_adaptation_v1/
+/vision_assembly/segmentation/vrm_fixed_boundary_dataset_v1/
+/vision_assembly/segmentation/vrm_fixed_boundary_dataset_v2/
+/vision_assembly/segmentation/vrm_fixed_boundary_dataset_v3/
+/vision_assembly/segmentation/vrm_fixed_boundary_dataset_v4/
+/vision_assembly/segmentation/vrm_negative_review_v1/
+**/.matplotlib/

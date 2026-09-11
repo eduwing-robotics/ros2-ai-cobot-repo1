@@ -1,6 +1,0 @@
-path: "/home/hc/KSMC/vision_assembly/segmentation/vrm_fixed_boundary_dataset_v3"
-train: images/train
-val: images/val
-test: images/test
-names:
-  0: vrm
