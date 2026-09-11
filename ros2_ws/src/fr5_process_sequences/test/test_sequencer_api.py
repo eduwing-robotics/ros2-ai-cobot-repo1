@@ -280,3 +280,37 @@ def test_profiled_gripper_preserves_explicit_low_force_in_driver_request():
     port._service=lambda command,code:commands.append(command)
     port.move_profiled_gripper(12,dict(velocity_percent=50,force_percent=1))
     assert commands == ['MoveGripper(1,12.0,50.0,1.0)']
+
+
+@pytest.mark.parametrize('removed_kind', ['gpu', 'hbm', 'long_orange', 'black_block', 'marked_white', 'right_white_brown'])
+def test_adapter_preserves_selected_set_for_post_pick_inspection(removed_kind):
+    import sys
+    sys.path.insert(0, str(ROOT/'vision_assembly/scripts'))
+    from tray_home_gate import check_pick_removal
+    config=json.loads((ROOT/'vision_assembly/config/tray_cycle_set_selection.json').read_text())
+    snapshot,_,_=payload_fixture()
+    rule=config['parts'][removed_kind]
+    width=config['reference_image_size_px']['width']
+    height=config['reference_image_size_px']['height']
+    polygon=rule['section_polygon_normalized']
+    point=[sum(p[0] for p in polygon)/len(polygon)*width,
+           sum(p[1] for p in polygon)/len(polygon)*height]
+    axis=0 if rule['axis']=='x' else 1
+    point[axis]=rule['boundary_px']-30
+    other=list(point);other[axis]=rule['boundary_px']+30
+    capture=snapshot['tray_capture']
+    capture.update(handeye_sha256='test', assembly_set_selection={'set_index':1,'config':config},
+        parts=[dict(part_type=removed_kind, instance_index=1, reference_center_pixel=point)])
+    reference=make_payload(snapshot)['tray_inspection_reference']
+    assert reference['assembly_set_selection']==capture['assembly_set_selection']
+    assert reference['assembly_set_selection'] is not capture['assembly_set_selection']
+    remaining=dict(part_type=removed_kind,instance_index=1,reference_center_pixel=other)
+    live=dict(timestamp_ros_ns=100_000_000_000, tray_registration='TRACKING',
+        base_transform_status='OK',handeye_sha256='test',stable_detections=[remaining],detections=[remaining])
+    code={'gpu':'GPU','hbm':'HBM','long_orange':'PM','black_block':'VRM','marked_white':'IND','right_white_brown':'CAP'}[removed_kind]
+    slot=code+'-01'
+    assert check_pick_removal(live,reference,{slot},slot,100.1,99)['picked_slot']==slot
+    occupied=dict(part_type=removed_kind,instance_index=1,reference_center_pixel=point)
+    live['detections'].append(occupied)
+    with pytest.raises(RuntimeError,match='still occupied'):
+        check_pick_removal(live,reference,{slot},slot,100.1,99)

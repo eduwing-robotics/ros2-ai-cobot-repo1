@@ -4,6 +4,7 @@ Uses the existing precision planner; never invents coordinates, re-stamps old
 observations, changes recipe values, or sends hardware commands.
 """
 import argparse
+from copy import deepcopy
 import hashlib
 import json
 import math
@@ -105,6 +106,7 @@ def build_target_payload(*, snapshot, recipes, slots, steps, job_id, plan_builde
             p.get('reference_center_pixel') is not None for p in reference_parts):
         payload['tray_inspection_reference'] = {
             'handeye_sha256': snapshot['tray_capture'].get('handeye_sha256'),
+            'assembly_set_selection': deepcopy(snapshot['tray_capture'].get('assembly_set_selection')),
             'bindings': [dict(part_type=p['part_type'], physical_index=p['instance_index'],
                 reference_center_pixel=p['reference_center_pixel']) for p in reference_parts]}
     for step, index in indexed:
