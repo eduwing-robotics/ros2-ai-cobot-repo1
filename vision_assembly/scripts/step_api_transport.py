@@ -9,6 +9,8 @@ from std_msgs.msg import String
 from std_srvs.srv import Trigger
 from fr5_process_sequences.sequencer_robot_client import RosSequencerRobotClient
 from assembly_cycle_launcher import write
+from startup_service_client import call_readonly_service
+from check_step_api import validate_status
 from cycle_pause import clock as cycle_clock, checkpoint as cycle_checkpoint
 
 
@@ -44,36 +46,37 @@ class StepApiSession:
         while rclpy.ok() and clock()<deadline:
             if predicate():return
             rclpy.spin_once(self.node,timeout_sec=.02)
+        if predicate():return
         raise TimeoutError(label)
 
-    def status(self):
-        if not self.status_client.wait_for_service(timeout_sec=5):raise RuntimeError('step API status unavailable')
-        future=self.status_client.call_async(Trigger.Request())
-        self.spin_until(future.done,5,'API status timeout')
-        result=future.result()
+    def status(self, *, deadline=None):
+        result=call_readonly_service(self.node,self.status_client,Trigger.Request(),deadline=deadline)
         if not result.success:raise RuntimeError(result.message)
         return json.loads(result.message)
 
     def ready(self):
         cycle_checkpoint(lambda:rclpy.spin_once(self.node,timeout_sec=.02))
-        self.spin_until(lambda:self.client._command_publisher.get_subscription_count()>0,8,'no robot API subscriber')
+        self.spin_until(lambda:self.client._command_publisher.get_subscription_count()>0,15,'no robot API subscriber: /real/robot/command; no motion request sent')
         state=self.status()
-        if (state.get('api_capabilities_revision')!='step-cycle-20260908'
-                or not state.get('hardware_execution_enabled') or not state.get('state_fresh')
-                or state.get('robot_motion_done')!=1 or state.get('active_operation')
-                or state.get('recovery_required')):
-            raise RuntimeError('step API is not idle/ready: '+json.dumps(state))
+        validate_status(state)
         return state
 
     def publish_targets(self,payload):
+        if payload.get('job_id')!=self.job_id or not payload.get('plan_sha256'):
+            raise ValueError('prepared plan must belong to this execution and have a hash')
         cycle_checkpoint(lambda:rclpy.spin_once(self.node,timeout_sec=.02))
-        self.spin_until(lambda:self.targets.get_subscription_count()>0,5,'no precision target subscriber')
+        self.spin_until(lambda:self.targets.get_subscription_count()>0,15,'no precision target subscriber: /real/vision/targets; no target sent')
         self.targets.publish(String(data=json.dumps(payload,allow_nan=False)))
-        deadline=time.monotonic()+8
+        deadline=time.monotonic()+20
         while time.monotonic()<deadline:
-            if self.status().get('vision_plan_sha256')==payload['plan_sha256']:return
-            rclpy.spin_once(self.node,timeout_sec=.05)
-        raise TimeoutError('API did not acknowledge prepared precision plan')
+            state=self.status(deadline=deadline)
+            validate_status(state)
+            prepared=state.get('prepared_execution') or {}
+            if (state.get('vision_plan_sha256')==payload['plan_sha256']
+                    and prepared.get('job_id')==self.job_id):
+                return
+            rclpy.spin_once(self.node,timeout_sec=min(.05,max(0.,deadline-time.monotonic())))
+        raise TimeoutError('API did not acknowledge prepared precision plan for execution '+self.job_id)
 
     def call(self,method,*args,timeout=600,**kwargs):
         try:

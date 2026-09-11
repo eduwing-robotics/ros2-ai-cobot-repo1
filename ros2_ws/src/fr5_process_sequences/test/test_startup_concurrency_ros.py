@@ -116,3 +116,36 @@ with (runtime/'launcher.lock').open('a') as a,(runtime/'step_operation.lock').op
             controller.process.terminate();controller.process.wait(timeout=5)
         if controller.thread is not None:controller.thread.join(timeout=3)
         executor.shutdown();thread.join();probe.destroy_node();node.destroy_node()
+
+
+@pytest.mark.parametrize('phase',['PlaceCamera','non-smd','smd'])
+def test_real_step_session_readiness_and_plan_ack_retry_without_motion(isolated,tmp_path,phase):
+    root=Path(__file__).resolve().parents[4]
+    sys.path.insert(0,str(root/'vision_assembly/scripts'))
+    from step_api_transport import StepApiSession
+    node=rclpy.create_node('isolated_step_server');probe=rclpy.create_node('isolated_step_client')
+    requests=[];targets=[];queries=[0];prepared=[None]
+    def status(req,res):
+        queries[0]+=1
+        if queries[0]==1:time.sleep(3.4)
+        data=dict(api_capabilities_revision='step-cycle-20260908',hardware_execution_enabled=True,
+            state_fresh=True,robot_health_clear=True,robot_motion_done=1,robot_mode=0,
+            tool_num=1,work_num=0,held_candidate=None,gripper_feedback_valid=True)
+        if prepared[0] is not None:
+            data.update(vision_plan_sha256=prepared[0]['plan_sha256'],prepared_execution={'job_id':prepared[0]['job_id']})
+        res.success=True;res.message=json.dumps(data);return res
+    def receive_target(msg):targets.append(json.loads(msg.data));prepared[0]=targets[-1]
+    node.create_service(Trigger,'/real/robot/status',status)
+    node.create_subscription(String,'/real/robot/command',lambda msg:requests.append(msg.data),10)
+    node.create_subscription(String,'/real/vision/targets',receive_target,10)
+    executor=MultiThreadedExecutor(num_threads=4);executor.add_node(node)
+    thread=threading.Thread(target=executor.spin);thread.start()
+    try:
+        job=str(uuid4());session=StepApiSession(probe,job,tmp_path/phase)
+        session.ready()
+        assert queries[0]>=2
+        session.publish_targets({'job_id':job,'plan_sha256':phase+'-hash'})
+        assert len(targets)==1 and targets[0]['job_id']==job
+        assert not requests and not session.record['commands']
+    finally:
+        executor.shutdown();thread.join();probe.destroy_node();node.destroy_node()

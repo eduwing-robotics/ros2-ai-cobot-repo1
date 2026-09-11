@@ -1,4 +1,4 @@
-"""Bounded startup RPCs. Only explicitly allowlisted observations may be retried."""
+"""Bounded cycle-wide RPCs. Only explicitly allowlisted observations may be retried."""
 import json
 import sys
 import time
@@ -68,7 +68,7 @@ def _is_readonly(client, request):
     from std_srvs.srv import Trigger
     from rcl_interfaces.srv import GetParameters
     from fairino_msgs.srv import RemoteCmdInterface
-    return ((client.srv_name=='/real/robot/status' and isinstance(request,Trigger.Request))
+    return ((client.srv_name in ('/real/robot/status','/real/assembly/status') and isinstance(request,Trigger.Request))
         or (client.srv_name=='/fr_command_server/get_parameters' and isinstance(request,GetParameters.Request))
         or (client.srv_name=='/fairino_remote_command_service'
             and isinstance(request,RemoteCmdInterface.Request)

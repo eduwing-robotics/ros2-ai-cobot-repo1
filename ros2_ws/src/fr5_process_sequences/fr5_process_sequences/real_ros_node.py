@@ -664,6 +664,7 @@ class RealRobotApiNode(Node):
         # Commands remain mutually exclusive in the default callback group.
         self._feedback_group = MutuallyExclusiveCallbackGroup()
         self._status_group = MutuallyExclusiveCallbackGroup()
+        self._assembly_status_group = MutuallyExclusiveCallbackGroup()
         self.declare_parameter("enable_hardware_execution", False)
         self.declare_parameter("enable_production_assembly", False)
         self.declare_parameter("whole_cycle_boundary_pause", False)

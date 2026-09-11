@@ -53,15 +53,12 @@ def main():
     def stop():
         publish({k:request[k] for k in ('schema','job_id','operation_id')} | {'action':'assembly.stop'})
     try:
-        if not client.wait_for_service(timeout_sec=8):
-            raise RuntimeError('조립 API 연결 실패. 직접 실행으로 우회하지 않습니다. ./run_fr5_assembly_stack.sh api-start 확인')
-        future = client.call_async(Trigger.Request())
-        deadline = time.monotonic()+8
-        while not future.done() and time.monotonic()<deadline:
-            rclpy.spin_once(node, timeout_sec=.1)
-        if not future.done() or not future.result().success:
-            raise RuntimeError('API 상태 조회 실패; 실행 요청 없음')
-        status = json.loads(future.result().message)
+        from startup_service_client import wait_for_startup_services, call_readonly_service
+        wait_for_startup_services((client,))
+        response = call_readonly_service(node, client, Trigger.Request())
+        if not response.success:
+            raise RuntimeError('조립 API 상태 조회 실패: '+response.message)
+        status = json.loads(response.message)
         if not (args.execute or args.check or args.stop or args.recover):
             print(json.dumps(status, ensure_ascii=False, indent=2))
             return 0

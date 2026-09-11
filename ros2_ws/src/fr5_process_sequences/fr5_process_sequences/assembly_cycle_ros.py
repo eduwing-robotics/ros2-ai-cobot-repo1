@@ -44,7 +44,9 @@ class AssemblyCycleRosBridge:
         node._backend._ghost.context_resolver = self.ghost_context
         node.create_subscription(String, '/real/assembly/command', self.command, 10)
         node.create_subscription(String, '/real/robot/event', self.robot_event, 100)
-        node.create_service(Trigger, '/real/assembly/status', self.status)
+        group = getattr(node, '_assembly_status_group', None)
+        options = {'callback_group': group} if group is not None else {}
+        node.create_service(Trigger, '/real/assembly/status', self.status, **options)
         node.create_timer(.5, self.publish_state)
         node.create_timer(.1, self.publish_robot)
 
