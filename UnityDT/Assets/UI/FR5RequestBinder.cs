@@ -104,7 +104,7 @@ namespace MainUnity.UI
         [SerializeField, Min(1)] int quantity = 1;
 
         [Header("완성체 미리보기")]
-        [SerializeField] RenderTexture productPreview;
+        [SerializeField] Sprite productPreview;
 
         VisualElement jobList, interlockList, slotList, previewEmpty;
         Image previewImage;
@@ -916,13 +916,13 @@ namespace MainUnity.UI
             bool ready = productPreview != null;
             if (previewImage != null)
             {
-                previewImage.image = ready ? productPreview : null;
+                previewImage.sprite = ready ? productPreview : null;
                 previewImage.style.display = ready ? DisplayStyle.Flex : DisplayStyle.None;
             }
             if (previewEmpty != null)
                 previewEmpty.style.display = ready ? DisplayStyle.None : DisplayStyle.Flex;
             FR5EmptyState.Detail(previewSource,
-                ready ? productPreview.width + "×" + productPreview.height : "미리보기 없음");
+                ready ? productPreview.rect.width + "×" + productPreview.rect.height : "미리보기 없음");
             if (!ready) FR5EmptyState.Detail(previewDesc, "조립체 미리보기가 연결되지 않았습니다.");
         }
 

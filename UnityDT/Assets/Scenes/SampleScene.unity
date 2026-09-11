@@ -11121,7 +11121,7 @@ MonoBehaviour:
   statusManager: {fileID: 0}
   mainServerBaseUrl: http://127.0.0.1:8000
   quantity: 1
-  productPreview: {fileID: 8400000, guid: 1ce422e539c2cd341aaba5e8f875f4e1, type: 2}
+  productPreview: {fileID: 21300000, guid: c180dc96e454c995ba8ff3489e41174a, type: 3}
 --- !u!4 &1428069491
 Transform:
   m_ObjectHideFlags: 0
