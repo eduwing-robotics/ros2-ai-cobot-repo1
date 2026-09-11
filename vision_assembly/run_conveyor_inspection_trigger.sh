@@ -9,5 +9,4 @@ if [[ "${1:-}" == "--legacy-arrival-trigger" ]]; then
   exec python3 "${project_dir}/vision_assembly/inspection/conveyor_inspection_trigger.py" "$@"
 fi
 # Default production path: arrival is a prerequisite, never a capture request.
-source "${project_dir}/scripts/vision_api_env.sh"
-exec python3 "${project_dir}/vision_assembly/integration/inspection_api.py" "$@"
+exec python3 "${project_dir}/vision_assembly/integration/inspection_ros.py" "$@"

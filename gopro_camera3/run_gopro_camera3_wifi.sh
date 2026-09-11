@@ -11,7 +11,7 @@ exec 9>"${GOPRO_RUNTIME_DIR}/gopro_camera3.lock"
 if ! flock -n 9; then
   echo '[ERROR] GoPro camera3 is already running.' >&2
   echo '[ERROR] Stop the previous GoPro terminal with Ctrl+C, then retry.' >&2
-  exit 1
+  exit 73
 fi
 
 GOPRO_IP="10.5.5.9"

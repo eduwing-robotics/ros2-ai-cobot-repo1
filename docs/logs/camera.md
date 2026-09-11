@@ -1,5 +1,22 @@
 # 카메라 작업 기록
 
+## 2026-09-11 GoPro startup integration and rqt receiver checks
+
+The ROS server bundle starts/reuses GoPro and waits for an actual camera3 frame.
+A portable receiver-side checker and compressed-to-raw rqt viewer were added.
+Live source JPEG reception and a temporary local rqt subscription passed; the
+teammate PC remains unverified. Camera quality/settings and the Endpoint were
+unchanged, and no working camera was restarted. Detailed measurements, lifecycle
+checks and limitations are in [the grouped vision log](vision.md#2026-09-11-gopro-bundle-lifecycle-and-remote-rqt-diagnostics).
+
+## 2026-09-11 Inspection PNG delivery through ROS services
+
+Report/countermeasure PNG delivery now uses bounded ROS service chunks with size
+and SHA256 validation. S22 camera connection, capture settings and optical pipeline
+are unchanged; no actual capture or camera restart was performed. Synthetic-image
+validation and the pending real-camera/network checks are documented in
+[the grouped vision log](vision.md#2026-09-11-ros-only-inspection-request-and-result-transport).
+
 ## 2026-09-11 — Make multi-PC ROS camera discovery explicit
 
 - The live host still publishes `/camera2/image_stream/compressed` at about

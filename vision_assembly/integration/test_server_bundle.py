@@ -18,14 +18,17 @@ def test_default_monitor_and_unchanged_entrypoints():
     assert specs[0][1][-1] == '--monitor-only'
     assert Path(specs[0][1][0]).name == 'run_conveyor_remote_server.sh'
     assert Path(specs[1][1][0]).name == 'run_conveyor_inspection_trigger.sh'
-    assert specs[1][1][1:] == ['--host', '0.0.0.0', '--port', '8766', '--timeout', '300']
-    assert len(specs) == 2  # no camera/legacy trigger/HTTP POST process
+    assert specs[1][1][1:] == ['--timeout', '300']
+    assert len(specs) == 3
+    assert specs[2][0] == 'gopro'
+    assert Path(specs[2][1][0]).name == 'run_gopro_camera3_wifi.sh'
 
 
 @pytest.mark.parametrize('argv', [
     ['--execute'], ['--confirm-motion'], ['--execute', '--monitor-only'],
     ['--legacy-arrival-trigger'], ['--port', '0'], ['--timeout', 'nan'],
-    ['--startup-timeout', '0'],
+    ['--startup-timeout', '0'], ['--gopro-startup-timeout', 'nan'],
+    ['--gopro-transport', 'invalid'],
 ])
 def test_invalid_options_never_arm(argv):
     with pytest.raises(SystemExit):
@@ -76,8 +79,8 @@ class Graph:
 def preflight_env(monkeypatch):
     monkeypatch.setenv('KSMC_VISION_API_TOKEN', 'x' * 64)
     monkeypatch.setattr(bundle, 'existing_local_servers', lambda: [])
-    monkeypatch.setattr(bundle, 'check_port', lambda *_: None)
     monkeypatch.setattr(bundle, 'check_lock', lambda *_: None)
+    monkeypatch.setattr(bundle, 'check_interfaces', lambda: None)
     monkeypatch.setattr(bundle.os, 'access', lambda *_: True)
 
 
@@ -97,10 +100,9 @@ def test_preflight_allows_remote_client_names(preflight_env):
     bundle.preflight(bundle.parse_args([]), Graph(['/conveyor/stop']), threading.Event(), discovery_seconds=0)
 
 
-def test_preflight_requires_original_token(preflight_env, monkeypatch):
+def test_preflight_needs_no_http_token(preflight_env, monkeypatch):
     monkeypatch.delenv('KSMC_VISION_API_TOKEN')
-    with pytest.raises(RuntimeError, match='Missing fixed'):
-        bundle.preflight(bundle.parse_args([]), Graph(), threading.Event(), discovery_seconds=0)
+    bundle.preflight(bundle.parse_args([]), Graph(), threading.Event(), discovery_seconds=0)
 
 
 class Child:
@@ -205,22 +207,8 @@ def test_check_mode_does_not_start_servers(preflight_env, monkeypatch):
     assert bundle.main(['--check']) == 0
 
 
-def test_port_conflict_does_not_disconnect_listener():
-    # Optional socket test; run outside restricted network sandbox.
-    import socket
-    with socket.socket() as server:
-        server.bind(('127.0.0.1', 0))
-        server.listen()
-        port = server.getsockname()[1]
-        with pytest.raises(RuntimeError, match='left untouched'):
-            bundle.check_port('0.0.0.0', port)
-        with socket.create_connection(('127.0.0.1', port), timeout=1):
-            connection, _ = server.accept()
-            connection.close()
-
-
 def test_stopping_bundle_does_not_need_camera_or_api_requests():
-    # Contract check: the supervisor only builds the unchanged two entrypoints.
+    # No service requests, Endpoint or S22 launcher is part of this bundle.
     assert bundle.SERVICES == {'/conveyor/move_to_assembly', '/conveyor/move_to_inspection',
                                '/conveyor/stop', '/conveyor/reset'}
     assert all('legacy' not in str(argv) and 's22_conveyor' not in str(argv)
@@ -256,3 +244,129 @@ def test_ros_graph_destroy_failure_still_shuts_down_context():
     with pytest.raises(RuntimeError, match='destruction'):
         graph.__exit__()
     assert calls == ['shutdown']
+
+
+def test_readiness_requires_actual_providers_and_all_typed_services():
+    from types import SimpleNamespace
+    calls = []
+    class Missing(Exception):
+        pass
+    available = {}
+    def query(name, namespace):
+        calls.append((name, namespace))
+        if name not in available:
+            raise Missing()
+        return available[name]
+    graph = bundle.RosGraph()
+    graph.rclpy = SimpleNamespace(node=SimpleNamespace(NodeNameNonExistentError=Missing))
+    graph.node = SimpleNamespace(get_service_names_and_types_by_node=query)
+    assert not graph.ready()
+    available['conveyor_remote_server'] = [(n, ['std_srvs/srv/Trigger']) for n in bundle.SERVICES]
+    assert not graph.ready()
+    available['vision_inspection_server'] = [(n, [t]) for n, t in bundle.INSPECTION_SERVICES.items()]
+    assert graph.ready()
+    available['vision_inspection_server'][0] = ('/vision/inspection/submit', ['std_srvs/srv/Trigger'])
+    assert not graph.ready()
+    assert all(ns == '/' for _, ns in calls)
+
+
+def test_gopro_usb_skip_and_reuse_options():
+    args = bundle.parse_args(['--gopro-transport', 'usb'])
+    assert Path(bundle.commands(args)[2][1][0]).name == 'run_gopro_camera3.sh'
+    assert len(bundle.commands(args, reuse_gopro=True)) == 2
+    assert len(bundle.commands(bundle.parse_args(['--without-gopro']))) == 2
+
+
+def test_gopro_existing_lock_is_reused_without_releasing_it(tmp_path):
+    root = tmp_path / 'project'
+    lock = root / 'runtime/gopro_camera3.lock'
+    lock.parent.mkdir(parents=True)
+    lock.write_text('preserved')
+    proc = tmp_path / 'proc'
+    proc.mkdir()
+    with lock.open('r') as handle:
+        fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        assert bundle.gopro_running(proc, root)
+        assert bundle.gopro_running(proc, root)
+    assert not bundle.gopro_running(proc, root)
+    assert lock.read_text() == 'preserved'
+
+
+@pytest.mark.parametrize('spelling', ['absolute', 'relative', 'dot'])
+def test_gopro_process_paths_resolve_before_reuse(tmp_path, spelling):
+    root = tmp_path / 'project'
+    root.mkdir()
+    proc = tmp_path / 'proc'
+    entry = proc / '123'
+    entry.mkdir(parents=True)
+    (entry / 'cwd').symlink_to(root, target_is_directory=True)
+    script = 'gopro_camera3/notebooks/gopro_camera3_node.py'
+    arg = str(root / script) if spelling == 'absolute' else ('./' if spelling == 'dot' else '') + script
+    (entry / 'cmdline').write_bytes(b'python3\0' + arg.encode() + b'\0')
+    assert bundle.gopro_running(proc, root)
+    (entry / 'cmdline').write_bytes(b'python3\0/other/gopro_camera3_node.py\0')
+    assert not bundle.gopro_running(proc, root)
+
+
+def test_gopro_lock_race_reuses_only_the_external_owner(monkeypatch):
+    cleaned = []
+    stop = threading.Event()
+    monkeypatch.setattr(bundle, 'cleanup', lambda children: cleaned.extend(children))
+    def ready():
+        stop.set()
+        return True
+    bundle.supervise([('server', ['server']), ('gopro', ['gopro'])], ready, stop, 2,
+        popen=lambda argv, **_: Child(73 if argv == ['gopro'] else None),
+        reuse_after_exit=lambda name, code: name == 'gopro' and code == 73)
+    assert [name for name, _ in cleaned] == ['server']
+
+
+def test_gopro_failure_still_cleans_up_all_owned_servers(monkeypatch):
+    cleaned = []
+    monkeypatch.setattr(bundle, 'cleanup', lambda children: cleaned.extend(children))
+    with pytest.raises(RuntimeError, match='gopro exited'):
+        bundle.supervise([('server', ['server']), ('gopro', ['gopro'])], lambda: False,
+            threading.Event(), 2, popen=lambda argv, **_: Child(1 if argv == ['gopro'] else None),
+            reuse_after_exit=lambda name, code: name == 'gopro' and code == 73)
+    assert [name for name, _ in cleaned] == ['server', 'gopro']
+
+
+def test_gopro_topic_name_without_recent_frame_is_not_ready(monkeypatch):
+    from types import SimpleNamespace
+    graph = bundle.RosGraph()
+    graph.node = object()
+    graph.executor = SimpleNamespace(spin_once=lambda **_k: None)
+    monkeypatch.setattr(bundle.time, 'monotonic', lambda: 100)
+    graph.last_gopro_frame = None
+    assert not graph.gopro_ready()
+    graph.last_gopro_frame = 99
+    assert graph.gopro_ready()
+    graph.last_gopro_frame = 97
+    assert not graph.gopro_ready()
+
+
+@pytest.mark.parametrize('running,without,expected', [(True, False, 2), (False, False, 3), (True, True, 2)])
+def test_main_gopro_plan_preserves_external_ownership(tmp_path, monkeypatch, running, without, expected):
+    calls = []
+    class FakeGraph:
+        def __enter__(self): return self
+        def __exit__(self, *_): pass
+        def ready(self): return True
+        def gopro_ready(self): return True
+        def gopro_publisher_exists(self): return False
+        def watch_gopro(self): calls.append('watch')
+    monkeypatch.setattr(bundle, 'ROOT', tmp_path)
+    monkeypatch.setattr(bundle, 'RosGraph', FakeGraph)
+    monkeypatch.setattr(bundle, 'gopro_running', lambda: running)
+    monkeypatch.setattr(bundle, 'preflight', lambda *_: None)
+    monkeypatch.setattr(bundle.signal, 'signal', lambda *_: None)
+    def supervise(specs, ready, stop, timeout, **kwargs):
+        assert len(specs) == expected
+        assert ready()
+        assert timeout == (20 if without else 45)
+        assert kwargs['reuse_after_exit']('gopro', 73) == running
+        assert not kwargs['reuse_after_exit']('gopro', 1)
+        return 0
+    monkeypatch.setattr(bundle, 'supervise', supervise)
+    assert bundle.main(['--without-gopro'] if without else []) == 0
+    assert calls == ([] if without else ['watch'])

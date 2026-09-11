@@ -1,3 +1,5 @@
+> **2026-09-11: 현재 전송은 ROS 2입니다. [새 ROS 계약](ROS_API.md)을 적용하세요. 아래 HTTP 설명은 이전 계약으로 보존합니다.**
+
 # Vision request/pull API — 2026-09-07
 
 **기본 전송 계약: JSON + `02_annotated_report.png` HTTP 개별 조회. ZIP 전송은 제거되었습니다. 대책서 전용 슬롯 확대 PNG는 선택 조회로 추가됩니다.**

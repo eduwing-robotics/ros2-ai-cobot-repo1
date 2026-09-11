@@ -1,0 +1,18 @@
+string inspection_id
+# Empty: annotated report. ALL or a returned slot_code: countermeasure PNG.
+string slot_code
+uint64 offset
+# 1..65536 bytes per response. Reassemble and verify total size and SHA256.
+uint32 max_bytes
+---
+bool success
+string error_code
+string inspection_id
+string slot_code
+string filename
+string mime_type
+string sha256
+uint64 total_bytes
+uint64 offset
+bool eof
+uint8[<=65536] data

@@ -20,6 +20,7 @@ import numpy as np
 import rclpy
 import requests
 from cv_bridge import CvBridge
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile, ReliabilityPolicy
 from sensor_msgs.msg import CompressedImage, Image
@@ -535,7 +536,7 @@ def main():
             args.jpeg_quality,
         )
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
         if node is not None:

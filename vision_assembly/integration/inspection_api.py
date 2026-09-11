@@ -2,9 +2,7 @@
 
 No DB writes, outbound uploads, or motion commands. ROS imports are CLI-only.
 """
-import argparse
 import copy
-import fcntl
 import hashlib
 import hmac
 import json
@@ -211,8 +209,9 @@ class Store:
 
 
 class Runner:
-    def __init__(self, timeout, lock_fd):
+    def __init__(self, timeout, lock_fd, source_topic='/vision/inspection/submit'):
         self.timeout, self.lock_fd = timeout, lock_fd
+        self.source_topic = source_topic
         self.stop = threading.Event()
 
     def __call__(self, request, directory):
@@ -224,7 +223,7 @@ class Runner:
         with (directory / 'execution.log').open('wb') as log:
             child = subprocess.Popen([sys.executable, str(ROOT /
                 'vision_assembly/inspection/triggered_inspection_once.py'),
-                '--event-output', str(event), '--source-topic', 'sequencer_http'],
+                '--event-output', str(event), '--source-topic', self.source_topic],
                 env=env, stdout=log, stderr=subprocess.STDOUT, start_new_session=True,
                 pass_fds=(self.lock_fd,))
             deadline = time.monotonic() + self.timeout
@@ -349,50 +348,10 @@ def handler(store, token):
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--host', default='127.0.0.1')
-    parser.add_argument('--port', type=int, default=8766)
-    parser.add_argument('--timeout', type=float, default=300)
-    parser.add_argument('--state-dir', type=Path, default=ROOT/'runtime/inspection/api')
-    args = parser.parse_args()
-    if not 0 < args.timeout <= 3600:
-        parser.error('--timeout must be in (0, 3600] seconds')
-    token = os.environ.get('KSMC_VISION_API_TOKEN', '')
-    if len(token) < 32:
-        parser.error('KSMC_VISION_API_TOKEN must contain at least 32 characters')
-    LOCK.parent.mkdir(parents=True, exist_ok=True)
-    lock = LOCK.open('a+')
-    fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    import rclpy
-    from std_msgs.msg import Bool
-    from rclpy.qos import qos_profile_sensor_data
-    rclpy.init()
-    node = rclpy.create_node('vision_inspection_api')
-    station = Station()
-    subscriptions = [node.create_subscription(Bool, topic,
-        lambda msg, key=key: station.update(key, msg.data), qos_profile_sensor_data)
-        for key, topic in [('moving', '/conveyor/moving'),
-            ('arrived', '/vision/conveyor/inspection/stop_trigger')]]
-    runner = Runner(args.timeout, lock.fileno())
-    store = Store(args.state_dir, station.ready, runner)
-    server = ThreadingHTTPServer((args.host, args.port), handler(store, token))
-    thread = threading.Thread(target=server.serve_forever, daemon=True)
-    thread.start()
-    try:
-        rclpy.spin(node)
-    except KeyboardInterrupt:
-        pass
-    finally:
-        store.closing = True
-        runner.stop.set()
-        server.shutdown()
-        server.server_close()
-        if store.thread:
-            store.thread.join()
-        node.destroy_node()
-        if rclpy.ok():
-            rclpy.shutdown()
-        lock.close()
+    # Historical executable name now uses ROS too. HTTP helpers above remain
+    # only for legacy fixtures; production launchers cannot open an HTTP port.
+    from inspection_ros import main as ros_main
+    ros_main()
 
 
 if __name__ == '__main__':

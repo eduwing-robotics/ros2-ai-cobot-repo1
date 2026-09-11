@@ -1,5 +1,22 @@
 # Conveyor Work Log
 
+## 2026-09-11 GoPro included in the ROS server bundle
+
+GoPro now starts with the conveyor/inspection bundle unless disabled, while an
+existing GoPro remains externally owned. A failed newly owned GoPro process uses
+the existing peer-shutdown path; no conveyor motion/stop criteria or Endpoint
+were changed and no motor command was sent. Tests and remaining live startup /
+remote-viewer checks are in [the grouped vision log](vision.md#2026-09-11-gopro-bundle-lifecycle-and-remote-rqt-diagnostics).
+
+## 2026-09-11 ROS-only conveyor and inspection bundle
+
+The integrated launcher now starts ROS inspection services alongside the existing
+ROS conveyor controller and verifies typed server discovery. Conveyor motion,
+stop, arrival and timeout rules are unchanged; capture still requires an explicit
+Sequencer request. No robot/conveyor command or teammate Endpoint action was sent.
+Software and isolated DDS validation, migration scope and remaining live-system
+checks are recorded once in [the grouped vision log](vision.md#2026-09-11-ros-only-inspection-request-and-result-transport).
+
 ## 2026-09-11 — Prevent duplicate HQ teardown and restore persistent services
 
 - The 11:56 KST failure was traced to the one-command cell, not ROS domain

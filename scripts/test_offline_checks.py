@@ -17,6 +17,7 @@ def test_plan_uses_only_tests_not_camera_or_motor_launchers():
         assert 'config/ksmc.env' not in command
     api = next(r for r in plan if r['name'] == 'api_and_bundle')
     assert 'not http_roundtrip' in api['command'][-1]
+    assert 'not http_countermeasure_roundtrip' in api['command'][-1]
     assert 'not port_conflict_does_not_disconnect_listener' in api['command'][-1]
     assert '-k' not in next(r for r in runner.build_plan(with_loopback=True)
                             if r['name'] == 'api_and_bundle')['command']

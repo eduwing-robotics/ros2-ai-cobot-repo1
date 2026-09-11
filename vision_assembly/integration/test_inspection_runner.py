@@ -39,6 +39,7 @@ def test_runner_packages_only_final_report(tmp_path, monkeypatch, decision):
     assert 'KSMC_VISION_CONTEXT_FILE' not in calls[0][1]['env']
     assert calls[0][1]['start_new_session'] is True
     assert calls[0][1]['pass_fds'] == (17,)
+    assert calls[0][0][-2:] == ['--source-topic', '/vision/inspection/submit']
     assert signals == [(123456, api.signal.SIGTERM), (123456, api.signal.SIGKILL)]
 
 

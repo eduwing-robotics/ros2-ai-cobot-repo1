@@ -16,7 +16,8 @@ not-ready/trigger와 유한 이동 timeout은 유지하고, 로봇 `/cmd_vel` �
 패키지다. 원격 API는 HTTP가 아니라 ROS 2 Jazzy 토픽과 서비스로 제공된다.
 
 2026-09-08: 서버 PC에서는 [통합 실행기](../../docs/CONVEYOR_VISION_SERVER.md)로
-컨베이어 원격 서버와 Vision 검사 HTTP 서버를 한 터미널에서 관리할 수 있다.
+컨베이어 원격 서버와 Vision 검사 ROS 서버를 한 터미널에서 관리할 수 있다.
+검사 요청·결과·PNG의 새 계약은 [Vision ROS API](../vision_sequencer_api/ROS_API.md)를 따른다.
 이 폴더의 ROS 계약은 그대로이며 팀원 코드를 교체할 필요는 없다. 기존 서버 운영 중에는
 그대로 두고, 정지·검사 완료를 확인한 뒤 다음 실행부터 전환한다. Unity 예제
 `ConveyorRosClient.cs`를 사용하는 씬은 최신 파일로 교체해야 상태 수신 간격만으로

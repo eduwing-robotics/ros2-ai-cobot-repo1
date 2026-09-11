@@ -2,7 +2,7 @@
 <package format="3">
   <name>vision_interfaces</name>
   <version>0.1.0</version>
-  <description>Messages shared by the vision server and main server.</description>
+  <description>Messages and inspection services shared by vision, Sequencer and main server.</description>
   <maintainer email="project@example.com">Project Team</maintainer>
   <license>Apache-2.0</license>
 

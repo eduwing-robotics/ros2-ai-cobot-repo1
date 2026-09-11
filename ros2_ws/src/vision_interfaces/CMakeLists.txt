@@ -10,6 +10,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Detections.msg"
   "msg/Inspection.msg"
   "msg/VisionStatus.msg"
+  "srv/SubmitInspection.srv"
+  "srv/GetInspection.srv"
+  "srv/GetInspectionImage.srv"
   DEPENDENCIES std_msgs
 )
 

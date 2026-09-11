@@ -43,7 +43,7 @@ def build_plan(root=ROOT, with_loopback=False):
                           for p in (root/directory).glob('test_*.py'))
     api = [str(ml), *pytest, 'vision_assembly/integration']
     if not with_loopback:
-        api += ['-k', 'not http_roundtrip and not port_conflict_does_not_disconnect_listener']
+        api += ['-k', 'not http_roundtrip and not http_countermeasure_roundtrip and not port_conflict_does_not_disconnect_listener']
     return [
         dict(name='hybrid', command=[str(ml), *pytest, 'vision_assembly/hybrid_inspection'],
              required=[str(ml)]),
@@ -56,7 +56,8 @@ def build_plan(root=ROOT, with_loopback=False):
              required=[system, *map(str, ros_paths)]),
         dict(name='viewer', command=['node', 'vision_assembly/integration/test_demo_viewer.cjs'],
              required=['node']),
-        dict(name='runner', command=[str(ml), *pytest, 'scripts/test_offline_checks.py'],
+        dict(name='runner', command=[str(ml), *pytest, 'scripts/test_offline_checks.py',
+                                    'scripts/test_remote_camera_view.py'],
              required=[str(ml)]),
         dict(name='source_syntax', command=[system, 'scripts/run_offline_checks.py', '--syntax-only'],
              required=[system, 'bash']),

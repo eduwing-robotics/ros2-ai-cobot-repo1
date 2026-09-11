@@ -1,5 +1,115 @@
 # AI/Vision 작업 기록
 
+## 2026-09-11 GoPro bundle lifecycle and remote rqt diagnostics
+
+- The user requested GoPro startup with the conveyor/inspection server and
+  explicitly kept the teammate ROS-TCP Endpoint out of scope. The ROS bundle
+  now starts GoPro by default through the existing Wi-Fi launcher; USB is
+  selectable with `--gopro-transport usb`, and `--without-gopro` retains the
+  server-only path. Existing GoPro locks, resolved launcher/node paths, or a
+  discovered compatible camera3 publisher cause reuse without ownership.
+  The two launchers report lock contention with exit 73 so a concurrent owner
+  can also be reused. Only newly created process groups are shut down.
+- Startup readiness requires the existing typed conveyor/inspection services
+  plus a recent nonempty CompressedImage sample from camera3, rather than
+  topic discovery alone. Default startup budget with GoPro is 45 seconds.
+  The private ROS graph context now has its own executor, fixing a failure
+  exposed by the live first-frame check. GoPro handles ExternalShutdownException
+  through its normal camera/decoder cleanup. No S22 or Endpoint lifecycle,
+  motion interlock, inspection model, threshold or fusion rule was changed.
+  GoPro hardware preview control still uses its existing device protocol;
+  application-facing camera output remains ROS.
+- Read-only live probes received S22 at 29.72 FPS (960x540), GoPro at 12.96 FPS
+  (1280x720), and the conveyor overlay at 12.35 FPS (960x540), with valid JPEG
+  decoding. One rqt node subscribed to the overlay, and the other to
+  `/vision/assembly/image/compressed`, which also delivered 39 valid frames
+  in five seconds. This establishes publisher operation on this host; it
+  does not establish delivery/rendering on the unspecified teammate PC.
+- Added the portable `team_handoff/rqt_camera` viewer/check tool. On the viewing
+  PC it subscribes with BEST_EFFORT, validates compressed-image decoding, and
+  only then starts its own rqt on a unique raw bgr8 topic. It keeps the latest
+  frame, caps local display at 15 FPS, isolates rqt settings in a temporary
+  directory, and closes its owned viewer after a valid-frame timeout rather
+  than silently retaining a frozen image. Check mode creates no publisher or
+  GUI. No source-camera FPS, JPEG quality, QoS, topic or network setting was
+  changed. This avoids reliance on rqt's discovery-time compressed-label
+  interpretation and does not require its compressed transport plugin.
+  The upstream implementation distinguishes a displayed topic label from
+  base topic/transport item data:
+  [rqt_image_view source](https://github.com/ros-visualization/rqt_image_view/blob/rolling-devel/src/rqt_image_view/image_view.cpp).
+- Validation: 175 related offline tests passed, with two explicitly opt-in DDS
+  tests skipped and two unchanged legacy HTTP socket tests excluded. Both
+  isolated localhost-domain-219 DDS tests separately passed, including the
+  private-context GoPro watcher regression. Shell syntax passed. The new
+  live check tool received 147 S22 frames at 29.61 FPS and 63 GoPro frames at
+  12.74 FPS over separate five-second probes; valid decode counts were 67
+  and 54 because only the local decode/display rate is capped. A temporary
+  offscreen rqt subscribed to the new raw Image output, and a parallel probe
+  received four 960x540 bgr8 frames (1,555,200 bytes each). The existing GoPro
+  reuse and recent-frame predicates both returned true. Existing camera,
+  rqt and Endpoint processes were not stopped or restarted.
+- Also corrected the offline-check selector to exclude the separately named
+  legacy countermeasure HTTP socket test in restricted mode. Added the viewer
+  tests to the allowlisted checks. No actual still capture, robot/conveyor
+  command, inspection request, DB write or production server replacement was
+  performed. Camera cold-start was exercised through lifecycle mocks, not by
+  interrupting the working camera. The teammate's affected topic/IP and a
+  receiver-side check are still required to establish the remote rqt root
+  cause and verify screen recovery; no cross-PC recovery claim is made.
+
+## 2026-09-11 ROS-only inspection request and result transport
+
+- Replaced the production inspection HTTP entrypoint with `inspection_ros.py`.
+  Both `run_conveyor_inspection_trigger.sh` and the historical executable
+  `inspection_api.py` now start ROS services; no production HTTP listener,
+  Bearer-token dependency, or outbound result upload is started. The integrated
+  conveyor/vision launcher checks all typed services on their server nodes,
+  checks generated native type support before launch, and retains separate
+  motion and inspection processes. Existing process/lock refusal and owned
+  child-group cleanup remain in place. The user explicitly excluded the
+  teammate-managed ROS-TCP Endpoint; its code, launch and configuration were
+  not changed.
+- Added SubmitInspection, GetInspection and GetInspectionImage in
+  `vision_interfaces`, exposed at `/vision/inspection/submit`, `/get`, and
+  `/get_image`, plus Trigger `/health` and a reliable transient-local `/state`
+  notification topic (depth 32). Requests retain the Sequencer UUID/job/unit
+  identity, single-flight execution, duplicate suppression and durable restart
+  recovery in `runtime/inspection/api`. The old backend is reused; HTTP helper
+  functions remain solely for legacy compatibility fixtures, not a CLI server.
+- Image queries return at most 65,536 bytes and validate PNG signature, stored
+  size and SHA256; the file limit is 64 MiB. Report and countermeasure images
+  (ALL and per-slot) use the same ROS service. Wire records replace historical
+  HTTP image paths with ROS service metadata without mutating stored records.
+  The provided Python client checks chunk identity/ranges and final hash before
+  replacing a completed output file. State notifications can coalesce and retain
+  only recent changes; durable ID-based get remains authoritative.
+- Re-read the frozen inspection fusion contract. No inspection model, threshold,
+  slot alignment, S22 capture settings or safety input semantics were changed.
+  Capture still requires an explicit request plus fresh stopped/arrived samples
+  held for 0.35 seconds, with another admission check before capture. Existing
+  worker timeout, camera lock, interrupted-request failure and engine recapture
+  policy remain. COMPLETED/UNKNOWN and ADVISORY_ONLY are preserved; transport
+  success is never a production PASS.
+- Validation: generated ROS interfaces built successfully in `ros2_ws`, native
+  type support loaded, and changed shell/Python syntax passed. Integration
+  regression: 120 tests passed with the opt-in DDS test skipped and two legacy
+  HTTP socket tests excluded; those two legacy tests separately passed using
+  temporary localhost fixtures after sandbox socket restrictions were lifted.
+  One additional actual ROS roundtrip test passed on localhost-only domain 219
+  with an inert runner and a 179,208-byte synthetic PNG split across three
+  responses. It checked admission, duplicate suppression, UNKNOWN, typed image
+  serialization/reassembly, state notification, and server-vs-client graph
+  readiness. No `/cmd_vel` topic was present in that isolated graph.
+- No actual camera capture, robot/conveyor command, Endpoint action, MainServer
+  upload, DB write or Sequencer production request was issued. No live server
+  was stopped/replaced by this work; a read-only process-name check found no
+  conveyor/inspection server at verification time. Live startup is left to the
+  normal launch command. Teammate consumers must build the updated interfaces
+  and replace HTTP calls; cross-PC DDS throughput/reconnection and real S22
+  capture were not measured. ROS uses existing network access controls rather
+  than the former HTTP Bearer token. See
+  `team_handoff/vision_sequencer_api/ROS_API.md` for the migration contract.
+
 ## 2026-09-11 Inspection runtime completion path and release gate
 
 - Re-read `vision_assembly/config/inspection_fusion_contract.json` before the
