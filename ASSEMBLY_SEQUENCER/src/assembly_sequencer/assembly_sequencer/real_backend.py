@@ -73,9 +73,24 @@ class RealBackend:
 
         snapshot = unavailable_snapshot("")
         snapshot.update(runtime_mode="real", equipment_ready=False,
-                        command_service_available=self.is_available())
-        robot = await self._read_status(self._status_client)
-        assembly = await self._read_status(self._assembly_status_client)
+                        command_service_available=self.is_available(),
+                        readiness=self._readiness_snapshot())
+        robot_available = False
+        assembly_available = False
+        try:
+            robot = await self._read_status(self._status_client)
+            robot_available = True
+            assembly = await self._read_status(self._assembly_status_client)
+            assembly_available = True
+        except (RuntimeError, TimeoutError, ValueError, json.JSONDecodeError) as error:
+            snapshot["readiness"] = self._readiness_snapshot()
+            snapshot["readiness"]["robot_status_available"] = robot_available
+            snapshot["readiness"]["assembly_status_available"] = assembly_available
+            snapshot.update(error_code="NOT_READY", message=str(error))
+            return snapshot
+        snapshot["readiness"] = self._readiness_snapshot()
+        snapshot["readiness"]["robot_status_available"] = True
+        snapshot["readiness"]["assembly_status_available"] = True
         snapshot["robot_api_status"] = robot
         snapshot["production_contract"] = assembly.get("production_contract")
         try:
@@ -84,6 +99,39 @@ class RealBackend:
         except RuntimeError as error:
             snapshot.update(error_code="NOT_READY", message=str(error))
         return snapshot
+
+    def _readiness_snapshot(self):
+        with self._lock:
+            state = dict(self._conveyor_state) if self._conveyor_state is not None else None
+            age = time.monotonic() - self._conveyor_received
+        conveyor_fresh = state is not None and age <= api.CONVEYOR_FRESHNESS_SECONDS
+        phase = state.get("state", "") if conveyor_fresh else ""
+        stopped = (phase in {"IDLE", "ASSEMBLY_STOP", "INSPECTION_STOP"} and
+                   state.get("moving") is False) if conveyor_fresh else False
+        return {
+            "ros_domain_id": self._node.context.get_domain_id(),
+            "robot_status_available": False,
+            "assembly_status_available": False,
+            "conveyor_state_fresh": conveyor_fresh,
+            "conveyor_services_available": all(client.wait_for_service(timeout_sec=0.0) for client in (
+                self._conveyor_assembly, self._conveyor_inspection, self._conveyor_stop)),
+            "conveyor_state": phase,
+            "conveyor_armed": state.get("armed") is True if conveyor_fresh else False,
+            "conveyor_stopped": stopped,
+            "vision_signal_fresh": state.get("vision_ready_fresh") is True if conveyor_fresh else False,
+            "vision_ready": state.get("vision_ready") is True if conveyor_fresh else False,
+            "vision_http_configured": self._vision_configuration_valid(),
+        }
+
+    def _vision_configuration_valid(self):
+        origin = urlsplit(self._vision_url if isinstance(self._vision_url, str) else "")
+        origin_valid = (origin.scheme in {"http", "https"} and bool(origin.hostname) and
+                        not origin.username and not origin.password and origin.path in {"", "/"} and
+                        not origin.query and not origin.fragment)
+        token = os.environ.get("KSMC_VISION_API_TOKEN", "")
+        token_valid = (len(token) >= 32 and token.isascii() and
+                       not any(c.isspace() or ord(c) < 32 or ord(c) == 127 for c in token))
+        return origin_valid and token_valid and bool(os.environ.get("DEFECT_IMAGE_ROOT", "").strip())
 
     def _validate_readiness(self, robot, assembly):
         production = assembly.get("production_contract", {})

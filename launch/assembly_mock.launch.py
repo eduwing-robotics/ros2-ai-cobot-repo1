@@ -1,6 +1,10 @@
 """Start the complete Mock assembly runtime."""
 
 from ament_index_python.packages import get_package_share_directory
+import json
+import os
+from pathlib import Path
+
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, SetEnvironmentVariable, TimerAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
@@ -10,6 +14,17 @@ from launch_ros.parameter_descriptions import ParameterValue
 
 
 def generate_launch_description():
+    config_path = Path(__file__).with_name(".env.mock")
+    environment = {}
+    if config_path.exists():
+        if config_path.stat().st_uid != os.getuid() or config_path.stat().st_mode & 0o077:
+            raise RuntimeError(f"{config_path}: current-user ownership and chmod 600 are required")
+        environment = json.loads(config_path.read_text())
+        if not isinstance(environment, dict) or any(
+            key not in {"MAIN_SERVER_DB_DSN", "PRODUCTION_DB_DSN", "DEFECT_IMAGE_ROOT"}
+            or not isinstance(value, str) for key, value in environment.items()
+        ):
+            raise RuntimeError(f"{config_path}: invalid runtime environment")
     robot_share = get_package_share_directory("fairino5_v6_moveit2_config")
     sequencer_share = get_package_share_directory("assembly_sequencer")
     mock_node = Node(
@@ -19,6 +34,8 @@ def generate_launch_description():
                     ("/unity/assembly/feedback", "/mock_db_mvp/internal/assembly/feedback")],
     )
     return LaunchDescription([
+        *[SetEnvironmentVariable(key, EnvironmentVariable(key, default_value=value))
+          for key, value in environment.items() if key != "MAIN_SERVER_DB_DSN"],
         SetEnvironmentVariable("ROS_DOMAIN_ID", "42"),
         SetEnvironmentVariable("ASSEMBLY_SEQUENCER_MODE", "mock"),
         DeclareLaunchArgument("endpoint_ip", default_value="0.0.0.0"),

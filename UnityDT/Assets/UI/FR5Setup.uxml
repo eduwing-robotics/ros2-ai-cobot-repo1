@@ -20,6 +20,8 @@
                     <ui:Label text="01   모드 · 시스템 연결" class="panel__title" />
                     <ui:Label text="운전 모드" class="setup-caption" />
                     <ui:Label name="setup-mode" text="미확인" class="setup-detail" />
+                    <ui:Label text="ROS Domain ID" class="setup-caption" />
+                    <ui:Label name="setup-domain" text="미확인" class="setup-detail" />
                     <ui:Label text="MainServer · DB" class="setup-caption" />
                     <ui:Label name="setup-api" text="조회 대기" class="setup-detail" />
                     <ui:Label text="Sequencer" class="setup-caption" />
@@ -32,9 +34,13 @@
                     <ui:Label name="setup-robot" text="미확인" class="setup-detail" />
                     <ui:Label text="그리퍼" class="setup-caption" />
                     <ui:Label name="setup-gripper" text="미확인" class="setup-detail" />
-                    <ui:Label text="검사 카메라" class="setup-caption" />
+                    <ui:Label text="검사 카메라 영상" class="setup-caption" />
                     <ui:Label name="setup-camera" text="미확인" class="setup-detail" />
-                    <ui:Label text="컨베이어 준비 · 설비 reset 완료: 미확인. 개별 상태 조회가 제공되지 않습니다." class="setup-footnote" />
+                    <ui:Label text="컨베이어" class="setup-caption" />
+                    <ui:Label name="setup-conveyor" text="미확인" class="setup-detail" />
+                    <ui:Label text="불량검사" class="setup-caption" />
+                    <ui:Label name="setup-inspection" text="미확인" class="setup-detail" />
+                    <ui:Label text="준비상태는 Sequencer의 설비 API와 heartbeat를 읽기 전용으로 표시합니다." class="setup-footnote" />
                 </ui:VisualElement>
                 <ui:VisualElement class="panel setup-card">
                     <ui:Label text="03   좌표 보정" class="panel__title" />

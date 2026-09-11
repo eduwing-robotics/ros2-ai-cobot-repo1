@@ -1145,6 +1145,11 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(snapshot["equipment_ready"])
         self.assertFalse(snapshot["robot_api_status"]["hardware_execution_enabled"])
         self.assertFalse(backend._pending_calls)
+        self.assertEqual(snapshot["readiness"]["ros_domain_id"], 5)
+        self.assertTrue(snapshot["readiness"]["robot_status_available"])
+        self.assertTrue(snapshot["readiness"]["assembly_status_available"])
+        self.assertFalse(snapshot["readiness"]["conveyor_state_fresh"])
+        self.assertFalse(snapshot["readiness"]["vision_http_configured"])
 
     async def test_v2_capability_is_read_from_nested_contract(self):
         backend, node = self.backend()

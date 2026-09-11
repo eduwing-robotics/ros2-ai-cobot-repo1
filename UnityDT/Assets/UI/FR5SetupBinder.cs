@@ -24,7 +24,7 @@ namespace MainUnity.UI
         }
 
         FR5ShellBinder shell;
-        Label summary, reasons, mode, robot, gripper, cameraStatus, tray, board, recipe, product, slots;
+        Label summary, reasons, mode, domain, robot, gripper, cameraStatus, conveyor, inspection, tray, board, recipe, product, slots;
         Label jobId, jobNote;
         Button refresh;
         Coroutine observations;
@@ -62,9 +62,12 @@ namespace MainUnity.UI
             summary = root.Q<Label>("setup-summary");
             reasons = root.Q<Label>("setup-reasons");
             mode = root.Q<Label>("setup-mode");
+            domain = root.Q<Label>("setup-domain");
             robot = root.Q<Label>("setup-robot");
             gripper = root.Q<Label>("setup-gripper");
             cameraStatus = root.Q<Label>("setup-camera");
+            conveyor = root.Q<Label>("setup-conveyor");
+            inspection = root.Q<Label>("setup-inspection");
             tray = root.Q<Label>("setup-tray");
             board = root.Q<Label>("setup-board");
             recipe = root.Q<Label>("setup-recipe");
@@ -95,17 +98,35 @@ namespace MainUnity.UI
             bool mock = uiMaster != null && uiMaster.IsSimulated;
             mode.text = uiMaster?.RobotMaster == null ? "미확인 · 로봇 연결 참조 없음" :
                 (mock ? "MOCK · 시뮬레이션" : "REAL · 실제 설비") + "\n운전 중 모드 변경 불가";
+            var readiness = shell?.LatestEquipmentReadiness;
+            domain.text = mock ? "42 · Mock launch 고정" : readiness == null ?
+                "미확인 · Sequencer 준비상태 없음" :
+                readiness.ros_domain_id + (readiness.ros_domain_id == 5 ? " · Real 계약 일치" : " · Real 계약 불일치");
             robot.text = !fresh ? "미확인 · 최신 로봇 상태 없음" :
                 status.CanAcceptCommand(out string reason) ? "로봇 명령 수신 가능 · 셀 전체 준비 판정 아님" : "명령 수신 불가 · " + reason;
             robot.text += frame == null ? "" : "\n마지막 수신 " + Age(frame.ReceiveTimeSeconds);
             gripper.text = !fresh || !frame.GripperFeedbackValid ? "미확인 · 유효한 그리퍼 피드백 없음" :
                 "오류 코드 " + frame.GripperFaultId + " · 동작 완료 값 " + frame.GripperMotionDone;
             if (mock) gripper.text += "\n시뮬레이션 피드백 · 실설비 확인 아님";
+            if (!mock && readiness != null)
+                robot.text += readiness.robot_status_available && readiness.assembly_status_available
+                    ? "\nReal 로봇·조립 상태 API 응답" : "\nReal 로봇 또는 조립 상태 API 미응답";
             var vision = uiMaster != null ? uiMaster.VisionImage : null;
             cameraStatus.text = vision == null ? "미확인 · 영상 수신기 연결 없음" :
                 !vision.isActiveAndEnabled ? "현재 페이지에서 수신기 비활성 · INSPECT에서 확인" :
                 !vision.HasReceivedImage ? "영상 수신 대기" :
                 (vision.IsStreaming ? "영상 수신 중" : "영상 수신 지연") + " · " + Age(vision.LastReceiveTimeSeconds);
+
+            conveyor.text = mock ? "시뮬레이션 · Mock backend가 공정 이동을 담당" : readiness == null ?
+                "미확인 · Sequencer 준비상태 없음" :
+                (readiness.conveyor_state_fresh ? "상태 수신 " + readiness.conveyor_state : "상태 heartbeat 없음 또는 지연") +
+                "\n서비스 " + Ready(readiness.conveyor_services_available) + " · 제어 " + Ready(readiness.conveyor_armed) +
+                " · 정지 " + Ready(readiness.conveyor_stopped);
+            inspection.text = mock ? "시뮬레이션 · Mock 검사 결과 사용" : readiness == null ?
+                "미확인 · Sequencer 준비상태 없음" :
+                "준비 신호 " + Ready(readiness.vision_ready && readiness.vision_signal_fresh) +
+                " · HTTP 설정 " + Ready(readiness.vision_http_configured) +
+                (readiness.vision_signal_fresh ? "" : "\nVision 준비 신호 없음 또는 지연");
 
             var traySource = uiMaster != null ? uiMaster.Calibration : null;
             var boardSource = uiMaster != null ? uiMaster.BoardCalibration : null;
@@ -124,14 +145,17 @@ namespace MainUnity.UI
                     boardSource.Progress == BoardPartCalibrator.ProgressState.ConfigurationError));
             bool serviceError = shell != null && (shell.ApiConnected == false || shell.SequencerConnected == false);
             bool robotError = status != null && status.State == RobotRunState.Error;
-            bool blocked = robotError || calibrationError || serviceError;
-            summary.text = blocked ? "준비 필요" : "확인 불가 · 미확인 항목 있음";
+            bool equipmentError = !mock && (readiness == null || shell?.EquipmentReady != true);
+            bool blocked = robotError || calibrationError || serviceError || equipmentError;
+            summary.text = blocked ? "준비 필요" : mock ? "Mock 준비상태 확인" : "실행 준비 완료";
             summary.EnableInClassList("bad", blocked);
             // 연결·배치 반영 성공만으로 설비 reset과 안전 준비를 보장할 수 없다.
             reasons.text = (robotError ? "로봇 오류를 확인하세요. " : "") +
                 (calibrationError ? "보정 결과를 확인하세요. " : "") +
                 (serviceError ? "서비스 연결을 확인하세요. " : "") +
-                "설비 전체 준비·reset 완료와 레시피 사전 검증 결과는 미확인입니다. 실제 실행 가능 여부는 실행 시 설비에서 확인합니다.";
+                (equipmentError ? "설비 준비: " + (shell?.EquipmentReadinessMessage ?? "상태 응답 없음") + ". " : "") +
+                (mock ? "실설비 준비 판정은 Real 모드에서만 제공됩니다." :
+                    "표시값은 Sequencer의 실행 직전 준비 판정과 같은 기준입니다.");
 
             var progress = uiMaster != null ? uiMaster.AssemblyProgress?.Latest : null;
             string observedJob = progress?.JobId;
@@ -201,6 +225,8 @@ namespace MainUnity.UI
             jobRequest.SetRequestHeader("X-Runtime-Mode", uiMaster.OperatingMode.ToString().ToLowerInvariant());
             jobRequest.SendWebRequest();
         }
+
+        static string Ready(bool value) => value ? "정상" : "준비 필요";
 
         static string Age(double time) => time < 0d ? "기록 없음" :
             Math.Max(0d, Time.realtimeSinceStartupAsDouble - time).ToString("0.0") + "초 전";

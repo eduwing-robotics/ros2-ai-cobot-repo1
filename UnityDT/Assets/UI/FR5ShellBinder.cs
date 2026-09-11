@@ -58,6 +58,24 @@ namespace MainUnity.UI
         int qualityUnitId;
 
         [Serializable] sealed class QualitySnapshotEnvelope { public QualitySnapshot data; }
+        [Serializable] sealed class AssemblyStatusEnvelope { public AssemblyStatus data; }
+        [Serializable] sealed class AssemblyStatus
+        {
+            public bool equipment_ready;
+            public string message;
+            public EquipmentReadiness readiness;
+        }
+        [Serializable] internal sealed class EquipmentReadiness
+        {
+            public int ros_domain_id;
+            public bool robot_status_available, assembly_status_available;
+            public bool conveyor_state_fresh, conveyor_services_available, conveyor_armed, conveyor_stopped;
+            public string conveyor_state;
+            public bool vision_signal_fresh, vision_ready, vision_http_configured;
+        }
+        internal EquipmentReadiness LatestEquipmentReadiness { get; private set; }
+        internal bool EquipmentReady { get; private set; }
+        internal string EquipmentReadinessMessage { get; private set; }
         [Serializable] sealed class QualitySnapshot { public string job_id, state, error_code; public int unit_id; }
         [Serializable] sealed class QualityUnitsEnvelope { public QualityUnit[] data; }
         [Serializable] sealed class QualityUnit
@@ -78,6 +96,9 @@ namespace MainUnity.UI
             cached = false;
             ApiConnected = null;
             SequencerConnected = null;
+            LatestEquipmentReadiness = null;
+            EquipmentReady = false;
+            EquipmentReadinessMessage = null;
             servicePolling = StartCoroutine(PollServiceLinks());
         }
 
@@ -429,10 +450,23 @@ namespace MainUnity.UI
             sequencer.SetRequestHeader("X-Runtime-Mode", uiMaster == null ? "" : uiMaster.OperatingMode.ToString().ToLowerInvariant());
             sequencer.timeout = 3;
             yield return sequencer.SendWebRequest();
-            SetLinkState(linkSequencerDot, linkSequencerLabel,
-                sequencer.result == UnityWebRequest.Result.Success,
-                sequencer.result == UnityWebRequest.Result.Success
-                    ? "AssemblySequencer 응답 정상"
+            bool sequencerConnected = sequencer.result == UnityWebRequest.Result.Success;
+            LatestEquipmentReadiness = null;
+            EquipmentReady = false;
+            EquipmentReadinessMessage = null;
+            if (sequencerConnected)
+            {
+                try
+                {
+                    AssemblyStatus snapshot = JsonUtility.FromJson<AssemblyStatusEnvelope>(sequencer.downloadHandler.text)?.data;
+                    LatestEquipmentReadiness = snapshot?.readiness;
+                    EquipmentReady = snapshot?.equipment_ready == true;
+                    EquipmentReadinessMessage = snapshot?.message;
+                }
+                catch (ArgumentException) { }
+            }
+            SetLinkState(linkSequencerDot, linkSequencerLabel, sequencerConnected,
+                sequencerConnected ? "AssemblySequencer 응답 정상"
                     : "AssemblySequencer 응답 실패 · HTTP " + sequencer.responseCode);
             if (qualityBanner != null)
             {
