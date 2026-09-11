@@ -416,7 +416,7 @@ class Detector(Node):
    cm=np.zeros(image.shape[:2],np.uint8);cv2.drawContours(cm,[contour],-1,255,-1)
    # Reject mixed edge pixels where aligned depth can blend the package top
    # with the tray floor.  Keep the full mask as a fallback for tiny parts.
-   depth_mask=cv2.erode(cm,np.ones((5,5),np.uint8)) if part in ('gpu','hbm') else cm
+   depth_mask=cv2.erode(cm,np.ones((5,5),np.uint8)) if part in ('gpu','hbm','black_block') else cm
    values=depth_float[(depth_mask>0)&(depth_float>100)&(depth_float<2000)]
    if values.size<3:
     values=depth_float[(cv2.dilate(cm,np.ones((5,5),np.uint8))>0)&(depth_float>100)&(depth_float<2000)]
@@ -786,7 +786,7 @@ class Detector(Node):
     part=item['part_spec_id']
     if self.seg_model is not None and part in self.seg_class_ids:
      found,poly,floor=self.find_segmented(item,canonical,image,depth_float,fx,fy,cx,cy,H,seg_results[part])
-     if part in ('long_orange','black_block','hbm') and any(not passes_quality(d,self.seg_quality[part]) for d in found):
+     if part in ('long_orange','black_block','hbm','marked_white') and any(not passes_quality(d,self.seg_quality[part]) for d in found):
       primary_size=self.a.power_seg_image_size if part=='long_orange' else self.a.seg_image_size
       alternate_size=640 if primary_size!=640 else 960
       sx1,sy1,sx2,sy2=map(int,item['roi_px']);pad=self.a.seg_crop_padding

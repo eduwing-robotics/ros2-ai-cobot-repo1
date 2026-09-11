@@ -137,7 +137,9 @@ class TrayCaptureRetry:
                 if changed:
                     if quality_error is None:
                         raise RetryCaptureError(f'{key[0]}:{key[1]}: confirmed part geometry changed '
-                                                f'(XYZ={xyz_delta:.3f}mm, axis={angle_delta:.3f}deg); discard cached coordinates')
+                                                f'(XYZ={xyz_delta:.3f}mm, axis={angle_delta:.3f}deg, '
+                                                f'dXYZ={(np.asarray(detection["base_xyz_mm"])-np.asarray(anchor["base_xyz_mm"])).round(3).tolist()}, '
+                                                f'previous_depth_m={anchor.get("depth_m")}, current_depth_m={detection.get("depth_m")}); discard cached coordinates')
                     # A weak observation cannot prove motion or unchanged presence.
                     self.current_visible.discard(key)
                     self.reasons[key] = quality_error

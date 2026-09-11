@@ -315,3 +315,40 @@ def test_pm_retry_uses_other_resolution_and_keeps_quality_gate(detector, primary
     with pytest.raises(ValueError,match='alternate reached'):
         detector.process_color(SimpleNamespace(header=header(1_000_000_000),data=jpeg.tobytes()))
     assert sizes==[640,primary,alternate]
+
+
+def rename_part(detector, kind):
+    detector.bins[0]['part_spec_id']=kind
+    for name in ['specs','seg_class_ids','seg_single_areas','seg_quality']:
+        values=getattr(detector,name);values[kind]=values.pop('hbm')
+    detector.process_color.__func__.__globals__['COLORS'][kind]=(0,200,200)
+
+
+def test_vrm_depth_excludes_floor_contaminated_edges(detector):
+    rename_part(detector,'black_block')
+    depth=np.full((80,80),510.,np.float32)
+    depth[12:18,12:29]=500.
+    image=np.zeros((80,80,3),np.uint8)
+    found,_,_=detector.find_segmented(detector.bins[0],image,image,depth,
+                                     100.,100.,0.,0.,np.eye(3),prediction())
+    assert found[0]['depth_m']==.5
+    # Entire original mask has a floor-majority median; interior stays on the top.
+    assert np.median(depth[10:21,10:31])==510.
+
+
+def test_inductor_weak_prediction_uses_verified_alternate_resolution(detector):
+    rename_part(detector,'marked_white')
+    detector.seg_quality['marked_white']['minimum_detection_confidence']=.7
+    calls=[]
+    def predict(*args,**kwargs):
+        calls.append(kwargs['imgsz']);p=prediction()
+        score=.4 if len(calls)==1 else .9
+        p.boxes.conf=SimpleNamespace(cpu=lambda:np.array([score]))
+        return [p]
+    detector.seg_model.predict=predict
+    _,jpeg=cv2.imencode('.jpg',np.zeros((80,80,3),np.uint8))
+    detector.process_color(SimpleNamespace(header=header(1_000_000_000),data=jpeg.tobytes()))
+    result=json.loads(detector.a.output_json.read_text())
+    assert calls==[640,960]
+    assert result['detections'][0]['segmentation_confidence']==.9
+    assert result['detections'][0]['scale_retry']['primary_confidence']==.4

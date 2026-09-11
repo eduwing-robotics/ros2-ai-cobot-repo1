@@ -1,4 +1,4 @@
-"""Replace only weak, geometrically matched PM/VRM/HBM detections in one frame."""
+"""Replace only weak, geometrically matched PM/VRM/HBM/IND detections in one frame."""
 import math
 import numpy as np
 
