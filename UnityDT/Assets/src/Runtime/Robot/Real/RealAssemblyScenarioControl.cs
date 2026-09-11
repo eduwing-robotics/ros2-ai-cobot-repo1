@@ -226,6 +226,8 @@ namespace MainUnity.Runtime.Robot.Real
                 AssemblySnapshot snapshot = await ReadStatusAsync(currentGeneration);
                 if (snapshot.active && !(snapshot.job_id == queuedJobId && snapshot.error_code == "SCENE_CONFIRMATION_REQUIRED"))
                     throw new InvalidOperationException("A Real assembly is already running.");
+
+                ValidateConveyorVisualization();
                 if (itemManager == null)
                     throw new InvalidOperationException("Assign the shared ItemManager.");
                 itemManager.ValidateConfiguration();
@@ -532,6 +534,8 @@ namespace MainUnity.Runtime.Robot.Real
                 if (itemManager.CurrentBoard != null &&
                     (itemManager.JobId != snapshot.job_id || itemManager.UnitId != snapshot.unit_id))
                     itemManager.DiscardCurrentUnit();
+
+                ValidateConveyorVisualization();
                 Transform board = BeginUnit(snapshot.job_id, snapshot.unit_id);
                 ApplyConveyorVisualization(snapshot, board);
                 if (snapshot.state == "PCB_PLACED" ||
@@ -771,6 +775,21 @@ namespace MainUnity.Runtime.Robot.Real
         {
             string reason = string.IsNullOrWhiteSpace(message) ? "Real assembly request failed." : message;
             return new InvalidOperationException(string.IsNullOrWhiteSpace(code) ? reason : code + ": " + reason);
+        }
+
+        void ValidateConveyorVisualization()
+        {
+            if (beltPlane == null || assemblyStopPoint == null || inspectionStopPoint == null)
+                throw new InvalidOperationException(
+                    "Real conveyor visualization requires Belt Plane, Assembly Stop Point and Inspection Stop Point.");
+            if (!float.IsFinite(conveyorSpeed) || conveyorSpeed <= 0f ||
+                !float.IsFinite(arrivalHoldDistance) || arrivalHoldDistance <= 0f)
+                throw new InvalidOperationException(
+                    "Real conveyor visualization speed and arrival hold distance must be finite and positive.");
+
+            RefreshConveyorReferences();
+            if (beltRenderer == null)
+                throw new InvalidOperationException("Real conveyor Belt Plane requires a Renderer.");
         }
     }
 }
