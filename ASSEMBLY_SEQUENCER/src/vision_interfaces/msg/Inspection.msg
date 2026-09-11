@@ -1,0 +1,13 @@
+std_msgs/Header header
+string camera
+string board_id
+string recipe_id
+string status
+int32 expected_total
+int32 found_total
+string[] names
+int32[] expected
+int32[] found
+string[] slot_ids
+string[] slot_status
+string[] errors

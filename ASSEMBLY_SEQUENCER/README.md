@@ -39,7 +39,7 @@ Mock 컨베이어 피드백은 이동마다 Job·Unit·이동 UUID를 대조합�
 Real 컨베이어는 수락된 motion_id와 서버 instance·도착 상태를 대조합니다. 외부에서 이미 완료된 이동을 현재 Job·Unit에 연결하거나 재사용하는 기능은 없습니다.
 
 `real_backend.py`는 `/real/robot/status`와 `/real/assembly/status`의 생산 v2 capability를
-조회하고 컨베이어 이동·도착 대기, 로봇 전체 Start와 Vision HTTP 검사 경계를 소유합니다.
+조회하고 컨베이어 이동·도착 대기, 로봇 전체 Start와 Vision ROS 검사 경계를 소유합니다.
 Sequencer가 `execute_assembly()`를 호출하면 단일 Start를 발행하고 실행 식별자가 일치하는
 진행·전체 완료·실패를 기다립니다.
 요청을 `DEFECT_IMAGE_ROOT/executions/<unit_id>/request.json`에 발행 전에 저장하고,
@@ -65,10 +65,9 @@ Mock·Real 공개 실행 진입점은 [최상단 실행 절차](../README.md#실
 
 ## Real 연결 설정
 
-기존 Real 프로세스에서 `VISION_BASE_URL` 환경 변수 또는 `vision_base_url` ROS 파라미터로
-검사 HTTP origin을 지정합니다. `KSMC_VISION_API_TOKEN`은 서버 프로세스 환경에만 제공하고
-Unity·로그·Git에 포함하지 않습니다. `DEFECT_IMAGE_ROOT`는 실행 원문과 검사 자료를 보존할
-공유 저장소입니다. 설정이 없거나 잘못되면 준비 검증을 통과하지 못합니다.
+Real 검사는 `vision_interfaces`의 submit/get/get_image 서비스와 health를 사용합니다.
+시작 전 서버 가용성을 확인하고, 검사 위치 도착 후 촬영 준비 조건을 확인합니다.
+`DEFECT_IMAGE_ROOT`는 실행 원문과 검사 자료를 보존할 공유 저장소입니다.
 생산 DB에는 제품·버전·25개 슬롯과 실제 재고가 준비되어 있어야 합니다. 테스트 성공 기록에서
 재고를 추정하거나 생성하지 않습니다. `fr5_interlock_required=false`는 제공 서버의 미사용 계약을
 따르며, true일 때만 FR5 clear와 freshness를 요구합니다. 누락·잘못된 형식은 준비 실패입니다.
@@ -84,10 +83,9 @@ Unity·로그·Git에 포함하지 않습니다. `DEFECT_IMAGE_ROOT`는 실행 �
 검사 저장은 Unit 실행 완료가 아닙니다. 전체 workflow 성공 뒤 `DbWriter.unit_completed(unit_id)`를 기록하고 `flush()`를 확인한 후 다음 Unit 또는 Job 완료로 진행합니다. 실패 시 이미 저장된 검사 자료는 유지합니다.
 
 
-`real_backend.inspect()`는 Vision의 완료 JSON과 검증된 PNG를
-`{"data": dict, "image_bytes": bytes | None}`로 반환하는 동기 함수입니다.
-`RealBackend.inspect_unit()`은 별도 worker에서 이를 호출합니다.
-같은 Job·Unit에서 같은 검사 UUID를 사용하며 ROS callback을 HTTP 대기로 막지 않습니다.
+`RealBackend.inspect_unit()`은 ROS 비동기 서비스로 검사 요청·완료 조회·PNG 조각 수신을 수행합니다.
+같은 Job·Unit은 같은 검사 UUID를 사용하며 응답 유실 시 같은 ID를 조회합니다.
+PNG의 식별자·offset·전체 크기·SHA256을 검증한 뒤 기존 DB writer에 전달합니다.
 전체 조립 완료 기록과 검사 위치 도착을 확인한 뒤 호출합니다.
 
 기존 `DbWriter.inspection_recorded(unit_id, result, defects, image_path=None)`는
@@ -99,7 +97,7 @@ Unity·로그·Git에 포함하지 않습니다. `DEFECT_IMAGE_ROOT`는 실행 �
 
 Unit당 재검사는 허용하지 않습니다. 같은 내용은 기존 UID를 복구하고 다른 내용은 거절합니다.
 모든 제품 슬롯을 검사 JSON과 대조하고, 확정 불량 없는 슬롯은 `defect_type=NULL`로 저장합니다.
-`UNKNOWN`은 Unit을 RUNNING으로 보류하고 발행 대기를 만들지 않습니다.
+`UNKNOWN`은 원본 검사 증거를 저장한 후 `INSPECTION_UNKNOWN`으로 Job·Unit을 실패 종료합니다. 확정 불량이나 PASS로 변환하지 않고 발행 대기를 만들지 않습니다.
 제품 슬롯 수는 DB 구성과 정확히 일치해야 하며 누락된 검사 상세를 만들어 넣지 않습니다.
 
 `DEFECT_IMAGE_ROOT` 아래 `inspections/<unit_id>/response.json`에 원본 응답,

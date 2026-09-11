@@ -35,11 +35,12 @@ Service는 모드 접두사와 요청 JSON을 `cmd_str`, 응답 JSON을 `cmd_res
 | 컨베이어 | `/conveyor/move_to_assembly` | `std_srvs/srv/Trigger` | 조립 위치 이동 요청 |
 | 컨베이어 | `/conveyor/move_to_inspection` | `std_srvs/srv/Trigger` | 검사 위치 이동 요청 |
 | 컨베이어 | `/conveyor/stop` | `std_srvs/srv/Trigger` | 이동 오류 이후 정지 요청 |
-| Vision | `/api/v1/inspections` | HTTP POST | Job·Unit·검사 ID로 검사 요청 |
-| Vision | `/api/v1/inspections/{inspection_id}` | HTTP GET | 동일 검사 진행·결과 조회 |
-| Vision | 검사 결과의 `image.path` | HTTP GET | 제공 origin에서 결과 이미지 조회·검증 |
+| Vision | `/vision/inspection/submit` | SubmitInspection | Job·Unit·검사 ID로 검사 요청 |
+| Vision | `/vision/inspection/get` | GetInspection | 동일 검사 진행·결과 조회 |
+| Vision | `/vision/inspection/get_image` | GetInspectionImage | PNG 조각 조회·검증 |
+| Vision | `/vision/inspection/health` | Trigger | 서버 가용성·촬영 준비 상태 조회 |
 
-ROS 서비스 응답 한도는 5초입니다. 컨베이어 도착 대기는 35초, 상태 수신 freshness는 1초입니다. 로봇 전체 완료 대기는 1800초이며 2초마다 status로 보완합니다. Vision은 기본 전체 330초·개별 요청 10초 한도를 사용합니다. HTTP 인증은 서버 환경의 Bearer 토큰을 사용하며 문서·로그에 값을 남기지 않습니다.
+ROS 서비스 응답 한도는 5초입니다. 컨베이어 도착 대기는 35초, 상태 수신 freshness는 1초입니다. 로봇 전체 완료 대기는 1800초이며 2초마다 status로 보완합니다. Vision은 기본 전체 330초·개별 요청 10초 한도를 사용합니다. 검사 서비스 타입은 `vision_interfaces/srv`를 사용합니다. submit/get 응답의 success는 요청 성공이며 record_json의 COMPLETED가 검사 완료입니다. health의 station_ready는 검사 접수 조건이며 생산 시작 조건이 아닙니다. PNG는 최대 65536바이트씩 수신하며 전체 상한은 64MiB입니다. HTTP 주소·인증 토큰은 사용하지 않습니다.
 
 컨베이어 Trigger에는 Job·Unit을 전송하지 않습니다. `operation_id`는 Sequencer 내부 공정 식별자이며 제공자의 `motion_id`와 동일하지 않습니다. 현재 구현은 매번 새 이동을 요청하고 수락된 motion_id의 도착을 기다립니다. 이미 목적지인 상태의 재사용, 외부 이동의 현재 Job·Unit 연결, 도착의 명령 속도 0 검증은 구현되어 있지 않습니다. `ASSEMBLY_STOP`만으로 새 Unit의 도착 완료를 확정하지 않습니다.
 
@@ -131,7 +132,7 @@ PENDING Job은 현장 확인 없이 자동 실행하지 않습니다.
 Start 이후에는 동일 Unit·실행 ID의 전체 완료를 검증한 뒤에만 검사 위치로 이동합니다.
 검사 PASS/FAIL은 Unit 완료를 기록하며 PASS만 목표 수량에 포함됩니다. 다음 Unit이 필요하면
 `PAUSED`·`SCENE_CONFIRMATION_REQUIRED`로 기다리고 같은 Job에 새 실행 ID와 현장 확인을 받습니다.
-검사 `UNKNOWN`은 `PAUSED`·`INSPECTION_UNKNOWN`으로 RUNNING Unit을 유지하며 일반 resume을 거절합니다.
+Real 검사 `UNKNOWN`은 증거 저장 후 `FAILED`·`INSPECTION_UNKNOWN`으로 Job·Unit을 실패 종료합니다.
 복구가 필요한 실패·불명확한 완료도 PAUSED로 유지하고 다음 공정을 실행하지 않습니다.
 
 대기 상태에는 `state=IDLE`, `active=false`, 빈 Job ID와 `unit_id=0`이 들어갑니다.
@@ -328,8 +329,8 @@ DB·실행 함수를 호출하지 않습니다. 읽기 요청 `{"command":"statu
 `ASSEMBLY_SEQUENCER_MODE`는 시작 시 고정되며 Mock/domain 42, Real/domain 5 조합만 허용합니다.
 DB는 같은 모드의 관리자 설정을 확인하고 실행 중 모드 변경을 거절합니다. 도메인은 인증 수단이 아닙니다.
 
-검사 결과 `UNKNOWN`은 자료 저장·flush 후 `PAUSED`와 `INSPECTION_UNKNOWN`으로 표시합니다.
-Job·Unit은 RUNNING을 유지하고 기판 이송·다음 Unit·일반 resume는 진행하지 않습니다.
+Real 검사 결과 `UNKNOWN`은 자료 저장·flush 후 `FAILED`와 `INSPECTION_UNKNOWN`으로 표시합니다.
+Job·Unit을 실패 종료하며 다음 Unit을 자동 시작하지 않습니다. Mock의 기존 UNKNOWN 보류 경로는 유지합니다.
 검사 판정 해소·재검사 API는 제공하지 않습니다.
 
 ### 진행 설명 표시
@@ -338,8 +339,8 @@ Real 실행의 `message`는 컨베이어 목적지 이동, 로봇이 보고한 `
 확인된 검사 결과를 전달합니다. 로봇 단계가 바뀌면 완료 슬롯 증가가 없어도 feedback을 발행하며,
 같은 완료 슬롯 목록·단계의 반복 callback은 추가 발행하지 않습니다. status에도 최신 설명을 보존합니다.
 `message`는 표시용 설명이며 설비 제어 명령이나 완료 판정의 근거가 아닙니다.
-후속 촬영 단계는 검사 PASS가 아니며, 검사 FAIL 이후 새 PCB 확인 대기와 UNKNOWN 판정 보류는
-기존 `PAUSED` 상태와 오류 의미를 유지합니다. Real Unity는 feedback 수신 후 status를 조회합니다.
+후속 촬영 단계는 검사 PASS가 아니며, 검사 FAIL 이후 새 PCB 확인 대기는
+기존 `PAUSED` 상태를 유지합니다. UNKNOWN은 실패 종료합니다. Real Unity는 feedback 수신 후 status를 조회합니다.
 
 Real status의 선택적 표시 필드 `current_part_id`, `current_slot_code`, `current_action`,
 `current_phase`, `current_event`는 로봇 callback의 현재 대상과 마지막 세부 동작 이벤트입니다.
@@ -377,3 +378,5 @@ Real status는 `controls_available=true`와 `pause_reason`, `resume_reason`, `ca
 취소의 생산 종료 반영은 조립 전·로봇·품질 보류 경로 모두 같은 Sequencer 확정 경계를 사용합니다. DB 응답 유실 시 Job의 실제 CANCELLED·실행 Unit 없음 상태를 읽어 확인하며 다른 종료 상태를 쓰지 않습니다. Writer의 전체 DB 오류 상태는 임의로 해제하지 않습니다. 장비 취소와 DB commit은 하나의 트랜잭션이 아니므로 미확인 단계에서는 보류를 유지합니다. 원격 조회 응답은 적용 직전에 현재 실행·서버·제어 식별자와 event sequence를 잠금 안에서 다시 대조합니다.
 
 `status.force_cancel_available`은 강제 취소 지원과 활성 Job 존재 여부를 표시합니다. 설비 준비 판정과는 별개입니다. `force_cancel`은 Real의 활성 Job에만 적용하며 기존 설비 요청의 정지·복구 완료를 보장하지 않습니다. DB 취소가 확인되면 `FAILED` / `EXECUTION_FORCE_CANCELLED`를 반환하고 Job은 `CANCELLED`로 보존합니다. 지연된 설비 응답은 다음 공정이나 완료 기록으로 이어지지 않습니다. 기존 실행 요청을 추적하는 동안 새 Job 시작은 제한하며, 이후 시작도 기존 설비 준비 검증을 거칩니다. 같은 terminal Job의 재요청은 중복 기록하지 않습니다. DB 실패는 성공으로 반환하지 않습니다.
+
+Real 검사 UNKNOWN은 원본 증거 보존 후 INSPECTION_UNKNOWN으로 실패 종료하며 보류하지 않습니다. submit 응답 유실 시 같은 검사 ID를 get으로 조회하고 inspection_not_found일 때만 재접수합니다. station_not_ready는 전체 제한시간 내 재시도하고 다른 오류는 호출자에게 전달합니다.

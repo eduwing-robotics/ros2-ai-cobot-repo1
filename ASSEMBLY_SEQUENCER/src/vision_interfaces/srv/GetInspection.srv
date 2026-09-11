@@ -1,0 +1,5 @@
+string inspection_id
+---
+bool success
+string error_code
+string record_json

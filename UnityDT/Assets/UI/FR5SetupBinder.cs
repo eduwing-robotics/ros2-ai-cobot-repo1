@@ -125,7 +125,7 @@ namespace MainUnity.UI
             inspection.text = mock ? "시뮬레이션 · Mock 검사 결과 사용" : readiness == null ?
                 "미확인 · Sequencer 준비상태 없음" :
                 "준비 신호 " + Ready(readiness.vision_ready && readiness.vision_signal_fresh) +
-                " · HTTP 설정 " + Ready(readiness.vision_http_configured) +
+                " · ROS 서비스 " + Ready(readiness.vision_services_available) +
                 (readiness.vision_signal_fresh ? "" : "\nVision 준비 신호 없음 또는 지연");
 
             var traySource = uiMaster != null ? uiMaster.Calibration : null;

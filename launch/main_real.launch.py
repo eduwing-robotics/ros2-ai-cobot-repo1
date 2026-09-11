@@ -17,7 +17,7 @@ def generate_launch_description():
             raise RuntimeError(f"{config_path}: current-user ownership and chmod 600 are required")
         environment = json.loads(config_path.read_text())
         if not isinstance(environment, dict) or any(
-            key not in {"MAIN_SERVER_DB_DSN", "PRODUCTION_DB_DSN", "DEFECT_IMAGE_ROOT", "VISION_BASE_URL", "KSMC_VISION_API_TOKEN"}
+            key not in {"MAIN_SERVER_DB_DSN", "PRODUCTION_DB_DSN", "DEFECT_IMAGE_ROOT"}
             or not isinstance(value, str) for key, value in environment.items()
         ):
             raise RuntimeError(f"{config_path}: invalid runtime environment")

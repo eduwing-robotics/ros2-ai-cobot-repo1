@@ -66,7 +66,6 @@ from pathlib import Path
 import shlex
 import sys
 import tempfile
-from urllib.parse import urlsplit
 
 import psycopg
 
@@ -97,8 +96,6 @@ try:
                 raise ValueError(f'{path}: current-user ownership and chmod 600 are required')
             config = json.loads(path.read_text())
         keys = ['MAIN_SERVER_DB_DSN', 'PRODUCTION_DB_DSN', 'DEFECT_IMAGE_ROOT']
-        if mode == 'real':
-            keys += ['VISION_BASE_URL', 'KSMC_VISION_API_TOKEN']
         if not isinstance(config, dict) or any(k not in keys or not isinstance(v, str) for k, v in config.items()):
             raise ValueError(f'{path}: invalid runtime environment')
         for key in keys:
@@ -153,13 +150,6 @@ try:
             raise ValueError(f'{mode}: DEFECT_IMAGE_ROOT must be an existing absolute directory')
         if not os.access(image_root, os.R_OK | os.W_OK | os.X_OK):
             raise ValueError(f'{mode}: DEFECT_IMAGE_ROOT requires read/write access')
-        if mode == 'real':
-            url = urlsplit(config['VISION_BASE_URL'])
-            if url.scheme not in ('http', 'https') or not url.hostname or url.username or url.password or url.query or url.fragment or url.path not in ('', '/'):
-                raise ValueError('real: VISION_BASE_URL must be an HTTP(S) origin without credentials')
-            token = config['KSMC_VISION_API_TOKEN']
-            if len(token) < 32 or not token.isascii() or any(ord(c) < 33 or ord(c) > 126 for c in token):
-                raise ValueError('real: Vision token must contain at least 32 printable non-space ASCII characters')
         if not check_only:
             save_private(path, json.dumps(config, indent=2) + '\n')
         print(f'{mode}: DB mode, roles, shared storage and settings verified' + (' (read-only check)' if check_only else ' and saved'))

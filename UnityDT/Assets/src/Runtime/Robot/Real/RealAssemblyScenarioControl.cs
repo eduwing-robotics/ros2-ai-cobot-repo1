@@ -20,6 +20,7 @@ namespace MainUnity.Runtime.Robot.Real
         const string RecipeVersion = "assembly-r1";
         const string MainServerBaseUrl = "http://127.0.0.1:8000";
         const double CompletionTimeoutSeconds = 1800d;
+        const double StartRequestTimeoutSeconds = 20d;
         const double ServiceTimeoutSeconds = 5d;
 
         [SerializeField] ItemManager itemManager;
@@ -558,7 +559,8 @@ namespace MainUnity.Runtime.Robot.Real
             if (progress != null && progress.Latest?.JobId != jobId)
                 progress.Apply(new AssemblyProgressFrame(jobId, RecipeVersion, AssemblyState.Idle,
                     0, 0, 0, "", "", "", "실행 요청 중 · 설비 상태 확인 대기", double.NegativeInfinity));
-            string responseJson = await SendServiceAsync("real\n" + json, currentGeneration);
+            double timeoutSeconds = command == "start" ? StartRequestTimeoutSeconds : ServiceTimeoutSeconds;
+            string responseJson = await SendServiceAsync("real\n" + json, currentGeneration, timeoutSeconds);
             CommandResponse response = JsonUtility.FromJson<CommandResponse>(responseJson);
             if (response == null || response.job_id != jobId)
                 throw new InvalidOperationException($"Real assembly {command} response job_id did not match.");
@@ -572,7 +574,8 @@ namespace MainUnity.Runtime.Robot.Real
             }
         }
 
-        async Task<string> SendServiceAsync(string payload, int currentGeneration)
+        async Task<string> SendServiceAsync(
+            string payload, int currentGeneration, double timeoutSeconds = ServiceTimeoutSeconds)
         {
             RequireEnabled(currentGeneration);
             EnsureRosConnection();
@@ -583,11 +586,11 @@ namespace MainUnity.Runtime.Robot.Real
             if (command && frame != null)
             {
                 frame.PendingRequest = "작업 명령 요청 대기 중";
-                frame.RequestDeadline = Time.realtimeSinceStartupAsDouble + ServiceTimeoutSeconds;
+                frame.RequestDeadline = Time.realtimeSinceStartupAsDouble + timeoutSeconds;
             }
             try
             {
-                if (await Task.WhenAny(request, Task.Delay(TimeSpan.FromSeconds(ServiceTimeoutSeconds))) != request)
+                if (await Task.WhenAny(request, Task.Delay(TimeSpan.FromSeconds(timeoutSeconds))) != request)
                     throw new TimeoutException("요청 응답 시간 초과 · 실제 실행 결과는 상태 재조회로 확인해야 합니다.");
             }
             finally

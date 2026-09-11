@@ -1,0 +1,9 @@
+# UUIDs are issued by the Sequencer. Reuse the same identity on retry.
+string inspection_id
+string job_id
+int64 unit_id
+---
+# Success means accepted/existing, not a completed inspection or PASS.
+bool success
+string error_code
+string record_json

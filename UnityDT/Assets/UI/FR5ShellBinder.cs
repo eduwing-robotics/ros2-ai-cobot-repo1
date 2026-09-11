@@ -71,7 +71,7 @@ namespace MainUnity.UI
             public bool robot_status_available, assembly_status_available;
             public bool conveyor_state_fresh, conveyor_services_available, conveyor_armed, conveyor_stopped;
             public string conveyor_state;
-            public bool vision_signal_fresh, vision_ready, vision_http_configured;
+            public bool vision_signal_fresh, vision_ready, vision_services_available;
         }
         internal EquipmentReadiness LatestEquipmentReadiness { get; private set; }
         internal bool EquipmentReady { get; private set; }

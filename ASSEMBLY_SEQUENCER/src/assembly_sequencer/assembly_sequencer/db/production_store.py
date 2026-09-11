@@ -384,7 +384,8 @@ def record_inspection(unit_id, result, defects, image_path=None, *, inspection=N
     """Record a final inspection; Vision data also persists immutable files and slot UID links.
 
     Vision callers pass the backend's data/image_bytes with result and defects=None.
-    UNKNOWN holds the Unit RUNNING. Reinspection and different-content retries are rejected.
+    This write does not finalize a Unit. The Sequencer fails a Real UNKNOWN
+    after preserving evidence. Reinspection and different-content retries are rejected.
     """
     if inspection is not None:
         if defects is not None or image_path is not None or result != inspection.get("result", {}).get("decision"):

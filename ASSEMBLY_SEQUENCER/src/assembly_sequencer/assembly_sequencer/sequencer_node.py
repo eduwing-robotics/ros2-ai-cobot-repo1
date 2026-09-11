@@ -543,10 +543,8 @@ class AssemblySequencer(Node):
             active["inspection_result"] = inspection["result"]
             active["message"] = "검사 결과 · " + inspection["result"]
             if inspection["result"] == "UNKNOWN":
-                active.update(state="PAUSED", inspection_hold=True, error_code="INSPECTION_UNKNOWN",
-                              message="검사 완료 · 판정 보류. 결과 자료를 확인하세요.")
-                self.publish(failed_feedback(active["job_id"], active["error_code"], active["message"],
-                                             self.db_writer.sync_state) | {"state": "PAUSED"})
+                self.fail_active("INSPECTION_UNKNOWN", RuntimeError(
+                    "검사 판정 불가 · 증거를 보존하고 작업을 실패로 종료했습니다."))
                 return
             self.finish_active_unit(active)
         except Exception as error:

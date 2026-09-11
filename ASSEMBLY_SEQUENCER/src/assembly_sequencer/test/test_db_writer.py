@@ -933,10 +933,10 @@ class RealWorkflowTest(unittest.IsolatedAsyncioTestCase):
             self.assertLess(messages.index("조립 위치 이동 중"), messages.index("전체 조립 실행 중"))
             self.assertLess(messages.index("검사 위치 이동 중"), messages.index("검사 진행 중"))
             if decision == "UNKNOWN":
-                self.assertIn("판정 보류", messages[-1])
+                self.assertIn("실패로 종료", messages[-1])
             else:
                 self.assertIn("검사 결과 · " + decision, messages[-1])
-            if decision == "PASS":
+            if decision in {"PASS", "UNKNOWN"}:
                 self.assertEqual(node.terminal_snapshot["message"], messages[-1])
             else:
                 self.assertEqual(active["state"], "PAUSED")
@@ -1000,14 +1000,15 @@ class RealWorkflowTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(node.terminal_snapshot["state"], "COMPLETED")
         self.assertEqual(node.terminal_snapshot["placed_count"], 25)
 
-    async def test_unknown_keeps_unit_running_and_preserves_reason_in_status(self):
+    async def test_unknown_preserves_evidence_and_finishes_failed(self):
         node, active = self.sequencer("UNKNOWN", False)
         await AssemblySequencer.run_real_workflow(node, active)
         node.db_writer.inspection_recorded.assert_called_once()
         node.db_writer.unit_completed.assert_not_called()
-        node.db_writer.finish.assert_not_called()
-        self.assertEqual(assembly_snapshot(active, active["state"])["error_code"], "INSPECTION_UNKNOWN")
-        self.assertTrue(active["inspection_hold"])
+        node.db_writer.finish.assert_called_once_with(JOB_ID, "FAILED")
+        self.assertIsNone(node.active)
+        self.assertEqual(node.terminal_snapshot["state"], "FAILED")
+        self.assertEqual(node.terminal_snapshot["error_code"], "INSPECTION_UNKNOWN")
 
     async def test_fail_inspection_completes_attempt_but_waits_for_new_confirmation(self):
         node, active = self.sequencer("FAIL", False)
@@ -1149,7 +1150,7 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(snapshot["readiness"]["robot_status_available"])
         self.assertTrue(snapshot["readiness"]["assembly_status_available"])
         self.assertFalse(snapshot["readiness"]["conveyor_state_fresh"])
-        self.assertFalse(snapshot["readiness"]["vision_http_configured"])
+        self.assertTrue(snapshot["readiness"]["vision_services_available"])
         self.assertEqual(snapshot["message"], "Robot production v2 Start is unavailable.")
 
     async def test_v2_capability_is_read_from_nested_contract(self):
@@ -1162,36 +1163,95 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
                         production_contract=dict(schema="fr5.assembly_execution/v2",
                             capabilities=dict(start=True), current_recipe_revision="deployed-r1",
                             equipment_busy_or_unresolved=False))
-        backend._read_status = AsyncMock(side_effect=[robot, assembly])
+        backend._read_status = AsyncMock(side_effect=[robot, assembly, dict(transport="ros2", closing=False, active_inspection_id=None, station_ready=False)])
         backend._ready_conveyor = Mock()
-        backend._vision_url = "http://vision:8766"
-        with patch.dict(os.environ, {"KSMC_VISION_API_TOKEN": "test-token-" * 4, "DEFECT_IMAGE_ROOT": "/tmp/test-evidence"}):
+        with patch.dict(os.environ, {"DEFECT_IMAGE_ROOT": "/tmp/test-evidence"}):
             snapshot = await backend.status()
         self.assertTrue(snapshot["production_contract"]["capabilities"]["start"])
         self.assertTrue(snapshot["equipment_ready"])
         self.assertTrue(snapshot["available"])
         node.create_publisher.return_value.publish.assert_not_called()
 
-    def test_vision_configuration_reports_each_missing_value(self):
-        backend, _ = self.backend()
-        backend._vision_url = ""
+    def test_vision_configuration_requires_services_and_storage(self):
+        backend, node = self.backend()
+        node.create_client.return_value.wait_for_service.return_value = False
+        self.assertEqual(backend._vision_configuration_error(),
+                         "Vision inspection ROS services are unavailable.")
+        node.create_client.return_value.wait_for_service.return_value = True
         with patch.dict(os.environ, {}, clear=True):
-            self.assertEqual(
-                backend._vision_configuration_error(),
-                "VISION_BASE_URL must identify the Real inspection HTTP origin.",
-            )
-            backend._vision_url = "http://192.168.11.4:8766"
-            self.assertEqual(
-                backend._vision_configuration_error(),
-                "KSMC_VISION_API_TOKEN must be configured on the Sequencer.",
-            )
-            os.environ["KSMC_VISION_API_TOKEN"] = "test-token-" * 4
-            self.assertEqual(
-                backend._vision_configuration_error(),
-                "DEFECT_IMAGE_ROOT must identify shared execution and inspection storage.",
-            )
+            self.assertIn("DEFECT_IMAGE_ROOT", backend._vision_configuration_error())
             os.environ["DEFECT_IMAGE_ROOT"] = "/tmp/test-evidence"
             self.assertIsNone(backend._vision_configuration_error())
+
+    async def test_ros_inspection_retries_same_id_and_verifies_chunks(self):
+        import hashlib
+        import uuid
+        from vision_interfaces.srv import SubmitInspection, GetInspection, GetInspectionImage
+
+        backend, _ = self.backend()
+        iid = str(uuid.uuid5(uuid.UUID(JOB_ID), "unit:22"))
+        png = b"\x89PNG\r\n\x1a\nverified PNG fixture"
+        info = dict(ready=True, service=api_contracts.VISION_IMAGE, slot_code="",
+                    filename="02_annotated_report.png", mime_type="image/png",
+                    size_bytes=len(png), max_chunk_bytes=8, sha256=hashlib.sha256(png).hexdigest())
+        record = dict(inspection_id=iid, job_id=JOB_ID, unit_id=22, transport="ros2",
+                      status="COMPLETED", result=dict(decision="UNKNOWN"), image=info)
+        submissions = 0
+        async def call(client, request, deadline):
+            nonlocal submissions
+            self.assertEqual(request.inspection_id, iid)
+            if isinstance(request, SubmitInspection.Request):
+                submissions += 1
+                if submissions == 1:
+                    return SimpleNamespace(success=False, error_code="station_not_ready")
+                raise TimeoutError("lost acceptance")
+            if isinstance(request, GetInspection.Request):
+                return SimpleNamespace(success=True, record_json=json.dumps(record))
+            self.assertIsInstance(request, GetInspectionImage.Request)
+            chunk = png[request.offset:request.offset + request.max_bytes]
+            return SimpleNamespace(success=True, inspection_id=iid, slot_code="",
+                filename=info["filename"], mime_type="image/png", sha256=info["sha256"],
+                total_bytes=len(png), offset=request.offset,
+                eof=request.offset + len(chunk) == len(png), data=chunk)
+        backend._vision_call = call
+        backend._vision_poll = AsyncMock()
+        output = await backend.inspect_unit(JOB_ID, 22, [])
+        self.assertEqual(output["image_bytes"], png)
+        self.assertEqual(output["result"], "UNKNOWN")
+        self.assertEqual(submissions, 2)
+        self.assertFalse(backend._inspection_pending)
+        self.assertIsNone(backend._display_wait)
+        async def corrupt(client, request, deadline):
+            response = await call(client, request, deadline)
+            if isinstance(request, GetInspectionImage.Request):
+                response.offset += 1
+            return response
+        backend._vision_call = corrupt
+        with self.assertRaisesRegex(ValueError, "chunk mismatch"):
+            await backend.inspect_unit(JOB_ID, 22, [])
+
+    async def test_ros_inspection_timeout_is_bounded_and_releases_local_state(self):
+        backend, _ = self.backend()
+        backend._vision_call = AsyncMock(side_effect=TimeoutError("lost"))
+        with patch.object(api_contracts, "VISION_TIMEOUT_SECONDS", 0):
+            with self.assertRaises(TimeoutError):
+                await backend.inspect_unit(JOB_ID, 22, [])
+        self.assertFalse(backend._inspection_pending)
+        self.assertIsNone(backend._display_wait)
+
+    async def test_ros_inspection_rejects_wrong_identity_and_remote_failure(self):
+        import uuid
+        backend, _ = self.backend()
+        record = dict(inspection_id=str(uuid.uuid5(uuid.UUID(JOB_ID), "unit:22")),
+                      job_id=JOB_ID, unit_id=23, transport="ros2", status="COMPLETED")
+        backend._vision_call = AsyncMock(return_value=SimpleNamespace(
+            success=True, record_json=json.dumps(record)))
+        with self.assertRaisesRegex(ValueError, "identity"):
+            await backend.inspect_unit(JOB_ID, 22, [])
+        record.update(unit_id=22, status="FAILED", error=dict(code="capture_failed"))
+        backend._vision_call.return_value.record_json = json.dumps(record)
+        with self.assertRaisesRegex(RuntimeError, "capture_failed"):
+            await backend.inspect_unit(JOB_ID, 22, [])
 
     def test_scene_confirmation_requires_actual_fresh_confirmation(self):
         from assembly_sequencer.recipe_contract import validate_scene_confirmation
@@ -1570,18 +1630,20 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
             for node in ast.walk(ast.parse(path.read_text())):
                 if isinstance(node, ast.Constant) and isinstance(node.value, str):
                     self.assertFalse(any(node.value.startswith(prefix) for prefix in
-                        ("/real/", "/conveyor/", "/api/v1/inspections", "fr5.assembly_execution/")),
+                        ("/real/", "/conveyor/", "/api/v1/inspections", "/vision/inspection/", "fr5.assembly_execution/")),
                         f"Duplicate or legacy API declaration: {path}:{node.lineno}")
 
     def test_real_backend_has_only_reviewed_imports_and_ros_endpoints(self):
         import ast
         source = Path(sys.modules[RealBackend.__module__].__file__).read_text()
         tree = ast.parse(source)
-        allowed_imports = {"hashlib", "http", "json", "math", "os", "threading", "time", "uuid",
-                           "urllib", "rclpy", "std_msgs", "std_srvs", "recipe_contract", "copy", "unittest", "pathlib"}
+        allowed_imports = {"hashlib", "json", "os", "threading", "time", "uuid",
+                           "rclpy", "std_msgs", "std_srvs", "recipe_contract", "pathlib", "vision_interfaces"}
         endpoints = {"/real/robot/status", "/real/assembly/status", "/real/assembly/command",
                      "/real/assembly/event", "/conveyor/state", "/conveyor/move_to_assembly",
-                     "/conveyor/move_to_inspection", "/conveyor/stop"}
+                     "/conveyor/move_to_inspection", "/conveyor/stop",
+                     "/vision/inspection/submit", "/vision/inspection/get",
+                     "/vision/inspection/get_image", "/vision/inspection/health"}
         for item in ast.walk(tree):
             if isinstance(item, ast.Import):
                 for alias in item.names:
