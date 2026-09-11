@@ -15,6 +15,7 @@ from vision_server.conveyor_controller import (
 from vision_server.conveyor_roi import (
     BoardDetection,
     ConveyorStopLine,
+    OVERLAY_QOS,
     detect_dark_board,
     detect_dark_boards,
     fit_dominant_body_box,
@@ -506,6 +507,10 @@ class FrameHarness:
     _update_station_state = ConveyorStopLine._update_station_state
 
     def __init__(self):
+        from vision_server.conveyor_arrival import LiveArrival
+        self._arrival = LiveArrival()
+        self._publish_arrivals = Mock()
+        self._update_arrivals = Mock()
         self._stations = {
             name: StopStation(name, name, NormalizedLine('x', pos, 0.1, 0.9), (0, 0, 0))
             for name, pos in [('assembly', 0.2), ('inspection', 0.8)]
@@ -535,6 +540,38 @@ class FrameHarness:
         self.get_logger = Mock(return_value=Mock())
 
 
+def test_arrival_adapter_uses_raw_frames_and_rejects_missing_spacing_or_decode():
+    node = FrameHarness()
+    board = _board_detection((250, 200), 116, 80, 0, 192)
+    for i in range(9):
+        node.now_ns = 10_000_000_000 + i*50_000_000
+        node._arrival.set_motor(dict(timestamp_ns=node.now_ns, state='ASSEMBLY_STOP',
+            moving=False, command_linear_x_mps=0.0, server_instance_id='test', motion_id='test:1'),
+            node.now_ns)
+        stamp = SimpleNamespace(sec=node.now_ns//1_000_000_000,
+                                nanosec=node.now_ns%1_000_000_000)
+        msg = SimpleNamespace(header=SimpleNamespace(stamp=stamp))
+        ConveyorStopLine._update_arrivals(node, msg, [board], 960, 540, True)
+    assert node._arrival.snapshot('assembly', node.now_ns)['at_station']
+    assert not node._arrival.snapshot('inspection', node.now_ns)['at_station']
+    ConveyorStopLine._reject_frame(node, 'decode failure')
+    assert not node._arrival.snapshot('assembly', node.now_ns)['at_station']
+    ConveyorStopLine._update_arrivals(node, msg, [board], 960, 540, False)
+    assert not node._arrival.snapshot('assembly', node.now_ns)['at_station']
+
+
+def test_arrival_adapter_does_not_reuse_held_visual_tracks():
+    node = FrameHarness()
+    node._visual_tracks = [SimpleNamespace(detection=_board_detection((250,200),116,80,0,192))]
+    msg = SimpleNamespace(header=SimpleNamespace(stamp=SimpleNamespace(sec=10, nanosec=0)))
+    node._arrival.set_motor(dict(timestamp_ns=node.now_ns, state='ASSEMBLY_STOP', moving=False,
+        command_linear_x_mps=0., server_instance_id='test', motion_id='test:1'), node.now_ns)
+    ConveyorStopLine._update_arrivals(node, msg, [], 960, 540, True)
+    result = node._arrival.snapshot('assembly', node.now_ns)
+    assert not result['at_station']
+    assert result['reason'] == 'NO_BOARD_IN_STATION_WINDOW'
+
+
 @pytest.fixture
 def frame_harness(monkeypatch):
     def forbidden(*args, **kwargs):
@@ -556,11 +593,11 @@ def synthetic_frame():
 
 
 @pytest.mark.parametrize('stamp', [(0, 0), (11, 0), (9, 0)])
-def test_unverifiable_or_stale_frame_never_refreshes_control(frame_harness, stamp):
+def test_unverifiable_or_stale_frame_is_ignored_without_status_fault(frame_harness, stamp):
     message = synthetic_frame()
     message.header.stamp.sec, message.header.stamp.nanosec = stamp
     frame_harness._image_cb(message)
-    assert frame_harness._ready_pub.publish.call_args.args[0].data is False
+    frame_harness._ready_pub.publish.assert_not_called()
     frame_harness._publish_station.assert_not_called()
     roi_module.detect_dark_boards.assert_not_called()
 
@@ -584,14 +621,14 @@ def test_decode_failure_breaks_consecutive_evidence_but_preserves_latched_stop(f
     frame_harness._publish_station.assert_not_called()
 
 
-def test_frame_expiring_during_detection_cannot_publish_fresh_ready(frame_harness):
+def test_frame_expiring_during_detection_is_ignored_without_status_fault(frame_harness):
     def delayed_detection(*args, **kwargs):
         frame_harness.now_ns += 151_000_000
         return []
 
     roi_module.detect_dark_boards.side_effect = delayed_detection
     frame_harness._image_cb(synthetic_frame())
-    assert frame_harness._ready_pub.publish.call_args.args[0].data is False
+    frame_harness._ready_pub.publish.assert_not_called()
     frame_harness._publish_station.assert_not_called()
 
 
@@ -609,8 +646,69 @@ def test_invalid_detection_cannot_authorize_motion(frame_harness, field, bad):
     frame_harness._publish_station.assert_not_called()
 
 
-def test_fresh_empty_belt_keeps_existing_ready_and_station_heartbeat_semantics(frame_harness):
+def test_fresh_empty_belt_keeps_existing_ready_and_station_status_semantics(frame_harness):
     frame_harness._image_cb(synthetic_frame())
     assert frame_harness._ready_pub.publish.call_args.args[0].data is True
     assert frame_harness._publish_station.call_count == 2
+    assert all(
+        call.kwargs['defer_optional'] is True
+        for call in frame_harness._publish_station.call_args_list
+    )
     assert frame_harness._board_count_pub.publish.call_args.args[0].data == 0
+
+
+def test_overlay_qos_matches_default_unity_reliable_subscription():
+    # A reliable offer is compatible with rqt's best-effort sensor-data view,
+    # while a best-effort offer is rejected by Unity's reliable subscriber.
+    assert OVERLAY_QOS.reliability.name == 'RELIABLE'
+
+
+def test_raw_region_empty_evidence_and_board_away_from_stop_line_veto():
+    harness = FrameHarness()
+    harness._empty_belt_region = dict(x_start=.166, x_end=.80, y_start=.26, y_end=.45)
+    image = np.full((540, 960, 3), 135, dtype=np.uint8)
+    for i in range(41):
+        now = 10_000_000_000+i*50_000_000
+        harness.get_clock = lambda: SimpleNamespace(now=lambda: SimpleNamespace(nanoseconds=now))
+        harness._arrival.set_motor(dict(timestamp_ns=now, state='ASSEMBLY_STOP', moving=False,
+                                       command_linear_x_mps=0, server_instance_id='s', motion_id='s:1'), now)
+        message = SimpleNamespace(header=SimpleNamespace(stamp=SimpleNamespace(sec=now//10**9, nanosec=now%10**9)))
+        ConveyorStopLine._update_arrivals(harness, message, [], 960, 540, True, image)
+    assert harness._arrival.snapshot('assembly', now)['regions_empty']
+    # A valid raw board between stop lines must veto even against gray pixels.
+    now += 50_000_000
+    message.header.stamp.nanosec += 50_000_000
+    detection = _board_detection((400, 200), 100, 80, 0, 350)
+    ConveyorStopLine._update_arrivals(harness, message, [detection], 960, 540, True, image)
+    assert not harness._arrival.snapshot('assembly', now)['regions_empty']
+
+
+def test_board_fully_returned_upstream_does_not_block_restart_empty_evidence():
+    harness = FrameHarness()
+    harness._empty_belt_region = dict(x_start=.166, x_end=.80, y_start=.26, y_end=.45)
+    harness._empty_upstream_margin_px = 30.0
+    image = np.full((540, 960, 3), 135, dtype=np.uint8)
+    # The board's trailing edge is well before the assembly line at x=192. It
+    # is physically on the start side, so its verified dark polygon may be
+    # excluded from the neutral-belt ratio while the rest remains visible.
+    detection = _board_detection((115, 200), 90, 80, 0, 70)
+    for i in range(41):
+        now = 10_000_000_000+i*50_000_000
+        harness.get_clock = lambda: SimpleNamespace(
+            now=lambda: SimpleNamespace(nanoseconds=now)
+        )
+        harness._arrival.set_motor(
+            dict(timestamp_ns=now, state='ASSEMBLY_STOP', moving=False,
+                 command_linear_x_mps=0, server_instance_id='s', motion_id='s:1'),
+            now,
+        )
+        message = SimpleNamespace(
+            header=SimpleNamespace(
+                stamp=SimpleNamespace(sec=now//10**9, nanosec=now%10**9)
+            )
+        )
+        ConveyorStopLine._update_arrivals(
+            harness, message, [detection], 960, 540, True, image
+        )
+    payload = harness._arrival.snapshot('assembly', now)
+    assert payload['restart_regions_empty'] and payload['regions_empty']

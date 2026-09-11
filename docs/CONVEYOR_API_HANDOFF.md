@@ -1,5 +1,11 @@
 # KSMC Conveyor Integration API Handoff
 
+2026-09-10 추가: [S22 현재 도착 확인 및 같은 목적지 재요청](../team_handoff/conveyor_remote_api/CURRENT_ARRIVAL_UPDATE.md).
+ROI/remote server 적용 후 읽기 전용 도착 조회와 검증된 무이동 완료 응답을 제공합니다.
+2026-09-11: ready/trigger 수신 시각 기반 heartbeat fault를 제거했습니다. 명시적인
+not-ready/trigger와 유한 이동 timeout은 유지하고, 로봇 `/cmd_vel` 수신기 없는
+상태의 이동 요청은 즉시 거절합니다.
+
 기준일: 2026-09-03  
 대상: DB/Backend, Unity Digital Twin 팀원  
 통신: ROS 2 Jazzy (`ROS_DOMAIN_ID=5`), Unity는 ROS-TCP Endpoint 사용
@@ -16,10 +22,10 @@ S22 비전 노드가 기판과 두 정지선을 추적하고, 별도 컨베이�
 
 - station ID: `assembly`, `inspection`
 - 구현 완료: 기판 검출, 정지선까지 거리, 정지 trigger, 두 기판 간격 검사,
-  원격 station 이동·정지·reset 서비스, FR5-clear heartbeat interlock,
+  원격 station 이동·정지·reset 서비스, S22 정지선 상태와
   fail-safe 정지
 - 아직 없음: 실제 모터 encoder 상태 feedback, 완성된 생산 cycle ID 관리자,
-  FR5 제어 노드의 clear 신호 publisher
+  FR5 작업영역 이탈 확인
 - DB와 Unity는 상태를 구독하고 Main Server 정책에 따라 이동 서비스를 호출한다.
 - DB/Unity에서 `/cmd_vel`을 직접 발행하지 않는다. 속도 명령 publisher는
   `conveyor_controller` 하나만 사용한다.
@@ -47,7 +53,7 @@ ros2 topic echo /vision/conveyor/stop_line_ready
 
 | 토픽 | 타입 | 의미 |
 |---|---|---|
-| `/vision/conveyor/stop_line_ready` | `std_msgs/msg/Bool` | 정지선 제어 허가 heartbeat. `false` 또는 갱신 중단은 FAULT로 처리 |
+| `/vision/conveyor/stop_line_ready` | `std_msgs/msg/Bool` | 정지선 제어 상태. `false`는 출발을 막고 이동 중 정지하지만, 갱신 주기 자체는 fault 조건이 아님 |
 | `/vision/conveyor/station_spacing_valid` | `std_msgs/msg/Bool` | 두 정지 위치에 기판 두 장을 둘 수 있는 간격인지 여부 |
 | `/vision/conveyor/station_spacing_board_lengths` | `std_msgs/msg/Float32` | 정지선 간격 ÷ 검출 기판 진행축 길이 |
 | `/vision/conveyor/board_count` | `std_msgs/msg/Int32` | 현재 S22 화면에서 분리 검출된 기판 수 |
@@ -90,10 +96,27 @@ ros2 topic echo /vision/conveyor/stop_line_ready
 ~/KSMC/run_conveyor_remote_server.sh --execute --confirm-motion
 ```
 
+컨베이어 서버와 S22 카메라/정지선 ROI를 같은 컴퓨터에서 한 번에 관리할 때는
+`--with-s22`를 추가한다.
+
+```bash
+~/KSMC/run_conveyor_remote_server.sh --with-s22 --monitor-only
+# 현장 운전 전환:
+~/KSMC/run_conveyor_remote_server.sh --with-s22 --execute --confirm-motion
+```
+
+이 옵션은 기존 S22 HQ 런처를 재사용하거나 새로 시작한 프로세스만 함께
+관리한다. 기존 `/cmd_vel` 서버 잠금이 있으면 카메라를 시작하지 않고 종료한다.
+Unity ROS-TCP Endpoint(`10000`)와 GoPro 런처는 이 명령에 포함되지 않는다.
+
 두 번째 명령도 서버 실행만으로는 움직이지 않는다. 아래 이동 서비스가 요청되고
 모든 interlock을 통과해야 `/cmd_vel`이 발행된다. 기존 단발 제어 스크립트와 원격
 서버를 동시에 실행하지 않으며, 서버도 다른 `/cmd_vel` publisher를 발견하면
 이동을 거부하거나 즉시 `FAULT` 정지한다.
+
+이동 요청 전에 상태 JSON의 `command_receiver_connected=true`를 확인한다. 로봇
+bringup이 꺼져 있거나 ROS 그래프에 호환 `TwistStamped` subscriber가 없으면
+요청은 즉시 `success=false`로 반환되며 속도 명령은 시작되지 않는다.
 
 ### 서비스 규격
 
@@ -116,44 +139,53 @@ ros2 service call /conveyor/reset std_srvs/srv/Trigger '{}'
 ```
 
 응답의 `success=false`는 명령을 실행하지 않았다는 뜻이며 `message`에 거절 이유가
-들어 있다. `success=true`인 이동 응답은 “이동 명령 수락”이지 물리 도착 완료가
-아니다. 완료는 `/conveyor/state`와 station trigger로 확인한다.
+들어 있다. 일반 `success=true` 이동 응답은 이동 수락이며 도착 완료가 아니다.
+새 `already_arrived=true, completed=true` 응답은 최신 영상으로 같은 목적지의
+정지를 검증한 무이동 완료다. 현재 도착 조회와 작업 연결을 확인해 처리한다.
 
-### 필수 FR5 interlock 입력
+### FR5 허가 제거 (2026-09-09)
 
-| 토픽 | 타입 | 의미 |
-|---|---|---|
-| `/cell/fr5_clear_for_conveyor` | `std_msgs/msg/Bool` | FR5와 그리퍼가 컨베이어 작업영역 밖에 있으면 `true` |
-
-FR5/Main Server 담당 노드는 이 토픽을 최소 10 Hz로 계속 발행해야 한다. 신호가
-`false`이거나 250 ms 이상 끊기면 출발 요청을 거부하고, 이동 중이면 즉시
-`FAULT`와 0속도를 발행한다. 아직 실제 FR5 clear publisher는 구현되지 않았으므로
-이 신호 없이 원격 이동은 의도적으로 불가능하다.
+`/cell/fr5_clear_for_conveyor`는 구독하지 않으며 출발/이동 중 정지 조건에 사용하지 않는다.
+FR5 작업영역 이탈은 운용자/상위 시퀀서가 확인해야 한다.
+상태 JSON의 `fr5_clear`, `fr5_clear_fresh`, `fr5_interlock_required`는 호환용으로
+모두 `false`이며 실제 로봇 위치를 나타내지 않는다. `vision_ready_fresh`도 이전
+Unity 호환 필드이며 현재 `vision_ready`의 별칭이다. 상태 heartbeat가 아니라
+현재 제어 상태를 읽는다.
 
 ### 원격 제어 상태
 
 | 토픽 | 타입 | 의미 |
 |---|---|---|
-| `/conveyor/state` | `std_msgs/msg/String` | 10 Hz JSON 상태 heartbeat |
+| `/conveyor/state` | `std_msgs/msg/String` | 10 Hz JSON 제어 상태 |
 | `/conveyor/moving` | `std_msgs/msg/Bool` | 명령 기준 이동 중 여부 |
 
 상태 값은 `IDLE`, `MOVING_TO_ASSEMBLY`, `ASSEMBLY_STOP`,
 `MOVING_TO_INSPECTION`, `INSPECTION_STOP`, `MANUAL_STOP`, `FAULT`다.
 JSON에는 `schema_version`, `timestamp_ns`, `state`, `moving`,
-`target_station`, `reason`, `armed`, `command_linear_x_mps`, vision/FR5
-heartbeat 상태가 포함된다. 이는 모터 encoder feedback이 아니라 **제어 명령 상태**다.
+`target_station`, `reason`, `armed`, `command_linear_x_mps`, 현재 vision 상태와
+`command_receiver_connected`가 포함된다. 이는 모터 encoder feedback이 아니라
+**제어 명령 상태**다. ready/trigger의 지연된 수신 시각은 이동 허가나 fault 판정에
+사용하지 않는다.
 
 기본 실제 벨트 전진 명령은 검증된 TurtleBot 매핑인
 `TwistStamped.linear.x=-0.10 m/s`이고, 이동 시간 30초를 넘으면 `FAULT` 정지한다.
+원격 서버가 `IDLE`인 동안에는 `/cmd_vel`에 주기적인 0을 보내지 않아 수동
+텔레옵이 명령을 소유할 수 있다. 단, 텔레옵을 사용할 때도 publisher는 하나만
+유지해야 하며, `ASSEMBLY_STOP`, `INSPECTION_STOP`, `MANUAL_STOP`, `FAULT`에서는
+정지 0이 계속 발행된다.
 
 ### 서비스별 허용 순서
 
 - `move_to_assembly`: `IDLE` 또는 이전 `INSPECTION_STOP`에서만 허용
 - `move_to_inspection`: `ASSEMBLY_STOP` 상태에서 허용
-- 서버를 조립 정지 후 재시작한 경우에는 fresh assembly trigger가 `true`이면
+- 서버를 조립 정지 후 재시작한 경우에는 현재 assembly trigger가 `true`이면
   현재 조립 정지를 복구 근거로 인정하고 inspection 이동을 허용
 - 선택한 목적지 trigger가 이미 `true`이면 재출발을 거부
-- `FAULT` 또는 `MANUAL_STOP`에서는 `reset` 전까지 이동 거부
+- 조립/검사 STOP 또는 MANUAL_STOP에서 새 `move_to_assembly` 요청이 들어오면,
+  두 station의 S22 empty 증거(`restart_regions_empty`, 5프레임/0.4초,
+  fresh source)를 확인한 경우에만 이전 completion을 IDLE로 정리한 뒤 같은
+  요청을 새 motion으로 접수한다. 수동 정지의 타이머 자동 해제는 하지 않는다.
+- `FAULT`에서는 계속 `reset` 전까지 이동 거부
 
 ### `assembly-r1` 레시피 연동
 
@@ -166,21 +198,22 @@ heartbeat 상태가 포함된다. 이는 모터 encoder feedback이 아니라 **
 | 긴급/사용자 정지 | `/conveyor/stop` 호출 | `MANUAL_STOP`, `moving=false` |
 | fault 복구 준비 | 원인 제거 후 `/conveyor/reset` 호출 | `IDLE`, `moving=false` |
 
-서비스 `success=true`만 받고 다음 조립·검사 단계로 넘어가면 안 된다. 이는 이동
-요청 수락을 뜻할 뿐이다. Main Server executor는 상태 heartbeat를 계속 감시하면서
-목적지 STOP 상태를 받을 때까지 해당 recipe operation을 완료하지 않는다.
+일반 이동은 `success=true`만으로 다음 단계로 넘어가지 않는다. executor는
+목적지 STOP/arrival과 motion_id를 확인한다. 검증된 `already_arrived` 응답은
+새 MOVING이나 새 motion_id를 기다리지 않고, 현재 도착 조회 및 Job/Unit 연결을
+확인한 뒤 동일한 완료 분기로 한 번만 처리한다.
 
 권장 흐름:
 
 ```text
 before_all:
-  FR5 clear heartbeat=true
+  FR5 작업영역 이탈 확인
   move_conveyor_to_assembly service accepted
   wait ASSEMBLY_STOP
   ensure_camera_calibrated
 
 after_all:
-  FR5 home/clear 확인 및 heartbeat=true
+  FR5 home/clear 확인
   move_conveyor_to_inspection service accepted
   wait INSPECTION_STOP
   inspect_assembled_pcb
@@ -200,15 +233,16 @@ ASCII space를 사용해야 한다. 제공된 채팅 본문에는 NBSP가 섞여
 | `CONVEYOR_READY` | `stop_line_ready`가 `false -> true` | timestamp, ready, spacing_valid, board_count |
 | `BOARD_SEEN` | station의 `board_detected`가 `false -> true` | timestamp, station, distance_px, polygon |
 | `STATION_REACHED` | station의 `stop_trigger`가 `false -> true` | timestamp, station, distance_px, board_count |
-| `CONVEYOR_VISION_FAULT` | ready=false 또는 heartbeat timeout | timestamp, last_ready_age_ms, spacing_valid |
+| `CONVEYOR_VISION_FAULT` | ready=false 또는 검출/간격 오류 | timestamp, spacing_valid, board_count |
 | `BOARD_POSE` | 아래 position_valid=true | timestamp, station, base pose, status JSON |
 
 - `stop_trigger=true`가 여러 프레임 반복되므로 **상승 에지만 한 번 저장**한다.
 - DB 중복 방지를 위해 `(production_cycle_id, station, event_type)`에 unique key 또는
   idempotency key를 둔다.
-- `stop_line_ready`와 station trigger가 250 ms 이상 갱신되지 않으면 마지막 `true`를
-  신뢰하지 않고 통신 장애로 처리한다. 실제 모터 제어기는 더 엄격한 150 ms
-  watchdog을 사용한다.
+- `stop_line_ready`와 station trigger는 현재 Bool 상태로 처리한다. 주기적인 갱신
+  중단만으로 fault를 만들지 않으며, 명시적인 `false`, 정지 trigger, 정지선 검출
+  오류가 제어 조건이다. 이동이 정지 trigger 없이 계속되면 유한 30초 timeout이
+  fallback 정지를 수행한다.
 - ROS 메시지 header가 없는 Bool/Float32 토픽은 DB 수신 시각을 기록한다.
 
 ## 6. Unity 연결
@@ -259,6 +293,65 @@ public class ConveyorRosView : MonoBehaviour
 }
 ```
 
+정지선 화면을 Unity `RawImage`에 표시할 때는 반드시 ROS 타입과 토픽을 함께
+맞춘다.
+
+```csharp
+using RosMessageTypes.Sensor;
+using Unity.Robotics.ROSTCPConnector;
+
+ROSConnection.GetOrCreateInstance().Subscribe<CompressedImageMsg>(
+    "/vision/conveyor/stop_image/compressed", OnStopImage);
+```
+
+RawImage 갱신까지 포함한 복사 가능한 예제는
+`team_handoff/conveyor_remote_api/unity/S22ConveyorOverlayView.cs`에 있다.
+이 예제는 JPEG의 실제 크기를 사용하므로 `1280x720`으로 고정된 기존 화면
+코드와 섞지 않는다. 첫 프레임의 `960x540`, `format=jpeg`, byte 수를 Unity
+Console에서 확인할 수 있다.
+
+`stop_image/compressed`는 `sensor_msgs/msg/CompressedImage`이다. 현재 ROI
+publisher는 Unity의 reliable subscription과 호환되는 depth-1 `RELIABLE` QoS를
+제공하며, 기존 rqt best-effort 뷰도 계속 받을 수 있다. Unity를 실행했는데
+`ros2 topic info -v /vision/conveyor/stop_image/compressed`의 subscription count가
+0이면 Unity 씬이 해당 `CompressedImageMsg`를 등록하지 않았거나 팀원이 관리하는
+ROS-TCP Endpoint가 연결되지 않은 상태다. Endpoint는 로봇팔 담당 팀원이 계속
+관리하며, 이 카메라 호환 수정 때문에 Endpoint 소스를 전달하거나 재시작할
+필요는 없다.
+
+S22와 GoPro의 화면도 각각
+`/camera2/image_stream/compressed`와 `/camera3/image_raw/compressed`의
+`sensor_msgs/msg/CompressedImage`를 사용한다. 두 카메라 compressed publisher는
+depth-1 `BEST_EFFORT` sensor-data QoS를 사용하며, 기존 Endpoint와 rqt의
+sensor-data subscriber가 이 설정과 호환된다. 다만 `rqt_image_view`에서는 전체
+`/compressed` 경로를 plugin base로 직접 입력하지 말고, 각각
+`/camera2/image_stream compressed`, `/camera3/image_raw compressed` 항목을
+선택한다. Unity 화면이 비어 있으면 먼저 이 전체 토픽을 Endpoint가 구독 중인지와
+Endpoint TCP 연결을 확인한다.
+
+원격 PC에서 토픽 이름만 보이고 영상이 비어 있으면 다음 세 값과 실제 구독
+생성을 먼저 확인한다. 이 확인은 Endpoint를 시작·중지하지 않는다.
+
+```bash
+source /opt/ros/jazzy/setup.bash
+source ~/KSMC/scripts/ksmc_env.sh
+export ROS_DOMAIN_ID=5
+export ROS_LOCALHOST_ONLY=0
+export ROS_AUTOMATIC_DISCOVERY_RANGE=SUBNET
+ros2 topic info -v /camera2/image_stream/compressed --no-daemon
+ros2 topic info -v /camera3/image_raw/compressed --no-daemon
+```
+
+정상 rqt를 열었다면 각 선택 토픽의 `Subscription count`에
+`rqt_gui_cpp_node`가 나타나야 한다. count가 0이면 rqt에서 base 토픽과
+`compressed` transport를 선택하지 않은 것이고, count가 1 이상인데 화면이
+비어 있으면 해당 PC의 DDS 인터페이스·방화벽·QoS를 점검한다.
+
+`/camera2/image_stream/compressed`는 정지선이 없는 원본/제어 화면이고,
+`/vision/conveyor/stop_image/compressed`에만 정지선과 대시보드가 포함된다.
+따라서 원본 토픽을 rqt에서 볼 수 있어도 Unity 정지선 화면의 수신·표시가
+검증된 것은 아니다. 현재 실시간 stop-image JPEG는 `960x540`으로 발행된다.
+
 Unity에서 조립 위치 이동 서비스를 호출하는 예시:
 
 ```csharp
@@ -275,7 +368,7 @@ ROSConnection.GetOrCreateInstance().SendServiceMessage<TriggerRequest,
 
 Unity 표시 상태 권장 매핑:
 
-- `stop_line_ready=false` 또는 heartbeat timeout: `FAULT`/회색
+- `stop_line_ready=false`: `FAULT`/회색
 - `board_detected=true`, `distance_to_stop_px > 20`: `APPROACHING`
 - `stop_trigger` 상승 에지: `ASSEMBLY_STOP` 또는 `INSPECTION_STOP`
 - `board_count >= 2`이고 `station_spacing_valid=true`: 두 기판 동시 표시 가능
@@ -306,6 +399,15 @@ Unity 표시 상태 권장 매핑:
 ```bash
 ~/KSMC/run_s22_conveyor_hq.sh
 ```
+
+컨베이어 원격 서버와 같은 컴퓨터에서 함께 관리할 때는 위 명령 대신
+다음 원커맨드를 사용한다.
+
+```bash
+~/KSMC/run_conveyor_remote_server.sh --with-s22 --execute --confirm-motion
+```
+
+이 원커맨드는 GoPro나 팀원 소유 Endpoint를 시작하지 않는다.
 
 수동 운전 시에는 원격 서버를 종료한 상태에서 장비 담당자만 아래 스크립트로
 한 단계씩 실행한다.

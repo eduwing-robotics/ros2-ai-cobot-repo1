@@ -4,7 +4,8 @@ The only supported S22 camera path uses official scrcpy 4.1 camera streaming
 over USB. The current measured stable high-quality profile uses the S22 rear
 main camera at 1920x1080, 30 FPS with H.264 at 30 Mbps. Every fresh camera
 frame wakes the control publisher immediately; it is not sampled by a second
-30 Hz timer. The live view is 1280x720 JPEG 90 at a target 30 FPS.
+30 Hz timer. The live control view is 960x540 JPEG 84 at a target 30 FPS;
+the reduced packet size keeps stop status delivery responsive over DDS.
 
 The subscriber-activated 1920x1080 JPEG 95 analysis topic runs in another
 thread and is capped at 5 FPS, so opening it cannot queue old control frames.
@@ -26,12 +27,46 @@ Run the camera and conveyor overlay together:
 Topics and service:
 
 ```text
-/camera2/image_stream/compressed           1280x720 JPEG 90, ~30 FPS live view
+/camera2/image_stream/compressed           960x540 JPEG 84, ~30 FPS live view
 /camera2/image_raw/compressed              1920x1080 JPEG 95, max 5 FPS analysis
 /vision/conveyor/stop_image/compressed     stop-line overlay (recalibration pending)
 /camera2/inspection_frame/compressed       one 1080p overview PNG on request
 /camera2/capture_inspection_frame          std_srvs/srv/Trigger
 ```
+
+All three compressed viewer topics (`/camera2/image_stream/compressed`,
+`/camera2/image_raw/compressed`, and `/camera2/inspection_frame/compressed`)
+offer the sensor-data `BEST_EFFORT`, `KEEP_LAST(1)`, `VOLATILE` QoS used by
+rqt_image_view, the ROI node, and the ROS-TCP Endpoint. Keeping one newest
+sample avoids stale JPEG replay and network backpressure. The uncompressed
+`Image`/`CameraInfo` sensor paths use the same best-effort profile.
+
+For `rqt_image_view`, select the base topics `/camera2/image_stream`,
+`/camera3/image_raw`, or `/vision/conveyor/stop_image` and set the image
+transport to `compressed` in the plugin. Do not pass the `/compressed` suffix
+as the plugin's base topic: rqt then creates a `sensor_msgs/msg/Image`
+subscription on a `sensor_msgs/msg/CompressedImage` topic, so the topic is
+listed but no frame can be decoded. Direct ROS tools and Unity should continue
+to use the full compressed names shown above. The GoPro compressed publisher
+uses the same best-effort depth-one viewer profile.
+
+When viewing from another computer, source the cell environment before
+starting rqt so it joins the same ROS subnet:
+
+```bash
+source /opt/ros/jazzy/setup.bash
+source ~/KSMC/scripts/ksmc_env.sh
+export ROS_DOMAIN_ID=5
+export ROS_LOCALHOST_ONLY=0
+export ROS_AUTOMATIC_DISCOVERY_RANGE=SUBNET
+ros2 run rqt_image_view rqt_image_view
+```
+
+The remote viewer must then show an active `rqt_gui_cpp_node` subscription in
+`ros2 topic info -v` for the selected compressed topic. If the topic is listed
+but the subscription count stays zero, rqt is using the wrong base/transport or
+is not in the same ROS domain; if a subscription is present but no frames
+arrive, compare the DDS interface/firewall on that computer.
 
 Capture one inspection frame while the PCB is stationary:
 
@@ -48,11 +83,12 @@ stationary; it is deliberately limited to 5 FPS and is not the control display.
 After the phone position and stop lines are recalibrated, the conveyor stop
 detector must still be revalidated at the real belt speed.
 
-The stop detector publishes trigger/heartbeat data before drawing the optional
-dashboard. A source frame older than 0.20 seconds is rejected, and the motion
-controller stops if no fresh vision state arrives for 0.25 seconds. Thus a
-camera or viewer stall causes a fail-safe stop instead of allowing the PCB to
-continue past a line.
+The stop detector publishes trigger and ready status before drawing the optional
+dashboard. A source frame older than the configured 0.15 seconds is ignored for
+new stop/arrival evidence; that delay alone does not create a liveness fault.
+The motion controller stops on explicit `ready=false`, a stop trigger, or its
+finite motion timeout. A camera or viewer stall therefore cannot create a
+false status fault, while a move with no visual trigger still ends at timeout.
 
 The conveyor overview uses a 1.5x main-camera zoom. On this
 SM-S901N, scrcpy `--camera-zoom=3.0` remains on the main physical camera and is

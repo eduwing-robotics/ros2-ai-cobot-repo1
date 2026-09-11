@@ -3,9 +3,8 @@ conveyor_roi:
   # 1920x1080 analysis topic and lossless 4K inspection capture stay separate.
   image_topic: /camera2/image_stream/compressed
   annotated_topic: /vision/conveyor/stop_image/compressed
-  # Reject delayed control frames instead of allowing the belt to continue
-  # from an old image. The motion controller has an independent heartbeat
-  # cutoff as a second fail-safe.
+  # Do not use a delayed control frame for a new stop/arrival decision. The
+  # remote controller has an independent finite motion timeout as fallback.
   max_frame_age_seconds: 0.15
   # Keep /camera2/image_raw/compressed at 1920x1080 for stationary analysis.
   # Exact inspection uses the separate 4000x3000 telephoto still capture.
@@ -18,6 +17,29 @@ conveyor_roi:
   # Control runs at 30 FPS. The optional dashboard is capped separately so
   # rqt/UI encoding cannot delay stop-trigger publication.
   annotated_fps: 15
+
+  # Current occupancy, independent of the latched stop trigger. Pixel limits
+  # are at 960px control width; not a certified robot assembly pose tolerance.
+  # 2026-09-10 visible belt interior at the fixed 1.5x overview. Both station
+  # footprints, excluding rails/tools and the start area. Camera pose must stay
+  # fixed; ≥98% neutral gray pixels (95..180, channel spread ≤35), 2s/20 frames.
+  # A verified board safely upstream of the assembly line is excluded from
+  # this belt ratio so a manually returned start board can be retried.
+  empty_belt_region:
+    x_start: 0.166
+    x_end: 0.80
+    y_start: 0.26
+    y_end: 0.45
+  # Require the detected trailing edge to be at least 30 px before the
+  # assembly stop. This admits a board returned to the start while still
+  # vetoing a board whose stop-line edge is already at the station.
+  empty_upstream_margin_px: 30.0
+
+  arrival_observation:
+    tolerance_px: 8.0
+    stationary_span_px: 2.0
+    minimum_seconds: 0.4
+    minimum_frames: 5
 
   # Image travel direction is left -> right. The TurtleBot wheel command used
   # to produce this physical direction is negative_x and is configured in the

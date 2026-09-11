@@ -1,5 +1,201 @@
 # Conveyor Work Log
 
+## 2026-09-11 — Prevent duplicate HQ teardown and restore persistent services
+
+- The 11:56 KST failure was traced to the one-command cell, not ROS domain
+  selection. The existing S22 process was running as `bash
+  ./run_s22_conveyor_hq.sh`, while `run_conveyor_cell.sh` only recognised an
+  absolute script spelling. The cell therefore started a second HQ. Its
+  startup `pkill` removed the first HQ's ROI; the first HQ then cleaned up the
+  shared camera, the second HQ failed its camera gate, and the cell stopped the
+  conveyor server. The server log had only its startup line at 11:56:08 KST;
+  the S22 camera log ended at 11:56:10 KST, matching this teardown sequence.
+- `run_conveyor_cell.sh` now resolves each `/proc/<pid>/cmdline` script
+  argument before matching, so absolute, relative and `./` invocations reuse
+  the same HQ. `run_s22_conveyor_hq.sh` now holds an exclusive HQ launcher
+  lock before stale-ROI cleanup. A race that loses this lock is treated as a
+  reuse case and no longer tears down an already-running server. Normal ROS
+  shutdown also handles `ExternalShutdownException` without a false traceback.
+- Validation: shell syntax passed; `vision_server` rebuilt successfully. A
+  monitor-only 24-second cell run reused an existing HQ and stayed alive. A
+  detached, armed integrated run using `setsid
+  ./run_conveyor_vision_server.sh --execute --confirm-motion` is currently
+  alive with ROS domain 5: `/conveyor/move_to_assembly`,
+  `/conveyor/move_to_inspection` and `/conveyor/stop` each have one local
+  provider, `/conveyor/state` has one publisher, and `0.0.0.0:8766` accepts
+  connections (an unauthenticated probe correctly returned HTTP 401). S22
+  and ROI remained a single external HQ process throughout the replacement.
+- No move service, inspection request, positive `/cmd_vel`, robot, Job, DB or
+  Sequencer command was issued. Server startup is armed but begins in IDLE and
+  emitted no nonzero command. During the earlier replacement check a separate
+  `turtlebot3_teleop` `/cmd_vel` publisher was present; the remote server
+  intentionally rejects a move while that second command owner is present.
+  The final live check has one server publisher and one TurtleBot subscriber.
+
+## 2026-09-11 Add one-command cell launcher and preserve Wi-Fi SSH
+
+- Added `run_conveyor_cell.sh` and the additive
+  `run_conveyor_remote_server.sh --with-s22` form. It starts the conveyor
+  remote server first, then starts or reuses `run_s22_conveyor_hq.sh`, supervises
+  only processes it owns, and refuses to touch the camera when the existing
+  `/cmd_vel` owner lock is held. It never starts the Unity ROS-TCP Endpoint or
+  the GoPro launcher; those remain separate team-managed processes.
+- The laptop currently has `enp129s0=10.77.5.1/30` and Wi-Fi
+  `wlo1=192.168.11.4/24` with the Wi-Fi default route. A read-only SSH probe to
+  `musk@192.168.11.101` reached the robot but was rejected with
+  `Permission denied (publickey,password)`, so no robot network setting was
+  changed. The documented robot-side additive profile uses
+  `10.77.5.2/30`, no Ethernet default gateway, and leaves Wi-Fi/SSH enabled.
+  An opt-in `config/fastdds_laptop_wired.xml` is available for the later ROS
+  switchover; it is not active until both robot and laptop wired paths are
+  verified.
+- Validation: `bash -n` passed for both launchers and `run_conveyor_cell.sh
+  --help` completed without starting ROS, cameras, endpoint, or motion. No
+  robot, conveyor, Job, DB, Sequencer, or Unity command was issued for this
+  change. Physical wired reachability and ROS subscriber migration remain
+  pending authorized robot-console/SSH access.
+
+## 2026-09-11 Prevent competing conveyor command owners from causing belt jerk
+
+- Read-only host inspection found two `conveyor_remote_server` processes alive
+  in ROS domain 5 at the same time (PIDs 22175 and 24490 under separate
+  launchers). The graph collapsed the identical node names and showed only one
+  visible publisher, so process ownership must be checked in addition to
+  `ros2 topic info`. The direct `run_conveyor_to_assembly.sh` path also owns
+  `/cmd_vel`; running it beside the service server can alternate its `-0.10`
+  command with the server's zero command and make the physical belt jerk.
+- The standard remote-server launcher and direct one-shot wrapper now share
+  the process-lifetime `runtime/conveyor_cmd_vel_owner.lock`. A second local
+  command owner is refused before it can publish. The documented operation is
+  to stop the remote server before using the direct test wrapper, or use the
+  remote movement service while the server owns the topic.
+- Current read-only measurements after the camera/ROI restart were S22 capture
+  30.0 FPS and `/camera2/image_stream/compressed` 29.2--29.9 FPS. The optional
+  reliable stop overlay was only 5.3 FPS (about 80 KB per frame) while three
+  subscribers were present, so a Unity stop-screen that uses this topic can
+  look stuttered even while the control stream remains current. The direct
+  wired interface is 1 Gb/s at `10.77.5.1`, but the robot address
+  `10.77.5.2` did not answer ARP/SSH; robot ROS traffic therefore remains on
+  Wi-Fi `192.168.11.101` until the robot side is configured.
+- Validation: `bash -n` passed for all conveyor wrappers and an isolated
+  `flock` contention check returned the expected refusal. No movement service,
+  positive `/cmd_vel`, robot, Job, or Sequencer command was issued during this
+  performance investigation. The stale duplicate was then retired during a
+  controlled IDLE restart. The rebuilt service is the only
+  `conveyor_remote_server` process, reports `IDLE/moving=false`, and emitted no
+  `/cmd_vel` sample during a three-second passive-IDLE observation. A direct
+  `run_conveyor_to_assembly.sh --station assembly` attempt was refused by the
+  lock before ROS was invoked. No physical movement was commanded.
+
+## 2026-09-11 Prevent remote IDLE zeros from overriding manual teleop
+
+- Read-only host inspection found two `conveyor_remote_server` processes alive
+  in ROS domain 5 at the same time (PIDs 22175 and 24490 under separate
+  launchers). The graph collapsed them to one node name and showed one visible
+  publisher, so process ownership must be checked in addition to
+  `ros2 topic info`. The one-shot `run_conveyor_to_assembly.sh` path also owns
+  `/cmd_vel`; running it beside the remote server can interleave its `-0.10`
+  command with the server's zero command and make the belt jerk.
+- The remote server's `_control_tick()` previously published `/cmd_vel=0.0`
+  every 20 ms whenever it was not moving, including `IDLE`. That competed with
+  an operator's `turtlebot3_teleop` publisher. IDLE is now passive; latched
+  `ASSEMBLY_STOP`, `INSPECTION_STOP`, `MANUAL_STOP`, and `FAULT` still repeat
+  zero for the stop hold, and entering/resetting those states still emits an
+  immediate zero. A rejected service request also does not inject a zero when
+  another `/cmd_vel` publisher owns the topic.
+- The normal remote-server launcher and direct one-shot wrapper share the
+  process-lifetime `runtime/conveyor_cmd_vel_owner.lock`, so a second command
+  owner is refused before it can publish. The operator must leave the remote
+  state in `IDLE` before starting teleop; active station holds remain a stop
+  interlock and require the existing reset procedure.
+- Validation: targeted remote-server regression tests passed (`81 passed`),
+  including passive IDLE ticks, teleop publisher rejection without a zero
+  pulse, and continued zero publication in latched stop/fault states. No
+  positive `/cmd_vel` was issued during this investigation; physical teleop
+  response remains to be checked after the operator selects exactly one command
+  owner and confirms the TurtleBot is clear.
+
+## 2026-09-11 Remove status heartbeat faults and reject disconnected robot moves
+
+- The active conveyor control path no longer treats the age or absence of a
+  periodic S22 `ready`/station-trigger sample as a heartbeat fault. A received
+  `ready=false` still stops a move, a received stop trigger still latches the
+  destination STOP state, stale camera frames are ignored for new control and
+  arrival evidence, and the finite 30-second motion timeout remains the
+  bounded fallback.
+- The remote server now checks the resolved `/cmd_vel` graph before accepting a
+  move and requires a compatible `geometry_msgs/msg/TwistStamped` subscriber.
+  If TurtleBot bringup is down, the request is rejected immediately with
+  `robot command receiver is not connected on /cmd_vel` instead of being
+  accepted and timing out after 30 seconds. The check also faults an active
+  move if its receiver disappears.
+- The 2026-09-10 evidence was an accepted request at 20:29:22.936 KST followed
+  by `CONVEYOR HOLD: FAULT: motion timeout` at 20:29:52.949 KST. At that
+  interval ROS showed one `/cmd_vel` publisher and zero subscribers; the known
+  TurtleBot address `192.168.11.101` was unreachable and the laptop wired
+  interface had no carrier. Unity/Sequencer reached the server, but the robot
+  command path was not available. The earlier 18:23:39 event was the separate
+  stale-S22-status fault that this change removes from active control.
+- Validation: all 181 offline `vision_server` tests passed, including stale
+  status, explicit not-ready/trigger, receiver preflight, arrival-age and
+  stale-frame cases. One guarded `/conveyor/move_to_assembly` service request
+  was issued after the rebuild; it returned the receiver error and published
+  no nonzero `/cmd_vel`. No reset, Job, Unit or Sequencer command was sent.
+  Physical motion remains unverified until TurtleBot bringup and its network
+  endpoint are restored; the software now fails closed at the service boundary
+  in that condition.
+
+## 2026-09-10 User-authorized MANUAL_STOP reset
+
+- The live `/conveyor/state` preflight reported `MANUAL_STOP`, `moving=false`,
+  with fresh S22 readiness. After confirming that the belt was not moving, the
+  user-authorized `/conveyor/reset` Trigger was called once.
+- The server returned `success=true`, `controller reset to IDLE; conveyor
+  remains stopped`; a follow-up state read reported `IDLE`, `moving=false`.
+  No move, stop, robot, Job, or Sequencer command was issued.
+- Unity may now request the normal first move from `IDLE`, subject to its
+  existing ready/interlock checks. The reset only clears the controller hold;
+  it does not move or reposition a board.
+
+## 2026-09-10 S22 control heartbeat separated from Unity overlay traffic
+
+- A live ROI warning measured `control_publish=313.9 ms` while the belt was
+  still upstream of assembly. The blocking portion was the non-critical
+  station telemetry publication; it could starve the 150 ms S22-ready watchdog
+  even though rqt showed a live image.
+- Station line/detection/polygon/distance messages now use a bounded latest
+  snapshot worker. The callback sends station triggers, ready, and spacing
+  heartbeats first, then drops stale display telemetry when the worker is
+  behind. Arrival observation and all motion interlocks remain unchanged.
+- The optional stop-image topic now offers reliable depth-1 QoS to match the
+  Unity ROS-TCP display while retaining compatibility with rqt. After a safe
+  ROI/camera restart, 20-second read-only probes received 590 camera frames
+  and 592 ready heartbeats (29.5/29.6 FPS), with no slow-callback or stale-frame
+  log. `ros2 topic info` showed the rqt and team Endpoint subscriptions. No
+  reset, move, robot, Job, or Sequencer command was issued.
+
+## 2026-09-10 S22 ready heartbeat latency mitigation
+
+- An interrupted assembly move stopped upstream of the station because the ROI rejected a 185 ms old frame and the controller latched `S22 ready heartbeat missing`; it was not an arrival stop. Deployed Fast DDS interface filtering and non-blocking UDP on the laptop, preserving the 150 ms watchdog and manual/fault behavior. Matched audit reduced ready false samples/gaps over150 ms to0; the robot Ethernet endpoint is still unconfigured, so the remote robot remains on Wi-Fi. No movement, reset, robot, Job or Sequencer request was issued. Detailed measurements and remaining physical-test limits: [grouped vision record](vision.md#2026-09-10-s22-heartbeat-latency-and-wired-transport-mitigation).
+- The laptop-only DHCP probe on the connected cable found no robot lease/ARP response and was reverted to static `10.77.5.1/30`; no robot network or conveyor command was changed.
+- Latest read-only preflight remains `MANUAL_STOP`/zero command with fresh ready. Unity must perform the explicit reset recovery before its next move request; pressing the process button immediately will be rejected. No reset or move was issued here. Fallback details: [heartbeat rollback note](../team_handoff/conveyor_remote_api/HEARTBEAT_ROLLBACK.md).
+- After the TurtleBot power cycle, its known Wi-Fi IP is ARP-incomplete and `/cmd_vel` has zero subscribers on ROS domain5. The laptop cable is physically1Gb/s but the robot Ethernet endpoint has no address/lease. Bring up the TurtleBot on its local console or restore authorized SSH before Unity; no robot start or conveyor command was issued.
+
+## 2026-09-10 Automatic IDLE for restart from the start area
+
+- Deployed automatic cleanup of ASSEMBLY_STOP/INSPECTION_STOP after both station regions have positive empty-belt evidence for2s/20frames; retains manual stop/fault and existing motion guards.178 offline tests passed; live empty evidence qualified with stationary IDLE. No motion/robot/Job request; lifecycle zero commands apply. Physical interrupted-process replay remains untested. Detailed behavior, calibration and limitations: [grouped vision record](vision.md#2026-09-10-automatic-idle-after-both-station-regions-become-empty).
+
+## 2026-09-10 Current visual arrival and safe same-destination completion
+
+- Added fresh raw-frame arrival observations, read-only arrival queries and verified no-motion completion for repeated requests at the same stopped destination. Existing motion guards and historical trigger semantics remain.162 ROS tests and24 bundle tests passed; live read-only S22/state probe correctly abstained in the actual MANUAL_STOP state. Subsequent user-authorized ROI/bundle deployment completed; final live state IDLE/zero command with fresh vision readiness. Lifecycle stop publication applies; no move/reset/robot request or Job/DB change. Both stations currently report no board in the station window; positive physical arrival and Sequencer integration remain unverified. Detailed behavior, engineering limits, measured observations and limitations are recorded once in the [grouped vision record](vision.md#2026-09-10-current-s22-arrival-observation-and-completed-request-handling).
+
+## 2026-09-09 Remove FR5 conveyor permission
+
+- User-authorized bundle restart completed; live state is IDLE/zero command with FR5 permission disabled. Shutdown/startup emitted stop commands; no movement requested. Deployment evidence is in the linked grouped record below.
+
+- Removed FR5 permission gating/subscription; S22 watchdogs and stop behavior remain. 126 offline tests passed; no live commands or restart. Checkpoint, final behavior, evidence and operational limits: [grouped vision record](vision.md#2026-09-09-remove-fr5-conveyor-permission).
+
+
 ## 2026-09-09 Correlated persistent arrival callbacks
 
 - Added compatible motion_id/arrival fields and teammate callback examples; safety gates and legacy states unchanged. Current direct ROS discovery found trigger publishers but no remote-server state/services; no server was launched or motion commanded. Offline tests cover both stations, repetition, reset/fault and late consumers. Detailed shared validation and limitations: [vision record](vision.md#2026-09-09-arrival-callbacks-and-countermeasure-evidence-cards).
@@ -277,3 +473,60 @@
   어떤 이동 명령도 보내지 않았다.
 - Vision 패키지 전체 47개 테스트와 ROS 빌드가 통과했다. 상세 팀 연동 계약은
   `docs/CONVEYOR_API_HANDOFF.md`에 기록했다.
+## 2026-09-10 Bundle startup false-positive repair
+
+- Diagnosed startup refusal: `/conveyor/move_to_assembly`, `/conveyor/move_to_inspection`
+  and `/conveyor/stop` were visible in the ROS graph, but `ros2 service info` reported
+  `Services count: 0` and only `/conveyor_roi` was present as a client. rclpy's graph
+  service-name query combines client/server names, so the bundle incorrectly treated
+  teammate clients as an existing server and exited before launching.
+- Removed the graph-name duplicate refusal. Local server process detection, HTTP port
+  reservation and bundle lock remain duplicate guards. Startup readiness now requires
+  the local HTTP listener and a local owned server process; graph names remain only
+  diagnostic/readiness hints. No service call, motor command or robot command was sent.
+- Updated regression test to allow remote client names. Full vision/integration test
+  suite after the repair: 508 offline tests passed (three socket tests excluded).
+  Actual server restart and teammate request remain pending operator execution.
+## 2026-09-10 Asynchronous stop overlay
+
+- Same reported motion_id reproduced in local log: accepted at1789004707.683,
+  heartbeat fault at1789004708.457, ROI stale-frame rejection age183ms at
+  1789004708.468. Camera five-second averages near29FPS do not exclude latency
+  spikes; other ROI frames exceeded150ms. Teammate MCAP is not local.
+- Moved dashboard drawing/JPEG publication to one bounded render worker, using
+  frozen station snapshots. Busy renderer skips intermediate displays; controls
+  continue on incoming frames. Worker finishes before publisher destruction.
+  Image age and heartbeat limits unchanged. This removes one blocking source;
+  no claim yet that all capture/detection/DDS latency is resolved.
+- Runtime system Python ROI tests45passed. PatchCore venv runs had six existing
+  NumPy2 two-dimensional-cross incompatibility failures; not used for camera runtime.
+  No live restart, motor request or network change. Deployment requires restarting
+  the stop-line node while conveyor stopped; live latency must then be measured.
+
+## 2026-09-11 — Request-time recovery after a manually returned board
+
+- Reproduced the reported retry delay in the controller: passive completion
+  cleanup required 20 distinct empty frames spanning 2 seconds. That window
+  remains in place for unattended automatic IDLE recovery.
+- Added a separate explicit-request path. When the controller is latched at
+  `ASSEMBLY_STOP` or `INSPECTION_STOP`, a new move request can clear the old
+  completion after both station observations have fresh empty evidence for
+  5 frames spanning 0.4 seconds. The old motion ID, arrival record and stop
+  triggers are cleared before the request is validated, so the same request
+  can start a new motion without `/conveyor/reset`.
+- Empty evidence still requires a fresh stopped motor state, matching server
+  and motion IDs, a fresh source image, and both station regions clear. A board
+  still at either station, stale evidence, or another `/cmd_vel` publisher
+  continues to reject the request. `MANUAL_STOP` can be recovered only by this
+  explicit empty-evidence request; `FAULT` still requires `/conveyor/reset`.
+- The S22 empty-belt mask now excludes only a valid detected polygon whose
+  trailing edge is at least 30 px upstream of the assembly line. This
+  covers a board physically returned to the start position without treating a
+  board crossing the assembly line as empty; unknown dark obstructions still
+  veto the evidence.
+- Offline regression validation passed 158 conveyor arrival, remote-server,
+  and ROI tests, including the new short-window restart and upstream-board
+  cases. No live move, stop, reset, robot command, or teammate Endpoint process
+  was started or restarted during this change. A physical retry still requires
+  the board to be visibly clear of both station footprints and a supervised
+  operator test.

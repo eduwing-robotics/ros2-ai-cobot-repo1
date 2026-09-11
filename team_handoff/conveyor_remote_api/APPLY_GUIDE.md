@@ -38,15 +38,7 @@ ros2 topic echo /vision/conveyor/board_count
 
 ### FR5/Main Server
 
-FR5가 컨베이어 작업영역 밖에 있을 때만 아래 신호를 최소 10 Hz로 발행한다.
-
-```text
-/cell/fr5_clear_for_conveyor
-std_msgs/msg/Bool
-```
-
-이 신호는 실제 로봇 상태와 TCP 위치로 계산해야 한다. 터미널에서 임의로 `true`를
-계속 발행하는 방식은 통신 시험 외 실제 운전에 사용하지 않는다.
+FR5 허가 토픽은 더 이상 필요하지 않다. 작업영역 이탈은 운용자/상위 시퀀서가 확인한다.
 
 ### 컨베이어 원격 서버 컴퓨터
 
@@ -73,6 +65,27 @@ ros2 topic echo /conveyor/state
 서버를 ARMED로 실행해도 자동으로 움직이지 않는다. 이동 서비스 요청과 모든
 interlock 통과가 필요하다.
 
+### 서버와 S22를 한 번에 실행
+
+컨베이어 서버와 S22 정지선/ROI를 같은 컴퓨터에서 함께 관리할 때는 다음
+원커맨드 런처를 사용한다.
+
+```bash
+~/KSMC/run_conveyor_remote_server.sh --with-s22 --monitor-only
+```
+
+현장 운전 전환은 다음과 같다.
+
+```bash
+~/KSMC/run_conveyor_remote_server.sh --with-s22 --execute --confirm-motion
+```
+
+이 런처는 기존 S22 HQ 프로세스가 있으면 재사용하고, 자신이 시작한 프로세스만
+종료한다. 기존 컨베이어 서버가 이미 실행 중이면 `/cmd_vel` 소유권 충돌로
+종료하므로 기존 서버를 먼저 정상 종료해야 한다. Unity ROS-TCP Endpoint
+(`port 10000`)와 GoPro 런처는 이 명령에 포함되지 않으며 팀원이 계속 별도로
+관리한다.
+
 ## 3. assembly-r1 operation 연결
 
 Main/Unity executor에서 레시피 문자열을 다음 서비스로 매핑한다.
@@ -88,7 +101,7 @@ Main/Unity executor에서 레시피 문자열을 다음 서비스로 매핑한�
 
 ```text
 1. FR5 home/clear 확인
-2. fr5_clear_for_conveyor=true heartbeat 확인
+2. S22 `stop_line_ready=true`와 선택 정지선 trigger 상태 확인
 3. move_to_assembly 서비스 호출
 4. response.success 확인
 5. /conveyor/state가 ASSEMBLY_STOP이 될 때까지 대기
@@ -111,11 +124,11 @@ ros2 service call /conveyor/reset std_srvs/srv/Trigger '{}'
 거절되면 response의 `message`를 확인한다. 대표 원인은 다음과 같다.
 
 - monitor-only/disarmed
-- S22 heartbeat stale
-- FR5-clear heartbeat stale/false
+- S22 stop-line status가 `false`
 - 목적지 stop trigger가 이미 true
 - 잘못된 공정 순서
 - 다른 `/cmd_vel` publisher 실행 중
+- 호환되는 로봇 `/cmd_vel` subscriber가 없음
 - 이전 FAULT/MANUAL_STOP 이후 reset하지 않음
 
 ## 5. Unity 적용
@@ -134,6 +147,8 @@ cd ~/KSMC/Ros2UnityEndopoint_PKG_0.2/Ros2UnityEndopoint_PKG
 6. UI 버튼의 OnClick을 `MoveToAssembly`, `MoveToInspection`, `Stop`, `Reset`
    메서드에 연결한다.
 7. `LastState`, `IsMoving`, `ConnectionStale`을 기존 UI/DT 상태에 반영한다.
+   `ConnectionStale`은 유효한 상태를 한 번도 받지 못한 초기 표시용 호환
+   플래그이며, 상태 수신 간격만으로 `FAULT`를 만들지 않는다.
 
 Unity 버튼은 실제 장비 권한이 있는 Main Server 정책을 우회하면 안 된다. 운영
 구성에서는 Main Server가 서비스 호출 권한을 갖고 Unity는 요청 UI 또는 상태 표시

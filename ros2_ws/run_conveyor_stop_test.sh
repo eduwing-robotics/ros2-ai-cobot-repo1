@@ -9,7 +9,7 @@ set -Eeo pipefail
 #     --station assembly \
 #     --cmd-topic /cmd_vel --cmd-type twist_stamped \
 #     --speed 0.10 --direction negative_x \
-#     --timeout 0 --execute --confirm-motion
+#     --timeout 30 --execute --confirm-motion
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/../scripts/ksmc_env.sh"

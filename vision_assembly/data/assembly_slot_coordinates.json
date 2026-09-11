@@ -1,0 +1,800 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-08-31T14:49:52.481545+09:00",
+  "station": "assembly",
+  "status": "BOARD_RELATIVE_AND_IMAGE_COORDINATES_VALID",
+  "robot_motion_sent": false,
+  "source_image": "/home/hc/KSMC/runtime/inspection/s22_inspection_20260831_144951_800535703.png",
+  "source_layout": "/home/hc/KSMC/vision_assembly/config/board_layout_from_unity.json",
+  "source_physical_board": "/home/hc/KSMC/vision_assembly/config/physical_board.json",
+  "physical_override_slots": [
+    "smd_capacitor_01",
+    "smd_capacitor_02",
+    "smd_capacitor_03",
+    "smd_capacitor_04",
+    "smd_capacitor_05",
+    "inductor_01",
+    "inductor_02"
+  ],
+  "source_polygon_topic": "/vision/conveyor/assembly/board_polygon_normalized",
+  "coordinate_frames": {
+    "board": {
+      "origin": "geometric PCB center",
+      "+x": "toward image left in the current assembly fixture orientation",
+      "+y": "toward fixture handle / image top",
+      "+z": "upward from PCB top",
+      "units": "mm"
+    },
+    "image": {
+      "origin": "top-left of source image",
+      "+x": "right",
+      "+y": "down",
+      "size_px": [
+        3840,
+        2160
+      ]
+    },
+    "robot_base": "UNAVAILABLE: S22 plane calibration has not passed"
+  },
+  "board": {
+    "size_mm": [
+      139.0,
+      110.0
+    ],
+    "polygon_normalized_tl_tr_br_bl": [
+      [
+        0.2484961301088333,
+        0.3346486985683441
+      ],
+      [
+        0.3673918843269348,
+        0.3389259874820709
+      ],
+      [
+        0.36573702096939087,
+        0.5052068829536438
+      ],
+      [
+        0.24681031703948975,
+        0.5022010803222656
+      ]
+    ],
+    "polygon_px_tl_tr_br_bl": [
+      [
+        953.9766235351562,
+        722.5065307617188
+      ],
+      [
+        1410.41748046875,
+        731.7412109375
+      ],
+      [
+        1404.064453125,
+        1090.74169921875
+      ],
+      [
+        947.5048217773438,
+        1084.2520751953125
+      ]
+    ],
+    "center_image_px": [
+      1178.9908447265625,
+      907.3104248046875
+    ],
+    "edge_lengths_px": {
+      "top": 456.5342712402344,
+      "right": 359.05670166015625,
+      "bottom": 456.6057434082031,
+      "left": 361.8034362792969
+    },
+    "sample_count": 20,
+    "max_corner_jitter_px": 2.0141124725341797,
+    "fixture_handle_yellow_scores": {
+      "+Y": 954,
+      "-Y": 0,
+      "+X": 0,
+      "-X": 0
+    },
+    "orientation_valid": true,
+    "orientation_rule": "fixture handle is board +Y; board +X is image left"
+  },
+  "homography_board_mm_to_normalized_image": [
+    [
+      -0.0008723140565808323,
+      1.5612148277375084e-05,
+      0.3073354528201596
+    ],
+    [
+      -4.923897653514122e-05,
+      -0.0015168165772606644,
+      0.4202462062058857
+    ],
+    [
+      -5.482615685269818e-05,
+      1.3929641360948594e-06,
+      1.0
+    ]
+  ],
+  "placements": [
+    {
+      "slot_id": "ai_gpu",
+      "component_type": "GPU",
+      "label": "G1",
+      "center_board_mm": [
+        0.0,
+        0.0004984728604138323
+      ],
+      "top_z_mm_nominal": 9.839,
+      "long_axis_board_deg": 90.0,
+      "center_image_normalized": [
+        0.3073354661464691,
+        0.4202454388141632
+      ],
+      "center_image_px": [
+        1179.86083984375,
+        907.3098754882812
+      ],
+      "long_axis_image_deg": -89.42723008377246,
+      "nominal_size_mm": {
+        "x": 29.504338571428573,
+        "y": 56.93208080698224,
+        "height": 6.6383
+      },
+      "coordinate_source": "Unity-derived CAD candidate",
+      "coordinate_status": "requires physical TCP-hover validation"
+    },
+    {
+      "slot_id": "hbm_01",
+      "component_type": "HBM",
+      "label": "H1",
+      "center_board_mm": [
+        -23.82857142857143,
+        -24.424671687647844
+      ],
+      "top_z_mm_nominal": 13.008,
+      "long_axis_board_deg": 90.0,
+      "center_image_normalized": [
+        0.32732364535331726,
+        0.45788463950157166
+      ],
+      "center_image_px": [
+        1256.595458984375,
+        988.5729370117188
+      ],
+      "long_axis_image_deg": -89.42765839058924,
+      "nominal_size_mm": {
+        "x": 10.17341,
+        "y": 14.266293265178499,
+        "height": 9.8151
+      },
+      "coordinate_source": "Unity-derived CAD candidate",
+      "coordinate_status": "requires physical TCP-hover validation"
+    },
+    {
+      "slot_id": "hbm_02",
+      "component_type": "HBM",
+      "label": "H2",
+      "center_board_mm": [
+        -23.82857142857143,
+        -8.27415101008728
+      ],
+      "top_z_mm_nominal": 13.008,
+      "long_axis_board_deg": 90.0,
+      "center_image_normalized": [
+        0.3275681138038635,
+        0.43340864777565
+      ],
+      "center_image_px": [
+        1257.533935546875,
+        935.729248046875
+      ],
+      "long_axis_image_deg": -89.42762462636901,
+      "nominal_size_mm": {
+        "x": 10.17341,
+        "y": 14.266293265178499,
+        "height": 9.8151
+      },
+      "coordinate_source": "Unity-derived CAD candidate",
+      "coordinate_status": "requires physical TCP-hover validation"
+    },
+    {
+      "slot_id": "hbm_03",
+      "component_type": "HBM",
+      "label": "H3",
+      "center_board_mm": [
+        -23.82857142857143,
+        8.175453383724406
+      ],
+      "top_z_mm_nominal": 13.008,
+      "long_axis_board_deg": 90.0,
+      "center_image_normalized": [
+        0.32781708240509033,
+        0.40848052501678467
+      ],
+      "center_image_px": [
+        1258.48974609375,
+        881.909423828125
+      ],
+      "long_axis_image_deg": -89.42760211467568,
+      "nominal_size_mm": {
+        "x": 10.17341,
+        "y": 14.266293265178499,
+        "height": 9.8151
+      },
+      "coordinate_source": "Unity-derived CAD candidate",
+      "coordinate_status": "requires physical TCP-hover validation"
+    },
+    {
+      "slot_id": "hbm_04",
+      "component_type": "HBM",
+      "label": "H4",
+      "center_board_mm": [
+        -23.82857142857143,
+        24.026890345033856
+      ],
+      "top_z_mm_nominal": 13.008,
+      "long_axis_board_deg": 90.0,
+      "center_image_normalized": [
+        0.3280569911003113,
+        0.3844599723815918
+      ],
+      "center_image_px": [
+        1259.4107666015625,
+        830.049072265625
+      ],
+      "long_axis_image_deg": -89.42756834381538,
+      "nominal_size_mm": {
+        "x": 10.17341,
+        "y": 14.266293265178499,
+        "height": 9.8151
+      },
+      "coordinate_source": "Unity-derived CAD candidate",
+      "coordinate_status": "requires physical TCP-hover validation"
+    },
+    {
+      "slot_id": "hbm_05",
+      "component_type": "HBM",
+      "label": "H5",
+      "center_board_mm": [
+        23.53071428571429,
+        -24.424671687647844
+      ],
+      "top_z_mm_nominal": 13.008,
+      "long_axis_board_deg": 90.0,
+      "center_image_normalized": [
+        0.28680771589279175,
+        0.4567401111125946
+      ],
+      "center_image_px": [
+        1101.0548095703125,
+        986.1019287109375
+      ],
+      "long_axis_image_deg": -89.42576908807284,
+      "nominal_size_mm": {
+        "x": 10.17341,
+        "y": 14.266293265178499,
+        "height": 9.8151
+      },
+      "coordinate_source": "Unity-derived CAD candidate",
+      "coordinate_status": "requires physical TCP-hover validation"
+    },
+    {
+      "slot_id": "hbm_06",
+      "component_type": "HBM",
+      "label": "H6",
+      "center_board_mm": [
+        23.53071428571429,
+        -8.27415101008728
+      ],
+      "top_z_mm_nominal": 13.008,
+      "long_axis_board_deg": 90.0,
+      "center_image_normalized": [
+        0.2870537340641022,
+        0.43220052123069763
+      ],
+      "center_image_px": [
+        1101.999267578125,
+        933.1209106445312
+      ],
+      "long_axis_image_deg": -89.42574656321325,
+      "nominal_size_mm": {
+        "x": 10.17341,
+        "y": 14.266293265178499,
+        "height": 9.8151
+      },
+      "coordinate_source": "Unity-derived CAD candidate",
+      "coordinate_status": "requires physical TCP-hover validation"
+    },
+    {
+      "slot_id": "hbm_07",
+      "component_type": "HBM",
+      "label": "H7",
+      "center_board_mm": [
+        23.53071428571429,
+        8.175453383724406
+      ],
+      "top_z_mm_nominal": 13.008,
+      "long_axis_board_deg": 90.0,
+      "center_image_normalized": [
+        0.2873042821884155,
+        0.4072076082229614
+      ],
+      "center_image_px": [
+        1102.961181640625,
+        879.1612548828125
+      ],
+      "long_axis_image_deg": -89.42458899834133,
+      "nominal_size_mm": {
+        "x": 10.17341,
+        "y": 14.266293265178499,
+        "height": 9.8151
+      },
+      "coordinate_source": "Unity-derived CAD candidate",
+      "coordinate_status": "requires physical TCP-hover validation"
+    },
+    {
+      "slot_id": "hbm_08",
+      "component_type": "HBM",
+      "label": "H8",
+      "center_board_mm": [
+        23.53071428571429,
+        24.026890345033856
+      ],
+      "top_z_mm_nominal": 13.008,
+      "long_axis_board_deg": 90.0,
+      "center_image_normalized": [
+        0.28754574060440063,
+        0.3831246495246887
+      ],
+      "center_image_px": [
+        1103.8880615234375,
+        827.1661376953125
+      ],
+      "long_axis_image_deg": -89.42569024333261,
+      "nominal_size_mm": {
+        "x": 10.17341,
+        "y": 14.266293265178499,
+        "height": 9.8151
+      },
+      "coordinate_source": "Unity-derived CAD candidate",
+      "coordinate_status": "requires physical TCP-hover validation"
+    },
+    {
+      "slot_id": "inductor_01",
+      "component_type": "Inductor",
+      "label": "I1",
+      "center_board_mm": [
+        -59.674,
+        -32.872
+      ],
+      "top_z_mm_nominal": 9.721,
+      "long_axis_board_deg": 0.0,
+      "center_image_normalized": [
+        0.3577227294445038,
+        0.4715242087841034
+      ],
+      "center_image_px": [
+        1373.297607421875,
+        1018.020751953125
+      ],
+      "long_axis_image_deg": -178.4274278745497,
+      "nominal_size_mm": {
+        "x": 9.30168142857143,
+        "y": 9.339985680234193,
+        "height": 8.5222
+      },
+      "coordinate_source": "current S22 empty-board socket image cross-checked against the assembled-board image on 2026-08-31",
+      "coordinate_status": "physical image-registered candidate; I1 and I2 are the upper and lower round sockets at the board lower-right"
+    },
+    {
+      "slot_id": "inductor_02",
+      "component_type": "Inductor",
+      "label": "I2",
+      "center_board_mm": [
+        -59.674,
+        -44.297
+      ],
+      "top_z_mm_nominal": 9.721,
+      "long_axis_board_deg": 0.0,
+      "center_image_normalized": [
+        0.35755062103271484,
+        0.4888058602809906
+      ],
+      "center_image_px": [
+        1372.6368408203125,
+        1055.3319091796875
+      ],
+      "long_axis_image_deg": -178.49171900476898,
+      "nominal_size_mm": {
+        "x": 9.30168142857143,
+        "y": 9.339985680234193,
+        "height": 8.5222
+      },
+      "coordinate_source": "current S22 empty-board socket image cross-checked against the assembled-board image on 2026-08-31",
+      "coordinate_status": "physical image-registered candidate; I1 and I2 are the upper and lower round sockets at the board lower-right"
+    },
+    {
+      "slot_id": "power_module_01",
+      "component_type": "Power Module",
+      "label": "P1",
+      "center_board_mm": [
+        47.14681428571429,
+        0.31054859204074314
+      ],
+      "top_z_mm_nominal": 5.992,
+      "long_axis_board_deg": 90.0,
+      "center_image_normalized": [
+        0.266903281211853,
+        0.41853538155555725
+      ],
+      "center_image_px": [
+        1024.6417236328125,
+        903.6178588867188
+      ],
+      "long_axis_image_deg": -89.42534418375946,
+      "nominal_size_mm": {
+        "x": 12.043357142857143,
+        "y": 59.80587654186719,
+        "height": 4.7848
+      },
+      "coordinate_source": "Unity-derived CAD candidate",
+      "coordinate_status": "requires physical TCP-hover validation"
+    },
+    {
+      "slot_id": "power_module_02",
+      "component_type": "Power Module",
+      "label": "P2",
+      "center_board_mm": [
+        -46.584857142857146,
+        0.31054859204074314
+      ],
+      "top_z_mm_nominal": 5.992,
+      "long_axis_board_deg": 90.0,
+      "center_image_normalized": [
+        0.3470902740955353,
+        0.42099353671073914
+      ],
+      "center_image_px": [
+        1332.4796142578125,
+        908.925048828125
+      ],
+      "long_axis_image_deg": -89.42803144077544,
+      "nominal_size_mm": {
+        "x": 12.043357142857143,
+        "y": 59.80587654186719,
+        "height": 4.7848
+      },
+      "coordinate_source": "Unity-derived CAD candidate",
+      "coordinate_status": "requires physical TCP-hover validation"
+    },
+    {
+      "slot_id": "power_module_03",
+      "component_type": "Power Module",
+      "label": "P3",
+      "center_board_mm": [
+        0.13999285714286244,
+        -43.896018561316694
+      ],
+      "top_z_mm_nominal": 5.992,
+      "long_axis_board_deg": 0.0,
+      "center_image_normalized": [
+        0.3065491318702698,
+        0.48685503005981445
+      ],
+      "center_image_px": [
+        1176.8421630859375,
+        1051.1199951171875
+      ],
+      "long_axis_image_deg": -178.48962528829964,
+      "nominal_size_mm": {
+        "x": 59.56060642857143,
+        "y": 12.092951593753682,
+        "height": 4.7848
+      },
+      "coordinate_source": "Unity-derived CAD candidate",
+      "coordinate_status": "requires physical TCP-hover validation"
+    },
+    {
+      "slot_id": "power_module_04",
+      "component_type": "Power Module",
+      "label": "P4",
+      "center_board_mm": [
+        0.13999285714286244,
+        43.73551030026192
+      ],
+      "top_z_mm_nominal": 5.992,
+      "long_axis_board_deg": 0.0,
+      "center_image_normalized": [
+        0.3078797459602356,
+        0.35388171672821045
+      ],
+      "center_image_px": [
+        1181.9503173828125,
+        764.0306396484375
+      ],
+      "long_axis_image_deg": -178.0027228794888,
+      "nominal_size_mm": {
+        "x": 59.56060642857143,
+        "y": 12.092951593753682,
+        "height": 4.7848
+      },
+      "coordinate_source": "Unity-derived CAD candidate",
+      "coordinate_status": "requires physical TCP-hover validation"
+    },
+    {
+      "slot_id": "smd_capacitor_01",
+      "component_type": "SMD Capacitor",
+      "label": "S1",
+      "center_board_mm": [
+        -40.95,
+        -39.21
+      ],
+      "top_z_mm_nominal": 4.229,
+      "long_axis_board_deg": 0.0,
+      "center_image_normalized": [
+        0.3416960835456848,
+        0.48068398237228394
+      ],
+      "center_image_px": [
+        1311.771240234375,
+        1037.7967529296875
+      ],
+      "long_axis_image_deg": -178.46277884173503,
+      "nominal_size_mm": {
+        "x": 6.7527,
+        "y": 3.8244,
+        "height": 3.0238
+      },
+      "coordinate_source": "D435 physical-slot measurements from 2026-08-13, renumbered to the agreed assembly convention",
+      "coordinate_status": "physical measured candidate; S1 is the only horizontal slot and S2-S5 run bottom-to-top in the right column"
+    },
+    {
+      "slot_id": "smd_capacitor_02",
+      "component_type": "SMD Capacitor",
+      "label": "S2",
+      "center_board_mm": [
+        -60.43,
+        -17.97
+      ],
+      "top_z_mm_nominal": 4.229,
+      "long_axis_board_deg": 90.0,
+      "center_image_normalized": [
+        0.358589768409729,
+        0.44900253415107727
+      ],
+      "center_image_px": [
+        1376.6260986328125,
+        969.396484375
+      ],
+      "long_axis_image_deg": -89.42988347368009,
+      "nominal_size_mm": {
+        "x": 3.8087,
+        "y": 6.7805,
+        "height": 3.0238
+      },
+      "coordinate_source": "D435 physical-slot measurements from 2026-08-13, renumbered to the agreed assembly convention",
+      "coordinate_status": "physical measured candidate; S1 is the only horizontal slot and S2-S5 run bottom-to-top in the right column"
+    },
+    {
+      "slot_id": "smd_capacitor_03",
+      "component_type": "SMD Capacitor",
+      "label": "S3",
+      "center_board_mm": [
+        -59.98,
+        -1.38
+      ],
+      "top_z_mm_nominal": 4.229,
+      "long_axis_board_deg": 90.0,
+      "center_image_normalized": [
+        0.35845720767974854,
+        0.4238995909690857
+      ],
+      "center_image_px": [
+        1376.1171875,
+        915.19921875
+      ],
+      "long_axis_image_deg": -89.42874334925916,
+      "nominal_size_mm": {
+        "x": 3.8087,
+        "y": 6.7805,
+        "height": 3.0238
+      },
+      "coordinate_source": "D435 physical-slot measurements from 2026-08-13, renumbered to the agreed assembly convention",
+      "coordinate_status": "physical measured candidate; S1 is the only horizontal slot and S2-S5 run bottom-to-top in the right column"
+    },
+    {
+      "slot_id": "smd_capacitor_04",
+      "component_type": "SMD Capacitor",
+      "label": "S4",
+      "center_board_mm": [
+        -60.39,
+        15.59
+      ],
+      "top_z_mm_nominal": 4.229,
+      "long_axis_board_deg": 90.0,
+      "center_image_normalized": [
+        0.35906127095222473,
+        0.39824536442756653
+      ],
+      "center_image_px": [
+        1378.436279296875,
+        859.811767578125
+      ],
+      "long_axis_image_deg": -89.42983853781197,
+      "nominal_size_mm": {
+        "x": 3.8087,
+        "y": 6.7805,
+        "height": 3.0238
+      },
+      "coordinate_source": "D435 physical-slot measurements from 2026-08-13, renumbered to the agreed assembly convention",
+      "coordinate_status": "physical measured candidate; S1 is the only horizontal slot and S2-S5 run bottom-to-top in the right column"
+    },
+    {
+      "slot_id": "smd_capacitor_05",
+      "component_type": "SMD Capacitor",
+      "label": "S5",
+      "center_board_mm": [
+        -60.25,
+        32.47
+      ],
+      "top_z_mm_nominal": 4.228,
+      "long_axis_board_deg": 90.0,
+      "center_image_normalized": [
+        0.3591965436935425,
+        0.37271377444267273
+      ],
+      "center_image_px": [
+        1378.95556640625,
+        804.6890258789062
+      ],
+      "long_axis_image_deg": -89.42980483126217,
+      "nominal_size_mm": {
+        "x": 3.8087,
+        "y": 6.7805,
+        "height": 3.0238
+      },
+      "coordinate_source": "D435 physical-slot measurements from 2026-08-13, renumbered to the agreed assembly convention",
+      "coordinate_status": "physical measured candidate; S1 is the only horizontal slot and S2-S5 run bottom-to-top in the right column"
+    },
+    {
+      "slot_id": "vrm_01",
+      "component_type": "VRM",
+      "label": "V1",
+      "center_board_mm": [
+        61.07064285714285,
+        -36.348142508859226
+      ],
+      "top_z_mm_nominal": 6.401,
+      "long_axis_board_deg": 90.0,
+      "center_image_normalized": [
+        0.25435975193977356,
+        0.47398364543914795
+      ],
+      "center_image_px": [
+        976.487060546875,
+        1023.3306884765625
+      ],
+      "long_axis_image_deg": -89.42472897521084,
+      "nominal_size_mm": {
+        "x": 10.92142857142857,
+        "y": 13.957240091719006,
+        "height": 5.2025
+      },
+      "coordinate_source": "Unity-derived CAD candidate",
+      "coordinate_status": "requires physical TCP-hover validation"
+    },
+    {
+      "slot_id": "vrm_02",
+      "component_type": "VRM",
+      "label": "V2",
+      "center_board_mm": [
+        61.07064285714285,
+        -18.14391364637429
+      ],
+      "top_z_mm_nominal": 6.401,
+      "long_axis_board_deg": 90.0,
+      "center_image_normalized": [
+        0.2546384334564209,
+        0.44626563787460327
+      ],
+      "center_image_px": [
+        977.5569458007812,
+        963.4874877929688
+      ],
+      "long_axis_image_deg": -89.42357382069797,
+      "nominal_size_mm": {
+        "x": 10.92142857142857,
+        "y": 13.957240091719006,
+        "height": 5.2025
+      },
+      "coordinate_source": "Unity-derived CAD candidate",
+      "coordinate_status": "requires physical TCP-hover validation"
+    },
+    {
+      "slot_id": "vrm_03",
+      "component_type": "VRM",
+      "label": "V3",
+      "center_board_mm": [
+        61.07064285714285,
+        -0.1988906713069963
+      ],
+      "top_z_mm_nominal": 6.401,
+      "long_axis_board_deg": 90.0,
+      "center_image_normalized": [
+        0.2549131512641907,
+        0.4189436733722687
+      ],
+      "center_image_px": [
+        978.611572265625,
+        904.4993896484375
+      ],
+      "long_axis_image_deg": -89.42353997264087,
+      "nominal_size_mm": {
+        "x": 10.92142857142857,
+        "y": 13.957240091719006,
+        "height": 5.2025
+      },
+      "coordinate_source": "Unity-derived CAD candidate",
+      "coordinate_status": "requires physical TCP-hover validation"
+    },
+    {
+      "slot_id": "vrm_04",
+      "component_type": "VRM",
+      "label": "V4",
+      "center_board_mm": [
+        61.07064285714285,
+        18.005338191177934
+      ],
+      "top_z_mm_nominal": 6.401,
+      "long_axis_board_deg": 90.0,
+      "center_image_normalized": [
+        0.255191832780838,
+        0.39122846722602844
+      ],
+      "center_image_px": [
+        979.6814575195312,
+        844.6622314453125
+      ],
+      "long_axis_image_deg": -89.42462762855573,
+      "nominal_size_mm": {
+        "x": 10.92142857142857,
+        "y": 13.957240091719006,
+        "height": 5.2025
+      },
+      "coordinate_source": "Unity-derived CAD candidate",
+      "coordinate_status": "requires physical TCP-hover validation"
+    },
+    {
+      "slot_id": "vrm_05",
+      "component_type": "VRM",
+      "label": "V5",
+      "center_board_mm": [
+        61.07064285714285,
+        36.48871185549725
+      ],
+      "top_z_mm_nominal": 6.401,
+      "long_axis_board_deg": 90.0,
+      "center_image_normalized": [
+        0.2554747462272644,
+        0.36308974027633667
+      ],
+      "center_image_px": [
+        980.767578125,
+        783.9107666015625
+      ],
+      "long_axis_image_deg": -89.42348355037814,
+      "nominal_size_mm": {
+        "x": 10.92142857142857,
+        "y": 13.957240091719006,
+        "height": 5.2025
+      },
+      "coordinate_source": "Unity-derived CAD candidate",
+      "coordinate_status": "requires physical TCP-hover validation"
+    }
+  ],
+  "warnings": [
+    "S22 pixel coordinates are valid only while the camera and stopped PCB remain fixed.",
+    "Inductor and SMD coordinates use physical-board overrides; all slots still require a no-descent TCP hover before placement.",
+    "Nominal top Z is not a robot TCP descent coordinate."
+  ]
+}

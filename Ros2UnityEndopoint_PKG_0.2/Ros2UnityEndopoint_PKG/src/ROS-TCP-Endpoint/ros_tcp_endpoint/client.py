@@ -43,6 +43,7 @@ class ClientThread(threading.Thread):
         self.tcp_server = tcp_server
         self.incoming_ip = incoming_ip
         self.incoming_port = incoming_port
+        self.client_id = None
         threading.Thread.__init__(self)
 
     @staticmethod
@@ -147,29 +148,32 @@ class ClientThread(threading.Thread):
             error_msg = "Service destination '{}' is not registered! Known services are: {} ".format(
                 destination, self.tcp_server.ros_services_table.keys()
             )
-            self.tcp_server.send_unity_error(error_msg)
+            self.tcp_server.send_unity_error(error_msg, client_id=self.client_id)
             self.tcp_server.logerr(error_msg)
             # TODO: send a response to Unity anyway?
             return
         else:
             ros_communicator = self.tcp_server.ros_services_table[destination]
             service_thread = threading.Thread(
-                target=self.service_call_thread, args=(srv_id, destination, data, ros_communicator)
+                target=self.service_call_thread,
+                args=(srv_id, destination, data, ros_communicator, self.client_id),
             )
             service_thread.daemon = True
             service_thread.start()
 
-    def service_call_thread(self, srv_id, destination, data, ros_communicator):
+    def service_call_thread(self, srv_id, destination, data, ros_communicator, client_id):
         response = ros_communicator.send(data)
 
         if not response:
             error_msg = "No response data from service '{}'!".format(destination)
-            self.tcp_server.send_unity_error(error_msg)
+            self.tcp_server.send_unity_error(error_msg, client_id=client_id)
             self.tcp_server.logerr(error_msg)
             # TODO: send a response to Unity anyway?
             return
 
-        self.tcp_server.unity_tcp_sender.send_ros_service_response(srv_id, destination, response)
+        self.tcp_server.unity_tcp_sender.send_ros_service_response(
+            srv_id, destination, response, client_id=client_id
+        )
 
     def run(self):
         """
@@ -188,7 +192,8 @@ class ClientThread(threading.Thread):
         """
         self.tcp_server.loginfo("Connection from {}".format(self.incoming_ip))
         halt_event = threading.Event()
-        self.tcp_server.unity_tcp_sender.start_sender(self.conn, halt_event)
+        client_id = self.tcp_server.unity_tcp_sender.start_sender(self.conn, halt_event)
+        self.client_id = client_id
         try:
             while not halt_event.is_set():
                 destination, data = self.read_message(self.conn)
@@ -210,7 +215,7 @@ class ClientThread(threading.Thread):
                     pass
                 elif destination.startswith("__"):
                     # handle a system command, such as registering new topics
-                    self.tcp_server.handle_syscommand(destination, data)
+                    self.tcp_server.handle_syscommand(destination, data, client_id=client_id)
                 elif destination in self.tcp_server.publishers_table:
                     ros_communicator = self.tcp_server.publishers_table[destination]
                     ros_communicator.send(data)
@@ -218,11 +223,12 @@ class ClientThread(threading.Thread):
                     error_msg = "Not registered to publish topic '{}'! Valid publish topics are: {} ".format(
                         destination, self.tcp_server.publishers_table.keys()
                     )
-                    self.tcp_server.send_unity_error(error_msg)
+                    self.tcp_server.send_unity_error(error_msg, client_id=client_id)
                     self.tcp_server.logerr(error_msg)
         except IOError as e:
             self.tcp_server.logerr("Exception: {}".format(e))
         finally:
             halt_event.set()
             self.conn.close()
+            self.tcp_server.remove_client(client_id)
             self.tcp_server.loginfo("Disconnected from {}".format(self.incoming_ip))

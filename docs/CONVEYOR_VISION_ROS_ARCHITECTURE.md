@@ -19,7 +19,7 @@ Galaxy S22 image
        - two-board spacing validation
   -> conveyor_controller
        - one explicitly selected station per run
-       - heartbeat/trigger watchdog
+       - explicit ready/trigger status and finite motion timeout
        - HOLD_STOP
   -> TurtleBot /cmd_vel (TwistStamped on the tested Burger)
   -> wheel/roller/belt

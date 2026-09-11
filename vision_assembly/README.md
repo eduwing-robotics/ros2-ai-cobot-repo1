@@ -32,6 +32,17 @@ GPU 1, HBM 8, Power Module 4, VRM 5, Inductor 2, SMD Capacitor 5를 한 번에
 상태·방향 검사, 부품별 PatchCore를 모두 실행한다. 이전 ROI를 재사용하려면
 진단 목적으로만 `--skip-capture`를 붙인다. 최신 결과는 다음 위치에 저장된다.
 
+위치 계산의 기본 설정은 `config/s22_fixed_reference_pose_candidate.json`이다.
+노란 CAD 좌표와 확인된 정상 사진의 고정 중심 보정을 사용하며, 검사 중인
+부품들의 공통 중심 편차는 진단용으로만 남긴다. 학습 모델 입력 crop과
+위치·각도 허용 오차는 유지한다. 기준 자료·CAD·검출 가중치의 해시가 맞지
+않으면 해당 위치 검사를 `UNKNOWN`으로 보류한다. 이 기준은 개발용 보조
+판정이며, 모든 소켓의 실제 안착이나 높이 검증을 대신하지 않는다.
+검증 범위와 남은 문제는
+[고정 위치 기준 수정 기록](../docs/logs/vision.md#2026-09-10-frozen-raw-position-reference-repair)를 참고한다.
+기존 `full_board_inspection.json`을 명시적으로 지정하면 이전 위치 보정 방식이
+실행되므로 두 설정의 결과를 같은 기준으로 비교하지 않는다.
+
 ```text
 runtime/inspection/hybrid_fixed_slot/hybrid_report_latest.png
 runtime/inspection/hybrid_fixed_slot/hybrid_report_latest.json
@@ -319,3 +330,11 @@ GPU 두 개의 위치와 각도를 바꿔가며 한 배치당 한 장을 촬영�
 라벨링한다. 같은 장면으로 이미 확보한 최초 10장에만 라벨러의 `P` 복사를 사용한다.
 서로 다른 장면에서는 `S`로 장별 저장한다. 데이터 분할과 학습 방법은
 `obb/README.md`에 정리되어 있다.
+
+## SMD01 micro lip seating
+
+SMD01 micro lip seating remains deferred/UNKNOWN. The September 10 gross-position
+fallback was withdrawn after the user corrected the sample's physical condition.
+An image-derived centre offset alone does not establish socket exit or height.
+Existing independent position, missing and orientation checks remain in place.
+Correction: [work record](../docs/logs/vision.md#2026-09-10-smd01-sample-truth-correction-and-fallback-withdrawal).

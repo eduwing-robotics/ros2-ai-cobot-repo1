@@ -15,10 +15,25 @@ set -Eeo pipefail
 # - --station assembly/inspection으로 선택한 정지선에서 자동 정지한다.
 # - 각 이동은 한 정지선까지만 담당한다. 조립 완료 확인 없이 검사선까지
 #   자동 재시작하지 않는다.
-# - Ctrl+C 또는 카메라 heartbeat 단절 시에도 정지한다.
-# - 0.15초 동안 새 비전 상태가 없으면 정지선을 기다리지 않고 fail-safe 정지한다.
+# - Ctrl+C, 명시적인 비전 not-ready 상태, 정지 trigger가 오면 정지한다.
+# - 30초 안에 정지 trigger가 없으면 fail-safe timeout으로 정지한다.
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Direct one-shot control and the service-driven remote server must never
+# publish to /cmd_vel together.  Alternating their 0 and -0.10 commands makes
+# the physical belt jerk and can also starve the camera/ROI process while both
+# launchers compete for CPU.  Use the same inherited lock as the remote server
+# so the ownership check covers the entire controller lifetime.
+source "${PROJECT_DIR}/scripts/ksmc_env.sh"
+CONVEYOR_CMD_LOCK="${PROJECT_DIR}/runtime/conveyor_cmd_vel_owner.lock"
+mkdir -p "$(dirname "${CONVEYOR_CMD_LOCK}")"
+exec 9>"${CONVEYOR_CMD_LOCK}"
+if ! flock -n 9; then
+  echo '[S22 Conveyor] Another conveyor command owner is already running.' >&2
+  echo '[S22 Conveyor] Stop the remote server/teleop before direct motion.' >&2
+  exit 1
+fi
 
 STATION="assembly"
 if [[ "${1:-}" == "--station" ]]; then
@@ -40,8 +55,7 @@ exec "${PROJECT_DIR}/ros2_ws/run_conveyor_stop_test.sh" \
   --cmd-type twist_stamped \
   --speed 0.10 \
   --direction negative_x \
-  --heartbeat-timeout 0.15 \
-  --timeout 0 \
+  --timeout 30 \
   --execute \
   --confirm-motion \
   "$@"

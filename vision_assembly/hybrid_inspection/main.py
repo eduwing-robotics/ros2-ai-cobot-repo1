@@ -17,6 +17,7 @@ import numpy as np
 from vrm_boundary_advisory import VrmBoundaryAdvisory
 from capture_quality import assess_capture_quality, build_evidence_audit, build_provider_health
 from active_slot_pose_reference import bind_active_slot_centers
+from fixed_pose_reference import validate_fixed_reference
 from vrm_rotation_geometry import corroborated_rotation, multi_axis_rotation, strong_boundary_rotation
 from vrm_context_pose import context_pose_codes
 from vrm_presence_advisory import inspect_context, corroborates_missing, summarize_presence_state
@@ -54,7 +55,9 @@ from preprocessor_and_cropper import (  # noqa: E402
 
 
 DEFAULT_IMAGE = PROJECT_DIR / "runtime/inspection/s22_inspection_roi_latest.png"
-DEFAULT_CONFIG = PROJECT_DIR / "vision_assembly/config/full_board_inspection.json"
+# Provider pixels still use full_board_inspection.json through provider_crop_config.
+# Pose uses a frozen normal reference; live component populations cannot move it.
+DEFAULT_CONFIG = PROJECT_DIR / "vision_assembly/config/s22_fixed_reference_pose_candidate.json"
 DEFAULT_OUTPUT = PROJECT_DIR / "runtime/inspection/hybrid_fixed_slot"
 DEFAULT_PRESENCE_MODELS = PROJECT_DIR / "vision_assembly/slot_classifier/models"
 DEFAULT_PATCHCORE_MODELS = (
@@ -1310,6 +1313,8 @@ def inspect_pcb(
             raise ValueError("Provider/CAD slot IDs differ")
         (run_dir / "geometry_reference.json").write_text(json.dumps({
             "provider_config": str(provider_config), "geometry_config": str(config_path),
+            "geometry_config_sha256": hashlib.sha256(Path(config_path).read_bytes()).hexdigest(),
+            "provider_config_sha256": hashlib.sha256(Path(provider_config).read_bytes()).hexdigest(),
             "slots": {s.slot_id: list(s.geometry) for s in geometry_slots},
             "note": "CAD centers for auxiliary pose; fixed original provider crops. No polygon containment authority."
         }, indent=2))
@@ -1413,11 +1418,17 @@ def inspect_pcb(
         registered.image_bgr.shape,
         cropper.board_size_mm,
         maximum_bias_mm=common_bias_limit,
+        diagnostic_only=bool(geometry_cropper.config.get("component_bias_diagnostic_only", False)),
     )
     slot_reports = []
     slot_reference_config = geometry_cropper.config.get(
         "auxiliary_pose_slot_reference_offsets_mm", {}
     )
+    fixed_reference_health = validate_fixed_reference(
+        geometry_cropper.config, PROJECT_DIR, [slot.slot_id for slot in slots], yolo.weights,
+    ) if geometry_cropper.config.get('fixed_pose_reference') is not None else None
+    if fixed_reference_health and fixed_reference_health['status'] != 'AVAILABLE':
+        slot_reference_config = {}
     for slot in slots:
         vrm_state_result = (
             vrm_state_provider.inspect(slot, registered.image_bgr)
@@ -1465,6 +1476,12 @@ def inspect_pcb(
             # Its asymmetric black marker remains the independent direction check.
             check_axis_angle=slot.component_type != "Inductor",
         )
+        if fixed_reference_health and fixed_reference_health['status'] != 'AVAILABLE':
+            pose_result = CheckEvidence(
+                'auxiliary_pose', 'UNKNOWN', 'INVALID', 0.0,
+                'FIXED_POSE_REFERENCE_INVALID', {},
+                {'reference_validation': fixed_reference_health},
+            )
         orientation_result = _orientation_check(slot, cropper, vrm_state_result)
         patchcore_result = patchcore_items[slot.slot_id]
         stages = {
@@ -1687,6 +1704,7 @@ def inspect_pcb(
                 "reason": yolo.last_reason,
                 "candidate_slots": len(yolo_items),
                 "common_projection_bias": common_pose_bias_evidence,
+                "fixed_reference_validation": fixed_reference_health,
                 "smd_transverse_pose_candidate_gate": {
                     "authority": "ADVISORY_ONLY",
                     "presence_confidence_min": CORROBORATED_PRESENT_CONFIDENCE_MIN,

@@ -1,22 +1,40 @@
 from dataclasses import dataclass
+from concurrent.futures import ThreadPoolExecutor
+import copy
+import json
+import queue
+import threading
 import time
 
 import cv2
 import numpy as np
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from rclpy.qos import HistoryPolicy, QoSProfile, ReliabilityPolicy
 from geometry_msgs.msg import Point32, PolygonStamped
 from sensor_msgs.msg import CompressedImage
-from std_msgs.msg import Bool, Float32, Int32
+from std_msgs.msg import Bool, Float32, Int32, String
 
 from .config_utils import default_path, load_yaml
+from .conveyor_arrival import LiveArrival, clear_belt_region
 
 
 SENSOR_QOS = QoSProfile(
     history=HistoryPolicy.KEEP_LAST,
     depth=1,
     reliability=ReliabilityPolicy.BEST_EFFORT,
+)
+
+# The Unity ROS-TCP subscriber requests RELIABLE delivery by default.  A
+# BEST_EFFORT image publisher cannot match that subscription, which leaves the
+# rqt sensor-data view working while Unity receives no frames.  Reliable is
+# safe for this optional monitoring stream because its publication is isolated
+# from the stop-line status messages below.
+OVERLAY_QOS = QoSProfile(
+    history=HistoryPolicy.KEEP_LAST,
+    depth=1,
+    reliability=ReliabilityPolicy.RELIABLE,
 )
 
 
@@ -772,6 +790,15 @@ class ConveyorStopLine(Node):
             raise ValueError('annotated_fps must be finite and > 0')
         self._annotated_period = 1.0 / self._annotated_fps
         self._last_annotated_at = 0.0
+        self._render_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix='stop_overlay')
+        self._render_future = None
+        # Optional station telemetry can be delayed by a slow ROS subscriber
+        # (for example a Unity dashboard).  Keep it off the image callback so
+        # the stop trigger and ready status are never held up by UI traffic.
+        # A single latest-frame batch is sufficient for display.
+        self._telemetry_queue = queue.Queue(maxsize=1)
+        self._telemetry_stop = threading.Event()
+        self._telemetry_thread = None
         self._max_frame_age_seconds = float(
             config.get('max_frame_age_seconds', 0.20)
         )
@@ -788,7 +815,7 @@ class ConveyorStopLine(Node):
         )
 
         self._image_pub = self.create_publisher(
-            CompressedImage, annotated_topic, SENSOR_QOS
+            CompressedImage, annotated_topic, OVERLAY_QOS
         )
         self._station_publishers = {}
         for name in self._stations:
@@ -850,6 +877,31 @@ class ConveyorStopLine(Node):
         self._subscription = self.create_subscription(
             CompressedImage, image_topic, self._image_cb, SENSOR_QOS
         )
+        self._empty_belt_region = config.get('empty_belt_region')
+        self._empty_upstream_margin_px = float(
+            config.get('empty_upstream_margin_px', 5.0)
+        )
+        if (not np.isfinite(self._empty_upstream_margin_px)
+                or self._empty_upstream_margin_px < 0.0):
+            raise ValueError('empty_upstream_margin_px must be finite and >= 0')
+        arrival_config = config.get('arrival_observation', {})
+        self._arrival = LiveArrival(max_age=self._max_frame_age_seconds, **arrival_config)
+        self._arrival_publishers = {
+            station: self.create_publisher(
+                String, f'/vision/conveyor/{station}/arrival_observation', 1)
+            for station in self._stations
+        }
+        self._motor_subscription = self.create_subscription(
+            String, '/conveyor/state', self._arrival_motor_callback, 1)
+        # Expire evidence even when the camera stops publishing entirely.
+        self.create_timer(0.05, self._publish_arrivals)
+
+        self._telemetry_thread = threading.Thread(
+            target=self._telemetry_loop,
+            name='stop_telemetry',
+            daemon=True,
+        )
+        self._telemetry_thread.start()
 
         self.get_logger().info(
             f'NO MOTION dual stop-line overlay: {image_topic} -> {annotated_topic}'
@@ -983,6 +1035,62 @@ class ConveyorStopLine(Node):
         self._visual_tracks = updated_tracks
         return [track.detection for track in updated_tracks]
 
+    def _telemetry_loop(self) -> None:
+        """Publish latest non-critical station telemetry outside image callback."""
+        while not self._telemetry_stop.is_set():
+            try:
+                batch = self._telemetry_queue.get(timeout=0.1)
+            except queue.Empty:
+                continue
+            try:
+                for item in batch:
+                    (
+                        station,
+                        detection,
+                        distance_px,
+                        spacing_valid,
+                        source_header,
+                        image_width,
+                        image_height,
+                        legacy,
+                    ) = item
+                    self._publish_station(
+                        station,
+                        detection,
+                        distance_px,
+                        spacing_valid,
+                        source_header,
+                        image_width,
+                        image_height,
+                        legacy=legacy,
+                        include_trigger=False,
+                    )
+            except Exception as exc:  # pragma: no cover - ROS middleware edge
+                self.get_logger().warning(
+                    f'Asynchronous station telemetry failed: {type(exc).__name__}'
+                )
+            finally:
+                self._telemetry_queue.task_done()
+
+    def _enqueue_station_telemetry(self, batch) -> None:
+        """Replace stale dashboard data without ever blocking the camera callback."""
+        if not batch:
+            return
+        try:
+            # Keep one coherent assembly+inspection snapshot.  Dropping an old
+            # visual frame is preferable to delaying control status publication.
+            while True:
+                self._telemetry_queue.get_nowait()
+                self._telemetry_queue.task_done()
+        except queue.Empty:
+            pass
+        try:
+            self._telemetry_queue.put_nowait(tuple(batch))
+        except queue.Full:
+            # The worker won the race and is publishing the previous batch;
+            # the next camera frame will replace it.
+            pass
+
     def _publish_station(
         self,
         station: StopStation,
@@ -994,13 +1102,32 @@ class ConveyorStopLine(Node):
         image_height: int,
         *,
         legacy: bool,
-    ) -> None:
+        defer_optional: bool = False,
+        include_trigger: bool = True,
+    ):
         publishers = self._station_publishers[station.name]
+        trigger = Bool(data=bool(station.trigger_latched and spacing_valid))
+        if include_trigger:
+            publishers['trigger'].publish(trigger)
+            if legacy:
+                self._legacy_publishers['trigger'].publish(trigger)
+
+        if defer_optional:
+            # Copy all state that is mutated by the next frame before handing
+            # it to the worker.  ROS message headers are tiny and copyable.
+            return (
+                copy.deepcopy(station),
+                copy.deepcopy(detection),
+                float(distance_px),
+                bool(spacing_valid),
+                copy.deepcopy(source_header),
+                int(image_width),
+                int(image_height),
+                bool(legacy),
+            )
+
         publishers['line'].publish(Float32(data=float(station.line.position)))
         publishers['detected'].publish(Bool(data=detection is not None))
-        publishers['trigger'].publish(
-            Bool(data=bool(station.trigger_latched and spacing_valid))
-        )
         if detection is not None:
             publishers['edge'].publish(
                 Float32(data=float(detection.trailing_edge_px))
@@ -1029,9 +1156,6 @@ class ConveyorStopLine(Node):
         )
         self._legacy_publishers['detected'].publish(
             Bool(data=detection is not None)
-        )
-        self._legacy_publishers['trigger'].publish(
-            Bool(data=bool(station.trigger_latched and spacing_valid))
         )
         if detection is not None:
             self._legacy_publishers['edge'].publish(
@@ -1753,8 +1877,98 @@ class ConveyorStopLine(Node):
             medium=True,
         )
 
+    def _arrival_motor_callback(self, message: String) -> None:
+        try:
+            payload = json.loads(message.data)
+        except (ValueError, TypeError):
+            payload = None
+        self._arrival.set_motor(payload, self.get_clock().now().nanoseconds)
+
+    def _publish_arrivals(self) -> None:
+        now = self.get_clock().now().nanoseconds
+        for station, publisher in self._arrival_publishers.items():
+            publisher.publish(String(data=json.dumps(
+                self._arrival.snapshot(station, now), separators=(',', ':'), allow_nan=False)))
+
+    def _update_arrivals(self, message, detections, width, height, spacing_valid, image=None):
+        if not spacing_valid:
+            self._arrival.invalidate('UNSAFE_STATION_SPACING')
+        else:
+            scale = 960.0 / width
+            observations = {}
+            for name, station in self._stations.items():
+                stop_px = line_position_px(station.line, width, height)
+                candidates = []
+                for detection in detections:
+                    distance = station_distance_px(
+                        detection.trailing_edge_px, stop_px, self._travel_direction) * scale
+                    if abs(distance) <= self._arrival.tolerance_px:
+                        points = detection.points
+                        # Never qualify an image-clipped board as arrived.
+                        if (np.min(points[:, 0]) <= 0 or np.max(points[:, 0]) >= width-1
+                                or np.min(points[:, 1]) <= 0 or np.max(points[:, 1]) >= height-1):
+                            candidates.append([float('nan')]*5)
+                            continue
+                        candidates.append([distance, detection.center_px[0]*scale,
+                                           detection.center_px[1]*scale,
+                                           float(np.ptp(points[:, 0]))*scale,
+                                           float(np.ptp(points[:, 1]))*scale])
+                observations[name] = candidates
+            stamp = message.header.stamp.sec*1_000_000_000 + message.header.stamp.nanosec
+            # Calibrated belt interior across both station footprints. The wider
+            # detector search includes rails/tools and is not empty-belt evidence.
+            bounds = getattr(self, '_empty_belt_region', None)
+            ignored_upstream_ids = set()
+            ignored_upstream_polygons = []
+            if (bounds and self._travel_direction in ('positive_x', 'negative_x')
+                    and all(s.line.axis == 'x' for s in self._stations.values())):
+                assembly_stop_px = line_position_px(
+                    self._stations['assembly'].line, width, height
+                )
+                upstream_margin_px = float(
+                    getattr(self, '_empty_upstream_margin_px', 5.0)
+                )
+                for detection in detections:
+                    points = np.asarray(detection.points, dtype=np.float32)
+                    if (points.ndim != 2 or points.shape[1] != 2 or points.shape[0] < 3
+                            or not np.isfinite(points).all()
+                            or np.min(points[:, 0]) <= 0 or np.max(points[:, 0]) >= width - 1
+                            or np.min(points[:, 1]) <= 0 or np.max(points[:, 1]) >= height - 1):
+                        continue
+                    if self._travel_direction == 'positive_x':
+                        fully_upstream = (
+                            assembly_stop_px - float(detection.trailing_edge_px)
+                            >= upstream_margin_px
+                        )
+                    else:
+                        fully_upstream = (
+                            float(detection.trailing_edge_px) - assembly_stop_px
+                            >= upstream_margin_px
+                        )
+                    if fully_upstream:
+                        ignored_upstream_ids.add(id(detection))
+                        ignored_upstream_polygons.append(points)
+            clear = bool(
+                bounds and self._travel_direction == 'positive_x'
+                and all(s.line.axis == 'x' for s in self._stations.values())
+                and clear_belt_region(
+                    image, **bounds, ignore_polygons=ignored_upstream_polygons
+                )
+            )
+            if clear and any(
+                    id(detection) not in ignored_upstream_ids
+                    and np.max(detection.points[:, 0]) >= bounds['x_start'] * width
+                    and np.min(detection.points[:, 0]) <= bounds['x_end'] * width
+                    for detection in detections):
+                clear = False
+            self._arrival.observe(stamp, self.get_clock().now().nanoseconds, observations,
+                                  regions_clear=clear)
+        self._publish_arrivals()
+
     def _reject_frame(self, reason: str) -> None:
         self._ready_pub.publish(Bool(data=False))
+        self._arrival.invalidate('INVALID_CAMERA_FRAME')
+        self._publish_arrivals()
         # Invalid frames break consecutive evidence, but must not clear an
         # already latched station stop or count as a board leaving the scene.
         for station in self._stations.values():
@@ -1769,16 +1983,35 @@ class ConveyorStopLine(Node):
             message.header.stamp.nanosec,
         )
         if not np.isfinite(frame_age) or frame_age > self._max_frame_age_seconds:
-            # Do not continue moving from a delayed picture. The controller
-            # receives ready=False immediately and publishes zero velocity.
-            self._reject_frame(
-                f'Rejecting stale or invalid S22 control frame: age={frame_age:.3f}s '
-                f'> {self._max_frame_age_seconds:.3f}s'
+            # A delayed frame must not advance stop-line or arrival evidence.
+            # Ignore it without toggling the status bit: a short DDS scheduling
+            # delay is not itself a motion fault.  The remote controller keeps
+            # an independent bounded motion deadline.
+            self._arrival.invalidate('STALE_CAMERA_FRAME')
+            self._publish_arrivals()
+            for station in self._stations.values():
+                station.crossing_frames = 0
+                station.rearm_frames = 0
+            self.get_logger().warning(
+                f'Skipping stale S22 control frame: age={frame_age:.3f}s '
+                f'> {self._max_frame_age_seconds:.3f}s',
+                throttle_duration_sec=1.0,
             )
             return False
         return True
 
     def _image_cb(self, message: CompressedImage) -> None:
+        marks = [('entry', time.monotonic())]
+        try:
+            ConveyorStopLine._process_image(self, message, marks)
+        finally:
+            marks.append(('exit', time.monotonic()))
+            if marks[-1][1]-marks[0][1] > .075:
+                stages = {b[0]: round((b[1]-a[1])*1000, 2)
+                          for a, b in zip(marks, marks[1:])}
+                self.get_logger().warning('S22 slow callback ms: ' + json.dumps(stages))
+
+    def _process_image(self, message: CompressedImage, marks) -> None:
         if not self._frame_is_fresh(message):
             return
 
@@ -1812,11 +2045,13 @@ class ConveyorStopLine(Node):
         display_image = processing_image
 
         height, width = processing_image.shape[:2]
+        marks.append(("decode_resize", time.monotonic()))
         detections = detect_dark_boards(
             processing_image,
             search_bounds=self._search_bounds,
             **self._detector_settings,
         )
+        marks.append(("detect", time.monotonic()))
         if any(
             not np.isfinite(detection.trailing_edge_px)
             or not np.isfinite(detection.travel_length_px)
@@ -1847,8 +2082,8 @@ class ConveyorStopLine(Node):
                 self._minimum_clearance_px,
             )
 
-        # A frame can expire during decode/detection. Never refresh the motor
-        # heartbeat from it just because it was fresh on callback entry.
+        # A frame can expire during decode/detection. Do not use it for control
+        # evidence just because it was fresh at callback entry.
         if not self._frame_is_fresh(message):
             return
 
@@ -1873,7 +2108,7 @@ class ConveyorStopLine(Node):
         # the physical stop trigger.
         assembly = self._stations['assembly']
         assembly_detection, assembly_distance = station_results['assembly']
-        self._publish_station(
+        assembly_telemetry = self._publish_station(
             assembly,
             assembly_detection,
             assembly_distance,
@@ -1882,12 +2117,13 @@ class ConveyorStopLine(Node):
             width,
             height,
             legacy=True,
+            defer_optional=True,
         )
         inspection = self._stations['inspection']
         inspection_detection, inspection_distance = station_results[
             'inspection'
         ]
-        self._publish_station(
+        inspection_telemetry = self._publish_station(
             inspection,
             inspection_detection,
             inspection_distance,
@@ -1896,15 +2132,50 @@ class ConveyorStopLine(Node):
             width,
             height,
             legacy=False,
+            defer_optional=True,
         )
+        if hasattr(self, '_telemetry_queue'):
+            self._enqueue_station_telemetry(
+                (assembly_telemetry, inspection_telemetry)
+            )
         self._board_count_pub.publish(Int32(data=len(detections)))
         self._spacing_valid_pub.publish(Bool(data=spacing_valid))
         self._spacing_ratio_pub.publish(Float32(data=float(spacing_ratio)))
         self._ready_pub.publish(Bool(data=spacing_valid))
+        marks.append(("control_publish", time.monotonic()))
+        self._update_arrivals(message, detections, width, height, spacing_valid, processing_image)
+        marks.append(("arrival_publish", time.monotonic()))
 
         if np.isfinite(spacing_ratio):
             self._last_spacing_ratio = spacing_ratio
 
+        if self._image_pub.get_subscription_count() <= 0:
+            return
+        # At most one render is outstanding: never queue old dashboard frames.
+        if self._render_future is not None:
+            if not self._render_future.done():
+                return
+            try:
+                self._render_future.result()
+            except Exception as exc:
+                self.get_logger().warning(f'Overlay rendering failed: {type(exc).__name__}')
+        now = time.monotonic()
+        if now - self._last_annotated_at < self._annotated_period:
+            return
+        self._last_annotated_at = now
+        # Freeze the station state so rendering cannot race the next control frame.
+        renderer = copy.copy(self)
+        renderer._stations = copy.deepcopy(self._stations)
+        renderer._visual_tracks = copy.deepcopy(self._visual_tracks)
+        renderer._last_annotated_at = 0.0
+        self._render_future = self._render_executor.submit(
+            renderer._render_overlay, message, display_image, detections,
+            station_geometry, station_results, spacing_valid, spacing_ratio,
+            separation_px, required_spacing_px, width, height)
+
+    def _render_overlay(self, message, display_image, detections, station_geometry,
+                        station_results, spacing_valid, spacing_ratio,
+                        separation_px, required_spacing_px, width, height):
         # The overlay is observability, not control. Skip all drawing when no
         # one watches it and cap it independently when a viewer is connected.
         if self._image_pub.get_subscription_count() <= 0:
@@ -2058,13 +2329,20 @@ class ConveyorStopLine(Node):
         annotated.data = output.tobytes()
         self._image_pub.publish(annotated)
 
+    def destroy_node(self):
+        self._telemetry_stop.set()
+        if self._telemetry_thread is not None:
+            self._telemetry_thread.join(timeout=0.25)
+        self._render_executor.shutdown(wait=True, cancel_futures=True)
+        return super().destroy_node()
+
 
 def main(args=None) -> None:
     rclpy.init(args=args)
     node = ConveyorStopLine()
     try:
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
         node.destroy_node()

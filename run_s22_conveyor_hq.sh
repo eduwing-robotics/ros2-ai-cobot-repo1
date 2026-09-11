@@ -5,14 +5,37 @@ PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${PROJECT_DIR}/scripts/ksmc_env.sh"
 
 CAMERA_PID=""
+CAMERA_OWNED=0
 ROI_PID=""
+HQ_LOCK_FILE="${S22_CAMERA_CONTROL_DIR:-${PROJECT_DIR}/runtime/s22_camera_control}/hq_launcher.lock"
+mkdir -p "$(dirname "${HQ_LOCK_FILE}")"
+exec 8>"${HQ_LOCK_FILE}"
+if ! flock -n 8; then
+  echo '[S22 Conveyor HQ] Another HQ launcher is already running; leaving it untouched.'
+  exit 0
+fi
+
+camera_launcher_pid() {
+  local pid=""
+  local cmdline=""
+  local pid_file="${S22_CAMERA_CONTROL_DIR:-${PROJECT_DIR}/runtime/s22_camera_control}/launcher.pid"
+  [[ -r "${pid_file}" ]] || return 1
+  pid="$(<"${pid_file}")"
+  [[ "${pid}" =~ ^[0-9]+$ ]] || return 1
+  kill -0 "${pid}" 2>/dev/null || return 1
+  [[ -r "/proc/${pid}/cmdline" ]] || return 1
+  cmdline="$(tr '\0' ' ' <"/proc/${pid}/cmdline")"
+  [[ "${cmdline}" == *"${PROJECT_DIR}/camera2_scrcpy/run_camera2_scrcpy.sh"* ]] || return 1
+  CAMERA_PID="${pid}"
+  return 0
+}
 
 cleanup() {
   if [[ -n "${ROI_PID}" ]] && kill -0 "${ROI_PID}" 2>/dev/null; then
     kill "${ROI_PID}" 2>/dev/null || true
     wait "${ROI_PID}" 2>/dev/null || true
   fi
-  if [[ -n "${CAMERA_PID}" ]] && kill -0 "${CAMERA_PID}" 2>/dev/null; then
+  if (( CAMERA_OWNED )) && [[ -n "${CAMERA_PID}" ]] && kill -0 "${CAMERA_PID}" 2>/dev/null; then
     kill "${CAMERA_PID}" 2>/dev/null || true
     wait "${CAMERA_PID}" 2>/dev/null || true
   fi
@@ -26,8 +49,13 @@ pkill -f '/opt/ros/jazzy/bin/ros2 launch vision_server conveyor_roi.launch.py' \
   2>/dev/null || true
 
 echo '[S22 Conveyor HQ] Starting the USB scrcpy camera.'
-"${PROJECT_DIR}/camera2_scrcpy/run_camera2_scrcpy.sh" &
-CAMERA_PID=$!
+if camera_launcher_pid; then
+  echo "[S22 Conveyor HQ] Reusing existing S22 scrcpy launcher (PID ${CAMERA_PID})."
+else
+  "${PROJECT_DIR}/camera2_scrcpy/run_camera2_scrcpy.sh" &
+  CAMERA_PID=$!
+  CAMERA_OWNED=1
+fi
 
 # The ROI node is a persistent subscriber and safely waits for the first
 # frame. A short ros2 CLI probe can miss DDS discovery and is intentionally

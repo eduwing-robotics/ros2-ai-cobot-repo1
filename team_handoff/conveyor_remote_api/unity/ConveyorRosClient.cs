@@ -31,6 +31,7 @@ public class ConveyorRosClient : MonoBehaviour
         public float command_linear_x_mps;
         public bool vision_ready;
         public bool vision_ready_fresh;
+        public bool command_receiver_connected;
         public bool assembly_trigger;
         public bool inspection_trigger;
         public bool fr5_clear;
@@ -41,12 +42,12 @@ public class ConveyorRosClient : MonoBehaviour
     public string LastState { get; private set; } = "DISCONNECTED";
     public string LastReason { get; private set; } = "No state received";
     public bool IsMoving { get; private set; }
+    // Compatibility flag: true until a valid state arrives. The client no
+    // longer turns a delayed state sample into a local conveyor FAULT.
     public bool ConnectionStale { get; private set; } = true;
     public Arrival LastArrival { get; private set; }
 
     ROSConnection ros;
-    float lastStateReceivedAt = -1f;
-    const float StateTimeoutSeconds = 0.3f;
     string lastArrivalId;
     string previousReceivedState;
     // Service response means accepted; these events mean vision-triggered HOLD.
@@ -60,17 +61,6 @@ public class ConveyorRosClient : MonoBehaviour
         ros.Subscribe<BoolMsg>("/conveyor/moving", msg => IsMoving = msg.data);
     }
 
-    void Update()
-    {
-        ConnectionStale = lastStateReceivedAt < 0f ||
-            Time.realtimeSinceStartup - lastStateReceivedAt > StateTimeoutSeconds;
-        if (ConnectionStale && LastState != "DISCONNECTED")
-        {
-            LastState = "FAULT";
-            LastReason = "Conveyor state heartbeat timeout";
-        }
-    }
-
     void OnState(StringMsg message)
     {
         ConveyorState state = JsonUtility.FromJson<ConveyorState>(message.data);
@@ -81,7 +71,6 @@ public class ConveyorRosClient : MonoBehaviour
             return;
         }
 
-        lastStateReceivedAt = Time.realtimeSinceStartup;
         ConnectionStale = false;
         LastState = state.state;
         LastReason = state.reason;

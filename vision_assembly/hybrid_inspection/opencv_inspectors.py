@@ -391,9 +391,9 @@ def check_auxiliary_pose(
         )
     raw_delta_mm = (center - expected) / px_per_mm
     # The segmentation centroid is not necessarily the physical part centre.
-    # Remove the shared frame bias first, then a fixed per-slot centroid bias
-    # measured from user-verified normal S22 captures.  This does not move the
-    # CAD slot or normalize away a new slot-relative displacement.
+    # Legacy callers may remove a shared component-centroid bias. The fixed
+    # reference profile passes ZERO common bias and a frozen raw-centroid
+    # offset: inspecting a different set of parts cannot shift this reference.
     common_bias_corrected_mm = raw_delta_mm - bias_mm
     delta_mm = common_bias_corrected_mm - reference_offset_mm
     position_error = float(np.linalg.norm(delta_mm))
@@ -461,12 +461,13 @@ def estimate_common_projection_bias(
     maximum_bias_mm: float = 1.5,
     minimum_candidates: int = 6,
     minimum_confidence: float = 0.50,
+    diagnostic_only: bool = False,
 ) -> tuple[tuple[float, float], dict[str, Any]]:
-    """Estimate one shared segmentation-centre bias without moving slot targets.
+    """Legacy component-centroid statistic, diagnostic-only in the fixed profile.
 
-    The median is robust to a minority of genuinely misplaced components.  The
-    correction is rejected when it is too large or supported by too few slots;
-    individual residual offsets remain available to the pose decision.
+    A robust median is not an independent board-motion measurement: changed
+    part membership or common real displacement can change it. Never use this
+    statistic to update the frozen normal reference.
     """
     px_per_mm = np.asarray(
         (image_shape[1] / board_size_mm[0], image_shape[0] / board_size_mm[1]),
@@ -508,6 +509,9 @@ def estimate_common_projection_bias(
     details["median_absolute_deviation_mm"] = np.median(
         np.abs(stacked - median), axis=0
     ).tolist()
+    if diagnostic_only:
+        details["reason"] = "COMPONENT_BIAS_DIAGNOSTIC_ONLY_USE_REGISTERED_BOARD"
+        return (0.0, 0.0), details
     if magnitude > maximum_bias_mm:
         details["reason"] = "COMMON_BIAS_EXCEEDS_CONTRACT_LIMIT"
         return (0.0, 0.0), details

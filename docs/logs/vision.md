@@ -1,5 +1,258 @@
 # AI/Vision 작업 기록
 
+## 2026-09-11 Inspection model readiness audit
+
+- Re-read `vision_assembly/config/inspection_fusion_contract.json` before the
+  run. The S22 fixed-slot hybrid and fail-safe fusion rules were preserved:
+  every required stage must be calibrated, available and authoritative before
+  PASS; an unverified or low-confidence provider remains `ADVISORY_ONLY` and
+  any missing required evidence remains `UNKNOWN`.
+- Ran the complete 25-slot hybrid pipeline against the current S22 inspection
+  image. The board registration was valid (alignment score `0.9852`) and the
+  capture-quality triage found no gross issue, but the final result was
+  `UNKNOWN/ONE_OR_MORE_SLOTS_UNKNOWN`. The report is
+  `/tmp/inspection_model_probe/20260911_103843_049131/hybrid_report.json`.
+- The provider audit recorded 31 unavailable or disabled entries: 25
+  component PatchCore providers could not run on this CPU-only host, five VRM
+  seating candidates are intentionally `runtime_enabled=false`, and the YOLO
+  auxiliary provider requires the RTX host. PatchCore roots also have normal
+  calibration only; no controlled-defect `decision_thresholds.json` exists.
+  The VRM state V6 classifier's held-out accuracy/macro recall is `1.0`, but its
+  metadata remains `validated=false` and `authority=ADVISORY_ONLY` because
+  independent physical defect validation is missing.
+- Regression validation passed `145` tests. The audit changed no active model,
+  threshold, fusion rule or contract, and sent no robot or conveyor command.
+  Production completion still requires independently captured normal and
+  controlled defect scenes for every required slot/stage, slot-level PatchCore
+  thresholds, and physical validation before any provider can be considered
+  authoritative. Until then the runtime must hold/recapture on `UNKNOWN`.
+
+## 2026-09-11 S22 status handling no longer uses heartbeat age
+
+- The S22 conveyor ROI node now ignores a delayed or unverifiable camera frame
+  without publishing a transient `ready=false`. It clears only the affected
+  visual/arrival continuity; a valid subsequent frame publishes the current
+  ready and trigger booleans. Decode failures, invalid geometry and unsafe
+  station spacing still publish explicit `ready=false`, and a latched visual
+  stop trigger is unchanged.
+- The remote conveyor server consumes `ready` and station triggers as current
+  boolean status. Their reception timestamps no longer authorize motion or
+  create FAULT states. The separate arrival observer still rejects old source
+  images and old stopped-motor context, so stale evidence cannot claim a board
+  is at a station or make the server skip a move. The finite motion timeout and
+  command-receiver preflight remain active.
+- This is a conveyor control/status change only. The fixed inspection fusion
+  contract, S22 independent hybrid composition, fail-safe fusion authority,
+  models, thresholds, camera resolution and transport settings were not
+  changed. Offline validation passed all 181 vision-server tests. No image was
+  captured, no model was trained or promoted, and no robot/conveyor command was
+  sent. One guarded move service preflight was issued after the rebuild and was
+  rejected because `/cmd_vel` had no robot subscriber; no nonzero robot command
+  was sent. Physical robot bringup/network recovery is still required for a
+  live motion test.
+
+## 2026-09-11 Conveyor retry after a manually returned board
+
+- The visual arrival observer now exposes both the existing conservative
+  2-second/20-frame empty window and a separate 0.4-second/5-frame window used
+  only by an explicit new move request. This short path clears a stale stop
+  completion after both station regions are freshly empty, while preserving
+  the long unattended automatic-IDLE criterion.
+- The fixed S22 empty-belt evidence remains fail-safe: fresh stopped motor
+  context, matching server/motion IDs, and both station observations are still
+  required. A detected board whose trailing edge is safely upstream of the
+  assembly line may be excluded from the neutral-belt pixel ratio so a
+  manually returned start board does not block a retry; a board at/crossing a
+  station remains a veto. `MANUAL_STOP` is recoverable only on this explicit
+  empty-evidence request; `FAULT` still requires a reset.
+- Offline arrival, remote-server, and ROI regression validation passed 158
+  tests (189 vision-server tests including adapters and controller checks).
+  No inspection fusion contract, model authority, camera transport, or
+  robot/conveyor command was changed or exercised.
+
+## 2026-09-10 S22 Unity overlay QoS and heartbeat isolation
+
+- The laptop rqt view confirmed that the S22 source and the stop-line renderer
+  were producing frames. Unity's stop screen still stayed blank because the
+  overlay publisher used the sensor-data `BEST_EFFORT` profile while the
+  Unity/ROS-TCP subscription path can request `RELIABLE`; an earlier ROI log
+  records the resulting `requesting incompatible QoS ... RELIABILITY` warning.
+- Changed only the optional `/vision/conveyor/stop_image/compressed` publisher
+  to a depth-1 `RELIABLE` profile. This remains compatible with rqt's
+  best-effort viewer and with the Unity endpoint. The endpoint source already
+  selects sensor-data QoS for `CompressedImage`; restarting that endpoint is
+  still required if an older installed copy is running.
+- Moved station line/detection/polygon/distance telemetry to a daemon worker
+  with one latest-frame batch. The image callback publishes stop triggers and
+  the `stop_line_ready` heartbeat before enqueueing optional UI telemetry;
+  stale UI data is dropped instead of delaying the 150 ms fail-safe. The
+  overlay renderer remains a separate bounded worker, and no stop threshold,
+  camera resolution, or motion command changed.
+- Offline verification: Python syntax check and the vision ROI test file pass
+  (`49 passed`). With the conveyor still `MANUAL_STOP/moving=false`, the
+  camera/ROI pair was restarted using the existing phone and source settings,
+  changing only the 960x540/JPEG84 control stream. Read-only probes then
+  received 590 input images (29.5 FPS) and 592 ready heartbeats (29.6 FPS) in
+  20 seconds; no stale frame or slow-callback warning was logged. The overlay
+  publisher is `RELIABLE` and `ros2 topic info` shows both rqt and the team's
+  ROS-TCP subscriber registered. A live stop-image sample was then decoded
+  locally as `960x540` JPEG and visibly contained both stop lines and the HUD;
+  the unannotated `/camera2/image_stream/compressed` source has no Unity
+  subscriber. Unity's rendered pixels and the team-managed TCP forwarding were
+  not directly inspectable from this host. No reset, move, robot Start, Job/DB,
+  or Sequencer request was sent in this investigation.
+
+
+## 2026-09-10 S22 heartbeat latency and wired transport mitigation
+
+- Root cause evidence from the interrupted assembly move: the controller accepted motion, then latched `FAULT` on `S22 ready heartbeat missing` before the assembly stop line. The ROI log at the same interval rejected a control frame aged 185 ms against the 150 ms fail-safe cutoff; the earlier 30-second audit measured 7 stale image frames, a 1,490 ms maximum image gap, 38 ready gaps over 150 ms and 24 false ready samples. The board in the supplied frame was still upstream of the assembly station, so this was not an arrival stop.
+- Fast DDS was using all active interfaces with blocking UDP sends. Added a validated profile that keeps local shared memory, allows the ROS cell Wi-Fi and wired `enp129s0`, excludes the GoPro-only WLAN, and enables non-blocking UDP sends so a full network buffer cannot hold the high-rate camera publisher. `scripts/ksmc_env.sh` now selects Fast DDS explicitly unless an RMW was already chosen. This follows Fast DDS transport behavior: blocking sends can hinder high-frequency writers, while non-blocking sends return immediately when a buffer is full; the existing 150 ms freshness watchdog remains the loss fail-safe. [Fast DDS UDP transport documentation](https://fast-dds.docs.eprosima.com/en/2.x/fastdds/transport/udp/udp.html)
+- The laptop Ethernet link is physically up at 1 Gb/s Full Duplex and has a dedicated `10.77.5.1/30` address. The known robot Wi-Fi address `192.168.11.101` did not answer on the wired link, so the robot side has not been assigned a matching Ethernet address and ROS commands to that robot still route over `wlo1`. The profile is prepared for the wired path but does not claim that path is active until the robot Ethernet address and ROS interface are configured. SSH read-only access as the documented `musk` account was unavailable (authentication/timeout); no robot setting was changed.
+- A reversible laptop-only DHCP/shared-mode probe on the dedicated cable received no lease or ARP response from the robot, so the connection was restored to the documented static `10.77.5.1/30` profile. This did not alter the Wi-Fi default route or any robot configuration.
+- After the transport profile and non-blocking send change, a matched 30-second audit measured 0 false ready samples and 0 ready gaps over 150 ms; image timestamp age stayed below 91 ms with no stale images. A later audit after assigning and then restoring the laptop wired address kept ready/state gaps at 0 over 150 ms; the separate image observer saw sampling gaps (final maximum411 ms), so it is not used as proof of full camera delivery. Camera logs reported 30 FPS capture and approximately29.6 FPS control. No slow ROI callback or stale-frame log appeared after deployment. The remaining observer gap is why physical motion has not been certified.
+- Deployment preserved existing armed mode and configuration, kept the controller in `MANUAL_STOP`, and sent no move, reset, robot Start, Job/DB, or Sequencer-resume request. The controller's startup/hold lifecycle publishes zero-speed commands. Positive movement and the supplied interrupted-process replay remain untested. The next safe step is to configure the robot Ethernet endpoint (or provide its authorized console access), then run the same read-only latency audit before any guarded motion test.
+- A subsequent Unity preflight read shows the active controller still in `MANUAL_STOP`, `moving=false`, command speed0, fresh `vision_ready=true`, no target, and no arrival record. Thus the old explicit recovery remains required before pressing Unity: confirm the PCB is clear, call `/conveyor/reset` once, verify `IDLE`/fresh ready, then start a new Job/Unit. This investigation did not call reset or move. The exact fallback and rollback boundary are recorded in `team_handoff/conveyor_remote_api/HEARTBEAT_ROLLBACK.md`.
+- The TurtleBot was then power-cycled. After a20-second boot wait, `192.168.11.101` remained ARP-incomplete with no ICMP response; ROS_DOMAIN_ID5 showed `/cmd_vel` publisher count1 and subscriber count0, so the robot bringup is offline. The laptop Ethernet carrier remains up at1Gb/s but no robot Ethernet IP/DHCP lease is present. No SSH start command, robot bringup, reset, move, Job mutation or Unity request was sent. Physical robot console or restored authorized SSH access is required before the next preflight.
+
+## 2026-09-10 Automatic IDLE after both station regions become empty
+
+- User clarified the recovery scenario: a PCB previously reached assembly/inspection, the process was interrupted, and the PCB was returned to the start area before pressing Unity process execution again. Implemented automatic stale-completion cleanup, separate from the earlier already-arrived no-op. Only ASSEMBLY_STOP/INSPECTION_STOP with no target may transition to IDLE. Clear arrival, motion_id, live evidence and motion start time; preserve server instance and monotonic motion_sequence so the next assembly request gets a new ID. No motion starts automatically, and no Job/DB/robot/Sequencer step is changed.
+- Empty evidence requires fresh distinct images and fresh stopped/zero-command controller context continuously for at least2s and20frames. Both station messages must pass source/receipt/motor freshness and current server/motion/state checks; existing vision-ready and competing command-publisher guards apply. MOVING, MANUAL_STOP, FAULT, missing/invalid images, detector ambiguity or UNKNOWN are not auto-reset authority. Normal stop-line/motion interlocks and the locked inspection fusion contract remain unchanged.
+- Added explicit gray-belt evidence instead of interpreting a missing ±8px arrival candidate as absence. Fixed S22 1.5x profile uses normalized belt interior x0.166..0.80/y0.26..0.45 across both station footprints; at least98% of pixels must have every channel95..180 and channel spread<=35. Any raw board detection overlapping that x-range vetoes the empty result, including boards away from the stop lines. The wider detector search includes rails/tools and cannot serve as an empty-background mask. Saved live frame `runtime/conveyor/auto_idle_20260910/current.jpg` was visually reviewed; its selected interior meets the gray condition at100%. This is engineering calibration on one fixed overview, not independent physical qualification. Camera pose change, belt-colored occluders, very small/out-of-region objects and all lighting/part variations are not proven covered. Gray/visibility mismatch abstains; no threshold adaptation or model training.
+- Validation:178 ROS tests passed, including both stopped stations resetting then accepting a new assembly move, preservation of motion sequence, stale/wrong identity/missing evidence rejection, manual/fault retention, positive-background continuity, camera expiry, dark/bright obstruction and raw-board veto outside arrival windows. Tests use in-memory command publishers, no ROS motion. An initial live probe without the final calibrated interior did not qualify empty; that provisional result was not treated as proof of absence.
+- User-authorized deployment completed after a fresh IDLE/zero-command precheck and no durable active inspection records. Preserved existing process argv/environment, restarted only ROI and bundle via SIGTERM (new launchers246072/246102); camera was not restarted or reconfigured. New controller instance5eec1529-5702-4cd2-b266-1e74bd49aa65. Final independent8s live probe received197images/64motor states, no stale images, and qualified empty with114continuous frames at the final sample. Controller remained IDLE/zero command. Evidence and logs: `runtime/conveyor/auto_idle_20260910/`.
+- Deployment verification found the previous ROI child238545 had survived its launch parent termination and was publishing concurrently. Retired only that identified old child (SIGTERM then bounded SIGKILL fallback); the active new ROI is246076. A final15s subscription to the actual deployed topics received136stationary state messages and632observations per station, including152qualified-empty messages per station. Earlier short windows had no qualified-empty messages; uninterrupted evidence is workload-sensitive and may take longer than2s. Freshness limits were not relaxed. `deployed_readonly.json` records the actual topic histories; arrival queries remain UNKNOWN because empty is not arrival.
+- No move/reset/robot Start request, Job mutation or Sequencer resume. Controller lifecycle/idle loop publishes zero-speed commands. Live STOP-to-IDLE transition and complete Unity restart with a real PCB were not exercised; the preexisting controller was already IDLE. Full process success still depends on Sequencer/robot recovery handling; this change removes the stale conveyor STOP blocker when empty evidence qualifies.
+
+## 2026-09-10 Current S22 arrival observation and completed-request handling
+
+- User requested live S22 destination confirmation after Sequencer retried assembly motion from ASSEMBLY_STOP. Added `conveyor_arrival.py` and raw-frame integration in the ROI node. Current observation is separate from the latched stop trigger and historical arrival record. It requires one raw board candidate within the station window, distinct/fresh source timestamps, a continuous stable window, and current stopped controller state/zero command. UI smoothing/held tracks are never used. Missing/ambiguous/clipped/invalid detections, camera gaps/repeated frames, motor context change/motion/FAULT/MANUAL_STOP invalidate continuity; a timer expires evidence even with no new image. Motor snapshots retain only bounded scalar fields to avoid cyclic state/observation payload growth.
+- Added per-station `arrival_observation` JSON topics, read-only `/conveyor/check_{station}_arrival` Trigger services and validated `live_arrival` in controller state. Source-image, motor, server/motion identity and receipt freshness are checked. Default engineering limits: at960px width, ±8px station window,2px maximum componentwise centroid/box-span drift, at least5distinct frames and0.4s, existing0.15s image freshness. These limits are not physical robot-pose calibration or encoder feedback; full/partial occlusion detection and real arrival sensitivity remain unqualified. Observation IDs mark visual continuity episodes, not Job/Unit/serial identities.
+- Same-destination move requests now return success with `already_arrived=true,completed=true` ONLY when controller is already in the requested STOP state, original arrival matches current motion_id/station, armed/ready/no-other-command-publisher guards pass and current visual evidence matches the same server/motion/state. The no-op creates no motor command, no new motion ID or deadline, and preserves original completion/state. Stale evidence and MOVING/FAULT/MANUAL_STOP do not bypass existing refusal/fault behavior. Sequencer must still bind the current Job/Unit and run robot Start only once; its source is not present locally and was not modified.
+- Offline validation:162 ROS vision-server tests passed, including temporal expiry, duplicate images, slow drift, missing/ambiguous boards, real raw-frame adapter checks, wrong server/motion/station, repeated no-op completion, no extra velocity publication and read-only service behavior.24 bundle tests passed, one local socket test excluded. No ROS context is initialized by these tests. `scripts/probe_conveyor_arrival.py` is a separate read-only image/state subscriber with no motion service calls or control publishers.
+- Host live probe in ROS_DOMAIN_ID5: first15s received369images (one stale); follow-up8s received165images and48motor messages from one conveyor_remote_server publisher. Actual current state was MANUAL_STOP, moving=false, command0, armed=true, server015c58f5-215b-4fd1-be86-a1b4172158e9/motion:4. Both stations stayed UNKNOWN, correctly refusing to reinterpret manual stop as arrival. Saved `runtime/conveyor/arrival_validation_20260910/{live_readonly,motor_state_readonly}.json`. Improved the displayed rejection reason to MOTOR_STATE_MANUAL_STOP afterward and verified offline. Live positive AT_STATION, physical moves and Sequencer end-to-end completion were not tested.
+- User subsequently authorized deployment with Sequencer left paused. Read-only precheck confirmed MANUAL_STOP/zero command and no durable ACCEPTED/RUNNING inspection. Gracefully stopped the owned bundle; ROI launch did not exit on SIGINT within25s, so the two identified ROI processes were terminated with SIGTERM before replacement. Restarted ROI (launcher238525/node238545) and bundle238587 (controller launcher238643/API238644), preserving armed mode and using the existing configured launch/auth files. Original bundle environment was not retained after its exit; the recovery used the standard wrapper/configuration and existing ROI environment. Controller instance is now0a33ef66-6044-40ef-a2de-42e039e83e37, IDLE, motion_id/arrival cleared as disclosed. No reset/move service, robot Start, Job/DB mutation, Sequencer resume or teammate message was sent. Server lifecycle includes its zero-speed stop publication path; this was not a motion test or a measurement of every wire command. Sequencer state itself was not remotely verified or modified.
+- Initial post-restart read-only checks found image heartbeat expiry; an independent5s probe received40motor states and zero images. Host inspection found no S22 launcher/scrcpy/ROS camera process, while USB remained authorized. Why the previous camera processes exited was not established. Restored the existing camera launcher (PID239548) using unchanged stored settings: camera0,1.5x,1920x1080@30 source,1280x720 JPEG90 control stream. Final8s read-only verification received72stationary IDLE/zero-command states and249observations per station; vision_ready and freshness were both true. Both query services responded UNKNOWN, with raw observations reporting NO_BOARD_IN_STATION_WINDOW, not stale imagery. Positive physical AT_STATION and repeated-motion no-op remain offline-only tests. Evidence: `runtime/conveyor/arrival_validation_20260910/` restart JSON, deployment/camera logs, camera probe and `deployed_readonly.json`.
+- Deployment is complete for local ROI/controller/API; Sequencer source is absent and its Job/Unit binding and completion handling still require the teammate changes in `team_handoff/conveyor_remote_api/CURRENT_ARRIVAL_UPDATE.md`. Physical arrival/move/robot and full Job completion are unverified. Existing inspection-model qualification limitations remain unchanged.
+
+## 2026-09-10 Frozen raw position reference repair
+
+- Re-read the locked S22 fusion contract; no contract/authority change. Replaced the default position profile with `vision_assembly/config/s22_fixed_reference_pose_candidate.json`: fixed yellow-CAD slot geometry plus per-slot arithmetic mean raw-centroid offsets from three documented normal sources (Sept9 154203, Sept10 094352 and explicitly user-confirmed161501). VRM04 has two available reference measurements; other slots have three. References are development calibration data, not validation samples or certified socket centres. Maximum in-sample radial residual0.747152mm is reported, not used to widen a limit.
+- Removed live component-population bias from the new profile (`component_bias_diagnostic_only=true`). Its median remains diagnostic; it has no position vote. No per-frame reference update, part-specific image alignment, rotation normalization, angle fitting, learned-weight retraining or tolerance widening. Existing0.75mm/3deg checks and candidate rules remain. Provider crops stay on the original `full_board_inspection.json`; presence, orientation, pins, surface, seating and VRM boundary stage dictionaries are exactly unchanged on both before/after comparison images. Raw CAD offsets and applied fixed offsets remain visible in JSON. This changes the numeric position evidence, not just overlay suppression.
+- Added `fixed_pose_reference.py` with deterministic least-squares constant fitting and validation of unique source samples, complete slot coverage, finite values, recomputed reference entries, pinned source/report/CAD/provider-config/model dependencies, and prohibition of live component bias. Missing/changed reference dependencies make only this pose provider UNKNOWN/INVALID; independent stages continue. Reports now include fixed-reference health/entry digest and geometry/provider config hashes. Existing explicitly selected legacy profiles retain legacy behavior; new default inspection subprocesses select the fixed reference. Running server was not restarted and no API/DB result was submitted.
+- Completed full host-GPU comparisons under `runtime/inspection/model_completion_20260910/fixed_reference_validation`: held-out saved normal restoration162412 changes eight internal poseFAIL signals to zero, with zero displayed candidates; saved PM01 position control162213 changes five internal signals to the one PM01 signal and retains exactly PM01 POSITION?. Both sources are excluded from the three reference samples. Source SHA and unchanged independent-stage dictionaries verified in `repair_review.json`. These were previously inspected developmental controls, not blind model-selection validation.
+- After numeric reference freeze, captured fresh unchanged restored setup163703 (flashOFF4000x3000,7mm/69mm equivalent); overview restored. Full GPU report `fresh_normal/20260910_163713_991876` has zero internal poseFAIL signals and zero displayed candidates, alignment0.985235. JSON and rendered image reviewed; source is not in calibration samples. No tuning or calibration update used this image. It is a fresh temporal repeat of the same setup, not independent reseating/lighting/part coverage. FinalUNKNOWN persists; all25 PatchCore slots available and five VRM seating stages disabled.
+- Added `audit_fixed_pose_reference.py`; source-hash-checked524 archived reports/286unique images,340 changed candidate sets. It recomputes frozen-reference pose from original registered pixels without new image inference. These counts are not accuracy metrics and include old providers/geometries/repeated scenes. Scoped historical PM01 displacement144923 retainsPOSE; inductor02 direction172527 retainsDIR/SURFACE. Known VRM05 seating failure184100 remains unselected in archived evidence, so the repair does not complete seating detection or justify all-slot production qualification. Detailed comparisons remain in `archive_audit.json` and `repair_review.json`; no new automatic truth labels.
+- Validation:524 hybrid/integration tests passed; three unrelated local-socket tests excluded. Twelve new regressions cover fixed-reference default validity, shared real displacement preservation, missing evidence, independent angle errors, duplicate/nonfinite/insufficient calibration, and changed/missing model/reference abstention. No robot or conveyor command. Camera connection/quality configuration unchanged. Remaining: independent all-slot displacement/normal-reseating coverage, VRM seating misses, HBM pin qualification and authoritative final PASS calibration. Current three-scene reference is ACTIVE_ADVISORY, not a fully completed inspection model.
+
+## 2026-09-10 Fresh completion baseline and position warning follow-up
+
+- PM01 requested normal restoration acknowledged by `ㄱ`: fresh162412 flash-OFF4000x3000/7mm/69mm equivalent capture and overview restoration succeeded. Same yellow-CAD geometry/config SHA verified across normal161501→position162213→restored162412. Completed GPU report `fresh_pm01_restoration/20260910_162422_231150` has zero displayed candidates; sequence is 0→PM01 POSITION?→0 without tuning/training. PM01 image-derived transverse residual0.288457mm, radial0.862038mm; alignment0.986467. JSON/report image reviewed, source hashes and three-scene comparison saved in `validation.json`.
+- This completes one requested PM01 position/restoration candidate sequence, not production qualification. Restored image retains eight undisplayed advisory pose signals (GPU, HBM01/02/05, PM01/04, CAP01, VRM02), all25 PatchCore slots available, five VRM seating checks disabled; final UNKNOWN unchanged. No physical displacement/height measurement or new truth labels for unchanged slots. No runtime default/config/code/weight/threshold edits, training, server restart, robot or conveyor command.
+
+- Fresh PM01 position control: user replied `ㄱ` after the request to move only PM01 slightly outside its socket. Captured 162213 (flash OFF, 4000x3000, 7mm/69mm equivalent), restored overview, and completed host-GPU inspection with the SAME yellow-CAD config as verified normal161501. Geometry reference equality and config SHA verified; source hash and request/acknowledgement provenance in `fresh_pm01_position_control/20260910_162222_870106/validation.json`. Physical displacement/height was not measured.
+- Exactly one displayed candidate: PM01 POSITION?; prior normal161501 has zero. PM01 image-derived transverse residual 0.224783→2.607129mm, radial 1.172430→2.666977mm, auxiliary confidence 0.146485 in control, alignment0.984967. These are advisory model-derived values, not physical socket metrology. Original ROI and rendered report reviewed; four unrelated raw pose signals remain undisplayed. Final UNKNOWN, all25 PatchCore slots available, five VRM seating checks disabled. This is a successful requested single-scene candidate response, not production qualification. Normal restoration remains pending. No model/threshold/config edits, training, server restart, robot or conveyor commands.
+
+- Follow-up user explicitly states `전부다 정상배치야` (all normal placement). Saved separate `ground_truth_confirmation.json` beside the original report, labelling all 25 slots NORMAL_PLACEMENT and PM01/VRM01 displayed position findings as false positives; CAP01 raw pose flag is also inconsistent with normal placement. Original prediction and pre-disclosure validation remain unchanged. This placement label does not assert individual pin integrity or measured height; no training added.
+- Found and corrected comparison provenance: the default launcher used legacy `full_board_inspection.json`, whereas earlier completion replays used isolated `cad_yellow_trial_a8puvcqm/config.json`. Do not treat these as the same geometry baseline. Offline removal of common bias on the legacy report clears PM01 but flags VRM01/02/03, so blanket removal was not deployed. Archived counterfactual retains historical slot offsets and is not a valid recalibration.
+- Completed host-GPU replay of the SAME hash-pinned 161501 photo with the existing yellow-CAD trial config and original provider crops, under `fresh_normal_followup_cad/20260910_161931_875606`. Displayed candidates are now zero, but raw advisory pose signals remain on PM01, PM04, CAP01 and VRM02; final UNKNOWN and five disabled VRM seating checks remain. Report image reviewed; comparison/config hash in `validation.json`. This corrects the baseline configuration used for comparison, not production position accuracy. No runtime default/config/code/weight/threshold changes, fresh capture, training, server restart, robot or conveyor commands in this follow-up. Matched normal/actual socket-exit validation remains required before production promotion.
+
+- User replied `ㄱ` to proceeding with a normal-baseline capture. Treated as go-ahead; normal setup was assumed, not an explicit per-slot physical truth label. Excluded this capture from verified-normal training/accuracy claims pending specific physical confirmation.
+- Fresh flash-OFF S22 optical capture 161501, 4000x3000, 7mm focal/69mm equivalent; overview restored successfully. Completed all 25 slots with host GPU and unchanged models/rules. Report and source-hash verification: `runtime/inspection/model_completion_20260910/fresh_normal_followup/20260910_161511_032225/validation.json`. SHA256 `4d74c3ccbd0e2640ba838ced15f52358394ec67b2117fd9ef80a78251ccdd1a5`; alignment 0.986099, all 25 PatchCore slots available, five VRM seating providers remain disabled.
+- Displayed POSITION? candidates: PM01 and VRM01. PM01 raw image-derived Y offset 0.824475mm becomes 1.526352mm after common and slot-reference corrections. VRM01 corrected radial offset 0.730474mm exceeds the existing 0.700mm nomination criterion, although the auxiliary pose stage uses 0.750mm. These are distinct existing gates, not physical measurements of socket exit. CAP01 retains an undisplayed advisory raw pose FAIL; no displayed warning is not PASS. No pin candidate is not pin qualification.
+- JSON and rendered report reviewed; final UNKNOWN and ADVISORY_ONLY retained. No threshold adjustment, training, runtime code change, server restart, robot or conveyor command. Capture connection/settings were not modified. Initial sandbox ADB attempt was blocked before capture; approved host execution completed. Further position correction requires confirmed current-slot normal and true socket-exit controls, not tuning to remove these two warnings. SMD01 micro seating remains DEFERRED_UNKNOWN.
+
+## 2026-09-10 SMD01 sample truth correction and fallback withdrawal
+
+- User explicitly corrected the SMD1/CAP01 photo: it was captured for micro lip seating, not the gross in-plane position error previously asserted. The historical `smd01_displaced_truth.json` claim conflicted with this direct correction. Corrected its primary label to MICRO_LIP_SEATING, preserved the superseded record, excluded it from position validation/normal training, and retained the source hash `1da5c571217859a9ceecf98ed1ee29b0541d94f664eef4c08e07d08af10996de`. No other slots relabelled. The +2.051 mm number is an image-derived projected centre offset, not a measured physical displacement, socket exit or height.
+- Removed the newly added gross-position fallback import/call and its implementation/audit/tests from active source. Archived the withdrawn source and added WITHDRAWN.json alongside its immutable historical artifacts. Withdrew the preceding claim of a recovered position defect; passing software tests and repeated-image replay did not validate that incorrect physical interpretation. Updated README and latest-record link.
+- Locked S22 hybrid architecture and SMD01 DEFERRED_UNKNOWN scope remain unchanged. Existing missing, orientation and independently supported position routes remain; raw outline/provider evidence is preserved. No new seating decision, learned weights, normal-training data or threshold change. This rollback does not solve micro lip seating detection.
+- Validation: 410 hybrid tests passed, including four regression cases that preserve outline evidence without turning it into a position label and retain independent YOLO position candidates. Re-evaluated the completed saved report with current nomination rules: CAP01 POSITION? is gone, all 25 stage dictionaries and the unrelated PM01 candidate are unchanged; source SHA matches and original/fused result remains UNKNOWN. `runtime/inspection/smd01_gross_position_20260910/withdrawal_verification.json` records the check. No new inference, camera capture, server restart, robot or conveyor command.
+
+
+## 2026-09-10 SMD01 gross displacement fallback
+
+> WITHDRAWN: the user corrected this sample to micro lip seating. The position-defect label, claimed physical displacement and claimed recovered position detection below are invalid interpretations. Preserved only as historical work; see the correction above.
+
+- Read the locked S22 hybrid fusion contract. Located a concrete missed position candidate: user-labelled CAP01/SMD01 position-error source `s22_inspection_roi_20260910_100210.png`, SHA256 `1da5c571217859a9ceecf98ed1ee29b0541d94f664eef4c08e07d08af10996de`. Label provenance is `runtime/inspection/model_completion_20260910/smd01_displaced_truth.json`; no new label assigned to other slots. Presence probability was 0.997974, YOLO pose was missing, but the existing independent raw/CLAHE outline had 0.711 px threshold spread, 0.977 edge support and +2.051 mm image-Y centre offset. Existing outline evidence only fed the deferred seating route, so this in-plane displacement had no candidate.
+- Added `smd01_gross_position.py` and connected an additive POSITION? nomination: SMD01 only, missing YOLO pose, unverified PRESENT confidence >=0.99, valid registration and multi-threshold outline, centre spread <=3 px, edge support >=0.60, positive image-Y offset >1.5 mm. This engineering nomination margin is not calibrated socket metrology. No per-part alignment, learned weight, crop, common-bias correction, model threshold, required stage or fusion status is changed. Negative-Y and fine seating remain deferred; absent/uncertain outline abstains. This narrow fallback does not establish all-direction position or height coverage.
+- Archived replay audit verified source hashes for 516 reports / 283 unique images. Exactly one report gains a candidate: the labelled SMD01 displacement above. No other archived candidate sets change. These contain reused scenes/older providers and are NOT independent accuracy trials. Two current verified-normal crops had independent offsets of approximately +3.95 and +1.00 image pixels versus +23.44 pixels in the displacement control; these are developmental observations, not a new calibration.
+- Full current GPU replay: `runtime/inspection/smd01_gross_position_20260910/gpu_displaced/20260910_145909_493046`. Original source SHA and all 25 slot stage dictionaries exactly match the prior report; only CAP01 POSITION? is added to the existing PM01 candidate. JSON and rendered PNG were checked. Final UNKNOWN/ADVISORY_ONLY remains. Comparison and repeatable archive audit are saved in the parent output directory.
+- Validation: 531 offline hybrid/integration tests plus two local socket tests passed (one unrelated socket test deselected). Includes 23 new tests for additive evidence, normal/boundary/deferred cases, missing/invalid outline, confidence and slot/provider scope. Socket tests initially hit sandbox restrictions and subsequently passed on the host. Initial CPU fallback inference was stopped after sandbox GPU denial; only the completed host-GPU replay is final evidence.
+- No fresh capture, weight training, server restart, robot command or conveyor command in this model task. Next inspection subprocess uses the updated candidate rule. PM01/CAP01 common-bias false positives remain unresolved; this change repairs the separate missing-YOLO position nomination, not those normal warnings or complete production qualification.
+
+
+## 2026-09-10 Archive-wide bias verification and inductor regression
+
+- Added audit_component_bias_modes.py: source SHA verified, deep-copy pose
+  counterfactual with archived mm offsets and preserved pixel coordinates. No
+  image inference, new truth labels, verdict changes or production configuration
+  writes. Audited 511 archived reports; 411 nomination sets differ without common
+  bias. These include repeated scenes and old provider versions: NOT 511 independent
+  tests and NOT an accuracy statistic. Results bias_modes_archive.json under
+  runtime/inspection/model_completion_20260910; blanket bias removal not deployed.
+- Full current-model GPU replay of explicitly labelled inductor02 direction-defect
+  source s22_inspection_roi_20260906_172527.png now nominates DIR and SURFACE for
+  inductor02 (BLACK_MARKER_AXIS_ROTATION_WRONG); inductor01 direction remains OK.
+  HBM03 DIR also appears but its truth is outside this scoped inductor control.
+  Final UNKNOWN unchanged. Historical missed direction recovered on this reused
+  control only; no inference of independent accuracy or authority promotion.
+- 508 offline hybrid/integration tests passed, three socket tests excluded.
+  New tests preserve original reports/pixel geometry and missing evidence.
+  Initial attempted historical image filename was absent and produced no inference;
+  replay used the source path read from the archived report instead.
+- No fresh photo, server restart, robot or conveyor command this work group.
+  Remaining PM01/CAP01 bias policy requires current-position defect controls as
+  well as the fresh normal source; cannot select a cutoff by suppressing warnings.
+
+## 2026-09-10 CAD common-bias counterfactual
+
+- Fresh normal source 094352 used the Unity yellow CAD config, not legacy blue
+  geometry. Component-centre median correction [0.0983,-0.7152] mm increased PM01
+  radial offset from approximately .740 to 1.383 mm and CAP01 transverse offset
+  from .197 to .912 mm, generating two advisory position nominations.
+- Added opt-in component_bias_diagnostic_only: estimates remain recorded but zero
+  bias is passed to pose checks. Default remains unchanged; candidate config only
+  in runtime/inspection/model_completion_20260910/no_component_bias_config.json.
+  Synthetic shared true-displacement test verifies the diagnostic mode does not
+  subtract that displacement. Learned crops/CAD regions/weights/limits unchanged.
+- Full GPU candidate replays of current 094352 and previous normal 154203 both
+  nominate HBM06 POSE only. PM01/CAP01 clear, but the previous zero-candidate scene
+  regresses to one. Therefore blanket disabling is NOT deployed or called a fix.
+  Final UNKNOWN maintained; counterfactual archive checks are not qualification.
+- No new capture in this correction task, no robot/conveyor commands or server
+  restart. Remaining task: validate type/slot measurement bias against independent
+  normal and defect controls, without subtracting genuine placement errors.
+
+## 2026-09-10 Inspection completion baseline replay
+
+- Re-read the locked fusion contract; preserved unrelated conveyor edits. No model,
+  threshold, authority or server changes. 505 offline hybrid/integration tests passed;
+  three socket tests excluded. This is software regression evidence, not accuracy.
+- GPU replay of verified normal source s22_inspection_roi_20260909_154203.png:
+  zero advisory candidates, all PatchCore slots available, final UNKNOWN. Authority
+  inventory is 114 advisory stages and five disabled VRM seating stages. Therefore
+  zero visible findings cannot be promoted to a calibrated full-board PASS.
+- GPU replay of historical s22_inspection_roi_20260905_150517.png retains VRM03 DIR
+  nomination. Other 20 missing nominations belong to the historical mostly-empty
+  scene, not 20 independently verified defects. VRM rotation truth is the scoped
+  development control; no new generalization claim.
+- Saved both reports plus source-hash-checked release_review.json under
+  runtime/inspection/model_completion_20260910. No new capture or physical robot/
+  conveyor command. Next evidence should be a fresh known-normal current scene,
+  followed by labelled defect controls, not further tuning to the same archive.
+
+## 2026-09-09 Remove FR5 conveyor permission
+
+- Follow-up deployment authorized by user: gracefully stopped bundle PID 255377 and restarted with its original environment and `--execute --confirm-motion`; new bundle PID 306913. Conveyor and inspection API reported listening (HTTP 8766). Live ROS state confirmed `IDLE`, `moving=false`, `armed=true`, zero commanded speed, fresh/true vision readiness and `fr5_interlock_required=false`. Normal shutdown/startup zero-speed commands occurred; no move service, robot command or inspection request was sent. Updated bundle startup wording to match FR5 removal. Log: `runtime/server_bundle/restart_20260909_193219.log`.
+
+- User explicitly requested a Git checkpoint followed by removal of FR5 permission only. Pre-change local commit: `1d5f87b`; tracked changes and selected untracked source/config/document files saved. Virtual environments, models, runtime artifacts and other excluded/unselected files are not a full filesystem backup. No remote push.
+- Removed the remote controller's FR5 subscription, callback, permission parameters and start/moving checks. Missing, false or stale `/cell/fr5_clear_for_conveyor` no longer blocks or stops conveyor motion. Legacy JSON fields `fr5_clear`, `fr5_clear_fresh` and `fr5_interlock_required` remain false for client compatibility; they are not measured robot clearance. Updated current API/setup/checklist documentation; historical logs and dated ZIP handoffs remain archival.
+- S22 ready/selected-trigger freshness, immediate vision stop, explicit arming, manual stop/reset, duplicate command publisher guard and motion deadline remain. No inspection/model/fusion-contract change. Operator/upstream sequencer must coordinate robot clearance; this controller no longer detects robot entry into the conveyor area.
+- Validation: 126 offline ROS package tests passed. Both station tests start without FR5 data, continue beyond the former 250 ms FR5 deadline with fresh vision, report disabled FR5 fields, and stop on station triggers. Existing remaining watchdog/stop/reset tests pass; no physical timing or clearance measurements were made.
+- No robot/conveyor commands, camera capture, live process restart or deployment performed. Change takes effect on the next remote-server process start using this source.
+
+
 ## 2026-09-09 Arrival callbacks and countermeasure evidence cards
 
 - Inspected supplied `/home/hc/Downloads/불량대책서_샘플_종결본_v2.xlsx` (SHA256394a6e3ee96ca263d2e273b05f776e12b90d7c78f462a902af3cd13555f9c7e4): sheets대책서/검사근거/대체품; first-page image ~212×168px with right-panel srcRect crop. It is an UNKNOWN/unissued review sample, not a confirmed closed defect. Source workbook preserved. Derived preview replaces only first-page image relationship/crop and its caption; other sheet evidence remains intact. ZIP/XML/embedded-image integrity checked; no OnlyOffice GUI rendering claim.

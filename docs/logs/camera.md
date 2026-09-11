@@ -1,5 +1,138 @@
 # 카메라 작업 기록
 
+## 2026-09-11 — Make multi-PC ROS camera discovery explicit
+
+- The live host still publishes `/camera2/image_stream/compressed` at about
+  30 FPS and `/camera3/image_raw/compressed` at about 13 FPS. Both topics are
+  `sensor_msgs/msg/CompressedImage` with depth-one `BEST_EFFORT`/`VOLATILE`
+  QoS, and a local JPEG probe received valid `FF D8 FF E0` frames.
+- The reported teammate rqt symptom was not a publisher stall: the live ROS
+  graph had no rqt subscription on either camera topic. The only rqt process
+  was subscribed to the local stop-image overlay. This means the remote viewer
+  had either not created the compressed transport subscription or was running
+  with a different ROS discovery scope/domain; a topic name alone does not
+  prove that image data is being received.
+- `scripts/ksmc_env.sh` now makes the intended cell-wide defaults explicit:
+  `ROS_DOMAIN_ID=5`, `ROS_LOCALHOST_ONLY=0`, and
+  `ROS_AUTOMATIC_DISCOVERY_RANGE=SUBNET`. The existing Fast DDS profile still
+  allows the cell Wi-Fi and wired interface while excluding the GoPro-only
+  WLAN. No camera resolution, JPEG setting, topic name or QoS was changed.
+- This is a configuration/read-only verification change. No Endpoint process,
+  robot, conveyor, Job or Sequencer command was started or restarted. The
+  remote PCs must source the workspace environment (or set the same three
+  values) before opening rqt and must choose each base topic with the
+  `compressed` transport.
+
+## 2026-09-11 — Protect S22 HQ lifecycle from duplicate launchers
+
+- The S22 stream interruption at 11:56 KST occurred when the combined
+  conveyor cell failed to recognise an already-running `bash
+  ./run_s22_conveyor_hq.sh` and launched a second HQ. The second HQ's stale-ROI
+  cleanup terminated the first ROI; the first HQ then released the shared
+  scrcpy camera and the cell stopped its server. This was a launcher ownership
+  race; no USB, resolution, JPEG, FPS or DDS transport setting caused it.
+- HQ process matching now resolves the actual script argument in `/proc`, and
+  the HQ launcher holds `runtime/s22_camera_control/hq_launcher.lock` before
+  any cleanup. Repeated absolute/relative invocations therefore reuse one
+  camera/ROI pair. The existing camera launcher and GoPro remain separate.
+- A live monitor-only reuse test kept the original HQ, camera2 node and ROI
+  alive for the full test window. The final integrated server was then started
+  in a detached session without restarting that HQ; no camera command or
+  physical motion was issued. Current stream settings and topic/QoS contracts
+  are unchanged.
+
+## 2026-09-11 — rqt compressed transport selection
+
+- The teammate rqt report was reproducible as a transport/type selection
+  error, not an absent camera frame. Passing a transport-specific
+  `/compressed` name to `rqt_image_view` makes it create a
+  `sensor_msgs/msg/Image` subscription on the
+  `sensor_msgs/msg/CompressedImage` topic. The topic remains visible, but no
+  image can be decoded. The official plugin source also represents compressed
+  entries as a base topic plus a transport label and creates the compressed
+  subscriber from that pair ([rqt_image_view source](https://github.com/ros-visualization/rqt_image_view/blob/rolling-devel/src/rqt_image_view/image_view.cpp#L327-L437)).
+- The final camera transport remains `BEST_EFFORT/KEEP_LAST(1)/VOLATILE`, which
+  is the rqt `SensorDataQoS` and the existing ROI/ROS-TCP Endpoint profile. The
+  earlier temporary reliable-camera experiment was rolled back to avoid adding
+  reliable retransmission to the high-rate viewer path. Topic names, frame
+  sizes, JPEG settings, capture transports and latest-frame behavior are
+  unchanged.
+- In rqt, choose base `/camera2/image_stream`, `/camera3/image_raw`, or
+  `/vision/conveyor/stop_image` and select the `compressed` transport entry
+  (the plugin displays it as a base topic with a transport label). Use the full
+  `/.../compressed` names only for `ros2 topic echo`, Unity and direct ROS
+  subscribers. A read-only offscreen reproduction confirmed the bad direct
+  selection; it was terminated without touching Endpoint or motion.
+- After the camera nodes were restored, S22 remained about 29.6 FPS and GoPro
+  about 13.6 FPS. Both compressed topics delivered JPEGs to best-effort
+  subscribers; camera offline tests passed (`23 passed`). The ROS-TCP
+  Endpoint/Unity process remains owned and started by the robot-arm teammate;
+  it was not copied, started or restarted, and no robot, conveyor, Job or
+  Sequencer command was issued.
+
+## 2026-09-11 S22와 컨베이어 서버 원커맨드 실행
+
+- `run_conveyor_remote_server.sh --with-s22`와 `run_conveyor_cell.sh`를 추가했다.
+  컨베이어 서버가 `/cmd_vel` 소유권을 먼저 확보한 뒤 `run_s22_conveyor_hq.sh`를
+  시작하거나 기존 HQ 런처를 재사용한다. 기존 서버 잠금이 있으면 S22를 건드리지
+  않고 종료하며, 이 런처는 팀원이 관리하는 ROS-TCP Endpoint와 GoPro를 시작하지
+  않는다.
+- Wi-Fi SSH를 보존하기 위해 노트북의 `wlo1=192.168.11.4/24`와 기본 경로는
+  그대로 두고, 유선 `enp129s0=10.77.5.1/30`은 별도 경로로 유지했다. 로봇
+  `musk@192.168.11.101`에 대한 읽기 전용 SSH는 인증 거부로 끝났고 로봇 측
+  인터페이스나 Wi-Fi 설정은 변경하지 않았다. 로봇에 `10.77.5.2/30`을 추가한
+  뒤 사용할 수 있는 유선 전용 Fast DDS 프로파일을 별도로 제공했다.
+- `bash -n`, XML 파싱, `--help` 검증을 통과했고 기존 서버 잠금 상태에서 실제
+  `--monitor-only` 실행이 S22를 시작하지 않고 종료되는 것을 확인했다. 이 작업
+  중 카메라·로봇·컨베이어·Endpoint 명령은 발행하지 않았다. 로봇 콘솔 또는
+  인증된 SSH가 복구될 때까지 유선 ROS 전환은 미완료다.
+
+## 2026-09-11 S22 delayed-frame handling
+
+- No camera transport, resolution, JPEG quality, USB or lens setting changed.
+  The conveyor ROI consumer now ignores a delayed source frame for a new
+  stop/arrival decision without turning that delay into a ready-liveness fault.
+  Explicit invalid/decode status still reports `ready=false`; the finite
+  motion timeout remains in the controller.
+- The existing 960x540/JPEG84 control stream and 1920x1080/JPEG95 analysis
+  stream were not restarted or reconfigured for this change. No capture,
+  robot or conveyor command was sent; the only live check was a guarded move
+  request rejected before any nonzero `/cmd_vel` because the robot subscriber
+  was absent.
+
+## 2026-09-10 S22 Unity stop-screen delivery
+
+- rqt continued to receive the S22 overlay, which isolates the remaining
+  display failure to the Unity ROS topic path rather than USB capture. The
+  stop-image publisher now offers depth-1 `RELIABLE` QoS so a Unity reliable
+  subscription can match it; the raw/control camera stream remains
+  best-effort sensor data with the existing resolution and JPEG settings.
+- With the conveyor in `MANUAL_STOP/moving=false`, the existing S22 launcher was
+  restarted without changing phone, lens, source resolution, or source FPS.
+  Only the network/control stream changed to `960x540/JPEG84`; the
+  `1920x1080/JPEG95` source and inspection path remain unchanged. A 20-second
+  read-only probe received 590 control images (29.5 FPS), and the ROI emitted
+  592 ready heartbeats (29.6 FPS). The team's ROS-TCP Endpoint registered its
+  `CompressedImage` subscriber after the restart; its process remains team
+  managed.
+- A live frame decoded directly from `/vision/conveyor/stop_image/compressed`
+  was `960x540` JPEG and visibly contained both calibrated stop lines and the
+  dashboard. The ROS graph showed the Unity Endpoint subscriber on this
+  stop-image topic, while `/camera2/image_stream/compressed` remained the
+  unannotated source view with only the ROI subscriber. Seeing the source view
+  in rqt therefore does not validate the Unity stop-screen callback. The
+  remaining blank display is on the team-managed Endpoint/Unity rendering path;
+  the Unity project source is not present in this repository.
+
+
+## 2026-09-10 S22 heartbeat transport mitigation
+
+- The interrupted move correlated with stale S22 control frames and missing ready heartbeats. The camera launcher now runs with the validated Fast DDS profile that excludes the GoPro-only WLAN and uses non-blocking UDP sends; camera settings and USB transport are unchanged. Matched post-change audit: 30 FPS capture, no stale image samples, and no false ready samples in the measured 30-second window. The physical Ethernet link is 1 Gb/s, but the robot endpoint is not yet configured on that link, so remote ROS traffic still uses robot Wi-Fi. Detailed evidence and limits: [grouped vision record](vision.md#2026-09-10-s22-heartbeat-latency-and-wired-transport-mitigation).
+
+## 2026-09-10 S22 overview restoration during arrival deployment
+
+- Restored the absent S22 stream launcher using existing stored camera/quality settings after confirming USB authorization and zero received images. Final ROI observations use fresh frames and vision readiness is true. Exit cause remains undetermined. Deployment evidence and limitations are recorded once in the [grouped vision record](vision.md#2026-09-10-current-s22-arrival-observation-and-completed-request-handling).
+
 ## 2026-09-08 flash pair experiment
 
 - Existing capture script used once with OFF and once ON in separate flash_pair_20260908_trial1 folders; EXIF verifies actual flash firing for ON. Both optical7mm, 4000x3000. Managed overview restored. Default script/config remains OFF; Samsung Camera last capture UI was ON and normal launcher explicitly forces OFF on next default capture. No persistent stream settings, server restart or conveyor/robot commands changed. Findings and exposure values: [vision comparison](vision.md#2026-09-08-flash-off-on-physical-comparison).
@@ -928,3 +1061,38 @@
 - 다른 컴퓨터에서 대용량 raw RGB/aligned-depth를 뒤늦게 직접 구독했을 때 이미지 패킷 유실로 완전한 프레임 저장은 실패했지만, 카메라 PC에서 처리된 소형 상태 토픽은 안정적으로 수신됐다. 따라서 실제 실행 파일은 D435가 연결된 로봇 PC에서 현재 검출기와 함께 사용하고, `run_d435_rgbd_stable.sh`를 중복 실행하지 않는다.
 - 상태 토픽의 관측 지연은 최대 2.645초였고 live freshness 제한을 3.5초로 설정했다. 목표 고정 후에는 15초 안에만 상공 경로를 사용할 수 있다. 다섯 비-SMD 종류의 5프레임 live 수집은 모두 통과했다.
 - 이번 작업에서 D435 시작/종료/파라미터 변경, 로봇·그리퍼·컨베이어 실제 명령은 없었다. 원격 디버그 JPEG 자체는 전송 손실로 신규 저장하지 못했으며, 물리 50 mm 간격과 절대 Hand-Eye 정확도는 별도 실제 이동 검증이 남아 있다.
+## 2026-09-10 Stop-line preview scheduling
+
+Moved stop-line dashboard rendering/encoding off the control image callback to
+a single bounded worker. USB acquisition and image timestamps are unchanged.
+See docs/logs/conveyor.md asynchronous-stop-overlay entry for measured frame
+ages, tests and deployment limitations. No camera restart or real motion occurred.
+
+## 2026-09-11 — ROS-TCP camera fan-out and latest-frame delivery
+
+The local ROS graph showed `/camera2/image_stream/compressed` publishing one
+BEST_EFFORT/volatile stream at about 29.3–29.9 FPS and roughly 2.2 MB/s, while
+the ROS-TCP graph had no active S22 stream subscriber. `/camera3/image_raw/compressed`
+had a subscriber, but the endpoint implementation stored one global outgoing
+queue and one subscriber node per topic. Consequently, a second Unity client
+could replace the first client's queue and receive no camera frames.
+
+The ROS-TCP endpoint now maintains an independent bounded queue for each TCP
+client, broadcasts a topic to all clients that requested it, keeps one ROS
+subscriber per topic, and removes a dynamic subscriber only after its last
+client disconnects. Camera subscriptions use explicit KEEP_LAST depth 1,
+BEST_EFFORT, volatile QoS. A keyed camera entry replaces an older pending
+JPEG, preventing a slow Unity socket from accumulating stale frames or
+blocking ROS callbacks. Unity-side protocol payloads and the supported camera
+topic names remain unchanged.
+
+Static checks passed with `python3 -m py_compile` for the modified endpoint
+modules. The queue behavior was exercised with a bounded latest-entry test;
+no Unity client playback was performed. A brief local bind probe used during
+diagnosis was terminated immediately and the endpoint is not left running on
+this laptop; the team-managed endpoint remains the deployment owner. No robot
+or conveyor motion command was issued. All team computers still need
+ROS_DOMAIN_ID 5 and network reachability to the endpoint's TCP port 10000; the
+endpoint must be running on the configured endpoint computer, and Unity should
+subscribe to `/camera2/image_stream/compressed` for S22 and
+`/camera3/image_raw/compressed` for GoPro.

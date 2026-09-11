@@ -12,8 +12,8 @@ adapter=importlib.util.module_from_spec(spec);spec.loader.exec_module(adapter)
 
 def test_late_subscription_repeat_and_missed_moving_state(monkeypatch):
     events=[];monkeypatch.setattr(adapter,'persist_event',events.append)
-    harness=SimpleNamespace(previous_state=None,previous_arrival_id=None,last_state_at=0,
-                            timeout_reported=False,get_logger=lambda:Mock())
+    harness=SimpleNamespace(previous_state=None, previous_arrival_id=None,
+                            get_logger=lambda:Mock())
     def receive(mid):
         state=dict(schema_version=1,state='ASSEMBLY_STOP',moving=False,timestamp_ns=123,
                    arrival=dict(station='assembly',motion_id=mid,timestamp_ns=120))

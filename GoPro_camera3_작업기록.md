@@ -63,7 +63,10 @@ source /opt/ros/jazzy/setup.bash
 ros2 run rqt_image_view rqt_image_view
 ```
 
-`rqt_image_view`에서는 `/camera3/image_raw/compressed`를 선택한다.
+`rqt_image_view`에서는 base 토픽 `/camera3/image_raw`를 선택하고 image
+transport를 `compressed`로 설정한다. `/camera3/image_raw/compressed`를
+plugin base 토픽으로 직접 넣으면 `sensor_msgs/Image` 구독이 만들어져
+`CompressedImage` 프레임이 표시되지 않는다.
 
 프레임 확인:
 
@@ -77,7 +80,8 @@ ros2 topic hz /camera3/image_raw/compressed
 - 목표 프레임: 30Hz
 - 압축 품질: JPEG 75
 - 화면 오른쪽 아래에 노트북 현지 날짜와 시간을 표시
-- ROS QoS: Best Effort, Keep Last, depth 1
+- 압축 viewer 토픽 QoS: Best Effort, Keep Last, depth 1, Volatile
+- 원본 Image 토픽 QoS: Best Effort, Keep Last, depth 1, Volatile
 - 압축 토픽: `/camera3/image_raw/compressed` (최대 30Hz)
 - 원본 토픽: `/camera3/image_raw` (구독자가 있을 때만 약 5Hz)
 - FFmpeg 입력: MPEG-TS 강제 지정, H.264 비디오 스트림만 선택

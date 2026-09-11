@@ -11,9 +11,10 @@ ROS 정지 제어와 HTTP 촬영/검사 처리를 같은 실행 스레드로 합
   기존 서버를 종료·인수·재시작하지 않습니다.
 - 통합 실행기로 전환은 **검사 요청이 없고 컨베이어가 정지한 때**, 팀원과 확인 후
   기존 두 서버를 사용자가 종료하고 다음 실행부터 합니다. 무중단 인수 기능은 아닙니다.
-- S22 카메라/정지선 화면은 현재 실행 방식을 유지합니다. 이 실행기는 카메라를
-  재시작하지 않습니다. 카메라까지 시작하는 `run_s22_conveyor_auto_inspection.sh`와
-  동시에 실행하면 검사 API가 중복되므로 함께 사용하지 마세요.
+- S22 카메라/정지선 화면은 현재 실행 방식을 유지합니다. 이 HTTP 검사 통합
+  실행기는 카메라를 재시작하지 않습니다. 컨베이어 서버와 S22를 같은 컴퓨터에서
+  한 번에 관리하려면 `run_conveyor_remote_server.sh --with-s22`를 사용하세요.
+  GoPro와 팀원이 관리하는 ROS-TCP Endpoint는 계속 별도 프로세스입니다.
 
 ## 실행
 
@@ -35,9 +36,19 @@ ROS 정지 제어와 HTTP 촬영/검사 처리를 같은 실행 스레드로 합
 ~/KSMC/run_conveyor_vision_server.sh --execute --confirm-motion
 ```
 
-시작 자체는 이동 명령이 아닙니다. 팀원 이동 요청과 기존 S22/FR5 안전 조건이 모두
-충족되어야 움직입니다. `/cell/fr5_clear_for_conveyor` 신호 요구를 없애지 않습니다.
-설비 비상정지는 계속 사용할 수 있어야 합니다.
+터미널을 닫아도 통합 서버를 유지해야 하면 셀을 새 세션으로 분리해 실행합니다.
+이 명령도 시작할 때 이동 요청을 보내지 않으며, 기존 S22 HQ는 재사용합니다.
+
+```bash
+cd ~/KSMC
+setsid ./run_conveyor_vision_server.sh --execute --confirm-motion \
+  > runtime/server_bundle/live.log 2>&1 < /dev/null &
+```
+
+시작 자체는 이동 명령이 아닙니다. 팀원 이동 요청과 현재 S22 상태, 호환되는
+`/cmd_vel` 로봇 수신기 확인이 모두 충족되어야 움직입니다. 정지선 상태의 갱신
+주기만으로 fault를 만들지 않으며, 명시적인 not-ready/stop trigger와 유한 이동
+timeout은 유지합니다. 설비 비상정지는 계속 사용할 수 있어야 합니다.
 
 기본 HTTP 바인딩은 `0.0.0.0:8766`이며 신뢰 LAN에서만 사용합니다. 기존 고정 토큰
 파일 `config/private/vision_api.token`을 읽되 화면·로그·명령행에 토큰을 출력하지 않습니다.

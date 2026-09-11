@@ -79,21 +79,21 @@ cp config/ksmc.env.example config/ksmc.env
 ./scripts/doctor.sh</pre>
 
 <h2>2. 영상 확인 공통 명령</h2>
-<p><span class="status">[무동작]</span> 뷰어를 열고 상단 목록에서 원하는 compressed 토픽을 선택한다.</p>
+<p><span class="status">[무동작]</span> 뷰어를 열고 상단 목록에서 base 토픽과 <code>compressed</code> transport를 선택한다. 아래 표의 <code>/compressed</code> 표기는 실제 전송 토픽이며, rqt 입력란에는 접미사를 제외한 base 이름을 사용한다.</p>
 <pre>source /opt/ros/jazzy/setup.bash
 export ROS_DOMAIN_ID=5
 ros2 run rqt_image_view rqt_image_view</pre>
 
 <table>
 <tr><th>용도</th><th>선택할 토픽</th></tr>
-<tr><td>S22 저지연 화면</td><td><code>/camera2/image_stream/compressed</code></td></tr>
-<tr><td>S22 Full-HD 분석 화면</td><td><code>/camera2/image_raw/compressed</code></td></tr>
-<tr><td>S22 컨베이어 정지선</td><td><code>/vision/conveyor/stop_image/compressed</code></td></tr>
+<tr><td>S22 저지연 화면</td><td><code>/camera2/image_stream</code> + <code>compressed</code></td></tr>
+<tr><td>S22 Full-HD 분석 화면</td><td><code>/camera2/image_raw</code> + <code>compressed</code></td></tr>
+<tr><td>S22 컨베이어 정지선</td><td><code>/vision/conveyor/stop_image</code> + <code>compressed</code></td></tr>
 <tr><td>D435 원격 최적화 화면</td><td><code>/camera/camera/color/image_ai/compressed</code></td></tr>
 <tr><td>6종 부품 OBB</td><td><code>/vision/parts_obb/image/compressed</code></td></tr>
 <tr><td>트레이 영역</td><td><code>/vision/tray/sections_image/compressed</code></td></tr>
 <tr><td>기판 좌표/슬롯</td><td><code>/vision/board/image/compressed</code></td></tr>
-<tr><td>GoPro</td><td><code>/camera3/image_raw/compressed</code></td></tr>
+<tr><td>GoPro</td><td><code>/camera3/image_raw</code> + <code>compressed</code></td></tr>
 </table>
 
 <h2>3. S22 고화질 카메라·컨베이어 정지선</h2>
@@ -113,6 +113,14 @@ ros2 run rqt_image_view rqt_image_view</pre>
 lsusb -t
 v4l2-ctl --list-devices
 ros2 topic hz /camera2/image_stream/compressed</pre>
+
+<h3>3.4 컨베이어 서버와 S22를 한 번에 실행</h3>
+<p>컨베이어 서버가 S22 카메라·정지선 ROI를 함께 관리해야 할 때 사용한다. 기존 S22
+런처가 있으면 재사용하며, 팀원이 관리하는 Unity ROS-TCP Endpoint와 GoPro는 별도로
+실행한다.</p>
+<pre>~/KSMC/run_conveyor_remote_server.sh --with-s22 --monitor-only
+# 실제 운전 준비 후
+~/KSMC/run_conveyor_remote_server.sh --with-s22 --execute --confirm-motion</pre>
 
 <h2>4. 컨베이어 조립/검사 위치 자동 정지</h2>
 

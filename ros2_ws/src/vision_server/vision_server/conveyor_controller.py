@@ -17,6 +17,12 @@ def bounded_speed(value: float) -> float:
 
 
 def bounded_heartbeat_timeout(value: float) -> float:
+    """Validate a deprecated compatibility option without using it.
+
+    Older launch scripts still pass ``--heartbeat-timeout``.  The controller
+    now uses the latest boolean status and a finite motion timeout instead, so
+    this compatibility validator is intentionally not consulted at runtime.
+    """
     value = float(value)
     if not math.isfinite(value) or value < 0.10 or value > 1.0:
         raise ValueError('heartbeat timeout must be between 0.10 and 1.0 seconds')
@@ -24,7 +30,7 @@ def bounded_heartbeat_timeout(value: float) -> float:
 
 
 def heartbeat_is_fresh(received_at: float, now: float, timeout: float) -> bool:
-    """Missing, invalid, or future reception times never authorize motion."""
+    """Legacy timestamp helper; active motion control does not call it."""
     return bool(
         all(math.isfinite(value) for value in (received_at, now, timeout))
         and received_at > 0.0
@@ -57,14 +63,12 @@ class ConveyorController(Node):
         self.timeout = float(args.timeout)
         if not math.isfinite(self.timeout) or self.timeout < 0.0:
             raise ValueError('timeout must be >= 0 seconds (0 disables timeout)')
-        self.heartbeat_timeout = bounded_heartbeat_timeout(
-            args.heartbeat_timeout
-        )
+        # ``heartbeat_timeout`` remains an accepted legacy CLI option, but
+        # missing samples no longer stop an otherwise valid move.  A finite
+        # motion timeout is the fallback when no visual trigger arrives.
 
         self.trigger = False
         self.ready = False
-        self.last_trigger_time = 0.0
-        self.last_ready_time = 0.0
         self.started_at = time.monotonic()
         self.stopped = False
         self.stop_reason = ''
@@ -95,13 +99,12 @@ class ConveyorController(Node):
             f'station={self.station}, trigger={self.trigger_topic}, '
             f'belt speed={self.speed:.3f} m/s, robot direction={self.direction}, '
             f'linear.x={self.command_speed:.3f} m/s, '
-            f'heartbeat_timeout={self.heartbeat_timeout:.2f}s, '
+            'vision_status=ready_required, '
             f'timeout={"disabled" if self.timeout == 0.0 else f"{self.timeout:.1f} s"}'
         )
 
     def trigger_callback(self, message):
         self.trigger = bool(message.data)
-        self.last_trigger_time = time.monotonic()
         # Stop in the subscription callback so a visual line crossing does not
         # wait for the next 20 ms control tick.  The timer continues publishing
         # zero afterwards to make the stop command robust on the network.
@@ -110,9 +113,8 @@ class ConveyorController(Node):
 
     def ready_callback(self, message):
         self.ready = bool(message.data)
-        self.last_ready_time = time.monotonic()
         if not self.ready and not self.stopped:
-            self.request_stop('vision safety became not ready')
+            self.request_stop('vision status became not ready')
 
     def publish_speed(self, speed):
         if self.cmd_type == 'twist_stamped':
@@ -140,11 +142,7 @@ class ConveyorController(Node):
         if self.stopped:
             self.request_stop(self.stop_reason)
             return
-        if (
-            not math.isfinite(now)
-            or not math.isfinite(self.started_at)
-            or now < self.started_at
-        ):
+        if not math.isfinite(now) or not math.isfinite(self.started_at) or now < self.started_at:
             self.request_stop('invalid motion clock')
             return
         if self.trigger:
@@ -153,28 +151,12 @@ class ConveyorController(Node):
         if self.timeout > 0.0 and now - self.started_at >= self.timeout:
             self.request_stop('safety timeout')
             return
-        if self.last_ready_time == 0.0 or self.last_trigger_time == 0.0:
+        # Wait for an explicit ready=True status, but do not require periodic
+        # status samples after that. This removes false periodic-liveness
+        # faults while keeping startup and explicit not-ready stops
+        # deterministic.
+        if not self.ready:
             self.publish_speed(0.0)
-            if now - self.started_at > 3.0:
-                missing = []
-                if self.last_ready_time == 0.0:
-                    missing.append('ready')
-                if self.last_trigger_time == 0.0:
-                    missing.append(f'{self.station} trigger')
-                self.request_stop(
-                    'vision heartbeat not received at startup: ' + ', '.join(missing)
-                )
-            return
-        if (
-            not self.ready
-            or not heartbeat_is_fresh(
-                self.last_ready_time, now, self.heartbeat_timeout
-            )
-            or not heartbeat_is_fresh(
-                self.last_trigger_time, now, self.heartbeat_timeout
-            )
-        ):
-            self.request_stop('vision heartbeat missing')
             return
         self.publish_speed(self.command_speed)
 
@@ -210,7 +192,7 @@ def parse_args():
         '--heartbeat-timeout',
         type=float,
         default=0.25,
-        help='stop if fresh vision status is absent for this many seconds',
+        help='deprecated compatibility option; status age is ignored',
     )
     parser.add_argument(
         '--direction',

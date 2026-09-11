@@ -16,7 +16,6 @@ from std_msgs.msg import String
 
 
 STATE_TOPIC = '/conveyor/state'
-STATE_TIMEOUT_SECONDS = 0.30
 
 
 def persist_event(event: dict) -> None:
@@ -25,14 +24,12 @@ def persist_event(event: dict) -> None:
 
 
 class ConveyorEventSubscriber(Node):
-    """Convert conveyor state transitions and heartbeat loss into DB events."""
+    """Convert valid conveyor state transitions into DB events."""
 
     def __init__(self) -> None:
         super().__init__('conveyor_event_subscriber')
         self.previous_state = None
         self.previous_arrival_id = None
-        self.last_state_at = 0.0
-        self.timeout_reported = False
         qos = QoSProfile(
             history=HistoryPolicy.KEEP_LAST,
             depth=1,
@@ -40,7 +37,6 @@ class ConveyorEventSubscriber(Node):
             durability=DurabilityPolicy.TRANSIENT_LOCAL,
         )
         self.create_subscription(String, STATE_TOPIC, self.on_state, qos)
-        self.create_timer(0.05, self.check_timeout)
 
     def on_state(self, message: String) -> None:
         received_at_ns = time.time_ns()
@@ -53,8 +49,6 @@ class ConveyorEventSubscriber(Node):
             self.get_logger().error('Unsupported conveyor state schema')
             return
 
-        self.last_state_at = time.monotonic()
-        self.timeout_reported = False
         current = state.get('state')
         if current != self.previous_state:
             persist_event({
@@ -83,21 +77,6 @@ class ConveyorEventSubscriber(Node):
             })
             self.previous_arrival_id = arrival_id
         self.previous_state = current
-
-    def check_timeout(self) -> None:
-        if not self.last_state_at:
-            return
-        age = time.monotonic() - self.last_state_at
-        if age <= STATE_TIMEOUT_SECONDS or self.timeout_reported:
-            return
-        self.timeout_reported = True
-        persist_event({
-            'event_type': 'CONVEYOR_STATE_HEARTBEAT_TIMEOUT',
-            'received_at_ns': time.time_ns(),
-            'last_state': self.previous_state,
-            'age_ms': round(age * 1000.0, 1),
-        })
-
 
 def main() -> None:
     """Run the DB adapter example until interrupted."""

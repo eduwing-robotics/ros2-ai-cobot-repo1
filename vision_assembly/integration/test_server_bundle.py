@@ -91,9 +91,10 @@ def test_preflight_refuses_existing_local_without_killing(preflight_env, monkeyp
         bundle.preflight(bundle.parse_args([]), Graph(), threading.Event(), discovery_seconds=0)
 
 
-def test_preflight_refuses_remote_service(preflight_env):
-    with pytest.raises(RuntimeError, match='Existing ROS'):
-        bundle.preflight(bundle.parse_args([]), Graph(['/conveyor/stop']), threading.Event(), discovery_seconds=0)
+def test_preflight_allows_remote_client_names(preflight_env):
+    # rclpy exposes client and server names through the same graph query;
+    # remote client names must not block starting our local server.
+    bundle.preflight(bundle.parse_args([]), Graph(['/conveyor/stop']), threading.Event(), discovery_seconds=0)
 
 
 def test_preflight_requires_original_token(preflight_env, monkeypatch):

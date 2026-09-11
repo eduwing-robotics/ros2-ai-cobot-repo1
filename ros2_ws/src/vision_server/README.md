@@ -35,12 +35,13 @@ D435 aligned depth + CameraInfo ───────┘   ├→ /vision/status
 | `/vision/conveyor/stop_image/compressed` | 조립·검사 정지선과 기판 검출이 표시된 S22 영상 |
 | `/vision/conveyor/assembly/stop_trigger` | 첫 번째 조립 정지선의 안정 통과 여부 |
 | `/vision/conveyor/inspection/stop_trigger` | 두 번째 비전검사 정지선의 안정 통과 여부 |
+| `/vision/conveyor/{station}/arrival_observation` | 최신 원본 영상과 모터 정지 상태에 근거한 현재 도착 JSON; 오래된 통과 기록과 별개 |
 | `/vision/conveyor/{station}/stop_line_normalized` | station별 영상 정규화 정지선 위치(0~1) |
 | `/vision/conveyor/board_count` | 현재 영상에서 분리 검출한 기판 수 |
 | `/vision/conveyor/station_spacing_valid` | 두 정지점에 기판 2장이 겹치지 않는 간격인지 여부 |
 | `/vision/conveyor/station_spacing_board_lengths` | 정지선 간격을 현재 기판 진행축 길이로 나눈 값 |
-| `/vision/conveyor/stop_line_ready` | 영상·검출·정지선 간격을 포함한 모터 허가 heartbeat |
-| `/conveyor/state` | 원격 컨베이어 서버의 JSON 상태 heartbeat |
+| `/vision/conveyor/stop_line_ready` | 영상·검출·정지선 간격을 반영한 현재 모터 허가 상태 |
+| `/conveyor/state` | 원격 컨베이어 서버의 JSON 제어 상태 |
 | `/conveyor/moving` | 원격 서버의 명령 기준 이동 여부 |
 | `/conveyor/move_to_assembly` | 안전 조건 확인 후 조립선까지 이동하는 Trigger 서비스 |
 | `/conveyor/move_to_inspection` | 조립 정지 확인 후 검사선까지 이동하는 Trigger 서비스 |
@@ -172,7 +173,11 @@ ros2 service call /vision/run_inspection std_srvs/srv/Trigger '{}'
 ~/KSMC/ros2_ws/run_conveyor_roi.sh
 ```
 
-RQT Image View에서 `/vision/conveyor/stop_image/compressed`를 선택한다. 영상
+RQT Image View에서는 base 토픽 `/vision/conveyor/stop_image`를 선택하고 image
+transport를 `compressed`로 설정한다. `/vision/conveyor/stop_image/compressed`를
+plugin base 토픽으로 직접 선택하면 rqt가 `sensor_msgs/Image`로 구독해
+`CompressedImage` 영상을 표시하지 못한다. 직접 ROS/Unity 구독에서는 전체
+`/vision/conveyor/stop_image/compressed` 이름을 사용한다. 영상
 왼쪽→오른쪽을 기판 진행 방향으로 정의하며, 초록색은 조립 정지선, 하늘색은
 비전검사 정지선이다. 기판 후단(왼쪽 끝)이 선택한 선을 안정적으로 통과할 때 해당
 station trigger가 발생한다. 현재 1.5배 S22 overview 기준 조립선은
@@ -195,9 +200,9 @@ station trigger가 발생한다. 현재 1.5배 S22 overview 기준 조립선은
   --execute --confirm-motion
 ```
 
-이 시험 노드는 비전 heartbeat가 1초 이상 끊기거나, 정지 trigger가 발생하거나,
-설정한 timeout에 도달하거나, 사용자가 Ctrl+C를 누르면 속도 0을 10회 발행한다.
-`--timeout 0`은 시간 제한 없이 비전 trigger까지 구동한다.
+이 시험 노드는 명시적인 `ready=false`, 정지 trigger, 설정한 timeout 또는 사용자가
+Ctrl+C를 누르면 속도 0을 10회 발행한다. `--timeout 0`은 시간 제한 없이 비전
+trigger까지 구동하므로 실제 운전에서는 유한 timeout을 사용한다.
 
 현재 TurtleBot 설정(`TwistStamped`, 물리 전진=`linear.x=-0.10 m/s`)의 단계별
 실행 명령은 다음과 같다.
@@ -217,6 +222,11 @@ station trigger가 발생한다. 현재 1.5배 S22 overview 기준 조립선은
 ### Main Server/Unity 원격 제어
 
 상시 원격 제어 서버는 수동 단발 제어기와 동시에 실행하지 않는다.
+서버가 `IDLE`일 때는 `/cmd_vel`에 주기적인 0을 발행하지 않으므로, 수동
+텔레옵을 사용할 수 있다. 텔레옵을 시작하기 전 서버 상태가 `IDLE`인지 확인하고
+`/cmd_vel` publisher는 하나만 유지한다. `ASSEMBLY_STOP`, `INSPECTION_STOP`,
+`MANUAL_STOP`, `FAULT`에서는 정지 0을 계속 발행하며, 이 상태는 기존 reset 절차로
+해제한다.
 
 ```bash
 # 상태/서비스 형식만 확인하며 이동은 거부
@@ -224,11 +234,18 @@ station trigger가 발생한다. 현재 1.5배 S22 overview 기준 조립선은
 
 # 서비스 요청 시 실제 이동을 허용
 ~/KSMC/run_conveyor_remote_server.sh --execute --confirm-motion
+
+# 같은 컴퓨터에서 컨베이어 서버와 S22/ROI를 함께 관리
+~/KSMC/run_conveyor_remote_server.sh --with-s22 --execute --confirm-motion
 ```
 
-원격 이동은 S22 ready/trigger heartbeat와
-`/cell/fr5_clear_for_conveyor=True` heartbeat가 모두 fresh일 때만 허용한다.
-FR5 clear가 250 ms 이상 끊기거나 false가 되면 즉시 FAULT 정지한다. 서비스는
+`--with-s22` 런처도 Endpoint(`10000`)나 GoPro를 시작하지 않는다. Endpoint는
+팀원이 별도로 실행하고, GoPro는 기존 Wi-Fi 런처를 사용한다.
+
+원격 이동은 현재 S22 `ready=true`, 선택 정지선 trigger가 비활성이고 호환되는
+로봇 `/cmd_vel` subscriber가 있을 때 허용한다. 상태 timestamp의 지연만으로
+이동을 거절하거나 FAULT로 바꾸지 않는다.
+FR5 허가 입력은 제거되었으며 로봇 작업영역 이탈은 운용자/상위 시퀀서가 확인한다. 서비스는
 `std_srvs/srv/Trigger` 타입의 `/conveyor/move_to_assembly`,
 `/conveyor/move_to_inspection`, `/conveyor/stop`, `/conveyor/reset`이다.
 상세 계약과 Unity 예시는 `docs/CONVEYOR_API_HANDOFF.md`에 있다.

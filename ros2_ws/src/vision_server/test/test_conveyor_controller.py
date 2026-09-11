@@ -49,11 +49,11 @@ def controller(monkeypatch):
 
 @pytest.mark.parametrize('bad', [float('nan'), float('inf'), -float('inf'), NOW + 1.0, -1.0])
 @pytest.mark.parametrize('field', ['last_ready_time', 'last_trigger_time'])
-def test_invalid_heartbeat_stops_instead_of_authorizing_speed(controller, field, bad):
+def test_legacy_status_timestamps_do_not_stop_ready_motion(controller, field, bad):
     setattr(controller, field, bad)
     controller.control_tick()
-    assert controller.stopped
-    controller.publish_speed.assert_called_once_with(0.0)
+    assert not controller.stopped
+    controller.publish_speed.assert_called_once_with(-0.10)
 
 
 def test_ready_false_then_true_between_ticks_cannot_cancel_stop(controller):
@@ -76,34 +76,32 @@ def test_stop_trigger_is_immediate_and_repeated_zero_shutdown_is_preserved(contr
     controller_module.rclpy.shutdown.assert_called_once_with()
 
 
-def test_valid_heartbeat_and_unexpired_timeout_preserve_speed(controller):
+def test_ready_status_and_unexpired_timeout_preserve_speed(controller):
     controller.control_tick()
     controller.publish_speed.assert_called_once_with(-0.10)
     assert not controller.stopped
 
 
-@pytest.mark.parametrize('missing', ['last_ready_time', 'last_trigger_time'])
-def test_startup_wait_publishes_only_zero_and_then_times_out(controller, missing):
-    setattr(controller, missing, 0.0)
+def test_ready_false_waits_without_startup_heartbeat_timeout(controller):
+    controller.ready = False
     controller.control_tick()
     assert not controller.stopped
     controller.publish_speed.assert_called_once_with(0.0)
     controller.started_at = NOW - 3.01
     controller.control_tick()
-    assert controller.stopped
-    assert 'startup' in controller.stop_reason
+    assert not controller.stopped
     assert all(call.args == (0.0,) for call in controller.publish_speed.call_args_list)
 
 
-def test_disabled_motion_timeout_still_enforces_heartbeat(controller):
+def test_disabled_motion_timeout_does_not_reenable_heartbeat_watchdog(controller):
     controller.timeout = 0.0
     controller.started_at = NOW - 50.0
     controller.control_tick()
     controller.publish_speed.assert_called_once_with(-0.10)
     controller.last_ready_time = NOW - 0.151
     controller.control_tick()
-    assert controller.stopped
-    assert controller.publish_speed.call_args.args == (0.0,)
+    assert not controller.stopped
+    assert controller.publish_speed.call_args.args == (-0.10,)
 
 
 def test_elapsed_motion_timeout_stops_with_fresh_heartbeats(controller):

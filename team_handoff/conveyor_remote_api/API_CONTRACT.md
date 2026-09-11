@@ -18,13 +18,17 @@
 | `/conveyor/stop` | 즉시 HOLD 및 `MANUAL_STOP` |
 | `/conveyor/reset` | 정지 상태를 `IDLE`로 복구하며 이동하지 않음 |
 
-`response.success=true`는 요청 수락이다. 도착은 상태 토픽으로 확인한다.
+일반 이동의 `response.success=true`는 요청 수락이다. 도착은 상태 토픽으로 확인한다.
+현재 영상으로 같은 목적지 도착이 검증된 재요청은 새 이동 없이
+`already_arrived=true, completed=true`를 반환할 수 있다.
+새 현재 도착 조회 서비스와 Sequencer 처리 분기는
+[현재 도착 확인 보완](CURRENT_ARRIVAL_UPDATE.md)을 따른다.
 
 2026-09-09 보완: 수락 응답에 `motion_id`, 상태에 `motion_id`,
 `completed_station`, `arrival={station,motion_id,timestamp_ns,basis}`가 추가되었습니다.
 도착 시 `target_station=null`은 기존 규격입니다. `arrival`과 STOP 상태를 사용하고
 motion_id별 한 번만 콜백 처리하세요. FAULT/MANUAL_STOP/IDLE은 도착이 아닙니다.
-완료 정보는 정지 상태 heartbeat에 유지됩니다. 서버 재시작마다 ID 공간이 달라집니다.
+완료 정보는 정지 상태에 유지됩니다. 서버 재시작마다 ID 공간이 달라집니다.
 
 ## 제어 상태
 
@@ -59,23 +63,25 @@ FAULT
   "command_linear_x_mps": 0.0,
   "vision_ready": true,
   "vision_ready_fresh": true,
+  "command_receiver_connected": true,
   "assembly_trigger": true,
   "inspection_trigger": false,
-  "fr5_clear": true,
-  "fr5_clear_fresh": true,
-  "fr5_interlock_required": true
+  "fr5_clear": false,
+  "fr5_clear_fresh": false,
+  "fr5_interlock_required": false
 }
 ```
 
-## 필수 interlock 입력
+## 필수 제어 상태 입력
 
-| 토픽 | 타입 | timeout |
-|---|---|---:|
-| `/cell/fr5_clear_for_conveyor` | `std_msgs/msg/Bool` | 0.25 s |
-| `/vision/conveyor/stop_line_ready` | `std_msgs/msg/Bool` | 0.15 s |
-| `/vision/conveyor/{station}/stop_trigger` | `std_msgs/msg/Bool` | 0.15 s |
+| 토픽 | 타입 | 동작 |
+|---|---|---|
 
-하나라도 false/stale이면 출발을 거절하거나 이동 중 FAULT 정지한다.
+| `/vision/conveyor/stop_line_ready` | `std_msgs/msg/Bool` | `false`이면 출발 차단·이동 중 정지 |
+| `/vision/conveyor/{station}/stop_trigger` | `std_msgs/msg/Bool` | `true`이면 해당 정지선 HOLD |
+
+Bool의 수신 시각이 오래됐다는 이유만으로 fault를 만들지 않는다. 정지선 검출
+오류는 `ready=false`로 명시되고, trigger 상승은 목적지 HOLD를 만든다.
 
 ## 비전 관측 토픽
 
@@ -98,5 +104,9 @@ FAULT
 - 기본 벨트 전진: TurtleBot `TwistStamped.linear.x=-0.10 m/s`
 - 최대 연속 이동: 30초
 - 다른 `/cmd_vel` publisher 발견 시 출발 거부/FAULT
-- 서버 종료, heartbeat timeout, FR5 clear=false, 비전 trigger에서 0속도 발행
+- 서버 종료, 명시적인 비전 not-ready/trigger, 유한 이동 timeout에서 0속도 발행
+- 이동 요청 전에 호환되는 로봇 `/cmd_vel` subscriber가 없으면 즉시 거절하며,
+  수신기 없이 요청을 받아 30초 뒤 timeout으로 끝내지 않는다.
 - `/conveyor/state`는 command state이며 encoder 기반 물리 feedback이 아님
+
+FR5 permission input was removed on 2026-09-09. The three legacy FR5 status fields are always false (unavailable, not measured clearance). No FR5 subscription or timeout remains.

@@ -42,6 +42,10 @@ class GoProCamera3(Node):
         # decodes/scales in a separate process, so a small fixed pool gives
         # steadier JPEG latency when other vision nodes are active.
         cv2.setNumThreads(2)
+        # Keep only the newest sample on both paths. The compressed publisher
+        # uses the sensor-data profile used by rqt_image_view and the existing
+        # ROS-TCP Endpoint; depth one prevents a slow viewer from building a
+        # stale JPEG queue.
         camera_qos = QoSProfile(
             history=HistoryPolicy.KEEP_LAST,
             depth=1,

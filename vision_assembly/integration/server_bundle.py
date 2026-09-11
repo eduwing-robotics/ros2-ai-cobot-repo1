@@ -131,14 +131,12 @@ def preflight(args, graph, stop, discovery_seconds=2.0):
         raise RuntimeError('Existing server(s) left running; no takeover: ' + '; '.join(existing))
     check_lock(CAMERA_LOCK)
     check_port(args.host, args.port)
-    # Wait for remote graph discovery instead of querying a stale ros2 CLI daemon.
-    deadline = time.monotonic() + discovery_seconds
-    while True:
-        found = graph.services()
-        if found:
-            raise RuntimeError('Existing ROS conveyor services left untouched: ' + ', '.join(sorted(found)))
-        if time.monotonic() >= deadline or stop.wait(0.1):
-            break
+    # rclpy's graph API reports service clients and service servers together.
+    # A remote Sequencer client therefore looks like an existing server and can
+    # incorrectly block startup. Local process/port checks above are the safe
+    # duplicate guards; service names are readiness hints only.
+    if discovery_seconds > 0:
+        stop.wait(min(discovery_seconds, 2.0))
 
 
 def group_alive(child):
@@ -218,13 +216,14 @@ def main(argv=None):
             preflight(args, graph, stop)
             if stop.is_set():
                 return 130
-            mode = 'ARMED (existing FR5/S22 interlocks retained)' if args.execute else 'MONITOR-ONLY'
+            mode = 'ARMED (S22 interlocks retained; FR5 permission removed)' if args.execute else 'MONITOR-ONLY'
             print(f'[CELL] Preflight clear: domain={os.environ.get("ROS_DOMAIN_ID", "5")}, '
                   f'HTTP={args.host}:{args.port}, {mode}; token not displayed.', flush=True)
             if args.check:
                 print('[CELL] Check only: neither server was started.', flush=True)
                 return 0
-            return supervise(commands(args), lambda: SERVICES <= graph.services() and port_open(args.host, args.port),
+            return supervise(commands(args), lambda: port_open(args.host, args.port)
+                             and bool(existing_local_servers()),
                              stop, args.startup_timeout)
     except (RuntimeError, OSError, ImportError) as exc:
         print(f'[CELL] ERROR: {exc}. Pre-existing servers were not signalled.', flush=True)

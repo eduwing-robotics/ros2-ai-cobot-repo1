@@ -16,7 +16,12 @@ import rclpy
 import socket
 import re
 
-from rclpy.qos import QoSProfile, qos_profile_sensor_data
+from rclpy.qos import (
+    DurabilityPolicy,
+    HistoryPolicy,
+    QoSProfile,
+    ReliabilityPolicy,
+)
 from sensor_msgs.msg import CompressedImage, Image
 
 from .communication import RosReceiver
@@ -43,9 +48,17 @@ class RosSubscriber(RosReceiver):
         self.tcp_server = tcp_server
         self.queue_size = queue_size
 
-        # Image streams favor the newest frame; the default reliable QoS stays for all other messages.
+        # Image streams favor the newest frame.  Keep a single best-effort
+        # sample so a slow TCP client cannot make DDS queue old JPEGs behind
+        # the current frame.  This is compatible with the camera publishers
+        # and Unity's sensor-data subscription profile.
         qos_profile = (
-            qos_profile_sensor_data
+            QoSProfile(
+                history=HistoryPolicy.KEEP_LAST,
+                depth=1,
+                reliability=ReliabilityPolicy.BEST_EFFORT,
+                durability=DurabilityPolicy.VOLATILE,
+            )
             if self.msg in (Image, CompressedImage)
             else QoSProfile(depth=queue_size)
         )

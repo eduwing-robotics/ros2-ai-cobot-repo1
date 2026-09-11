@@ -239,6 +239,18 @@ def test_common_projection_bias_removes_only_shared_offset() -> None:
     assert result.measured["position_error_mm"] < 1e-6
 
 
+def test_diagnostic_bias_keeps_shared_component_displacement():
+    items = {f"hbm_{i:02d}": _pose_item((110.,192.), (100.,200.)) for i in range(8)}
+    bias, evidence = estimate_common_projection_bias(
+        items, (1000,1000,3), (100.,100.), diagnostic_only=True)
+    assert bias == (0.,0.)
+    assert evidence['applied'] is False
+    assert np.allclose(evidence['estimated_bias_mm'], (1.,-.8))
+    result = check_auxiliary_pose(items['hbm_00'],90.,(1000,1000,3),(100.,100.),
+                                  position_tolerance_mm=.75, common_bias_mm=bias)
+    assert result.status == 'FAIL'
+
+
 def test_slot_reference_offset_is_removed_after_common_bias() -> None:
     item = _pose_item((521.0, 496.0), (500.0, 500.0))
     result = check_auxiliary_pose(

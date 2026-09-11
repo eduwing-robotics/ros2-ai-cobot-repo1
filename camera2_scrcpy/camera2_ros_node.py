@@ -82,10 +82,9 @@ class Camera2Node(Node):
         self.rate_report_at = time.monotonic()
         self.publish_period = 1.0 / float(fps)
         self.analysis_publish_period = 1.0 / float(analysis_fps)
-        # Camera frames are only useful while they are current. A reliable
-        # queue can replay old full-HD JPEGs after a slow subscriber catches
-        # up, which looks like stutter and also delays the conveyor stop
-        # decision. Keep only the newest frame instead.
+        # Camera frames are only useful while they are current. Keep the
+        # sensor-data profile and retain only the newest sample so a slow
+        # viewer cannot replay old JPEGs or delay the conveyor stop decision.
         camera_qos = QoSProfile(
             history=HistoryPolicy.KEEP_LAST,
             depth=1,
@@ -474,9 +473,9 @@ def main():
     parser.add_argument('--expected-height', type=int, default=1080)
     parser.add_argument('--output-width', type=int, default=1920)
     parser.add_argument('--output-height', type=int, default=1080)
-    parser.add_argument('--stream-width', type=int, default=1280)
-    parser.add_argument('--stream-height', type=int, default=720)
-    parser.add_argument('--stream-jpeg-quality', type=int, default=88)
+    parser.add_argument('--stream-width', type=int, default=960)
+    parser.add_argument('--stream-height', type=int, default=540)
+    parser.add_argument('--stream-jpeg-quality', type=int, default=84)
     parser.add_argument('--analysis-fps', type=float, default=5.0)
     parser.add_argument(
         '--inspection-dir',

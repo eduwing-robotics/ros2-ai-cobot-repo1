@@ -70,8 +70,10 @@ fall back to RGB board plane plus configured part height.
 The first line is the assembly station and the downstream line is the vision
 inspection station. `run_conveyor_to_assembly.sh` and
 `run_conveyor_to_inspection.sh` command one explicitly selected movement at
-0.10 m/s. Vision/trigger heartbeat loss, invalid two-board station spacing and
-Ctrl+C publish zero speed. The original single-line hardware stop was tested;
+0.10 m/s. Explicit vision not-ready/trigger status, invalid two-board station
+spacing and Ctrl+C publish zero speed; periodic status age is not a fault.
+The server rejects a move when no compatible robot `/cmd_vel` subscriber is
+present, avoiding a silent timeout. The original single-line hardware stop was tested;
 the new two-line extension has passed software tests but still needs final
 hardware line registration and a physical stop test. This is a prototype
 auxiliary control, not a certified safety function.

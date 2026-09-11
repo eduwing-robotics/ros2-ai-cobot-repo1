@@ -59,8 +59,9 @@ MainServer는 Sequencer를 통해 받습니다. Vision→MainServer 업로드/DB
 moving=false일 때 `arrival.station`, `arrival.motion_id`를 확인합니다.
 완료 상태는 10Hz로 유지되며 동일 motion_id는 한 번만 처리합니다.
 reset/fault/manual stop은 도착 성공이 아닙니다. 서버 재시작은 새 식별자를 사용합니다.
-FAULT/MANUAL_STOP 또는 상태 heartbeat 끊김은 실패/보류 경로로 처리해야 하며,
-도착 콜백만 무한 대기하지 마세요. safety reason은 기존 상태 JSON에 남습니다.
+FAULT/MANUAL_STOP 또는 명시적인 안전 reason은 실패/보류 경로로 처리해야 하며,
+도착 콜백만 무한 대기하지 마세요. 상태 수신 간격만으로 fault를 만들지 않고,
+safety reason은 기존 상태 JSON에 남습니다.
 이는 비전 트리거와 정지 명령 근거이며 엔코더 기반 실제 정지 확인은 아닙니다.
 
 Unity 예제에는 AssemblyArrived / InspectionArrived 이벤트를 추가했습니다.

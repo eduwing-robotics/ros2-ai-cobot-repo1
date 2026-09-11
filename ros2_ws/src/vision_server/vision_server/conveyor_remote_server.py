@@ -3,11 +3,13 @@
 from dataclasses import dataclass
 import json
 import math
+import os
 import time
 import uuid
 
 from geometry_msgs.msg import TwistStamped
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from rclpy.qos import (
     DurabilityPolicy,
@@ -19,11 +21,15 @@ from std_msgs.msg import Bool, String
 from std_srvs.srv import Trigger
 
 from .conveyor_controller import (
-    bounded_heartbeat_timeout,
     bounded_speed,
     heartbeat_is_fresh,
     signed_speed,
     station_trigger_topic,
+)
+from .conveyor_arrival import (
+    arrival_matches,
+    empty_matches,
+    restart_empty_matches,
 )
 
 
@@ -49,14 +55,15 @@ class StartContext:
     ready: Signal
     assembly_trigger: Signal
     inspection_trigger: Signal
-    fr5_clear: Signal
-    heartbeat_timeout: float
-    fr5_timeout: float
-    require_fr5_clear: bool
+    # Compatibility-only field retained for callers that construct the old
+    # context shape.  It is not consulted by motion validation.
+    heartbeat_timeout: float = 0.0
     duplicate_cmd_publisher: bool = False
+    command_receiver_connected: bool = True
 
 
 def signal_is_fresh(signal: Signal, now: float, timeout: float) -> bool:
+    """Legacy helper retained for API compatibility; unused by motion control."""
     return heartbeat_is_fresh(signal.received_at, now, timeout)
 
 
@@ -75,23 +82,21 @@ def validate_start_request(
         return False, 'controller is in FAULT; call /conveyor/reset first'
     if context.state == MANUAL_STOP:
         return False, 'controller is manually stopped; call /conveyor/reset first'
-    if not signal_is_fresh(context.ready, now, context.heartbeat_timeout):
-        return False, 'S22 ready heartbeat is missing or stale'
+    # The ready and trigger topics are ordinary current-status topics.  A
+    # delayed DDS sample must not turn into a false motion fault.  An explicit
+    # false status still blocks/halts motion, while the independent motion
+    # deadline remains the bounded fail-safe if the camera stops publishing.
     if not context.ready.value:
-        return False, 'S22 stop-line safety is not ready'
-    if context.require_fr5_clear:
-        if not signal_is_fresh(context.fr5_clear, now, context.fr5_timeout):
-            return False, 'FR5-clear heartbeat is missing or stale'
-        if not context.fr5_clear.value:
-            return False, 'FR5 is not clear of the conveyor work area'
+        return False, 'S22 stop-line status is not ready'
+
+    if not context.command_receiver_connected:
+        return False, 'robot command receiver is not connected on /cmd_vel'
 
     selected = (
         context.assembly_trigger
         if station == 'assembly'
         else context.inspection_trigger
     )
-    if not signal_is_fresh(selected, now, context.heartbeat_timeout):
-        return False, f'{station} trigger heartbeat is missing or stale'
     if selected.value:
         return False, f'{station} stop trigger is already active'
 
@@ -103,11 +108,6 @@ def validate_start_request(
             context.state == ASSEMBLY_STOP
             or (
                 context.state == IDLE
-                and signal_is_fresh(
-                    context.assembly_trigger,
-                    now,
-                    context.heartbeat_timeout,
-                )
                 and context.assembly_trigger.value
             )
         )
@@ -126,22 +126,12 @@ def moving_fault_reason(
         return f'unknown target station: {target_station}'
     if context.duplicate_cmd_publisher:
         return 'another /cmd_vel publisher became active'
-    if not signal_is_fresh(context.ready, now, context.heartbeat_timeout):
-        return 'S22 ready heartbeat missing'
     if not context.ready.value:
-        return 'S22 stop-line safety became not ready'
-    selected = (
-        context.assembly_trigger
-        if target_station == 'assembly'
-        else context.inspection_trigger
-    )
-    if not signal_is_fresh(selected, now, context.heartbeat_timeout):
-        return f'{target_station} trigger heartbeat missing'
-    if context.require_fr5_clear:
-        if not signal_is_fresh(context.fr5_clear, now, context.fr5_timeout):
-            return 'FR5-clear heartbeat missing'
-        if not context.fr5_clear.value:
-            return 'FR5 entered or may have entered the conveyor work area'
+        return 'S22 stop-line status became not ready'
+    if not context.command_receiver_connected:
+        return 'robot command receiver disconnected from /cmd_vel'
+    # A missing update is not a fault.  A received true trigger is handled by
+    # _trigger_callback and is also checked in the control tick below.
     return None
 
 
@@ -151,13 +141,13 @@ class ConveyorRemoteServer(Node):
     def __init__(self) -> None:
         super().__init__('conveyor_remote_server')
         self.declare_parameter('allow_motion', False)
+        self.declare_parameter('startup_hold', os.environ.get('KSMC_CONVEYOR_STARTUP_HOLD') == '1')
         self.declare_parameter('cmd_topic', '/cmd_vel')
         self.declare_parameter('speed', 0.10)
         self.declare_parameter('direction', 'negative_x')
+        # Accepted only for old launch files; it has no effect.
         self.declare_parameter('heartbeat_timeout', 0.15)
-        self.declare_parameter('fr5_clear_topic', '/cell/fr5_clear_for_conveyor')
-        self.declare_parameter('fr5_timeout', 0.25)
-        self.declare_parameter('require_fr5_clear', True)
+        self.declare_parameter('arrival_evidence_max_age', 0.5)
         self.declare_parameter('motion_timeout', 30.0)
 
         self.armed = bool(self.get_parameter('allow_motion').value)
@@ -165,32 +155,37 @@ class ConveyorRemoteServer(Node):
         self.speed = bounded_speed(self.get_parameter('speed').value)
         self.direction = str(self.get_parameter('direction').value)
         self.command_speed = signed_speed(self.speed, self.direction)
-        self.heartbeat_timeout = bounded_heartbeat_timeout(
-            self.get_parameter('heartbeat_timeout').value
+        # ``heartbeat_timeout`` is deliberately ignored.  Ready and trigger
+        # are current boolean statuses; only explicit false/true values,
+        # visual arrival evidence, and the finite motion deadline affect a
+        # move.  Keep a separate age bound for arrival observations so an old
+        # image can never be used to skip a new move.
+        self.heartbeat_timeout = 0.0
+        self._arrival_evidence_max_age = float(
+            self.get_parameter('arrival_evidence_max_age').value
         )
-        self.fr5_clear_topic = str(
-            self.get_parameter('fr5_clear_topic').value
-        )
-        self.fr5_timeout = float(self.get_parameter('fr5_timeout').value)
-        if not math.isfinite(self.fr5_timeout) or not 0.10 <= self.fr5_timeout <= 1.0:
-            raise ValueError('fr5_timeout must be between 0.10 and 1.0 seconds')
-        self.require_fr5_clear = bool(
-            self.get_parameter('require_fr5_clear').value
-        )
+        if (
+            not math.isfinite(self._arrival_evidence_max_age)
+            or self._arrival_evidence_max_age <= 0.0
+        ):
+            raise ValueError('arrival_evidence_max_age must be finite and > 0 seconds')
+        self._command_receiver_connected = True
+        self._last_command_receiver_check = -math.inf
         self.motion_timeout = float(self.get_parameter('motion_timeout').value)
         if not math.isfinite(self.motion_timeout) or self.motion_timeout <= 0.0:
             raise ValueError('motion_timeout must be finite and > 0 seconds')
 
-        self.state = IDLE
+        startup_hold = bool(self.get_parameter('startup_hold').value)
+        self.state = MANUAL_STOP if startup_hold else IDLE
         self.target_station = ''
-        self.reason = 'server started'
+        self.reason = 'maintenance restart; manual stop retained' if startup_hold else 'server started'
         self.motion_started_at = 0.0
         self.server_instance_id = str(uuid.uuid4())
         self.motion_sequence = 0
         self.motion_id = None
         self.arrival = None
+        self.live_arrivals = {}
         self.ready = Signal()
-        self.fr5_clear = Signal()
         self.triggers = {
             'assembly': Signal(),
             'inspection': Signal(),
@@ -230,9 +225,12 @@ class ConveyorRemoteServer(Node):
                 lambda message, name=station: self._trigger_callback(name, message),
                 1,
             )
-        self.create_subscription(
-            Bool, self.fr5_clear_topic, self._fr5_clear_callback, 1
-        )
+            self.create_subscription(
+                String, f'/vision/conveyor/{station}/arrival_observation',
+                lambda message, name=station: self._arrival_callback(name, message), 1)
+            self.create_service(
+                Trigger, f'/conveyor/check_{station}_arrival',
+                lambda request, response, name=station: self._check_arrival(name, response))
 
         self.create_service(
             Trigger, '/conveyor/move_to_assembly', self._move_to_assembly
@@ -248,8 +246,7 @@ class ConveyorRemoteServer(Node):
         mode = 'ARMED' if self.armed else 'MONITOR-ONLY'
         self.get_logger().warning(
             f'{mode} remote conveyor server: cmd={self.cmd_topic}, '
-            f'linear.x={self.command_speed:.3f}, '
-            f'FR5 interlock={self.require_fr5_clear} ({self.fr5_clear_topic})'
+            f'linear.x={self.command_speed:.3f}, FR5 permission removed'
         )
 
     @property
@@ -272,11 +269,6 @@ class ConveyorRemoteServer(Node):
             )
             self._hold(stop_state, f'{station} vision stop trigger')
 
-    def _fr5_clear_callback(self, message: Bool) -> None:
-        self.fr5_clear = Signal(bool(message.data), self._now())
-        if self.moving and self.require_fr5_clear and not message.data:
-            self._fault('FR5 entered or may have entered the conveyor work area')
-
     def _other_command_publisher_exists(self) -> bool:
         # Graph queries do not apply topic remaps. Inspect the actual publisher
         # topic, and count endpoints: ROS permits identical node names.
@@ -293,6 +285,45 @@ class ConveyorRemoteServer(Node):
                 return True
         return False
 
+    def _command_receiver_exists(self) -> bool:
+        """Check that a compatible robot node can consume ``/cmd_vel``.
+
+        Previously a move was accepted even when TurtleBot bringup was down,
+        then the watchdog reported only ``motion timeout`` much later.  Make
+        that wiring failure explicit at request time.  The plain callback
+        harness used by unit tests has no ROS graph method and is treated as
+        connected.
+        """
+        getter = getattr(self, 'get_subscriptions_info_by_topic', None)
+        if getter is None:
+            return True
+        now = self._now()
+        if now - self._last_command_receiver_check < 0.25:
+            return self._command_receiver_connected
+        try:
+            endpoints = getter(self.command_publisher.topic_name)
+        except Exception:
+            self._command_receiver_connected = False
+            self._last_command_receiver_check = now
+            return False
+
+        expected = 'geometry_msgs/msg/TwistStamped'
+        connected = False
+        for endpoint in endpoints:
+            topic_type = getattr(endpoint, 'topic_type', None)
+            if topic_type is None:
+                connected = True
+                break
+            if isinstance(topic_type, (tuple, list, set)):
+                connected = expected in topic_type
+            else:
+                connected = str(topic_type) == expected
+            if connected:
+                break
+        self._command_receiver_connected = connected
+        self._last_command_receiver_check = now
+        return connected
+
     def _start_context(self) -> StartContext:
         return StartContext(
             armed=self.armed,
@@ -300,11 +331,8 @@ class ConveyorRemoteServer(Node):
             ready=self.ready,
             assembly_trigger=self.triggers['assembly'],
             inspection_trigger=self.triggers['inspection'],
-            fr5_clear=self.fr5_clear,
-            heartbeat_timeout=self.heartbeat_timeout,
-            fr5_timeout=self.fr5_timeout,
-            require_fr5_clear=self.require_fr5_clear,
             duplicate_cmd_publisher=self._other_command_publisher_exists(),
+            command_receiver_connected=self._command_receiver_exists(),
         )
 
     def _publish_command(self, speed: float) -> None:
@@ -335,9 +363,63 @@ class ConveyorRemoteServer(Node):
     def _fault(self, reason: str) -> None:
         self._hold(FAULT, reason)
 
+    def _arrival_callback(self, station: str, message: String) -> None:
+        try:
+            payload = json.loads(message.data)
+            if not isinstance(payload, dict) or payload.get('station') != station:
+                raise ValueError('Wrong arrival station')
+        except (ValueError, TypeError):
+            self.live_arrivals.pop(station, None)
+            return
+        self.live_arrivals[station] = (payload, self._now())
+
+    def _current_arrival(self, station: str) -> dict:
+        payload, received_at = self.live_arrivals.get(station, ({}, 0.0))
+        now = self._now()
+        valid = (math.isfinite(received_at) and 0 < received_at <= now
+                 and now-received_at <= self._arrival_evidence_max_age
+                 and arrival_matches(payload, station, self.get_clock().now().nanoseconds,
+                                     self._arrival_evidence_max_age, self.server_instance_id,
+                                     self.motion_id, self.state))
+        return dict(station=station, status='AT_STATION' if valid else 'UNKNOWN',
+                    at_station=bool(valid), observation=payload if valid else None)
+
+    def _check_arrival(self, station: str, response) -> Trigger.Response:
+        current = self._current_arrival(station)
+        response.success = current['at_station']
+        response.message = json.dumps(current, separators=(',', ':'))
+        return response
+
     def _request_move(self, station: str, response) -> Trigger.Response:
+        # A previous run may have completed at a station and left its stop
+        # state latched.  If the operator has since moved the PCB back to the
+        # start, consume fresh short-window empty evidence before validating
+        # this explicit new request.  The passive control tick still uses the
+        # conservative two-second window; this path avoids making the user
+        # wait for that timer after a manual reposition.
+        if station in ('assembly', 'inspection'):
+            self._auto_idle_if_empty(fast=True)
         now = self._now()
         context = self._start_context()
+        expected_stop = {'assembly': ASSEMBLY_STOP, 'inspection': INSPECTION_STOP}.get(station)
+        # A successful no-op requires current image evidence AND the original
+        # controller completion. A STOP label or old latched trigger alone is
+        # never sufficient. Preserve IDs; this does not create another move.
+        if (expected_stop and self.state == expected_stop and not self.target_station
+                and self.armed and not context.duplicate_cmd_publisher
+                and context.command_receiver_connected and self.ready.value
+                and self.motion_id and isinstance(self.arrival, dict)
+                and self.arrival.get('station') == station
+                and self.arrival.get('motion_id') == self.motion_id):
+            current = self._current_arrival(station)
+            if current['at_station']:
+                response.success = True
+                response.message = json.dumps(dict(
+                    accepted=True, already_arrived=True, completed=True,
+                    state=self.state, target=station, motion_id=self.motion_id,
+                    observation_id=current['observation']['observation_id']), separators=(',', ':'))
+                self._publish_state()
+                return response
         accepted, reason = validate_start_request(station, context, now)
         if not accepted:
             # Rejected duplicate requests are not stop requests. Do not inject
@@ -347,7 +429,10 @@ class ConveyorRemoteServer(Node):
                 fault = moving_fault_reason(context, self.target_station, now)
                 if fault:
                     self._fault(fault)
-            else:
+            elif not context.duplicate_cmd_publisher:
+                # Another publisher (for example an operator teleop node) owns
+                # this topic.  A rejected service request must not interrupt
+                # that owner with a one-shot zero command.
                 self._publish_command(0.0)
             response.success = False
             response.message = reason
@@ -406,9 +491,57 @@ class ConveyorRemoteServer(Node):
         response.message = 'controller reset to IDLE; conveyor remains stopped'
         return response
 
+    def _auto_idle_if_empty(self, *, fast=False) -> bool:
+        allowed_states = (ASSEMBLY_STOP, INSPECTION_STOP)
+        if fast:
+            # MANUAL_STOP is still never cleared by the passive timer. An
+            # explicit new move request may recover it only with the same
+            # fresh two-station empty proof used for a returned board.
+            allowed_states += (MANUAL_STOP,)
+        if (self.state not in allowed_states or self.target_station
+                or not self.ready.value or self._other_command_publisher_exists()):
+            return False
+        matcher = restart_empty_matches if fast else empty_matches
+        allow_manual_stop = fast and self.state == MANUAL_STOP
+        for station in ('assembly', 'inspection'):
+            payload, received = self.live_arrivals.get(station, ({}, 0.0))
+            if (not math.isfinite(received) or not 0 < received <= self._now()
+                    or self._now()-received > self._arrival_evidence_max_age
+                    or not matcher(payload, station, self.get_clock().now().nanoseconds,
+                                         self._arrival_evidence_max_age, self.server_instance_id,
+                                         self.motion_id, self.state,
+                                         allow_manual_stop=allow_manual_stop)):
+                return False
+        self.state = IDLE
+        self.arrival = None
+        self.motion_id = None
+        self.target_station = ''
+        self.motion_started_at = 0.0
+        self.live_arrivals.clear()
+        # A stop trigger belongs to the completed motion. Clear it together
+        # with the stale completion so the same explicit request is not
+        # rejected by a latched true status while the ROI publishes its next
+        # frame. FAULT remains deliberately excluded; MANUAL_STOP is allowed
+        # here only because this path is reached by an explicit new request.
+        now = self._now()
+        for station in self.triggers:
+            self.triggers[station] = Signal(False, now)
+        if fast:
+            self.reason = 'both station regions visually empty for 0.4s; request-time IDLE, no motion'
+        else:
+            self.reason = 'both station regions visually empty for 2s; automatic IDLE, no motion'
+        self._publish_state()
+        return True
+
     def _control_tick(self) -> None:
         if not self.moving:
-            self._publish_command(0.0)
+            self._auto_idle_if_empty()
+            # IDLE is deliberately passive: repeatedly publishing zero here
+            # races an operator teleop publisher on the shared /cmd_vel topic.
+            # HOLD/FAULT states already publish the zero command when entered;
+            # keep reinforcing that stop while the state remains latched.
+            if self.state in (ASSEMBLY_STOP, INSPECTION_STOP, MANUAL_STOP, FAULT):
+                self._publish_command(0.0)
             return
 
         now = self._now()
@@ -451,20 +584,22 @@ class ConveyorRemoteServer(Node):
             'arrival': self.arrival if self.state in (ASSEMBLY_STOP, INSPECTION_STOP) else None,
             'completed_station': (self.arrival or {}).get('station')
                 if self.state in (ASSEMBLY_STOP, INSPECTION_STOP) else None,
+            'live_arrival': {station: self._current_arrival(station)
+                             for station in ('assembly', 'inspection')},
             'reason': self.reason,
             'armed': self.armed,
             'command_linear_x_mps': self.command_speed if self.moving else 0.0,
             'vision_ready': self.ready.value,
-            'vision_ready_fresh': signal_is_fresh(
-                self.ready, now, self.heartbeat_timeout
-            ),
+            # Kept as a compatibility field for older Unity builds.  It is a
+            # direct status alias, not an age-based liveness result.
+            'vision_ready_fresh': self.ready.value,
+            'command_receiver_connected': self._command_receiver_exists(),
             'assembly_trigger': self.triggers['assembly'].value,
             'inspection_trigger': self.triggers['inspection'].value,
-            'fr5_clear': self.fr5_clear.value,
-            'fr5_clear_fresh': signal_is_fresh(
-                self.fr5_clear, now, self.fr5_timeout
-            ),
-            'fr5_interlock_required': self.require_fr5_clear,
+            # Legacy status keys: false means unavailable, never robot clearance.
+            'fr5_clear': False,
+            'fr5_clear_fresh': False,
+            'fr5_interlock_required': False,
         }
         self.state_publisher.publish(
             String(data=json.dumps(payload, separators=(',', ':')))
@@ -483,8 +618,8 @@ def main(args=None) -> None:
     node = ConveyorRemoteServer()
     try:
         rclpy.spin(node)
-    except KeyboardInterrupt:
-        node.get_logger().warning('Ctrl+C received; publishing emergency stop')
+    except (KeyboardInterrupt, ExternalShutdownException):
+        node.get_logger().warning('Shutdown received; publishing emergency stop')
     finally:
         if rclpy.ok():
             node.emergency_stop()
