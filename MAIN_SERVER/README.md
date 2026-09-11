@@ -21,7 +21,7 @@ Job 등록 성공은 실행 시작이나 완료가 아닙니다. MainServer 조�
 
 ## 공개 진입점
 
-HTTP endpoint, payload와 오류는 [MainServer HTTP API](Main_serverAPI.md)가 소유합니다. Mock 전체 실행과 환경 구성의 단일 기준은 [Mock 올인원 실행](../Farino_AIO_Mock/README.md#mock-올인원-실행)입니다.
+HTTP endpoint, payload와 오류는 [MainServer HTTP API](Main_serverAPI.md)가 소유합니다. Mock·Real 실행과 환경 구성은 [최상단 실행 절차](../README.md#실행)를 따릅니다.
 
 ## 관련 설계
 
@@ -46,4 +46,4 @@ MainServer는 `DEFECT_IMAGE_ROOT`의 Unit별 `result.json`을 DB UID와 대조�
 품질 화면은 MainServer에서 제품·슬롯별 문서 준비 여부를 조회하고 XLSX를 내려받습니다.
 Unity 다운로드는 `Application.persistentDataPath/DefectReports`에 저장하며 기존 파일을 덮어쓰지 않습니다.
 이메일 전송은 생성기의 명시적 `email` 모드에서만 수행합니다.
-실행·보관 경로 설정은 [Mock 올인원 실행](../Farino_AIO_Mock/README.md#mock-올인원-실행)을 따릅니다.
+실행·보관 경로 설정은 [최상단 실행 절차](../README.md#실행)를 따릅니다.

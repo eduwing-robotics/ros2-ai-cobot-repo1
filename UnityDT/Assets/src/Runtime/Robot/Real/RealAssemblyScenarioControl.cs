@@ -302,7 +302,11 @@ namespace MainUnity.Runtime.Robot.Real
             int currentGeneration = generation;
             try
             {
-                AssemblySnapshot snapshot = await ReadStatusAsync(currentGeneration);
+                // The Sequencer re-validates the active Job and permission for every control. Using the fresh
+                // local snapshot avoids queueing an extra status call ahead of the command on its service group.
+                AssemblySnapshot snapshot = latest;
+                if (snapshot == null || Time.realtimeSinceStartupAsDouble - controlsReceivedAt > 3d)
+                    throw new InvalidOperationException("최신 조작 가능 상태를 확인 중입니다.");
                 if (!snapshot.available || !snapshot.active || snapshot.job_id != expectedJobId)
                     throw new InvalidOperationException("일치하는 실행 중 작업이 없습니다.");
                 string jobId = snapshot.job_id;

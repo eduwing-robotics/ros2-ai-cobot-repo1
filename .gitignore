@@ -1,6 +1,9 @@
 # Published repository scope
 /*
 !/.gitignore
+!/README.md
+!/launch/
+!/launch/*.launch.py
 !/ASSEMBLY_SEQUENCER/
 !/DATA_STATION/
 !/Farino_AIO_Mock/

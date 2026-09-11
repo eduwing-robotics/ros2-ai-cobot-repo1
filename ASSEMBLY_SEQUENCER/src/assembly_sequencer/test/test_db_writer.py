@@ -1247,6 +1247,7 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
                       capabilities=dict(cancel=True), recovery_required=False, status="running")
         backend._read_status = AsyncMock(return_value={"production_contract": status})
         request = await backend.request_control(OPERATION_ID, "cancel")
+        backend._read_status.assert_awaited_once()
         result = dict(status, status="cancelled", control_id=request["control_id"], stop_verified=False)
         self.assertIn("control_pending", backend.control_progress(result))
         self.assertNotIn("control_pending", backend.control_progress(dict(result, stop_verified=True)))

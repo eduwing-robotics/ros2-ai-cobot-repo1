@@ -7,11 +7,8 @@ from moveit_configs_utils.launches import generate_rsp_launch
 
 def generate_launch_description():
     # use_fake_hardware defaults to true so demo.launch.py (which includes this
-    # file without setting the argument) stays simulation-only. real_robot.launch.py
-    # sets it to false before this file is included, which this Declare picks up
-    # instead of overriding (ROS2 launch resolves LaunchConfiguration by name
-    # across the whole launch tree; a later DeclareLaunchArgument with the same
-    # name only supplies a fallback default, it does not override an existing value).
+    # file without setting the argument) stays simulation-only. The top-level
+    # Mock assembly launch uses this default and never enables Real hardware.
     declare_use_fake_hardware = DeclareLaunchArgument(
         "use_fake_hardware", default_value="true"
     )

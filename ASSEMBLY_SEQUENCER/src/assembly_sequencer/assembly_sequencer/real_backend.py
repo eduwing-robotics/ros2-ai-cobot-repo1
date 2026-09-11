@@ -269,7 +269,9 @@ class RealBackend:
 
         if action not in {"pause", "resume", "cancel"}:
             raise ValueError("Unsupported production control")
-        await self.reconcile_control()
+        # Reconciliation already reads and identity-checks the current remote status. Reuse it so
+        # a control is published after one equipment round trip instead of two.
+        data = await self.reconcile_control() or {}
         with self._lock:
             if self._execution_id != execution_id:
                 raise RuntimeError("No matching execution")
@@ -280,8 +282,6 @@ class RealBackend:
                 if pending["request"]["action"] == "assembly." + action:
                     return pending["request"]
                 raise RuntimeError("Another control confirmation is pending")
-        status = await self._read_status(self._assembly_status_client)
-        data = status.get("production_contract", {})
         if (data.get("execution_id") != execution_id or
                 data.get("server_instance_id") != self._execution_server or
                 data.get("capabilities", {}).get(action) is not True or

@@ -251,6 +251,13 @@ namespace MainUnity.Tests.PlayMode
                 Assert.That(Text("selectedResults"), Is.EqualTo("2건 · 1건"));
                 Assert.That(list[0].ClassListContains("jobs-row--selected"), Is.True);
                 Assert.That(Enabled("selectedCancel"), Is.True);
+                Field(binder, "actionJobId").SetValue(binder, "another-job");
+                Invoke(binder, "RefreshSelectedActions");
+                Assert.That(Enabled("selectedCancel"), Is.True, "Another Job must not block queued cancellation.");
+                Field(binder, "actionJobId").SetValue(binder, "test-job");
+                Invoke(binder, "RefreshSelectedActions");
+                Assert.That(Enabled("selectedCancel"), Is.False, "Do not race this Job's local start request.");
+                Field(binder, "actionJobId").SetValue(binder, null);
                 Invoke(binder, "SetJobError", "조회 실패");
                 Assert.That(Text("queryState"), Does.Contain("마지막 조회 기록"));
                 Assert.That(Enabled("selectedCancel"), Is.False);
@@ -1605,7 +1612,7 @@ namespace MainUnity.Tests.PlayMode
             yield return request.SendWebRequest();
             if (request.result != UnityWebRequest.Result.Success)
                 Assert.Ignore(
-                    "MainServer is unavailable. Start: ros2 launch mock_db_mvp launch_mock.launch.py");
+                    "MainServer is unavailable. Start: ros2 launch launch/main_mock.launch.py");
         }
 
         static IEnumerator GetJobs(Action<Job[]> receive)

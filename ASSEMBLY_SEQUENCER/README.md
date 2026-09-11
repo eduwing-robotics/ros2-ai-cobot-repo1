@@ -61,7 +61,7 @@ API 부재·실패·timeout 시 직접 제어로 우회하지 않고 실행을 �
 기존 테스트에서 Real backend의 import·ROS endpoint 허용 목록과 저수준 호출 부재를 검사합니다.
 이는 코드 회귀 검사이며 운영체제 수준의 네트워크 접근 차단을 뜻하지 않습니다.
 
-Mock 전체 스택의 유일한 실행 진입점은 [Mock 올인원 실행](../Farino_AIO_Mock/README.md#mock-올인원-실행)입니다.
+Mock·Real 공개 실행 진입점은 [최상단 실행 절차](../README.md#실행)를 따릅니다. Real 런치는 MoveIt과 `ros2_control`을 시작하지 않습니다.
 
 ## Real 연결 설정
 

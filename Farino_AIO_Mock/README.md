@@ -18,7 +18,7 @@ Mock과 Real은 상위 계층에 같은 업무 의미를 제공해야 합니다.
 
 Mock 성공도 시뮬레이션 요청 수락이 아니라 동작과 검사 완료를 뜻합니다. Real에서 지원하지 않는 기능은 임시 성공을 반환하지 않고 명시적으로 실패합니다.
 
-## Mock 올인원 실행
+## Mock 실행 환경
 
 저장소 루트에서 DB와 역할 권한을 먼저 적용합니다. 기존 DB는 migration을, 신규 DB는
 기준 DDL을 사용합니다. `DB_ADMIN_DSN`은 DDL과 역할 변경 권한이 있는 운영용 접속
@@ -62,24 +62,12 @@ PTP 접근은 현재 관절값으로 IK를 요청한 뒤 관절 목표로 계획
 현재 J5에서 90°를 초과해 벗어나는 궤적은 실행 전에 거절합니다.
 이는 현재 조립의 손목 자세를 유지하는 Mock 정책이며 설비 안전 인증을 대신하지 않습니다.
 
-Mock 올인원 launch는 자식 프로세스에 `ROS_DOMAIN_ID=42`를 지정합니다.
+최상단 Mock Assembly 런치는 자식 프로세스에 `ROS_DOMAIN_ID=42`를 지정합니다.
 외부 ROS CLI도 `export ROS_DOMAIN_ID=42`를 사용합니다.
 불량 보고 프로세스를 개별 실행할 때도 `export MAIN_SERVER_MODE=mock`을 지정합니다.
 HTTP health 외 요청에는 `X-Runtime-Mode: mock` 헤더가 필요합니다.
 
-공통 빌드와 실행:
-
-```bash
-cd ASSEMBLY_SEQUENCER
-colcon build --symlink-install
-source install/setup.bash
-cd ../Farino_AIO_Mock
-colcon build --symlink-install
-source install/setup.bash
-cd ..
-
-ros2 launch mock_db_mvp launch_mock.launch.py
-```
+공통 빌드와 공개 실행 명령은 [최상단 실행 절차](../README.md#실행)만 사용합니다.
 
 실행 전에 `PRODUCTION_DB_DSN`은 `production_writer`, `MAIN_SERVER_DB_DSN`은
 `job_submitter` 권한을 상속한 배포 계정으로 export해야 합니다.
@@ -125,7 +113,7 @@ export DEFECT_MAIL_ALLOWED_DOMAINS=example.com
 export DEFECT_MAIL_USERNAME=quality@example.com
 export DEFECT_MAIL_SECRET_FILE=/run/secrets/defect_smtp_password
 
-ros2 launch mock_db_mvp launch_mock.launch.py
+# 공개 실행 명령은 최상단 README의 실행 절차를 사용합니다.
 ```
 
 확정 불량 한 건 또는 전체를 로컬 생성하는 기존 진입점:
@@ -160,19 +148,16 @@ backend는 timeout, 통신 실패와 로봇 fault를 호출자에게 전달합�
 ## Real 실행 환경과 명령 계약
 
 Real 통신 프로세스와 외부 ROS CLI는 `ROS_DOMAIN_ID=5`를 사용합니다.
-`real_robot.launch.py`는 자식 프로세스에 5를 지정하며 command server는 다른 도메인에서
-SDK 연결 전에 종료합니다. MainServer는 `MAIN_SERVER_MODE=real`과 관리자 설정
+최상단 Real 런치는 자식 프로세스에 5를 지정합니다. MainServer는 `MAIN_SERVER_MODE=real`과 관리자 설정
 `app.runtime_mode=real`인 전용 DB를 사용합니다. 위 SQL은 확인한 Real DB에 한해서
 환경 값을 `real`로 지정하여 사용합니다.
 
-공통 Sequencer 실행 파일은 `sequencer_node`입니다. 기존 Mock 올인원 launch는
-`ASSEMBLY_SEQUENCER_MODE=mock`을 지정합니다. Real launch는 `start_sequencer:=true`를
-명시할 때만 `ASSEMBLY_SEQUENCER_MODE=real`로 Sequencer와 ROS TCP endpoint를 추가합니다.
-기본값은 `false`이며 `start_endpoint:=false`로 이미 실행 중인 endpoint를 재사용할 수 있습니다.
+공통 Sequencer 실행 파일은 `sequencer_node`입니다. 최상단 Mock·Real Assembly 런치가
+각각 `ASSEMBLY_SEQUENCER_MODE=mock`, `ASSEMBLY_SEQUENCER_MODE=real`을 고정합니다.
+Real은 `start_endpoint:=false`로 이미 실행 중인 endpoint를 재사용할 수 있습니다.
 Real Sequencer도 `PRODUCTION_DB_DSN`을 요구하고 관리자 설정이 Real인 DB만 사용합니다.
-Real Sequencer는 로컬 YAML을 사용하지 않으며 이 launch는 `recipe` 인자를 제공하지 않습니다.
-이 선택은 기존 Real MoveIt 실행에 프로세스를 추가하는 옵션이며 전체 스택 실행기를 새로 만들지 않습니다.
-현재 Real 실행 준비는 항상 미완료로 판정되므로 이 옵션으로 로봇 자동조립이 활성화되지는 않습니다.
+Real Sequencer는 로컬 YAML을 사용하지 않으며 Real 런치는 `recipe` 인자를 제공하지 않습니다.
+Real 런치는 MoveIt·`ros2_control`·로봇 드라이버를 시작하지 않고 외부 장비 서버의 공개 API만 소비합니다.
 
 `/fairino_remote_command_service`의 `cmd_str`는 실제 LF를 포함한 `real\n` 접두사 뒤에
 기존 `Function(arguments)`를 전달합니다. 누락·다른 접두사는 `MODE_MISMATCH`를 반환하고

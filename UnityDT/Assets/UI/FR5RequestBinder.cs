@@ -188,11 +188,15 @@ namespace MainUnity.UI
             checks.AddToClassList("scene-confirmation__checks");
             checks.Add(gripper); checks.Add(pcb); checks.Add(tray); checks.Add(fixture);
             panel.Add(checks);
-            var confirm = new Button(() => completion.TrySetResult(new AssemblySceneConfirmation
+            var confirm = new Button(() =>
             {
-                operator_id = requester.Trim(), execution_id = executionId,
-                confirmed_unix = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000d
-            })) { text = "확인하고 실행 요청" };
+                if (!completion.TrySetResult(new AssemblySceneConfirmation
+                    {
+                        operator_id = requester.Trim(), execution_id = executionId,
+                        confirmed_unix = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000d
+                    })) return;
+                pageRouter?.OpenMonitor();
+            }) { text = "확인하고 실행 요청" };
             confirm.AddToClassList("scene-confirmation__submit");
             var progress = new Label();
             progress.AddToClassList("scene-confirmation__progress");
@@ -520,11 +524,13 @@ namespace MainUnity.UI
             string cancelReason = pending ? "" : !matching ? "선택한 작업의 실행 상태를 확인 중입니다." :
                 uiMaster?.Scenario?.GetControlBlockReason("cancel") ?? "실행 경로 없음";
             selectedCancel?.SetEnabled(string.IsNullOrEmpty(cancelReason) && !cancelInFlight &&
-                (pending ? string.IsNullOrEmpty(actionJobId) : true) && string.IsNullOrEmpty(jobQueryError));
+                (pending ? actionJobId != job.job_id : true) && string.IsNullOrEmpty(jobQueryError));
             if (selectedCancel != null)
             {
-                selectedCancel.text = cancelInFlight ? "취소 결과 확인 중…" : "작업 취소";
-                selectedCancel.tooltip = string.IsNullOrEmpty(cancelReason) ? "취소를 요청하고 실제 정지와 기록 반영을 확인합니다." : cancelReason;
+                selectedCancel.text = cancelInFlight ? "취소 결과 확인 중…" : pending ? "대기 작업 취소" : "작업 취소";
+                selectedCancel.tooltip = string.IsNullOrEmpty(cancelReason)
+                    ? pending ? "설비 상태와 무관하게 실행 전 대기열에서 취소합니다." : "취소를 요청하고 실제 정지와 기록 반영을 확인합니다."
+                    : cancelReason;
             }
             if (selectedStatus != null && matching && (job.job_status == "RUNNING" || job.job_status == "PAUSED"))
                 selectedStatus.text = frame.DisplayStatus;
@@ -627,23 +633,29 @@ namespace MainUnity.UI
         IEnumerator CancelJob(string jobId)
         {
             Job job = Array.Find(jobs, item => item.job_id == jobId);
-            if (job?.job_status != "PENDING" || !string.IsNullOrEmpty(actionJobId)
+            if (job?.job_status != "PENDING" || actionJobId == jobId || cancelInFlight
                 || !string.IsNullOrEmpty(jobQueryError)) yield break;
-            actionJobId = jobId;
+            cancelInFlight = true;
             jobActionError = null;
             RefreshJobError();
             BuildJobs();
-            using var request = UnityWebRequest.Delete(ApiUrl("/api/v1/jobs/" + Uri.EscapeDataString(jobId)));
-            SetRuntimeModeHeader(request);
-            request.timeout = 5;
-            yield return request.SendWebRequest();
-            if (request.result != UnityWebRequest.Result.Success)
+            try
             {
-                jobActionError = "작업 취소 실패 · " + ShortJobId(jobId) + " · HTTP " + request.responseCode;
-                RefreshJobError();
-                uiMaster?.RecordEvent("작업", jobActionError, true);
+                using var request = UnityWebRequest.Delete(ApiUrl("/api/v1/jobs/" + Uri.EscapeDataString(jobId)));
+                SetRuntimeModeHeader(request);
+                request.timeout = 5;
+                yield return request.SendWebRequest();
+                if (request.result != UnityWebRequest.Result.Success)
+                {
+                    string reason = request.responseCode == 409 ? "작업 상태가 변경되어 대기 취소할 수 없습니다."
+                        : request.responseCode == 503 ? "서버의 대기 취소 처리에 실패했습니다."
+                        : "응답 미확인 · 갱신된 작업 상태를 확인하세요.";
+                    jobActionError = "대기 작업 취소 미완료 · " + ShortJobId(jobId) + " · " + reason + " (HTTP " + request.responseCode + ")";
+                    RefreshJobError();
+                    uiMaster?.RecordEvent("작업", jobActionError, true);
+                }
             }
-            actionJobId = null;
+            finally { cancelInFlight = false; }
             if (isActiveAndEnabled) yield return LoadJobs();
         }
 
@@ -693,6 +705,7 @@ namespace MainUnity.UI
             if (job.job_status == "PAUSED") return "불량 확인 대기 · 운전 화면에서 재개 또는 취소하세요.";
             if (job.job_status != "PENDING" && job.job_status != "RUNNING") return "완료된 작업은 실행할 수 없습니다.";
             if (!string.IsNullOrEmpty(jobQueryError)) return "작업 상태를 다시 조회한 뒤 실행하세요.";
+            if (cancelInFlight) return "취소 요청 처리 중";
             if (!string.IsNullOrEmpty(actionJobId))
                 return actionJobId == job.job_id ? "요청 처리 중" : "다른 요청 처리 중";
             Job runningJob = Array.Find(jobs, item => item.job_status == "RUNNING" || item.job_status == "PAUSED");
