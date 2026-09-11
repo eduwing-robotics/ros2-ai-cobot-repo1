@@ -48,8 +48,32 @@ namespace MainUnity.Runtime.Camera
             public string tray_registration_id;
             public string source_observation_id;
             public string coordinate_frame;
+            public TrayCounts counts;
+            public TrayCounts required;
             public string position_units;
             public TrayPart[] parts;
+        }
+
+        [Serializable]
+        sealed class TrayCounts
+        {
+            public int black_block;
+            public int long_orange;
+            public int marked_white;
+            public int right_white_brown;
+            public int gpu;
+            public int hbm;
+
+            public int Get(string type) => type switch
+            {
+                "black_block" => black_block,
+                "long_orange" => long_orange,
+                "marked_white" => marked_white,
+                "right_white_brown" => right_white_brown,
+                "gpu" => gpu,
+                "hbm" => hbm,
+                _ => -1
+            };
         }
 
         [Serializable]
@@ -170,6 +194,9 @@ namespace MainUnity.Runtime.Camera
         readonly Dictionary<(string Registration, string Observation), List<PartPose>> candidates = new();
         readonly Queue<(string Registration, string Observation)> candidateOrder = new();
         int candidatePartCount;
+        string pendingRegistration;
+        int pendingRegistrationFrames;
+        const int RegistrationConfirmationFrames = 2;
         double latestCandidateTime = -1d;
 
         ROSConnection connection;
@@ -611,7 +638,12 @@ namespace MainUnity.Runtime.Camera
                 }
                 foreach (Attachment value in attachments.Values)
                     if (value.Uncertain) unresolved++;
-                if (hasUnverifiedRestoredLayout && attachments.Count == instancesById.Count && unresolved == 0) hasUnverifiedRestoredLayout = false;
+                bool emptyOwnershipConfirmed = attachments.Count == 0 && rows.Count == 0 &&
+                    status["active_operation"]?.Type == JTokenType.Null &&
+                    status["held_candidate"]?.Type == JTokenType.Null;
+                if (hasUnverifiedRestoredLayout && unresolved == 0 &&
+                    (emptyOwnershipConfirmed || attachments.Count == instancesById.Count))
+                    hasUnverifiedRestoredLayout = false;
                 needsStatusReconciliation = unresolved > 0 || hasUnverifiedRestoredLayout;
                 SyncDetail = needsStatusReconciliation ? "일부 복원 미확인 · 전체 부품 자세 snapshot 필요" : "부착 상태 대조 완료 · callback 수신 중";
                 layoutSavePending = true;
@@ -776,7 +808,6 @@ namespace MainUnity.Runtime.Camera
                 return;
             }
 
-            // valid=false는 추적 준비 중의 정상 상태다. 마지막 정상 배치를 유지한다.
             if (state == null || state.schema != SchemaName)
             {
                 Reject("Rejected a tray state with an unsupported schema.");
@@ -784,30 +815,25 @@ namespace MainUnity.Runtime.Camera
             }
             if (!state.valid)
             {
+                pendingRegistration = null;
+                pendingRegistrationFrames = 0;
                 lastRejectedReason = null;
                 SetProgress(ProgressState.Preparing, hasSequence ? "추적 준비 중 · 이전 배치 유지" : "유효한 트레이 좌표 대기");
                 return;
             }
-            // 정상 상태의 동일 결과는 재배치/재할당하지 않는다. 준비나 거부 뒤에는 재검증한다.
             if (hasSequence && state.sequence == lastSequence && Progress == ProgressState.Applied) return;
             if (!TryCreatePoses(state, out List<PartPose> poses, out string error))
             {
+                pendingRegistration = null;
+                pendingRegistrationFrames = 0;
                 Reject(error);
                 return;
             }
 
-            // Detector absence is not physical removal. Keep the original scene and
-            // identity through gripper occlusion, partial frames and re-registration.
-            if (poses.Count == 0)
-            {
-                SetProgress(ProgressState.Preparing, "검출 부품 없음 · 이전 배치 유지");
-                return;
-            }
             if (error == null && attachments.Count == 0 && poses.Count <= MaxCandidateParts &&
                 !string.IsNullOrWhiteSpace(state.tray_registration_id) && !string.IsNullOrWhiteSpace(state.source_observation_id))
             {
                 var key = (state.tray_registration_id, state.source_observation_id);
-                // Repeated delivery of one observation must not replace its original pose.
                 if (!candidates.ContainsKey(key))
                 {
                     while (candidateOrder.Count >= MaxCandidateObservations || candidatePartCount + poses.Count > MaxCandidateParts)
@@ -825,31 +851,54 @@ namespace MainUnity.Runtime.Camera
             latestRegistration = state.tray_registration_id;
             latestObservation = state.source_observation_id;
             latestCandidateTime = Time.realtimeSinceStartupAsDouble;
-            if (instancesById.Count > 0 && registration != state.tray_registration_id)
+
+            // Never replace a display until the robot confirms that no restored or live part is owned.
+            if (attachments.Count > 0 || hasUnverifiedRestoredLayout || needsStatusReconciliation)
             {
-                SetProgress(ProgressState.Preparing, "트레이 등록 세대 변경 · 기존 배치 유지 · 명시적 재생성 필요");
+                pendingRegistration = null;
+                pendingRegistrationFrames = 0;
+                SetProgress(ProgressState.Preparing, "로봇 실행 또는 복원 상태 확인 중 · 관측으로 부품을 변경하지 않음");
                 return;
             }
-            if (attachments.Count > 0 || hasUnverifiedRestoredLayout)
+
+            // A new registration must be complete twice before replacing the previous unowned layout.
+            bool registrationChanged = instancesById.Count > 0 && registration != state.tray_registration_id;
+            if (registrationChanged)
             {
-                SetProgress(ProgressState.Preparing, "로봇 실행 배치 고정 · 관측으로 부품을 변경하지 않음");
-                return;
+                if (pendingRegistration == state.tray_registration_id)
+                    pendingRegistrationFrames++;
+                else
+                {
+                    pendingRegistration = state.tray_registration_id;
+                    pendingRegistrationFrames = 1;
+                }
+                if (pendingRegistrationFrames < RegistrationConfirmationFrames)
+                {
+                    SetProgress(ProgressState.Preparing, $"새 트레이 관측 검증 중 · {poses.Count}개");
+                    return;
+                }
+                if (!TryReplaceUnownedLayout(state.tray_registration_id, state.source_observation_id,
+                        poses, out error))
+                {
+                    Reject(error);
+                    return;
+                }
             }
-            if (!hasSequence || state.sequence != lastSequence)
+            else
             {
+                pendingRegistration = null;
+                pendingRegistrationFrames = 0;
                 registration = state.tray_registration_id;
-                Apply(poses);
-                if (!string.IsNullOrWhiteSpace(registration) && !string.IsNullOrWhiteSpace(state.source_observation_id))
-                    foreach (PartPose pose in poses)
-                        if (observations.Count < 16384 && !pose.Id.StartsWith("display-only:", StringComparison.Ordinal))
-                            observations.Add((registration, state.source_observation_id, pose.Id));
-                layoutSavePending = true;
-                LastAppliedTime = Time.realtimeSinceStartupAsDouble;
+                SynchronizeUnownedLayout(poses);
+                RecordObservations(state.source_observation_id, poses);
             }
+
+            layoutSavePending = true;
+            LastAppliedTime = Time.realtimeSinceStartupAsDouble;
             lastRejectedReason = null;
             lastSequence = state.sequence;
             hasSequence = true;
-            SetProgress(ProgressState.Applied, error ?? "트레이 좌표 검증 및 Unity 배치 반영됨");
+            SetProgress(ProgressState.Applied, $"트레이 배치 반영 완료 · {poses.Count}개");
         }
 
         bool TryBuildBindingLookup(out string error)
@@ -891,36 +940,60 @@ namespace MainUnity.Runtime.Camera
             poses = null;
             if (state.schema != SchemaName || state.registration_state != "TRACKING" ||
                 state.coordinate_frame != "base_link" || state.position_units != "mm" ||
-                state.parts == null)
+                state.parts == null || state.counts == null || state.required == null)
             {
-                error = "Rejected a tray state with an unsupported schema, tracking state, frame, or unit.";
+                error = "Rejected a tray state with an unsupported schema, tracking state, frame, unit, or count declaration.";
                 return false;
+            }
+
+            string[] supportedTypes =
+            {
+                "black_block", "long_orange", "marked_white",
+                "right_white_brown", "gpu", "hbm"
+            };
+            var actualCounts = new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (string type in supportedTypes) actualCounts[type] = 0;
+            foreach (TrayPart part in state.parts)
+            {
+                if (part == null || !actualCounts.ContainsKey(part.part_type ?? ""))
+                {
+                    error = "Tray state contains a missing or unsupported part type.";
+                    return false;
+                }
+                actualCounts[part.part_type]++;
+            }
+            foreach (string type in supportedTypes)
+            {
+                int declared = state.counts.Get(type);
+                int required = state.required.Get(type);
+                if (declared < 0 || required < 0 || declared != required ||
+                    actualCounts[type] != declared)
+                {
+                    error = $"트레이 {type} 개수 불일치 · 입력 {actualCounts[type]} / counts {declared} / required {required}";
+                    return false;
+                }
             }
 
             var ids = new HashSet<string>(StringComparer.Ordinal);
             var result = new List<PartPose>(state.parts.Length);
-            int skippedParts = 0;
             foreach (TrayPart part in state.parts)
             {
-                if (part == null || string.IsNullOrWhiteSpace(part.part_type) ||
-                    part.instance_index < 1 || part.base_xyz_mm == null || part.base_xyz_mm.Length != 3 ||
+                if (part.instance_index < 1 || part.base_xyz_mm == null || part.base_xyz_mm.Length != 3 ||
                     !IsFinite(part.base_xyz_mm[0]) || !IsFinite(part.base_xyz_mm[1]) ||
                     !IsFinite(part.base_xyz_mm[2]) || !IsFinite(part.angle_base_deg) ||
                     !bindingsByType.TryGetValue(part.part_type, out PrefabBinding binding))
                 {
-                    skippedParts++;
-                    continue;
+                    error = $"트레이 {part.part_type} 좌표·순번·프리팹 검증 실패";
+                    return false;
                 }
 
-                // ID 누락 시 타입·순번은 화면 객체 추적에만 사용한다. ROS 원본 ID를
-                // 채우거나 생산 요청에 전달하지 않는다. 임시 객체도 명시적 재생성 전까지 유지한다.
                 string displayId = string.IsNullOrWhiteSpace(part.id)
                     ? $"display-only:{part.part_type}:{part.instance_index}"
                     : part.id;
                 if (!ids.Add(displayId))
                 {
-                    skippedParts++;
-                    continue;
+                    error = $"트레이 부품 ID 중복 · {displayId}";
+                    return false;
                 }
 
                 Vector3 rosPositionMeters = new Vector3(
@@ -943,8 +1016,7 @@ namespace MainUnity.Runtime.Camera
             }
 
             poses = result;
-            error = skippedParts == 0 ? null :
-                $"트레이 {result.Count}개 배치 반영 · 무효/중복/미지원 부품 {skippedParts}개 제외";
+            error = null;
             return true;
         }
 
@@ -1082,11 +1154,15 @@ namespace MainUnity.Runtime.Camera
         {
             const string json = "{\"schema\":\"fr5.tray.unity_state/v1\",\"sequence\":7," +
                 "\"valid\":true,\"registration_state\":\"TRACKING\",\"coordinate_frame\":\"base_link\"," +
-                "\"position_units\":\"mm\",\"parts\":[{\"id\":\"gpu:01\",\"part_type\":\"gpu\"," +
+                "\"position_units\":\"mm\",\"counts\":{\"black_block\":0,\"long_orange\":0,\"marked_white\":0," +
+                "\"right_white_brown\":0,\"gpu\":1,\"hbm\":0},\"required\":{\"black_block\":0,\"long_orange\":0," +
+                "\"marked_white\":0,\"right_white_brown\":0,\"gpu\":1,\"hbm\":0}," +
+                "\"parts\":[{\"id\":\"gpu:01\",\"part_type\":\"gpu\"," +
                 "\"instance_index\":1,\"base_xyz_mm\":[1000,2000,3000],\"angle_base_deg\":0}]}";
             TrayState state = JsonUtility.FromJson<TrayState>(json);
             Vector3 converted = FLU.ConvertToRUF(new Vector3(1f, 2f, 3f));
-            if (state?.parts?.Length != 1 || state.parts[0].id != "gpu:01" ||
+            if (!TryCreatePoses(state, out List<PartPose> poses, out _) ||
+                poses.Count != 1 || state.parts[0].id != "gpu:01" ||
                 (converted - new Vector3(-2f, 3f, 1f)).sqrMagnitude > 0.000001f)
                 throw new InvalidOperationException("TrayPartCalibrator self-check failed.");
 
@@ -1099,8 +1175,87 @@ namespace MainUnity.Runtime.Camera
                     if (IsInitialSupplyPart(child.name) && child.gameObject.activeSelf)
                         throw new InvalidOperationException("An initial supply part remains active.");
 
-            Debug.Log("[TrayPartCalibrator] Self-check passed: parsed one part and converted " +
+            Debug.Log("[TrayPartCalibrator] Self-check passed: counts matched one GPU and converted " +
                 "ROS FLU (1, 2, 3) m to Unity RUF (-2, 3, 1) m.", this);
+        }
+
+        void SynchronizeUnownedLayout(List<PartPose> poses)
+        {
+            var currentIds = new HashSet<string>(StringComparer.Ordinal);
+            foreach (PartPose pose in poses) currentIds.Add(pose.Id);
+            var obsolete = new List<string>();
+            foreach (string id in instancesById.Keys)
+                if (!currentIds.Contains(id)) obsolete.Add(id);
+            foreach (string id in obsolete)
+            {
+                if (instancesById[id] != null)
+                {
+                    instancesById[id].SetActive(false);
+                    Destroy(instancesById[id]);
+                }
+                instancesById.Remove(id);
+                instanceRegistrations.Remove(id);
+                instanceTypes.Remove(id);
+            }
+            Apply(poses);
+        }
+
+        bool TryReplaceUnownedLayout(string newRegistration, string observation,
+            List<PartPose> poses, out string error)
+        {
+            var replacements = new Dictionary<string, GameObject>(StringComparer.Ordinal);
+            try
+            {
+                foreach (PartPose pose in poses)
+                {
+                    GameObject instance = Instantiate(pose.Binding.Prefab, SpawnRoot);
+                    instance.name = pose.Id;
+                    instance.transform.SetPositionAndRotation(pose.Position, pose.Rotation);
+                    replacements.Add(pose.Id, instance);
+                }
+            }
+            catch (Exception exception)
+            {
+                foreach (GameObject instance in replacements.Values)
+                    if (instance != null) Destroy(instance);
+                error = "새 트레이 배치 생성 실패 · 기존 배치 유지 · " + exception.Message;
+                return false;
+            }
+
+            foreach (GameObject instance in instancesById.Values)
+                if (instance != null)
+                {
+                    instance.SetActive(false);
+                    Destroy(instance);
+                }
+            instancesById.Clear();
+            instanceRegistrations.Clear();
+            instanceTypes.Clear();
+            foreach (PartPose pose in poses)
+            {
+                instancesById.Add(pose.Id, replacements[pose.Id]);
+                instanceRegistrations.Add(pose.Id, newRegistration);
+                instanceTypes.Add(pose.Id, pose.Binding.PartType);
+            }
+            registration = newRegistration;
+            observations.Clear();
+            RecordObservations(observation, poses);
+            hasUnverifiedRestoredLayout = false;
+            pendingRegistration = null;
+            pendingRegistrationFrames = 0;
+            error = null;
+            return true;
+        }
+
+        void RecordObservations(string observation, List<PartPose> poses)
+        {
+            observations.Clear();
+            if (string.IsNullOrWhiteSpace(registration) || string.IsNullOrWhiteSpace(observation))
+                return;
+            foreach (PartPose pose in poses)
+                if (observations.Count < 16384 &&
+                    !pose.Id.StartsWith("display-only:", StringComparison.Ordinal))
+                    observations.Add((registration, observation, pose.Id));
         }
     }
 }
