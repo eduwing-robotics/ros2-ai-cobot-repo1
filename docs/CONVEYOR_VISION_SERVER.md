@@ -67,7 +67,7 @@ ROS 환경은 `config/ksmc.env`와 기존 DDS 설정, 기본 ROS_DOMAIN_ID=5를 
   `/vision/inspection/get_image`, `/vision/inspection/health`.
 - 상태: 기존 `/conveyor/state`, `/conveyor/moving` 및 `/vision/inspection/state`.
 
-[검사 ROS 계약과 클라이언트 예제](../team_handoff/vision_sequencer_api/ROS_API.md)에
+[검사 ROS 서비스 정의](../ros2_ws/src/vision_interfaces/srv)에
 서비스 타입, ID 재시도 규칙, JSON 결과, PNG 조각/해시 검증을 정리했습니다.
 Sequencer/MainServer 팀원은 이전 HTTP 호출을 이 서비스로 교체해야 합니다.
 도착만으로 촬영하지 않으며, UNKNOWN 및 ADVISORY_ONLY의 판정 권한을 유지합니다.
@@ -84,5 +84,5 @@ Ctrl+C 또는 소유 서버 하나의 종료 시 이 실행기가 시작한 프�
 새로 시작한 GoPro가 종료되면 다른 소유 서버도 기존 안전종료 경로로 정리합니다.
 재사용 GoPro는 외부 소유이므로 이 실행기가 재시작하지 않습니다.
 
-팀원 rqt 화면 문제는 [수신 진단/뷰어 실행 도구](../team_handoff/rqt_camera/README.md)를
+팀원 rqt 화면 문제는 [수신 진단/뷰어 실행 도구](../scripts/camera_viewer/run_viewer.sh)를
 그 팀원 PC에서 사용해 확인할 수 있습니다.

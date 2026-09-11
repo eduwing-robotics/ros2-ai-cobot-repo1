@@ -7,7 +7,7 @@ import cv2
 import numpy as np
 import pytest
 
-path = Path(__file__).resolve().parents[1] / 'team_handoff/rqt_camera/view_camera.py'
+path = Path(__file__).resolve().parents[1] / 'scripts/camera_viewer/view_camera.py'
 spec = importlib.util.spec_from_file_location('remote_camera_view', path)
 viewer = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(viewer)
