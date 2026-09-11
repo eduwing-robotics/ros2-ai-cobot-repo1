@@ -36,6 +36,8 @@ def prepare_result(report, directory, request, config=None):
         defects=[dict(slot_code=f['slot_code'], defect_type=f['primary_defect_code'],
                       finding_id=f['finding_id']) for f in findings if f['confirmed_defect']])
     result['diagnostics'] = payload.get('diagnostics', {})
+    result['operational_decision'] = payload.get('operational_decision')
+    result['validated_decision'] = payload.get('validated_decision')
     image = next(item for item in payload['images'] if item['role'] == 'annotated_report')
     source = package / image['file']
     if image['mime_type'] != 'image/png' or source.read_bytes()[:8] != b'\x89PNG\r\n\x1a\n':

@@ -163,12 +163,25 @@ def check_gpu_hbm_dot(
     # Disagreement is ambiguity, not permission to pick the expected corner.
     # Apply symmetrically to both potential PASS and FAIL outcomes.
     ranking_conflict = suppress_pin_columns and bool(area_winners) and area_winners != [winner]
+    # A large end pin can win size/proximity while a different corner has
+    # the stronger round-dot shape. Keep that disagreement as uncertainty;
+    # never choose the expected corner to resolve it.
+    shape_scores = {name: value["area_px"] * value["circularity"]
+                    for name, value in selected.items() if value is not None}
+    strongest_shape = max(shape_scores.values(), default=0.0)
+    shape_winners = [name for name, score in shape_scores.items()
+                     if score == strongest_shape]
+    shape_conflict = (suppress_pin_columns and bool(shape_winners)
+                      and shape_winners != [winner])
     if winner_score < 0.05 or margin < winner_margin_min:
         status = "UNKNOWN"
         reason = "WHITE_DOT_NOT_UNAMBIGUOUS"
     elif ranking_conflict:
         status = "UNKNOWN"
         reason = "WHITE_DOT_SIZE_POSITION_CONFLICT"
+    elif shape_conflict:
+        status = "UNKNOWN"
+        reason = "WHITE_DOT_SHAPE_POSITION_CONFLICT"
     elif winner == expected_corner:
         status = "PASS"
         reason = "WHITE_DOT_AT_EXPECTED_CORNER"
@@ -194,6 +207,8 @@ def check_gpu_hbm_dot(
             "selected_corner_components": selected,
             "area_winning_corners": area_winners,
             "size_position_conflict": ranking_conflict,
+            "shape_winning_corners": shape_winners,
+            "shape_position_conflict": shape_conflict,
             "recapture_recommended": status == "UNKNOWN",
             "white_component_count": len(components),
             "side_pin_component_counts": side_pin_counts,

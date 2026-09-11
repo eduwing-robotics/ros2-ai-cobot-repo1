@@ -18,6 +18,16 @@
 - `config/inspection_fusion_contract.json`: 팀원의 D435 학습 모델에 의존하지 않는
   S22 하이브리드 AOI 조합, 모델 교체 인터페이스와 fail-safe 최종 판정 규칙.
 
+## 임시 PASS/FAIL 운영 모드 (2026-09-11 사용자 승인)
+
+현재 기본값은 `PROVISIONAL_BINARY_V1`이다. 실행·촬영 품질·기판 정합이
+정상이고 25슬롯 존재 근거와 불량 후보 검사를 통과하면 PASS, 아니면 FAIL이다.
+미검증 핀·표면·방향 범위와 비활성 실험용 VRM 안착 검사는 제한사항으로 수용한다.
+이는 정확도가 검증된 완성 모델이 아니며, 원래 엄격한 판정은 보고서의
+`validated_decision`, 임시 정책은 `operational_decision`에 보존된다.
+이하 기존 UNKNOWN 설명은 엄격한 검증 판정에 해당한다.
+계약 파일의 `operational_decision.mode`를 `VALIDATED_ONLY`로 바꾸면 복구된다.
+
 ## S22 현재 화면 촬영 후 전체 25슬롯 검사
 
 S22에 현재 보이는 기판을 새 3.5배 망원 사진으로 촬영하고, 보드 ROI를 만든 뒤

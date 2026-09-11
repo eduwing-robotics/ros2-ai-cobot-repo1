@@ -1,5 +1,265 @@
 # AI/Vision 작업 기록
 
+## 2026-09-11 Unity request path deployment of provisional decisions
+
+- Verified ROS submit -> Runner -> fresh triggered_inspection_once subprocess ->
+  hybrid main -> contract operational policy. Compact ROS result now also carries
+  operational_decision and validated_decision alongside existing decision.
+- Confirmed no active inspection and conveyor moving=false before replacing
+  local bundle PID 368534. Detached replacement bundle PID 390046 launched
+  inspection PID 390119; bundle reported ROS services ready and GoPro frames.
+  Teammate Endpoint and managed S22 launcher were not restarted. No motion or
+  inspection submit was sent. An initial shell background launch did not survive;
+  the detached Popen replacement is the verified running process.
+- Health success=true, closing=false, no active inspection. station_ready=false
+  at the final check: capture admission still requires fresh arrived=true and
+  moving=false samples for 0.35 seconds. This was not bypassed; no claim of a
+  successful end-to-end Unity request in this deployment check.
+- 478 hybrid/export/ROS transport tests passed. Previously verified actual GPU
+  provisional PASS report and offline export are retained. Existing topic names,
+  service identities and PASS/FAIL decision values are preserved.
+
+## 2026-09-11 User-authorized provisional binary disposition
+
+- User explicitly accepted imperfect decisions due deadline and requested actual
+  PASS/FAIL. Before implementation, explained the relaxation of the locked
+  calibrated-stage completion requirement. Added operational_decision policy to
+  the contract; original fusion is retained as validated_decision and individual
+  provider authority is unchanged. This is an unvalidated operating mode.
+- Board status now uses PROVISIONAL_BINARY_V1 by default: PASS requires 25 unique
+  slots, positive presence evidence, valid registration, no gross quality block,
+  no runtime provider failure and no displayed defect candidate. Otherwise FAIL.
+  Existing high-confidence, nonconflicting VRM context PRESENT can support
+  provisional presence when state is UNKNOWN. Disabled experimental VRM seating
+  is exempt. Uncalibrated pin/surface/direction coverage is explicitly accepted;
+  no displayed candidate does not certify normality. Generic UNKNOWN alone does
+  not reject in this mode. Acquisition/process exceptions still report errors.
+- Export preserves operational and validated decisions separately. Quality or
+  registration rejection can be exported as provisional FAIL, never PASS.
+  Findings retain advisory labels; operational rejection is not a certified defect.
+- Saved labelled checks: three normal repeats PASS, SMD02 missing FAIL, PM04
+  displacement FAIL, PM04 restoration PASS. Full GPU restoration replay produced
+  PASS and its offline JSON/PNG package exported DB_DECISION=PASS with zero
+  findings. Artifacts: runtime/inspection/provisional_binary_20260911/.
+  Hybrid and export tests: 461 passed. This is developmental verification,
+  not a measured production accuracy claim.
+- No new camera capture, server restart, robot/conveyor command, external upload
+  or DB write. New inspection subprocesses read the policy automatically.
+  Set operational_decision.mode to VALIDATED_ONLY to restore original board
+  fusion. Model completion gate remains a certification audit and can still
+  correctly report not ready despite this provisional operational mode.
+
+## 2026-09-11 PM04 physical restoration pair
+
+- User retrospectively confirmed PM04 was inadvertently displaced in the 17:53
+  capture and subsequently restored. Preserve that label for PM04 only; it
+  does not establish HBM01 or other slots' ground truth.
+- Fresh GPU inspection after restoration captured at 18:02:47 (flash off,
+  4000x3000, 69 mm-equivalent EXIF); overview restored successfully.
+  PM04 reference-relative position error changed from 1.54049 to 0.58249 mm
+  against the unchanged 0.75 mm advisory tolerance. Its position evidence
+  changed from FAIL to PASS, both ADVISORY_ONLY. These are image-derived
+  estimates, not certified physical metrology.
+- Full run detected 25 slots with zero displayed candidates and zero gross
+  quality flags; final UNKNOWN remains. Source/report hashes and scoped labels
+  are in `runtime/inspection/pm04_restored_gpu_validation_20260911/validation_pair.json`.
+- No threshold/model change, training, authority promotion, server restart,
+  robot/conveyor motion or external result submission. One pair supports this
+  development check only; wider independent validation remains outstanding.
+
+## 2026-09-11 HBM corner shape conflict guard
+
+- Re-read the locked fusion contract. Inspection of the 17:53 HBM01 crop showed
+  competing lower-left round-dot and upper-right elongated end-pin evidence.
+  The size/proximity winner scored 0.7719 versus 0.7017; its circularity was
+  0.5655 versus 0.8917. Actual physical placement labels were requested and are
+  pending; no normal/defect truth was inferred for PM04.
+- With pin suppression enabled, conflicting area-times-circularity and existing
+  corner-score winners now abstain symmetrically as
+  WHITE_DOT_SHAPE_POSITION_CONFLICT. Raw scores are preserved. This never picks
+  the expected corner to grant PASS and does not alter crop registration.
+- On 40 saved HBM crops, HBM01 from 17:53 abstained; the other 39 retained PASS
+  advisory evidence. Synthetic reversed conflict also abstains, while existing
+  unambiguous normal/reversed dot tests retain PASS/FAIL advisory outputs.
+  All 427 hybrid tests passed. These are development checks, not independent
+  field sensitivity measurements; increased abstention is a remaining tradeoff.
+- Full saved-image GPU replay in
+  `runtime/inspection/hbm_dot_shape_review_20260911/full_replay/20260911_175848_791383/`
+  retained only PM04 POSE? as a displayed candidate, final UNKNOWN. Its reference
+  offset remains 1.5405 mm against 0.75 mm candidate tolerance, without physical
+  metrology certification. No tolerance or model authority promotion.
+- No new capture, server restart, robot/conveyor command, or external submission.
+  Production completion remains pending independently labelled required-stage
+  validation, capture-quality calibration and controlled surface/pin thresholds.
+
+## 2026-09-11 User-requested live inspection transport test
+
+- User requested a local capture/inspection request and result delivery test.
+  Submitted once through the existing ROS API after health reported station_ready=true,
+  active_inspection_id=null. Temporary test identity, not a production-unit mapping:
+  inspection_id 9e87e73d-2cde-4ef8-9298-ab1f0527593e,
+  job_id 645acaf0-e946-4538-a1b9-c557a2eecb33, unit_id 1789116350223.
+  Identity and received artifacts are in runtime/inspection/transport_test_20260911/.
+- Existing runner took optical images at 17:46:23 and 17:47:15 using its existing
+  recapture policy: flash off, 4000x3000, EXIF 69 mm equivalent. Final report is
+  runtime/inspection/hybrid_fixed_slot/20260911_174725_650006/hybrid_report.json.
+  No threshold, model, fusion contract or API changes; no robot/conveyor command.
+- ROS get returned COMPLETED with decision UNKNOWN: 25 UNKNOWN slots, zero
+  confirmed defects and four advisory candidates (HBM-03 pin missing/damage,
+  HBM-04 position, PM-01 position, VRM-01 orientation). These are unverified
+  candidates, not physical ground truth or production FAIL/PASS.
+- Existing client retrieved the report PNG through get_image chunks and verified
+  its size 1041186 bytes and SHA256
+  94989054aecd839cecb1b3834f9dc59dce61ff3a6b19a6433671c6232c22418e.
+  Client exited successfully; independently rechecked the received file hash.
+  This validates live submit/get/PNG retrieval from this client, not teammate
+  consumption or DB persistence. No direct DB write or outbound upload occurred.
+
+## 2026-09-11 Camera restart, UDP buffers and rqt crash workaround
+
+- User authorized server/camera repair and optimization while retaining the
+  teammate's consumer API, then reported that video remained absent and local
+  rqt also crashed. No provider identifiers, schemas, image transfer limits,
+  inspection criteria or model authority changed. No teammate Endpoint changes.
+- Fixed GoPro optional raw publication: monotonic one-second deadlines replace
+  frame_id modulo 6, which could skip eligible output indefinitely when decoding
+  and publication sampled different sequences. Retains subscriber gating, fresh
+  frames only and no catch-up bursts. Two tests of the actual publish method pass,
+  covering IDs that never satisfy the old modulus, late ticks and absent subscribers.
+- GoPro preview is now 1280x720, 10 FPS, JPEG 75 via config/ksmc.env (and documented
+  example). Stop dashboard remains 960x540, now 10 FPS/JPEG 78. S22 control remains
+  960x540/30 FPS/JPEG 84, with unchanged camera pose, full-HD analysis, optical
+  inspection capture, stop coordinates, 20 px trigger lead and 0.15 s stale cutoff.
+  Initial ten-second local comparison reduced combined compressed payload from
+  45.55 to 33.28 Mbps, about 27%; scenes/time differed, so this is not a controlled
+  codec benchmark. That first restart did NOT restore external GoPro/dashboard.
+- A robot-local eight-second probe independently reproduced the external failure:
+  S22 230 frames, GoPro 0, dashboard 0, although local server subscriptions worked.
+  Host-wide five-second counters then showed 36395 UDP SndbufErrors, 375 RcvbufErrors
+  and 17382 IP fragments created. Counters are aggregate, not per-camera attribution.
+  Set explicit Fast DDS UDP sendBufferSize/receiveBufferSize to 4194304 bytes in
+  config/fastdds_laptop.xml, within existing host maxima; retained non-blocking
+  sending, allowed interfaces, SHM and maximum datagram size. After process restart,
+  a five-second sample showed 213 SndbufErrors and 496 RcvbufErrors; not zero loss.
+  Fresh socket inspection showed 8388608-byte Linux receive accounting after the
+  4 MiB request. Most importantly, the robot's same eight-second external probe
+  then received S22 239, GoPro 75 and dashboard 70 frames. Team .14 playback remains
+  unconfirmed after this second change. Buffer behavior reference:
+  https://fast-dds.docs.eprosima.com/en/2.x/fastdds/transport/udp/udp.html
+- Restarted only the owned S22/ROI and conveyor/inspection/GoPro processes. The
+  initial background cell ignored SIGINT; its existing SIGTERM cleanup completed
+  and old PIDs were verified absent before new startup. Current topology is separate
+  run_s22_conveyor_hq.sh plus run_conveyor_vision_server.sh --execute --confirm-motion.
+  GoPro initially logged missing H264 PPS while joining the stream; subsequently
+  decoded frames, bundle readiness and health were confirmed. Those startup errors
+  are not final steady-state measurements.
+- Equipment commands: existing /conveyor/stop invoked before restart and to retain
+  HOLD after each server replacement. No move, reset, nonzero velocity, assembly
+  or capture/submit commands were sent. During validation the robot motor process
+  was found dead with exit code -11, despite healthy wired ping; its launch and
+  remaining children were gracefully stopped and the same bringup restarted with
+  the existing wired profile. Final motor PID 3521 was alive; root cause of that
+  native crash remains undiagnosed. Lidar-stuck warnings persist. Final controller
+  state MANUAL_STOP, moving=false, armed=true, command_receiver_connected=true;
+  inspection health success=true, active=null, station_ready=false. No measured
+  belt stopping-distance validation or moving restart/fault test was performed.
+- Local rqt crashes were confirmed by SIGSEGV in the 16:38 apport report and a
+  17:21 kernel record, with ample free memory. Core backtrace enters
+  CompressedSubscriber::internalCallback -> imdecodeFlagFromConfig ->
+  rclcpp::Node::get_parameter. This identifies the crashing path, not its exact
+  lifetime/ABI root cause. Reused the existing Python compressed decoder + local
+  raw rqt viewer to avoid this plugin. Updated only the existing no-argument rqt
+  wrapper in /home/hc/.bash_aliases to use that path (default S22) and source KSMC
+  environment in a subshell; all other ros2 invocations pass through unchanged.
+  Backup: /tmp/ksmc-rqt-crash.9sdle9/bash_aliases.before. Existing terminals must
+  source ~/.bash_aliases or open a new shell. Opened the existing viewer for the
+  conveyor and confirmed a decoded frame and live rqt process; long-run crash-free
+  operation and arbitrary manual transport switching remain unverified. This is
+  a workaround, not a patch to the installed ROS library.
+- Validation: two GoPro regression tests, relevant shell syntax, XML parse and
+  diff whitespace checks pass. rqt remained alive for over two minutes. A final
+  six-second local sample received 56 GoPro compressed frames but only two large
+  raw frames; the new 1 Hz scheduling ceiling does not guarantee delivery of every
+  raw frame over BEST_EFFORT DDS. Compressed topics remain the normal viewer path.
+  All historical logs and user work were preserved.
+
+## 2026-09-11 Wired robot transport and existing consumer API validation
+
+- User authorized SSH diagnosis, wired repair and optimization of existing paths.
+  Robot eth0 had link but no IPv4; netplan-eth0 was waiting for DHCP. Wi-Fi SSH
+  worked poorly: a short ICMP sample received 1/3 replies with 1793 ms RTT.
+  Fresh robot ROS discovery found its command subscriber but no publisher.
+- Added persistent NetworkManager KSMC-wired on eth0: 10.77.5.2/30, manual IPv4,
+  never-default, autoconnect priority 100. Existing Wi-Fi profiles remain intact.
+  Five wired pings succeeded, 0% loss, RTT 0.116–0.690 ms, mean 0.276 ms.
+- Installed config/fastdds_turtlebot_wired.xml at robot
+  /home/musk/DEFAULT_FASTRTPS_PROFILES.xml; matching SHA256:
+  2ce62c956c403ad6d1eb714aab6c10438c583a87e478ce4811e177fae8cda21a.
+  Robot DDS uses lo/eth0 and SHM. Laptop retains Ethernet + team WLAN. Gracefully
+  stopped old robot bringup PID 1648 and verified children exited; restarted the
+  same bringup with the wired profile, domain 5 and SUBNET discovery (launch 2941,
+  motor node 2947 at validation). Log: /home/musk/.ros/log/ksmc_wired_bringup_20260911.log.
+  Home-directory launches load the default profile; other working directories
+  must set FASTRTPS_DEFAULT_PROFILES_FILE to its absolute path. No boot service added.
+- Actual equipment command: existing /conveyor/stop called once and acknowledged.
+  No move, nonzero velocity, reset, assembly or capture/submit command was sent.
+  Five-second robot sample received 199 zero commands, zero nonzero commands;
+  maximum observed gap 0.260 s (not a guaranteed deadline). 100 odometry samples
+  had maximum absolute linear/angular speed 0.000656 m/s and 0.000646 rad/s.
+  Final state MANUAL_STOP, moving=false, armed=true, command_receiver_connected=true.
+  Fresh laptop discovery found one command publisher and one turtlebot3 subscriber.
+- Existing inspection ROS server started in a maintained terminal with timeout 300.
+  An earlier detached shell attempt did not remain running and is not a successful
+  startup. Health returned success=true, station_ready=false, active_inspection_id=null,
+  closing=false. No inspection was submitted. Existing records were retained.
+- Consumer conveyor and inspection names match existing providers. No new APIs,
+  schema, model authority or decision criteria. Retained schema 1, 65536-byte PNG
+  chunks and 67108864-byte images. Provider motion/inspection limits remain 30/300 s,
+  distinct from consumer observation limits 35/330 s. Consumer freshness values
+  are not equipment safety settings. /real/robot/status, /real/assembly/* and
+  fr5.assembly_execution/v2 were not found as providers here and were not substituted.
+- Final five-second laptop sample: 137 S22 stream, 52 stop-overlay and 56 GoPro
+  frames; last local frame ages 9/26/6 ms. Unity display/reconnection remains
+  unverified. Endpoint belongs to the teammate; absence on this PC did not establish
+  whether their Endpoint was running. No Endpoint action was taken.
+- Overrun cause remains unproven: historical server log records vision HOLD 7.52 s
+  after assembly move acceptance, without historical robot receipt or measured belt
+  stopping distance. Wheel odometry and current zero receipt do not certify stopping
+  accuracy. Robot/laptop log clocks differ; cross-host timestamp latency is unverified.
+  Robot bringup also reports lidar-stuck warnings outside this transport repair.
+
+## 2026-09-11 Fresh SMD02 missing GPU control
+
+- Following the normal-board repeats, the user identified SMD2 as the removed
+  component and authorized capture. Fresh optical capture at 16:04:07 used
+  flash off, 4000x3000 pixels and EXIF 69 mm equivalent. Overview restored.
+- Full GPU inference reported exactly one displayed candidate: smd_capacitor_02
+  MISSING?. Its presence classifier returned EMPTY with confidence
+  0.9999991655. No other displayed candidates or gross quality flags occurred.
+  This is one physical missing control, not broad accuracy certification.
+- Raw report, image identity, label scope and result are recorded in
+  `runtime/inspection/smd02_missing_gpu_validation_20260911/validation.json`.
+  Final UNKNOWN and advisory authority remain; no tuning or model promotion.
+  No robot/conveyor movement command or server restart. Next: restore SMD2 and
+  confirm the missing indication clears on a fresh capture.
+
+## 2026-09-11 Fresh normal board GPU repeatability
+
+- Host-level nvidia-smi confirmed RTX 5070-series GPU, driver 595.84 and CUDA
+  13.2. Sandbox nvidia-smi failed; that did not establish a host driver failure.
+- On the user-prepared normal board, captured three fresh flash-off 3.5x optical
+  photos (4000x3000, EXIF 69 mm equivalent), at 15:59:45, 16:00:51 and 16:01:44.
+  Managed overview pause and restoration succeeded each time. Full hybrid
+  inference explicitly used GPU; logs confirmed CUDA execution.
+- All three runs matched 25 slots, produced zero displayed defect candidates,
+  zero gross capture-quality flags and zero unavailable PatchCore slots.
+  Final UNKNOWN remains because required stages are unvalidated. This is
+  same-board repeatability, not independent defect sensitivity or production PASS.
+- Reports, source hashes and result summary are archived under
+  `runtime/inspection/normal_gpu_validation_20260911/normal_repeat_summary.json`.
+  No model/threshold/authority change, server restart, or robot/conveyor movement
+  command. Next evidence needed: new explicitly labelled missing/rotated controls.
+
 ## 2026-09-11 S22 segmentation CPU execution repair
 
 - The S22 segmentation subprocess rejected every non-CUDA run before inference,

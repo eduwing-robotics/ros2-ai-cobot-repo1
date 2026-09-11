@@ -25,7 +25,10 @@
   },
   "sensor_contract": {
     "primary_inspection_camera": "S22 optical still",
-    "rectified_board_roi_px": [1600, 1266],
+    "rectified_board_roi_px": [
+      1600,
+      1266
+    ],
     "teammate_d435_segmentation_required": false,
     "d435_role": "optional independent second view only"
   },
@@ -109,7 +112,11 @@
       "calibration_id",
       "evidence"
     ],
-    "allowed_status": ["PASS", "FAIL", "UNKNOWN"],
+    "allowed_status": [
+      "PASS",
+      "FAIL",
+      "UNKNOWN"
+    ],
     "unverified_model_authority": "ADVISORY_ONLY",
     "low_confidence_policy": "Return UNKNOWN; never convert a weak score into PASS."
   },
@@ -135,5 +142,13 @@
       "board-level camera pose variation removed by registration",
       "lighting variation that has been separately validated"
     ]
+  },
+  "operational_decision": {
+    "mode": "PROVISIONAL_BINARY_V1",
+    "validated": false,
+    "authorization": "2026-09-11 user explicitly requests imperfect PASS/FAIL due deadline",
+    "policy": "PASS when all 25 presence checks are positive, registration and gross quality valid, providers available and no displayed defect candidates. Otherwise FAIL. Disabled experimental VRM seating excepted.",
+    "limitation": "Accepts uncalibrated pin/surface/orientation coverage. Does not certify accuracy or promote providers. Original fusion retained as validated_decision.",
+    "vrm_presence_fallback": "For UNKNOWN VRM state, accept existing independent PRESENT summary only if conflict=false and probability >=0.9; not a validated direction/pose vote."
   }
 }

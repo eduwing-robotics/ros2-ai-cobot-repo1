@@ -343,7 +343,11 @@ def _validate_report(report: dict[str, Any], config: dict[str, Any]) -> None:
         value = report.get(section, {})
         if not isinstance(value, dict) or type(value.get(flag, False)) is not bool:
             raise ExportError(f'{section}.{flag} must be a boolean when provided')
-    if report.get('capture_quality', {}).get('blocks_decision') and status != 'UNKNOWN':
+    operational = report.get('operational_decision') or {}
+    provisional_reject = (operational.get('mode') == 'PROVISIONAL_BINARY_V1'
+                          and operational.get('validated') is False
+                          and operational.get('status') == status == 'FAIL')
+    if report.get('capture_quality', {}).get('blocks_decision') and status != 'UNKNOWN' and not provisional_reject:
         raise ExportError('Capture quality recheck may only be exported as UNKNOWN')
     slots = report.get("slots")
     if not isinstance(slots, list) or len(slots) != 25:
@@ -364,7 +368,7 @@ def _validate_report(report: dict[str, Any], config: dict[str, Any]) -> None:
         raise ExportError('Hybrid report contains duplicate external slot codes')
     if not bool(report.get("registration", {}).get("alignment_valid", False)):
         # Registration failure is a valid UNKNOWN result and must still reach DB.
-        if status != "UNKNOWN":
+        if status != "UNKNOWN" and not provisional_reject:
             raise ExportError("Invalid registration may only be exported as UNKNOWN")
 
 
@@ -629,6 +633,8 @@ def build_package(
                 report_modified_at, tz=ZoneInfo("Asia/Seoul")
             ).isoformat(),
             "source_host": socket.gethostname(),
+            "operational_decision": report.get("operational_decision"),
+            "validated_decision": report.get("validated_decision"),
             "overall": {
                 "decision": status,
                 "reason": report.get("reason"),

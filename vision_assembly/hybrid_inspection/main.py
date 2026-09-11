@@ -1570,6 +1570,18 @@ def inspect_pcb(
             row['status'] = 'UNKNOWN'
             row['reason'] = 'CAPTURE_QUALITY_RECHECK; RAW_STAGE_EVIDENCE_PRESERVED'
 
+    validated_decision = {"status": board_status, "reason": board_reason}
+    advisory_candidates = build_advisory_candidates(slot_reports)
+    provider_health = build_provider_health(slot_reports, yolo_status=yolo.last_status, yolo_reason=yolo.last_reason)
+    from operational_decision import decide
+    decision_policy = json.loads((PROJECT_DIR / "vision_assembly/config/inspection_fusion_contract.json").read_text()).get("operational_decision", {})
+    operational_decision = None
+    if decision_policy.get("mode") == "PROVISIONAL_BINARY_V1":
+        operational_decision = decide(slot_reports, advisory_candidates, capture_quality,
+                                      alignment_valid, provider_health, board_status)
+        board_status = operational_decision["status"]
+        board_reason = "PROVISIONAL:" + ",".join(operational_decision["reasons"])
+
     diagnostic_image = _render_slot_diagnostic(
         registered.image_bgr,
         slots,
@@ -1641,6 +1653,8 @@ def inspect_pcb(
         "input_sha256": _image_hash(image_path),
         "status": board_status,
         "reason": board_reason,
+        "validated_decision": validated_decision,
+        "operational_decision": operational_decision,
         "pose_display_audit": pose_display_audit,
         "capture_quality": capture_quality,
         "evidence_audit": evidence_audit,

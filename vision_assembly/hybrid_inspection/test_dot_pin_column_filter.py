@@ -57,3 +57,18 @@ def test_conflict_cannot_promote_expected_corner(monkeypatch):
     r=inspector.check_gpu_hbm_dot(np.zeros((240,170,3),np.uint8),suppress_pin_columns=True)
     assert r.measured["winner"] == "lower_left"
     assert r.status == "UNKNOWN"
+
+@pytest.mark.parametrize('reverse', [False, True])
+def test_large_end_pin_and_round_dot_conflict_abstains(monkeypatch, reverse):
+    blobs = [
+        dict(x=146.27, y=44.95, area=270., circularity=.56554),
+        dict(x=58.66, y=175.52, area=229.5, circularity=.89171),
+    ]
+    if reverse:
+        blobs = [dict(c, x=170-c['x'], y=240-c['y']) for c in blobs]
+    monkeypatch.setattr(inspector, '_white_components', lambda image: (None, blobs))
+    result = inspector.check_gpu_hbm_dot(
+        np.zeros((240, 170, 3), np.uint8), suppress_pin_columns=True)
+    assert result.status == 'UNKNOWN'
+    assert result.reason == 'WHITE_DOT_SHAPE_POSITION_CONFLICT'
+    assert result.measured['recapture_recommended']
