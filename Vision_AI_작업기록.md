@@ -1,6 +1,6 @@
 # Vision/AI 작업 기록
 
-Latest grouped record: [GoPro bundle lifecycle and remote rqt diagnostics](docs/logs/vision.md#2026-09-11-gopro-bundle-lifecycle-and-remote-rqt-diagnostics). Detailed entries are maintained there only; historical entries below are preserved.
+Latest grouped record: [S22 segmentation CPU execution repair](docs/logs/vision.md#2026-09-11-s22-segmentation-cpu-execution-repair). Detailed entries are maintained there only; historical entries below are preserved.
 
 ## 2026-09-05 정상 복귀 확인 및 사용자 충격 전후 재촬영 묶음
 

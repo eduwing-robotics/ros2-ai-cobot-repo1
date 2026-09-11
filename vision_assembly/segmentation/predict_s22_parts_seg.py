@@ -194,7 +194,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--imgsz", type=int, default=1280)
     parser.add_argument("--conf", type=float, default=0.01)
     parser.add_argument("--iou", type=float, default=0.55)
-    parser.add_argument("--device", default="0")
+    parser.add_argument("--device", default="auto",
+                        help="auto selects CUDA device 0 when available, otherwise CPU")
     return parser.parse_args()
 
 
@@ -208,8 +209,9 @@ def main() -> None:
         raise FileNotFoundError(
             f"S22 segmentation weights do not exist: {weights}. Train the model first."
         )
-    if not torch.cuda.is_available():
-        raise RuntimeError("CUDA is unavailable; run S22 segmentation on the RTX GPU host")
+    device = args.device
+    if device == "auto":
+        device = "0" if torch.cuda.is_available() else "cpu"
     image = cv2.imread(str(image_path), cv2.IMREAD_COLOR)
     if image is None:
         raise RuntimeError(f"Cannot decode inspection image: {image_path}")
@@ -223,7 +225,7 @@ def main() -> None:
         conf=args.conf,
         iou=args.iou,
         nms=True,
-        device=args.device,
+        device=device,
         verbose=False,
         retina_masks=True,
     )[0]
@@ -368,6 +370,7 @@ def main() -> None:
         "input_image": str(image_path),
         "input_sha256": input_hash,
         "weights": str(weights),
+        "inference_device": device,
         "thresholds": {
             "model_floor": args.conf,
             "class_confidence": CLASS_CONFIDENCE,

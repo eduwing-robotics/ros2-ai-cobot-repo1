@@ -1,5 +1,26 @@
 # AI/Vision 작업 기록
 
+## 2026-09-11 S22 segmentation CPU execution repair
+
+- The S22 segmentation subprocess rejected every non-CUDA run before inference,
+  leaving slot-relative pose unavailable even after PatchCore CPU support.
+  Its default device is now `auto` (CUDA 0 when available, CPU otherwise);
+  explicit device requests still go to Ultralytics. Reports record the selected
+  device. Model weights, input pixels, thresholds and authority are unchanged.
+- A saved canonical image was replayed with CUDA hidden and all providers enabled:
+  `/tmp/inspection_full_cpu_followup/20260911_155357_391074/hybrid_report.json`.
+  Segmentation matched all 25 slots, PatchCore had no unavailable slots, and
+  displayed candidates were zero. Five experimental VRM seating stages remain
+  disabled. Final status is UNKNOWN, not a certification of normality.
+- Replayed the previously missed, user-labelled VRM04 compound rotation/lip
+  control `s22_inspection_roi_20260909_115915.png`: exactly VRM04 received
+  DIR?/POSE?, with final UNKNOWN. Report:
+  `/tmp/inspection_rotation_cpu_followup/20260911_155451_912834/hybrid_report.json`.
+  This reused development control is not independent accuracy evidence.
+- Seven existing segmentation geometry/label tests passed; syntax and whitespace
+  checks passed. No new capture, training, server restart or robot/conveyor command.
+  Independent physical validation remains outstanding.
+
 ## 2026-09-11 GoPro bundle lifecycle and remote rqt diagnostics
 
 - The user requested GoPro startup with the conveyor/inspection server and
