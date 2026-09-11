@@ -212,7 +212,7 @@ namespace MainUnity.Runtime.ConveyBelt
             Vector2 scale = beltMaterial.mainTextureScale;
             if (size.z > 0f)
                 beltMaterial.mainTextureOffset +=
-                    Vector2.down * distance * scale.y / size.z;
+                    Vector2.up * distance * scale.y / size.z;
         }
 
         static float MoveDistance(float remaining, float step) =>

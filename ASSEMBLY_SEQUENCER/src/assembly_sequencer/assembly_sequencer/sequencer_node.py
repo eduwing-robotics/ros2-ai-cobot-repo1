@@ -170,7 +170,7 @@ class AssemblySequencer(Node):
                 snapshot.update({action + "_reason": AssemblySequencer.control_reason(self, action)
                     for action in ("pause", "resume", "cancel")})
                 snapshot["controls_available"] = True
-                snapshot["force_cancel_available"] = self.active is not None
+                snapshot["force_cancel_available"] = False
                 # Presentation uses the executing backend's monotonic deadline, not a new UI timer.
                 waiting = getattr(self.backend, "_display_wait", None)
                 if self.active is not None and waiting and not snapshot.get("error_code"):
@@ -195,22 +195,10 @@ class AssemblySequencer(Node):
             return self.conveyor_failed(command, response)
 
         if command_type == "force_cancel":
-            job_id = command["job_id"]
-            terminal = self.terminal_snapshot or {}
-            if self.active is None:
-                if (terminal.get("job_id") == job_id and terminal.get("error_code") == "EXECUTION_FORCE_CANCELLED"
-                        and terminal.get("db_sync_state") == "SYNCED"):
-                    return self.set_response(response, True, job_id)
-                return self.set_response(response, False, job_id, "NOT_ACTIVE", "일치하는 활성 Job이 없습니다.")
-            if self.active["job_id"] != job_id:
-                return self.set_response(response, False, job_id, "NOT_ACTIVE", "다른 Job은 강제 취소할 수 없습니다.")
-            active = self.active
-            active["force_cancel_requested"] = True
-            self.finalize_cancel(active, "생산 기록 강제 취소 · 설비 정지 미확인")
-            if self.active is active:
-                return self.set_response(response, False, job_id, "DB_ERROR", active["message"])
-            self.get_logger().warning(f"FORCE_CANCEL job_id={job_id} unit_id={active['unit_id']} equipment_stop=unconfirmed")
-            return self.set_response(response, True, job_id)
+            return self.set_response(
+                response, False, command["job_id"], "CONTROL_REJECTED",
+                "설비 정지 확인 없는 생산 기록 강제 종료는 안전 정책상 지원하지 않습니다.",
+            )
 
         if command_type in {"pause", "resume", "cancel"}:
             job_id = command["job_id"]
@@ -255,8 +243,9 @@ class AssemblySequencer(Node):
             if self.active.get("inspection_hold"):
                 return self.set_response(response, False, job_id, "BUSY", "inspection resolution is required")
             if self.runtime_mode == "real":
-                if (command_type == "cancel" and not self.active.get("backend_started") and
-                        self.active["state"] == "PAUSED"):
+                if (command_type == "cancel" and (
+                        not self.active.get("backend_started") or
+                        self.active["state"] == "ASSEMBLY_COMPLETED")):
                     active = self.active
                     if active.get("control_pending"):
                         return self.set_response(response, True, job_id)
@@ -457,9 +446,11 @@ class AssemblySequencer(Node):
         if active.get("inspection_hold"):
             return "검사 판정 해소가 필요합니다."
         if not active.get("backend_started"):
-            if action == "cancel" and active["state"] == "PAUSED":
+            if action == "cancel":
                 return ""
-            return "로봇 조립 전에는 보류 작업 취소만 지원합니다."
+            return "로봇 조립 전에는 작업 취소만 지원합니다."
+        if active["state"] == "ASSEMBLY_COMPLETED":
+            return "" if action == "cancel" else "검사 이동 또는 검사 중에는 작업 취소만 지원합니다."
         if active["state"] not in {"STARTED", "PLACED", "PAUSED"}:
             return "현재 공정에서는 제어를 지원하지 않습니다."
         return self.backend.control_reason(active.get("execution_id"), action, active["state"] == "PAUSED")

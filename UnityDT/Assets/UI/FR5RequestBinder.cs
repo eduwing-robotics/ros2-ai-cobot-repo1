@@ -517,8 +517,12 @@ namespace MainUnity.UI
             string forceReason = uiMaster?.Scenario?.GetControlBlockReason("force_cancel") ?? "실행 경로 없음";
             selectedForceCancel?.SetEnabled(!cancelInFlight && string.IsNullOrEmpty(jobQueryError) &&
                 (job?.job_status == "RUNNING" || job?.job_status == "PAUSED") && string.IsNullOrEmpty(forceReason));
-            if (selectedForceCancel != null) selectedForceCancel.tooltip = string.IsNullOrEmpty(forceReason)
-                ? "생산 기록만 종료합니다. 설비 정지는 보장하지 않습니다." : forceReason;
+            if (selectedForceCancel != null)
+            {
+                selectedForceCancel.text = "관리자 기록 종료";
+                selectedForceCancel.tooltip = string.IsNullOrEmpty(forceReason)
+                    ? "설비 정지 확인 없는 기록 종료는 사용할 수 없습니다." : forceReason;
+            }
             var frame = uiMaster?.AssemblyProgress?.Latest;
             bool matching = job != null && frame?.JobId == job.job_id;
             string cancelReason = pending ? "" : !matching ? "선택한 작업의 실행 상태를 확인 중입니다." :
@@ -548,7 +552,7 @@ namespace MainUnity.UI
 
         static string StatusText(string status) => status switch
         {
-            "PENDING" => "실행 대기", "RUNNING" => "실행 중", "PAUSED" => "불량 확인 대기", "COMPLETED" => "완료",
+            "PENDING" => "실행 대기", "RUNNING" => "실행 중", "PAUSED" => "일시정지 또는 판정 대기", "COMPLETED" => "완료",
             "FAILED" => "실행 실패", "CANCELLED" => "취소", _ => "상태 확인 필요"
         };
 
@@ -702,7 +706,7 @@ namespace MainUnity.UI
 
         string StartBlockedReason(Job job)
         {
-            if (job.job_status == "PAUSED") return "불량 확인 대기 · 운전 화면에서 재개 또는 취소하세요.";
+            if (job.job_status == "PAUSED") return "일시정지 또는 판정 대기 · 운전 화면에서 상태를 확인하세요.";
             if (job.job_status != "PENDING" && job.job_status != "RUNNING") return "완료된 작업은 실행할 수 없습니다.";
             if (!string.IsNullOrEmpty(jobQueryError)) return "작업 상태를 다시 조회한 뒤 실행하세요.";
             if (cancelInFlight) return "취소 요청 처리 중";
