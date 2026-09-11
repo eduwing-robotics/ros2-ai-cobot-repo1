@@ -1002,26 +1002,12 @@ namespace MainUnity.UI
                 : frame.State == AssemblyState.Failed ? "bad" : "accent");
         }
 
-        /// <summary>JOB 패널의 현재 phase 와 슬롯 줄이다. 하단 패널과 같은 프레임을 읽는다.</summary>
+        /// <summary>좌측 하단에는 callback 내부 동작이 아닌 Sequencer의 전체 공정 단계를 표시한다.</summary>
         void RefreshUnitLine(AssemblyProgressFrame frame)
         {
             if (unitPhase != null)
             {
-                unitPhase.text = "현재 공정 · " + (frame == null ? "피드백 없음" : frame.State switch
-                {
-                    AssemblyState.Idle => "대기",
-                    AssemblyState.Started => "시작",
-                    AssemblyState.Picked => "부품 이동 중",
-                    AssemblyState.Placed => "장착",
-                    AssemblyState.ConveyorMoving => "컨베이어 이동",
-                    AssemblyState.Paused => "일시정지",
-                    AssemblyState.Completed => "완료",
-                    AssemblyState.Failed => "실패",
-                    _ => "확인 필요"
-                });
-                if (frame != null && !frame.IsTerminal && frame.State != AssemblyState.Paused &&
-                    !string.IsNullOrWhiteSpace(frame.Message))
-                    unitPhase.text = "현재 공정 · " + DescribeStage(frame.Message);
+                unitPhase.text = "전체 공정 · " + DescribeWorkflow(frame);
                 // FAILED 가 RUNNING·IDLE 과 같은 무게로 보이면 실패를 못 알아본다.
                 // 진행 중은 색을 얻지 않는다 — 이상만 색을 얻는다(Docs/ui-design.md 1절).
                 SetTone(unitPhase, frame != null && frame.State == AssemblyState.Failed ? "bad" : "none");
@@ -1046,32 +1032,21 @@ namespace MainUnity.UI
         {
             if (operationDetail != null)
             {
-                string detail = frame == null ? "생산 공정 피드백 대기" : frame.State switch
-                {
-                    AssemblyState.Idle => "실행 요청 대기",
-                    AssemblyState.Completed => string.IsNullOrEmpty(frame.Message) ? "목표 PASS 달성 여부는 작업 화면에서 확인" : frame.Message,
-                    AssemblyState.Failed => string.IsNullOrEmpty(frame.Message) ? "실패 원인은 최근 이벤트에서 확인" : frame.Message,
-                    AssemblyState.Paused => string.IsNullOrEmpty(frame.Message) ? "일시정지 중 · 재개 확인 필요" : frame.Message,
-                    _ => string.IsNullOrEmpty(frame.Message) ? "다음 진행 피드백 대기" : DescribeStage(frame.Message)
-                };
-                if (frame != null && !frame.IsTerminal && frame.State != AssemblyState.Paused &&
-                    !string.IsNullOrEmpty(frame.CurrentPhase))
-                    detail = DescribeOperation(frame);
-                if (statusManager != null && statusManager.State == RobotRunState.Error)
-                    detail = "로봇 오류 · 상단 알람 확인";
-                else if (statusManager != null && statusManager.State == RobotRunState.Disconnected)
-                    detail = "로봇 상태 수신 중단 · 운전 상태 확인 필요";
-                if (frame != null)
-                    detail = frame.DisplayStatus + (!string.IsNullOrEmpty(frame.CurrentPhase) ? " · " + DescribeOperation(frame) : "");
+                bool hasCallback = frame != null && (!string.IsNullOrEmpty(frame.CurrentEvent) ||
+                    !string.IsNullOrEmpty(frame.CurrentAction) || !string.IsNullOrEmpty(frame.CurrentPhase));
+                string detail = hasCallback ? DescribeOperation(frame) : frame == null
+                    ? "마지막 callback 대기"
+                    : frame.State == AssemblyState.Failed
+                        ? string.IsNullOrEmpty(frame.Message) ? "실패 callback 없음" : frame.Message
+                        : frame.State == AssemblyState.Completed ? "작업 완료 · 마지막 callback 없음"
+                        : "마지막 callback 대기";
                 operationDetail.text = detail;
                 operationDetail.tooltip = detail;
-                SetTone(operationDetail, frame?.State == AssemblyState.Failed ||
-                    statusManager?.State == RobotRunState.Error ? "bad" : "none");
+                SetTone(operationDetail, frame?.State == AssemblyState.Failed ? "bad" : "none");
             }
             if (operationAge != null)
-                operationAge.text = frame == null ? "공정 수신 기록 없음" :
-                    "공정 수신 " + Age(frame.ReceiveTimeSeconds);
-
+                operationAge.text = frame == null ? "callback 수신 기록 없음" :
+                    "마지막 callback 상태 수신 " + Age(frame.ReceiveTimeSeconds);
         }
 
         /// <summary>
@@ -1101,7 +1076,7 @@ namespace MainUnity.UI
 
         static string DescribeOperation(AssemblyProgressFrame frame)
         {
-            string phase = frame.CurrentPhase;
+            string phase = frame.CurrentPhase ?? string.Empty;
             // 경유점 번호는 레시피마다 달라진다. 동작 이름과 실제 이벤트로 표시한다.
             int separator = phase.IndexOf('_');
             if (separator > 0 && int.TryParse(phase.Substring(0, separator), out _))
@@ -1475,6 +1450,25 @@ namespace MainUnity.UI
             }
             // 툴 오프셋 · 페이로드는 하드코딩된 상수였다. 레시피/툴 정의에서 오는 값이
             // 생기기 전까지 지어낸 숫자를 띄우지 않는다. 카메라는 RefreshCamera 가 맡는다.
+        }
+
+        static string DescribeWorkflow(AssemblyProgressFrame frame)
+        {
+            if (frame == null) return "피드백 없음";
+            if (!frame.IsTerminal && frame.State != AssemblyState.Paused && !string.IsNullOrWhiteSpace(frame.Message))
+                return DescribeStage(frame.Message);
+            return frame.State switch
+            {
+                AssemblyState.Idle => "대기",
+                AssemblyState.Started => "시작",
+                AssemblyState.Picked => "부품 이동 중",
+                AssemblyState.Placed => "장착",
+                AssemblyState.ConveyorMoving => "컨베이어 이동",
+                AssemblyState.Paused => "일시정지",
+                AssemblyState.Completed => "완료",
+                AssemblyState.Failed => "실패",
+                _ => "확인 필요"
+            };
         }
     }
 }
