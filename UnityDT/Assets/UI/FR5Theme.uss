@@ -1048,13 +1048,17 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
 .page--inspect .inspect-verdict.bad { color: var(--c-bad-ink); }
 .page--inspect .inspect-verdict.warn { color: var(--c-warn); }
 .page--inspect .inspect-message { font-size: 16px; color: var(--c-ink-2); white-space: normal; min-height: 48px; flex-shrink: 0; }
-.page--inspect .inspect-checks { margin-top: 8px; }
+.page--inspect .panel__body { min-height: 0; flex-shrink: 1; }
+/* Keep the verdict and time fixed while recipe slot results scroll. */
+.page--inspect .inspect-checks-scroll { flex-grow: 1; flex-shrink: 1; flex-basis: 0; min-height: 0; margin-top: 8px; }
+.page--inspect .inspect-checks { margin-top: 0; }
 .page--inspect .inspect-checks Label { font-size: 14px; white-space: normal; }
 .page--inspect .inspect-time-row { border-top-width: 1px; border-top-color: var(--c-edge); padding-top: 12px; margin-top: 12px; flex-shrink: 0; }
 .page--inspect .inspect-time { font-size: 16px; color: var(--c-ink); }
 .page--inspect .inspect-defects-scroll { flex-grow: 1; min-height: 0; }
 .page--inspect #defect-grid > Label { font-size: 15px; white-space: normal; }
-.page--inspect .inspect-units-scroll { height: 78px; padding: 10px 18px; }
+.page--inspect #defect-grid > .slotchip { width: 100%; height: auto; min-height: 44px; margin-right: 0; padding: 10px; flex-shrink: 0; }
+.page--inspect .inspect-units-scroll { flex-grow: 1; flex-shrink: 1; min-height: 0; padding: 4px 18px; }
 .page--inspect #unit-strip { align-items: center; }
 .page--inspect #unit-strip .chip { min-width: 120px; height: 36px; margin-right: 8px; flex-shrink: 0; }
 .page--inspect #unit-strip .chip__text { font-size: 14px; }
