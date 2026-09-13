@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- TurtleBot eth0=10.77.5.2/30. Wi-Fi remains available for SSH.
+     Robot ROS traffic uses Ethernet; laptop ROS keeps its team-facing WLAN. -->
+<dds xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
+  <profiles>
+    <transport_descriptors>
+      <transport_descriptor>
+        <transport_id>ksmc_robot_udp</transport_id>
+        <type>UDPv4</type>
+        <interfaceWhiteList>
+          <interface>lo</interface>
+          <interface>eth0</interface>
+        </interfaceWhiteList>
+        <non_blocking_send>true</non_blocking_send>
+      </transport_descriptor>
+      <transport_descriptor>
+        <transport_id>ksmc_robot_shm</transport_id>
+        <type>SHM</type>
+      </transport_descriptor>
+    </transport_descriptors>
+    <participant profile_name="ksmc_robot_wired" is_default_profile="true">
+      <rtps>
+        <userTransports>
+          <transport_id>ksmc_robot_udp</transport_id>
+          <transport_id>ksmc_robot_shm</transport_id>
+        </userTransports>
+        <useBuiltinTransports>false</useBuiltinTransports>
+      </rtps>
+    </participant>
+  </profiles>
+</dds>

@@ -1,6 +1,9 @@
 """User-authorized provisional disposition; does not certify model authority."""
 
 def decide(slots, candidates, quality, alignment_valid, health, validated_status):
+    # Position uncertainty alone is not a provisional rejection. Keep the raw
+    # UNKNOWN evidence intact; candidates, provider errors and all gates below
+    # still reject. This is not a validated position PASS.
     reasons = []
     ids = [s.get('slot_id') for s in slots]
     if len(ids) != 25 or len(set(ids)) != 25 or any(not x for x in ids):

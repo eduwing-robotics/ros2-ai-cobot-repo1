@@ -105,7 +105,7 @@ def test_ros_services_state_and_chunk_roundtrip(tmp_path):
         store.thread.join(3)
         complete = call(GetInspection, 'get', GetInspection.Request(inspection_id=iid))
         record = json.loads(complete.record_json)
-        assert record['status'] == 'COMPLETED' and record['result']['decision'] == 'UNKNOWN'
+        assert record['status'] == 'COMPLETED' and record['result']['decision'] == 'FAIL'
         assert call(SubmitInspection, 'submit', req).success
         assert len(calls) == 1
         missing = call(GetInspection, 'get', GetInspection.Request(inspection_id=str(uuid.uuid4())))
@@ -134,7 +134,7 @@ def test_ros_services_state_and_chunk_roundtrip(tmp_path):
         while (not graph.ready() or not any(e['status'] == 'COMPLETED' for e in events)) and time.monotonic() < deadline:
             executor.spin_once(timeout_sec=.05)
         assert graph.ready()
-        assert any(e['inspection_id'] == iid and e['decision'] == 'UNKNOWN' for e in events)
+        assert any(e['inspection_id'] == iid and e['decision'] == 'FAIL' for e in events)
         assert not any(name == '/cmd_vel' for name, _ in client.get_topic_names_and_types())
         mock_conveyor.destroy_timer(timer)
     finally:

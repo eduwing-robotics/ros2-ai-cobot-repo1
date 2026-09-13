@@ -91,12 +91,14 @@ class GoProCamera3(Node):
         self.frame_lock = threading.Lock()
         self.latest_frame = None
         self.latest_capture_stamp = None
+        self.latest_frame_time = None
         self.latest_frame_id = 0
         self.published_frame_id = 0
         self.received_frames = 0
         self.published_frames = 0
         self.restart_count = 0
         self.publish_period = 1.0 / float(publish_fps)
+        self.next_raw_publish_at = 0.0
         self.jpeg_quality = int(jpeg_quality)
         self._start_pipeline()
         # Do not include camera/decoder startup time in the first FPS sample.
@@ -137,9 +139,13 @@ class GoProCamera3(Node):
             self.get_logger().warning(f"GoPro Wi-Fi keep-alive failed: {exc}")
 
     def _decoder_command(self):
+        # fifo_size counts 188-byte TS packets, not bytes. The former
+        # 2,000,000 setting allowed ~376 MB of old video to queue up. Keep
+        # a short burst cushion; this is a byte bound, not a latency promise.
+        # Prefer recovery over many seconds of queued preview during CPU stalls.
         udp_url = (
             f"udp://0.0.0.0:{self.port}"
-            "?fifo_size=2000000&overrun_nonfatal=1&buffer_size=1048576"
+            "?fifo_size=2048&overrun_nonfatal=1&buffer_size=262144"
         )
         return [
             "ffmpeg",
@@ -150,6 +156,12 @@ class GoProCamera3(Node):
             "nobuffer",
             "-flags",
             "low_delay",
+            # Automatic decoder/filter pools otherwise scale with all laptop
+            # cores. Two workers sustain 720p while leaving room for S22/ROI.
+            "-threads",
+            "2",
+            "-filter_threads",
+            "2",
             "-f",
             "mpegts",
             "-i",
@@ -161,6 +173,10 @@ class GoProCamera3(Node):
             f"scale={self.width}:{self.height}:flags=fast_bilinear",
             "-pix_fmt",
             "bgr24",
+            # rawvideo needs no parallel frame encoding. Avoid an automatic
+            # output frame-worker queue between decoding and the latest slot.
+            "-threads",
+            "1",
             "-fps_mode",
             "passthrough",
             "-f",
@@ -294,6 +310,10 @@ class GoProCamera3(Node):
             if not self.running:
                 return
             self.restart_count += 1
+            with self.frame_lock:
+                self.latest_frame = None
+                self.latest_capture_stamp = None
+                self.latest_frame_time = None
             self.get_logger().warning(
                 f"No complete frame for {self.stall_timeout:.1f}s; "
                 f"restarting GoPro stream (restart #{self.restart_count})"
@@ -338,6 +358,7 @@ class GoProCamera3(Node):
             with self.frame_lock:
                 self.latest_frame = frame
                 self.latest_capture_stamp = self.get_clock().now().to_msg()
+                self.latest_frame_time = time.monotonic()
                 self.latest_frame_id += 1
                 self.received_frames += 1
 
@@ -370,7 +391,12 @@ class GoProCamera3(Node):
             frame = self.latest_frame
             frame_id = self.latest_frame_id
             capture_stamp = self.latest_capture_stamp
+            frame_time = self.latest_frame_time
         if frame is None or frame_id == self.published_frame_id:
+            return
+        # This bounds only local decode-to-publish age, not camera capture age.
+        # Do not resurrect an old frame after a publisher pause or stream loss.
+        if frame_time is None or time.monotonic() - frame_time > 0.25:
             return
         self.published_frame_id = frame_id
 
@@ -421,13 +447,17 @@ class GoProCamera3(Node):
             self.compressed_publisher.publish(compressed)
             self.published_frames += 1
 
-        # Keep a low-rate raw topic for tools that cannot consume compressed
-        # images, without forcing DDS to move ~83 MB/s continuously.
-        if frame_id % 6 == 0 and self.raw_publisher.get_subscription_count() > 0:
+        # Decoding and publication skip frames independently. A frame-number
+        # modulus can therefore miss every eligible frame. Use elapsed time
+        # for the optional 1 Hz raw preview, with no catch-up bursts.
+        now = time.monotonic()
+        if (now >= self.next_raw_publish_at
+                and self.raw_publisher.get_subscription_count() > 0):
             raw = self.bridge.cv2_to_imgmsg(frame, encoding="bgr8")
             raw.header.stamp = stamp
             raw.header.frame_id = "camera3_optical_frame"
             self.raw_publisher.publish(raw)
+            self.next_raw_publish_at = now + 1.0
 
     def report_stats(self):
         now = time.monotonic()

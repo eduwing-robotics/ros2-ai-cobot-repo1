@@ -47,7 +47,7 @@ def test_same_request_owns_two_attempts_and_duplicate_never_recaptures(tmp_path,
         args.event_output = directory/'event.json'
         event = pipeline.run_pipeline(args)
         events.append(event)
-        # Public transport keeps UNKNOWN/PASS/FAIL; HOLD is not a new enum.
+        # Internal retry evidence stays tri-state; the public result is binary.
         return {'decision': event['final_status']}, {'ready': False}
 
     monkeypatch.setattr(pipeline, 'run_stage', stage)
@@ -70,7 +70,7 @@ def test_same_request_owns_two_attempts_and_duplicate_never_recaptures(tmp_path,
     final = store.get(req['inspection_id'])
     assert all(final[k] == v for k, v in req.items())
     assert final['status'] == 'COMPLETED'
-    assert final['result']['decision'] == second_decision
+    assert final['result']['decision'] == ('FAIL' if second_decision == 'UNKNOWN' else second_decision)
     assert requests == [req]
     assert len(calls) == 2
     assert len(events[0]['attempts']) == 2

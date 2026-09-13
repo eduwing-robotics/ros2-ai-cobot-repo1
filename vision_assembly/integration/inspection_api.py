@@ -21,6 +21,94 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 ROOT = Path(__file__).resolve().parents[2]
 LOCK = ROOT / 'runtime/s22_camera_control/auto_inspection_trigger.lock'
 IMAGE_NAME = '02_annotated_report.png'
+DEMO_CONFIRMATION_POLICY = 'USER_AUTHORIZED_DEMO_CANDIDATES_V1'
+
+
+def demo_confirmation_enabled():
+    contract = json.loads((ROOT / 'vision_assembly/config/inspection_fusion_contract.json').read_text())
+    return contract.get('operational_decision', {}).get('demo_confirmation', {}).get('mode') == DEMO_CONFIRMATION_POLICY
+
+
+def confirm_demo_candidates(result):
+    """Confirm a portfolio-demo disposition, not underlying model validation."""
+    policy = result.get('operational_decision') or {}
+    if not (result.get('decision') == policy.get('status') == 'FAIL'
+            and policy.get('mode') == 'PROVISIONAL_BINARY_V1'
+            and policy.get('validated') is False
+            and policy.get('reasons') == ['DEFECT_CANDIDATE']):
+        return
+    findings, slots = result.get('findings', []), result.get('slots', [])
+    by_id = {s.get('slot_id'): s for s in slots}
+    # Never invent a defect for capture/registration/provider failures or
+    # incomplete/malformed results. Confirm only existing, identifiable slots.
+    if (not findings or len(slots) != 25 or len(by_id) != 25 or None in by_id
+            or len({f.get('finding_id') for f in findings}) != len(findings)):
+        return
+    for f in findings:
+        slot = by_id.get(f.get('slot_id'), {})
+        if (not f.get('finding_id') or not f.get('primary_defect_code')
+                or not f.get('slot_code') or f['slot_code'] != slot.get('slot_code')
+                or f.get('authority') not in ('ADVISORY_ONLY', 'AUTHORITATIVE')):
+            return
+    for f in findings:
+        if f.get('authority') == 'ADVISORY_ONLY':
+            f['source_authority'] = 'ADVISORY_ONLY'
+            f['source_confirmed_defect'] = f.get('confirmed_defect', False)
+            f['decision_basis'] = DEMO_CONFIRMATION_POLICY
+            f['authority'] = 'AUTHORITATIVE'
+            f['confirmed_defect'] = True
+    result['confirmation_policy'] = {
+        'mode': DEMO_CONFIRMATION_POLICY, 'scope': 'PORTFOLIO_DEMO_ONLY',
+        'model_validated': False,
+        'basis': 'User-approved candidate confirmation, not measured defect verification.'}
+    result['defects'] = [dict(slot_code=f['slot_code'], defect_type=f['primary_defect_code'],
+                              finding_id=f['finding_id']) for f in findings
+                         if f.get('confirmed_defect') is True and f.get('authority') == 'AUTHORITATIVE']
+    if 'summary' in result:
+        result['summary']['confirmed_defect_count'] = len(result['defects'])
+        result['summary']['advisory_candidate_count'] = sum(f['authority'] == 'ADVISORY_ONLY' for f in findings)
+
+
+def public_result(result, *, demo_confirmation=False):
+    """Binary operator view; never rewrite archived provider evidence."""
+    result = copy.deepcopy(result)
+    if demo_confirmation:
+        confirm_demo_candidates(result)
+    policy = result.get('operational_decision') or {}
+    provisional = (policy.get('mode') == 'PROVISIONAL_BINARY_V1'
+                   and policy.get('validated') is False
+                   and policy.get('status') == result.get('decision')
+                   and result.get('decision') in ('PASS', 'FAIL'))
+    if result.get('decision') not in ('PASS', 'FAIL'):
+        result['decision'] = 'FAIL'
+        result['reason'] = 'INSPECTION_INCONCLUSIVE'
+    # Only the existing authorized operational policy may allow an uncertain
+    # slot. Legacy/incomplete results fail closed; no blanket UNKNOWN -> PASS.
+    localizable = provisional and bool(policy.get('reasons')) and set(policy['reasons']) <= {
+        'NO_DISPLAYED_DEFECT_CANDIDATE', 'DEFECT_CANDIDATE'}
+    findings = result.get('findings', [])
+    failing_ids = {f.get('slot_id') for f in findings}
+    for finding in findings:
+        finding['decision'] = 'FAIL'
+        # Candidate rejection is not a confirmed physical defect.
+        finding.pop('measurements', None)
+    for slot in result.get('slots', []):
+        slot['decision'] = ('PASS' if localizable and slot.get('decision') != 'FAIL'
+                            and slot.get('slot_id') not in failing_ids else 'FAIL')
+        slot['reason'] = ('PROVISIONAL_NO_DEFECT_CANDIDATE' if slot['decision'] == 'PASS'
+                          else 'OPERATIONAL_REJECTION')
+        slot.pop('stages', None)
+        # Raw status-bearing measurements belong to the local evidence archive.
+        measurements = slot.get('measurements', {})
+        measurements.pop('pin_status', None)
+        measurements.pop('presence_state', None)
+    if 'summary' in result:
+        result['summary']['slot_decisions'] = {
+            status: sum(s['decision'] == status for s in result.get('slots', []))
+            for status in ('PASS', 'FAIL')}
+    result.pop('validated_decision', None)
+    result.pop('diagnostics', None)
+    return result
 
 
 def prepare_result(report, directory, request, config=None):
@@ -103,6 +191,7 @@ class Store:
         self.root = Path(root)
         self.root.mkdir(parents=True, exist_ok=True, mode=0o700)
         self.ready, self.runner = ready, runner
+        self.demo_confirmation = demo_confirmation_enabled()
         self.lock = threading.RLock()
         self.active = None
         self.thread = None
@@ -207,6 +296,12 @@ class Store:
             # Old ZIP records remain locally intact; never expose obsolete links.
             data.pop('evidence', None)
             data.setdefault('image', dict(ready=False, error='legacy_zip_record'))
+            if isinstance(data.get('result'), dict):
+                data['result'] = public_result(data['result'], demo_confirmation=self.demo_confirmation)
+            for view in data['image'].get('countermeasure_views', []):
+                rendering = view.get('rendering', {})
+                if rendering.get('decision') == 'UNKNOWN':
+                    rendering['decision'] = 'FAIL'
             return data
 
 
@@ -215,42 +310,20 @@ class Runner:
         self.timeout, self.lock_fd = timeout, lock_fd
         self.source_topic = source_topic
         self.stop = threading.Event()
+        from inspection_process import InspectionProcess
+        self.process = InspectionProcess(lock_fd)
+
+    def close(self):
+        self.stop.set()
+        self.process.close()
 
     def __call__(self, request, directory):
         if self.stop.is_set():
             raise RuntimeError('shutdown_before_capture')
         event = directory / 'event.json'
-        env = dict(os.environ, KSMC_VISION_EXPORT='0')
-        env.pop('KSMC_VISION_CONTEXT_FILE', None)
-        with (directory / 'execution.log').open('wb') as log:
-            child = subprocess.Popen([sys.executable, str(ROOT /
-                'vision_assembly/inspection/triggered_inspection_once.py'),
-                '--event-output', str(event), '--source-topic', self.source_topic],
-                env=env, stdout=log, stderr=subprocess.STDOUT, start_new_session=True,
-                pass_fds=(self.lock_fd,))
-            deadline = time.monotonic() + self.timeout
-            try:
-                while child.poll() is None:
-                    if self.stop.wait(.1) or time.monotonic() >= deadline:
-                        raise TimeoutError('shutdown_or_inspection_timeout')
-                if child.returncode:
-                    raise RuntimeError('capture_or_inspection_failed; see execution.log')
-            finally:
-                # Kill the complete child group, including camera subprocesses.
-                try:
-                    os.killpg(child.pid, signal.SIGTERM)
-                except ProcessLookupError:
-                    pass
-                try:
-                    child.wait(timeout=3)
-                except subprocess.TimeoutExpired:
-                    os.killpg(child.pid, signal.SIGKILL)
-                    child.wait()
-                # A descendant may outlive the immediate child or ignore TERM.
-                try:
-                    os.killpg(child.pid, signal.SIGKILL)
-                except ProcessLookupError:
-                    pass
+        self.process.execute(
+            ['--event-output', str(event), '--source-topic', self.source_topic],
+            directory / 'execution.log', timeout=self.timeout, stop=self.stop)
         data = json.loads(event.read_text())
         if data['pipeline_status'] != 'COMPLETED':
             raise RuntimeError('pipeline_not_completed')

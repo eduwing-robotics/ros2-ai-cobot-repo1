@@ -1,6 +1,6 @@
 # Vision/AI 작업 기록
 
-Latest grouped record: [Unity request path deployment of provisional decisions](docs/logs/vision.md#2026-09-11-unity-request-path-deployment-of-provisional-decisions). Detailed entries are maintained there only; historical entries below are preserved.
+Latest grouped record: [User-authorized portfolio demo candidate confirmation](docs/logs/vision.md#2026-09-13-user-authorized-portfolio-demo-candidate-confirmation). Detailed entries are maintained there only; historical entries below are preserved.
 
 ## 2026-09-05 정상 복귀 확인 및 사용자 충격 전후 재촬영 묶음
 

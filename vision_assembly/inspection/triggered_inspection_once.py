@@ -81,7 +81,7 @@ def run_stage(label: str, command: list[str]) -> None:
         )
 
 
-def run_pipeline(args: argparse.Namespace) -> dict[str, Any]:
+def run_pipeline(args: argparse.Namespace, *, inspector=None) -> dict[str, Any]:
     # These paths intentionally remain unresolved.  Capture and inspection
     # atomically repoint their ``latest`` symlinks; resolving here would pin
     # the pipeline to the previous image/report target.
@@ -130,10 +130,13 @@ def run_pipeline(args: argparse.Namespace) -> dict[str, Any]:
             raise PipelineError(f"inspection image does not exist: {image_path}")
 
         captured_image = image_path.resolve(strict=True)
-        run_stage(
-            "full-board inspection",
-            [str(args.inspector_script), "--image", str(captured_image)],
-        )
+        if inspector is None:
+            run_stage(
+                "full-board inspection",
+                [str(args.inspector_script), "--image", str(captured_image)],
+            )
+        else:
+            inspector(captured_image)
         new_report = file_identity(report_path)
         if new_report is None:
             raise PipelineError(
@@ -214,7 +217,7 @@ def run_pipeline(args: argparse.Namespace) -> dict[str, Any]:
         raise
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv=None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Take one true-optical S22 board photo, extract its PCB ROI, and "
@@ -239,7 +242,7 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="inspect the current ROI without controlling the phone (test/manual use)",
     )
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
 def main() -> int:

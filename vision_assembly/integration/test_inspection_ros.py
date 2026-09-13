@@ -39,7 +39,8 @@ def seeded(tmp_path):
 def test_durable_get_unknown_and_no_http_links(tmp_path):
     store, req, _ = seeded(tmp_path)
     record = ros.Transport(store).get(req)
-    assert record['result']['decision'] == 'UNKNOWN'
+    assert record['result']['decision'] == 'FAIL'
+    assert store.records[req.inspection_id]['result']['decision'] == 'UNKNOWN'
     assert '/api/' not in json.dumps(record)
     assert record['image']['service'] == '/vision/inspection/get_image'
     assert store.get(req.inspection_id)['image']['path'].startswith('/api/')
@@ -66,7 +67,7 @@ def test_submit_idempotency_busy_conflict_and_restart(tmp_path):
         gate.set()
         store.thread.join(3)
     restarted = ros.Transport(ros.Store(tmp_path, lambda: False, None))
-    assert restarted.submit(req)['result']['decision'] == 'UNKNOWN'
+    assert restarted.submit(req)['result']['decision'] == 'FAIL'
     assert len(calls) == 1
 
 

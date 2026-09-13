@@ -1,5 +1,394 @@
 # AI/Vision 작업 기록
 
+## 2026-09-13 User-authorized portfolio demo candidate confirmation
+
+- After being told that candidate-based operational FAIL conflicts with the
+  teammate DB's authoritative-confirmed-defect requirement, the user explicitly
+  authorized candidate confirmation for this portfolio project. Added the
+  `USER_AUTHORIZED_DEMO_CANDIDATES_V1` exception to the operational section of
+  the inspection contract; this is demo policy authority, not model calibration
+  or measured physical defect verification. Raw S22 hybrid fusion, geometry,
+  D435 optionality and provider ADVISORY_ONLY authority remain unchanged.
+- On ROS/HTTP operator reads, a complete 25-slot provisional FAIL whose sole
+  rejection reason is DEFECT_CANDIDATE may expose its existing, slot-matched
+  candidates as AUTHORITATIVE / confirmed_defect=true. The response retains
+  source_authority=ADVISORY_ONLY, source_confirmed_defect=false, decision_basis,
+  and a PORTFOLIO_DEMO_ONLY confirmation_policy with model_validated=false.
+  Confirmed counts and defects[] are rebuilt from the same findings. No raw
+  state file, image, archived export package, or training label is rewritten.
+- Missing/inconsistent slot or finding identity, incomplete board records,
+  registration/quality/provider/presence errors and legacy inconclusive results
+  do not gain invented confirmed defects. These exclusions can still require
+  separate handling by the teammate's strict DB; this task resolves the stated
+  candidate-only rejection case, not every execution/error disposition.
+- Verified the actual ROS response for inspection
+  `57c3847b-1265-50b0-861e-27497025db85`: COMPLETED, overall FAIL, slots PASS 16 /
+  FAIL 9, findings 9, confirmed_defect_count 9, advisory_candidate_count 0,
+  defects length 9 with identical finding IDs; every finding AUTHORITATIVE and
+  confirmed_defect=true, full response contains no UNKNOWN. Original stored
+  evidence remains nine advisory/unconfirmed candidates. DB insertion itself
+  was not performed or observed; the teammate must re-fetch and retry its own
+  persistence workflow. Historical diagnostic images retain their original
+  candidate annotations rather than falsely depict new model validation.
+- Validation: 607 hybrid/integration tests passed, 2 opt-in DDS tests skipped;
+  live production ROS GetInspection read above passed. Eleven new tests cover
+  explicit enablement, count/identity consistency, provenance, repeated reads,
+  immutable storage and non-promotion of execution/data errors. No HTTP server
+  was started: production transport remains ROS 2 with unchanged endpoints.
+- Deployment: no active inspection and conveyor INSPECTION_STOP/moving=false
+  verified before restarting the owned bundle in the existing execute/confirm
+  mode without GoPro. New conveyor launcher PID 156002 / inspection PID 156003
+  became ready. No move/reset, robot or still-capture request was issued; normal
+  shutdown zero-velocity safety-stop behavior was retained. GoPro was untouched.
+  This setting is demo-only and must not be represented as production-validated
+  inspection accuracy or used as verified model-training ground truth.
+
+## 2026-09-13 GoPro direct-topic backlog limits
+
+- User requests lower delay/dropouts specifically on Unity's existing
+  `/camera3/image_raw/compressed`, without lowering image quality. Modified the
+  GoPro sender itself, not only rqt: UDP FIFO 16384 -> 2048 TS packets
+  (3,080,192 -> 385,024 bytes), socket request 1,048,576 -> 262,144 bytes.
+  These are queue-size bounds, not a camera-to-display latency guarantee.
+  Preserved 1280x720, JPEG 75, 15 FPS, camera encoding, topic and ROS QoS.
+- The sender clears its retained frame when recovering and refuses to begin
+  publication of decoded frames older than 250 ms, measured with monotonic time.
+  This does not measure camera exposure time or bound a blocked DDS publish.
+  Kept existing latest-frame output and decoder/filter thread limits.
+- A trial with probe size 32768 / analysis 200000 us failed stream discovery
+  on this camera and was removed before final deployment. Default analysis is
+  retained. Final startup emitted transient missing-PPS messages, then recovered
+  without a pipeline restart; steady logs measured 29.8-30.2 input FPS and 15.0
+  output FPS, restart count zero during observation.
+- Final 30-second local ROS observation: direct compressed topic 450 frames,
+  15.0013 FPS, maximum interarrival gap 69.57 ms; existing rqt bridge output
+  449 frames, 15.0042 FPS, maximum gap 76.53 ms. Four sender tests passed,
+  covering stale-frame rejection, unchanged output properties, and raw-preview
+  pacing. `git diff --check` passed. No new production process/load test or
+  Unity-side measurement was performed. The previously reported approximately
+  three-second visual age still requires a physical-scene timing comparison;
+  local ROS header timestamps alone cannot prove its elimination.
+- Restarted only the owned GoPro sender, final execution session 39609.
+  Dedicated WLAN was already connected with power saving off, signal -40 dBm.
+  No WLAN configuration, inspection server, conveyor server, robot/conveyor
+  command or still-inspection capture was changed/issued. Preview stop/start
+  requests were issued. Smaller buffers may expose packet loss under longer
+  load spikes; zero-dropout guarantees and thermal protection are not claimed.
+
+## 2026-09-13 Binary operator decisions and position uncertainty
+
+- User explicitly requested position-only uncertainty to permit PASS and no
+  UNKNOWN in operator results. The existing `PROVISIONAL_BINARY_V1` already
+  allows uncertain position when presence, registration, gross quality and
+  provider-availability gates pass and no displayed defect candidate exists.
+  Documented that policy and added regression tests; no geometry tolerance,
+  classifier, model authority or locked S22 hybrid fusion rule was weakened.
+- Corrected the presentation leak: overall disposition was binary, but compact
+  slot/finding decisions and raw diagnostics still exposed UNKNOWN to consumers.
+  ROS/HTTP result reads and ROS state events now use binary operational decisions.
+  Legacy inconclusive results read as FAIL, without rewriting stored records.
+  Under the existing provisional policy, candidate slots reject and other slots
+  may pass; global quality/registration/presence/provider or validated-failure
+  gates conservatively reject slot dispositions. Candidate FAIL does not change
+  `ADVISORY_ONLY`, `confirmed_defect=false`, or confirmed-defect counts.
+- Public result `summary.slot_decisions` now contains PASS/FAIL counts only.
+  Raw `validated_decision`, `diagnostics`, slot `stages`, finding `measurements`,
+  and slot measurement `pin_status`/`presence_state` are not exposed in the
+  operator result; they remain in local evidence/packages. Existing endpoint
+  names, request identities, image integrity and idempotency are unchanged.
+  Clients should display `result.decision`, slot/finding `decision`, and their
+  authority flags rather than infer certified normality from provisional PASS.
+- Newly rendered slot panels show binary operational counts; result panels use
+  FAIL for inconclusive board status and distinguish no boundary candidate from
+  a check error without showing UNKNOWN/UNCERTAIN as a disposition. Raw report
+  stages remain tri-state. Historical report images and archived export packages
+  were deliberately not edited; archived diagnostic/export files may still
+  contain UNKNOWN and are not the normalized ROS/HTTP operator view.
+- Evidence: inspection `71bab029-f6bf-5296-9013-fdfd3bc68850` (unit 27) had
+  registration score 0.987510267, no gross-quality block, 16 raw pose PASS and
+  9 raw pose FAIL (zero pose UNKNOWN). Its 10 displayed slot findings, including
+  HBM-02/CAP-02 position candidates and pin/surface/direction candidates, remain
+  rejections. Live `/vision/inspection/get` after deployment returned overall
+  FAIL, 15 operational slot PASS / 10 FAIL, zero confirmed defects, and no
+  `UNKNOWN` substring in the full response. This is not a new image inspection.
+- Validation: 596 hybrid/integration tests passed, with 2 opt-in DDS tests skipped
+  in that run; both DDS tests then passed separately on localhost domain 219.
+  Tests cover position uncertainty, retained rejection gates, immutable evidence,
+  binary findings/counts, renderer text, legacy replay, HTTP and ROS state/results.
+- Deployment: verified no active inspection and conveyor IDLE/moving=false.
+  Restarted the existing owned server bundle with `--execute --confirm-motion
+  --without-gopro`; inspection PID 130283 and conveyor launcher PID 130282 became
+  ready, live health reported no active inspection, and `allow_motion=true` was
+  read back. No robot, conveyor move/reset, or capture request was issued. The
+  conveyor shutdown path retains its normal zero-velocity safety-stop behavior.
+  GoPro was not touched. No new physical inspection was run; provisional accuracy
+  and uncalibrated coverage limitations remain, and previously cached client
+  results/images require a new get/request to observe the updated presentation.
+
+## 2026-09-13 GoPro pacing and process-start observation
+
+- Preserved 1280x720, JPEG quality 75, original camera encoding and existing
+  ROS topics/QoS. Increased the site's `GOPRO_PUBLISH_FPS` from 10 to 15 and
+  aligned the example configuration. Before this change, the existing checker
+  received/decoded 194 frames in 20 seconds (9.70 FPS); sender logs showed
+  approximately 30 FPS input but a 10 FPS output cap.
+- The saved GoPro WLAN profile inherited the host's `wifi.powersave=3` default.
+  Set only `GP27378198` to powersave=2 and reactivated it on USB adapter
+  `wlxb0386cf6ff53`. `iwconfig` subsequently reported Power Management:off.
+  Lab WLAN `codelab_robot_team_1_5G`, wired conveyor connection, and safety
+  settings were not changed. This is a preventive setting, not proof that
+  power saving caused every earlier outage. Restarted only the GoPro sender
+  for the new frame cap; decoder/filter/thread bounds remain unchanged.
+- A real display bottleneck remained: with 15 FPS source, the old receiver
+  decoded 349 of 445 received frames in a 30-second check; its live raw rqt
+  output was about 11.85 FPS. Its actual-time-based deadline accumulated
+  scheduling jitter, and a pending early frame could wait an extra fixed
+  50 ms. The viewer now preserves periodic phase through short jitter and
+  waits only until the pending frame's deadline. Long stalls skip missed
+  periods; no historical-frame queue, duplicate-frame synthesis or catch-up
+  replay was added. The existing stale/waiting/recovery logic is retained.
+- After the change, a 20-second no-GUI check received and decoded all 294
+  frames at 15.00 FPS. Restarted only the GoPro rqt bridge/viewer, leaving the
+  conveyor viewer alive. A simultaneous 20-second check received 299 source
+  and 299 raw-display frames (15.00/15.01 FPS), maximum gaps 0.069/0.074 seconds.
+  S22 remained 29.68 FPS; 592 stop-line-ready samples contained no false value.
+  The current GoPro bridge PID is 105234; sender/decoder are 102969/103051.
+- Validation: three display timing/freshness unit tests and two existing GoPro
+  publish tests passed. An actual offscreen rqt test in isolated localhost
+  ROS domain 199 retained the GUI through a nine-second input pause, published
+  a waiting image and resumed fresh frames. Shell syntax and `git diff --check`
+  passed. Optional Qt/class-loader shutdown warnings did not invalidate that
+  test's observed recovery assertions.
+- Reviewed the newest completed recording at the time of the request:
+  `/home/hc/Videos/Screencasts/Screencast from 2026-09-13 17-24-07.webm`
+  (1035x1325 VP8, 1031.53 seconds). Inspected its first native frame and sampled
+  contact sheet. Its GoPro rqt dropdown selected `/camera3/image_raw/compressed`,
+  bypassing the raw bridge; the recording also predates the 15 FPS/display
+  timing changes. No screen-frame timestamp gap above 150 ms was found in the
+  first 60 seconds. This does not exclude individual camera freezes inside
+  the recording, establish their exact durations, or establish a Unity cause.
+  Keep the new GoPro rqt on `/ksmc/rqt_105234/image`, not the compressed source.
+- On the user's explicit start notification, monitored without changing or
+  restarting anything. The first 100.07 seconds of
+  `runtime/camera_load_20260913_180337.jsonl` include IDLE -> MOVING_TO_ASSEMBLY
+  -> ASSEMBLY_STOP. GoPro source/display averaged 14.98/14.97 FPS, maximum
+  gaps 0.135/0.135 seconds; S22 averaged 29.62 FPS, maximum gap 0.063 seconds.
+  Stop-overlay averaged 8.73 FPS at its existing display cap; no false ready
+  sample was observed. Forty-second pidstat averages were 12.15% of one core
+  for GoPro, 19.98% decoder, 11.03% display bridge, and 42.23% conveyor ROI.
+  This is a start/early-assembly observation, not a full-cycle stability or
+  remote Unity render test. An earlier idle trace separately recorded isolated
+  ~0.36-second gaps, so intermittent delay is not declared eliminated.
+- Benchmarked JPEG options on one existing raw GoPro stream frame, without
+  a new still capture: quality 75/85/90 yielded 127878/166542/205870 bytes and
+  source-relative PSNR 37.36/39.69/41.49 dB. Encoding took about 2.5-2.7 ms.
+  Quality 85 adds about 30% payload per subscriber. Lab WLAN was already
+  transmitting roughly 96-123 MB per ten seconds during the observed start;
+  higher quality was therefore NOT deployed during the active process.
+  Quality remains 75 (never reduced); this benchmark does not measure new
+  optical detail or certify higher-quality end-to-end performance.
+- Considered asynchronous Fast DDS publication using the
+  [ROS Jazzy implementation documentation](https://github.com/ros2/rmw_fastrtps/tree/jazzy#change-publication-mode)
+  and confirmed installed-library support. Did not change publication mode:
+  no measured publisher blocking during this process start justified applying
+  another transport change while the equipment was active.
+- No robot, conveyor movement/stop/reset or inspection submit was issued by
+  the agent. Observed movements were user/Unity initiated. No inspection
+  decision, image preprocessing, model authority, camera2 control setting,
+  teammate endpoint, DB record or production sequence was changed.
+
+## 2026-09-13 Inspection worker reuse and exact-output optimization
+
+- Reviewed `vision_assembly/config/inspection_fusion_contract.json` before
+  implementation. Preserved the S22 standalone hybrid, fixed provider pixels,
+  slot-relative pose checks, authority/fail-safe rules, and existing separate
+  provisional operational and validated decisions. No weights, calibration,
+  thresholds, precision policy, capture/focus/zoom timing, camera transport,
+  conveyor speed/stop/arrival policy, or teammate endpoint was changed.
+- The existing ROS Runner now uses one lazily started private pipe-connected
+  inspection process. It performs the same optical-capture/fresh-report pipeline
+  and creates fresh per-request output and execution logs. No network listener
+  or public ROS service was added; submit/get/get_image/health identities and
+  payloads are unchanged. The standalone CLI remains a one-shot process.
+- Only this private worker enables a six-entry PatchCore model cache. Keys
+  include component, accelerator, resolved checkpoint path, device/inode, size,
+  mtime and ctime; replaced weights retire the previous entry. Prediction errors
+  evict the affected model, and a checkpoint changed during inference is rejected.
+  Each prediction has a new Engine/input/output context. Inputs, result packages,
+  geometry and calibration are recomputed/read for each inspection. Replaced
+  application code still requires the normal server restart.
+- Removed the anomaly-map Tensor -> Python list -> NumPy round trip, retaining
+  float32 maps via direct CPU NumPy conversion. No TF32, mixed precision, input
+  resize or batch-size change was made. Unit tests compare the former and new
+  conversion exactly, including NaN/Inf and detached tensors.
+- Preserved request serialization, durable idempotency, camera-lock inheritance,
+  freshness/input-report checks and bounded UNKNOWN recapture. Stop/timeout,
+  worker failure and invalid/mismatched protocol replies retire the whole worker
+  process group before another task can start. Shutdown also releases an idle
+  worker. Requests/replies are bounded to 4096 bytes; task identifiers never
+  cross the public API boundary. Existing 300-second execution timeout remains.
+- Saved-image evidence is under
+  `runtime/inspection/optimization_20260913/`. The pre-edit normal baseline
+  (`baseline/20260913_161612_357663/hybrid_report.json`) took 29.70 seconds.
+  Final six-job replay in the same process took 24.638 seconds cold, followed
+  by 12.641, 12.144, 12.358, 11.921 and 12.091 seconds warm. These exclude optical
+  capture and ROS result packaging/download; they are short-run saved-image
+  measurements, not an end-to-end or long-duration service latency guarantee.
+- Alternated saved normal `s22_inspection_roi_20260911_175937.png` and missing
+  component `s22_inspection_roi_20260911_160407.png`; operational outcomes were
+  PASS/PASS/FAIL/PASS/FAIL/PASS. Four normal outputs exactly match the pre-edit
+  report, ignoring only generated visualization directory names. Two defect
+  outputs exactly match a separate uncached current-code reference. All eight
+  referenced PNGs per comparison are byte-identical (48 comparisons total).
+  `comparison.json`, `timings.json` and replay scripts preserve the evidence.
+  This establishes equivalence for two saved scenes, not detection accuracy
+  or coverage of every physical defect/lighting condition.
+- Persistent-worker idle RSS ranged from 4,071,844 to 4,741,692 KiB across the
+  six jobs, ending at the lower value; high-water RSS plateaued at 5,249,840 KiB
+  after job three, with 56 threads. No monotonically growing RSS was observed
+  in this short replay. Faster repeated inference intentionally retains models
+  between requests and therefore uses more idle memory than process-per-job;
+  prolonged operation and concurrent GPU workloads remain to be observed.
+- Validation: integration suite 147 passed (two opt-in DDS tests initially
+  skipped); both DDS tests then passed on isolated localhost domain 219 using
+  synthetic data and an inert runner. Hybrid plus PatchCore conversion/heatmap
+  suites passed 448 tests. Targeted Runner/process/pipeline/trigger tests passed
+  78, including timeout descendant cleanup, shutdown, fresh next request,
+  checkpoint replacement, bounded cache and in-process UNKNOWN recapture.
+  Existing optional Matplotlib Axes3D warning remains; no dependency upgrade
+  was attempted. `git diff --check` passed.
+- Deployed only after reading live IDLE/moving=false and active inspection=null.
+  Normally restarted the managed conveyor/inspection bundle with the existing
+  `--execute --confirm-motion --without-gopro` arguments. Final supervisor PID
+  71282 owns conveyor wrapper 71365/node 71447 and inspection 71366. Final graph
+  contains one node of each server, health succeeds, armed/vision_ready/fresh/
+  command_receiver_connected are true, and motion remains IDLE/false. Station
+  readiness is false because no inspection arrival is asserted, not a health
+  failure. Worker creation/model warmup waits for the next explicit submit.
+- S22, GoPro and both rqt processes were left running; final five-second probe
+  received 157 S22 and 52 GoPro compressed frames (discovery/startup included).
+  No new photograph, live inspection submit, robot command, conveyor movement
+  request, reset or stop service was issued by this task. Normal server shutdown
+  retains its emergency-zero routine; its log reported shutdown safety-stop
+  handling, but actual zero-message delivery was not separately measured.
+  Other users' earlier accepted move requests were visible in historical logs
+  and are not attributed to these offline optimization checks.
+
+## 2026-09-13 Whole-cell performance audit and GoPro decoder bounds
+
+- Audited live S22, stop-overlay, GoPro, both rqt bridges, conveyor services and
+  inspection health. Memory was not under pressure (about 25 GiB available, zero
+  swap use); inspection was idle and healthy. Existing S22 30 FPS control,
+  full-HD analysis/stills, JPEG quality, API identities, model/decision policy,
+  motion speed and stop/arrival thresholds were preserved. No changes were made
+  to teammate endpoints, Wi-Fi connections or device safety settings.
+- The GoPro FFmpeg process had 74 threads, about 361,228 KiB RSS and 19.4% of one
+  CPU over a five-second pidstat sample. Its UDP fifo_size=2000000 represented
+  376,000,000 bytes, not 2 MB. As specified by the
+  [FFmpeg UDP documentation](https://ffmpeg.org/ffmpeg-protocols.html#udp), each
+  unit is 188 bytes. Reduced the queue to 16,384 units (3,080,192 bytes), retaining
+  the 1 MiB socket buffer and overrun_nonfatal policy. This bounds backlog bytes;
+  it does not establish a camera-to-screen latency bound or guarantee lossless
+  reception during long host stalls.
+- Set the existing GoPro decoder to two input codec workers, two filter workers
+  and one rawvideo output worker. Local `ffmpeg -h encoder=rawvideo` confirmed
+  frame-thread support; automatic output workers were unnecessary for this raw
+  pipe. Kept the 1280x720 BGR output, passthrough timing, 10 FPS ROS cap, quality
+  75, latest-frame scheduling and recovery logic. No frame-rate resampling or
+  repeated-frame synthesis was added. Only the managed standalone GoPro sender
+  was restarted for deployment. Existing viewer windows showed waiting/resumed
+  transitions and stayed alive; S22/ROI/conveyor/inspection were not restarted.
+- Final FFmpeg PID 57131 had eight threads and 81,152 KiB RSS. The comparable
+  five-second CPU sample was 16.37% of one core, versus 19.4% before. These are
+  short live-scene measurements, not a controlled workload or long-term leak
+  study. Following decoder warmup, source health sustained approximately 30 FPS
+  receive and 9.4-10 FPS compressed publish with zero recovery restarts.
+- A 20-second simultaneous source/display check after input/filter/FIFO changes
+  (before the final raw-output worker limit) measured S22 29.65 FPS, stop-overlay
+  9.15 FPS and GoPro 9.75 FPS. Both raw rqt paths matched their sources at
+  9.15/9.75 FPS; maximum interarrival gaps were 0.140/0.202 seconds and maximum
+  source-stamp ages 0.056/0.111 seconds. The final raw-output limit was verified
+  by process arguments/thread count, continued source health and live viewer
+  recovery. Timestamp ages do not measure camera encoding/UDP queue latency.
+- Final conveyor state: IDLE, moving=false, armed=true, vision_ready/fresh=true,
+  command_receiver_connected=true. Conveyor assembly and inspection-health
+  service provider counts were each one. No motion, stop/reset, capture submit,
+  model training or real inspection command was issued by this optimization.
+- Validation: sourced ROS Jazzy, then
+  `PYTHONPATH="/home/hc/KSMC:${PYTHONPATH}" /usr/bin/python3 -m pytest -q gopro_camera3/test_publish_timing.py vision_assembly/integration/test_server_bundle.py`
+  passed 40 tests after final edits; `git diff --check` passed. Data-assignment
+  alternatives were microbenchmarked and not adopted when slower under the
+  installed generated ROS message implementation. Existing SHM sizing and
+  viewer capture-pause recovery from the preceding task were retained.
+
+## 2026-09-13 Recorded rqt review, shared memory and capture-pause recovery
+
+- Reviewed sampled frames from all eight September 13 screencasts in
+  `/home/hc/Videos/Screencasts/`, including denser one-second samples of the
+  15:27:25 board-entry sequence. The sampled entry proceeds forward; the exact
+  reported intermittent replay was not established from these samples. The
+  15:30:50 VP8 recording decodes with artifacts across both camera halves in
+  FFmpeg's native and libvpx decoders (different corruption appearance). This
+  is not evidence that the S22 ROS source alone generated corrupt frames.
+  Original recordings were preserved. Review images are in
+  `runtime/rqt_recording_review_20260913/`.
+- Actual ROS graph inspection confirmed the two rqt windows subscribed directly
+  to GoPro and stop-overlay compressed topics. Their parent bridges still decoded
+  S22, after GUI topic changes bypassed the original raw display path. Replaced
+  these local viewers using the existing `run_viewer.sh conveyor` and `gopro`
+  commands; documented that changing back to a compressed topic bypasses the
+  workaround. No new API or camera processing pipeline was introduced.
+- Found an independently measurable local display transport defect. The explicit
+  SHM descriptor omitted segment_size, retaining the 512 KiB default, while raw
+  frames are 1,555,200 and 2,764,800 bytes. Host segment files were 549,408 bytes
+  including overhead. Set `config/fastdds_laptop.xml` segment_size to 33,554,432
+  bytes (32 MiB); new viewer mappings were 35,127,840 bytes including overhead.
+  [Fast DDS documentation](https://fast-dds.docs.eprosima.com/en/2.x/fastdds/transport/shared_memory/shared_memory.html)
+  warns that segments near/below a message size risk loss. Existing UDP buffer
+  sizes, interface allowlist, discovery and non-blocking policy were preserved.
+- Controlled 30-second raw-subscription checks with both viewers open: before
+  SHM adjustment, stop/GoPro received 51/39 frames (1.77/1.41 FPS), maximum gaps
+  3.626/3.900 seconds. After adjustment, 272/216 frames (9.08/7.19 FPS), maximum
+  gaps 0.363/2.002 seconds; no reversed or repeated source timestamps. A later
+  simultaneous source/raw check located GoPro's remaining gaps upstream of the
+  bridge (matching 228 messages and approximately 1.3-second gaps at both).
+  GoPro logs also contained Wi-Fi keep-alive timeouts and decoder recovery, so
+  not all camera interruption is attributed to local SHM.
+- During validation the old stop viewer exited with SOURCE_STALE. The S22
+  launcher independently logged an optical inspection pause and resumed its
+  overview at timestamp 1789282382; the viewer had exited at 1789282380. This
+  was an expected camera-sharing pause triggering an undesirable viewer exit,
+  not proof of an rqt crash or an SHM outage. Updated `view_camera.py`: after a
+  first valid frame, a one-second receive/decode gap replaces the scene with a
+  labelled waiting image, preserves the subscription/window and automatically
+  resumes on a valid frame. It no longer exits after eight seconds mid-session.
+  Initial no-frame startup timeout still applies. The one-second threshold is
+  display-only; placeholder images retain the last message's source timestamp
+  and are published only on the local viewer topic, never on camera/control
+  topics. Inspection capture and equipment safety rules were not changed.
+- Integration validation: sourced `scripts/ksmc_env.sh`, then ran
+  `python3 runtime/rqt_recording_review_20260913/check_recovery.py` with isolated
+  ROS domain 199 and an offscreen real rqt child. Initial synthetic image,
+  nine-second input pause, waiting image and subsequent different live image
+  all verified; GUI remained alive, SOURCE_STALE and SOURCE_RESUMED were logged.
+  XML parsing and whitespace checks passed. Restarted the GoPro sender with
+  the updated profile and launched the patched two viewers; actual first frames
+  were verified at 960x540 and 1280x720 respectively.
+- Final 20-second simultaneous raw display check received stop/GoPro 176/194
+  frames (9.06/10.03 FPS over each received interval), maximum interarrival gaps
+  0.143/0.203 seconds, with zero backward or duplicate source stamps. Actual rqt
+  subscribers were verified on both raw topics. Maximum source-stamp-to-checker
+  ages were 0.619/0.737 seconds, so these measurements do not claim a sub-100 ms
+  end-to-end display guarantee. Final viewer PIDs: 52488/52677, rqt 52572/52756.
+- No robot/conveyor motion, stop/reset or inspection-submit commands were issued
+  by this work. Other clients operated the running cell during observation;
+  those movements and the optical capture were not initiated by this diagnostic.
+  S22/ROI/server were not forcibly restarted. Existing processes load changed DDS
+  settings only when restarted; viewers and restarted GoPro use the new setting.
+  Long-duration GUI/recording behavior and the precise historical replay event
+  remain unproven; a successful transport check is not proof of physical stop
+  accuracy or uninterrupted GoPro Wi-Fi.
+
 ## 2026-09-11 Unity request path deployment of provisional decisions
 
 - Verified ROS submit -> Runner -> fresh triggered_inspection_once subprocess ->

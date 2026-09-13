@@ -11,7 +11,7 @@ import json
 from pathlib import Path
 import uuid
 
-from inspection_api import ApiError, IMAGE_NAME, LOCK, ROOT, Runner, Station, Store
+from inspection_api import ApiError, IMAGE_NAME, LOCK, ROOT, Runner, Station, Store, public_result
 
 PREFIX = '/vision/inspection'
 MAX_CHUNK = 65536
@@ -152,7 +152,8 @@ def create_node(store, station, *, context=None):
         def publish_changes():
             with store.lock:
                 changes = [dict(inspection_id=iid, job_id=r['job_id'], unit_id=r['unit_id'],
-                                status=r['status'], decision=r.get('result', {}).get('decision'),
+                                status=r['status'], decision=(public_result(r['result'])['decision']
+                                    if isinstance(r.get('result'), dict) else None),
                                 error=r.get('error'))
                            for iid, r in store.records.items() if sent.get(iid) != r['status']]
             for change in changes:
@@ -198,6 +199,7 @@ def main(argv=None):
             runner.stop.set()
             if store.thread:
                 store.thread.join()
+            runner.close()
             if node is not None:
                 node.destroy_node()
             if rclpy.ok():

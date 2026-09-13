@@ -113,7 +113,8 @@ def test_delivery_failure_does_not_change_inspection(monkeypatch, tmp_path):
     (['FAIL'], 'FAIL', 1),
     (['PASS'], 'PASS', 1),
 ])
-def test_bounded_unknown_recapture(monkeypatch, tmp_path, decisions, expected, captures):
+@pytest.mark.parametrize('in_process', [False, True])
+def test_bounded_unknown_recapture(monkeypatch, tmp_path, decisions, expected, captures, in_process):
     args = _args(tmp_path)
     args.unknown_recaptures = 1
     monkeypatch.setenv('KSMC_VISION_EXPORT', '0')
@@ -131,7 +132,8 @@ def test_bounded_unknown_recapture(monkeypatch, tmp_path, decisions, expected, c
                                          'input_image': command[-1]}))
             _rotate_link(args.report, report)
     monkeypatch.setattr(pipeline, 'run_stage', stage)
-    event = pipeline.run_pipeline(args)
+    inspector = (lambda image: stage('full-board inspection', [str(image)])) if in_process else None
+    event = pipeline.run_pipeline(args, inspector=inspector)
     assert len(calls) == captures
     assert len(event['attempts']) == captures
     assert event['final_status'] == expected

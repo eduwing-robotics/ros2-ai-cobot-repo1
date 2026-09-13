@@ -12,11 +12,11 @@ conveyor_roi:
   # latency. Drawing directly at the final size avoids one full-frame UI pass
   # and resize while retaining clean anti-aliased typography.
   processing_max_width: 960
-  jpeg_quality: 86
+  jpeg_quality: 78
   annotated_max_width: 960
   # Control runs at 30 FPS. The optional dashboard is capped separately so
   # rqt/UI encoding cannot delay stop-trigger publication.
-  annotated_fps: 15
+  annotated_fps: 10
 
   # Current occupancy, independent of the latched stop trigger. Pixel limits
   # are at 960px control width; not a certified robot assembly pose tolerance.

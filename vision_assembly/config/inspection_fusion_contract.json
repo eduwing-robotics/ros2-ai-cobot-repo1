@@ -149,6 +149,16 @@
     "authorization": "2026-09-11 user explicitly requests imperfect PASS/FAIL due deadline",
     "policy": "PASS when all 25 presence checks are positive, registration and gross quality valid, providers available and no displayed defect candidates. Otherwise FAIL. Disabled experimental VRM seating excepted.",
     "limitation": "Accepts uncalibrated pin/surface/orientation coverage. Does not certify accuracy or promote providers. Original fusion retained as validated_decision.",
-    "vrm_presence_fallback": "For UNKNOWN VRM state, accept existing independent PRESENT summary only if conflict=false and probability >=0.9; not a validated direction/pose vote."
+    "vrm_presence_fallback": "For UNKNOWN VRM state, accept existing independent PRESENT summary only if conflict=false and probability >=0.9; not a validated direction/pose vote.",
+    "position_unknown_policy": "2026-09-13 user clarification of existing provisional behavior: position UNKNOWN alone does not reject a board if all operational gates pass. Do not suppress displayed position/other defect candidates, provider errors, registration/quality/presence rejection or validated FAIL. Preserve raw stage UNKNOWN and validated_decision; provisional PASS is not certified position normality.",
+    "public_decision_policy": "2026-09-13 user requests no UNKNOWN in operator decisions. ROS/HTTP result and state events use PASS/FAIL; legacy inconclusive results fail closed on read without modifying archives. Slot/finding decisions are operational; demo confirmation below is a separately authorized presentation policy, not provider promotion. Raw validated_decision, diagnostic stages and status-bearing measurements remain local rather than public result fields. Existing service names and schemas remain unchanged.",
+    "demo_confirmation": {
+      "mode": "USER_AUTHORIZED_DEMO_CANDIDATES_V1",
+      "authorization": "2026-09-13 user explicitly approves confirming candidates for a portfolio project after being informed they are unverified.",
+      "scope": "PORTFOLIO_DEMO_ONLY",
+      "policy": "Only a complete provisional FAIL with sole reason DEFECT_CANDIDATE may expose existing advisory findings as AUTHORITATIVE/confirmed_defect=true in ROS/HTTP results, with matching defects and counts. Authority is the user-approved demo disposition policy, not a calibrated model.",
+      "provenance": "Retain source_authority/source_confirmed_defect and explicit decision_basis/confirmation_policy in the response. Archive raw provider evidence unchanged. Do not train on demo confirmations as verified labels.",
+      "exclusions": "No invented defects for missing data, capture quality, registration or provider errors. Does not certify real-world defect accuracy or change S22 fusion, geometry, model validation, robot or conveyor safety."
+    }
   }
 }

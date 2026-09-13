@@ -1,5 +1,29 @@
 # Conveyor Work Log
 
+## 2026-09-13 Stop-overlay viewer recovery
+
+Only local stop-overlay display behavior and laptop SHM capacity changed;
+conveyor detection, motion and stop/arrival criteria were preserved. The viewer
+now blanks stale scenes with a waiting label and resumes after capture gaps.
+Actual restart scope, tests and no-motion-command evidence are recorded in
+[the grouped vision log](vision.md#2026-09-13-recorded-rqt-review-shared-memory-and-capture-pause-recovery).
+
+## 2026-09-11 Camera/server restart with stop control preserved
+
+S22 control input and stop criteria are unchanged; only dashboard encoding/rate
+was reduced. Existing servers restarted, robot native motor-node crash discovered
+and bringup restored, final MANUAL_STOP with receiver connected. Only stop commands
+were issued. Measurements and unresolved physical-stop/native-crash limits are in
+[the grouped vision log](vision.md#2026-09-11-camera-restart-udp-buffers-and-rqt-crash-workaround).
+
+## 2026-09-11 Wired robot transport repair
+
+Robot Ethernet now has persistent 10.77.5.2/30 and its ROS transport uses eth0.
+The existing controller remains armed in MANUAL_STOP; no move or reset was issued.
+Network measurements, robot-local zero-command receipt, consumer compatibility
+and unverified physical overrun cause are recorded once in
+[the grouped vision log](vision.md#2026-09-11-wired-robot-transport-and-existing-consumer-api-validation).
+
 ## 2026-09-11 GoPro included in the ROS server bundle
 
 GoPro now starts with the conveyor/inspection bundle unless disabled, while an

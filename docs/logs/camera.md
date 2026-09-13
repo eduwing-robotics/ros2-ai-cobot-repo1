@@ -1,5 +1,105 @@
 # 카메라 작업 기록
 
+## 2026-09-13 GoPro direct-topic backlog limits
+
+Applied smaller UDP queues and a 250 ms local decoded-frame freshness gate to
+the sender of `/camera3/image_raw/compressed`, keeping 1280x720/JPEG 75/15 FPS.
+Final 30-second direct-topic observation: 450 frames, 15.0013 FPS, maximum gap
+69.57 ms. No inspection/conveyor server restart or robot/conveyor command.
+An incompatible reduced-probe trial was reverted; camera-to-Unity visual age
+and active-process stability remain unmeasured. Full evidence and limitations:
+[grouped vision record](vision.md#2026-09-13-gopro-direct-topic-backlog-limits).
+
+## 2026-09-13 GoPro frame pacing without a quality reduction
+
+Raised the site's GoPro preview cap to 15 FPS at unchanged 1280x720/JPEG 75,
+disabled power saving only on its dedicated WLAN profile, and corrected local
+rqt deadline drift. Only GoPro sender/viewer were restarted before the user's
+process start. Recording review, exact measurements, regression/recovery tests,
+quality benchmark, active-process observation and remaining limitations are
+recorded once in the [grouped vision log](vision.md#2026-09-13-gopro-pacing-and-process-start-observation).
+
+## 2026-09-13 GoPro-only reconnect successful on user retry
+
+- On the user's subsequent GoPro-only retry, activating saved `GP27378198`
+  on `wlxb0386cf6ff53` succeeded. The dedicated route returned with source
+  `10.5.5.113`; camera HTTP at `10.5.5.9:8080` responded. The existing sender
+  recovered without a manual process restart or image-setting change.
+- The existing viewer's ten-second read-only check received and decoded all
+  98 compressed frames, 1280x720 at 9.80 FPS, with one GoPro publisher.
+  Local video recovery is verified; Unity reception and prolonged stability
+  are not independently verified. Lab Wi-Fi, conveyor/inspection servers,
+  teammate endpoints and production sequence were not changed. No motion,
+  inspection capture or DB request was issued.
+
+## 2026-09-13 GoPro reconnect blocked by missing camera SSID
+
+- The existing GoPro sender was alive, but its dedicated USB WLAN
+  `wlxb0386cf6ff53` was disconnected. Camera HTTP timed out and a ten-second
+  ROS subscription received zero camera3 frames. The camera address fell back
+  to the lab default route because the dedicated route was absent.
+- Tried only the saved `GP27378198` connection on that USB adapter. The client
+  timed out; NetworkManager subsequently reported `ssid-not-found`. A fresh
+  scan saw surrounding access points but not the GoPro SSID. Saved credentials
+  were present; no password or Wi-Fi profile settings were changed. Recovery
+  is NOT complete: camera power/wireless availability requires a local check.
+- Lab WLAN `codelab_robot_team_1_5G` and `KSMC-Conveyor-Wired` remained connected.
+  No sender/server restart, inspection submit, robot/conveyor command or DB
+  write was performed. Read-only conveyor state was IDLE/moving=false with
+  assembly_trigger=false, and inspection health was available but not station
+  ready. User-reported completed assembly is not equivalent to current arrival
+  evidence; manual recovery must retain the existing motion/inspection gates
+  and original Sequencer job/unit identities. The existing ROS client saves
+  inspection evidence locally; DB delivery remains teammate-owned.
+
+## 2026-09-13 Whole-cell audit and GoPro resource limits
+
+Reduced GoPro UDP backlog capacity and bounded decoder/filter/raw-output workers
+while preserving resolution, JPEG quality and source/ROS rates. Existing cameras,
+two viewers and service health were checked. Final CPU/RSS/thread measurements,
+restart scope, tests and timing limitations are recorded in
+[the grouped vision log](vision.md#2026-09-13-whole-cell-performance-audit-and-gopro-decoder-bounds).
+
+## 2026-09-13 rqt shared memory and pause recovery
+
+Increased laptop DDS SHM capacity, restored the intended two viewer routes, and
+changed the existing viewer to show a waiting screen and recover automatically
+after an input gap, including S22 optical capture pauses. Recording evidence,
+measured transport improvements, actual restarts, synthetic pause/resume test
+and remaining limitations are in
+[the grouped vision log](vision.md#2026-09-13-recorded-rqt-review-shared-memory-and-capture-pause-recovery).
+
+## 2026-09-13 GoPro recovery after user power cycle
+
+After reconnecting only the GoPro USB Wi-Fi profile and the user's camera power
+cycle, restarted `./gopro_camera3/run_gopro_camera3_wifi.sh`. The existing sender
+remains running at 1280x720, 10 FPS output and JPEG quality 75; no code or quality
+settings changed. Initial H.264 PPS warnings cleared as decoding started. Sender
+health reached 30.0 FPS input and 9.8 FPS compressed output with zero restarts.
+`source scripts/ksmc_env.sh` followed by
+`bash team_handoff/rqt_camera/run_viewer.sh gopro --check --seconds 10`
+received 96 messages and decoded 95 images (9.60 FPS) locally on
+`/camera3/image_raw/compressed`. The user confirmed UFW is inactive; its service
+status was not evidence of packet filtering. Recovery does not establish the
+precise cause of the earlier missing UDP packets. Unity/remote reception and
+long-duration stability remain unverified. No robot or conveyor motion commands
+were issued, and teammate endpoints were not changed.
+
+## 2026-09-11 Camera restart and UDP/rqt repair
+
+GoPro raw timing and preview bandwidth were corrected; enlarged DDS socket buffers
+restored GoPro/dashboard reception on an independent wired receiver. Existing rqt
+decoder bridge is now the local default wrapper to avoid the confirmed compressed
+plugin crash. Measurements, actual restarts, .14 validation limits and no-motion
+scope are recorded in [the grouped vision log](vision.md#2026-09-11-camera-restart-udp-buffers-and-rqt-crash-workaround).
+
+## 2026-09-11 Existing camera streams during wired robot repair
+
+S22, stop-overlay and GoPro frames were received on the server after robot Ethernet
+repair. No camera settings or teammate Endpoint were changed. Local measurements
+and the remaining Unity receiver validation are recorded once in
+[the grouped vision log](vision.md#2026-09-11-wired-robot-transport-and-existing-consumer-api-validation).
+
 ## 2026-09-11 GoPro startup integration and rqt receiver checks
 
 The ROS server bundle starts/reuses GoPro and waits for an actual camera3 frame.

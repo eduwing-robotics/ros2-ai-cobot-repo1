@@ -4,10 +4,12 @@
 from __future__ import annotations
 
 import argparse
+from collections import OrderedDict
 from datetime import datetime
 import json
 import os
 from pathlib import Path
+import threading
 
 import cv2
 import numpy as np
@@ -32,6 +34,32 @@ DEFAULT_CONFIG = PROJECT_DIR / "vision_assembly/config/full_board_inspection.jso
 DEFAULT_MODELS = PROJECT_DIR / "runtime/inspection/patchcore/pcb_components_smd_v3"
 DEFAULT_OUTPUT = PROJECT_DIR / "runtime/inspection/patchcore/component_live_v3"
 DIR_TYPES = {directory: component_type for component_type, directory in TYPE_DIRS.items()}
+
+# Only the private long-lived inspection worker enables this cache. Results,
+# images, calibration and geometry are never cached here.
+_MODEL_CACHE = OrderedDict()
+_MODEL_CACHE_ENABLED = False
+_MODEL_LOCK = threading.RLock()
+_MODEL_CACHE_LIMIT = 6
+
+
+def enable_model_cache():
+    global _MODEL_CACHE_ENABLED
+    _MODEL_CACHE_ENABLED = True
+
+
+def checkpoint_identity(checkpoint):
+    path = Path(checkpoint).resolve(strict=True)
+    stat = path.stat()
+    return (str(path), stat.st_dev, stat.st_ino, stat.st_size,
+            stat.st_mtime_ns, stat.st_ctime_ns)
+
+
+def anomaly_array(value):
+    """Retain float32 values without constructing a Python object per pixel."""
+    if isinstance(value, torch.Tensor):
+        value = value.detach().to(device='cpu', dtype=torch.float32).numpy()
+    return np.asarray(value, dtype=np.float32).squeeze()
 
 
 def resolve_accelerator(requested: str | None = None) -> str:
@@ -73,24 +101,37 @@ def _predict_outputs(
     *,
     accelerator: str | None = None,
 ):
+    with _MODEL_LOCK:
+        return _predict_outputs_locked(component, crop_dir, checkpoint, output,
+                                       accelerator=accelerator)
+
+
+def _predict_outputs_locked(component, crop_dir, checkpoint, output, *, accelerator=None):
     from anomalib.engine import Engine
     from anomalib.models import Patchcore
 
     resolved_accelerator = resolve_accelerator(accelerator)
+    identity = checkpoint_identity(checkpoint)
+    key = (component, resolved_accelerator, identity)
+    # Retire replaced weights even when there is still spare cache capacity.
+    for old_key in list(_MODEL_CACHE):
+        if old_key[0] == component and old_key != key:
+            del _MODEL_CACHE[old_key]
+    model = _MODEL_CACHE.get(key) if _MODEL_CACHE_ENABLED else None
+    restored = model is not None
 
     width, height = OUTPUT_SIZE[DIR_TYPES[component]]
-    model = Patchcore(
-        backbone="wide_resnet50_2",
-        layers=("layer2", "layer3"),
-        # Inference restores the complete trained checkpoint below.  Asking
-        # timm for ImageNet weights here performs an unnecessary network HEAD
-        # request and can stall an offline production cell.
-        pre_trained=False,
-        coreset_sampling_ratio=0.1,
-        num_neighbors=9,
-        pre_processor=Patchcore.configure_pre_processor(image_size=(height, width)),
-        visualizer=False,
-    )
+    if model is None:
+        model = Patchcore(
+            backbone="wide_resnet50_2",
+            layers=("layer2", "layer3"),
+            # The checkpoint contains the trained weights; no network lookup.
+            pre_trained=False,
+            coreset_sampling_ratio=0.1,
+            num_neighbors=9,
+            pre_processor=Patchcore.configure_pre_processor(image_size=(height, width)),
+            visualizer=False,
+        )
     engine_kwargs = dict(
         accelerator=resolved_accelerator,
         devices=1,
@@ -106,10 +147,23 @@ def _predict_outputs(
 
         engine_kwargs["plugins"] = [LightningEnvironment()]
     engine = Engine(**engine_kwargs)
-    predictions = engine.predict(
-        model=model, ckpt_path=checkpoint, data_path=crop_dir,
-        return_predictions=True,
-    )
+    try:
+        # A fresh Engine keeps each request's paths/callbacks isolated. With an
+        # explicit model and no ckpt_path, Engine uses its already-loaded weights.
+        predictions = engine.predict(
+            model=model, ckpt_path=None if restored else checkpoint, data_path=crop_dir,
+            return_predictions=True,
+        )
+        if checkpoint_identity(checkpoint) != identity:
+            raise RuntimeError('PatchCore checkpoint changed during prediction')
+    except BaseException:
+        _MODEL_CACHE.pop(key, None)
+        raise
+    if _MODEL_CACHE_ENABLED:
+        _MODEL_CACHE[key] = model
+        _MODEL_CACHE.move_to_end(key)
+        while len(_MODEL_CACHE) > _MODEL_CACHE_LIMIT:
+            _MODEL_CACHE.popitem(last=False)
     outputs: dict[str, dict[str, object]] = {}
     for batch in predictions or []:
         paths = getattr(batch, "image_path", None)
@@ -120,7 +174,7 @@ def _predict_outputs(
             slot_id = Path(str(path)).stem
             anomaly_map = None
             if anomaly is not None:
-                anomaly_map = np.asarray(json_safe(anomaly), dtype=np.float32).squeeze()
+                anomaly_map = anomaly_array(anomaly)
                 if anomaly_map.ndim != 2:
                     raise RuntimeError(
                         f"Unexpected anomaly map shape for {slot_id}: {anomaly_map.shape}"

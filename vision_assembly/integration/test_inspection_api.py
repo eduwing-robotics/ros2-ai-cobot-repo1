@@ -20,7 +20,7 @@ def test_idempotent_unknown_and_restart(tmp_path):
     req = request()
     store.submit(req, req['inspection_id'])
     store.thread.join()
-    assert store.get(req['inspection_id'])['result']['decision'] == 'UNKNOWN'
+    assert store.get(req['inspection_id'])['result']['decision'] == 'FAIL'
     store = api.Store(tmp_path, lambda: False, run)
     assert store.submit(req, req['inspection_id'])['status'] == 'COMPLETED'
     assert len(calls) == 1
@@ -102,7 +102,7 @@ def test_http_roundtrip(tmp_path):
         store.thread.join()
         with urllib.request.urlopen(urllib.request.Request(base+'/'+req['inspection_id'],
                 headers=headers)) as response:
-            assert json.load(response)['data']['result']['decision'] == 'UNKNOWN'
+            assert json.load(response)['data']['result']['decision'] == 'FAIL'
         with urllib.request.urlopen(urllib.request.Request(base+'/'+req['inspection_id']+'/image',
                 headers=headers)) as response:
             assert response.read() == blob
@@ -174,7 +174,8 @@ def test_submit_and_runner_results_are_detached_snapshots(tmp_path):
     replay['result']['decision'] = 'PASS'
     saved = store.get(req['inspection_id'])
     assert saved['image']['ready'] is False
-    assert saved['result'] == {'decision': 'UNKNOWN', 'diagnostics': {'flags': []}}
+    assert saved['result'] == {'decision': 'FAIL', 'reason': 'INSPECTION_INCONCLUSIVE'}
+    assert store.records[req['inspection_id']]['result'] == {'decision': 'UNKNOWN', 'diagnostics': {'flags': []}}
 
 
 def test_worker_start_failure_does_not_leave_station_busy(tmp_path, monkeypatch):

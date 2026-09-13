@@ -1085,7 +1085,22 @@ def _render_slot_diagnostic(
     slot_reports: list[dict[str, Any]],
     board_status: str,
     alignment_score: float,
+    operational_decision: dict | None = None,
+    candidates: list | None = None,
 ) -> np.ndarray:
+    # Operator disposition only. Raw provider states remain in hybrid_report.json.
+    policy = operational_decision or {}
+    localizable = (policy.get('mode') == 'PROVISIONAL_BINARY_V1'
+                   and policy.get('validated') is False
+                   and policy.get('status') == board_status
+                   and bool(policy.get('reasons'))
+                   and set(policy['reasons']) <= {
+                       'NO_DISPLAYED_DEFECT_CANDIDATE', 'DEFECT_CANDIDATE'})
+    failed_ids = {item['slot_id'] for item in (candidates or [])}
+    slot_reports = [dict(row, status=(
+        'PASS' if localizable and row['status'] != 'FAIL'
+        and row['slot_id'] not in failed_ids else 'FAIL')) for row in slot_reports]
+    board_status = board_status if board_status in ('PASS', 'FAIL') else 'FAIL'
     panel_height = 74
     panel = np.full((panel_height, aligned.shape[1], 3), 22, np.uint8)
     color = STATUS_COLORS[board_status]
@@ -1102,7 +1117,7 @@ def _render_slot_diagnostic(
     counts = {status: sum(row["status"] == status for row in slot_reports) for status in STATUS_COLORS}
     cv2.putText(
         panel,
-        f"PASS {counts['PASS']}   FAIL {counts['FAIL']}   UNKNOWN {counts['UNKNOWN']}   | unverified providers never create PASS",
+        f"PASS {counts['PASS']}   FAIL {counts['FAIL']}   | OPERATIONAL DISPOSITION - NOT CERTIFIED",
         (20, 61),
         cv2.FONT_HERSHEY_SIMPLEX,
         0.50,
@@ -1145,6 +1160,7 @@ def _render_evidence_report(
     evidence_audit: dict | None = None,
     provider_health: dict | None = None,
 ) -> np.ndarray:
+    board_status = board_status if board_status in ('PASS', 'FAIL') else 'FAIL'
     original = _annotate_candidates(aligned, slots, candidates)
     overlay = _annotate_candidates(overlay, slots, candidates)
     display_height = 690
@@ -1261,12 +1277,12 @@ def _render_evidence_report(
     if boundary_items:
         summary = "VRM BOUNDARY: " + " | ".join(
             f"{slot}:" + ("/".join(display_codes(item.get("codes", []))) or
-                          ("UNAVAILABLE" if "UNAVAILABLE" in item.get("reason", "") else "UNCERTAIN"))
+                          ("CHECK ERROR" if "UNAVAILABLE" in item.get("reason", "") else "NO CANDIDATE"))
             for slot, item in sorted(boundary_items.items())
         )
         cv2.putText(output, summary, (22, footer_y + 115), cv2.FONT_HERSHEY_SIMPLEX,
                     0.60, (225, 225, 225), 1, cv2.LINE_AA)
-        cv2.putText(output, "POSITION / DIRECTION ARE ADVISORY CHECKS. UNCERTAIN != PASS",
+        cv2.putText(output, "FINAL PASS / FAIL IS OPERATIONAL; RAW GEOMETRY EVIDENCE IS ARCHIVED LOCALLY",
                     (22, footer_y + 140), cv2.FONT_HERSHEY_SIMPLEX, 0.54, (180, 190, 200), 1, cv2.LINE_AA)
     return output
 
@@ -1588,6 +1604,8 @@ def inspect_pcb(
         slot_reports,
         board_status,
         registered.alignment_score,
+        operational_decision,
+        advisory_candidates,
     )
     diagnostic_path = run_dir / "hybrid_slot_diagnostic.png"
     cv2.imwrite(
