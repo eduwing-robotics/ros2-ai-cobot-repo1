@@ -998,16 +998,23 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
 .page--run .run-col { top: 86px; }
 .run-command-strip { position: absolute; left: 54px; right: 32px; top: 14px; height: 60px; flex-direction: row; align-items: center; border-bottom-width: 1px; border-bottom-color: var(--c-edge); }
 .run-command-strip .run-sect__title { width: 84px; flex-shrink: 0; }
-.run-command-strip .run-sub { width: 150px; flex-shrink: 0; -unity-text-align: middle-right; }
+.run-command-strip .run-sub { width: 190px; flex-shrink: 0; -unity-text-align: middle-right; }
+.run-workflow { flex-grow: 1; flex-shrink: 1; min-width: 0; margin-left: 16px; margin-right: 24px; }
+.run-workflow #unit-phase { font-size: 16px; color: var(--c-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.run-workflow #unit-phase.bad { color: var(--c-bad); }
+.run-workflow .run-operation-detail { flex-grow: 0; font-size: 14px; margin: 4px 0 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .run-current Label { flex-shrink: 0; }
 .run-current #unit-phase, .run-current #request-id { white-space: normal; }
 .run-current #now-slot { font-size: 28px; }
 .run-operation-detail { flex-grow: 1; flex-shrink: 1; min-width: 0; font-size: 16px; color: var(--c-ink-2); white-space: normal; margin-left: 16px; margin-right: 20px; }
-.run-calibration { height: 32px; min-height: 32px; max-height: 32px; flex-shrink: 0; border-bottom-width: 1px; border-bottom-color: var(--c-edge); margin-bottom: 8px; overflow: hidden; }
-.run-calibration-state { font-size: 16px; color: var(--c-ink); -unity-font-style: bold; min-width: 0; flex-shrink: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-/* 상세 원인과 수신 시각은 요약의 툴팁으로 제공해 슬롯 영역 높이를 유지한다. */
-.run-calibration .run-calibration-detail, .run-calibration #calibration-age { display: none; }
-.run-calibration-detail { font-size: 14px; color: var(--c-ink-2); margin-top: 4px; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.run-calibration { height: 50px; min-height: 50px; max-height: 50px; flex-shrink: 0; border-bottom-width: 1px; border-bottom-color: var(--c-edge); margin-bottom: 6px; overflow: hidden; }
+.run-calibration-state { font-size: 13px; color: var(--c-ink); -unity-font-style: bold; min-width: 0; flex-shrink: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-left: 12px; }
+/* 사유 한 줄을 고정 높이로 노출하고 전체 시각·상세는 툴팁에 보존한다. */
+.run-calibration #calibration-age { display: none; }
+.run-calibration-detail { display: flex; font-size: 12px; height: 18px; flex-shrink: 0; color: var(--c-ink-2); margin-top: 5px; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.run-current #request-id, .run-current #recipe-version { font-size: 11px; letter-spacing: 0; }
+.page--run #watchdog-spark { opacity: 0.6; }
+.page--run #watchdog-value { font-size: 11px; flex-shrink: 0; margin-left: 6px; }
 .run-slot-content { flex-grow: 1; min-height: 0; overflow: hidden; }
 .run-slot-content .run-sect { margin-bottom: 4px; }
 .run-slot-content #progress-now { display: none; }
@@ -1016,8 +1023,8 @@ Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
 .run-slot-content #progress-count { font-size: 16px; }
 .run-slot-content #slot-progress-status { font-size: 11px; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .run-slot-content #progress-groups { flex-direction: row; flex-wrap: wrap; align-content: flex-start; flex-grow: 1; }
-.run-slot-content .grp { width: 33.333%; flex-grow: 0; flex-shrink: 0; margin-right: 0; margin-bottom: 6px; padding-right: 12px; }
-.run-slot-content .grp__head { height: 18px; }
+.run-slot-content .grp { width: 33.333%; flex-grow: 0; flex-shrink: 0; margin-right: 0; margin-bottom: 4px; padding-right: 12px; }
+.run-slot-content .grp__head { height: 16px; }
 .run-slot-content .grp__cells { flex-wrap: wrap; }
 .run-slot-content .cell { width: 15px; height: 17px; margin: 0 3px 2px 0; padding: 0; border-width: 1px; border-color: rgb(115,133,145); background-color: rgba(0,0,0,0); font-size: 12px; -unity-text-align: middle-center; color: rgb(226,236,241); }
 .run-slot-content .cell--done { background-color: rgb(92,111,124); border-color: rgb(167,188,200); }

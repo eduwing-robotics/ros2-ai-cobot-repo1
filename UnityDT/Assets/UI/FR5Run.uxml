@@ -91,14 +91,17 @@
         -->
         <ui:VisualElement name="progress-panel" class="run-deck panel--aux">
             <ui:VisualElement class="run-command-strip">
-                <ui:Label text="작업 상태" class="run-sect__title" />
-                <ui:Label name="operation-detail" text="진행 정보 대기" class="run-operation-detail" />
+                <ui:Label text="작업 흐름" class="run-sect__title" />
+                <ui:VisualElement class="run-workflow">
+                    <ui:Label name="unit-phase" text="공정 정보 미수신" class="run-now__phase" />
+                    <ui:Label name="operation-detail" text="진행 정보 대기" class="run-operation-detail" />
+                </ui:VisualElement>
                 <ui:Label name="operation-age" text="수신 기록 없음" class="run-sub" />
             </ui:VisualElement>
 
             <!-- 1. 지금 -->
             <ui:VisualElement class="run-col run-current" style="left:32px; width:300px;">
-                <ui:Label name="unit-phase" text="—" class="run-now__phase" />
+                <ui:Label text="작업 대상" class="run-sect__title" />
                 <ui:VisualElement class="row" style="margin-top:2px;">
                     <ui:Label name="now-slot" text="—" class="run-now__slot" />
                     <ui:Label name="now-part" text="" class="run-now__part" />
@@ -161,7 +164,7 @@
                 <ui:VisualElement class="run-hr" style="margin-top:12px; margin-bottom:12px;" />
                 <ui:VisualElement class="row">
                     <ui:VisualElement name="watchdog-dot" class="dot" />
-                    <ui:Label text="로봇 상태 수신 경과" tooltip="Unity가 마지막 로봇 상태를 수신한 뒤 경과한 시간입니다. Real: /nonrt_state_data · Mock: /joint_states" class="run-sect__title" style="margin-left:10px;" />
+                    <ui:Label text="상태 수신 경과" tooltip="Unity가 마지막 로봇 상태를 수신한 뒤 경과한 시간입니다. Real: /nonrt_state_data · Mock: /joint_states" class="run-sect__title" style="margin-left:8px;" />
                     <ui:VisualElement class="spacer" />
                     <ui:Label name="watchdog-value" text="—" class="run-sub" />
                 </ui:VisualElement>
@@ -172,7 +175,7 @@
             <ui:VisualElement name="run-detail-column" class="run-col run-col--rule" style="left:1250px; right:32px;">
                 <ui:VisualElement name="calibration-panel" class="run-calibration">
                     <ui:VisualElement class="row">
-                        <ui:Label text="CALIBRATION" class="run-sect__title" />
+                        <ui:Label text="트윈 좌표 반영" class="run-sect__title" />
                         <ui:VisualElement class="spacer" />
                         <ui:Label name="calibration-state" text="미수신" class="run-calibration-state" />
                     </ui:VisualElement>

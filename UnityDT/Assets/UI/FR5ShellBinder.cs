@@ -376,17 +376,20 @@ namespace MainUnity.UI
 
             bool received = vision != null && vision.HasReceivedImage;
             double age = vision != null ? Time.realtimeSinceStartupAsDouble - vision.LastReceiveTimeSeconds : -1;
-            bool fresh = received && age >= 0 && age < visionStaleSeconds;
+            bool enabled = vision != null && vision.isActiveAndEnabled;
+            bool fresh = enabled && received && age >= 0 && age < visionStaleSeconds;
 
             linkImageDot?.EnableInClassList("dot--ok", fresh);
             linkImageDot?.EnableInClassList("dot--good", false);
-            linkImageDot?.EnableInClassList("dot--bad", received && !fresh);
+            linkImageDot?.EnableInClassList("dot--bad", enabled && received && !fresh);
             if (linkImageAge != null)
             {
-                linkImageAge.text = "CAM";
-                linkImageAge.tooltip = fresh
-                    ? $"board/image · {age * 1000:0} ms"
-                    : received ? "board/image 수신 지연" : "board/image 수신 없음";
+                linkImageAge.text = !enabled ? "기준 영상 · 비활성" : "기준 영상";
+                string source = vision != null ? vision.TopicName : "수신기 미연결";
+                linkImageAge.tooltip = source + "\n" + (vision == null ? "수신기 연결 없음" :
+                    !enabled ? "수신 비활성" : fresh ? $"수신 중 · {age:0.0}초 전" :
+                    received ? $"수신 지연 · 마지막 {age:0.0}초 전" : "수신 기록 없음") +
+                    "\nRUN의 선택 영상 상태는 각 영상 패널에 표시됩니다.";
             }
         }
 

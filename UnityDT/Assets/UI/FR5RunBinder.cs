@@ -939,6 +939,10 @@ namespace MainUnity.UI
             return new SlotGroup { Total = total, Root = box, Count = count, Cells = sink, Codes = codes };
         }
 
+        // 취소 응답 수락만으로 지우지 않는다. 확인된 일반 취소만 표시를 비우며 원본 장착 이력은 보존한다.
+        static bool IsCancelled(AssemblyProgressFrame frame) =>
+            frame != null && frame.CancellationConfirmed && frame.ErrorCode == "EXECUTION_CANCELLED";
+
         void RefreshAssembly()
         {
             AssemblyProgressManager manager = uiMaster != null ? uiMaster.AssemblyProgress : null;
@@ -950,7 +954,7 @@ namespace MainUnity.UI
             // snapshot 전체를 매번 대체하므로 재접속 및 같은 Job의 새 Unit에도 이전 칸이 남지 않는다.
             completedSlots.Clear();
             configuredSlots.Clear();
-            bool valid = frame?.PlacedSlotCodes != null && frame.ExpectedStepCount == planTotal &&
+            bool valid = !IsCancelled(frame) && frame?.PlacedSlotCodes != null && frame.ExpectedStepCount == planTotal &&
                 frame.PlacedSlotCodes.Length == frame.PlacedCount;
             foreach (SlotGroup group in slotGroups)
                 foreach (string code in group.Codes)
@@ -994,7 +998,8 @@ namespace MainUnity.UI
             if (slotProgressStatus == null) return;
             bool valid = slotProgressStatus.userData is bool value && value;
             bool stale = frame != null && !frame.IsTerminal && Time.realtimeSinceStartupAsDouble - frame.ReceiveTimeSeconds > 3d;
-            slotProgressStatus.text = frame == null ? "진행 정보 미수신 · 칸은 트윈 구성" :
+            slotProgressStatus.text = IsCancelled(frame) ? "작업 취소 완료 · 다음 작업 대기" :
+                frame == null ? "진행 정보 미수신 · 칸은 트윈 구성" :
                 frame.PlacedSlotCodes == null ? "슬롯별 완료 정보 미제공" : !valid ? "슬롯 구성·완료 목록 확인 필요" :
                 stale ? "수신 중단 · 마지막 확인 " + Age(frame.ReceiveTimeSeconds) :
                 "✓ 장착 완료   • 현재 대상   빈 칸 미확인";
@@ -1018,34 +1023,36 @@ namespace MainUnity.UI
 
         void RefreshProgressHeader(AssemblyProgressFrame frame, int placed)
         {
+            bool cancelled = IsCancelled(frame);
             if (progressCount != null)
-                progressCount.text = frame != null && frame.ExpectedStepCount > 0
+                progressCount.text = cancelled ? "취소 완료" : frame != null && frame.ExpectedStepCount > 0
                     ? $"{placed} / {frame.ExpectedStepCount}" : "진행 수량 미확인";
 
             // 분모는 씬 슬롯 수가 아닌 실행 피드백의 전체 단계 수다.
             // 단계 수가 없으면 빈 레일과 미확인 문구를 함께 표시한다.
             if (progressRailFill != null)
                 progressRailFill.style.width = Length.Percent(
-                    frame != null && frame.ExpectedStepCount > 0
+                    !cancelled && frame != null && frame.ExpectedStepCount > 0
                         ? Mathf.Clamp01((float)placed / frame.ExpectedStepCount) * 100f : 0f);
 
             if (progressNow == null) return;
-            progressNow.text = frame == null ? "진행 피드백 없음" : Describe(frame);
-            SetTone(progressNow, frame == null || frame.State == AssemblyState.Completed ||
+            progressNow.text = cancelled ? "취소 완료" : frame == null ? "진행 피드백 없음" : Describe(frame);
+            SetTone(progressNow, cancelled || frame == null || frame.State == AssemblyState.Completed ||
                 frame.State == AssemblyState.Paused
                 ? "muted"
                 : frame.State == AssemblyState.Failed ? "bad" : "accent");
         }
 
-        /// <summary>좌측 하단에는 callback 내부 동작이 아닌 Sequencer의 전체 공정 단계를 표시한다.</summary>
+        // 전체 공정과 내부 동작은 상단 상태 띠에서 구분한다. 장착 수량은 우하단이 소유한다.
         void RefreshUnitLine(AssemblyProgressFrame frame)
         {
             if (unitPhase != null)
             {
-                unitPhase.text = "전체 공정 · " + DescribeWorkflow(frame);
+                unitPhase.text = "전체 공정 · " + (IsCancelled(frame) ? "취소 완료" : DescribeWorkflow(frame));
+                unitPhase.tooltip = unitPhase.text;
                 // FAILED 가 RUNNING·IDLE 과 같은 무게로 보이면 실패를 못 알아본다.
                 // 진행 중은 색을 얻지 않는다 — 이상만 색을 얻는다(Docs/ui-design.md 1절).
-                SetTone(unitPhase, frame != null && frame.State == AssemblyState.Failed ? "bad" : "none");
+                SetTone(unitPhase, !IsCancelled(frame) && frame != null && frame.State == AssemblyState.Failed ? "bad" : "none");
             }
 
             RefreshNow(frame);
@@ -1054,13 +1061,11 @@ namespace MainUnity.UI
             if (unitStep == null) return;
             if (frame == null)
             {
-                unitStep.text = $"계획 슬롯 {planTotal}개 · 진행 미확인";
+                unitStep.text = "작업 대상 정보 미수신";
                 return;
             }
 
-            unitStep.text = frame.ExpectedStepCount > 0
-                ? $"장착 완료 {frame.PlacedCount} / {frame.ExpectedStepCount}"
-                : "조립 단계 수 미확인";
+            unitStep.text = frame.UnitId > 0 ? $"Unit {frame.UnitId}" : "Unit 정보 미수신";
         }
 
         void RefreshOperationStatus(AssemblyProgressFrame frame)
@@ -1069,19 +1074,17 @@ namespace MainUnity.UI
             {
                 bool hasCallback = frame != null && (!string.IsNullOrEmpty(frame.CurrentEvent) ||
                     !string.IsNullOrEmpty(frame.CurrentAction) || !string.IsNullOrEmpty(frame.CurrentPhase));
-                string detail = hasCallback ? DescribeOperation(frame) : frame == null
-                    ? "마지막 callback 대기"
-                    : frame.State == AssemblyState.Failed
-                        ? string.IsNullOrEmpty(frame.Message) ? "실패 callback 없음" : frame.Message
-                        : frame.State == AssemblyState.Completed ? "작업 완료 · 마지막 callback 없음"
-                        : "마지막 callback 대기";
+                string detail = IsCancelled(frame) ? "작업 취소 완료 · 다음 작업 대기" : frame == null ? "진행 정보 미수신" :
+                    frame.State == AssemblyState.Failed ? (string.IsNullOrEmpty(frame.Message) ? "실패 상세 미수신" : frame.Message) :
+                    frame.State == AssemblyState.Completed ? "작업 완료" : hasCallback ? DescribeOperation(frame)
+                    : "세부 동작 정보 대기";
                 operationDetail.text = detail;
                 operationDetail.tooltip = detail;
-                SetTone(operationDetail, frame?.State == AssemblyState.Failed ? "bad" : "none");
+                SetTone(operationDetail, !IsCancelled(frame) && frame?.State == AssemblyState.Failed ? "bad" : "none");
             }
             if (operationAge != null)
-                operationAge.text = frame == null ? "callback 수신 기록 없음" :
-                    "마지막 callback 상태 수신 " + Age(frame.ReceiveTimeSeconds);
+                operationAge.text = frame == null ? "수신 기록 없음" :
+                    "진행 정보 수신 " + Age(frame.ReceiveTimeSeconds);
         }
 
         /// <summary>
@@ -1103,10 +1106,10 @@ namespace MainUnity.UI
 
             if (recipeVersion != null)
                 FR5EmptyState.Present(recipeVersion,
-                    frame != null && !string.IsNullOrEmpty(frame.RecipeVersion) ? frame.RecipeVersion : "—");
+                    frame != null && !string.IsNullOrEmpty(frame.RecipeVersion) ? "레시피 · " + frame.RecipeVersion : "레시피 · 미수신");
             if (requestId != null)
                 FR5EmptyState.Present(requestId,
-                    frame != null && !string.IsNullOrEmpty(frame.JobId) ? frame.JobId : "—");
+                    frame != null && !string.IsNullOrEmpty(frame.JobId) ? "Job · " + frame.JobId : "Job · 미수신");
         }
 
         static string DescribeOperation(AssemblyProgressFrame frame)
@@ -1215,7 +1218,7 @@ namespace MainUnity.UI
             bool mock = uiMaster != null && uiMaster.IsSimulated;
             string state = mock ? "사용 안 함" : source == null ? "연결 없음" : source.Progress switch
             {
-                TrayPartCalibrator.ProgressState.Preparing => "준비",
+                TrayPartCalibrator.ProgressState.Preparing => "반영 준비 중",
                 TrayPartCalibrator.ProgressState.Applied => "반영됨",
                 TrayPartCalibrator.ProgressState.Rejected => "거부",
                 TrayPartCalibrator.ProgressState.ConfigurationError => "설정 오류",
@@ -1237,6 +1240,7 @@ namespace MainUnity.UI
                 state = "수신 중단";
             calibrationState.text = state;
             SetTone(calibrationState, error ? "bad" : "none");
+            string traySummary = detail;
             if (!mock && source != null)
                 detail += "\n" + source.SyncDetail + (string.IsNullOrEmpty(source.StorageDetail) ? "" : "\n" + source.StorageDetail) +
                     "\n로봇 시각화: " + source.RobotDetail +
@@ -1255,7 +1259,7 @@ namespace MainUnity.UI
             var board = uiMaster != null ? uiMaster.BoardCalibration : null;
             string boardState = board == null ? "연결 없음" : board.Progress switch
             {
-                BoardPartCalibrator.ProgressState.Preparing => "준비",
+                BoardPartCalibrator.ProgressState.Preparing => "반영 준비 중",
                 BoardPartCalibrator.ProgressState.Applied => "반영됨",
                 BoardPartCalibrator.ProgressState.Rejected => "거부",
                 BoardPartCalibrator.ProgressState.ConfigurationError => "설정 오류",
@@ -1275,6 +1279,14 @@ namespace MainUnity.UI
                 "수신 " + Age(board.LastReceiveTime) + " · 반영 " + Age(board.LastAppliedTime));
             calibrationState.tooltip = "트레이: " + (source != null ? source.ProgressDetail : detail) +
                 "\n기판: " + (board != null ? board.ProgressDetail : "수신기 연결 필요") + "\n" + calibrationAge.text;
+            // 고정 한 줄에는 필요한 사유를 먼저 노출하고 전체 수신·반영 이력은 툴팁에 보존한다.
+            calibrationDetail.tooltip = calibrationDetail.text + "\n" + calibrationAge.text;
+            calibrationDetail.text = error ? "트레이 · " + traySummary :
+                boardError ? "기판 · " + board.ProgressDetail :
+                source == null || board == null ? "좌표 수신기 연결 필요 · 상세 확인" :
+                state == "수신 중단" || boardState == "수신 중단" ? "좌표 수신 중단 · 마지막 표시 유지" :
+                state == "수신 비활성" || boardState == "수신 비활성" ? "좌표 수신 비활성 · 자동 반영 중지" :
+                "트윈 표시용 좌표 · 설비 운전 준비와 별개";
             if (calibrationState.parent?.parent != null)
                 calibrationState.parent.parent.tooltip = calibrationState.tooltip;
         }
@@ -1453,7 +1465,8 @@ namespace MainUnity.UI
             if (statusManager == null || !statusManager.HasFreshState || gripper == null || !gripper.TryGetOpeningPercent(out float percent))
             {
                 if (gripperValue != null) gripperValue.text = "—";
-                if (gripperText != null) gripperText.text = "—";
+                if (gripperText != null) gripperText.text = gripper == null ? "연결 없음" :
+                    statusManager == null || !statusManager.HasFreshState ? "상태 미수신" : "개방률 미수신";
                 if (gripperFill != null) gripperFill.style.width = Length.Percent(0f);
                 gripperChip?.EnableInClassList("chip--accent", false);
                 return;
