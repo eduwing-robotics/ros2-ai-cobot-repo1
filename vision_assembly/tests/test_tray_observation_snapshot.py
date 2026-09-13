@@ -15,7 +15,7 @@ from scipy.spatial.transform import Rotation
 
 SCRIPTS = Path(__file__).resolve().parents[1] / 'scripts'
 sys.path.insert(0, str(SCRIPTS))
-from segmentation_scale_retry import passes_quality, merge_scale_retry
+from segmentation_scale_retry import passes_quality, merge_scale_retry, restore_crop_points
 
 
 def load_detector():
@@ -28,7 +28,8 @@ def load_detector():
     module = ast.fix_missing_locations(ast.Module(body=definitions, type_ignores=[]))
     namespace = dict(np=np, cv2=cv2, time=time, json=json, Rotation=Rotation,
                      String=SimpleNamespace, COLORS={'hbm': (220, 0, 220)},
-                     passes_quality=passes_quality, merge_scale_retry=merge_scale_retry)
+                     passes_quality=passes_quality, merge_scale_retry=merge_scale_retry,
+                     restore_crop_points=restore_crop_points)
     exec(compile(module, str(path), 'exec'), namespace)
     return namespace['Detector']
 
@@ -306,7 +307,7 @@ def test_pm_retry_uses_other_resolution_and_keeps_quality_gate(detector, primary
         sizes.append(kwargs['imgsz']);return [prediction()]
     detector.seg_model.predict=predict
     calls=[]
-    def find(*args):
+    def find(*args, **kwargs):
         calls.append(True)
         if len(calls)==2:raise ValueError('alternate reached')
         return [dict(segmentation_confidence=.69,mask_shape_score=.95,rectangularity=.95)],None,None
@@ -352,3 +353,25 @@ def test_inductor_weak_prediction_uses_verified_alternate_resolution(detector):
     assert calls==[640,960]
     assert result['detections'][0]['segmentation_confidence']==.9
     assert result['detections'][0]['scale_retry']['primary_confidence']==.4
+
+
+@pytest.mark.parametrize('kind',['gpu','hbm','black_block','marked_white','right_white_brown'])
+def test_all_parts_rotated_retry_restores_original_camera_coordinates(detector,kind):
+    if kind!='hbm':rename_part(detector,kind)
+    detector.seg_quality[kind]['minimum_detection_confidence']=.7
+    calls=[]
+    def predict(*args,**kwargs):
+        calls.append(kwargs['imgsz']);p=prediction()
+        score=.4 if len(calls)<4 else .9
+        p.boxes.conf=SimpleNamespace(cpu=lambda:np.array([score]))
+        if len(calls)==4:p.masks.xy=[np.array([79,79])-p.masks.xy[0]]
+        return [p]
+    detector.seg_model.predict=predict
+    _,jpeg=cv2.imencode('.jpg',np.zeros((80,80,3),np.uint8))
+    detector.process_color(SimpleNamespace(header=header(1_000_000_000),data=jpeg.tobytes()))
+    result=json.loads(detector.a.output_json.read_text())
+    assert calls==[640,960,1280,640]
+    d=result['detections'][0]
+    assert d['inference_rotation_deg']==180
+    assert d['segmentation_confidence']==.9
+    assert d['camera_xyz_m']==pytest.approx([.1,.075,.5])

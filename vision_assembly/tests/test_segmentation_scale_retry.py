@@ -22,3 +22,21 @@ def test_ambiguous_and_missing_identities_not_added():
  assert merge([a,b],[part(1,.95)])==[a,b]
  assert merge([], [part(1,.95)])==[]
  assert merge([a],[part(1,.95),part(2,.95)])[0] is a
+
+
+def test_rotated_crop_masks_return_to_original_pixels_before_matching():
+ import numpy as np
+ from segmentation_scale_retry import restore_crop_points
+ original=np.array([[12.5,20.25],[22.5,20.25],[22.5,60.25],[12.5,60.25]])
+ rotated=np.array([99,79])-original
+ assert np.allclose(restore_crop_points(rotated,100,80,180),original)
+ assert np.allclose(restore_crop_points(original,100,80,0),original)
+ with pytest.raises(ValueError):restore_crop_points(original,100,80,90)
+
+
+def test_rotated_retry_still_requires_unique_geometry_and_quality():
+ weak=part();rotated=part(1,.9,inference_rotation_deg=180)
+ chosen=merge([weak],[rotated])[0]
+ assert chosen['inference_rotation_deg']==180
+ rotated['angle_deg']=4
+ assert merge([weak],[rotated])[0] is weak

@@ -1,3 +1,11 @@
+## 그리퍼 자동 활성화 — 2026-09-13
+
+`start`와 `restart`는 서버 기동 후 하드웨어 실행 설정이 true이면 그리퍼를 자동 활성화한다. 활성 상태이면 명령을 반복하지 않고 정상 피드백이 1초간 유지되는지 확인한다. 로봇 이동이나 그리퍼 열기/닫기는 수행하지 않는다.
+
+로봇 AUTO(mode 0), 정지, 최신 정상 상태, Tool1/User0, 진행 작업 및 보유 후보 없음이 필요하다. 공유 실행 잠금을 잡아 동시 작업을 차단한다. 기존 recovery_required는 활성화만 허용하며 변경하지 않는다. 별도 assembly.recover가 필요하다.
+
+이미 서버가 켜졌다면 `./run_fr5_assembly_stack.sh gripper-start`로 같은 초기화를 수행한다. 실패 시 명령은 오류로 종료되며 진단과 복구를 위해 서버는 유지한다. 감사 기록은 runtime/assembly_stack/gripper_startup/에 저장한다.
+
 # FR5 조립 스택 통합 실행 명령
 
 ## 조립 사이클 실행 — 2026-09-07
@@ -171,7 +179,7 @@ FAIRINO 드라이버가 있는데 정지 상태 샘플을 확보하지 못하거
 
 ## 안전 범위
 
-이 실행기는 서버, 카메라, 비전 노드만 시작한다. 로봇 이동이나 그리퍼 명령은 보내지 않는다.
+이 실행기는 서버, 카메라, 비전 노드를 시작하고 하드웨어 모드에서 그리퍼를 활성화한다. 로봇 이동이나 그리퍼 열기/닫기는 수행하지 않는다.
 
 실제 이동 전에는 반드시 다음을 별도로 확인한다.
 
@@ -213,3 +221,7 @@ Real Backend 하드웨어 실행은 비활성으로 유지한다.
 ## Real Robot API 실행 모드 — 2026-09-08
 
 이 PC는 사용자 요청에 따라 `config/ksmc.env`의 `KSMC_REAL_HARDWARE_EXECUTION=true`로 실제 실행을 활성화했다. 스택 재시작 시에도 유지된다. 다른 PC에서 미지정 시 false다. `api-start`는 기존 API의 모드를 바꾸지 않으며 설정 변경 후에는 API 재시작이 필요하다. 상태는 `/real/robot/status` (`std_srvs/srv/Trigger`)의 `hardware_execution_enabled`로 확인한다. 기동 자체는 이동 명령을 보내지 않는다.
+
+## 제어 피드백 전용 로컬 경로 — 2026-09-13
+
+이 PC는 드라이버와 Robot API 간 피드백에 `KSMC_LOCAL_FEEDBACK_SOCKET=fr5_feedback_domain5`를 사용한다. Unity용 ROS 토픽은 유지한다. `/real/robot/status`의 `feedback_transport.transport=unix_datagram_v1`과 `error=null`을 확인한다. 상세 설정·검증은 [로컬 피드백 전송](LOCAL_FEEDBACK_KO_20260913.md)을 참고한다.

@@ -275,7 +275,7 @@ def run(args):
         photo_only = getattr(args, 'photo_only', False)
         evidence['capture_scope'] = 'photograph_only' if photo_only else 'measurement'
         prior = read(directory / 'snapshot.json') if phase == 'tray' and not photo_only else None
-        retry = (TrayCaptureRetry(read(parameters.recipe_file)['tray_snapshot_quality'], after, defer_smd_to_close_view=parameters.defer_smd_to_close_view)
+        retry = (TrayCaptureRetry(read(parameters.recipe_file)['tray_snapshot_quality'], after, defer_smd_to_close_view=parameters.defer_smd_to_close_view, max_geometry_recaptures=2)
                  if phase == 'tray' and not photo_only and parameters.part_group is None else None)
         retry_progress = None
         while time.monotonic() < deadline:

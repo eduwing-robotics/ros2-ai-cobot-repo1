@@ -10,12 +10,16 @@ from check_step_api import validate_status
 from startup_service_client import (wait_for_startup_services, call_startup_service, call_readonly_service)
 
 
-def prepare(status, command, clock=time.monotonic, sleep=time.sleep):
+def prepare(status, command, clock=time.monotonic, sleep=time.sleep, *, activation_only=False):
     def safe_state():
         state = status()
         # Only activation may be missing during preparation. All other readiness
         # requirements still apply, and reported gripper faults are never reset.
-        validate_status(dict(state, gripper_feedback_valid=True))
+        check = dict(state, gripper_feedback_valid=True)
+        if activation_only:
+            # Initializing the gripper does not clear or resume a failed cycle.
+            check["recovery_required"] = False
+        validate_status(check)
         if state.get('gripperfaultnum', 0) or state.get('grippererro', 0):
             raise RuntimeError('gripper fault before activation')
         return state
@@ -51,6 +55,7 @@ def prepare(status, command, clock=time.monotonic, sleep=time.sleep):
 def main():
     parser=argparse.ArgumentParser()
     parser.add_argument('--safety-record', required=True)
+    parser.add_argument('--activation-only', action='store_true')
     args=parser.parse_args()
     from assembly_cycle_launcher import read, write
     safety=read(args.safety_record)
@@ -78,7 +83,7 @@ def main():
                 before_send=mark_activation_pending if cmd == 'ActGripper(1,1)' else None,
                 deadline=startup_deadline,
             ).cmd_res
-        result = prepare(status, command)
+        result = prepare(status, command, activation_only=args.activation_only)
         safety['activation_outcome_unknown']=False
         write(args.safety_record,safety)
         print(json.dumps(result), flush=True)

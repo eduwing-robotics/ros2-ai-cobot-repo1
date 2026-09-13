@@ -88,7 +88,7 @@ def motion_plan_version(planned):
 
 
 class PortExecutor:
-    """Use the API node's subscribed feedback; never spin a second ROS executor."""
+    """Use the API port's verified feedback; never spin a second ROS executor."""
     def __init__(self, backend, operation):
         self.backend = backend; self.operation = operation; self.robot = backend._robot
         self.motion_plan_version = None
@@ -272,6 +272,7 @@ class PrecisionSteps:
         scripts = str(self.root / 'vision_assembly/scripts')
         if scripts not in sys.path: sys.path.insert(0, scripts)
         self.executor_factory = executor_factory
+        self.binding_plans = {}
         self.units = {}; self.sources = {}; self.held_plan = None; self.verified_pick = None
         # A restart never silently reconstructs consumed tray cells from images.
         self.previous_jobs = set()
@@ -400,6 +401,17 @@ class PrecisionSteps:
             if not 0 <= time.time() - stamp <= age_limit:
                 raise BackendFailure('CAMERA_NOT_READY', 'original frozen/source observations expired')
         check_age()
+        from .source_bindings import validate_source_bindings
+        try:
+            binding_hash = validate_source_bindings(payload)
+        except (ValueError, TypeError, KeyError) as error:
+            raise BackendFailure('INVALID_REQUEST', str(error)) from error
+        if payload.get('source_bindings_sha256') != binding_hash:
+            raise BackendFailure('INVALID_REQUEST', 'source binding fingerprint mismatch')
+        binding_key = (operation.job_id, payload['plan_sha256'])
+        previous_binding = self.binding_plans.get(binding_key)
+        if previous_binding is not None and previous_binding != binding_hash:
+            raise BackendFailure('INVALID_REQUEST', 'source bindings changed after execution began')
         selection = plan.get('plan_selection', {})
         kwargs = {}
         if selection.get('mode') == 'explicit_slots': kwargs['requested_selected_slots'] = selection['selected_slots']
@@ -461,6 +473,7 @@ class PrecisionSteps:
             unit.update(plan_sha256=payload['plan_sha256'],scope=incoming,mode='smd',placed=set())
         if pick and operation.slot_code in unit['removed']:
             raise BackendFailure('INVALID_REQUEST', 'source cell already consumed in this Unit')
+        self.binding_plans[binding_key] = binding_hash
         node = self.executor_factory(backend, operation)
         def validate_resume():
             check_age()

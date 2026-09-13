@@ -18,7 +18,8 @@ class RobotEventContext:
 
     def bind(self, operation, payload, row):
         context = {k: row.get(k) for k in
-                   ('source_id', 'tray_registration_id', 'source_observation_id')}
+                   ('source_id', 'tray_registration_id', 'source_observation_id',
+                    'calibration_instance_index', 'source_identity_scope')}
         context.update(source_cycle_id=payload.get('source_cycle_id'),
                        plan_sha256=payload.get('plan_sha256'))
         for key in ('production_job_id', 'unit_id', 'display_board_id'):
@@ -40,7 +41,9 @@ class RobotEventContext:
                 except (ValueError, TypeError):
                     value = None
                 if isinstance(value, dict):
-                    context.update(value)  # preserve existing completion message fields
+                    # Completion text cannot replace the frozen source identity.
+                    protected = set(context) | {'physical_holding_verified', 'attachment_binding_valid'}
+                    context.update({k:v for k,v in value.items() if k not in protected})
                 else:
                     context['reason'] = message
             context.update(schema='fr5.robot_event_context/v1',
@@ -48,6 +51,8 @@ class RobotEventContext:
                 slot_code=operation.slot_code, order=operation.order)
             context['attachment_binding_valid'] = all(isinstance(context.get(k), str)
                 and bool(context[k]) for k in ('source_id','tray_registration_id','source_observation_id'))
+            # Existing gripper/empty-cell evidence is not physical holding proof.
+            context['physical_holding_verified'] = False
             if feedback is not None:
                 context['feedback'] = deepcopy(feedback)
             self.sequence += 1

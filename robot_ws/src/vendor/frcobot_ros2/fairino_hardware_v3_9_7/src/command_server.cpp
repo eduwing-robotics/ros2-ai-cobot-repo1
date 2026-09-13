@@ -11737,6 +11737,11 @@ std::string robot_command_thread::SetWeaveOffsetRT(std::string para){
 /**
  * @brief 数据端口topic监听回调函数
 */
+void robot_command_thread::_publish_state(const robot_feedback_msg& msg) {
+    _local_feedback.send(msg);
+    _state_publisher->publish(msg);
+}
+
 void robot_command_thread::_state_recv_callback(){
     auto msg = robot_feedback_msg();
     static ROBOT_STATE_PKG ctrl_state;
@@ -11959,7 +11964,7 @@ void robot_command_thread::_state_recv_callback(){
         RCLCPP_INFO(rclcpp::get_logger(LOGGER_NAME),"state feedback error: error_code=%d",res);
         msg.reconnect_flag = 1;
     }
-    _state_publisher->publish(msg);
+    _publish_state(msg);
 }
 
 /**
@@ -11974,7 +11979,7 @@ void robot_command_thread::_ping_recv_callback(){
     if((!current_ping_status) || (state != 0)){
         RCLCPP_INFO(rclcpp::get_logger(LOGGER_NAME),"192.168.58.2 is error: error_code=%d",state);
         msg.reconnect_flag = 1;
-        _state_publisher->publish(msg);
+        _publish_state(msg);
         
     }
 }

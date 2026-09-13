@@ -242,6 +242,7 @@ class FairinoRobotPort:
         travel_speed_percent: int,
         vertical_speed_percent: int,
         state_max_age_sec: float = 0.25,
+        local_feedback_socket: str = "",
         service_timeout_sec: float = 10.0,
         maximum_joint_step_deg: float = 95.0,
         minimum_soft_limit_margin_deg: float = 10.0,
@@ -264,13 +265,23 @@ class FairinoRobotPort:
         self._state_gap_sec = 0.0
         io_group = getattr(node, '_feedback_group', None)
         options = {'callback_group': io_group} if io_group is not None else {}
-        node.create_subscription(RobotNonrtState, state_topic, self._state_callback, 10, **options)
+        self._local_receiver = None
+        if local_feedback_socket:
+            from .local_feedback import LocalFeedbackReceiver
+            from rclpy.serialization import deserialize_message
+            self._local_receiver = LocalFeedbackReceiver(local_feedback_socket,
+                self._store_state, lambda data: deserialize_message(data, RobotNonrtState),
+                max_age=self._state_max_age)
+        else:
+            node.create_subscription(RobotNonrtState, state_topic, self._state_callback, 10, **options)
         self._client = node.create_client(RemoteCmdInterface, command_service, **options)
         self._driver_parameters = node.create_client(GetParameters, "/fr_command_server/get_parameters", **options)
 
     def _state_callback(self, state: RobotNonrtState) -> None:
+        self._store_state(state, time.monotonic())
+
+    def _store_state(self, state: RobotNonrtState, now: float) -> None:
         with self._lock:
-            now = time.monotonic()
             previous = self._state_received_at
             self._state = state
             self._state_sequence = getattr(self, "_state_sequence", 0) + 1
@@ -281,15 +292,22 @@ class FairinoRobotPort:
             self._state_received_at = now
 
     def assert_continuous_driver(self):
+        receiver = getattr(self, '_local_receiver', None)
+        if receiver is not None:
+            self._fresh_state()
+            if not receiver.continuous_capable():
+                raise BackendFailure('SAFETY_STOP', 'fresh local driver blending capability unavailable')
+            return
         client = self._driver_parameters
         if not client.wait_for_service(timeout_sec=2):
             raise BackendFailure('SAFETY_STOP', 'continuous driver capability service unavailable')
         request = GetParameters.Request(names=['continuous_movej_revision'])
         future = client.call_async(request)
-        deadline = time.monotonic() + 2
+        deadline = time.monotonic() + self._service_timeout
         while not future.done() and time.monotonic() < deadline:
             time.sleep(.01)
         if not future.done() or future.result() is None:
+            future.cancel()
             raise BackendFailure('SAFETY_STOP', 'continuous driver capability timeout')
         values = future.result().values
         if len(values) != 1 or values[0].string_value != 'per-command-blend-v1':
@@ -677,6 +695,7 @@ class RealRobotApiNode(Node):
         self.declare_parameter("pause_topic", PAUSE_TOPIC)
         self.declare_parameter("vision_target_topic", VISION_TARGET_TOPIC)
         self.declare_parameter("robot_state_topic", ROBOT_STATE_TOPIC)
+        self.declare_parameter("local_feedback_socket", os.environ.get("KSMC_LOCAL_FEEDBACK_SOCKET", ""))
         self.declare_parameter("robot_command_service", ROBOT_COMMAND_SERVICE)
         self.declare_parameter("vision_max_age_sec", 2.5)
         self.declare_parameter("arm_timeout_sec", 90.0)
@@ -704,6 +723,7 @@ class RealRobotApiNode(Node):
             self,
             enabled=bool(self.get_parameter("enable_hardware_execution").value),
             state_topic=str(self.get_parameter("robot_state_topic").value),
+            local_feedback_socket=str(self.get_parameter("local_feedback_socket").value),
             command_service=str(self.get_parameter("robot_command_service").value),
             travel_speed_percent=int(self.get_parameter("travel_speed_percent").value),
             vertical_speed_percent=int(self.get_parameter("vertical_speed_percent").value),
@@ -818,12 +838,15 @@ class RealRobotApiNode(Node):
                 'plan_sha256': payload.get('plan_sha256'),
                 'execution_context': payload.get('execution_context'),
                 'parts': [{k: row.get(k) for k in ('source_id','tray_registration_id',
-                    'source_observation_id','part_id','source_index','slot_code','order')}
+                    'source_observation_id','part_id','source_index','slot_code','order',
+                    'calibration_instance_index','source_identity_scope')}
                     for row in payload.get('parts', [])]}
         status['observed_unix'] = time.time()
         held = self._backend.held_part
         status["held_candidate"] = None if held is None else {
             "job_id": held.job_id, "part_id": held.part_id, "slot_code": held.slot_code}
+        receiver = getattr(self._robot_port, "_local_receiver", None)
+        status["feedback_transport"] = receiver.snapshot() if receiver else {"transport": "ros_dds"}
         status["status_callback_elapsed_ms"] = (time.monotonic() - callback_started) * 1000
         response.success = True  # API availability; not permission to move
         response.message = json.dumps(status)
@@ -873,6 +896,9 @@ def main(args=None) -> None:
         executor.shutdown()
         if node._assembly_bridge is not None:
             node._assembly_bridge.controller.close()
+        receiver = getattr(node._robot_port, "_local_receiver", None)
+        if receiver is not None:
+            receiver.close()
         node.destroy_node()
         if rclpy.ok():
             rclpy.shutdown()

@@ -121,11 +121,19 @@ def build_target_payload(*, snapshot, recipes, slots, steps, job_id, plan_builde
                       order=step['order'], source_index=index)
         sources = [p for p in reference_parts if p['part_type'] == PART_TYPES[part]
                    and p['instance_index'] == index]
-        if len(sources) == 1:
-            # Never reconstruct IDs in a consumer; historical captures remain
-            # usable for motion diagnostics but cannot authorize attachment.
-            for key in ('source_id', 'tray_registration_id', 'source_observation_id'):
-                common[key] = sources[0].get(key)
+        if len(sources) != 1:
+            raise ValueError(f'{slot}: unique observed source required before motion')
+        source = sources[0]
+        if source.get('source_identity_scope') == 'invalid':
+            raise ValueError(f'{slot}: observed source is ambiguous; cannot generate an ID')
+        for key in ('source_id', 'tray_registration_id', 'source_observation_id',
+                    'calibration_instance_index', 'source_identity_scope'):
+            common[key] = source.get(key)
+        if not common.get('source_id'):
+            from .source_bindings import observation_source_id
+            common['source_id'] = observation_source_id(common.get('tray_registration_id'),
+                common.get('source_observation_id'), PART_TYPES[part], common.get('calibration_instance_index'))
+            common['source_identity_scope'] = 'observation_cell'
         recipe = recipes['parts'][PART_TYPES[part]]
         if part == 'VRM':
             recipe = recipe['horizontal']
@@ -142,6 +150,8 @@ def build_target_payload(*, snapshot, recipes, slots, steps, job_id, plan_builde
             payload[group].append(dict(common, tcp_pose_mm_deg=list(pose),
                 timestamp_ros_ns=int(stamp*1e9), expected_gripper=gripper,
                 gripper_profiles=profiles))
+    from .source_bindings import validate_source_bindings
+    payload['source_bindings_sha256'] = validate_source_bindings(payload)
     return payload
 
 

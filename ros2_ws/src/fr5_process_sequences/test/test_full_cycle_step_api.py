@@ -63,9 +63,14 @@ def populate(payload,plan,recipe):
     for item in plan['plan']:
         step=next(s for s in recipe['steps'] if s['slot_code']==item['slot_code'])
         payload['parts'].append(dict(job_id=payload['job_id'],**step,source_index=item['tray_instance_index'],
+            source_id='source-'+item['slot_code'],tray_registration_id='reg',source_observation_id='obs',calibration_instance_index=item['tray_instance_index'],
             expected_gripper=recipe['gripper']['parts'][step['part_id']],
             gripper_profiles={p:dict(velocity_percent=20,force_percent=1) for p in ('PREOPEN','GRASP','RELEASE')}))
         payload['tray_inspection_reference']['bindings'].append(dict(part_type=item['part_type'],physical_index=item['tray_instance_index'],reference_center_pixel=[10,20]))
+
+    from fr5_process_sequences.source_bindings import validate_source_bindings
+    payload['slots']=deepcopy(payload['parts'])
+    payload['source_bindings_sha256']=validate_source_bindings(payload)
 
 
 @pytest.mark.parametrize('fail_slot',[None,'GPU-01','HBM-08','CAP-03'])
@@ -96,6 +101,11 @@ def test_all25_individual_api_calls_or_stop_at_first_failure(tmp_path,plan,monke
         assert len(requests)==50
         assert [r['action'] for r in requests]==['robot.pick','robot.place']*25
         assert real.held_part is None
+        for event in events:
+            context=json.loads(event.message)
+            assert context['source_id']=='source-'+context['slot_code']
+            assert context['attachment_binding_valid'] is True
+            assert context['physical_holding_verified'] is False
     else:
         assert requests[-1]['slot_code']==fail_slot and requests[-1]['action']=='robot.pick'
         assert all(r['slot_code'] in (NON_SMD+SMD)[:(NON_SMD+SMD).index(fail_slot)+1] for r in requests)

@@ -166,7 +166,7 @@ def test_ghost_stage_has_ids_units_and_legacy_jointstate():
 
 def payload_fixture():
     snapshot={'cycle_id':'test','board_capture':{'captured_unix':99},
-              'tray_capture':{'captured_unix':98.5},'smd_close_capture':{'captured_unix':99.5},
+              'tray_capture':{'captured_unix':98.5, 'parts':[dict(part_type='right_white_brown',instance_index=1,calibration_instance_index=1,source_id='cap-test',tray_registration_id='reg-test',source_observation_id='obs-test')]},'smd_close_capture':{'captured_unix':99.5},
               'smd_close_captured':True}
     steps=[dict(order=14,part_id='CAP',slot_code='CAP-01')]
     def planner(*_,**kwargs):
@@ -231,6 +231,8 @@ def test_adapter_with_actual_precision_planner_keeps_user_order_and_real_values(
     sys.path.insert(0,str(ROOT/'vision_assembly/scripts'))
     from full_cycle_plan import build_plan
     snapshot=json.loads((ROOT/'vision_assembly/data/fixed_cycle_full_restart_retry2_2026-09-02.json').read_text())
+    for p in snapshot['tray_capture']['parts']:
+        p.update(source_id='test-'+p['part_type']+str(p['instance_index']), tray_registration_id='reg', source_observation_id='obs', calibration_instance_index=p['instance_index'])
     # Synthetic test input only: historical data is never published or written.
     snapshot["smd_close_captured"] = True
     for key in ('board_capture','tray_capture','smd_close_capture'):
@@ -301,6 +303,11 @@ def test_adapter_preserves_selected_set_for_post_pick_inspection(removed_kind):
     capture=snapshot['tray_capture']
     capture.update(handeye_sha256='test', assembly_set_selection={'set_index':1,'config':config},
         parts=[dict(part_type=removed_kind, instance_index=1, reference_center_pixel=point)])
+    # Adapter builds a CAP target in this fixture, in addition to the inspected kind.
+    if removed_kind != 'right_white_brown':
+        capture['parts'].append(dict(part_type='right_white_brown',instance_index=1,reference_center_pixel=[1.,2.]))
+    for p in capture['parts']:
+        p.update(source_id='test-'+p['part_type'],tray_registration_id='reg',source_observation_id='obs',calibration_instance_index=1)
     reference=make_payload(snapshot)['tray_inspection_reference']
     assert reference['assembly_set_selection']==capture['assembly_set_selection']
     assert reference['assembly_set_selection'] is not capture['assembly_set_selection']
@@ -314,3 +321,24 @@ def test_adapter_preserves_selected_set_for_post_pick_inspection(removed_kind):
     live['detections'].append(occupied)
     with pytest.raises(RuntimeError,match='still occupied'):
         check_pick_removal(live,reference,{slot},slot,100.1,99)
+
+
+def test_missing_source_gets_observation_scoped_id_in_both_pick_and_place():
+    from fr5_process_sequences.source_bindings import observation_source_id
+    snapshot,_,_=payload_fixture();source=snapshot['tray_capture']['parts'][0];source['source_id']=None
+    data=make_payload(snapshot)
+    expected=observation_source_id('reg-test','obs-test','right_white_brown',1)
+    assert data['parts'][0]['source_id']==data['slots'][0]['source_id']==expected
+    assert data['parts'][0]['source_identity_scope']=='observation_cell'
+
+
+def test_missing_observation_cannot_get_a_guessed_source_id():
+    snapshot,_,_=payload_fixture();source=snapshot['tray_capture']['parts'][0]
+    source['source_id']=None;source['source_observation_id']=None
+    with pytest.raises(ValueError):make_payload(snapshot)
+
+
+def test_ambiguous_observed_cell_cannot_be_repaired_by_generating_an_id():
+    snapshot,_,_=payload_fixture();source=snapshot['tray_capture']['parts'][0]
+    source['source_id']=None;source['source_identity_scope']='invalid'
+    with pytest.raises(ValueError,match='ambiguous'):make_payload(snapshot)

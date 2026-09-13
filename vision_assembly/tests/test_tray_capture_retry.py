@@ -205,3 +205,39 @@ def test_smd_presence_can_defer_confidence_but_not_shape_or_pm():
         assert c.observe(p,stamp+.1) is None
     assert ('long_orange',2) not in c.accepted
     assert ('right_white_brown',3) not in c.accepted
+
+
+@pytest.mark.parametrize('kind', list(EXPECTED_TRAY_COUNTS))
+def test_bounded_whole_tray_recapture_replaces_all_old_coordinates(kind):
+    collector=TrayCaptureRetry(QUALITY,after=100,max_geometry_recaptures=2)
+    # Hold one unrelated cell pending so the initial whole capture is unfinished.
+    pending='hbm' if kind!='hbm' else 'gpu'
+    for stamp in range(101,105):
+        payload=frame(stamp);part(payload,pending)['median_detection_confidence']=.1
+        assert collector.observe(payload,stamp+.1) is None
+    assert len(collector.accepted)==24
+    payload=frame(105);part(payload,kind)['base_xyz_mm'][2]=2.1
+    assert collector.observe(payload,105.1) is None
+    assert not collector.accepted
+    assert len(collector.geometry_recaptures)==1
+    for stamp in range(106,110):
+        payload=frame(stamp);part(payload,kind)['base_xyz_mm'][2]=2.1
+        result=collector.observe(payload,stamp+.1)
+    assert result is not None
+    assert all(v['source_timestamp_unix']==109 for v in collector.accepted.values())
+    assert part(result,kind)['base_xyz_mm'][2]==2.1
+
+
+def test_recapture_keeps_original_time_budget_and_movement_limit():
+    collector=TrayCaptureRetry(QUALITY,after=100,max_geometry_recaptures=1)
+    for stamp in range(101,105):
+        collector.observe(frame(stamp),stamp+.1)
+    payload=frame(105);part(payload)['base_xyz_mm'][2]=3
+    assert collector.observe(payload,105.1) is None
+    for stamp in range(106,110):
+        payload=frame(stamp);part(payload)['base_xyz_mm'][2]=3
+        collector.observe(payload,stamp+.1)
+    with pytest.raises(RetryCaptureError,match='geometry changed'):
+        collector.observe(frame(110),110.1)
+    with pytest.raises(RetryCaptureError,match='retries exhausted'):
+        collector.tick(161)

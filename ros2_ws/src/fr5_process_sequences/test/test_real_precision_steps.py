@@ -98,11 +98,15 @@ def setup_real(tmp_path, plan, monkeypatch, slot='HBM-01'):
     prefix=slot.split('-')[0]
     opening=dict(pregrasp_opening_percent=item['tray_open_position'],grasp_opening_percent=item['grip_position'],release_opening_percent=item['release_position'])
     row=dict(job_id=JOB,part_id=prefix,slot_code=slot,order=1,source_index=item['tray_instance_index'],
+             source_id='source-'+slot,tray_registration_id='reg',source_observation_id='obs',calibration_instance_index=item['tray_instance_index'],
              expected_gripper=opening,gripper_profiles={p:dict(velocity_percent=20,force_percent=1) for p in ('PREOPEN','GRASP','RELEASE')})
     payload=dict(job_id=JOB,calibration_digests=dict(recipes=digest({}),slots=digest({})),source_cycle_id='synthetic-scene',precision_plan=plan,plan_sha256=digest(plan),
         timestamp_ros_ns=int(time.time()*1e9),target_mode='frozen_unit',parts=[row],
         tray_inspection_reference=dict(handeye_sha256=hashlib.sha256(b'{}').hexdigest(),bindings=[
             dict(part_type=item['part_type'],physical_index=item['tray_instance_index'],reference_center_pixel=[10.,20.])]))
+    from fr5_process_sequences.source_bindings import validate_source_bindings
+    payload['slots'] = [deepcopy(row)]
+    payload['source_bindings_sha256'] = validate_source_bindings(payload)
     vision.precision_snapshot=lambda _:deepcopy(payload)
     monkeypatch.setattr('tray_home_gate.wait_inventory',lambda *a,**k:dict(evidence='picked_cell_absent_not_physical_holding_proof',distinct_consecutive_frames=3))
     executor=PrecisionSteps(tmp_path,executor_factory=SimExecutor)
@@ -366,3 +370,44 @@ def test_hbm04_pick_splits_high_transfer_without_changing_pick(plan):
             assert mid.tcp[axis]==pytest.approx(high.tcp[axis]+delta/2)
         final=next(w for _,w in route if w.label=='pick_final_50mm_vertical')
         assert final.tcp==pytest.approx(item['pick_final_tcp'])
+
+
+@pytest.mark.parametrize('slot', ['GPU-01'] + [f'HBM-{i:02d}' for i in range(1,9)]
+    + [f'PM-{i:02d}' for i in range(1,5)] + [f'VRM-{i:02d}' for i in range(1,6)]
+    + ['IND-01','IND-02'] + [f'CAP-{i:02d}' for i in range(1,6)])
+def test_all_25_sources_preserved_through_pick_and_place_callbacks(tmp_path,plan,monkeypatch,slot):
+    real,robot,executor,payload,pick,place,events=setup_real(tmp_path,plan,monkeypatch,slot)
+    assert real.execute(pick).event is Event.OPERATION_COMPLETED
+    # Live vision changes cannot replace the already held plan for Place.
+    payload['parts'][0]['source_id']='changed-live-source'
+    assert real.execute(place).event is Event.OPERATION_COMPLETED
+    for event in events:
+        context=json.loads(event.message)
+        assert context['source_id']=='source-'+slot
+        assert context['source_index']==pick['source_index']
+        assert context['tray_registration_id']=='reg' and context['source_observation_id']=='obs'
+        assert context['attachment_binding_valid'] is True
+        assert context['physical_holding_verified'] is False
+
+
+@pytest.mark.parametrize('bad',['missing','duplicate','slot_mismatch','fingerprint'])
+def test_bad_binding_rejected_before_arm_or_gripper(tmp_path,plan,monkeypatch,bad):
+    real,robot,executor,payload,pick,place,events=setup_real(tmp_path,plan,monkeypatch)
+    if bad=='missing':payload['parts'][0]['source_id']=None
+    if bad=='duplicate':payload['parts'].append(deepcopy(payload['parts'][0]));payload['slots'].append(deepcopy(payload['slots'][0]))
+    if bad=='slot_mismatch':payload['slots'][0]['source_id']='other'
+    if bad=='fingerprint':payload['source_bindings_sha256']='other'
+    result=real.execute(pick)
+    assert result.event is Event.OPERATION_FAILED and result.error_code=='INVALID_REQUEST'
+    assert not any(x[0] in ('arm','gripper') for x in robot.log)
+
+
+def test_binding_cannot_change_even_with_recomputed_fingerprint(tmp_path,plan,monkeypatch):
+    from fr5_process_sequences.source_bindings import validate_source_bindings
+    real,robot,executor,payload,pick,place,events=setup_real(tmp_path,plan,monkeypatch)
+    executor.binding_plans[(JOB,payload['plan_sha256'])]=payload['source_bindings_sha256']
+    for row in payload['parts']+payload['slots']:row['source_id']='replacement'
+    payload['source_bindings_sha256']=validate_source_bindings(payload)
+    result=real.execute(pick)
+    assert result.event is Event.OPERATION_FAILED and 'changed after' in result.message
+    assert not any(x[0] in ('arm','gripper') for x in robot.log)

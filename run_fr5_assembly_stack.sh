@@ -54,6 +54,7 @@ Commands:
   clean             Stop managed and matching stale/duplicate processes
   preflight         Check installed launchers/packages without starting services
   calibration-start Connect Unity board/tray calibration API without restarting other services
+  gripper-start     Activate gripper and verify feedback without starting assembly
   api-start         Connect the robot API using this PC hardware-execution setting
   status            Show managed processes, ROS nodes/topics, and TCP port 10000
   check             Read one robot-state sample and show essential topics
@@ -67,8 +68,8 @@ Options:
   --camera none      Do not manage the D435 process
   --smd-set 1|2      Select one 5-part SMD set from the 10-part tray (default: 1)
 
-This launcher starts command/vision services only. It never sends a robot-motion
-or gripper command.
+This launcher starts services and activates the gripper in hardware mode.
+It never sends robot-motion or jaw opening/closing commands.
 EOF
 }
 
@@ -316,6 +317,14 @@ start_unity_calibration() {
   echo "Unity calibration API connected; no motion sent."
 }
 
+activate_startup_gripper() {
+  if [[ "${KSMC_REAL_HARDWARE_EXECUTION:-false}" != true ]]; then
+    echo "Gripper activation skipped: hardware execution disabled."
+    return 0
+  fi
+  python3 "${root}/scripts/activate_startup_gripper.py"
+}
+
 start_stack() {
   [[ -x "${endpoint_root}/run_with_fairino.sh" ]] || {
     echo "Unity Endpoint launcher not found: ${endpoint_root}/run_with_fairino.sh" >&2
@@ -366,6 +375,7 @@ start_stack() {
   start_unity_calibration
 
   cleanup_failed_start=false
+  activate_startup_gripper
   echo
   echo "FR5 assembly stack started. No robot-motion command was sent."
   echo "Camera profile: ${camera_profile}; SMD set: ${smd_set_index} (5 of 10 parts)"
@@ -551,6 +561,9 @@ case "${command}" in
   calibration-start)
     [[ $# -eq 0 ]] || { usage; exit 2; }
     start_unity_calibration
+    ;;
+  gripper-start)
+    activate_startup_gripper
     ;;
   api-start)
     [[ $# -eq 0 ]] || { usage; exit 2; }

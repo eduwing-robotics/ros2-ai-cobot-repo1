@@ -21,6 +21,7 @@ from fr5_process_sequences.assembly_cycle_api import AssemblyCycleController, SC
 @pytest.fixture
 def isolated(monkeypatch):
     monkeypatch.delenv('KSMC_ROOT',raising=False)
+    monkeypatch.delenv('KSMC_LOCAL_FEEDBACK_SOCKET',raising=False)
     monkeypatch.setenv('ROS_DOMAIN_ID','117')
     monkeypatch.setenv('ROS_LOCALHOST_ONLY','1')
     rclpy.init(domain_id=117)

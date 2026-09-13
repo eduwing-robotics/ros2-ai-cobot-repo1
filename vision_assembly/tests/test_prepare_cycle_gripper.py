@@ -114,3 +114,30 @@ def test_successful_status_response_is_returned(monkeypatch):
     client.future.set_result(expected)
     assert module.call_startup_service(None, client, object()) is expected
     assert len(client.sent) == 1
+
+
+def test_activation_only_preserves_recovery_and_rejects_busy_robot():
+    state = dict(api_capabilities_revision='step-cycle-20260908',
+        hardware_execution_enabled=True, state_fresh=True, robot_health_clear=True,
+        robot_motion_done=1, robot_mode=0, tool_num=1, work_num=0,
+        held_candidate=None, gripper_feedback_valid=True, recovery_required=True)
+    now = [0.0]
+    calls = []
+    def command(cmd):
+        calls.append(cmd)
+        return '0,0,1'
+    def sleep(t):
+        now[0] += t
+    with pytest.raises(RuntimeError):
+        prepare(lambda: state, command)
+    assert calls == []
+    assert prepare(lambda: state, command, lambda: now[0], sleep,
+                   activation_only=True)['feedback_verified']
+    assert state['recovery_required'] is True
+    for key, value in [('active_operation', 'busy'), ('held_candidate', True),
+                       ('robot_motion_done', 0), ('grippererro', 1)]:
+        blocked = dict(state, **{key: value})
+        calls.clear()
+        with pytest.raises(RuntimeError):
+            prepare(lambda: blocked, command, activation_only=True)
+        assert calls == []

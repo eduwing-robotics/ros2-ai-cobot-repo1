@@ -20,6 +20,7 @@
 #include <queue>
 #include "libfairino/include/robot.h"
 #include <atomic>
+#include "fairino_hardware/local_feedback.hpp"
 #include "semaphore.h"
 
 using remote_cmd_server_srv_msg = fairino_msgs::srv::RemoteCmdInterface;
@@ -671,6 +672,8 @@ public:
 private:
 
     
+    LocalFeedbackSender _local_feedback;
+    void _publish_state(const robot_feedback_msg& msg);
     void _state_recv_callback();
     rclcpp::Publisher<robot_feedback_msg>::SharedPtr _state_publisher;//进程内通信，用于发送状态数据字符串
     rclcpp::TimerBase::SharedPtr _locktimer1;

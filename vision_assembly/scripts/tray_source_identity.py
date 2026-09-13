@@ -47,3 +47,41 @@ class TraySourceIdentity:
                     point=list(detection['reference_center_pixel'])))
                 detection['id']=identifier
         return detections
+
+
+def assign_observation_sources(detections, registration_id, observation_id):
+    """Fallback identifies a unique observed cell, never claims physical holding."""
+    import hashlib
+    import json
+    keys = [(d.get('part_type'), d.get('instance_index')) for d in detections]
+    ids = [d.get('id') for d in detections]
+    for d, key in zip(detections, keys):
+        d['tray_registration_id'] = registration_id
+        d['source_observation_id'] = observation_id
+        d['calibration_instance_index'] = d.get('instance_index')
+        point = d.get('reference_center_pixel')
+        valid = (isinstance(registration_id, str) and bool(registration_id)
+                 and isinstance(observation_id, str) and bool(observation_id)
+                 and isinstance(key[0], str) and bool(key[0])
+                 and type(key[1]) is int and key[1] > 0 and keys.count(key) == 1
+                 and isinstance(point, (list, tuple)) and len(point) == 2
+                 and all(isinstance(x, (int,float)) and math.isfinite(x) for x in point))
+        if valid:
+            # Two detections on the same observed cell are not two sources.
+            nearby = [other for other in detections if other.get('part_type') == key[0]
+                      and isinstance(other.get('reference_center_pixel'), (list,tuple))
+                      and len(other['reference_center_pixel']) == 2
+                      and all(isinstance(v,(int,float)) and math.isfinite(v) for v in other['reference_center_pixel'])
+                      and math.dist(point, other['reference_center_pixel']) <= 3.0]
+            valid = len(nearby) == 1
+        if not valid:
+            d['id'] = None
+            d['source_identity_scope'] = 'invalid'
+            continue
+        if d.get('id') and ids.count(d['id']) == 1:
+            d['source_identity_scope'] = 'tracked_cell'
+        else:
+            token = json.dumps([registration_id, observation_id, *key], separators=(',', ':'))
+            d['id'] = 'observation:' + hashlib.sha256(token.encode()).hexdigest()
+            d['source_identity_scope'] = 'observation_cell'
+    return detections

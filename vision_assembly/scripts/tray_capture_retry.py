@@ -12,8 +12,10 @@ class RetryCaptureError(RuntimeError):
 
 
 class TrayCaptureRetry:
-    def __init__(self, quality, after, *, window_sec=15, retries=3, required_frames=4, defer_smd_to_close_view=False):
+    def __init__(self, quality, after, *, window_sec=15, retries=3, required_frames=4, defer_smd_to_close_view=False, max_geometry_recaptures=0):
         self.defer_smd_to_close_view = defer_smd_to_close_view
+        self.max_geometry_recaptures = max_geometry_recaptures
+        self.geometry_recaptures = []
         self.quality = quality
         self.after = after
         self.window_sec = window_sec
@@ -136,6 +138,18 @@ class TrayCaptureRetry:
             if key in self.accepted:
                 if changed:
                     if quality_error is None:
+                        if len(self.geometry_recaptures) < self.max_geometry_recaptures:
+                            self.geometry_recaptures.append(dict(part=f'{key[0]}:{key[1]}',
+                                timestamp_unix=stamp, xyz_delta_mm=xyz_delta, angle_delta_deg=angle_delta))
+                            # Before any pick: discard ALL cached coordinates, not
+                            # only the changed part. Keep physical identity anchors,
+                            # calibration and the original overall time budget.
+                            self.accepted.clear()
+                            self.streak.clear()
+                            self.geometry_candidates.clear()
+                            self.current_visible.clear()
+                            self.reasons = {k: 'whole tray recapture after geometry change' for k in self.keys}
+                            return None
                         raise RetryCaptureError(f'{key[0]}:{key[1]}: confirmed part geometry changed '
                                                 f'(XYZ={xyz_delta:.3f}mm, axis={angle_delta:.3f}deg, '
                                                 f'dXYZ={(np.asarray(detection["base_xyz_mm"])-np.asarray(anchor["base_xyz_mm"])).round(3).tolist()}, '
@@ -184,4 +198,6 @@ class TrayCaptureRetry:
                 'window_sec': self.window_sec, 'accepted_count': len(self.accepted),
                 'pending': {f'{k[0]}:{k[1]}': self.reasons.get(k, 'waiting for detection')
                             for k in self.keys if k not in self.accepted or k not in self.current_visible},
-                'accepted_sources': self.sources()}
+                'accepted_sources': self.sources(),
+                'geometry_recaptures': deepcopy(self.geometry_recaptures),
+                'maximum_geometry_recaptures': self.max_geometry_recaptures}

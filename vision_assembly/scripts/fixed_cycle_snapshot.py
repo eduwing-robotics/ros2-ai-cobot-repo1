@@ -562,6 +562,8 @@ def capture_tray(args: argparse.Namespace, payload: dict) -> dict:
                     if "reference_center_pixel" in detection else None),
                 "consumed": False,
                 "source_id": detection.get("id"),
+                "calibration_instance_index": detection.get("calibration_instance_index", detection.get("detector_instance_index", detection["instance_index"])),
+                "source_identity_scope": detection.get("source_identity_scope"),
                 "tray_registration_id": detection.get("tray_registration_id"),
                 "source_observation_id": detection.get("source_observation_id"),
             }

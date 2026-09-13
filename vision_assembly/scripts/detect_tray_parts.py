@@ -31,7 +31,7 @@ def wrapped_angle_span(samples):
  return np.ptp(unwrapped,axis=0)
 
 from pm_mask_selection import priority as pm_candidate_priority
-from segmentation_scale_retry import passes_quality, merge_scale_retry
+from segmentation_scale_retry import passes_quality, merge_scale_retry, restore_crop_points
 
 class Detector(Node):
  def __init__(self,a):
@@ -345,7 +345,7 @@ class Detector(Node):
     '_contour':contour})
   found.sort(key=lambda q:q['cad_area_match_score'],reverse=True)
   return found[:item['expected_count']],poly,floor
- def find_segmented(self,item,canonical,image,depth_float,fx,fy,cx,cy,H,prediction=None):
+ def find_segmented(self,item,canonical,image,depth_float,fx,fy,cx,cy,H,prediction=None,prediction_rotation=0):
   part=item['part_spec_id'];x1,y1,x2,y2=map(int,item['roi_px']);pad=self.a.seg_crop_padding
   x1=max(0,x1-pad);y1=max(0,y1-pad);x2=min(self.rw,x2+pad);y2=min(self.rh,y2+pad)
   crop=canonical[y1:y2,x1:x2]
@@ -356,7 +356,7 @@ class Detector(Node):
   if result.masks is not None and result.boxes is not None:
    for score,cls,points in zip(result.boxes.conf.cpu().tolist(),result.boxes.cls.cpu().tolist(),result.masks.xy):
     if int(cls)!=class_id or float(score)<confidence or len(points)<3:continue
-    reference=np.asarray(points,np.float32)+np.array([x1,y1],np.float32)
+    reference=restore_crop_points(points,crop.shape[1],crop.shape[0],prediction_rotation)+np.array([x1,y1],np.float32)
     base_reference=np.rint(reference).astype(np.int32).reshape(-1,1,2)
     references=[base_reference]
     if part=='long_orange':
@@ -786,14 +786,19 @@ class Detector(Node):
     part=item['part_spec_id']
     if self.seg_model is not None and part in self.seg_class_ids:
      found,poly,floor=self.find_segmented(item,canonical,image,depth_float,fx,fy,cx,cy,H,seg_results[part])
-     if part in ('long_orange','black_block','hbm','marked_white') and any(not passes_quality(d,self.seg_quality[part]) for d in found):
-      primary_size=self.a.power_seg_image_size if part=='long_orange' else self.a.seg_image_size
-      alternate_size=640 if primary_size!=640 else 960
+     primary_size=self.a.power_seg_image_size if part=='long_orange' else self.a.seg_image_size
+     # Retry weak detections for every class on the same captured sensor frame.
+     # Keep primary physical identities and stop as soon as quality is met.
+     for alternate_size,rotation in ((640,0),(960,0),(1280,0),(640,180),(960,180),(1280,180)):
+      if alternate_size==primary_size and rotation==0:continue
+      if not any(not passes_quality(d,self.seg_quality[part]) for d in found):break
       sx1,sy1,sx2,sy2=map(int,item['roi_px']);pad=self.a.seg_crop_padding
       crop=canonical[max(0,sy1-pad):min(self.rh,sy2+pad),max(0,sx1-pad):min(self.rw,sx2+pad)]
-      alt_prediction=self.seg_model.predict(crop,imgsz=alternate_size,conf=self.a.power_seg_confidence if part=='long_orange' else self.a.seg_confidence,
+      inference_crop=crop if rotation==0 else cv2.rotate(crop,cv2.ROTATE_180)
+      alt_prediction=self.seg_model.predict(inference_crop,imgsz=alternate_size,conf=self.a.power_seg_confidence if part=='long_orange' else self.a.seg_confidence,
        device=self.a.seg_device,iou=self.a.seg_nms_iou,retina_masks=True,verbose=False)[0]
-      alternate,_,_=self.find_segmented(item,canonical,image,depth_float,fx,fy,cx,cy,H,alt_prediction)
+      alternate,_,_=self.find_segmented(item,canonical,image,depth_float,fx,fy,cx,cy,H,alt_prediction,prediction_rotation=rotation)
+      for candidate in alternate:candidate["inference_rotation_deg"]=rotation
       found=merge_scale_retry(found,alternate,self.seg_quality[part],primary_size=primary_size,alternate_size=alternate_size)
     else:found,poly,floor=self.find(item,image,background_delta,depth_float,hue,saturation,value_channel,fx,fy,cx,cy,H)
     color=COLORS[part]
@@ -865,13 +870,16 @@ class Detector(Node):
   result['tray_registration_id']=registration_id
   result['source_observation_id']=f"{registration_id}:{result['timestamp_ros_ns']}"
   self.source_identity.assign(result['stable_detections'])
-  for detection in result['stable_detections']:
-   detection['tray_registration_id']=registration_id
-   detection['source_observation_id']=result['source_observation_id']
+  from tray_source_identity import assign_observation_sources
+  assign_observation_sources(result['stable_detections'],registration_id,result['source_observation_id'])
   unity_parts=[]
   for detection in result['stable_detections']:
    unity_parts.append({
     'id':detection['id'],
+    'source_id':detection['id'],
+    'source_identity_scope':detection.get('source_identity_scope'),
+    'tray_registration_id':registration_id,
+    'source_observation_id':result['source_observation_id'],
     'part_type':detection['part_type'],
     'display_name':detection['display_name'],
     'instance_index':int(detection['instance_index']),

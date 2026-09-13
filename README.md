@@ -38,6 +38,15 @@ T_base_target = T_base_flange @ T_flange_camera @ T_camera_target
 - `references/`: 로봇 제어 아키텍처와 commissioning 기준
 - `docs/MIGRATION.md`: 두 원본에서 가져온 범위와 제외 항목
 
+## 2026-09-13 최신 변경
+
+- 전체 부품 검출의 다중 크기·180도 영상 재검출 및 제한된 전체 트레이 재촬영: [검출 안정화](docs/TRAY_CAPTURE_RELIABILITY_KO_20260913.md).
+- 드라이버→API 로컬 피드백과 연속 이동 지원 검증으로 조립 중 DDS 기능 조회 제거. 250ms 피드백 신선도 제한 유지: [피드백](docs/LOCAL_FEEDBACK_KO_20260913.md), [연속 이동 기능](docs/CONTINUOUS_CAPABILITY_FIX_KO_20260913.md).
+- 실행 전 부품·슬롯 대응 고정, 누락 ID의 관측 범위 생성, Pick/Place callback 식별자 유지: [Unity 부품 대응 계약](docs/SOURCE_BINDING_FIX_KO_20260913.md).
+- 통합 런처에서 그리퍼 활성화 확인/수행. 활성화는 로봇 이동이나 그리퍼 개폐 명령이 아니다.
+- 로컬 전용 피드백은 같은 Linux 호스트의 갱신된 드라이버/API 양쪽에 `KSMC_LOCAL_FEEDBACK_SOCKET`을 같은 값으로 설정해야 한다. 장비별 `config/ksmc.env`와 runtime 증거·영상은 Git에 포함하지 않는다.
+- 코드 회귀 검증과 실제 조립/검사 PASS는 별도다. 최신 변경 후 Unity 화면과 전체 물리 조립 반복 검증 범위는 [오늘 작업일지](작업일지/2026-09-13.md)를 참고한다.
+
 ## 최초 설정과 빌드
 
 ```bash

@@ -1,4 +1,4 @@
-"""Replace only weak, geometrically matched PM/VRM/HBM/IND detections in one frame."""
+"""Replace only weak, geometrically matched detections of any class in one frame."""
 import math
 import numpy as np
 
@@ -44,3 +44,13 @@ def merge_scale_retry(primary, alternate, quality, *, primary_size, alternate_si
             'center_delta_px': float(np.linalg.norm(np.asarray(chosen['center_pixel'])-center))}
         result.append(chosen)
     return result
+
+
+def restore_crop_points(points, width, height, rotation):
+    """Map a diagnostic inference mask back to the original crop coordinates."""
+    points = np.asarray(points, dtype=np.float32)
+    if rotation == 0:
+        return points
+    if rotation == 180:
+        return np.array([width - 1, height - 1], dtype=np.float32) - points
+    raise ValueError('unsupported inference rotation')

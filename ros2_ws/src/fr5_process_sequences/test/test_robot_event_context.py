@@ -57,3 +57,13 @@ def test_control_overtaking_grasp_does_not_drop_attachment_or_terminal():
     assert snapshot['attachments'][0]['state']=='attached'
     assert len(snapshot['terminal_operations'])==1
     assert snapshot['last_event']['event']=='PAUSE_CONFIRMED'
+
+
+def test_completion_cannot_overwrite_bound_identity_or_claim_physical_holding():
+    real,*_=backend();op=parse_operation(pick())
+    real.event_context.bind(op,{},dict(source_id='fixed',tray_registration_id='reg',source_observation_id='obs'))
+    event=real._event(op,phase='GRASP',event=Event.PHASE_COMPLETED,
+        message=json.dumps(dict(source_id='replacement',tray_registration_id='other',physical_holding_verified=True)))
+    context=json.loads(event.message)
+    assert context['source_id']=='fixed' and context['tray_registration_id']=='reg'
+    assert context['attachment_binding_valid'] is True and context['physical_holding_verified'] is False
