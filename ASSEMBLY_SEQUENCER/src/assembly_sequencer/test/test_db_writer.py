@@ -1502,6 +1502,49 @@ class RealApiBoundaryTest(unittest.IsolatedAsyncioTestCase):
             self.assertIsNone(backend._display_wait)
             self.assertTrue((Path(directory) / "executions/22/events.jsonl").is_file())
 
+    async def test_whole_start_tolerates_transient_status_timeout(self):
+        import tempfile
+        import time
+        backend, _ = self.backend()
+        request, completed, slots = self.completion_fixture()
+        confirmation = dict(operator_id="test-operator", execution_id=OPERATION_ID,
+            confirmed_unix=time.time(), scope="empty_gripper_empty_pcb_full_tray_fixed_fixture")
+        backend._read_status = AsyncMock(side_effect=[{},
+            {"production_contract": {"server_instance_id": "server-a"}},
+            TimeoutError("wifi delay"), {"production_contract": completed}])
+        backend._validate_readiness = Mock(return_value="deployed-r1")
+        backend._assembly_command.get_subscription_count.return_value = 1
+        backend._wait_tick = AsyncMock()
+        with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, {"DEFECT_IMAGE_ROOT": directory}), \
+             patch.object(api_contracts, "ASSEMBLY_POLL_SECONDS", 0):
+            result = await backend.execute_assembly(JOB_ID, 22, "assembly-r1", "deployed-r1",
+                                                     confirmation, slots, Mock())
+        self.assertEqual(result["event"], "EXECUTION_COMPLETED")
+        self.assertEqual(backend._read_status.await_count, 4)
+        self.assertFalse(backend.execution_tracking_stopped)
+
+    async def test_whole_start_stops_tracking_after_status_timeout_limit(self):
+        import tempfile
+        import time
+        backend, _ = self.backend()
+        _, _, slots = self.completion_fixture()
+        confirmation = dict(operator_id="test-operator", execution_id=OPERATION_ID,
+            confirmed_unix=time.time(), scope="empty_gripper_empty_pcb_full_tray_fixed_fixture")
+        backend._read_status = AsyncMock(side_effect=[{},
+            {"production_contract": {"server_instance_id": "server-a"}},
+            *[TimeoutError("wifi delay")] * api_contracts.ASSEMBLY_STATUS_TIMEOUT_LIMIT])
+        backend._validate_readiness = Mock(return_value="deployed-r1")
+        backend._assembly_command.get_subscription_count.return_value = 1
+        backend._wait_tick = AsyncMock()
+        with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, {"DEFECT_IMAGE_ROOT": directory}), \
+             patch.object(api_contracts, "ASSEMBLY_POLL_SECONDS", 0):
+            with self.assertRaisesRegex(RuntimeError, "SAFETY_STOP: wifi delay"):
+                await backend.execute_assembly(JOB_ID, 22, "assembly-r1", "deployed-r1",
+                                               confirmation, slots, Mock())
+        self.assertEqual(backend._read_status.await_count,
+                         2 + api_contracts.ASSEMBLY_STATUS_TIMEOUT_LIMIT)
+        self.assertTrue(backend.execution_tracking_stopped)
+
     async def test_whole_start_does_not_retry_an_uncertain_execution(self):
         import tempfile
         import time
