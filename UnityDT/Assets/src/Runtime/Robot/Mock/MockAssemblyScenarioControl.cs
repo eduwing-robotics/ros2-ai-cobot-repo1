@@ -77,6 +77,7 @@ namespace MainUnity.Runtime.Robot.Mock
         int expectedStepCount;
         int heldStepOrder = -1;
         int lastPlacedStepOrder = -1;
+        readonly List<string> placedSlotCodes = new();
         bool serviceRegistered;
         Vector3 assembledPcbPositionFromTcp;
         Quaternion assembledPcbRotationFromTcp = Quaternion.identity;
@@ -296,6 +297,7 @@ namespace MainUnity.Runtime.Robot.Mock
             expectedStepCount = observations.Length;
             heldStepOrder = -1;
             lastPlacedStepOrder = 0;
+            placedSlotCodes.Clear();
             assembledPcbHeld = false;
             assembledPcbTransferred = false;
             inspectionTransferStarted = false;
@@ -451,6 +453,8 @@ namespace MainUnity.Runtime.Robot.Mock
                 {
                     expectedStepCount = snapshot.expected_step_count;
                     lastPlacedStepOrder = snapshot.placed_count;
+                    placedSlotCodes.Clear();
+                    placedSlotCodes.AddRange(snapshot.placed_slot_codes);
                     assembledPcbTransferred = true;
                     terminal = snapshot.active ? new TaskCompletionSource<string>() : null;
                     Report(snapshot.active ? AssemblyState.Placed : AssemblyState.Completed, null);
@@ -516,6 +520,7 @@ namespace MainUnity.Runtime.Robot.Mock
             heldStepOrder = -1;
             lastPlacedStepOrder = 0;
             activeJobId = snapshot.job_id;
+            placedSlotCodes.Clear();
             activeUnitId = snapshot.unit_id;
             assembledPcbHeld = false;
             assembledPcbTransferred = false;
@@ -1136,6 +1141,7 @@ namespace MainUnity.Runtime.Robot.Mock
             heldStepOrder = -1;
             lastPlacedStepOrder = 0;
             assembledPcbHeld = false;
+            placedSlotCodes.Clear();
             assembledPcbTransferred = false;
             inspectionTransferStarted = false;
             assemblyConveyorStarted = false;
@@ -1213,6 +1219,7 @@ namespace MainUnity.Runtime.Robot.Mock
                 item.rotation = slot.rotation *
                     Quaternion.Euler(0f, resumeRotationOffsetDegrees, 0f);
             lastPlacedStepOrder = feedback.step_order;
+            placedSlotCodes.Add(feedback.slot_code);
             heldItem = null;
             heldPartId = string.Empty;
             heldSlotCode = string.Empty;
@@ -1490,7 +1497,11 @@ namespace MainUnity.Runtime.Robot.Mock
                 feedback != null ? feedback.slot_code : heldSlotCode,
                 feedback != null ? feedback.error_code : string.Empty,
                 feedback != null ? feedback.message : error,
-                Time.realtimeSinceStartupAsDouble));
+                Time.realtimeSinceStartupAsDouble)
+            {
+                PlacedSlotCodes = placedSlotCodes.ToArray(),
+                UnitId = activeUnitId
+            });
         }
 
         void EnsureRosConnection()

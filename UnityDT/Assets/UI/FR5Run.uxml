@@ -181,12 +181,13 @@
                 </ui:VisualElement>
                 <ui:VisualElement name="slot-map-content" class="run-slot-content">
                     <ui:VisualElement class="run-sect">
-                        <ui:Label text="슬롯 구성 · 장착 미확인" class="run-sect__title" />
+                        <ui:Label text="부품 장착 진행" class="run-sect__title" />
                         <ui:VisualElement class="spacer" />
                         <ui:Label name="progress-now" text="—" class="run-sub" />
                         <ui:Label name="progress-count" text="—" class="run-val" style="margin-left:16px;" />
                     </ui:VisualElement>
-                    <ui:VisualElement name="progress-groups" class="row vlist" style="flex-grow:1; flex-wrap:wrap; align-items:flex-start;" />
+                    <ui:Label name="slot-progress-status" text="진행 정보 미수신 · 칸은 트윈 구성" class="run-sub" />
+                    <ui:VisualElement name="progress-groups" class="row vlist" />
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>

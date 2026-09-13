@@ -56,6 +56,9 @@ namespace MainUnity.Runtime.Robot.Assembly
         internal string CurrentAction { get; set; }
         internal string CurrentPhase { get; set; }
         internal string CurrentEvent { get; set; }
+        // 서버 snapshot의 Unit별 전체 완료 목록이다. null은 미제공이며 빈 목록과 구분한다.
+        internal string[] PlacedSlotCodes { get; set; }
+        internal long UnitId { get; set; }
 
         // Local response waits never replace the last equipment state or its receive time.
         internal bool CancellationConfirmed { get; set; }

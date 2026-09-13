@@ -17,8 +17,6 @@ namespace MainUnity.UI
     {
         const int JointCount = 6;
 
-        // FR5Theme.uss의 셀 치수와 맞추며 이름·간격·개수에 최소 58px이 필요하다.
-        const int CellWidth = 15, CellGap = 4, MinHeadWidth = 60;
         static readonly float[] LimitLow  = { -175f, -265f, -162f, -265f, -175f, -175f };
         static readonly float[] LimitHigh = {  175f,   85f,  162f,   85f,  175f,  175f };
 
@@ -67,6 +65,9 @@ namespace MainUnity.UI
 
         Label gripperText, gripperValue, watchdogValue, realSource, mockNote;
         Label progressNow, progressCount, unitPhase, unitStep;
+        Label slotProgressStatus;
+        readonly HashSet<string> completedSlots = new(System.StringComparer.Ordinal);
+        readonly HashSet<string> configuredSlots = new(System.StringComparer.Ordinal);
         VisualElement progressHost, progressRailFill;
         readonly List<SlotGroup> slotGroups = new();
         int planTotal;
@@ -182,6 +183,7 @@ namespace MainUnity.UI
                 if (twinAssemblyButton != null) twinAssemblyButton.tooltip = viewHint;
                 if (slotGroups.Count == 0 && EnsureSlotGroups()) RefreshAssembly();
                 RefreshOperationStatus(observedProgress != null ? observedProgress.Latest : null);
+                RefreshSlotStatus(observedProgress != null ? observedProgress.Latest : null);
                 RefreshCalibration();
                 RefreshEvents();
             }
@@ -207,6 +209,7 @@ namespace MainUnity.UI
             progressRailFill = root.Q<VisualElement>("run-progress-fill");
             progressNow = root.Q<Label>("progress-now");
             progressCount = root.Q<Label>("progress-count");
+            slotProgressStatus = root.Q<Label>("slot-progress-status");
             unitPhase = root.Q<Label>("unit-phase");
             unitStep = root.Q<Label>("unit-step");
             eventFoldout = root.Q<Foldout>("session-events");
@@ -860,17 +863,15 @@ namespace MainUnity.UI
 
         // ─────────────────────── 조립 진행 ───────────────────────
         //
-        // 칸 하나 = 슬롯 하나 = 레시피 스텝 하나다. 묶음 하나 = 부품 타입 하나.
-        // 칸 수와 순서는 씬의 기판이, 어디까지 놓였는지는 조립 피드백이 답한다.
+        // 칸은 Scene 슬롯 코드에 대응한다. 완료 목록을 배열 순서로 배분하지 않는다.
 
-        /// <summary>부품 타입 하나의 진행 묶음이다. Start 는 첫 슬롯의 0-기준 스텝 번호다.</summary>
         sealed class SlotGroup
         {
-            public int Start;
             public int Total;
             public VisualElement Root;
             public Label Count;
             public VisualElement[] Cells;
+            public string[] Codes;
         }
 
         /// <summary>
@@ -891,22 +892,20 @@ namespace MainUnity.UI
             {
                 int total = group.Slots.Length;
                 if (total <= 0) continue;
-                slotGroups.Add(BuildSlotGroup(group.RequiredItemType, planTotal, total));
+                slotGroups.Add(BuildSlotGroup(group.RequiredItemType, group.Slots));
                 planTotal += total;
             }
             return slotGroups.Count > 0;
         }
 
-        SlotGroup BuildSlotGroup(string partId, int start, int total)
+        SlotGroup BuildSlotGroup(string partId, Transform[] slots)
         {
+            int total = slots.Length;
             var box = new VisualElement();
             box.AddToClassList("grp");
 
             var head = new VisualElement();
             head.AddToClassList("grp__head");
-            // 머리줄을 칸 줄과 같은 너비로 묶는다. 묶음 상자는 서로 같은 폭으로 늘어나므로
-            // 그냥 두면 개수가 칸에서 한참 떨어진 곳에 떠서 어느 묶음의 수인지 흐려진다.
-            head.style.width = Mathf.Max(total * (CellWidth + CellGap) - CellGap, MinHeadWidth);
 
             var name = new Label(string.IsNullOrEmpty(partId) ? "—" : partId.ToUpperInvariant());
             name.AddToClassList("grp__name");
@@ -924,9 +923,12 @@ namespace MainUnity.UI
             var cells = new VisualElement();
             cells.AddToClassList("grp__cells");
             var sink = new VisualElement[total];
+            var codes = new string[total];
             for (int i = 0; i < total; i++)
             {
-                var cell = new VisualElement();
+                var cell = new Label();
+                codes[i] = slots[i] != null ? slots[i].name : string.Empty;
+                cell.tooltip = codes[i] + " · 장착 미확인";
                 cell.AddToClassList("cell");
                 cells.Add(cell);
                 sink[i] = cell;
@@ -934,7 +936,7 @@ namespace MainUnity.UI
             box.Add(cells);
             progressHost.Add(box);
 
-            return new SlotGroup { Start = start, Total = total, Root = box, Count = count, Cells = sink };
+            return new SlotGroup { Total = total, Root = box, Count = count, Cells = sink, Codes = codes };
         }
 
         void RefreshAssembly()
@@ -945,26 +947,59 @@ namespace MainUnity.UI
 
             int placed = frame != null ? frame.PlacedCount : 0;
 
-            // 피드백의 누적 수량은 슬롯별 이력이 아니다. 씬 그룹 순서에 배분하면
-            // 레시피 순서가 다르거나 중간에 연결했을 때 다른 슬롯을 완료로 표시한다.
+            // snapshot 전체를 매번 대체하므로 재접속 및 같은 Job의 새 Unit에도 이전 칸이 남지 않는다.
+            completedSlots.Clear();
+            configuredSlots.Clear();
+            bool valid = frame?.PlacedSlotCodes != null && frame.ExpectedStepCount == planTotal &&
+                frame.PlacedSlotCodes.Length == frame.PlacedCount;
+            foreach (SlotGroup group in slotGroups)
+                foreach (string code in group.Codes)
+                    if (string.IsNullOrEmpty(code) || !configuredSlots.Add(code)) valid = false;
+            if (frame?.PlacedSlotCodes != null)
+                foreach (string code in frame.PlacedSlotCodes)
+                    if (string.IsNullOrEmpty(code) || !configuredSlots.Contains(code) || !completedSlots.Add(code)) valid = false;
+            string current = frame != null && !frame.IsTerminal ? frame.CurrentSlotCode : null;
+            if (string.IsNullOrEmpty(current) && frame?.State == AssemblyState.Picked) current = frame.SlotCode;
             foreach (SlotGroup group in slotGroups)
             {
-                group.Count.text = $"{group.Total} 슬롯";
-                group.Root.tooltip = "트윈 구성 · 슬롯별 실물 장착 여부 미확인";
-                group.Root.EnableInClassList("grp--now", false);
-
+                int doneCount = 0;
+                bool active = false;
                 for (int i = 0; i < group.Cells.Length; i++)
                 {
                     VisualElement cell = group.Cells[i];
-                    cell.EnableInClassList("cell--done", false);
-                    cell.EnableInClassList("cell--now", false);
+                    bool done = valid && completedSlots.Contains(group.Codes[i]);
+                    bool now = valid && !done && group.Codes[i] == current;
+                    if (done) doneCount++;
+                    active |= now;
+                    ((Label)cell).text = done ? "✓" : now ? "•" : "";
+                    cell.tooltip = group.Codes[i] + " · " + (done ? "장착 완료 보고됨 · 검사 판정과 별개" : now ? "현재 작업 대상" : "장착 미확인");
+                    cell.EnableInClassList("cell--done", done);
+                    cell.EnableInClassList("cell--now", now);
                     cell.EnableInClassList("cell--bad", false);
                 }
+                group.Count.text = valid ? $"{doneCount} / {group.Total}" : $"— / {group.Total}";
+                group.Root.EnableInClassList("grp--now", active);
             }
+            if (slotProgressStatus != null)
+                slotProgressStatus.userData = valid;
+            RefreshSlotStatus(frame);
 
             WarnOnStepCountMismatch(frame);
             RefreshProgressHeader(frame, placed);
             RefreshUnitLine(frame);
+        }
+
+        void RefreshSlotStatus(AssemblyProgressFrame frame)
+        {
+            if (slotProgressStatus == null) return;
+            bool valid = slotProgressStatus.userData is bool value && value;
+            bool stale = frame != null && !frame.IsTerminal && Time.realtimeSinceStartupAsDouble - frame.ReceiveTimeSeconds > 3d;
+            slotProgressStatus.text = frame == null ? "진행 정보 미수신 · 칸은 트윈 구성" :
+                frame.PlacedSlotCodes == null ? "슬롯별 완료 정보 미제공" : !valid ? "슬롯 구성·완료 목록 확인 필요" :
+                stale ? "수신 중단 · 마지막 확인 " + Age(frame.ReceiveTimeSeconds) :
+                "✓ 장착 완료   • 현재 대상   빈 칸 미확인";
+            slotProgressStatus.tooltip = frame == null ? slotProgressStatus.text :
+                $"Job {frame.JobId} · Unit {frame.UnitId}\n{slotProgressStatus.text}\n장착 완료는 검사 PASS를 뜻하지 않습니다.";
         }
 
         /// <summary>
