@@ -823,7 +823,7 @@ namespace MainUnity.Runtime.Camera
                 return;
             }
             if (hasSequence && state.sequence == lastSequence && Progress == ProgressState.Applied) return;
-            if (!TryCreatePoses(state, out List<PartPose> poses, out string error))
+            if (!TryCreatePoses(state, out List<PartPose> poses, out bool executionReady, out string error))
             {
                 pendingRegistration = null;
                 pendingRegistrationFrames = 0;
@@ -831,7 +831,7 @@ namespace MainUnity.Runtime.Camera
                 return;
             }
 
-            if (error == null && attachments.Count == 0 && poses.Count <= MaxCandidateParts &&
+            if (executionReady && attachments.Count == 0 && poses.Count <= MaxCandidateParts &&
                 !string.IsNullOrWhiteSpace(state.tray_registration_id) && !string.IsNullOrWhiteSpace(state.source_observation_id))
             {
                 var key = (state.tray_registration_id, state.source_observation_id);
@@ -896,6 +896,7 @@ namespace MainUnity.Runtime.Camera
                     Reject(error);
                     return;
                 }
+                if (!executionReady) observations.Clear();
             }
             else
             {
@@ -903,7 +904,8 @@ namespace MainUnity.Runtime.Camera
                 pendingRegistrationFrames = 0;
                 registration = state.tray_registration_id;
                 SynchronizeUnownedLayout(poses);
-                RecordObservations(state.source_observation_id, poses);
+                if (executionReady) RecordObservations(state.source_observation_id, poses);
+                else observations.Clear();
             }
 
             layoutSavePending = true;
@@ -911,7 +913,9 @@ namespace MainUnity.Runtime.Camera
             lastRejectedReason = null;
             lastSequence = state.sequence;
             hasSequence = true;
-            SetProgress(ProgressState.Applied, $"트레이 배치 반영 완료 · {poses.Count}개");
+            SetProgress(ProgressState.Applied, executionReady
+                ? $"트레이 배치 반영 완료 · {poses.Count}개"
+                : $"트레이 부분 검출 표시 · {poses.Count}개 · 실행 관측 미등록");
         }
 
         bool TryBuildBindingLookup(out string error)
@@ -948,9 +952,11 @@ namespace MainUnity.Runtime.Camera
             return true;
         }
 
-        bool TryCreatePoses(TrayState state, out List<PartPose> poses, out string error)
+        bool TryCreatePoses(TrayState state, out List<PartPose> poses,
+            out bool executionReady, out string error)
         {
             poses = null;
+            executionReady = false;
             if (state.schema != SchemaName || state.registration_state != "TRACKING" ||
                 state.coordinate_frame != "base_link" || state.position_units != "mm" ||
                 state.parts == null || state.counts == null || state.required == null)
@@ -979,13 +985,21 @@ namespace MainUnity.Runtime.Camera
             {
                 int declared = state.counts.Get(type);
                 int required = state.required.Get(type);
-                if (declared < 0 || required < 0 || declared != required ||
-                    actualCounts[type] != declared)
+                if (declared < 0 || required < 0)
                 {
-                    error = $"트레이 {type} 개수 불일치 · 입력 {actualCounts[type]} / counts {declared} / required {required}";
+                    error = $"트레이 {type} 개수 선언 오류 · counts {declared} / required {required}";
                     return false;
                 }
             }
+
+            executionReady = true;
+            foreach (string type in supportedTypes)
+                if (state.counts.Get(type) != state.required.Get(type) ||
+                    actualCounts[type] != state.counts.Get(type))
+                {
+                    executionReady = false;
+                    break;
+                }
 
             var ids = new HashSet<string>(StringComparer.Ordinal);
             var result = new List<PartPose>(state.parts.Length);
@@ -1174,8 +1188,8 @@ namespace MainUnity.Runtime.Camera
                 "\"instance_index\":1,\"base_xyz_mm\":[1000,2000,3000],\"angle_base_deg\":0}]}";
             TrayState state = JsonUtility.FromJson<TrayState>(json);
             Vector3 converted = FLU.ConvertToRUF(new Vector3(1f, 2f, 3f));
-            if (!TryCreatePoses(state, out List<PartPose> poses, out _) ||
-                poses.Count != 1 || state.parts[0].id != "gpu:01" ||
+            if (!TryCreatePoses(state, out List<PartPose> poses, out bool executionReady, out _) ||
+                !executionReady || poses.Count != 1 || state.parts[0].id != "gpu:01" ||
                 (converted - new Vector3(-2f, 3f, 1f)).sqrMagnitude > 0.000001f)
                 throw new InvalidOperationException("TrayPartCalibrator self-check failed.");
 
