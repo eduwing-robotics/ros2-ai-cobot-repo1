@@ -1,5 +1,211 @@
 # AI/Vision 작업 기록
 
+## 2026-09-14 Camera transport and overlay trials with rollback
+
+- FINAL RECOVERY: at the user's explicit request, restored the 30-FPS overlay
+  cap and phase-preserving display scheduler. Retained historical 4 MiB UDP
+  buffers, nonblocking sends and 32 MiB SHM; replaced the legacy interface
+  whitelist with the same lo/wlo1/enp129s0 allowlist plus netmask filtering ON.
+  This limits each UDP interface to destinations in its own subnet without
+  removing the wired robot path or changing JPEGs, topics, QoS or stop criteria.
+  Scope/behavior follow the installed Fast DDS 2.14 headers/schema and
+  [official interface documentation](https://fast-dds.docs.eprosima.com/en/2.14.x/fastdds/transport/interfaces.html).
+  The previous small-packet/blocking/async experiment remains reverted.
+- Historical repair rechecked: the Sept11 incident used larger DDS socket
+  buffers to recover an external probe. Today the buffers were already applied
+  (Linux accounting 8388608 bytes), but GoPro output queues reached about 7.7 MiB
+  on both cell-WLAN and robot-Ethernet source sockets. A 5-second sample counted
+  922 UDP send-buffer errors. Before subnet filtering, a temporary robot receiver
+  obtained S22/GoPro/overlay 253/122/84 frames over wired Ethernet in 10 seconds;
+  a WLAN-only 16-second probe obtained 29.35/10.88/21.83 FPS with GoPro/overlay
+  gaps 1.399/1.330 s. Robot/laptop clocks differ by about 187326 seconds, so remote
+  header age is NOT a latency measurement. Only temporary diagnostic files were
+  copied to robot /tmp; no robot network/control setting or motion changed.
+- The later laptop-blank report had a separate concrete cause: S22, GoPro and
+  the server bundle processes were absent, with NO_PUBLISHER on camera3; an
+  orphan overlay survived. The exact termination cause was not recovered.
+  Normally stopped only that orphan and relaunched S22, overlay and the armed
+  bundle using nohup/setsid with dedicated runtime logs, detached from the tool
+  session. Source steady logs returned S22 ~30 FPS and GoPro 30 input/15 output.
+  The user then explicitly confirmed both laptop and teammate screens working.
+  This is user-confirmed playback recovery, not a post-change instrumented
+  AP/Unity latency benchmark or proof that filtering alone caused recovery.
+- Final retained-code tests: 96 passed and installed Fast DDS XSD validation
+  passed. Subsequent read-only server check: PID 49708 allow_motion=true, one
+  conveyor-state publisher, armed=true, IDLE/moving=false, vision_ready=true,
+  compatible turtlebot3_node TwistStamped subscriber confirmed, inspection
+  health available/no active inspection. Existing server was left running;
+  no move/reset/capture request was made. Existing lifecycle zero commands may
+  occur during the earlier restart. Physical process/stop accuracy and prolonged
+  wireless/thermal stability remain untested. Earlier trials below are preserved.
+
+- INTERMEDIATE ROLLBACK: both the experimental DDS transport and 30-FPS overlay
+  rate/deadline changes were reverted after the user reported that teammate
+  screens no longer received video. Original common DDS, 10-FPS overlay cap
+  and original scheduler are restored; JPEG quality/topics/control criteria
+  are unchanged. Only the overlay duplicate-start guard and a corrected local
+  GoPro viewer connection remain. Earlier measurements below are trial results,
+  not proof of remote recovery. The armed server remains running without a
+  move/reset/capture request from this task.
+
+- Tested, then REVERTED a laptop camera-only Fast DDS profile and shared camera
+  environment helper. Final S22, GoPro, overlay and server launchers all retain
+  the original common transport. The discarded trial profile
+  limits outgoing DDS messages to 1400 bytes, retains the larger receive limit,
+  and uses async round-robin sending (16384 bytes / 2 ms per participant),
+  blocking background UDP sends, reallocating histories and existing local SHM.
+  The installed Fast DDS parser and XSD accept the final data_writer/data_reader
+  XML. The outgoing-only property follows the
+  [Fast DDS property documentation](https://fast-dds.docs.eprosima.com/en/2.14.x/fastdds/property_policies/non_consolidated_qos.html).
+  This was not a global bandwidth cap or a change to JPEG pixels. Existing topic
+  names and application QoS are preserved, including RELIABLE depth-1 overlay
+  compatibility with the teammate Endpoint. Removed the trial profile, helper,
+  trial-only tests and site/example opt-in after the final regression below.
+- Host-network measurements (not sandbox counters): the original common profile
+  generated 31588 IP fragments in one 5-second loaded sample, with zero UDP send
+  buffer errors. A rejected small-packet/nonblocking/unpaced trial generated
+  564 fragments but 1505 send-buffer errors in 5 seconds. Pacing/blocking async
+  initially corrected that regression: paced-trial sample 666 fragments and
+  zero send errors / 5 seconds; subsequent simultaneous-router/peer ping window
+  had 8 fragments and zero send errors over about 10 seconds. Fragmentation moved
+  from IP to DDS/UDP; this does NOT demonstrate lower byte usage or lossless
+  reception. Global counters include unrelated processes, and these short
+  sequential samples are not a controlled end-to-end A/B test.
+- In the subsequently reverted display trial, raised the optional stop-overlay cap
+  from 10 to 30 FPS and changed display scheduling to advance an absolute
+  deadline instead of accumulating callback jitter. Missed deadlines do not
+  create a catch-up queue; the single render worker remains separate, after
+  control publication. Kept 960-pixel overlay/JPEG 78, S22 stream 960x540/JPEG 84,
+  GoPro 1280x720/JPEG 75/15 FPS, source capture settings, stop geometry, thresholds,
+  150 ms stale-control cutoff, inspection/fusion and all API contracts unchanged.
+- One old overlay child survived a launcher SIGTERM during this task's restart.
+  The resulting 36-39 FPS aggregate and doubled ready counts were rejected as
+  duplicate observations, not performance gains. Identified and stopped that
+  exact orphan; subsequent restart used scoped SIGINT and verified exit. Added
+  a launcher lock plus same-user orphan-executable check: refuse duplicate
+  startup without takeover. Final ROS graph reports one publisher each for
+  S22 stream, GoPro, overlay, stop_line_ready, conveyor/state and cmd_vel.
+- Trial single-overlay trace `runtime/camera_load_20260914_112602.jsonl` measured
+  27.7-29.0 overlay FPS (previous 8.6-8.8 in the paced 10-FPS trace
+  `runtime/camera_load_20260914_111533.jsonl`), maximum overlay gap 69.5 ms and
+  local header age 70.5 ms. S22 stayed 29.4-29.7 FPS and GoPro 14.9-15.0 FPS;
+  all 887 ready samples were true and conveyor remained IDLE. These timestamps
+  are laptop publication/capture-pipeline observations, not measured camera
+  exposure-to-Unity latency. An inactive old rqt topic is excluded.
+- IMPORTANT rejected-trial result: after the first armed restart, trace
+  `runtime/camera_load_20260914_112907.jsonl` captured GoPro gaps up to 1.019 s
+  and overlay gaps up to 1.216 s despite healthy S22 and no duplicate publishers.
+  Zero kernel send errors did not mean smooth delivery: a blocking DDS send
+  path can wait instead of returning an error. This contradicted the earlier
+  short steady observation, so the paced/blocking transport was NOT retained.
+  The user also reported abnormal GoPro output and requested a full restart.
+- The higher overlay rate increases wireless traffic: the single-overlay trace
+  showed about 133-155 Mbit/s laptop TX versus about 95-99 Mbit/s in the earlier
+  paced 10-FPS trace. A subsequent ~10-second 30-FPS ping sample had zero UDP send
+  errors, 24 IP fragments, and no ICMP loss, but router average/max 137.646/618.014
+  ms, Endpoint .5 187.923/771.734 ms and Unity .14 158.719/636.543 ms. Local trial
+  smoothness improved; remote Wi-Fi/Endpoint/Unity stutter is NOT verified
+  resolved. Endpoint-local third-camera smoothness does not validate this
+  laptop's extra network hop. No teammate machine, endpoint or Wi-Fi SSID was
+  changed; previously disabled laptop WLAN power saving remains in place.
+- Trial validation: 100 offline transport, overlay and server-bundle tests
+  passed, plus 2 isolated localhost ROS transport round-trip tests on domain
+  219 using inert capture; the XML schema passed, but these do not validate
+  loaded camera delivery and did not prevent the live regression. Current
+  retained source is used through the existing symlink install. Full
+  physical process/arrival accuracy and remote rendering remain untested.
+- After fresh health showed no active inspection and conveyor IDLE/not moving,
+  stopped only the known monitor bundle and restarted with
+  `./run_conveyor_vision_server.sh --execute --confirm-motion`, reusing the
+  existing GoPro. Final read-only state: armed=true, vision_ready=true,
+  command_receiver_connected=true, IDLE, moving=false; inspection ROS health
+  succeeds with active_inspection_id=null. No move/reset/submit, robot motion,
+  still capture or DB request was issued. Server shutdown/startup can emit its
+  existing zero-speed safety commands; no nonzero command was requested here.
+- On the user's explicit full-restart request, identified and normally stopped
+  the exact server bundle, S22/scrcpy, GoPro and overlay PIDs, verified all scoped
+  processes exited, reverted trial DDS settings, then restarted S22, the overlay
+  and the armed bundle (which starts/owns GoPro). No blanket process-name kill,
+  teammate endpoint change or nonzero motion/inspection request was made.
+- After the full restart and DDS rollback, trace
+  `runtime/camera_load_20260914_113357.jsonl` locally measured GoPro 14.99-15.00
+  FPS after discovery, maximum gap 70.6 ms; overlay 26.4-28.6 FPS, max gap 80 ms.
+  All 878 readiness samples were true, state IDLE. 91 retained-code tests passed
+  at this intermediate stage. This did not establish remote recovery: the user
+  subsequently reported repeating local scenes and absent teammate video.
+- Read-only GoPro follow-up: one publisher/decoder and compatible BEST_EFFORT
+  local/remote readers. A 16-second local sample received 239 unique timestamps
+  and JPEG hashes at 15.0009 FPS, max gap 69.8 ms/header age 51.2 ms, no reversed
+  timestamps. A UDP-only local diagnostic received/decoded 179 frames at 15.0019
+  FPS and 1280x720; it does not cross the physical AP-to-teammate path. Decoder
+  UDP receive queue and socket drop counter were zero at inspection. These
+  results exclude identical ROS-message replay in that sample, not all possible
+  camera-side visual looping or downstream display backlog.
+- The old local rqt had been manually switched to direct GoPro compressed input,
+  bypassing its S22 bridge's latest-frame pacing/stale-screen behavior. Stopped
+  only that known viewer owner/child and opened the existing dedicated GoPro
+  bridge at 15 FPS with a new raw rqt view. Kept the other stop-line viewer,
+  source cameras, Endpoint and armed server untouched in this viewer operation.
+  New bridge /ksmc/rqt_38916/image has one rqt reader. Viewer recovery remains
+  distinct from teammate delivery; no claim that this alone fixes Unity.
+- On the user's before/after regression report, restored annotated_fps=10 AND
+  original display scheduling, after confirming fresh IDLE/moving=false state.
+  Restarted only exact overlay PIDs, preserving the armed server and GoPro.
+  A 30-FPS wireless-load regression is a supported possibility, not a confirmed
+  sole cause; no receiver-side packet/rate log is available. Remote reception,
+  physical stopping and prolonged thermal stability remain unverified.
+- Final restored-rate trace `runtime/camera_load_20260914_114758.jsonl`:
+  GoPro 14.9-15.0 FPS/max gap 69.1 ms, S22 29.5-29.6 FPS, overlay 8.8-9.0 FPS.
+  All 591 readiness samples were true and state stayed IDLE. Overlay payload
+  fell to about 0.60 MB/s, but total WLAN TX was still 153-168 Mbit/s; aggregate
+  traffic is therefore not explained by overlay rate alone. No remote-recovery
+  claim. Final retained launcher/controller/bundle regression suite: 89 passed;
+  diff checks passed. Teammate-side reception after rollback requires confirmation.
+
+## 2026-09-14 Unity recording review and team WLAN power-saving change
+
+- Reviewed `/home/hc/Downloads/Screencast from 2026-09-13 20-01-01.webm`
+  (2080x1169, 1316.351 s). The dashboard shows the S22 stop-overlay and GoPro
+  alongside a third assembly camera; its ROS connection label is
+  192.168.11.5:10000, distinct from the user's Unity-PC address 192.168.11.14.
+  Inspected a screenshot and sampled seconds 360-430 at 20 Hz (1400 frames).
+  Low-change camera regions include 376.35-379.25 s while the 3-D region changes,
+  but static physical scenes/compression/recording effects prevent treating
+  every low-change interval as measured frame loss. No capture timestamps were
+  recovered from this recording and no Unity logs/source were available.
+- Previous matching local trace `runtime/camera_load_20260913_200720.jsonl`
+  had stable local GoPro/S22/overlay output despite reported Unity stalls.
+  Found team profile `codelab_robot_team_1_5G` inherited powersave=default and
+  NetworkManager's global wifi.powersave=3. Set only this profile to powersave=2.
+  Live reapply was rejected as unsupported; after checking no active inspection,
+  reactivated the same connection on wlo1. NetworkManager confirmed connected
+  and powersave=disable. SSID, IP, camera quality, ROS topics and DDS settings
+  were not changed. Reverting the saved setting is `nmcli connection modify
+  codelab_robot_team_1_5G 802-11-wireless.powersave 0`, applied at next activation.
+- Started the initially inactive S22/GoPro senders at their existing settings.
+  Kept the inspection/conveyor servers running in monitor-only mode. No robot,
+  conveyor movement/reset, or inspection still-capture request was issued.
+  GoPro preview start/stop and S22 preview activation were issued. GoPro had
+  transient startup PPS warnings, then 29.8-30.2 input / 15 output FPS without
+  recovery restarts in the observed steady period.
+- Final trace `runtime/camera_load_20260914_110433.jsonl`: after initial discovery,
+  GoPro 15.0 FPS/max gap 69 ms, S22 29.6-29.8 FPS/max gap 50 ms, stop-overlay
+  9.0-9.3 FPS/max gap 135 ms. CPU pressure avg10=0; wlo1 TX about 92-102 MB per
+  10 s (74-82 Mbit/s), no interface-reported drops. Old rqt topic is inactive
+  and its zero count is not camera loss. These are local observations only.
+- Power-saving change did NOT demonstrate a fix: unloaded pre-change router
+  ping averaged 3.523 ms/max 18.814 ms; post-change with both streams active
+  averaged 402.912 ms/max 1478.644 ms. Unity .14 ping averaged 365.322 ms/max
+  688.113 ms. Both post-change samples had no ICMP packet loss. Loads differ,
+  so this is not a causal A/B comparison of power saving. Shared transmission
+  congestion is supported, but router/driver/receiver contributions and video
+  packet loss remain unisolated. No zero-stutter or latency-resolution claim.
+- Tested JPEG optimized Huffman encoding offline on a saved board ROI resized
+  to stream dimensions: only 1-2% smaller with identical decoded pixels but
+  higher encode cost (about 1-2 -> 2.4-3.7 ms). NOT applied. Sender code remains
+  unchanged. Next required validation is wired-path or receiver-side access
+  for the existing ROS Endpoint/Unity; no teammate machine was modified.
+
 ## 2026-09-13 User-authorized portfolio demo candidate confirmation
 
 - After being told that candidate-based operational FAIL conflicts with the

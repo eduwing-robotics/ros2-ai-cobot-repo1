@@ -1,5 +1,5 @@
 conveyor_roi:
-  # Use the network-safe 1280x720 stream for the live stop decision. The
+  # Use the network-safe 960x540 stream for the live stop decision. The
   # 1920x1080 analysis topic and lossless 4K inspection capture stay separate.
   image_topic: /camera2/image_stream/compressed
   annotated_topic: /vision/conveyor/stop_image/compressed
@@ -14,9 +14,9 @@ conveyor_roi:
   processing_max_width: 960
   jpeg_quality: 78
   annotated_max_width: 960
-  # Control runs at 30 FPS. The optional dashboard is capped separately so
-  # rqt/UI encoding cannot delay stop-trigger publication.
-  annotated_fps: 10
+  # Match the 30 FPS input for smooth dashboard motion. Rendering stays on a
+  # single independent latest-frame worker, after control publication.
+  annotated_fps: 30
 
   # Current occupancy, independent of the latched stop trigger. Pixel limits
   # are at 960px control width; not a certified robot assembly pose tolerance.

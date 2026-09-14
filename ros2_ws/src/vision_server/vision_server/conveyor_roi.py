@@ -38,6 +38,13 @@ OVERLAY_QOS = QoSProfile(
 )
 
 
+def next_overlay_deadline(now: float, deadline: float, period: float) -> float:
+    """Keep display cadence through input jitter; never catch up stale frames."""
+    if deadline <= 0.0 or now - deadline >= period:
+        return now + period
+    return deadline + period
+
+
 def timestamp_age_seconds(
     now_nanoseconds: int, stamp_seconds: int, stamp_nanoseconds: int
 ) -> float:
@@ -790,6 +797,7 @@ class ConveyorStopLine(Node):
             raise ValueError('annotated_fps must be finite and > 0')
         self._annotated_period = 1.0 / self._annotated_fps
         self._last_annotated_at = 0.0
+        self._next_annotated_at = 0.0
         self._render_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix='stop_overlay')
         self._render_future = None
         # Optional station telemetry can be delayed by a slow ROS subscriber
@@ -2160,8 +2168,10 @@ class ConveyorStopLine(Node):
             except Exception as exc:
                 self.get_logger().warning(f'Overlay rendering failed: {type(exc).__name__}')
         now = time.monotonic()
-        if now - self._last_annotated_at < self._annotated_period:
+        if now < self._next_annotated_at:
             return
+        self._next_annotated_at = next_overlay_deadline(
+            now, self._next_annotated_at, self._annotated_period)
         self._last_annotated_at = now
         # Freeze the station state so rendering cannot race the next control frame.
         renderer = copy.copy(self)

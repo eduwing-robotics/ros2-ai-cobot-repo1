@@ -20,6 +20,7 @@ from vision_server.conveyor_roi import (
     detect_dark_boards,
     fit_dominant_body_box,
     normalized_line_to_pixels,
+    next_overlay_deadline,
     NormalizedLine,
     StopStation,
     smooth_board_detection,
@@ -30,6 +31,24 @@ from vision_server.conveyor_roi import (
     validate_station_layout,
 )
 import yaml
+
+
+def test_overlay_deadlines_do_not_drift_with_input_jitter():
+    period = 1.0 / 32.0  # exactly representable; test scheduling, not rounding
+    deadline = 0.0
+    rendered = 0
+    for index in range(300):
+        now = 10.0 + index * period + (0.0005 if index % 2 else 0.0)
+        if now >= deadline:
+            rendered += 1
+            deadline = next_overlay_deadline(now, deadline, period)
+    assert rendered >= 299
+
+
+def test_overlay_deadlines_skip_backlog_after_stall():
+    assert next_overlay_deadline(20.0, 10.0, 0.1) == pytest.approx(20.1)
+    assert next_overlay_deadline(20.0, 0.0, 0.1) == pytest.approx(20.1)
+    assert next_overlay_deadline(20.01, 20.0, 0.1) == pytest.approx(20.1)
 
 
 def _board_detection(center, long_length, short_length, angle_deg, trailing_edge):

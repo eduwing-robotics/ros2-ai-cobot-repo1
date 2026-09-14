@@ -1,5 +1,22 @@
 # Conveyor Work Log
 
+## 2026-09-14 Display trial rollback and user-requested armed restart
+
+Final follow-up supersedes the intermediate display rollback: 30-FPS overlay
+restored as requested, detection/stop criteria unchanged. Detached armed server
+verified alive with fresh ready state and one compatible turtlebot3_node command
+reader. No move/reset/inspection request; the already-running server was preserved.
+
+Reverted overlay pacing/rate and camera transport trials; original 10-FPS
+display, stop-line geometry, detection/arrival decisions, stale-frame cutoff
+and interlocks remain unchanged. Retained duplicate-start guards.
+After confirming no active work, restarted the server armed; verified IDLE,
+moving=false, vision_ready=true and command_receiver_connected=true. No move,
+reset or capture request; normal lifecycle zero-speed safety commands may occur.
+Physical stopping and remote display remain unvalidated. Detailed tests,
+restart-orphan correction, measurements and limitations:
+[grouped vision log](vision.md#2026-09-14-camera-transport-and-overlay-trials-with-rollback).
+
 ## 2026-09-13 Stop-overlay viewer recovery
 
 Only local stop-overlay display behavior and laptop SHM capacity changed;

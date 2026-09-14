@@ -1,5 +1,33 @@
 # 카메라 작업 기록
 
+## 2026-09-14 Camera transport and overlay rollback
+
+Final follow-up: restored 30-FPS overlay/display timing at the user's request;
+kept historical buffers/nonblocking/SHM and added same-interface subnet filtering.
+Recovered absent camera/server processes using detached execution. User confirmed
+laptop AND teammate video working. Earlier trial rollbacks below are historical;
+exact evidence, tests, command scope and remaining limits are in the grouped log.
+
+Reverted BOTH the camera DDS trial and increased overlay FPS/scheduler after
+later stalls and absent teammate video. Final senders retain original DDS,
+image quality and 10-FPS overlay. Retained duplicate-start guards; replaced
+the old local direct-compressed rqt connection with the existing dedicated
+latest-frame GoPro bridge. Local direct/UDP tests receive fresh 15-FPS GoPro
+images, but teammate delivery is NOT verified restored. No move/inspection
+request. Evidence, failed trials, tests, restart scopes and normal lifecycle
+zero-speed-command caveat are recorded once in the
+[grouped vision log](vision.md#2026-09-14-camera-transport-and-overlay-trials-with-rollback).
+
+## 2026-09-14 Unity recording review and team WLAN power saving
+
+Disabled power saving only on the existing team WLAN profile and reactivated
+the same connection after verifying no active inspection. Camera quality/topics
+and sender code are unchanged; S22/GoPro preview senders were started, without
+robot/conveyor movement or still capture. Local steady frames remain healthy,
+but loaded network latency still reaches 1.48 s to the router; stutter is NOT
+verified fixed. Evidence, rejected JPEG optimization and remaining receiver-side
+work: [grouped vision record](vision.md#2026-09-14-unity-recording-review-and-team-wlan-power-saving-change).
+
 ## 2026-09-13 GoPro direct-topic backlog limits
 
 Applied smaller UDP queues and a 250 ms local decoded-frame freshness gate to

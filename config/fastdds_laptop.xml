@@ -14,11 +14,18 @@
              limits. Camera bursts overflowed the 208 KiB system default. -->
         <sendBufferSize>4194304</sendBufferSize>
         <receiveBufferSize>4194304</receiveBufferSize>
-        <interfaceWhiteList>
-          <interface>lo</interface>
-          <interface>wlo1</interface>
-          <interface>enp129s0</interface>
-        </interfaceWhiteList>
+        <!-- Match each destination to its real subnet. Without filtering,
+             DDS may also attempt team-WLAN traffic from the robot-only NIC,
+             filling two output queues for the same remote camera readers.
+             Fast DDS 2.14+ allowlist keeps the same three interfaces and SHM. -->
+        <netmask_filter>ON</netmask_filter>
+        <interfaces>
+          <allowlist>
+            <interface name="lo" netmask_filter="ON"/>
+            <interface name="wlo1" netmask_filter="ON"/>
+            <interface name="enp129s0" netmask_filter="ON"/>
+          </allowlist>
+        </interfaces>
         <non_blocking_send>true</non_blocking_send>
       </transport_descriptor>
       <transport_descriptor>
