@@ -129,7 +129,7 @@
     },
     "hbm": {
       "axis": "x",
-      "boundary_px": 1225,
+      "boundary_px": 1250,
       "per_set_count": 8,
       "capacity": 16,
       "section_polygon_normalized": [
@@ -152,5 +152,5 @@
       ]
     }
   },
-  "evidence": "Existing detector set order; separator lies in empty gap of registered 50-part observation on 2026-09-11. Fixed reference coordinates; never recompute from partial detections."
+  "evidence": "Existing detector set order; separator lies in empty gap of registered 50-part observation on 2026-09-11. Fixed reference coordinates; never recompute from partial detections. HBM boundary revised to 1250px on 2026-09-14: current first-set right edge center 1214.54px; original two-set fixture second-set leftmost center 1284.69px. Retain 12px margin and fixed physical membership; no per-frame boundary recomputation."
 }

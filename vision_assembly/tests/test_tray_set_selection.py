@@ -85,3 +85,24 @@ def test_inventory_with_full_second_set_preserves_geometric_checks():
     target['base_xyz_mm'][0]+=10
     with pytest.raises(RuntimeError,match='XY changed'):
         check_inventory(raw,ref,set(),quality(),101.1,100)
+
+
+def test_september14_hbm_boundary_preserves_membership_and_missing_cells():
+    raw = json.loads((Path(__file__).parent/'fixtures/tray_set_boundary_20260914.json').read_text())
+    config = json.loads((Path(__file__).resolve().parents[1]/'config/tray_cycle_set_selection.json').read_text())
+    old = deepcopy(config)
+    old['parts']['hbm']['boundary_px'] = 1225
+    with pytest.raises(RuntimeError, match='hbm: ambiguous physical set boundary'):
+        select_cycle_tray_set(raw, old)
+    result = select_cycle_tray_set(raw, config)
+    assert len(result['stable_detections']) == 25
+    expected = [d['id'] for d in raw['stable_detections'] if d['part_type']=='hbm' and d['instance_index']<=8]
+    assert [d['id'] for d in result['stable_detections'] if d['part_type']=='hbm'] == expected
+    missing = deepcopy(raw)
+    missing['stable_detections'] = [d for d in missing['stable_detections'] if d.get('id') != expected[1]]
+    selected = select_cycle_tray_set(missing, config)
+    assert {d['id'] for d in selected['stable_detections'] if d['part_type']=='hbm'} == set(expected)-{expected[1]}
+    ambiguous = deepcopy(raw)
+    next(d for d in ambiguous['stable_detections'] if d['part_type']=='hbm')['reference_center_pixel'][0] = 1250
+    with pytest.raises(RuntimeError, match='hbm: ambiguous physical set boundary'):
+        select_cycle_tray_set(ambiguous, config)

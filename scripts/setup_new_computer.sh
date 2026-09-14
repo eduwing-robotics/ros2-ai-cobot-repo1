@@ -14,7 +14,8 @@ sudo apt-get install -y \
   python3-numpy python3-pip python3-rosdep python3-scipy python3-yaml \
   v4l-utils \
   ros-jazzy-cv-bridge ros-jazzy-image-transport ros-jazzy-rqt-image-view \
-  ros-jazzy-realsense2-camera ros-jazzy-realsense2-description
+  ros-jazzy-realsense2-camera ros-jazzy-realsense2-description \
+  ros-jazzy-rmw-cyclonedds-cpp
 
 if [[ ! -f "${PROJECT_DIR}/config/ksmc.env" ]]; then
   cp "${PROJECT_DIR}/config/ksmc.env.example" \

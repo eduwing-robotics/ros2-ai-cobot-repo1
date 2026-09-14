@@ -14,7 +14,7 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 if ! ros2 topic list 2>/dev/null | grep -qx '/vision/tray/registration'; then
-  python3 "${script_dir}/scripts/view_tray_sections.py" --registration-only &
+  bash "${script_dir}/run_tray_sections_view.sh" --registration-only &
   tracker_pid=$!
 fi
 

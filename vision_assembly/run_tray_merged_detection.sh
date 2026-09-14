@@ -34,7 +34,7 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-python3 "${script_dir}/scripts/view_tray_sections.py" --registration-only &
+bash "${script_dir}/run_tray_sections_view.sh" --registration-only &
 section_pid=$!
 
 python3 "${script_dir}/scripts/render_tray_live.py" &
