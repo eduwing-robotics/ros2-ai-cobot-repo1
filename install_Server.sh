@@ -18,7 +18,7 @@ while (($#)); do
         --skip-deps) skip_deps=true; shift ;;
         --skip-build) skip_build=true; shift ;;
         -h|--help)
-            echo 'Usage: bash install.sh [--mode mock|real|all] [--configure-only|--check] [--skip-deps] [--skip-build]'
+            echo 'Usage: bash install_Server.sh [--mode mock|real|all] [--configure-only|--check] [--skip-deps] [--skip-build]'
             echo 'Setup details and the four runtime commands: README.md, 실행 section.'
             exit 0 ;;
         *) echo "Unknown option: $1" >&2; exit 2 ;;
