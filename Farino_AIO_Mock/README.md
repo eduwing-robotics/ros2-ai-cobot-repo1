@@ -142,7 +142,7 @@ backend는 timeout, 통신 실패와 로봇 fault를 호출자에게 전달합�
 ## 문서
 
 - [시스템 아키텍처](../docs/architecture/index.md)
-- [공개 API 목록](../docs/API.md)
+- [공개 API 목록](../README.md#공개-api)
 - [Assembly Sequencer](../ASSEMBLY_SEQUENCER/README.md)
 
 ## Real 실행 환경과 명령 계약

@@ -11,6 +11,7 @@
 !/MAIN_SERVER/
 !/Ros2UnityEndopoint_PKG/
 !/UnityDT/
+!/docs/
 
 # Nested repository metadata
 **/.git/
@@ -93,7 +94,3 @@ UnityDT/mono_crash.*.blob
 
 # Local quarantine
 Trash/
-
-# Local documentation captures and derived UI exports
-docs/images/captures/
-UnityDT/Docs/ui/local-exports/

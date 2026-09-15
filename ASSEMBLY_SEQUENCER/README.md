@@ -74,7 +74,7 @@ Real 검사는 `vision_interfaces`의 submit/get/get_image 서비스와 health�
 
 ## 관련 설계
 
-- [공개 API 목록](../docs/API.md)
+- [공개 API 목록](../README.md#공개-api)
 - [production 데이터 설계](../DATA_STATION/DB/README.md)
 
 

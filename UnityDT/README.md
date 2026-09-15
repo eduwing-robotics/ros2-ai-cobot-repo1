@@ -105,7 +105,7 @@ Real은 Sequencer의 네 단계 공정 완료와 DB 동기화를 기다리고 �
 - [Unity UI 책임](Docs/UI.md)
 - [HMI 설계 원칙](Docs/ui-design.md)
 - [전체 시스템 아키텍처](../docs/architecture/index.md)
-- [공개 API 목록](../docs/API.md)
+- [공개 API 목록](../README.md#공개-api)
 
 JOBS의 작업 실행은 공통 Scenario 계약으로 현장 확인 UI를 전달합니다. Real에서는 운영자 ID와
 그리퍼 비움·빈 PCB·트레이 25개·고정 지그 확인을 기본 미선택 상태로 받고, 해당 실행 UUID와

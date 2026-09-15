@@ -49,4 +49,4 @@ Unity의 **Robotics > ROS Settings**에서 ROS 2를 선택하고, ROS IP에는 �
 
 ## 문서
 
-- [공개 API 목록](../docs/API.md)
+- [공개 API 목록](../README.md#공개-api)

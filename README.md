@@ -16,22 +16,40 @@ Mock과 Real은 MainServer와 AssemblySequencer를 각각 독립 프로세스로
 | `Farino_AIO_Mock/` | FR5 실행 구성, Real·Mock backend와 Mock 통합 실행 |
 | `Ros2UnityEndopoint_PKG/` | Unity와 ROS 2 사이의 메시지 전송 |
 | `DATA_STATION/DB/` | MainServer와 Sequencer가 공유하는 PostgreSQL 스키마·제약·권한 |
-| `docs/` | 시스템 설계, 공개 API 목차와 과거 기록 |
+| `docs/architecture/` | 시스템 책임 배치, 생산 불변 조건과 완료·실패 경계 |
 | `launch/` | MainServer·AssemblySequencer의 Mock/Real 공개 실행 진입점 |
 
 `build/`, `install/`, `log/`, Unity `Library/`와 `Trash/`는 생성물 또는 로컬 격리 공간이며 기준 원본을 두지 않습니다.
 
-## 기준 문서
+## 문서
 
-- 프로젝트 작업 정책: [AGENTS.md](AGENTS.md)
-- 문서 안내: [docs/index.md](docs/index.md)
-- 시스템 설계: [docs/architecture/index.md](docs/architecture/index.md)
-- 공개 API 목록: [docs/API.md](docs/API.md)
-- production 데이터 설계: [DATA_STATION/DB/README.md](DATA_STATION/DB/README.md)
+| 문서 | 소유 내용 |
+|---|---|
+| [시스템 아키텍처](docs/architecture/index.md) | 세 계층, 생산 불변 조건, 완료·실패와 데이터 경계 |
+| [production 데이터 설계](DATA_STATION/DB/README.md) | MainServer와 Sequencer가 공유하는 스키마·제약·권한 |
+| 컴포넌트 README | 한 컴포넌트의 역할과 공개 실행 진입점 |
+| 제공 컴포넌트 API 문서 | endpoint, payload, 오류와 완료 의미 |
 
-컴포넌트별 역할은 해당 README, 구체 endpoint와 payload는 제공 컴포넌트의 API 문서가 소유합니다. 실행 절차와 공개 명령은 아래 절만을 기준으로 사용합니다.
+실행 코드, IDL과 기준 DDL이 구체 계약의 원본입니다. 문서는 이 원본을 설명하며 구현되지 않은 이름이나 미래 구조를 미리 예약하지 않습니다.
 
-`reports/`와 `archive/`는 시점별 조사·과거 판단 기록이며 현재 설계 계약으로 사용하지 않습니다.
+- 시스템 의미와 책임은 아키텍처 문서 한 곳에서 설명합니다.
+- 구체 통신 식별자와 메시지 형식은 API 문서에만 기록합니다.
+- Real·Mock 표기는 구현이나 공개 경계가 실제로 갈리는 경우에만 사용합니다.
+- production 데이터 계약은 공통 기반이며 별도 실행 컴포넌트나 backend로 표현하지 않습니다.
+- 실행 절차와 공개 명령은 아래 [실행](#실행) 절만을 기준으로 사용합니다.
+
+## 공개 API
+
+현재 구현되어 외부 컴포넌트가 사용하는 API의 목차입니다. endpoint, payload, 오류와 완료 의미는 제공 컴포넌트의 API 문서와 실행 코드가 함께 소유합니다.
+
+| 제공자 | 공개 경계 | 소비자 | 상세 계약 |
+|---|---|---|---|
+| MainServer | HTTP `/api/v1/*` | UnityDT·외부 클라이언트 | [MAIN_SERVER/Main_serverAPI.md](MAIN_SERVER/Main_serverAPI.md) |
+| Assembly Sequencer | ROS 2 service·topic | UnityDT·MainServer | [ASSEMBLY_SEQUENCER/API.md](ASSEMBLY_SEQUENCER/API.md) |
+
+Assembly Sequencer는 모드별 ROS domain에서 공통 service·feedback 형식을 제공합니다. Real은 등록된 Job에 대한 명시적 시작 요청으로 컨베이어 조립 위치 이동 → 로봇 전체 Start → 컨베이어 검사 위치 이동 → 검사를 실행합니다. 로봇 조립 중 일시정지·재개·취소 요청도 연결되어 있습니다. 요청 수락은 실제 완료가 아니며, 지원 조건과 완료·실패 의미는 [Sequencer API](ASSEMBLY_SEQUENCER/API.md)를 따릅니다.
+
+내부 클래스·queue·worker 구조, PostgreSQL 내부 호출과 SQL 함수, 레시피 파일의 구현 세부사항, 미구현 인터페이스와 미래 계획은 공개 API 문서 대상이 아닙니다.
 
 ## 실행
 
