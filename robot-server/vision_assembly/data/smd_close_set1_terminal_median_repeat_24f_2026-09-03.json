@@ -1,0 +1,5938 @@
+{
+  "schema_version": 2,
+  "mode": "smd_close_multiframe_base_targets",
+  "timestamp_unix": 1788425870.9793577,
+  "robot_motion_authorized": false,
+  "set_index": 1,
+  "required_count": 5,
+  "layout_capacity": 10,
+  "validation_passed": true,
+  "handeye_sha256": "f08dc2dd9a40523e3f0c69e9285d88c774d69553659c3d9be891da727877c558",
+  "parts": [
+    {
+      "part_type": "right_white_brown",
+      "instance_index": 1,
+      "part_center_base_mm": [
+        -619.213,
+        -166.797,
+        -47.291
+      ],
+      "long_axis_angle_base_deg": 84.334,
+      "long_axis_angle_canonical_deg": 3.822,
+      "frame_count": 24,
+      "confidence_median": 0.9523,
+      "center_span_canonical_px": [
+        1.635,
+        0.654
+      ],
+      "angle_mad_deg": 0.4059,
+      "angle_batch_span_deg": 0.9847,
+      "temporal_batch_count": 3,
+      "frames_per_temporal_batch": 8,
+      "per_frame_angle_mad_diagnostic_deg": 1.3963,
+      "base_xyz_span_mm": [
+        0.092,
+        0.124,
+        0.0
+      ],
+      "robot_pose_translation_span_mm": 0.0056,
+      "robot_pose_rotation_span_deg": 0.00087,
+      "validation_passed": true,
+      "angle_source": "three independent 8-frame median images, two white terminals colour-weighted axis",
+      "fixed_base_correction_mm": [
+        0.041,
+        4.548,
+        0.0
+      ],
+      "temporal_batches": [
+        {
+          "frame_indices": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "angle_canonical_deg": 3.8217,
+          "angle_base_deg": 84.3345,
+          "terminal_axis": {
+            "angle_canonical_deg": 3.8216801928490725,
+            "axis_ratio": 1.418779683088954,
+            "colour_center_offset_px": 1.1637789417782078,
+            "body_core_saturation_median": 80.0,
+            "terminal_saturation_medians": [
+              20.0,
+              17.0
+            ],
+            "terminal_pixel_counts": [
+              414,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "frame_indices": [
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
+          "angle_canonical_deg": 4.4005,
+          "angle_base_deg": 83.3131,
+          "terminal_axis": {
+            "angle_canonical_deg": 4.400493456428819,
+            "axis_ratio": 1.4309675995789701,
+            "colour_center_offset_px": 1.1087383085101166,
+            "body_core_saturation_median": 78.5,
+            "terminal_saturation_medians": [
+              20.0,
+              18.0
+            ],
+            "terminal_pixel_counts": [
+              414,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "frame_indices": [
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24
+          ],
+          "angle_canonical_deg": 3.4158,
+          "angle_base_deg": 85.0522,
+          "terminal_axis": {
+            "angle_canonical_deg": 3.415805576497121,
+            "axis_ratio": 1.4445243049080643,
+            "colour_center_offset_px": 1.0077509759578889,
+            "body_core_saturation_median": 78.0,
+            "terminal_saturation_medians": [
+              21.0,
+              18.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        }
+      ],
+      "samples": [
+        {
+          "center": [
+            279.253173828125,
+            247.23117065429688
+          ],
+          "angle": 5.392365133778554,
+          "obb_angle_diagnostic": 1.3021240234375,
+          "confidence": 0.9534799456596375,
+          "source": [
+            583.2586059570312,
+            366.1561584472656
+          ],
+          "depth_m": 0.2226367006567168,
+          "base": [
+            -619.2333128136326,
+            -166.82980007841138,
+            -47.291
+          ],
+          "base_angle": 81.56823706396905,
+          "pose": [
+            -526.0045776367188,
+            -118.96455383300781,
+            234.86231994628906,
+            179.99855041503906,
+            -0.002224019728600979,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 5.392365133778554,
+            "axis_ratio": 1.430725927439506,
+            "colour_center_offset_px": 1.9165231907118074,
+            "body_core_saturation_median": 78.0,
+            "terminal_saturation_medians": [
+              23.0,
+              19.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            279.41064453125,
+            247.1890411376953
+          ],
+          "angle": 5.591250615482295,
+          "obb_angle_diagnostic": 1.814971923828125,
+          "confidence": 0.9513199329376221,
+          "source": [
+            583.3085327148438,
+            366.13262939453125
+          ],
+          "depth_m": 0.22263274766274968,
+          "base": [
+            -619.2339066188167,
+            -166.81808782625674,
+            -47.291
+          ],
+          "base_angle": 81.21945497888963,
+          "pose": [
+            -526.0016479492188,
+            -118.96609497070312,
+            234.85911560058594,
+            179.9981231689453,
+            -0.0024556454736739397,
+            89.9997787475586
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 5.591250615482295,
+            "axis_ratio": 1.4648995047464393,
+            "colour_center_offset_px": 2.17686503005449,
+            "body_core_saturation_median": 80.0,
+            "terminal_saturation_medians": [
+              21.0,
+              18.0
+            ],
+            "terminal_pixel_counts": [
+              417,
+              417
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            280.1114807128906,
+            247.52581787109375
+          ],
+          "angle": 5.119465595629492,
+          "obb_angle_diagnostic": 1.5038299560546875,
+          "confidence": 0.9523782134056091,
+          "source": [
+            583.5235595703125,
+            366.3188781738281
+          ],
+          "depth_m": 0.2226311179264406,
+          "base": [
+            -619.1894901580226,
+            -166.76202878515983,
+            -47.291
+          ],
+          "base_angle": 82.04724856538596,
+          "pose": [
+            -526.0020751953125,
+            -118.96409606933594,
+            234.85911560058594,
+            179.9981231689453,
+            -0.0024556454736739397,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 5.119465595629492,
+            "axis_ratio": 1.4362053633575251,
+            "colour_center_offset_px": 1.5555299418503687,
+            "body_core_saturation_median": 78.0,
+            "terminal_saturation_medians": [
+              20.0,
+              17.0
+            ],
+            "terminal_pixel_counts": [
+              414,
+              414
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            280.0188903808594,
+            247.33145141601562
+          ],
+          "angle": 4.286439901106519,
+          "obb_angle_diagnostic": 1.220428466796875,
+          "confidence": 0.9496843218803406,
+          "source": [
+            583.4971923828125,
+            366.2110900878906
+          ],
+          "depth_m": 0.2226339416194733,
+          "base": [
+            -619.2185425841725,
+            -166.7688534610463,
+            -47.291
+          ],
+          "base_angle": 83.51400946497016,
+          "pose": [
+            -526.0033569335938,
+            -118.9641342163086,
+            234.8607177734375,
+            179.9983367919922,
+            -0.002448556711897254,
+            89.99934387207031
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 4.286439901106519,
+            "axis_ratio": 1.4637464729990257,
+            "colour_center_offset_px": 0.6944756293988619,
+            "body_core_saturation_median": 79.0,
+            "terminal_saturation_medians": [
+              20.5,
+              17.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            278.96807861328125,
+            247.66162109375
+          ],
+          "angle": 1.7852892517016983,
+          "obb_angle_diagnostic": 2.4339065551757812,
+          "confidence": 0.9553747773170471,
+          "source": [
+            583.1633911132812,
+            366.39532470703125
+          ],
+          "depth_m": 0.2226327610418543,
+          "base": [
+            -619.1724455103417,
+            -166.8477400581222,
+            -47.291
+          ],
+          "base_angle": 87.94048888894646,
+          "pose": [
+            -526.0037841796875,
+            -118.9621353149414,
+            234.8607177734375,
+            179.9983367919922,
+            -0.002448556711897254,
+            89.99913024902344
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 1.7852892517016983,
+            "axis_ratio": 1.434064766336219,
+            "colour_center_offset_px": 1.557492578500178,
+            "body_core_saturation_median": 78.0,
+            "terminal_saturation_medians": [
+              23.0,
+              17.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            279.7310791015625,
+            247.317626953125
+          ],
+          "angle": 2.5138482708543677,
+          "obb_angle_diagnostic": -0.32470211386680603,
+          "confidence": 0.9483822584152222,
+          "source": [
+            583.4072265625,
+            366.20367431640625
+          ],
+          "depth_m": 0.22263136172238854,
+          "base": [
+            -619.2159521238136,
+            -166.79104872818885,
+            -47.291
+          ],
+          "base_angle": 86.64934395572266,
+          "pose": [
+            -526.001708984375,
+            -118.96408081054688,
+            234.8587188720703,
+            179.99790954589844,
+            -0.0024627407547086477,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 2.5138482708543677,
+            "axis_ratio": 1.3808526958575496,
+            "colour_center_offset_px": 1.320975774368655,
+            "body_core_saturation_median": 81.0,
+            "terminal_saturation_medians": [
+              19.0,
+              19.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              417
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            279.93792724609375,
+            247.52505493164062
+          ],
+          "angle": 4.648527746607272,
+          "obb_angle_diagnostic": 3.992218017578125,
+          "confidence": 0.9412640333175659,
+          "source": [
+            583.4691772460938,
+            366.318603515625
+          ],
+          "depth_m": 0.2226307505483493,
+          "base": [
+            -619.1910948173919,
+            -166.77506474827442,
+            -47.291
+          ],
+          "base_angle": 82.87545430081994,
+          "pose": [
+            -526.003662109375,
+            -118.96414947509766,
+            234.85870361328125,
+            179.9981231689453,
+            -0.002455652691423893,
+            89.99934387207031
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 4.648527746607272,
+            "axis_ratio": 1.3672065622964658,
+            "colour_center_offset_px": 2.134285147466117,
+            "body_core_saturation_median": 78.0,
+            "terminal_saturation_medians": [
+              19.0,
+              18.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              417
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            278.7092590332031,
+            247.48941040039062
+          ],
+          "angle": 4.062112882790615,
+          "obb_angle_diagnostic": 5.673667907714844,
+          "confidence": 0.9458542466163635,
+          "source": [
+            583.0846557617188,
+            366.29998779296875
+          ],
+          "depth_m": 0.22263120020409188,
+          "base": [
+            -619.194155054278,
+            -166.86968731363854,
+            -47.291
+          ],
+          "base_angle": 83.90943502660107,
+          "pose": [
+            -526.003662109375,
+            -118.96414947509766,
+            234.85870361328125,
+            179.9981231689453,
+            -0.002455652691423893,
+            89.99934387207031
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 4.062112882790615,
+            "axis_ratio": 1.404593650794771,
+            "colour_center_offset_px": 2.1422961513737677,
+            "body_core_saturation_median": 81.0,
+            "terminal_saturation_medians": [
+              18.0,
+              17.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            280.06622314453125,
+            247.42715454101562
+          ],
+          "angle": 1.7847042113211558,
+          "obb_angle_diagnostic": 0.5307769775390625,
+          "confidence": 0.9548668265342712,
+          "source": [
+            583.5107421875,
+            366.26416015625
+          ],
+          "depth_m": 0.22263588532192788,
+          "base": [
+            -619.2061340695764,
+            -166.76583600379698,
+            -47.291
+          ],
+          "base_angle": 87.9423191694624,
+          "pose": [
+            -526.0029907226562,
+            -118.96412658691406,
+            234.86273193359375,
+            179.99855041503906,
+            -0.0024414551444351673,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 1.7847042113211558,
+            "axis_ratio": 1.4487242687420494,
+            "colour_center_offset_px": 0.7424899743261058,
+            "body_core_saturation_median": 78.0,
+            "terminal_saturation_medians": [
+              19.0,
+              18.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            278.6793212890625,
+            247.44894409179688
+          ],
+          "angle": 2.4345063307943633,
+          "obb_angle_diagnostic": 4.214668273925781,
+          "confidence": 0.943030059337616,
+          "source": [
+            583.0758056640625,
+            366.2775573730469
+          ],
+          "depth_m": 0.22263179549587375,
+          "base": [
+            -619.1980766243998,
+            -166.87194179737665,
+            -47.291
+          ],
+          "base_angle": 86.78964359168499,
+          "pose": [
+            -526.0020751953125,
+            -118.96409606933594,
+            234.85911560058594,
+            179.9981231689453,
+            -0.002455652691423893,
+            89.99934387207031
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 2.4345063307943633,
+            "axis_ratio": 1.4431879340754044,
+            "colour_center_offset_px": 1.603446698707009,
+            "body_core_saturation_median": 78.0,
+            "terminal_saturation_medians": [
+              19.0,
+              17.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            279.6634521484375,
+            247.19918823242188
+          ],
+          "angle": 6.229517970478923,
+          "obb_angle_diagnostic": 1.2808914184570312,
+          "confidence": 0.9509108066558838,
+          "source": [
+            583.3876342773438,
+            366.13800048828125
+          ],
+          "depth_m": 0.2226346011478173,
+          "base": [
+            -619.2352599172538,
+            -166.79882737667958,
+            -47.291
+          ],
+          "base_angle": 80.10246105283719,
+          "pose": [
+            -526.0028686523438,
+            -118.96613311767578,
+            234.8607177734375,
+            179.9983367919922,
+            -0.0024485504254698753,
+            89.9997787475586
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 6.229517970478923,
+            "axis_ratio": 1.4505315852914589,
+            "colour_center_offset_px": 1.3527168237256528,
+            "body_core_saturation_median": 79.0,
+            "terminal_saturation_medians": [
+              21.0,
+              20.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              414
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            279.8034973144531,
+            247.3917236328125
+          ],
+          "angle": 5.050828964291895,
+          "obb_angle_diagnostic": 1.896209716796875,
+          "confidence": 0.9499638080596924,
+          "source": [
+            583.4288940429688,
+            366.2447509765625
+          ],
+          "depth_m": 0.2226349538773361,
+          "base": [
+            -619.2107063958806,
+            -166.78596975805536,
+            -47.291
+          ],
+          "base_angle": 82.16792525961618,
+          "pose": [
+            -526.0042114257812,
+            -118.96416473388672,
+            234.8619384765625,
+            179.9983367919922,
+            -0.0024485504254698753,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 5.050828964291895,
+            "axis_ratio": 1.4275126529667506,
+            "colour_center_offset_px": 1.3523022212909368,
+            "body_core_saturation_median": 78.0,
+            "terminal_saturation_medians": [
+              18.0,
+              18.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            280.314208984375,
+            247.48318481445312
+          ],
+          "angle": 4.128914763754494,
+          "obb_angle_diagnostic": 1.86334228515625,
+          "confidence": 0.9522978663444519,
+          "source": [
+            583.587646484375,
+            366.2950134277344
+          ],
+          "depth_m": 0.2226333938256806,
+          "base": [
+            -619.197992844693,
+            -166.7480492343233,
+            -47.291
+          ],
+          "base_angle": 83.79204334932854,
+          "pose": [
+            -526.0032958984375,
+            -118.96450805664062,
+            234.8607177734375,
+            179.9983367919922,
+            -0.002231115009635687,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 4.128914763754494,
+            "axis_ratio": 1.437285631541107,
+            "colour_center_offset_px": 0.9480105653579679,
+            "body_core_saturation_median": 81.0,
+            "terminal_saturation_medians": [
+              22.0,
+              17.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            279.7430725097656,
+            247.51190185546875
+          ],
+          "angle": 4.296994242912376,
+          "obb_angle_diagnostic": 0.47174072265625,
+          "confidence": 0.9533931612968445,
+          "source": [
+            583.4083251953125,
+            366.3114929199219
+          ],
+          "depth_m": 0.22263414218996225,
+          "base": [
+            -619.194068546378,
+            -166.79451206652737,
+            -47.291
+          ],
+          "base_angle": 83.49545413994494,
+          "pose": [
+            -526.0032348632812,
+            -118.96652221679688,
+            234.86109924316406,
+            179.99855041503906,
+            -0.002224019728600979,
+            89.9997787475586
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 4.296994242912376,
+            "axis_ratio": 1.4074630833954052,
+            "colour_center_offset_px": 1.6753780457110468,
+            "body_core_saturation_median": 77.0,
+            "terminal_saturation_medians": [
+              18.0,
+              17.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            280.04443359375,
+            247.24044799804688
+          ],
+          "angle": 7.656725900554875,
+          "obb_angle_diagnostic": -0.22006428241729736,
+          "confidence": 0.9522165656089783,
+          "source": [
+            583.5064697265625,
+            366.1605529785156
+          ],
+          "depth_m": 0.2226321167230336,
+          "base": [
+            -619.229919680561,
+            -166.768429042949,
+            -47.291
+          ],
+          "base_angle": 77.62189208726485,
+          "pose": [
+            -526.003662109375,
+            -118.96452331542969,
+            234.85870361328125,
+            179.99810791015625,
+            -0.002238210290670395,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 7.656725900554875,
+            "axis_ratio": 1.4039057878909906,
+            "colour_center_offset_px": 0.9613648680634015,
+            "body_core_saturation_median": 78.0,
+            "terminal_saturation_medians": [
+              22.0,
+              20.0
+            ],
+            "terminal_pixel_counts": [
+              417,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            279.7427673339844,
+            247.19564819335938
+          ],
+          "angle": 3.477710823556322,
+          "obb_angle_diagnostic": -0.08637536317110062,
+          "confidence": 0.9538516402244568,
+          "source": [
+            583.4125366210938,
+            366.1359558105469
+          ],
+          "depth_m": 0.22263459750365466,
+          "base": [
+            -619.2365289626935,
+            -166.79036711396714,
+            -47.291
+          ],
+          "base_angle": 84.94280747151727,
+          "pose": [
+            -526.0033569335938,
+            -118.9641342163086,
+            234.8607177734375,
+            179.9983367919922,
+            -0.0024485504254698753,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 3.477710823556322,
+            "axis_ratio": 1.4442995994553856,
+            "colour_center_offset_px": 1.0271661273390877,
+            "body_core_saturation_median": 80.0,
+            "terminal_saturation_medians": [
+              22.0,
+              19.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            279.5718078613281,
+            247.53204345703125
+          ],
+          "angle": 4.05944404993096,
+          "obb_angle_diagnostic": 0.5229949951171875,
+          "confidence": 0.9516337513923645,
+          "source": [
+            583.3543701171875,
+            366.3228454589844
+          ],
+          "depth_m": 0.22263479774567055,
+          "base": [
+            -619.1896062558728,
+            -166.8039128610398,
+            -47.291
+          ],
+          "base_angle": 83.91449395566623,
+          "pose": [
+            -526.0026245117188,
+            -118.964111328125,
+            234.86233520507812,
+            179.9983367919922,
+            -0.0024485504254698753,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 4.05944404993096,
+            "axis_ratio": 1.441103922045777,
+            "colour_center_offset_px": 1.533413892430314,
+            "body_core_saturation_median": 76.0,
+            "terminal_saturation_medians": [
+              22.0,
+              17.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            278.9871826171875,
+            247.3361358642578
+          ],
+          "angle": 2.4342271600509378,
+          "obb_angle_diagnostic": 1.9613265991210938,
+          "confidence": 0.9533900022506714,
+          "source": [
+            583.173828125,
+            366.21466064453125
+          ],
+          "depth_m": 0.22263343325576695,
+          "base": [
+            -619.2146830108168,
+            -166.84860501688118,
+            -47.291
+          ],
+          "base_angle": 86.7904216085771,
+          "pose": [
+            -526.0029296875,
+            -118.96412658691406,
+            234.86033630371094,
+            179.9981231689453,
+            -0.0024556454736739397,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 2.4342271600509378,
+            "axis_ratio": 1.4623776602487997,
+            "colour_center_offset_px": 2.1092504574382747,
+            "body_core_saturation_median": 78.0,
+            "terminal_saturation_medians": [
+              18.0,
+              19.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            279.1394958496094,
+            247.31689453125
+          ],
+          "angle": 5.082561918704869,
+          "obb_angle_diagnostic": 1.1554794311523438,
+          "confidence": 0.9510576128959656,
+          "source": [
+            583.2218017578125,
+            366.2038269042969
+          ],
+          "depth_m": 0.22263421610919865,
+          "base": [
+            -619.218566506599,
+            -166.83895351243788,
+            -47.291
+          ],
+          "base_angle": 82.11202956468372,
+          "pose": [
+            -526.0028686523438,
+            -118.96613311767578,
+            234.8607177734375,
+            179.9983367919922,
+            -0.002448556711897254,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 5.082561918704869,
+            "axis_ratio": 1.4272019662107156,
+            "colour_center_offset_px": 2.146641113890959,
+            "body_core_saturation_median": 78.0,
+            "terminal_saturation_medians": [
+              20.0,
+              17.0
+            ],
+            "terminal_pixel_counts": [
+              414,
+              417
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            279.6519470214844,
+            247.34954833984375
+          ],
+          "angle": 1.9556881108676691,
+          "obb_angle_diagnostic": 0.43041229248046875,
+          "confidence": 0.9532669186592102,
+          "source": [
+            583.3819580078125,
+            366.2214660644531
+          ],
+          "depth_m": 0.22263395131055405,
+          "base": [
+            -619.2146785373154,
+            -166.7998435470834,
+            -47.291
+          ],
+          "base_angle": 87.6393163247126,
+          "pose": [
+            -526.0028686523438,
+            -118.96613311767578,
+            234.8607177734375,
+            179.9983367919922,
+            -0.0024485504254698753,
+            89.9997787475586
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 1.9556881108676691,
+            "axis_ratio": 1.4825013443565283,
+            "colour_center_offset_px": 1.2703726488415406,
+            "body_core_saturation_median": 78.0,
+            "terminal_saturation_medians": [
+              22.0,
+              19.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            279.936767578125,
+            247.30166625976562
+          ],
+          "angle": 6.752080059712625,
+          "obb_angle_diagnostic": 0.814483642578125,
+          "confidence": 0.9538143277168274,
+          "source": [
+            583.4718627929688,
+            366.1946105957031
+          ],
+          "depth_m": 0.22262976231582216,
+          "base": [
+            -619.2190382354796,
+            -166.7751068952114,
+            -47.291
+          ],
+          "base_angle": 79.19103731476746,
+          "pose": [
+            -526.0023803710938,
+            -118.96410369873047,
+            234.8571014404297,
+            179.99790954589844,
+            -0.0024627407547086477,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 6.752080059712625,
+            "axis_ratio": 1.42796135906144,
+            "colour_center_offset_px": 1.2310281799093359,
+            "body_core_saturation_median": 80.0,
+            "terminal_saturation_medians": [
+              23.0,
+              19.0
+            ],
+            "terminal_pixel_counts": [
+              417,
+              417
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            279.5072021484375,
+            247.42031860351562
+          ],
+          "angle": 0.8902409960520004,
+          "obb_angle_diagnostic": 0.3077239990234375,
+          "confidence": 0.9546058773994446,
+          "source": [
+            583.3356323242188,
+            366.2608947753906
+          ],
+          "depth_m": 0.22263172086664879,
+          "base": [
+            -619.2030266563056,
+            -166.80849523463297,
+            -47.291
+          ],
+          "base_angle": 89.52902094845975,
+          "pose": [
+            -526.0020751953125,
+            -118.96409606933594,
+            234.85911560058594,
+            179.9981231689453,
+            -0.0024556454736739397,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 0.8902409960520004,
+            "axis_ratio": 1.4473419880395608,
+            "colour_center_offset_px": 0.8893036184123386,
+            "body_core_saturation_median": 77.0,
+            "terminal_saturation_medians": [
+              18.0,
+              19.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            280.09051513671875,
+            247.38836669921875
+          ],
+          "angle": 3.5563508674052002,
+          "obb_angle_diagnostic": 0.6074981689453125,
+          "confidence": 0.9540011286735535,
+          "source": [
+            583.5188598632812,
+            366.2425842285156
+          ],
+          "depth_m": 0.22263294182770932,
+          "base": [
+            -619.2091738405695,
+            -166.76364715364815,
+            -47.291
+          ],
+          "base_angle": 84.80341302383336,
+          "pose": [
+            -526.0029296875,
+            -118.96412658691406,
+            234.86033630371094,
+            179.9981231689453,
+            -0.0024556454736739397,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 3.5563508674052002,
+            "axis_ratio": 1.422139331353359,
+            "colour_center_offset_px": 1.4072599827956072,
+            "body_core_saturation_median": 80.0,
+            "terminal_saturation_medians": [
+              20.0,
+              18.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            279.3243103027344,
+            247.00765991210938
+          ],
+          "angle": 2.4075756866789675,
+          "obb_angle_diagnostic": 0.9967727661132812,
+          "confidence": 0.9518617391586304,
+          "source": [
+            583.2839965820312,
+            366.03204345703125
+          ],
+          "depth_m": 0.22263806614321516,
+          "base": [
+            -619.2648918262781,
+            -166.82365055262872,
+            -47.291
+          ],
+          "base_angle": 86.8383711116827,
+          "pose": [
+            -526.0045166015625,
+            -118.96581268310547,
+            234.8627166748047,
+            179.998779296875,
+            -0.0026517952792346478,
+            89.9997787475586
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 2.4075756866789675,
+            "axis_ratio": 1.4491106753828706,
+            "colour_center_offset_px": 1.6258910527533976,
+            "body_core_saturation_median": 78.0,
+            "terminal_saturation_medians": [
+              23.0,
+              18.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        }
+      ],
+      "set_index": 1,
+      "physical_instance_index": 1
+    },
+    {
+      "part_type": "right_white_brown",
+      "instance_index": 2,
+      "part_center_base_mm": [
+        -619.293,
+        -154.215,
+        -47.291
+      ],
+      "long_axis_angle_base_deg": 85.835,
+      "long_axis_angle_canonical_deg": 2.977,
+      "frame_count": 24,
+      "confidence_median": 0.9651,
+      "center_span_canonical_px": [
+        1.472,
+        0.492
+      ],
+      "angle_mad_deg": 0.6903,
+      "angle_batch_span_deg": 2.2655,
+      "temporal_batch_count": 3,
+      "frames_per_temporal_batch": 8,
+      "per_frame_angle_mad_diagnostic_deg": 1.5879,
+      "base_xyz_span_mm": [
+        0.066,
+        0.111,
+        0.0
+      ],
+      "robot_pose_translation_span_mm": 0.0056,
+      "robot_pose_rotation_span_deg": 0.00087,
+      "validation_passed": true,
+      "angle_source": "three independent 8-frame median images, two white terminals colour-weighted axis",
+      "fixed_base_correction_mm": [
+        0.041,
+        4.548,
+        0.0
+      ],
+      "temporal_batches": [
+        {
+          "frame_indices": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "angle_canonical_deg": 2.9774,
+          "angle_base_deg": 85.8354,
+          "terminal_axis": {
+            "angle_canonical_deg": 2.9774236108414414,
+            "axis_ratio": 1.462885869388406,
+            "colour_center_offset_px": 0.7186758756885242,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              23.0,
+              21.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "frame_indices": [
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
+          "angle_canonical_deg": 1.4023,
+          "angle_base_deg": 88.6231,
+          "terminal_axis": {
+            "angle_canonical_deg": 1.402285106063772,
+            "axis_ratio": 1.4729697292243404,
+            "colour_center_offset_px": 0.7453115500780998,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              22.0,
+              21.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "frame_indices": [
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24
+          ],
+          "angle_canonical_deg": 3.6677,
+          "angle_base_deg": 84.6165,
+          "terminal_axis": {
+            "angle_canonical_deg": 3.667735938707409,
+            "axis_ratio": 1.4766735511205384,
+            "colour_center_offset_px": 1.599619088315521,
+            "body_core_saturation_median": 87.0,
+            "terminal_saturation_medians": [
+              22.0,
+              22.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        }
+      ],
+      "samples": [
+        {
+          "center": [
+            443.0638427734375,
+            248.56356811523438
+          ],
+          "angle": 2.6216242487007264,
+          "obb_angle_diagnostic": 0.9760055541992188,
+          "confidence": 0.965336263179779,
+          "source": [
+            634.638427734375,
+            366.7398986816406
+          ],
+          "depth_m": 0.22259149550990098,
+          "base": [
+            -619.2933218099676,
+            -154.19703126050456,
+            -47.291
+          ],
+          "base_angle": 86.4645551283492,
+          "pose": [
+            -526.0045776367188,
+            -118.96455383300781,
+            234.86231994628906,
+            179.99855041503906,
+            -0.002224019728600979,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 2.6216242487007264,
+            "axis_ratio": 1.4021512887200913,
+            "colour_center_offset_px": 1.1839809953383689,
+            "body_core_saturation_median": 85.0,
+            "terminal_saturation_medians": [
+              21.0,
+              21.5
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            443.47869873046875,
+            248.63729858398438
+          ],
+          "angle": 3.8251297888168665,
+          "obb_angle_diagnostic": 1.2537765502929688,
+          "confidence": 0.9673416614532471,
+          "source": [
+            634.7678833007812,
+            366.78045654296875
+          ],
+          "depth_m": 0.22258702902884023,
+          "base": [
+            -619.2784960127193,
+            -154.1657374324053,
+            -47.291
+          ],
+          "base_angle": 84.3390657904322,
+          "pose": [
+            -526.0016479492188,
+            -118.96609497070312,
+            234.85911560058594,
+            179.9981231689453,
+            -0.0024556454736739397,
+            89.9997787475586
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 3.8251297888168665,
+            "axis_ratio": 1.5345564483797327,
+            "colour_center_offset_px": 0.7805756455746561,
+            "body_core_saturation_median": 83.0,
+            "terminal_saturation_medians": [
+              23.0,
+              19.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            442.4980163574219,
+            248.50633239746094
+          ],
+          "angle": 5.756353022896064,
+          "obb_angle_diagnostic": 2.0901336669921875,
+          "confidence": 0.9641600251197815,
+          "source": [
+            634.4613037109375,
+            366.7086181640625
+          ],
+          "depth_m": 0.22258783398465853,
+          "base": [
+            -619.2955301159246,
+            -154.2390327788753,
+            -47.291
+          ],
+          "base_angle": 80.94870224537239,
+          "pose": [
+            -526.0020751953125,
+            -118.96409606933594,
+            234.85911560058594,
+            179.9981231689453,
+            -0.0024556454736739397,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 5.756353022896064,
+            "axis_ratio": 1.4744307948101567,
+            "colour_center_offset_px": 1.7421713238922532,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              26.0,
+              23.0
+            ],
+            "terminal_pixel_counts": [
+              414,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            443.0110168457031,
+            248.59146118164062
+          ],
+          "angle": 4.387968482926198,
+          "obb_angle_diagnostic": 1.6589279174804688,
+          "confidence": 0.9651703238487244,
+          "source": [
+            634.6215209960938,
+            366.75543212890625
+          ],
+          "depth_m": 0.22258929697467186,
+          "base": [
+            -619.2871966645662,
+            -154.19920643043943,
+            -47.291
+          ],
+          "base_angle": 83.34736871071253,
+          "pose": [
+            -526.0033569335938,
+            -118.9641342163086,
+            234.8607177734375,
+            179.9983367919922,
+            -0.002448556711897254,
+            89.99934387207031
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 4.387968482926198,
+            "axis_ratio": 1.463936787588411,
+            "colour_center_offset_px": 0.8250426725110951,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              23.0,
+              22.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            442.4539794921875,
+            248.3863525390625
+          ],
+          "angle": 2.6229326612499335,
+          "obb_angle_diagnostic": 2.0256729125976562,
+          "confidence": 0.9659531116485596,
+          "source": [
+            634.4487915039062,
+            366.6419677734375
+          ],
+          "depth_m": 0.2225903225008937,
+          "base": [
+            -619.3150131784761,
+            -154.23977627885648,
+            -47.291
+          ],
+          "base_angle": 86.46181229986598,
+          "pose": [
+            -526.0037841796875,
+            -118.9621353149414,
+            234.8607177734375,
+            179.9983367919922,
+            -0.002448556711897254,
+            89.99913024902344
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 2.6229326612499335,
+            "axis_ratio": 1.5148500029133694,
+            "colour_center_offset_px": 1.7971356799208675,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              20.0,
+              21.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              417
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            442.0064697265625,
+            248.25897216796875
+          ],
+          "angle": 1.2623184269779415,
+          "obb_angle_diagnostic": 1.8256378173828125,
+          "confidence": 0.9643145799636841,
+          "source": [
+            634.3096313476562,
+            366.5716247558594
+          ],
+          "depth_m": 0.22258827730775285,
+          "base": [
+            -619.3272125748332,
+            -154.27680926214214,
+            -47.291
+          ],
+          "base_angle": 88.87133667180765,
+          "pose": [
+            -526.001708984375,
+            -118.96408081054688,
+            234.8587188720703,
+            179.99790954589844,
+            -0.0024627407547086477,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 1.2623184269779415,
+            "axis_ratio": 1.3990185181847823,
+            "colour_center_offset_px": 2.076005985632968,
+            "body_core_saturation_median": 85.0,
+            "terminal_saturation_medians": [
+              21.0,
+              21.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            443.26513671875,
+            248.56674194335938
+          ],
+          "angle": 5.947232126545259,
+          "obb_angle_diagnostic": 1.7515106201171875,
+          "confidence": 0.9651483297348022,
+          "source": [
+            634.7015991210938,
+            366.741455078125
+          ],
+          "depth_m": 0.22258697454759216,
+          "base": [
+            -619.2901002702747,
+            -154.1795281919626,
+            -47.291
+          ],
+          "base_angle": 80.61505354665147,
+          "pose": [
+            -526.003662109375,
+            -118.96414947509766,
+            234.85870361328125,
+            179.9981231689453,
+            -0.002455652691423893,
+            89.99934387207031
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 5.947232126545259,
+            "axis_ratio": 1.4558847014682288,
+            "colour_center_offset_px": 0.7886104315714746,
+            "body_core_saturation_median": 92.0,
+            "terminal_saturation_medians": [
+              25.5,
+              21.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            443.2240295410156,
+            248.66461181640625
+          ],
+          "angle": -2.653117573677548,
+          "obb_angle_diagnostic": 0.59613037109375,
+          "confidence": 0.9657099843025208,
+          "source": [
+            634.6876220703125,
+            366.7958984375
+          ],
+          "depth_m": 0.222586559009825,
+          "base": [
+            -619.2766374039803,
+            -154.1827403971031,
+            -47.291
+          ],
+          "base_angle": 95.78672004795831,
+          "pose": [
+            -526.003662109375,
+            -118.96414947509766,
+            234.85870361328125,
+            179.9981231689453,
+            -0.002455652691423893,
+            89.99934387207031
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": -2.653117573677548,
+            "axis_ratio": 1.3784781303534603,
+            "colour_center_offset_px": 0.8720577794157699,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              21.0,
+              23.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            442.8321533203125,
+            248.45767211914062
+          ],
+          "angle": 3.0348801506960967,
+          "obb_angle_diagnostic": 2.2106857299804688,
+          "confidence": 0.965315580368042,
+          "source": [
+            634.5667724609375,
+            366.6812438964844
+          ],
+          "depth_m": 0.22259229034755715,
+          "base": [
+            -619.3059085351365,
+            -154.21338861907086,
+            -47.291
+          ],
+          "base_angle": 85.73383815461067,
+          "pose": [
+            -526.0029907226562,
+            -118.96412658691406,
+            234.86273193359375,
+            179.99855041503906,
+            -0.0024414551444351673,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 3.0348801506960967,
+            "axis_ratio": 1.3831195766486917,
+            "colour_center_offset_px": 2.077097445942829,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              22.0,
+              23.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            443.2806701660156,
+            248.56158447265625
+          ],
+          "angle": -0.779936174315992,
+          "obb_angle_diagnostic": 0.5572967529296875,
+          "confidence": 0.9664756059646606,
+          "source": [
+            634.70654296875,
+            366.73858642578125
+          ],
+          "depth_m": 0.22258740552235878,
+          "base": [
+            -619.2892583932381,
+            -154.17827750068994,
+            -47.291
+          ],
+          "base_angle": 92.48618352955603,
+          "pose": [
+            -526.0020751953125,
+            -118.96409606933594,
+            234.85911560058594,
+            179.9981231689453,
+            -0.002455652691423893,
+            89.99934387207031
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": -0.779936174315992,
+            "axis_ratio": 1.5339177910375648,
+            "colour_center_offset_px": 1.0011511091445773,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              21.0,
+              21.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            442.83734130859375,
+            248.7231903076172
+          ],
+          "angle": 3.623496293521839,
+          "obb_angle_diagnostic": 0.6370468139648438,
+          "confidence": 0.9652321934700012,
+          "source": [
+            634.5654907226562,
+            366.8288269042969
+          ],
+          "depth_m": 0.22258876608606548,
+          "base": [
+            -619.2681439983096,
+            -154.21538320788807,
+            -47.291
+          ],
+          "base_angle": 84.69465468161269,
+          "pose": [
+            -526.0028686523438,
+            -118.96613311767578,
+            234.8607177734375,
+            179.9983367919922,
+            -0.0024485504254698753,
+            89.9997787475586
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 3.623496293521839,
+            "axis_ratio": 1.3851543750893685,
+            "colour_center_offset_px": 1.3698443816194046,
+            "body_core_saturation_median": 89.0,
+            "terminal_saturation_medians": [
+              23.0,
+              22.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            442.5174560546875,
+            248.3658447265625
+          ],
+          "angle": 0.08719812908870495,
+          "obb_angle_diagnostic": 0.55096435546875,
+          "confidence": 0.9643617868423462,
+          "source": [
+            634.468994140625,
+            366.6305236816406
+          ],
+          "depth_m": 0.22259161817026688,
+          "base": [
+            -619.3181275563753,
+            -154.2376138096479,
+            -47.291
+          ],
+          "base_angle": 90.95242870361072,
+          "pose": [
+            -526.0042114257812,
+            -118.96416473388672,
+            234.8619384765625,
+            179.9983367919922,
+            -0.0024485504254698753,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 0.08719812908870495,
+            "axis_ratio": 1.438451070179083,
+            "colour_center_offset_px": 1.0581441108123226,
+            "body_core_saturation_median": 84.0,
+            "terminal_saturation_medians": [
+              24.0,
+              23.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            442.8411560058594,
+            248.40762329101562
+          ],
+          "angle": 1.5819591643063404,
+          "obb_angle_diagnostic": 0.8049087524414062,
+          "confidence": 0.9639390110969543,
+          "source": [
+            634.5701904296875,
+            366.6534423828125
+          ],
+          "depth_m": 0.2225902706307355,
+          "base": [
+            -619.3119189212589,
+            -154.21404646813716,
+            -47.291
+          ],
+          "base_angle": 88.3051232654548,
+          "pose": [
+            -526.0032958984375,
+            -118.96450805664062,
+            234.8607177734375,
+            179.9983367919922,
+            -0.002231115009635687,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 1.5819591643063404,
+            "axis_ratio": 1.4115680463384679,
+            "colour_center_offset_px": 2.310828962223787,
+            "body_core_saturation_median": 84.0,
+            "terminal_saturation_medians": [
+              23.0,
+              21.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            442.5791015625,
+            248.5397491455078
+          ],
+          "angle": 1.133547513424162,
+          "obb_angle_diagnostic": 1.0314788818359375,
+          "confidence": 0.9659929871559143,
+          "source": [
+            634.4863891601562,
+            366.72711181640625
+          ],
+          "depth_m": 0.22259049399264433,
+          "base": [
+            -619.2943373918991,
+            -154.2367486192015,
+            -47.291
+          ],
+          "base_angle": 89.09954607157532,
+          "pose": [
+            -526.0032348632812,
+            -118.96652221679688,
+            234.86109924316406,
+            179.99855041503906,
+            -0.002224019728600979,
+            89.9997787475586
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 1.133547513424162,
+            "axis_ratio": 1.5051858602590922,
+            "colour_center_offset_px": 0.2574202046680064,
+            "body_core_saturation_median": 84.0,
+            "terminal_saturation_medians": [
+              21.0,
+              20.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            443.0165100097656,
+            248.6762237548828
+          ],
+          "angle": -0.2914320293610331,
+          "obb_angle_diagnostic": -0.12094056606292725,
+          "confidence": 0.9658597707748413,
+          "source": [
+            634.6222534179688,
+            366.80255126953125
+          ],
+          "depth_m": 0.2225866674995653,
+          "base": [
+            -619.2745338594865,
+            -154.20058510573892,
+            -47.291
+          ],
+          "base_angle": 91.62244522077458,
+          "pose": [
+            -526.003662109375,
+            -118.96452331542969,
+            234.85870361328125,
+            179.99810791015625,
+            -0.002238210290670395,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": -0.2914320293610331,
+            "axis_ratio": 1.5603946815954794,
+            "colour_center_offset_px": 0.3868352368844961,
+            "body_core_saturation_median": 85.0,
+            "terminal_saturation_medians": [
+              23.0,
+              22.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            442.4583435058594,
+            248.60299682617188
+          ],
+          "angle": 3.496983111208266,
+          "obb_angle_diagnostic": 2.0380935668945312,
+          "confidence": 0.9647731781005859,
+          "source": [
+            634.44775390625,
+            366.76239013671875
+          ],
+          "depth_m": 0.2225893796683347,
+          "base": [
+            -619.2846579693769,
+            -154.24224508128992,
+            -47.291
+          ],
+          "base_angle": 84.91762523555435,
+          "pose": [
+            -526.0033569335938,
+            -118.9641342163086,
+            234.8607177734375,
+            179.9983367919922,
+            -0.0024485504254698753,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 3.496983111208266,
+            "axis_ratio": 1.477283144202884,
+            "colour_center_offset_px": 1.6747099395328824,
+            "body_core_saturation_median": 89.0,
+            "terminal_saturation_medians": [
+              23.0,
+              23.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            442.46148681640625,
+            248.27896118164062
+          ],
+          "angle": 5.561103344021973,
+          "obb_angle_diagnostic": 2.1984481811523438,
+          "confidence": 0.9645246863365173,
+          "source": [
+            634.4523315429688,
+            366.582275390625
+          ],
+          "depth_m": 0.222592406544633,
+          "base": [
+            -619.3283749661903,
+            -154.24185914451013,
+            -47.291
+          ],
+          "base_angle": 81.28988770497023,
+          "pose": [
+            -526.0026245117188,
+            -118.964111328125,
+            234.86233520507812,
+            179.9983367919922,
+            -0.0024485504254698753,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 5.561103344021973,
+            "axis_ratio": 1.5074252288400265,
+            "colour_center_offset_px": 1.7257309481795506,
+            "body_core_saturation_median": 89.0,
+            "terminal_saturation_medians": [
+              23.0,
+              21.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            442.281005859375,
+            248.42037963867188
+          ],
+          "angle": 3.542821789537811,
+          "obb_angle_diagnostic": 1.8147659301757812,
+          "confidence": 0.9643776416778564,
+          "source": [
+            634.3941040039062,
+            366.6610412597656
+          ],
+          "depth_m": 0.2225894817582623,
+          "base": [
+            -619.3078909439791,
+            -154.25579223762713,
+            -47.291
+          ],
+          "base_angle": 84.83692733115372,
+          "pose": [
+            -526.0029296875,
+            -118.96412658691406,
+            234.86033630371094,
+            179.9981231689453,
+            -0.0024556454736739397,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 3.542821789537811,
+            "axis_ratio": 1.3658762396716295,
+            "colour_center_offset_px": 2.436174532200687,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              21.0,
+              25.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            442.62451171875,
+            248.53619384765625
+          ],
+          "angle": 1.5732543370399696,
+          "obb_angle_diagnostic": 1.6299285888671875,
+          "confidence": 0.9641914367675781,
+          "source": [
+            634.5006713867188,
+            366.72509765625
+          ],
+          "depth_m": 0.2225896301083882,
+          "base": [
+            -619.2935634024877,
+            -154.2313910924046,
+            -47.291
+          ],
+          "base_angle": 88.32047621238972,
+          "pose": [
+            -526.0028686523438,
+            -118.96613311767578,
+            234.8607177734375,
+            179.9983367919922,
+            -0.002448556711897254,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 1.5732543370399696,
+            "axis_ratio": 1.512059438790991,
+            "colour_center_offset_px": 1.1148807329944161,
+            "body_core_saturation_median": 91.0,
+            "terminal_saturation_medians": [
+              21.0,
+              23.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            443.00689697265625,
+            248.61940002441406
+          ],
+          "angle": 4.784693483149596,
+          "obb_angle_diagnostic": 0.577362060546875,
+          "confidence": 0.964113712310791,
+          "source": [
+            634.619873046875,
+            366.7709655761719
+          ],
+          "depth_m": 0.22258917655559596,
+          "base": [
+            -619.2826090003823,
+            -154.2022547934495,
+            -47.291
+          ],
+          "base_angle": 82.65057334409653,
+          "pose": [
+            -526.0028686523438,
+            -118.96613311767578,
+            234.8607177734375,
+            179.9983367919922,
+            -0.0024485504254698753,
+            89.9997787475586
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 4.784693483149596,
+            "axis_ratio": 1.4765556950984957,
+            "colour_center_offset_px": 0.6613090423438084,
+            "body_core_saturation_median": 89.0,
+            "terminal_saturation_medians": [
+              25.0,
+              21.0
+            ],
+            "terminal_pixel_counts": [
+              413,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            442.9718017578125,
+            248.32786560058594
+          ],
+          "angle": 4.536102192906384,
+          "obb_angle_diagnostic": 1.0239715576171875,
+          "confidence": 0.9634310007095337,
+          "source": [
+            634.6121215820312,
+            366.6089782714844
+          ],
+          "depth_m": 0.2225861267514098,
+          "base": [
+            -619.3198099168077,
+            -154.20231201813087,
+            -47.291
+          ],
+          "base_angle": 83.08761479435151,
+          "pose": [
+            -526.0023803710938,
+            -118.96410369873047,
+            234.8571014404297,
+            179.99790954589844,
+            -0.0024627407547086477,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 4.536102192906384,
+            "axis_ratio": 1.5103754520777928,
+            "colour_center_offset_px": 1.17796709260362,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              24.0,
+              23.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            442.83648681640625,
+            248.75047302246094
+          ],
+          "angle": 2.101094597790251,
+          "obb_angle_diagnostic": 0.6602325439453125,
+          "confidence": 0.965082049369812,
+          "source": [
+            634.5648803710938,
+            366.843994140625
+          ],
+          "depth_m": 0.2225866914997467,
+          "base": [
+            -619.2626025688147,
+            -154.21302240452647,
+            -47.291
+          ],
+          "base_angle": 87.3856928593828,
+          "pose": [
+            -526.0020751953125,
+            -118.96409606933594,
+            234.85911560058594,
+            179.9981231689453,
+            -0.0024556454736739397,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 2.101094597790251,
+            "axis_ratio": 1.4117130225722496,
+            "colour_center_offset_px": 1.4742082872669608,
+            "body_core_saturation_median": 87.0,
+            "terminal_saturation_medians": [
+              22.0,
+              24.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            442.06085205078125,
+            248.56590270996094
+          ],
+          "angle": 0.04033540173358574,
+          "obb_angle_diagnostic": 0.7445068359375,
+          "confidence": 0.965736985206604,
+          "source": [
+            634.3233032226562,
+            366.74212646484375
+          ],
+          "depth_m": 0.22258890233931833,
+          "base": [
+            -619.2876415801403,
+            -154.2728608586814,
+            -47.291
+          ],
+          "base_angle": 91.03512229683933,
+          "pose": [
+            -526.0029296875,
+            -118.96412658691406,
+            234.86033630371094,
+            179.9981231689453,
+            -0.0024556454736739397,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 0.04033540173358574,
+            "axis_ratio": 1.421552553072845,
+            "colour_center_offset_px": 1.585957012056462,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              22.0,
+              20.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            442.54119873046875,
+            248.32278442382812
+          ],
+          "angle": 4.438049381385042,
+          "obb_angle_diagnostic": 2.451751708984375,
+          "confidence": 0.964499294757843,
+          "source": [
+            634.4769287109375,
+            366.6065673828125
+          ],
+          "depth_m": 0.22259317483245902,
+          "base": [
+            -619.326474953286,
+            -154.23677737027268,
+            -47.291
+          ],
+          "base_angle": 83.26000007704269,
+          "pose": [
+            -526.0045166015625,
+            -118.96581268310547,
+            234.8627166748047,
+            179.998779296875,
+            -0.0026517952792346478,
+            89.9997787475586
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 4.438049381385042,
+            "axis_ratio": 1.5228602280018306,
+            "colour_center_offset_px": 1.0229167592776875,
+            "body_core_saturation_median": 84.0,
+            "terminal_saturation_medians": [
+              21.0,
+              21.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        }
+      ],
+      "set_index": 1,
+      "physical_instance_index": 2
+    },
+    {
+      "part_type": "right_white_brown",
+      "instance_index": 3,
+      "part_center_base_mm": [
+        -619.033,
+        -142.974,
+        -47.291
+      ],
+      "long_axis_angle_base_deg": 91.495,
+      "long_axis_angle_canonical_deg": -0.221,
+      "frame_count": 24,
+      "confidence_median": 0.9603,
+      "center_span_canonical_px": [
+        1.213,
+        0.695
+      ],
+      "angle_mad_deg": 1.0061,
+      "angle_batch_span_deg": 2.0929,
+      "temporal_batch_count": 3,
+      "frames_per_temporal_batch": 8,
+      "per_frame_angle_mad_diagnostic_deg": 1.9703,
+      "base_xyz_span_mm": [
+        0.097,
+        0.096,
+        0.0
+      ],
+      "robot_pose_translation_span_mm": 0.0056,
+      "robot_pose_rotation_span_deg": 0.00087,
+      "validation_passed": true,
+      "angle_source": "three independent 8-frame median images, two white terminals colour-weighted axis",
+      "fixed_base_correction_mm": [
+        0.041,
+        4.548,
+        0.0
+      ],
+      "temporal_batches": [
+        {
+          "frame_indices": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "angle_canonical_deg": -0.221,
+          "angle_base_deg": 91.4947,
+          "terminal_axis": {
+            "angle_canonical_deg": -0.22100603282581233,
+            "axis_ratio": 1.395189615909902,
+            "colour_center_offset_px": 1.2562759884181502,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              28.0,
+              22.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "frame_indices": [
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
+          "angle_canonical_deg": 0.8658,
+          "angle_base_deg": 89.5727,
+          "terminal_axis": {
+            "angle_canonical_deg": 0.8657981417705685,
+            "axis_ratio": 1.3876227628724993,
+            "colour_center_offset_px": 1.0108657912024832,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              28.0,
+              22.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "frame_indices": [
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24
+          ],
+          "angle_canonical_deg": -1.2271,
+          "angle_base_deg": 93.2719,
+          "terminal_axis": {
+            "angle_canonical_deg": -1.2271210576465705,
+            "axis_ratio": 1.3634974551345371,
+            "colour_center_offset_px": 1.1701465347812994,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              28.0,
+              21.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        }
+      ],
+      "samples": [
+        {
+          "center": [
+            588.5112915039062,
+            251.920166015625
+          ],
+          "angle": 2.1003024576318126,
+          "obb_angle_diagnostic": 1.5030670166015625,
+          "confidence": 0.9588780999183655,
+          "source": [
+            680.3489990234375,
+            368.468994140625
+          ],
+          "depth_m": 0.22254181638768358,
+          "base": [
+            -619.0488256282762,
+            -142.9579983892407,
+            -47.291
+          ],
+          "base_angle": 87.38897562305073,
+          "pose": [
+            -526.0045776367188,
+            -118.96455383300781,
+            234.86231994628906,
+            179.99855041503906,
+            -0.002224019728600979,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 2.1003024576318126,
+            "axis_ratio": 1.4306145257561411,
+            "colour_center_offset_px": 0.9083955688767666,
+            "body_core_saturation_median": 84.0,
+            "terminal_saturation_medians": [
+              31.0,
+              22.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            588.054931640625,
+            251.99462890625
+          ],
+          "angle": -7.232397429115736,
+          "obb_angle_diagnostic": 1.0307693481445312,
+          "confidence": 0.9606876969337463,
+          "source": [
+            680.2046508789062,
+            368.5108642578125
+          ],
+          "depth_m": 0.2225376041180108,
+          "base": [
+            -619.0326416539357,
+            -142.9941967984112,
+            -47.291
+          ],
+          "base_angle": 103.70155314151275,
+          "pose": [
+            -526.0016479492188,
+            -118.96609497070312,
+            234.85911560058594,
+            179.9981231689453,
+            -0.0024556454736739397,
+            89.9997787475586
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": -7.232397429115736,
+            "axis_ratio": 1.400570029782745,
+            "colour_center_offset_px": 1.1215370895629209,
+            "body_core_saturation_median": 87.0,
+            "terminal_saturation_medians": [
+              26.0,
+              22.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            588.157958984375,
+            252.2376708984375
+          ],
+          "angle": -2.192399741912652,
+          "obb_angle_diagnostic": 2.5682525634765625,
+          "confidence": 0.9584234356880188,
+          "source": [
+            680.2349243164062,
+            368.6460266113281
+          ],
+          "depth_m": 0.22253652167881566,
+          "base": [
+            -619.0000017052208,
+            -142.98391329209028,
+            -47.291
+          ],
+          "base_angle": 94.97246765967377,
+          "pose": [
+            -526.0020751953125,
+            -118.96409606933594,
+            234.85911560058594,
+            179.9981231689453,
+            -0.0024556454736739397,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": -2.192399741912652,
+            "axis_ratio": 1.483420662648495,
+            "colour_center_offset_px": 1.1287719164106904,
+            "body_core_saturation_median": 89.0,
+            "terminal_saturation_medians": [
+              28.0,
+              25.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            588.4592895507812,
+            252.0283203125
+          ],
+          "angle": 1.9902852020296962,
+          "obb_angle_diagnostic": 1.552032470703125,
+          "confidence": 0.9602434635162354,
+          "source": [
+            680.3316650390625,
+            368.52923583984375
+          ],
+          "depth_m": 0.22253931350245976,
+          "base": [
+            -619.0316530842495,
+            -142.96022334408627,
+            -47.291
+          ],
+          "base_angle": 87.58324504172151,
+          "pose": [
+            -526.0033569335938,
+            -118.9641342163086,
+            234.8607177734375,
+            179.9983367919922,
+            -0.002448556711897254,
+            89.99934387207031
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 1.9902852020296962,
+            "axis_ratio": 1.2881313246123165,
+            "colour_center_offset_px": 1.5621539895058016,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              29.0,
+              21.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            588.0916137695312,
+            252.135498046875
+          ],
+          "angle": 1.2523245728598056,
+          "obb_angle_diagnostic": 1.7718276977539062,
+          "confidence": 0.9575728178024292,
+          "source": [
+            680.2149658203125,
+            368.5892028808594
+          ],
+          "depth_m": 0.2225389359105855,
+          "base": [
+            -619.0169433007126,
+            -142.98632538251215,
+            -47.291
+          ],
+          "base_angle": 88.8880172074748,
+          "pose": [
+            -526.0037841796875,
+            -118.9621353149414,
+            234.8607177734375,
+            179.9983367919922,
+            -0.002448556711897254,
+            89.99913024902344
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 1.2523245728598056,
+            "axis_ratio": 1.3509779846663603,
+            "colour_center_offset_px": 1.5175945103101143,
+            "body_core_saturation_median": 89.0,
+            "terminal_saturation_medians": [
+              28.0,
+              21.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            588.6993408203125,
+            252.33779907226562
+          ],
+          "angle": -0.2112486904663342,
+          "obb_angle_diagnostic": 2.80267333984375,
+          "confidence": 0.9577744603157043,
+          "source": [
+            680.404541015625,
+            368.70123291015625
+          ],
+          "depth_m": 0.22253520848906697,
+          "base": [
+            -618.9856310041135,
+            -142.94201591907128,
+            -47.291
+          ],
+          "base_angle": 91.47758625348786,
+          "pose": [
+            -526.001708984375,
+            -118.96408081054688,
+            234.8587188720703,
+            179.99790954589844,
+            -0.0024627407547086477,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": -0.2112486904663342,
+            "axis_ratio": 1.3363813719411601,
+            "colour_center_offset_px": 1.7781720146620938,
+            "body_core_saturation_median": 85.0,
+            "terminal_saturation_medians": [
+              28.0,
+              24.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            587.8587646484375,
+            252.1697998046875
+          ],
+          "angle": -0.42279529563757023,
+          "obb_angle_diagnostic": 1.5049819946289062,
+          "confidence": 0.9586188197135925,
+          "source": [
+            680.141357421875,
+            368.6085205078125
+          ],
+          "depth_m": 0.22253647695168174,
+          "base": [
+            -619.010525923684,
+            -143.0067478226046,
+            -47.291
+          ],
+          "base_angle": 91.85137767586187,
+          "pose": [
+            -526.003662109375,
+            -118.96414947509766,
+            234.85870361328125,
+            179.9981231689453,
+            -0.002455652691423893,
+            89.99934387207031
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": -0.42279529563757023,
+            "axis_ratio": 1.3387511121588553,
+            "colour_center_offset_px": 1.3381940519805609,
+            "body_core_saturation_median": 85.0,
+            "terminal_saturation_medians": [
+              30.0,
+              21.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            588.286376953125,
+            251.92013549804688
+          ],
+          "angle": 0.06659061681534695,
+          "obb_angle_diagnostic": 1.1565628051757812,
+          "confidence": 0.9591811299324036,
+          "source": [
+            680.2781982421875,
+            368.46917724609375
+          ],
+          "depth_m": 0.22253746023301088,
+          "base": [
+            -619.0453745360198,
+            -142.97364518026365,
+            -47.291
+          ],
+          "base_angle": 90.98632952963777,
+          "pose": [
+            -526.003662109375,
+            -118.96414947509766,
+            234.85870361328125,
+            179.9981231689453,
+            -0.002455652691423893,
+            89.99934387207031
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 0.06659061681534695,
+            "axis_ratio": 1.4681725359331117,
+            "colour_center_offset_px": 0.9533891534090013,
+            "body_core_saturation_median": 84.0,
+            "terminal_saturation_medians": [
+              28.0,
+              22.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            588.0995483398438,
+            251.738037109375
+          ],
+          "angle": -2.383082023363386,
+          "obb_angle_diagnostic": 2.4310455322265625,
+          "confidence": 0.9631725549697876,
+          "source": [
+            680.2210083007812,
+            368.3680114746094
+          ],
+          "depth_m": 0.22254302967094963,
+          "base": [
+            -619.0716082565193,
+            -142.9883072929153,
+            -47.291
+          ],
+          "base_angle": 95.3077867724288,
+          "pose": [
+            -526.0029907226562,
+            -118.96412658691406,
+            234.86273193359375,
+            179.99855041503906,
+            -0.0024414551444351673,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": -2.383082023363386,
+            "axis_ratio": 1.469420218661869,
+            "colour_center_offset_px": 0.5815709375617764,
+            "body_core_saturation_median": 83.0,
+            "terminal_saturation_medians": [
+              28.0,
+              24.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              414
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            588.5669555664062,
+            251.84437561035156
+          ],
+          "angle": 3.914893875667218,
+          "obb_angle_diagnostic": 2.7453155517578125,
+          "confidence": 0.9606958627700806,
+          "source": [
+            680.3671875,
+            368.4267578125
+          ],
+          "depth_m": 0.22253813452597415,
+          "base": [
+            -619.054602747308,
+            -142.95187159175768,
+            -47.291
+          ],
+          "base_angle": 84.18799445754526,
+          "pose": [
+            -526.0020751953125,
+            -118.96409606933594,
+            234.85911560058594,
+            179.9981231689453,
+            -0.002455652691423893,
+            89.99934387207031
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 3.914893875667218,
+            "axis_ratio": 1.406059590117993,
+            "colour_center_offset_px": 0.7684546674340181,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              27.0,
+              23.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            588.5126953125,
+            251.64955139160156
+          ],
+          "angle": 0.8699111509717454,
+          "obb_angle_diagnostic": 2.7531967163085938,
+          "confidence": 0.961481511592865,
+          "source": [
+            680.3518676757812,
+            368.318359375
+          ],
+          "depth_m": 0.22254094929629786,
+          "base": [
+            -619.0829814908268,
+            -142.95874470162642,
+            -47.291
+          ],
+          "base_angle": 89.56570053877263,
+          "pose": [
+            -526.0028686523438,
+            -118.96613311767578,
+            234.8607177734375,
+            179.9983367919922,
+            -0.0024485504254698753,
+            89.9997787475586
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 0.8699111509717454,
+            "axis_ratio": 1.418203541828511,
+            "colour_center_offset_px": 0.8559713006553985,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              29.0,
+              22.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            587.7373046875,
+            251.8057861328125
+          ],
+          "angle": 2.7636790338894173,
+          "obb_angle_diagnostic": 2.1661605834960938,
+          "confidence": 0.9595390558242798,
+          "source": [
+            680.1063232421875,
+            368.4060363769531
+          ],
+          "depth_m": 0.22254167801793362,
+          "base": [
+            -619.0619085365287,
+            -143.01638639820314,
+            -47.291
+          ],
+          "base_angle": 86.21701242201169,
+          "pose": [
+            -526.0042114257812,
+            -118.96416473388672,
+            234.8619384765625,
+            179.9983367919922,
+            -0.0024485504254698753,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 2.7636790338894173,
+            "axis_ratio": 1.26857126219781,
+            "colour_center_offset_px": 1.3143576613121948,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              28.0,
+              21.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            588.2474365234375,
+            252.32713317871094
+          ],
+          "angle": 1.5696880688350063,
+          "obb_angle_diagnostic": 2.5968704223632812,
+          "confidence": 0.9589672088623047,
+          "source": [
+            680.2623291015625,
+            368.69573974609375
+          ],
+          "depth_m": 0.22253815527580348,
+          "base": [
+            -618.9902352663238,
+            -142.97844182775287,
+            -47.291
+          ],
+          "base_angle": 88.32708199069107,
+          "pose": [
+            -526.0032958984375,
+            -118.96450805664062,
+            234.8607177734375,
+            179.9983367919922,
+            -0.002231115009635687,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 1.5696880688350063,
+            "axis_ratio": 1.4172692377713663,
+            "colour_center_offset_px": 1.186143647411812,
+            "body_core_saturation_median": 82.0,
+            "terminal_saturation_medians": [
+              27.0,
+              21.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            587.7366943359375,
+            251.85174560546875
+          ],
+          "angle": 6.273022750993647,
+          "obb_angle_diagnostic": 2.3364639282226562,
+          "confidence": 0.9585632085800171,
+          "source": [
+            680.105712890625,
+            368.431640625
+          ],
+          "depth_m": 0.22254107959540895,
+          "base": [
+            -619.0555699314466,
+            -143.0202659185815,
+            -47.291
+          ],
+          "base_angle": 80.06384691514795,
+          "pose": [
+            -526.0032348632812,
+            -118.96652221679688,
+            234.86109924316406,
+            179.99855041503906,
+            -0.002224019728600979,
+            89.9997787475586
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 6.273022750993647,
+            "axis_ratio": 1.30697988094924,
+            "colour_center_offset_px": 1.4982969651735958,
+            "body_core_saturation_median": 83.5,
+            "terminal_saturation_medians": [
+              29.0,
+              22.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            588.7678833007812,
+            251.6630859375
+          ],
+          "angle": -0.4224570619787187,
+          "obb_angle_diagnostic": 1.847747802734375,
+          "confidence": 0.9605727791786194,
+          "source": [
+            680.4320678710938,
+            368.3256530761719
+          ],
+          "depth_m": 0.2225385290815897,
+          "base": [
+            -619.0811558942037,
+            -142.93817554468265,
+            -47.291
+          ],
+          "base_angle": 91.85133013425458,
+          "pose": [
+            -526.003662109375,
+            -118.96452331542969,
+            234.85870361328125,
+            179.99810791015625,
+            -0.002238210290670395,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": -0.4224570619787187,
+            "axis_ratio": 1.3996583987364288,
+            "colour_center_offset_px": 1.316966643321555,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              27.0,
+              24.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            587.997802734375,
+            252.02764892578125
+          ],
+          "angle": -0.4805839341470346,
+          "obb_angle_diagnostic": 0.714569091796875,
+          "confidence": 0.9588937759399414,
+          "source": [
+            680.1864013671875,
+            368.5292663574219
+          ],
+          "depth_m": 0.22253942792320833,
+          "base": [
+            -619.0309768830014,
+            -142.9962704308975,
+            -47.291
+          ],
+          "base_angle": 91.95376595165217,
+          "pose": [
+            -526.0033569335938,
+            -118.9641342163086,
+            234.8607177734375,
+            179.9983367919922,
+            -0.0024485504254698753,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": -0.4805839341470346,
+            "axis_ratio": 1.4039984589366465,
+            "colour_center_offset_px": 0.64203366167944,
+            "body_core_saturation_median": 89.0,
+            "terminal_saturation_medians": [
+              29.0,
+              21.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            588.876708984375,
+            252.0177001953125
+          ],
+          "angle": -4.80696002574274,
+          "obb_angle_diagnostic": 1.6570205688476562,
+          "confidence": 0.960287868976593,
+          "source": [
+            680.4631958007812,
+            368.5229187011719
+          ],
+          "depth_m": 0.22254087786861707,
+          "base": [
+            -619.032977755177,
+            -142.92821040294285,
+            -47.291
+          ],
+          "base_angle": 99.53966796903563,
+          "pose": [
+            -526.0026245117188,
+            -118.964111328125,
+            234.86233520507812,
+            179.9983367919922,
+            -0.0024485504254698753,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": -4.80696002574274,
+            "axis_ratio": 1.3691492603882915,
+            "colour_center_offset_px": 1.081192280825616,
+            "body_core_saturation_median": 84.0,
+            "terminal_saturation_medians": [
+              28.0,
+              21.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            587.8004760742188,
+            252.34463500976562
+          ],
+          "angle": -2.7403201885645103,
+          "obb_angle_diagnostic": 1.0381851196289062,
+          "confidence": 0.9603972434997559,
+          "source": [
+            680.1213989257812,
+            368.70587158203125
+          ],
+          "depth_m": 0.2225373642516523,
+          "base": [
+            -618.9857269832409,
+            -143.01156910358068,
+            -47.291
+          ],
+          "base_angle": 95.93462574649305,
+          "pose": [
+            -526.0029296875,
+            -118.96412658691406,
+            234.86033630371094,
+            179.9981231689453,
+            -0.0024556454736739397,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": -2.7403201885645103,
+            "axis_ratio": 1.3620251221823039,
+            "colour_center_offset_px": 1.2559620060151109,
+            "body_core_saturation_median": 87.0,
+            "terminal_saturation_medians": [
+              28.0,
+              21.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            588.9501342773438,
+            251.9744873046875
+          ],
+          "angle": 4.18252743650504,
+          "obb_angle_diagnostic": 2.5326690673828125,
+          "confidence": 0.9611313343048096,
+          "source": [
+            680.4866943359375,
+            368.4988098144531
+          ],
+          "depth_m": 0.22253942945588395,
+          "base": [
+            -619.039177923506,
+            -142.92460666501404,
+            -47.291
+          ],
+          "base_angle": 83.71752311337588,
+          "pose": [
+            -526.0028686523438,
+            -118.96613311767578,
+            234.8607177734375,
+            179.9983367919922,
+            -0.002448556711897254,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 4.18252743650504,
+            "axis_ratio": 1.3296728231740973,
+            "colour_center_offset_px": 1.3896205327635263,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              27.0,
+              21.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            587.7679443359375,
+            251.86087036132812
+          ],
+          "angle": 0.10383450396437865,
+          "obb_angle_diagnostic": 1.25140380859375,
+          "confidence": 0.9614973664283752,
+          "source": [
+            680.115478515625,
+            368.4366760253906
+          ],
+          "depth_m": 0.22254020913718392,
+          "base": [
+            -619.0529138716865,
+            -143.01638224862222,
+            -47.291
+          ],
+          "base_angle": 90.92092789712474,
+          "pose": [
+            -526.0028686523438,
+            -118.96613311767578,
+            234.8607177734375,
+            179.9983367919922,
+            -0.0024485504254698753,
+            89.9997787475586
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 0.10383450396437865,
+            "axis_ratio": 1.394834820658904,
+            "colour_center_offset_px": 1.2954834364887227,
+            "body_core_saturation_median": 87.0,
+            "terminal_saturation_medians": [
+              29.0,
+              23.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            588.4282836914062,
+            252.09011840820312
+          ],
+          "angle": 2.0107229211933486,
+          "obb_angle_diagnostic": 1.7878265380859375,
+          "confidence": 0.9620391130447388,
+          "source": [
+            680.3213500976562,
+            368.5636291503906
+          ],
+          "depth_m": 0.22253473298792664,
+          "base": [
+            -619.0197777624453,
+            -142.96304291945674,
+            -47.291
+          ],
+          "base_angle": 87.54680097386706,
+          "pose": [
+            -526.0023803710938,
+            -118.96410369873047,
+            234.8571014404297,
+            179.99790954589844,
+            -0.0024627407547086477,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 2.0107229211933486,
+            "axis_ratio": 1.4339496168505133,
+            "colour_center_offset_px": 0.9774217953059485,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              30.0,
+              21.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            588.28759765625,
+            251.8965301513672
+          ],
+          "angle": -3.6940363586472813,
+          "obb_angle_diagnostic": 1.9881362915039062,
+          "confidence": 0.9607301950454712,
+          "source": [
+            680.27880859375,
+            368.4560241699219
+          ],
+          "depth_m": 0.22253797508011153,
+          "base": [
+            -619.0469543035726,
+            -142.9738350365631,
+            -47.291
+          ],
+          "base_angle": 97.60374766103673,
+          "pose": [
+            -526.0020751953125,
+            -118.96409606933594,
+            234.85911560058594,
+            179.9981231689453,
+            -0.0024556454736739397,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": -3.6940363586472813,
+            "axis_ratio": 1.3879471462765536,
+            "colour_center_offset_px": 1.075445226821393,
+            "body_core_saturation_median": 84.0,
+            "terminal_saturation_medians": [
+              28.0,
+              21.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            588.4697875976562,
+            252.0882568359375
+          ],
+          "angle": -1.000540503472962,
+          "obb_angle_diagnostic": -0.3234279751777649,
+          "confidence": 0.9608926177024841,
+          "source": [
+            680.33447265625,
+            368.56256103515625
+          ],
+          "depth_m": 0.22253831843501523,
+          "base": [
+            -619.0218548098121,
+            -142.9597525225496,
+            -47.291
+          ],
+          "base_angle": 92.87213477056903,
+          "pose": [
+            -526.0029296875,
+            -118.96412658691406,
+            234.86033630371094,
+            179.9981231689453,
+            -0.0024556454736739397,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": -1.000540503472962,
+            "axis_ratio": 1.3447801124994647,
+            "colour_center_offset_px": 1.062618657469331,
+            "body_core_saturation_median": 89.0,
+            "terminal_saturation_medians": [
+              28.0,
+              21.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            588.3771362304688,
+            252.25523376464844
+          ],
+          "angle": 3.3347719303252177,
+          "obb_angle_diagnostic": 0.4593048095703125,
+          "confidence": 0.9579828977584839,
+          "source": [
+            680.3037719726562,
+            368.65557861328125
+          ],
+          "depth_m": 0.22254097997086666,
+          "base": [
+            -619.0037113643008,
+            -142.96789825786578,
+            -47.291
+          ],
+          "base_angle": 85.20926212679142,
+          "pose": [
+            -526.0045166015625,
+            -118.96581268310547,
+            234.8627166748047,
+            179.998779296875,
+            -0.0026517952792346478,
+            89.9997787475586
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 3.3347719303252177,
+            "axis_ratio": 1.2898046115205528,
+            "colour_center_offset_px": 1.847824375601062,
+            "body_core_saturation_median": 84.0,
+            "terminal_saturation_medians": [
+              28.0,
+              21.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        }
+      ],
+      "set_index": 1,
+      "physical_instance_index": 3
+    },
+    {
+      "part_type": "right_white_brown",
+      "instance_index": 4,
+      "part_center_base_mm": [
+        -619.511,
+        -131.319,
+        -47.291
+      ],
+      "long_axis_angle_base_deg": 98.703,
+      "long_axis_angle_canonical_deg": -4.327,
+      "frame_count": 24,
+      "confidence_median": 0.9577,
+      "center_span_canonical_px": [
+        1.703,
+        0.808
+      ],
+      "angle_mad_deg": 0.7442,
+      "angle_batch_span_deg": 1.5999,
+      "temporal_batch_count": 3,
+      "frames_per_temporal_batch": 8,
+      "per_frame_angle_mad_diagnostic_deg": 1.9525,
+      "base_xyz_span_mm": [
+        0.116,
+        0.13,
+        0.0
+      ],
+      "robot_pose_translation_span_mm": 0.0056,
+      "robot_pose_rotation_span_deg": 0.00087,
+      "validation_passed": true,
+      "angle_source": "three independent 8-frame median images, two white terminals colour-weighted axis",
+      "fixed_base_correction_mm": [
+        0.041,
+        4.548,
+        0.0
+      ],
+      "temporal_batches": [
+        {
+          "frame_indices": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "angle_canonical_deg": -3.5826,
+          "angle_base_deg": 97.406,
+          "terminal_axis": {
+            "angle_canonical_deg": -3.582581594523276,
+            "axis_ratio": 1.2766073489050587,
+            "colour_center_offset_px": 1.7624842045721925,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              27.0,
+              23.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "frame_indices": [
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
+          "angle_canonical_deg": -4.3268,
+          "angle_base_deg": 98.7027,
+          "terminal_axis": {
+            "angle_canonical_deg": -4.326757567283039,
+            "axis_ratio": 1.2917512642086406,
+            "colour_center_offset_px": 1.5425794066233347,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              27.0,
+              24.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              417
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "frame_indices": [
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24
+          ],
+          "angle_canonical_deg": -5.1825,
+          "angle_base_deg": 100.1861,
+          "terminal_axis": {
+            "angle_canonical_deg": -5.182505804439302,
+            "axis_ratio": 1.2518985768918378,
+            "colour_center_offset_px": 1.8392796663525957,
+            "body_core_saturation_median": 85.0,
+            "terminal_saturation_medians": [
+              27.0,
+              25.0
+            ],
+            "terminal_pixel_counts": [
+              414,
+              414
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        }
+      ],
+      "samples": [
+        {
+          "center": [
+            738.4864501953125,
+            249.73321533203125
+          ],
+          "angle": -2.2311355756874036,
+          "obb_angle_diagnostic": -0.8204492926597595,
+          "confidence": 0.9608664512634277,
+          "source": [
+            727.6383666992188,
+            367.1094055175781
+          ],
+          "depth_m": 0.22251509975298536,
+          "base": [
+            -619.5710333424656,
+            -131.34641511550407,
+            -47.291
+          ],
+          "base_angle": 95.03862700418526,
+          "pose": [
+            -526.0045776367188,
+            -118.96455383300781,
+            234.86231994628906,
+            179.99855041503906,
+            -0.002224019728600979,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": -2.2311355756874036,
+            "axis_ratio": 1.276090909408789,
+            "colour_center_offset_px": 2.412999928607832,
+            "body_core_saturation_median": 84.0,
+            "terminal_saturation_medians": [
+              27.0,
+              24.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            738.5211791992188,
+            249.79737854003906
+          ],
+          "angle": -3.845166881280363,
+          "obb_angle_diagnostic": -0.8008041381835938,
+          "confidence": 0.9587185382843018,
+          "source": [
+            727.64892578125,
+            367.1451110839844
+          ],
+          "depth_m": 0.22251085711948862,
+          "base": [
+            -619.5570178219203,
+            -131.34480126236718,
+            -47.291
+          ],
+          "base_angle": 97.86459818185955,
+          "pose": [
+            -526.0016479492188,
+            -118.96609497070312,
+            234.85911560058594,
+            179.9981231689453,
+            -0.0024556454736739397,
+            89.9997787475586
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": -3.845166881280363,
+            "axis_ratio": 1.323910963062654,
+            "colour_center_offset_px": 1.637078232886946,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              29.0,
+              23.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            739.110595703125,
+            250.16815185546875
+          ],
+          "angle": -1.6079132097858633,
+          "obb_angle_diagnostic": -1.2465124130249023,
+          "confidence": 0.9597018361091614,
+          "source": [
+            727.8324584960938,
+            367.35107421875
+          ],
+          "depth_m": 0.222509099658504,
+          "base": [
+            -619.507513041681,
+            -131.29670060146677,
+            -47.291
+          ],
+          "base_angle": 93.94189061543598,
+          "pose": [
+            -526.0020751953125,
+            -118.96409606933594,
+            234.85911560058594,
+            179.9981231689453,
+            -0.0024556454736739397,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": -1.6079132097858633,
+            "axis_ratio": 1.2801520894348195,
+            "colour_center_offset_px": 1.6122841960943575,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              27.0,
+              23.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            738.847412109375,
+            250.14596557617188
+          ],
+          "angle": -2.51545056208613,
+          "obb_angle_diagnostic": -2.060035467147827,
+          "confidence": 0.9576740860939026,
+          "source": [
+            727.7495727539062,
+            367.3389587402344
+          ],
+          "depth_m": 0.22251121354264422,
+          "base": [
+            -619.5126406138244,
+            -131.31663651080666,
+            -47.291
+          ],
+          "base_angle": 95.53735050823065,
+          "pose": [
+            -526.0033569335938,
+            -118.9641342163086,
+            234.8607177734375,
+            179.9983367919922,
+            -0.002448556711897254,
+            89.99934387207031
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": -2.51545056208613,
+            "axis_ratio": 1.3507876814064588,
+            "colour_center_offset_px": 1.6088566257222259,
+            "body_core_saturation_median": 85.0,
+            "terminal_saturation_medians": [
+              29.0,
+              25.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            738.16015625,
+            250.02145385742188
+          ],
+          "angle": -2.3449892103037655,
+          "obb_angle_diagnostic": -1.2527216672897339,
+          "confidence": 0.9608485102653503,
+          "source": [
+            727.5335083007812,
+            367.270263671875
+          ],
+          "depth_m": 0.222511921968876,
+          "base": [
+            -619.5291698576759,
+            -131.3675815219798,
+            -47.291
+          ],
+          "base_angle": 95.23792433077496,
+          "pose": [
+            -526.0037841796875,
+            -118.9621353149414,
+            234.8607177734375,
+            179.9983367919922,
+            -0.002448556711897254,
+            89.99913024902344
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": -2.3449892103037655,
+            "axis_ratio": 1.2012388354017585,
+            "colour_center_offset_px": 2.884612555202439,
+            "body_core_saturation_median": 85.0,
+            "terminal_saturation_medians": [
+              25.0,
+              23.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            739.2428588867188,
+            250.54110717773438
+          ],
+          "angle": -2.173021425596403,
+          "obb_angle_diagnostic": -3.0606231689453125,
+          "confidence": 0.9566691517829895,
+          "source": [
+            727.8717651367188,
+            367.5587158203125
+          ],
+          "depth_m": 0.22250669571060397,
+          "base": [
+            -619.4550977024866,
+            -131.28637929980692,
+            -47.291
+          ],
+          "base_angle": 94.93603236634827,
+          "pose": [
+            -526.001708984375,
+            -118.96408081054688,
+            234.8587188720703,
+            179.99790954589844,
+            -0.0024627407547086477,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": -2.173021425596403,
+            "axis_ratio": 1.3449254712566752,
+            "colour_center_offset_px": 0.5989856045647324,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              28.0,
+              24.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            739.0789184570312,
+            250.19784545898438
+          ],
+          "angle": -10.444667542458319,
+          "obb_angle_diagnostic": -0.3339388072490692,
+          "confidence": 0.9567002654075623,
+          "source": [
+            727.822265625,
+            367.3676452636719
+          ],
+          "depth_m": 0.22250856569568084,
+          "base": [
+            -619.5050083487494,
+            -131.29887701963798,
+            -47.291
+          ],
+          "base_angle": 109.06012051163368,
+          "pose": [
+            -526.003662109375,
+            -118.96414947509766,
+            234.85870361328125,
+            179.9981231689453,
+            -0.002455652691423893,
+            89.99934387207031
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": -10.444667542458319,
+            "axis_ratio": 1.2158216737955276,
+            "colour_center_offset_px": 2.3581243430181718,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              25.0,
+              22.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              417
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            737.8955078125,
+            249.81643676757812
+          ],
+          "angle": -6.652256089277785,
+          "obb_angle_diagnostic": -1.2153403759002686,
+          "confidence": 0.9588715434074402,
+          "source": [
+            727.4513549804688,
+            367.15631103515625
+          ],
+          "depth_m": 0.22251051306412378,
+          "base": [
+            -619.5555663025193,
+            -131.39066932898328,
+            -47.291
+          ],
+          "base_angle": 102.71143440248149,
+          "pose": [
+            -526.003662109375,
+            -118.96414947509766,
+            234.85870361328125,
+            179.9981231689453,
+            -0.002455652691423893,
+            89.99934387207031
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": -6.652256089277785,
+            "axis_ratio": 1.285351090169328,
+            "colour_center_offset_px": 1.620291992349118,
+            "body_core_saturation_median": 83.0,
+            "terminal_saturation_medians": [
+              25.0,
+              23.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            739.1214599609375,
+            250.13043212890625
+          ],
+          "angle": -4.430732959131831,
+          "obb_angle_diagnostic": -1.2642558813095093,
+          "confidence": 0.9593866467475891,
+          "source": [
+            727.8361206054688,
+            367.3300476074219
+          ],
+          "depth_m": 0.2225135809217428,
+          "base": [
+            -619.5159268536532,
+            -131.2955895634485,
+            -47.291
+          ],
+          "base_angle": 98.88338957073614,
+          "pose": [
+            -526.0029907226562,
+            -118.96412658691406,
+            234.86273193359375,
+            179.99855041503906,
+            -0.0024414551444351673,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": -4.430732959131831,
+            "axis_ratio": 1.215138714535374,
+            "colour_center_offset_px": 1.8852190352272202,
+            "body_core_saturation_median": 85.0,
+            "terminal_saturation_medians": [
+              25.5,
+              23.0
+            ],
+            "terminal_pixel_counts": [
+              414,
+              414
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            739.0473022460938,
+            250.49942016601562
+          ],
+          "angle": -3.500694288498835,
+          "obb_angle_diagnostic": -2.001843214035034,
+          "confidence": 0.9577677845954895,
+          "source": [
+            727.8103637695312,
+            367.5356750488281
+          ],
+          "depth_m": 0.22250767173170855,
+          "base": [
+            -619.4620274202633,
+            -131.3011581479288,
+            -47.291
+          ],
+          "base_angle": 97.26271224681852,
+          "pose": [
+            -526.0020751953125,
+            -118.96409606933594,
+            234.85911560058594,
+            179.9981231689453,
+            -0.002455652691423893,
+            89.99934387207031
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": -3.500694288498835,
+            "axis_ratio": 1.2778636340439067,
+            "colour_center_offset_px": 1.5746430217963772,
+            "body_core_saturation_median": 84.0,
+            "terminal_saturation_medians": [
+              27.0,
+              22.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            739.1098022460938,
+            250.12200927734375
+          ],
+          "angle": -4.942677005290079,
+          "obb_angle_diagnostic": -1.9825670719146729,
+          "confidence": 0.9569287896156311,
+          "source": [
+            727.83251953125,
+            367.32537841796875
+          ],
+          "depth_m": 0.22251125443410436,
+          "base": [
+            -619.515730607703,
+            -131.29901861491877,
+            -47.291
+          ],
+          "base_angle": 99.77141556570758,
+          "pose": [
+            -526.0028686523438,
+            -118.96613311767578,
+            234.8607177734375,
+            179.9983367919922,
+            -0.0024485504254698753,
+            89.9997787475586
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": -4.942677005290079,
+            "axis_ratio": 1.2654520809200418,
+            "colour_center_offset_px": 1.7706750934269044,
+            "body_core_saturation_median": 84.0,
+            "terminal_saturation_medians": [
+              27.0,
+              26.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              417
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            738.7090454101562,
+            250.31375122070312
+          ],
+          "angle": -6.259359521026454,
+          "obb_angle_diagnostic": -0.586111307144165,
+          "confidence": 0.9569807648658752,
+          "source": [
+            727.704833984375,
+            367.43255615234375
+          ],
+          "depth_m": 0.22251173741650856,
+          "base": [
+            -619.490284876796,
+            -131.3276013378726,
+            -47.291
+          ],
+          "base_angle": 102.03949644075496,
+          "pose": [
+            -526.0042114257812,
+            -118.96416473388672,
+            234.8619384765625,
+            179.9983367919922,
+            -0.0024485504254698753,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": -6.259359521026454,
+            "axis_ratio": 1.3666032664624048,
+            "colour_center_offset_px": 1.2982338431372082,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              25.0,
+              25.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            738.247314453125,
+            250.10910034179688
+          ],
+          "angle": -2.711909746417291,
+          "obb_angle_diagnostic": -1.317244529724121,
+          "confidence": 0.959136426448822,
+          "source": [
+            727.5604248046875,
+            367.3190002441406
+          ],
+          "depth_m": 0.22251156618039988,
+          "base": [
+            -619.5166979139918,
+            -131.36496006885434,
+            -47.291
+          ],
+          "base_angle": 95.88239150021205,
+          "pose": [
+            -526.0032958984375,
+            -118.96450805664062,
+            234.8607177734375,
+            179.9983367919922,
+            -0.002231115009635687,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": -2.711909746417291,
+            "axis_ratio": 1.3059870437150143,
+            "colour_center_offset_px": 1.8855574055340474,
+            "body_core_saturation_median": 87.0,
+            "terminal_saturation_medians": [
+              26.0,
+              24.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            738.5113525390625,
+            249.869384765625
+          ],
+          "angle": -2.1978149436622516,
+          "obb_angle_diagnostic": -2.549793004989624,
+          "confidence": 0.9605550765991211,
+          "source": [
+            727.6453247070312,
+            367.1852111816406
+          ],
+          "depth_m": 0.22251327904666923,
+          "base": [
+            -619.5509512583179,
+            -131.34688180646282,
+            -47.291
+          ],
+          "base_angle": 94.98001957781261,
+          "pose": [
+            -526.0032348632812,
+            -118.96652221679688,
+            234.86109924316406,
+            179.99855041503906,
+            -0.002224019728600979,
+            89.9997787475586
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": -2.1978149436622516,
+            "axis_ratio": 1.2995816424250295,
+            "colour_center_offset_px": 2.0048545752338587,
+            "body_core_saturation_median": 85.0,
+            "terminal_saturation_medians": [
+              26.0,
+              25.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              414
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            738.8085327148438,
+            250.23965454101562
+          ],
+          "angle": -3.3195433271220622,
+          "obb_angle_diagnostic": -1.8168872594833374,
+          "confidence": 0.9575202465057373,
+          "source": [
+            727.7366943359375,
+            367.3912048339844
+          ],
+          "depth_m": 0.22250847076568536,
+          "base": [
+            -619.4987473550945,
+            -131.32162055563305,
+            -47.291
+          ],
+          "base_angle": 96.94641099803985,
+          "pose": [
+            -526.003662109375,
+            -118.96452331542969,
+            234.85870361328125,
+            179.99810791015625,
+            -0.002238210290670395,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": -3.3195433271220622,
+            "axis_ratio": 1.3431771138506894,
+            "colour_center_offset_px": 1.473860776545498,
+            "body_core_saturation_median": 83.0,
+            "terminal_saturation_medians": [
+              26.0,
+              23.0
+            ],
+            "terminal_pixel_counts": [
+              417,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            739.3173217773438,
+            250.12921142578125
+          ],
+          "angle": -8.499345845506696,
+          "obb_angle_diagnostic": -1.9925767183303833,
+          "confidence": 0.9562126398086548,
+          "source": [
+            727.89794921875,
+            367.3291931152344
+          ],
+          "depth_m": 0.2225111729348562,
+          "base": [
+            -619.5155852798282,
+            -131.28058757693185,
+            -47.291
+          ],
+          "base_angle": 105.83726748955489,
+          "pose": [
+            -526.0033569335938,
+            -118.9641342163086,
+            234.8607177734375,
+            179.9983367919922,
+            -0.0024485504254698753,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": -8.499345845506696,
+            "axis_ratio": 1.2564983850289762,
+            "colour_center_offset_px": 1.5112701850617405,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              27.0,
+              23.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            738.751708984375,
+            250.0335693359375
+          ],
+          "angle": -4.935050341153158,
+          "obb_angle_diagnostic": 1.1166915893554688,
+          "confidence": 0.9573701024055481,
+          "source": [
+            727.7200927734375,
+            367.2764587402344
+          ],
+          "depth_m": 0.22251334472213508,
+          "base": [
+            -619.5272067632324,
+            -131.32427787543892,
+            -47.291
+          ],
+          "base_angle": 99.75818531031005,
+          "pose": [
+            -526.0026245117188,
+            -118.964111328125,
+            234.86233520507812,
+            179.9983367919922,
+            -0.0024485504254698753,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": -4.935050341153158,
+            "axis_ratio": 1.2971597190496873,
+            "colour_center_offset_px": 1.4424947782295252,
+            "body_core_saturation_median": 84.0,
+            "terminal_saturation_medians": [
+              25.0,
+              24.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            738.790283203125,
+            250.16567993164062
+          ],
+          "angle": -6.944937284760272,
+          "obb_angle_diagnostic": 0.5216445922851562,
+          "confidence": 0.9553971886634827,
+          "source": [
+            727.7313842773438,
+            367.3500061035156
+          ],
+          "depth_m": 0.2225104092798113,
+          "base": [
+            -619.5082873995638,
+            -131.32145083148876,
+            -47.291
+          ],
+          "base_angle": 103.21057961725349,
+          "pose": [
+            -526.0029296875,
+            -118.96412658691406,
+            234.86033630371094,
+            179.9981231689453,
+            -0.0024556454736739397,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": -6.944937284760272,
+            "axis_ratio": 1.205706398535901,
+            "colour_center_offset_px": 1.9645833471482728,
+            "body_core_saturation_median": 83.0,
+            "terminal_saturation_medians": [
+              25.0,
+              23.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              417
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            739.598876953125,
+            250.43630981445312
+          ],
+          "angle": -7.558667187051981,
+          "obb_angle_diagnostic": -1.549573302268982,
+          "confidence": 0.9549523591995239,
+          "source": [
+            727.9848022460938,
+            367.5
+          ],
+          "depth_m": 0.2225097668697905,
+          "base": [
+            -619.4733907078613,
+            -131.2606944298723,
+            -47.291
+          ],
+          "base_angle": 104.25271052869833,
+          "pose": [
+            -526.0028686523438,
+            -118.96613311767578,
+            234.8607177734375,
+            179.9983367919922,
+            -0.002448556711897254,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": -7.558667187051981,
+            "axis_ratio": 1.3007433797388528,
+            "colour_center_offset_px": 2.223108395263052,
+            "body_core_saturation_median": 85.0,
+            "terminal_saturation_medians": [
+              29.0,
+              25.0
+            ],
+            "terminal_pixel_counts": [
+              417,
+              414
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            738.5299682617188,
+            250.31106567382812
+          ],
+          "angle": 0.884981370231003,
+          "obb_angle_diagnostic": 0.91485595703125,
+          "confidence": 0.9584380388259888,
+          "source": [
+            727.6483154296875,
+            367.4312438964844
+          ],
+          "depth_m": 0.2225105707895824,
+          "base": [
+            -619.4889377312214,
+            -131.3439102646759,
+            -47.291
+          ],
+          "base_angle": 89.54217555216759,
+          "pose": [
+            -526.0028686523438,
+            -118.96613311767578,
+            234.8607177734375,
+            179.9983367919922,
+            -0.0024485504254698753,
+            89.9997787475586
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 0.884981370231003,
+            "axis_ratio": 1.206815591319079,
+            "colour_center_offset_px": 1.8205667010308735,
+            "body_core_saturation_median": 85.0,
+            "terminal_saturation_medians": [
+              29.0,
+              24.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            738.2291259765625,
+            250.14273071289062
+          ],
+          "angle": -5.824050992552429,
+          "obb_angle_diagnostic": -1.2850977182388306,
+          "confidence": 0.9576912522315979,
+          "source": [
+            727.5545043945312,
+            367.3377685546875
+          ],
+          "depth_m": 0.22250705728211317,
+          "base": [
+            -619.5088290420128,
+            -131.36519018272244,
+            -47.291
+          ],
+          "base_angle": 101.29252846680002,
+          "pose": [
+            -526.0023803710938,
+            -118.96410369873047,
+            234.8571014404297,
+            179.99790954589844,
+            -0.0024627407547086477,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": -5.824050992552429,
+            "axis_ratio": 1.214918903269187,
+            "colour_center_offset_px": 1.9699104474566287,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              25.0,
+              25.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            738.84326171875,
+            250.0752410888672
+          ],
+          "angle": -6.614694493778586,
+          "obb_angle_diagnostic": -1.7815715074539185,
+          "confidence": 0.9607362747192383,
+          "source": [
+            727.7487182617188,
+            367.299560546875
+          ],
+          "depth_m": 0.22250956907599329,
+          "base": [
+            -619.5198632255662,
+            -131.3174365787382,
+            -47.291
+          ],
+          "base_angle": 102.64725142113012,
+          "pose": [
+            -526.0020751953125,
+            -118.96409606933594,
+            234.85911560058594,
+            179.9981231689453,
+            -0.0024556454736739397,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": -6.614694493778586,
+            "axis_ratio": 1.2717555949004897,
+            "colour_center_offset_px": 2.1859388023689235,
+            "body_core_saturation_median": 84.0,
+            "terminal_saturation_medians": [
+              24.0,
+              26.0
+            ],
+            "terminal_pixel_counts": [
+              414,
+              417
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            739.2403564453125,
+            250.2286376953125
+          ],
+          "angle": -7.473417735918588,
+          "obb_angle_diagnostic": -1.0281708240509033,
+          "confidence": 0.9579166173934937,
+          "source": [
+            727.873046875,
+            367.3846435546875
+          ],
+          "depth_m": 0.22251002629298863,
+          "base": [
+            -619.5003215499634,
+            -131.28654378171112,
+            -47.291
+          ],
+          "base_angle": 104.10817294802412,
+          "pose": [
+            -526.0029296875,
+            -118.96412658691406,
+            234.86033630371094,
+            179.9981231689453,
+            -0.0024556454736739397,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": -7.473417735918588,
+            "axis_ratio": 1.339530880326636,
+            "colour_center_offset_px": 1.560403517217197,
+            "body_core_saturation_median": 87.0,
+            "terminal_saturation_medians": [
+              28.0,
+              24.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              417
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            739.0405883789062,
+            250.44039916992188
+          ],
+          "angle": 0.14268260998110804,
+          "obb_angle_diagnostic": -1.6493964195251465,
+          "confidence": 0.9543197751045227,
+          "source": [
+            727.80859375,
+            367.5028076171875
+          ],
+          "depth_m": 0.2225125626962569,
+          "base": [
+            -619.4759078709288,
+            -131.30275396884417,
+            -47.291
+          ],
+          "base_angle": 90.85359650840343,
+          "pose": [
+            -526.0045166015625,
+            -118.96581268310547,
+            234.8627166748047,
+            179.998779296875,
+            -0.0026517952792346478,
+            89.9997787475586
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 0.14268260998110804,
+            "axis_ratio": 1.2369772036574074,
+            "colour_center_offset_px": 2.278965918372115,
+            "body_core_saturation_median": 85.0,
+            "terminal_saturation_medians": [
+              26.0,
+              24.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        }
+      ],
+      "set_index": 1,
+      "physical_instance_index": 4
+    },
+    {
+      "part_type": "right_white_brown",
+      "instance_index": 5,
+      "part_center_base_mm": [
+        -619.666,
+        -119.19,
+        -47.291
+      ],
+      "long_axis_angle_base_deg": 69.249,
+      "long_axis_angle_canonical_deg": 12.757,
+      "frame_count": 24,
+      "confidence_median": 0.9557,
+      "center_span_canonical_px": [
+        2.15,
+        0.726
+      ],
+      "angle_mad_deg": 0.3058,
+      "angle_batch_span_deg": 1.08,
+      "temporal_batch_count": 3,
+      "frames_per_temporal_batch": 8,
+      "per_frame_angle_mad_diagnostic_deg": 1.2637,
+      "base_xyz_span_mm": [
+        0.101,
+        0.166,
+        0.0
+      ],
+      "robot_pose_translation_span_mm": 0.0056,
+      "robot_pose_rotation_span_deg": 0.00087,
+      "validation_passed": true,
+      "angle_source": "three independent 8-frame median images, two white terminals colour-weighted axis",
+      "fixed_base_correction_mm": [
+        0.041,
+        4.548,
+        0.0
+      ],
+      "temporal_batches": [
+        {
+          "frame_indices": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "angle_canonical_deg": 12.7567,
+          "angle_base_deg": 69.2489,
+          "terminal_axis": {
+            "angle_canonical_deg": 12.756668648928553,
+            "axis_ratio": 1.5062484774905807,
+            "colour_center_offset_px": 1.5695682644574553,
+            "body_core_saturation_median": 88.0,
+            "terminal_saturation_medians": [
+              26.0,
+              28.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "frame_indices": [
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
+          "angle_canonical_deg": 11.9824,
+          "angle_base_deg": 70.5029,
+          "terminal_axis": {
+            "angle_canonical_deg": 11.982408579179264,
+            "axis_ratio": 1.5603472467317592,
+            "colour_center_offset_px": 1.2685234184249388,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              26.0,
+              29.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              417
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "frame_indices": [
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24
+          ],
+          "angle_canonical_deg": 13.0624,
+          "angle_base_deg": 68.7573,
+          "terminal_axis": {
+            "angle_canonical_deg": 13.062426247912697,
+            "axis_ratio": 1.5476784562269807,
+            "colour_center_offset_px": 1.3665528312391269,
+            "body_core_saturation_median": 89.0,
+            "terminal_saturation_medians": [
+              27.5,
+              29.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        }
+      ],
+      "samples": [
+        {
+          "center": [
+            894.9109497070312,
+            250.62730407714844
+          ],
+          "angle": 13.873218682430803,
+          "obb_angle_diagnostic": 2.2137832641601562,
+          "confidence": 0.9604591727256775,
+          "source": [
+            777.049072265625,
+            367.4589538574219
+          ],
+          "depth_m": 0.2224733325152571,
+          "base": [
+            -619.6807852247942,
+            -119.21186296880018,
+            -47.291
+          ],
+          "base_angle": 67.46469120223745,
+          "pose": [
+            -526.0045776367188,
+            -118.96455383300781,
+            234.86231994628906,
+            179.99855041503906,
+            -0.002224019728600979,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 13.873218682430803,
+            "axis_ratio": 1.4794740572874432,
+            "colour_center_offset_px": 2.01927955022863,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              26.0,
+              29.0
+            ],
+            "terminal_pixel_counts": [
+              418,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            895.457763671875,
+            250.94375610351562
+          ],
+          "angle": 12.418948195351817,
+          "obb_angle_diagnostic": 4.7278289794921875,
+          "confidence": 0.9573397040367126,
+          "source": [
+            777.2207641601562,
+            367.6349182128906
+          ],
+          "depth_m": 0.22246791411514177,
+          "base": [
+            -619.6329313763243,
+            -119.17051344820776,
+            -47.291
+          ],
+          "base_angle": 69.79426484425952,
+          "pose": [
+            -526.0016479492188,
+            -118.96609497070312,
+            234.85911560058594,
+            179.9981231689453,
+            -0.0024556454736739397,
+            89.9997787475586
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 12.418948195351817,
+            "axis_ratio": 1.490033053043302,
+            "colour_center_offset_px": 1.9579749118621073,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              27.0,
+              27.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              417
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            894.9755249023438,
+            250.8643035888672
+          ],
+          "angle": 9.907743951868582,
+          "obb_angle_diagnostic": 3.8995285034179688,
+          "confidence": 0.9570466876029968,
+          "source": [
+            777.0685424804688,
+            367.591064453125
+          ],
+          "depth_m": 0.2224683774138151,
+          "base": [
+            -619.6435505880976,
+            -119.20566222624015,
+            -47.291
+          ],
+          "base_angle": 73.92517577276337,
+          "pose": [
+            -526.0020751953125,
+            -118.96409606933594,
+            234.85911560058594,
+            179.9981231689453,
+            -0.0024556454736739397,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 9.907743951868582,
+            "axis_ratio": 1.5035949485495756,
+            "colour_center_offset_px": 1.0571841005308824,
+            "body_core_saturation_median": 91.0,
+            "terminal_saturation_medians": [
+              25.0,
+              29.0
+            ],
+            "terminal_pixel_counts": [
+              417,
+              417
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            895.248779296875,
+            250.82139587402344
+          ],
+          "angle": 11.313975868898893,
+          "obb_angle_diagnostic": 4.044189453125,
+          "confidence": 0.9583393931388855,
+          "source": [
+            777.1551513671875,
+            367.56689453125
+          ],
+          "depth_m": 0.22247045055680612,
+          "base": [
+            -619.6522707442608,
+            -119.18390116123271,
+            -47.291
+          ],
+          "base_angle": 71.59569213284658,
+          "pose": [
+            -526.0033569335938,
+            -118.9641342163086,
+            234.8607177734375,
+            179.9983367919922,
+            -0.002448556711897254,
+            89.99934387207031
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 11.313975868898893,
+            "axis_ratio": 1.5173855029847294,
+            "colour_center_offset_px": 1.969242102560758,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              27.0,
+              29.0
+            ],
+            "terminal_pixel_counts": [
+              414,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            895.2666625976562,
+            250.30960083007812
+          ],
+          "angle": 15.077342094622026,
+          "obb_angle_diagnostic": 3.1127548217773438,
+          "confidence": 0.9592621326446533,
+          "source": [
+            777.1629028320312,
+            367.28143310546875
+          ],
+          "depth_m": 0.22247267900872864,
+          "base": [
+            -619.7229958859998,
+            -119.180467499508,
+            -47.291
+          ],
+          "base_angle": 65.57333923319409,
+          "pose": [
+            -526.0037841796875,
+            -118.9621353149414,
+            234.8607177734375,
+            179.9983367919922,
+            -0.002448556711897254,
+            89.99913024902344
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 15.077342094622026,
+            "axis_ratio": 1.5668101960584724,
+            "colour_center_offset_px": 2.729261840611092,
+            "body_core_saturation_median": 88.0,
+            "terminal_saturation_medians": [
+              28.0,
+              27.0
+            ],
+            "terminal_pixel_counts": [
+              414,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            895.1825561523438,
+            250.66143798828125
+          ],
+          "angle": 17.62781389798735,
+          "obb_angle_diagnostic": 7.202033996582031,
+          "confidence": 0.9556764960289001,
+          "source": [
+            777.1348876953125,
+            367.47772216796875
+          ],
+          "depth_m": 0.22246846584892493,
+          "base": [
+            -619.6702582957947,
+            -119.18975570600216,
+            -47.291
+          ],
+          "base_angle": 61.68611790124067,
+          "pose": [
+            -526.001708984375,
+            -118.96408081054688,
+            234.8587188720703,
+            179.99790954589844,
+            -0.0024627407547086477,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 17.62781389798735,
+            "axis_ratio": 1.5034613252349458,
+            "colour_center_offset_px": 1.6068839958638723,
+            "body_core_saturation_median": 90.0,
+            "terminal_saturation_medians": [
+              29.0,
+              26.0
+            ],
+            "terminal_pixel_counts": [
+              414,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            895.03076171875,
+            250.7553253173828
+          ],
+          "angle": 11.086379366128455,
+          "obb_angle_diagnostic": 6.4425201416015625,
+          "confidence": 0.9542862176895142,
+          "source": [
+            777.0864868164062,
+            367.5302429199219
+          ],
+          "depth_m": 0.2224684271284398,
+          "base": [
+            -619.6601608599623,
+            -119.20118366588915,
+            -47.291
+          ],
+          "base_angle": 71.97000377293038,
+          "pose": [
+            -526.003662109375,
+            -118.96414947509766,
+            234.85870361328125,
+            179.9981231689453,
+            -0.002455652691423893,
+            89.99934387207031
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 11.086379366128455,
+            "axis_ratio": 1.55811073619377,
+            "colour_center_offset_px": 1.4114147369618217,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              25.0,
+              28.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              414
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            895.913330078125,
+            250.39013671875
+          ],
+          "angle": 14.798762987770061,
+          "obb_angle_diagnostic": 4.706016540527344,
+          "confidence": 0.9533299803733826,
+          "source": [
+            777.3670654296875,
+            367.32574462890625
+          ],
+          "depth_m": 0.2224698063887497,
+          "base": [
+            -619.7116090652645,
+            -119.13287968121702,
+            -47.291
+          ],
+          "base_angle": 66.00828761708911,
+          "pose": [
+            -526.003662109375,
+            -118.96414947509766,
+            234.85870361328125,
+            179.9981231689453,
+            -0.002455652691423893,
+            89.99934387207031
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 14.798762987770061,
+            "axis_ratio": 1.4431895902802068,
+            "colour_center_offset_px": 2.7758713965936876,
+            "body_core_saturation_median": 88.0,
+            "terminal_saturation_medians": [
+              28.0,
+              29.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            894.4156494140625,
+            250.88189697265625
+          ],
+          "angle": 13.847420785374425,
+          "obb_angle_diagnostic": 6.2113037109375,
+          "confidence": 0.9550436735153198,
+          "source": [
+            776.8914184570312,
+            367.6014099121094
+          ],
+          "depth_m": 0.2224727528524853,
+          "base": [
+            -619.6435274638591,
+            -119.24860598686313,
+            -47.291
+          ],
+          "base_angle": 67.50473712639344,
+          "pose": [
+            -526.0029907226562,
+            -118.96412658691406,
+            234.86273193359375,
+            179.99855041503906,
+            -0.0024414551444351673,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 13.847420785374425,
+            "axis_ratio": 1.5516915441507182,
+            "colour_center_offset_px": 1.9058008581718135,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              26.0,
+              29.0
+            ],
+            "terminal_pixel_counts": [
+              419,
+              419
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            894.9796142578125,
+            250.7572021484375
+          ],
+          "angle": 8.152945874057082,
+          "obb_angle_diagnostic": 9.767745971679688,
+          "confidence": 0.9542218446731567,
+          "source": [
+            777.0703125,
+            367.5313415527344
+          ],
+          "depth_m": 0.22246884346428714,
+          "base": [
+            -619.6582591696678,
+            -119.20503742801507,
+            -47.291
+          ],
+          "base_angle": 76.88379052773875,
+          "pose": [
+            -526.0020751953125,
+            -118.96409606933594,
+            234.85911560058594,
+            179.9981231689453,
+            -0.002455652691423893,
+            89.99934387207031
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 8.152945874057082,
+            "axis_ratio": 1.6227036563276536,
+            "colour_center_offset_px": 0.9038320057054765,
+            "body_core_saturation_median": 87.0,
+            "terminal_saturation_medians": [
+              26.0,
+              29.0
+            ],
+            "terminal_pixel_counts": [
+              418,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            896.3216552734375,
+            250.2969970703125
+          ],
+          "angle": 7.929181242195142,
+          "obb_angle_diagnostic": 4.3307952880859375,
+          "confidence": 0.956010639667511,
+          "source": [
+            777.49658203125,
+            367.2734069824219
+          ],
+          "depth_m": 0.22247247862840158,
+          "base": [
+            -619.7253759185902,
+            -119.10362545208204,
+            -47.291
+          ],
+          "base_angle": 77.26597836866374,
+          "pose": [
+            -526.0028686523438,
+            -118.96613311767578,
+            234.8607177734375,
+            179.9983367919922,
+            -0.0024485504254698753,
+            89.9997787475586
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 7.929181242195142,
+            "axis_ratio": 1.5271783037417395,
+            "colour_center_offset_px": 2.0371229332629066,
+            "body_core_saturation_median": 91.0,
+            "terminal_saturation_medians": [
+              25.0,
+              29.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              414
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            894.7626953125,
+            251.02261352539062
+          ],
+          "angle": 11.877444224465023,
+          "obb_angle_diagnostic": 5.121971130371094,
+          "confidence": 0.9550281167030334,
+          "source": [
+            777.0006103515625,
+            367.6795654296875
+          ],
+          "depth_m": 0.22247091177060757,
+          "base": [
+            -619.6248366448491,
+            -119.22173847304462,
+            -47.291
+          ],
+          "base_angle": 70.673393399079,
+          "pose": [
+            -526.0042114257812,
+            -118.96416473388672,
+            234.8619384765625,
+            179.9983367919922,
+            -0.0024485504254698753,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 11.877444224465023,
+            "axis_ratio": 1.6192590062578345,
+            "colour_center_offset_px": 1.1142315653434678,
+            "body_core_saturation_median": 84.0,
+            "terminal_saturation_medians": [
+              27.0,
+              29.0
+            ],
+            "terminal_pixel_counts": [
+              418,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            895.0328979492188,
+            250.60333251953125
+          ],
+          "angle": 11.709307528333454,
+          "obb_angle_diagnostic": 6.635520935058594,
+          "confidence": 0.9562027454376221,
+          "source": [
+            777.0877685546875,
+            367.4454650878906
+          ],
+          "depth_m": 0.2224714551551493,
+          "base": [
+            -619.6818317199065,
+            -119.20260035065161,
+            -47.291
+          ],
+          "base_angle": 70.94871909572959,
+          "pose": [
+            -526.0032958984375,
+            -118.96450805664062,
+            234.8607177734375,
+            179.9983367919922,
+            -0.002231115009635687,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 11.709307528333454,
+            "axis_ratio": 1.6061941549114533,
+            "colour_center_offset_px": 1.3233517018593486,
+            "body_core_saturation_median": 89.0,
+            "terminal_saturation_medians": [
+              27.0,
+              28.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              417
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            895.4108276367188,
+            251.01620483398438
+          ],
+          "angle": 12.862505119147897,
+          "obb_angle_diagnostic": 2.738006591796875,
+          "confidence": 0.956951916217804,
+          "source": [
+            777.2056274414062,
+            367.6753845214844
+          ],
+          "depth_m": 0.22247029320473327,
+          "base": [
+            -619.6267293007464,
+            -119.17529991873421,
+            -47.291
+          ],
+          "base_angle": 69.0786373431383,
+          "pose": [
+            -526.0032348632812,
+            -118.96652221679688,
+            234.86109924316406,
+            179.99855041503906,
+            -0.002224019728600979,
+            89.9997787475586
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 12.862505119147897,
+            "axis_ratio": 1.482170374354988,
+            "colour_center_offset_px": 1.851503814806079,
+            "body_core_saturation_median": 85.5,
+            "terminal_saturation_medians": [
+              26.0,
+              29.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              417
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            895.5645751953125,
+            250.53512573242188
+          ],
+          "angle": 16.140750758377948,
+          "obb_angle_diagnostic": 4.336509704589844,
+          "confidence": 0.9556729793548584,
+          "source": [
+            777.2562255859375,
+            367.40692138671875
+          ],
+          "depth_m": 0.22246923424122245,
+          "base": [
+            -619.6911113410756,
+            -119.16167110648234,
+            -47.291
+          ],
+          "base_angle": 63.93275044911926,
+          "pose": [
+            -526.003662109375,
+            -118.96452331542969,
+            234.85870361328125,
+            179.99810791015625,
+            -0.002238210290670395,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 16.140750758377948,
+            "axis_ratio": 1.532463075345721,
+            "colour_center_offset_px": 1.8435684068370033,
+            "body_core_saturation_median": 84.0,
+            "terminal_saturation_medians": [
+              27.0,
+              28.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            895.0430908203125,
+            250.88424682617188
+          ],
+          "angle": 13.66661154295275,
+          "obb_angle_diagnostic": 5.258445739746094,
+          "confidence": 0.9574289917945862,
+          "source": [
+            777.08984375,
+            367.6021423339844
+          ],
+          "depth_m": 0.22247022616405215,
+          "base": [
+            -619.6433349892353,
+            -119.20019734379991,
+            -47.291
+          ],
+          "base_angle": 67.79227309391807,
+          "pose": [
+            -526.0033569335938,
+            -118.9641342163086,
+            234.8607177734375,
+            179.9983367919922,
+            -0.0024485504254698753,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 13.66661154295275,
+            "axis_ratio": 1.5307317663174438,
+            "colour_center_offset_px": 1.5197291923760647,
+            "body_core_saturation_median": 84.0,
+            "terminal_saturation_medians": [
+              26.0,
+              27.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            895.91162109375,
+            250.29953002929688
+          ],
+          "angle": 13.603010964402756,
+          "obb_angle_diagnostic": 5.2358245849609375,
+          "confidence": 0.9549501538276672,
+          "source": [
+            777.3668823242188,
+            367.27520751953125
+          ],
+          "depth_m": 0.2224741850524554,
+          "base": [
+            -619.7242529895863,
+            -119.13286035089153,
+            -47.291
+          ],
+          "base_angle": 67.89484382711998,
+          "pose": [
+            -526.0026245117188,
+            -118.964111328125,
+            234.86233520507812,
+            179.9983367919922,
+            -0.0024485504254698753,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 13.603010964402756,
+            "axis_ratio": 1.546403116856864,
+            "colour_center_offset_px": 2.3992253933706573,
+            "body_core_saturation_median": 89.0,
+            "terminal_saturation_medians": [
+              27.0,
+              28.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            895.4290161132812,
+            250.74847412109375
+          ],
+          "angle": 14.32678512321732,
+          "obb_angle_diagnostic": 4.828346252441406,
+          "confidence": 0.9542732834815979,
+          "source": [
+            777.2124633789062,
+            367.5260314941406
+          ],
+          "depth_m": 0.22246999418207733,
+          "base": [
+            -619.6610413402202,
+            -119.17037072496396,
+            -47.291
+          ],
+          "base_angle": 66.74798408184724,
+          "pose": [
+            -526.0029296875,
+            -118.96412658691406,
+            234.86033630371094,
+            179.9981231689453,
+            -0.0024556454736739397,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 14.32678512321732,
+            "axis_ratio": 1.5259636019622893,
+            "colour_center_offset_px": 2.1276797154796334,
+            "body_core_saturation_median": 86.0,
+            "terminal_saturation_medians": [
+              28.0,
+              28.0
+            ],
+            "terminal_pixel_counts": [
+              418,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            894.17138671875,
+            250.54995727539062
+          ],
+          "angle": 12.86764453069776,
+          "obb_angle_diagnostic": 11.178230285644531,
+          "confidence": 0.9522059559822083,
+          "source": [
+            776.8154907226562,
+            367.4165344238281
+          ],
+          "depth_m": 0.2224718954925221,
+          "base": [
+            -619.6874469268681,
+            -119.27008627770309,
+            -47.291
+          ],
+          "base_angle": 69.07047985533599,
+          "pose": [
+            -526.0028686523438,
+            -118.96613311767578,
+            234.8607177734375,
+            179.9983367919922,
+            -0.002448556711897254,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 12.86764453069776,
+            "axis_ratio": 1.5759199922617473,
+            "colour_center_offset_px": 1.8421071052208149,
+            "body_core_saturation_median": 87.0,
+            "terminal_saturation_medians": [
+              29.0,
+              28.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              417
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            895.194091796875,
+            250.81842041015625
+          ],
+          "angle": 14.804516472290231,
+          "obb_angle_diagnostic": 9.095909118652344,
+          "confidence": 0.9508664011955261,
+          "source": [
+            777.1378784179688,
+            367.5652770996094
+          ],
+          "depth_m": 0.22247047684367025,
+          "base": [
+            -619.6521104958923,
+            -119.19085627874944,
+            -47.291
+          ],
+          "base_angle": 65.99839434036629,
+          "pose": [
+            -526.0028686523438,
+            -118.96613311767578,
+            234.8607177734375,
+            179.9983367919922,
+            -0.0024485504254698753,
+            89.9997787475586
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 14.804516472290231,
+            "axis_ratio": 1.5713379386518511,
+            "colour_center_offset_px": 1.4645698798393783,
+            "body_core_saturation_median": 85.0,
+            "terminal_saturation_medians": [
+              29.0,
+              27.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            895.3905029296875,
+            250.982666015625
+          ],
+          "angle": 13.47891254295871,
+          "obb_angle_diagnostic": 8.839591979980469,
+          "confidence": 0.9536682367324829,
+          "source": [
+            777.1993408203125,
+            367.6567077636719
+          ],
+          "depth_m": 0.22246539610332186,
+          "base": [
+            -619.6270516850453,
+            -119.17367422416403,
+            -47.291
+          ],
+          "base_angle": 68.09114572649447,
+          "pose": [
+            -526.0023803710938,
+            -118.96410369873047,
+            234.8571014404297,
+            179.99790954589844,
+            -0.0024627407547086477,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 13.47891254295871,
+            "axis_ratio": 1.5225603424040033,
+            "colour_center_offset_px": 1.2686766871260735,
+            "body_core_saturation_median": 89.0,
+            "terminal_saturation_medians": [
+              28.0,
+              29.0
+            ],
+            "terminal_pixel_counts": [
+              416,
+              417
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            895.548095703125,
+            250.41073608398438
+          ],
+          "angle": 11.794216917084583,
+          "obb_angle_diagnostic": 2.1490097045898438,
+          "confidence": 0.9585723876953125,
+          "source": [
+            777.25146484375,
+            367.3375549316406
+          ],
+          "depth_m": 0.2224702173217821,
+          "base": [
+            -619.7066760314403,
+            -119.16147875059247,
+            -47.291
+          ],
+          "base_angle": 70.81026131301454,
+          "pose": [
+            -526.0020751953125,
+            -118.96409606933594,
+            234.85911560058594,
+            179.9981231689453,
+            -0.0024556454736739397,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 11.794216917084583,
+            "axis_ratio": 1.525549275390698,
+            "colour_center_offset_px": 2.1368157009280884,
+            "body_core_saturation_median": 88.0,
+            "terminal_saturation_medians": [
+              26.0,
+              29.0
+            ],
+            "terminal_pixel_counts": [
+              414,
+              417
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            894.97705078125,
+            250.67349243164062
+          ],
+          "angle": 11.976600691113646,
+          "obb_angle_diagnostic": 8.067230224609375,
+          "confidence": 0.9540524482727051,
+          "source": [
+            777.06982421875,
+            367.4846496582031
+          ],
+          "depth_m": 0.22247043058259602,
+          "base": [
+            -619.6706622192141,
+            -119.2055084861564,
+            -47.291
+          ],
+          "base_angle": 70.51253827596202,
+          "pose": [
+            -526.0029296875,
+            -118.96412658691406,
+            234.86033630371094,
+            179.9981231689453,
+            -0.0024556454736739397,
+            89.99956512451172
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 11.976600691113646,
+            "axis_ratio": 1.556783367351591,
+            "colour_center_offset_px": 1.021731225762203,
+            "body_core_saturation_median": 92.0,
+            "terminal_saturation_medians": [
+              27.0,
+              29.0
+            ],
+            "terminal_pixel_counts": [
+              415,
+              416
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        },
+        {
+          "center": [
+            895.18603515625,
+            250.54379272460938
+          ],
+          "angle": 11.493519554729176,
+          "obb_angle_diagnostic": 6.029182434082031,
+          "confidence": 0.9557828903198242,
+          "source": [
+            777.1364135742188,
+            367.412109375
+          ],
+          "depth_m": 0.22247439995416493,
+          "base": [
+            -619.6937642066941,
+            -119.18994622348959,
+            -47.291
+          ],
+          "base_angle": 71.30211144763804,
+          "pose": [
+            -526.0045166015625,
+            -118.96581268310547,
+            234.8627166748047,
+            179.998779296875,
+            -0.0026517952792346478,
+            89.9997787475586
+          ],
+          "inliers": 0,
+          "terminal_axis": {
+            "angle_canonical_deg": 11.493519554729176,
+            "axis_ratio": 1.5265588687925489,
+            "colour_center_offset_px": 1.0457274537107197,
+            "body_core_saturation_median": 91.0,
+            "terminal_saturation_medians": [
+              25.0,
+              29.0
+            ],
+            "terminal_pixel_counts": [
+              420,
+              415
+            ],
+            "method": "two_white_terminals_colour_weighted_axis"
+          }
+        }
+      ],
+      "set_index": 1,
+      "physical_instance_index": 5
+    }
+  ]
+}

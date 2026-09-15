@@ -1,0 +1,40 @@
+{
+  "slot_code": "VRM-04",
+  "source_record": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/vrm04_run_20260906.json",
+  "plan_sha256": "170ab10e14ef7ef8d6f661db8e2f168f5f4df512d04ac7cb0cabf32a9e9eccf7",
+  "operator_confirmed_held": true,
+  "part_held_candidate": false,
+  "physical_placement_verified": false,
+  "status": "motion_complete_awaiting_physical_verification",
+  "start_tcp": [
+    -527.9959716796875,
+    -60.956565856933594,
+    337.87835693359375,
+    179.9998016357422,
+    0.00023460442025680095,
+    89.99956512451172
+  ],
+  "preflight": {
+    "passed": true,
+    "waypoints": 9,
+    "minimum_joint_soft_limit_margin_deg": 42.984222,
+    "maximum_joint_step_deg": 31.491066999999997,
+    "minimum_j6_deg": -14.821294,
+    "maximum_j6_deg": -4.688226,
+    "j6_operational_bounds_deg": [
+      -178.0,
+      178.0
+    ]
+  },
+  "last_waypoint": "post_release_lift_100mm_vertical",
+  "release_feedback_settled": true,
+  "last_tcp": [
+    -16.640539169311523,
+    -498.35296630859375,
+    187.2727508544922,
+    179.98338317871094,
+    0.004367446061223745,
+    -179.25271606445312
+  ],
+  "completed_unix": 1788675990.1635973
+}

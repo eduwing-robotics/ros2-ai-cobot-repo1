@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "timestamp_unix": 1788086832.148056,
+  "mode": "power_module_visual_alignment_target",
+  "part_type": "long_orange",
+  "instance_index": 1,
+  "part_center_base_mm": [-750.303, -74.367, -45.812],
+  "long_axis_angle_base_deg": 175.181,
+  "source_detection_base_mm": [-747.753, -72.317, -45.812],
+  "initial_center_correction_base_mm": [-2.550, -2.050],
+  "robot_motion_authorized": false
+}

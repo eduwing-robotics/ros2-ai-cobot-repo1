@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "timestamp_unix": 1788259826.8033736,
+  "frame_id": "base",
+  "target_slot": "HBM-02",
+  "position_base_m": [
+    0.019976513334571195,
+    -0.5098660143353532,
+    0.09032714538574219
+  ],
+  "position_base_mm": [
+    19.976513334571194,
+    -509.86601433535316,
+    90.32714538574218
+  ],
+  "orientation_xyzw": [
+    -7.044841501836618e-10,
+    0.9999999992371111,
+    3.2490565285566704e-05,
+    2.1682731731094628e-05
+  ],
+  "frames": 20,
+  "jitter_median_mm": 0.0,
+  "jitter_max_mm": 0.0,
+  "robot_motion_sent": false
+}

@@ -1,0 +1,163 @@
+{
+  "model": "/home/juchan-yoon/FR5_robot_control/vision_assembly/models/smd_obb/pilot_03/weights/best.pt",
+  "frames": 8,
+  "all_frames_detect_10": true,
+  "mean_angle_error_deg": 2.723,
+  "max_angle_error_deg": 10.927,
+  "limit_deg": 5.0,
+  "passed": false,
+  "records": [
+    {
+      "frame": "frame_01_v00.jpg",
+      "split": "val",
+      "detection_count": 10,
+      "angle_errors_deg": [
+        0.308,
+        10.737,
+        2.457,
+        6.617,
+        1.786,
+        6.725,
+        0.162,
+        1.489,
+        0.391,
+        1.305
+      ],
+      "max_angle_error_deg": 10.737,
+      "mean_angle_error_deg": 3.198
+    },
+    {
+      "frame": "frame_02_v00.jpg",
+      "split": "val",
+      "detection_count": 10,
+      "angle_errors_deg": [
+        0.827,
+        9.655,
+        0.8,
+        6.701,
+        0.272,
+        2.062,
+        2.441,
+        0.357,
+        0.554,
+        0.13
+      ],
+      "max_angle_error_deg": 9.655,
+      "mean_angle_error_deg": 2.38
+    },
+    {
+      "frame": "frame_03_v00.jpg",
+      "split": "train",
+      "detection_count": 10,
+      "angle_errors_deg": [
+        1.034,
+        8.012,
+        0.81,
+        6.185,
+        0.534,
+        1.78,
+        0.497,
+        0.579,
+        0.343,
+        0.066
+      ],
+      "max_angle_error_deg": 8.012,
+      "mean_angle_error_deg": 1.984
+    },
+    {
+      "frame": "frame_04_v00.jpg",
+      "split": "train",
+      "detection_count": 10,
+      "angle_errors_deg": [
+        0.158,
+        8.893,
+        1.662,
+        7.223,
+        1.358,
+        5.596,
+        0.259,
+        1.76,
+        0.798,
+        1.371
+      ],
+      "max_angle_error_deg": 8.893,
+      "mean_angle_error_deg": 2.908
+    },
+    {
+      "frame": "frame_05_v00.jpg",
+      "split": "train",
+      "detection_count": 10,
+      "angle_errors_deg": [
+        0.106,
+        10.927,
+        0.833,
+        6.351,
+        0.428,
+        2.432,
+        1.271,
+        0.28,
+        0.02,
+        0.065
+      ],
+      "max_angle_error_deg": 10.927,
+      "mean_angle_error_deg": 2.271
+    },
+    {
+      "frame": "frame_06_v00.jpg",
+      "split": "train",
+      "detection_count": 10,
+      "angle_errors_deg": [
+        1.039,
+        8.413,
+        3.168,
+        8.339,
+        0.687,
+        4.136,
+        2.26,
+        0.996,
+        0.46,
+        0.732
+      ],
+      "max_angle_error_deg": 8.413,
+      "mean_angle_error_deg": 3.023
+    },
+    {
+      "frame": "frame_07_v00.jpg",
+      "split": "train",
+      "detection_count": 10,
+      "angle_errors_deg": [
+        0.428,
+        10.402,
+        1.884,
+        9.071,
+        1.343,
+        4.715,
+        0.657,
+        1.53,
+        0.088,
+        1.982
+      ],
+      "max_angle_error_deg": 10.402,
+      "mean_angle_error_deg": 3.21
+    },
+    {
+      "frame": "frame_08_v00.jpg",
+      "split": "train",
+      "detection_count": 10,
+      "angle_errors_deg": [
+        1.254,
+        10.12,
+        1.721,
+        7.781,
+        0.035,
+        3.012,
+        2.092,
+        1.273,
+        0.182,
+        0.623
+      ],
+      "max_angle_error_deg": 10.12,
+      "mean_angle_error_deg": 2.809
+    }
+  ]
+}

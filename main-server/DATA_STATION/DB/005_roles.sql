@@ -1,0 +1,108 @@
+BEGIN;
+
+-- Application credentials are created outside this repository. These NOLOGIN
+-- roles only define the privileges granted to those deployment-specific users.
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'job_submitter') THEN
+        CREATE ROLE job_submitter NOLOGIN;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'production_writer') THEN
+        CREATE ROLE production_writer NOLOGIN;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'datastation_reader') THEN
+        CREATE ROLE datastation_reader NOLOGIN;
+    END IF;
+END
+$$;
+
+ALTER ROLE job_submitter
+    NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
+ALTER ROLE production_writer
+    NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
+ALTER ROLE datastation_reader
+    NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
+
+-- Custom schemas and their objects must never inherit access through PUBLIC.
+REVOKE ALL ON SCHEMA production FROM PUBLIC;
+REVOKE ALL ON ALL TABLES IN SCHEMA production
+    FROM PUBLIC;
+REVOKE ALL ON ALL SEQUENCES IN SCHEMA production
+    FROM PUBLIC;
+REVOKE ALL ON ALL FUNCTIONS IN SCHEMA production
+    FROM PUBLIC;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA production
+    REVOKE ALL ON TABLES FROM PUBLIC;
+ALTER DEFAULT PRIVILEGES IN SCHEMA production
+    REVOKE ALL ON SEQUENCES FROM PUBLIC;
+ALTER DEFAULT PRIVILEGES IN SCHEMA production
+    REVOKE ALL ON FUNCTIONS FROM PUBLIC;
+
+-- Reset group roles before applying the intended least-privilege matrix.
+REVOKE ALL ON SCHEMA production
+    FROM job_submitter, production_writer, datastation_reader;
+REVOKE ALL ON ALL TABLES IN SCHEMA production
+    FROM job_submitter, production_writer, datastation_reader;
+REVOKE ALL ON ALL SEQUENCES IN SCHEMA production
+    FROM job_submitter, production_writer, datastation_reader;
+REVOKE ALL ON ALL FUNCTIONS IN SCHEMA production
+    FROM job_submitter, production_writer, datastation_reader;
+
+-- MainServer may submit/read Jobs and invoke the single pre-claim withdrawal boundary.
+GRANT USAGE ON SCHEMA production TO job_submitter;
+-- Both application roles can read all production facts; writes remain separated.
+GRANT SELECT ON ALL TABLES IN SCHEMA production TO job_submitter;
+GRANT INSERT (job_id, product_id, requested_quantity, recipe_version, requested_by)
+    ON production.jobs TO job_submitter;
+GRANT EXECUTE ON FUNCTION production.cancel_pending_job(uuid)
+    TO job_submitter;
+GRANT UPDATE (
+    delivery_status,
+    attempt_count,
+    next_attempt_at,
+    claimed_at,
+    sent_at,
+    message_id,
+    last_error
+) ON production.defect_report_deliveries TO job_submitter;
+
+-- Sequencer owns production execution writes. Reference definitions remain read-only.
+GRANT USAGE ON SCHEMA production TO production_writer;
+GRANT SELECT ON ALL TABLES IN SCHEMA production TO production_writer;
+GRANT INSERT ON
+    production.units,
+    production.unit_defects,
+    production.defect_report_deliveries,
+    production.inventory_movements
+    TO production_writer;
+GRANT USAGE ON SEQUENCE
+    production.units_unit_id_seq,
+    production.unit_defects_unit_defect_id_seq,
+    production.inventory_movements_inventory_movement_id_seq
+    TO production_writer;
+
+-- Only the documented lifecycle columns may change after insertion.
+GRANT UPDATE (stock_quantity)
+    ON production.parts TO production_writer;
+GRANT UPDATE (definition_locked_at)
+    ON production.products TO production_writer;
+GRANT UPDATE (job_status, job_started_at, job_finished_at)
+    ON production.jobs TO production_writer;
+GRANT UPDATE (
+    unit_status,
+    inspection_result,
+    inspection_image_path,
+    assembly_completed_at,
+    inspected_at
+) ON production.units TO production_writer;
+
+-- DataStation can query production but cannot mutate any of them.
+GRANT USAGE ON SCHEMA production
+    TO datastation_reader;
+GRANT SELECT ON ALL TABLES IN SCHEMA production
+    TO datastation_reader;
+
+COMMIT;

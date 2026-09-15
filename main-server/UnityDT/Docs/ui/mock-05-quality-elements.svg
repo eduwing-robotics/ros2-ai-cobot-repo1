@@ -1,0 +1,265 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1220" viewBox="0 0 1920 1220" role="img" aria-labelledby="t d">
+  <title id="t">QUALITY 표현 요소 정의</title>
+  <desc id="d">QUALITY 페이지가 쓰는 그래프·행·스프라이트·빈 상태의 해부도와 상태 변화, 각 요소가 어느 조회 필드에서 나오는지의 대응표.</desc>
+
+  <defs>
+    <style>
+      text { font-family: Inter, Pretendard, "Noto Sans CJK KR", "Noto Sans KR", system-ui, sans-serif; font-variant-numeric:tabular-nums; text-rendering:geometricPrecision; }
+      svg { shape-rendering:geometricPrecision; }
+      .lb  { fill:#93a5b2; font-size:14px; letter-spacing:1.4px; font-weight:700 }
+      .hd  { fill:#8494a0; font-size:10px; letter-spacing:1.2px; font-weight:700 }
+      .bd  { fill:#e2ecf1; font-size:15px }
+      .mu  { fill:#8494a0; font-size:13px }
+      .dim { fill:#64707a; font-size:12px }
+      .src { fill:#64707a; font-size:11px; font-family: ui-monospace, "SF Mono", Menlo, monospace }
+      .ann { fill:#facc33; font-size:11px; font-weight:700; letter-spacing:.6px }
+      .warn { fill:#f6ad37 } .bad { fill:#f0475a }
+    </style>
+  </defs>
+
+  <rect width="1920" height="1220" fill="#070b10"/>
+
+  <rect x="136" y="56" width="3" height="30" fill="#facc33"/>
+  <text x="156" y="72" fill="#e2ecf1" font-size="24" font-weight="800" letter-spacing="1.2">QUALITY · 표현 요소 정의</text>
+  <text x="156" y="94" class="mu">각 요소는 실제 조회 필드 하나에 대응한다. 대응이 없는 요소는 정의만 두고 화면에 그리지 않는다.</text>
+  <text x="1872" y="72" text-anchor="end" class="dim">FR5Theme.uss · FR5EmptyState.cs 규약</text>
+  <text x="1872" y="94" text-anchor="end" class="dim">mock-05-quality-v2.svg 와 같은 어휘</text>
+  <line x1="136" y1="118" x2="1872" y2="118" stroke="#ffffff" stroke-opacity=".10"/>
+
+  <!-- A. 비율 막대 -->
+  <rect x="136" y="150" width="560" height="300" fill="#0a0f14"/>
+  <rect x="136" y="150" width="3" height="300" fill="#facc33"/>
+  <text x="156" y="178" class="lb">A · 비율 막대</text>
+  <text x="156" y="198" class="dim">.gauge / .gauge__fill — 이미 FR5Theme.uss:215 에 있다</text>
+
+  <text x="156" y="232" class="hd">해부</text>
+  <rect x="156" y="244" width="400" height="8" rx="4" fill="#ffffff" fill-opacity=".06"/>
+  <rect x="156" y="244" width="160" height="8" rx="4" fill="#e2ecf1" fill-opacity=".9"/>
+  <line x1="156" y1="262" x2="156" y2="272" stroke="#facc33" stroke-opacity=".7"/>
+  <line x1="316" y1="262" x2="316" y2="272" stroke="#facc33" stroke-opacity=".7"/>
+  <line x1="556" y1="262" x2="556" y2="272" stroke="#facc33" stroke-opacity=".7"/>
+  <text x="156" y="286" class="ann">0</text>
+  <text x="316" y="286" text-anchor="middle" class="ann">값</text>
+  <text x="556" y="286" text-anchor="end" class="ann">축 최대</text>
+  <text x="156" y="308" class="dim">채움 = 값 / 축최대 × 트랙폭. 트랙은 항상 끝까지 그린다 —</text>
+  <text x="156" y="326" class="dim">트랙이 없으면 "작은 값"과 "값 없음"이 같아 보인다.</text>
+
+  <text x="156" y="358" class="hd">상태</text>
+  <rect x="156" y="370" width="200" height="6" rx="3" fill="#ffffff" fill-opacity=".04"/>
+  <circle cx="159" cy="373" r="3" fill="#64707a"/>
+  <text x="376" y="378" class="dim">0.00% — 채움 없음, 점 하나</text>
+  <rect x="156" y="394" width="200" height="6" rx="3" fill="#ffffff" fill-opacity=".06"/>
+  <rect x="156" y="394" width="72" height="6" rx="3" fill="#e2ecf1" fill-opacity=".8"/>
+  <text x="376" y="402" class="dim">값 있음 — 무채색 (임계 미연결)</text>
+  <rect x="156" y="418" width="200" height="6" rx="3" fill="#ffffff" fill-opacity=".06"/>
+  <rect x="156" y="418" width="150" height="6" rx="3" fill="#f0475a" fill-opacity=".85"/>
+  <text x="376" y="426" class="dim bad">임계 초과 — thresholds 연결 후에만</text>
+
+  <!-- B. 계층 행 -->
+  <rect x="724" y="150" width="560" height="300" fill="#0a0f14"/>
+  <rect x="724" y="150" width="3" height="300" fill="#facc33"/>
+  <text x="744" y="178" class="lb">B · 계층 행 3종</text>
+  <text x="744" y="198" class="dim">product_slots 의 부품 1 : 슬롯 N 을 들여쓰기로 표현</text>
+
+  <text x="744" y="232" class="hd">부모 · 부품</text>
+  <rect x="744" y="242" width="520" height="34" fill="#ffffff" fill-opacity=".04"/>
+  <text x="752" y="264" fill="#8494a0" font-size="12">▾</text>
+  <rect x="768" y="248" width="22" height="22" rx="4" fill="#ffffff" fill-opacity=".06"/>
+  <image href="../../Assets/UI/Icons/item-pm.png" x="768" y="248" width="22" height="22" preserveAspectRatio="xMidYMid meet"/>
+  <text x="800" y="264" fill="#e2ecf1" font-size="15" font-weight="700">PM</text>
+  <text x="880" y="264" class="dim">슬롯 4</text>
+  <text x="990" y="264" text-anchor="end" class="mu" font-size="12">1 / 16</text>
+  <rect x="1004" y="255" width="150" height="7" rx="3.5" fill="#ffffff" fill-opacity=".06"/>
+  <rect x="1004" y="255" width="38" height="7" rx="3.5" fill="#e2ecf1" fill-opacity=".9"/>
+  <text x="1256" y="265" text-anchor="end" fill="#e2ecf1" font-size="17" font-weight="700">6.25%</text>
+  <text x="744" y="294" class="dim">굵은 이름 · 두꺼운 막대(8px) · 스프라이트. 값은 자식의 합.</text>
+
+  <text x="744" y="324" class="hd">자식 · 슬롯</text>
+  <rect x="808" y="334" width="2" height="30" fill="#ffffff" fill-opacity=".10"/>
+  <text x="824" y="354" class="bd" font-size="14">PM-01</text>
+  <text x="990" y="354" text-anchor="end" class="mu" font-size="12">1 / 4</text>
+  <rect x="1004" y="347" width="150" height="6" rx="3" fill="#ffffff" fill-opacity=".06"/>
+  <rect x="1004" y="347" width="150" height="6" rx="3" fill="#e2ecf1" fill-opacity=".75"/>
+  <text x="1256" y="355" text-anchor="end" class="bd" font-size="15">25.00%</text>
+  <text x="744" y="382" class="dim">얇은 막대(6px) · 세로 계보선 · 부모와 같은 축을 쓴다.</text>
+
+  <text x="744" y="412" class="hd">정상 접기</text>
+  <rect x="808" y="422" width="2" height="26" fill="#ffffff" fill-opacity=".10"/>
+  <text x="824" y="440" class="dim" font-size="13">정상 슬롯 3</text>
+  <text x="990" y="440" text-anchor="end" class="dim" font-size="12">0 / 12</text>
+  <rect x="1004" y="433" width="150" height="6" rx="3" fill="#ffffff" fill-opacity=".04"/>
+  <circle cx="1007" cy="436" r="3" fill="#64707a"/>
+  <text x="1256" y="441" text-anchor="end" class="dim" font-size="14">0.00%</text>
+
+  <!-- C. 색 규칙 -->
+  <rect x="1312" y="150" width="560" height="300" fill="#0a0f14"/>
+  <rect x="1312" y="150" width="3" height="300" fill="#facc33"/>
+  <text x="1332" y="178" class="lb">C · 색 규칙</text>
+  <text x="1332" y="198" class="dim">정상에는 색을 주지 않는다 (FR5Theme.uss 머리말)</text>
+
+  <rect x="1332" y="220" width="28" height="14" fill="#8fa6b4"/>
+  <text x="1376" y="232" class="bd" font-size="14">--c-ok</text>
+  <text x="1560" y="232" class="dim">정상 · 기본값. 초록이 아니다.</text>
+  <rect x="1332" y="252" width="28" height="14" fill="#f6ad37"/>
+  <text x="1376" y="264" class="bd" font-size="14">--c-warn</text>
+  <text x="1560" y="264" class="dim">임계 접근. thresholds 필요.</text>
+  <rect x="1332" y="284" width="28" height="14" fill="#f0475a"/>
+  <text x="1376" y="296" class="bd" font-size="14">--c-bad</text>
+  <text x="1560" y="296" class="dim">임계 초과. thresholds 필요.</text>
+  <rect x="1332" y="316" width="28" height="14" fill="#facc33"/>
+  <text x="1376" y="328" class="bd" font-size="14">--c-accent</text>
+  <text x="1560" y="328" class="dim">모드 · "지금 여기" 전용. 수치 금지.</text>
+  <rect x="1332" y="348" width="28" height="14" fill="#64707a"/>
+  <text x="1376" y="360" class="bd" font-size="14">--c-ink-4</text>
+  <text x="1560" y="360" class="dim">부재 · 미연결. 이상이 아니다.</text>
+
+  <line x1="1332" y1="382" x2="1852" y2="382" stroke="#ffffff" stroke-opacity=".08"/>
+  <text x="1332" y="406" class="dim">임계 조회가 없는 지금은 warn · bad 를 쓸 근거가 없다.</text>
+  <text x="1332" y="424" class="dim">그래서 v2 화면의 막대는 전부 무채색이고, 패널 머리에</text>
+  <text x="1332" y="442" class="dim">"임계 미연결 · 색 판정 보류"를 적어 이유를 밝힌다.</text>
+
+  <!-- D. 부품 스프라이트 -->
+  <rect x="136" y="478" width="560" height="300" fill="#0a0f14"/>
+  <rect x="136" y="478" width="3" height="300" fill="#facc33"/>
+  <text x="156" y="506" class="lb">D · 부품 스프라이트</text>
+  <text x="156" y="526" class="dim">Assets/UI/Icons/item-*.png — 이미 6종 모두 있다</text>
+
+  <rect x="156" y="546" width="44" height="44" rx="6" fill="#ffffff" fill-opacity=".05"/>
+  <image href="../../Assets/UI/Icons/item-hbm.png" x="158" y="548" width="40" height="40" preserveAspectRatio="xMidYMid meet"/>
+  <text x="178" y="606" text-anchor="middle" class="dim" font-size="11">HBM</text>
+  <rect x="240" y="546" width="44" height="44" rx="6" fill="#ffffff" fill-opacity=".05"/>
+  <image href="../../Assets/UI/Icons/item-pm.png" x="242" y="548" width="40" height="40" preserveAspectRatio="xMidYMid meet"/>
+  <text x="262" y="606" text-anchor="middle" class="dim" font-size="11">PM</text>
+  <rect x="324" y="546" width="44" height="44" rx="6" fill="#ffffff" fill-opacity=".05"/>
+  <image href="../../Assets/UI/Icons/item-gpu.png" x="326" y="548" width="40" height="40" preserveAspectRatio="xMidYMid meet"/>
+  <text x="346" y="606" text-anchor="middle" class="dim" font-size="11">GPU</text>
+  <rect x="408" y="546" width="44" height="44" rx="6" fill="#ffffff" fill-opacity=".05"/>
+  <image href="../../Assets/UI/Icons/item-cap.png" x="410" y="548" width="40" height="40" preserveAspectRatio="xMidYMid meet"/>
+  <text x="430" y="606" text-anchor="middle" class="dim" font-size="11">CAP</text>
+  <rect x="492" y="546" width="44" height="44" rx="6" fill="#ffffff" fill-opacity=".05"/>
+  <image href="../../Assets/UI/Icons/item-ind.png" x="494" y="548" width="40" height="40" preserveAspectRatio="xMidYMid meet"/>
+  <text x="514" y="606" text-anchor="middle" class="dim" font-size="11">IND</text>
+  <rect x="576" y="546" width="44" height="44" rx="6" fill="#ffffff" fill-opacity=".05"/>
+  <image href="../../Assets/UI/Icons/item-vrm.png" x="578" y="548" width="40" height="40" preserveAspectRatio="xMidYMid meet"/>
+  <text x="598" y="606" text-anchor="middle" class="dim" font-size="11">VRM</text>
+
+  <text x="156" y="642" class="dim">· tint 하지 않는다. 실물 렌더라 색을 덮으면 형태만 남는다.</text>
+  <text x="156" y="660" class="dim">· 스프라이트에 상태색을 얹지 않는다. 여기는 "무엇인가"만</text>
+  <text x="156" y="678" class="dim">  말하는 자리다. "얼마나 나쁜가"는 막대와 수치가 말한다.</text>
+  <text x="156" y="696" class="dim">· 규칙 없는 part_id 는 이니셜 글자가 남는다 (빈 칸 금지).</text>
+  <text x="156" y="726" class="src">FR5Theme.uss:364  .parttile__icon--hbm …</text>
+  <text x="156" y="746" class="src">part_id.ToLower() → .partrow__icon--{id}</text>
+  <text x="156" y="766" class="dim">부모 행에서 24×24, 이 정의표에서 40×40.</text>
+
+  <!-- E. 공통 축 -->
+  <rect x="724" y="478" width="560" height="300" fill="#0a0f14"/>
+  <rect x="724" y="478" width="3" height="300" fill="#facc33"/>
+  <text x="744" y="506" class="lb">E · 공통 축</text>
+  <text x="744" y="526" class="dim">부모와 자식이 같은 축을 쓴다 — 이것이 계층의 핵심</text>
+
+  <rect x="744" y="556" width="400" height="7" rx="3.5" fill="#ffffff" fill-opacity=".06"/>
+  <rect x="744" y="556" width="100" height="7" rx="3.5" fill="#e2ecf1" fill-opacity=".9"/>
+  <text x="1264" y="564" text-anchor="end" class="dim">PM 6.25%</text>
+  <rect x="744" y="580" width="400" height="6" rx="3" fill="#ffffff" fill-opacity=".06"/>
+  <rect x="744" y="580" width="400" height="6" rx="3" fill="#e2ecf1" fill-opacity=".75"/>
+  <text x="1264" y="588" text-anchor="end" class="dim">PM-01 25.00%</text>
+  <g stroke="#ffffff" stroke-opacity=".08">
+    <line x1="824" y1="548" x2="824" y2="596"/>
+    <line x1="904" y1="548" x2="904" y2="596"/>
+    <line x1="984" y1="548" x2="984" y2="596"/>
+    <line x1="1064" y1="548" x2="1064" y2="596"/>
+  </g>
+  <line x1="744" y1="602" x2="1144" y2="602" stroke="#ffffff" stroke-opacity=".14"/>
+  <g class="dim" font-size="11" text-anchor="middle">
+    <text x="744" y="620">0%</text><text x="824" y="620">5%</text><text x="904" y="620">10%</text>
+    <text x="984" y="620">15%</text><text x="1064" y="620">20%</text><text x="1144" y="620">25%</text>
+  </g>
+
+  <text x="744" y="656" class="hd">축 최대 정하는 법</text>
+  <text x="744" y="678" class="dim">모든 행(부모 + 자식)의 최댓값을 5% 단위로 올림한다.</text>
+  <text x="744" y="696" class="dim">행마다 축을 따로 잡으면 막대 길이가 서로 비교 불가능해진다 —</text>
+  <text x="744" y="714" class="dim">그러면 막대를 그리는 의미가 없다.</text>
+  <text x="744" y="742" class="warn" font-size="12">여기서 드러나는 것: PM 6.25% &gt; HBM 3.13% 인데 불량은 각 1건이다.</text>
+  <text x="744" y="760" class="dim">슬롯 수가 달라 분모가 다르기 때문 — 자식 행이 그 이유를 보여준다.</text>
+
+  <!-- F. 임계 눈금 -->
+  <rect x="1312" y="478" width="560" height="300" fill="#0a0f14"/>
+  <rect x="1312" y="478" width="3" height="300" fill="#facc33"/>
+  <text x="1332" y="506" class="lb">F · 임계 눈금</text>
+  <text x="1332" y="526" class="dim">정의만 두고 지금은 그리지 않는 요소</text>
+
+  <text x="1332" y="560" class="hd">연결되면 (예시)</text>
+  <rect x="1332" y="574" width="440" height="7" rx="3.5" fill="#ffffff" fill-opacity=".06"/>
+  <rect x="1332" y="574" width="300" height="7" rx="3.5" fill="#f0475a" fill-opacity=".85"/>
+  <line x1="1552" y1="568" x2="1552" y2="588" stroke="#f0475a" stroke-opacity=".9" stroke-width="1.5"/>
+  <text x="1552" y="604" text-anchor="middle" class="dim" font-size="11">임계</text>
+  <text x="1332" y="630" class="dim">트랙 위 세로선 한 줄. 넘은 막대만 색을 얻는다.</text>
+
+  <text x="1332" y="664" class="hd">지금 (미연결)</text>
+  <rect x="1332" y="678" width="440" height="7" rx="3.5" fill="#ffffff" fill-opacity=".06"/>
+  <rect x="1332" y="678" width="300" height="7" rx="3.5" fill="#e2ecf1" fill-opacity=".85"/>
+  <text x="1332" y="712" class="dim">눈금을 그리지 않고 막대는 무채색으로 둔다.</text>
+  <text x="1332" y="730" class="dim">임의의 임계값(0.30% 등)을 옛 목업에서 가져다 쓰면</text>
+  <text x="1332" y="748" class="dim">화면이 실측으로 오인된다 (FR5EmptyState 규칙 1).</text>
+  <text x="1332" y="768" class="src">defect_report.thresholds — 조회 계약 없음</text>
+
+  <!-- G. 머리 문장 -->
+  <rect x="136" y="806" width="560" height="300" fill="#0a0f14"/>
+  <rect x="136" y="806" width="3" height="300" fill="#facc33"/>
+  <text x="156" y="834" class="lb">G · 머리 문장</text>
+  <text x="156" y="854" class="dim">KPI 타일 4개를 문장 하나로 대체한다</text>
+
+  <text x="156" y="900" fill="#e2ecf1" font-size="21" font-weight="700">검사 <tspan font-weight="800">100</tspan>건 중 불량 <tspan font-weight="800">2</tspan>건</text>
+  <text x="156" y="924" fill="#e2ecf1" font-size="17">— PM-01 · HBM-01 각 1건</text>
+  <text x="156" y="946" class="dim" font-size="11">부품 6종 · 슬롯 25 · 검사 유닛 4대 · 전체 슬롯 불량률 2.00%</text>
+  <line x1="156" y1="966" x2="676" y2="966" stroke="#ffffff" stroke-opacity=".08"/>
+
+  <text x="156" y="992" class="hd">타일보다 나은 이유</text>
+  <text x="156" y="1014" class="dim">· 타일 3개(100 · 2 · 2.00%)는 같은 사실 하나였다. 2/100 = 2.00%.</text>
+  <text x="156" y="1032" class="dim">· 문장에는 주어가 있다 — 어느 슬롯인지까지 말한다.</text>
+  <text x="156" y="1050" class="dim">· 92px 밴드가 28px 두 줄이 된다. 차트가 그만큼 올라온다.</text>
+  <text x="156" y="1068" class="dim">· 전체 평균은 차트 축의 점선으로 옮겼다 — 비교할 곳 옆에 둔다.</text>
+  <text x="156" y="1090" class="src">분모는 "슬롯 기회 기준"을 문장에 박아 유닛 기준과 구분한다</text>
+
+  <!-- H. 미연결 한 줄 -->
+  <rect x="724" y="806" width="560" height="300" fill="#0a0f14"/>
+  <rect x="724" y="806" width="3" height="300" fill="#facc33"/>
+  <text x="744" y="834" class="lb">H · 미연결 한 줄</text>
+  <text x="744" y="854" class="dim">FR5EmptyState — 상자도 경고색도 쓰지 않는다</text>
+
+  <text x="744" y="896" class="dim" font-size="12">미연결 조회 2 <tspan fill="#4c565f">·</tspan> RECIPE A / B — 레시피 버전별 집계</text>
+  <text x="744" y="916" class="dim" font-size="12"><tspan fill="#4c565f">·</tspan> DEFECT REPORT alerts — GET /alerts <tspan fill="#4c565f">·</tspan> 임계 — thresholds</text>
+  <line x1="744" y1="940" x2="1264" y2="940" stroke="#ffffff" stroke-opacity=".08"/>
+
+  <text x="744" y="966" class="hd">점선 상자를 걷어낸 이유</text>
+  <text x="744" y="988" class="dim">· 정보량이 0 인 자리가 화면 폭 전체와 112px 높이를 먹었다.</text>
+  <text x="744" y="1006" class="dim">· 노란색 · 주의 아이콘을 쓰지 않는다. 부재는 이상이 아니다.</text>
+  <text x="744" y="1024" class="dim">· 그래도 무엇이 없는지는 적는다 (규칙 3) —</text>
+  <text x="744" y="1042" class="dim">  그래야 화면이 곧 남은 작업 목록이 된다.</text>
+  <text x="744" y="1060" class="dim">· 빈 칸을 막는 방법은 상자가 아니라 문장이다.</text>
+  <text x="744" y="1090" class="src">FR5EmptyState.cs 규칙 1 · 2 · 3</text>
+
+  <!-- I. 쓰지 않는 표현 -->
+  <rect x="1312" y="806" width="560" height="300" fill="#0a0f14"/>
+  <rect x="1312" y="806" width="3" height="300" fill="#f0475a" fill-opacity=".6"/>
+  <text x="1332" y="834" class="lb">I · 쓰지 않는 표현</text>
+  <text x="1332" y="854" class="dim">이 페이지에 어울리지 않거나 데이터가 없는 것</text>
+
+  <text x="1332" y="888" class="bad" font-size="14" font-weight="700">파이 / 도넛</text>
+  <text x="1332" y="908" class="dim">부품 6종 중 4종이 0% 다. 0 조각은 각도가 없어 사라진다.</text>
+
+  <text x="1332" y="940" class="bad" font-size="14" font-weight="700">추세 라인 차트</text>
+  <text x="1332" y="960" class="dim">slot-rates 는 누적 스냅샷 하나다. 시계열 축이 아예 없다.</text>
+
+  <text x="1332" y="992" class="bad" font-size="14" font-weight="700">불량 유형 Pareto</text>
+  <text x="1332" y="1012" class="dim">defect_type 은 /jobs/{id}/units 에만 있고 잡 단위다.</text>
+  <text x="1332" y="1030" class="dim">이 페이지의 제품 누적 축과 분모가 어긋난다.</text>
+
+  <text x="1332" y="1062" class="bad" font-size="14" font-weight="700">보드 위치 히트맵</text>
+  <text x="1332" y="1082" class="dim">슬롯의 물리 좌표가 스키마에 없다. slot_code 는 이름일 뿐</text>
+  <text x="1332" y="1100" class="dim">행·열이 아니다. 좌표가 생기면 별도 블록으로 넣는다.</text>
+
+  <line x1="136" y1="1140" x2="1872" y2="1140" stroke="#ffffff" stroke-opacity=".10"/>
+  <text x="136" y="1168" class="dim">모든 예시 수치는 DATA_STATION/DB/005_mock_sample_data.sql 의 목 데이터로 slot-rates 를 계산한 값이다. 목업용으로 지어낸 수는 없다.</text>
+  <text x="136" y="1188" class="dim">새로 필요한 USS 는 .lede · .partrow · .partrow__icon · .slotrow · .foldrow · .axis 여섯뿐이고, 막대는 기존 .gauge 를 그대로 쓴다.</text>
+</svg>

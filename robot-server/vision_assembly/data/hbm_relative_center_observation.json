@@ -1,0 +1,105 @@
+{
+  "image_size": [
+    1280,
+    720
+  ],
+  "hbm_count": 8,
+  "detections": [
+    {
+      "center_pixel": [
+        812.5,
+        440.5
+      ],
+      "size_pixel": [
+        35.0,
+        25.0
+      ],
+      "angle_deg": -90.0,
+      "confidence": 0.9676
+    },
+    {
+      "center_pixel": [
+        762.0,
+        643.5
+      ],
+      "size_pixel": [
+        43.0,
+        24.0
+      ],
+      "angle_deg": -90.0,
+      "confidence": 0.9579
+    },
+    {
+      "center_pixel": [
+        760.0,
+        577.5
+      ],
+      "size_pixel": [
+        39.0,
+        24.0
+      ],
+      "angle_deg": -90.0,
+      "confidence": 0.9518
+    },
+    {
+      "center_pixel": [
+        825.0,
+        559.0
+      ],
+      "size_pixel": [
+        40.0,
+        26.0
+      ],
+      "angle_deg": -90.0,
+      "confidence": 0.9479
+    },
+    {
+      "center_pixel": [
+        825.5,
+        497.5
+      ],
+      "size_pixel": [
+        39.0,
+        25.0
+      ],
+      "angle_deg": -90.0,
+      "confidence": 0.9463
+    },
+    {
+      "center_pixel": [
+        747.5,
+        439.5
+      ],
+      "size_pixel": [
+        35.0,
+        23.0
+      ],
+      "angle_deg": -90.0,
+      "confidence": 0.8834
+    },
+    {
+      "center_pixel": [
+        752.5,
+        506.0
+      ],
+      "size_pixel": [
+        38.0,
+        23.0
+      ],
+      "angle_deg": -90.0,
+      "confidence": 0.8204
+    },
+    {
+      "center_pixel": [
+        830.0,
+        646.0
+      ],
+      "size_pixel": [
+        42.0,
+        26.0
+      ],
+      "angle_deg": -90.0,
+      "confidence": 0.8181
+    }
+  ]
+}

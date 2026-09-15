@@ -1,0 +1,1474 @@
+// 역할: 운전 상태·조립 진행을 표시하고 트윈 관찰과 카메라 화면을 연결한다.
+
+using System.Collections.Generic;
+using MainUnity.Runtime.Camera;
+using MainUnity.Runtime.Robot;
+using MainUnity.Runtime.Robot.Assembly;
+using MainUnity.Runtime.Robot.Status;
+using MainUnity.Static;
+using UnityEngine;
+using UnityEngine.UIElements;
+
+namespace MainUnity.UI
+{
+    [DisallowMultipleComponent]
+    [RequireComponent(typeof(UIDocument))]
+    public sealed class FR5RunBinder : MonoBehaviour
+    {
+        const int JointCount = 6;
+
+        // FR5Theme.uss의 셀 치수와 맞추며 이름·간격·개수에 최소 58px이 필요하다.
+        const int CellWidth = 15, CellGap = 4, MinHeadWidth = 60;
+        static readonly float[] LimitLow  = { -175f, -265f, -162f, -265f, -175f, -175f };
+        static readonly float[] LimitHigh = {  175f,   85f,  162f,   85f,  175f,  175f };
+
+        [Header("데이터 소스")]
+        [SerializeField] UIMaster uiMaster;
+        [SerializeField] RobotStatusManager statusManager;
+        [SerializeField] GripperSubscriber gripper;
+        [SerializeField] CamVisionReceiver vision;
+
+        // 기존 씬 직렬화 호환용으로 보존한다. 장비 watchdog 기준으로 사용하지 않는다.
+        [SerializeField] float watchdogLimitMilliseconds = 50f;
+
+        [Header("카메라")]
+        // MOCK 에는 실제 카메라가 없다. 트윈의 RenderTexture 가 그 자리를 대신한다.
+        // REAL 에서는 CamVisionReceiver 가 ROS 스트림으로 덮어쓴다.
+        [Tooltip("ROBOT 소스로 쓸 트윈 카메라의 RenderTexture 입니다.")]
+        [SerializeField] RenderTexture robotCamTexture;
+        [Tooltip("BOARD 소스로 쓸 기판 카메라의 RenderTexture 입니다.")]
+        [SerializeField] RenderTexture boardCamTexture;
+
+        // RenderTexture 카메라는 켜 두면 매 프레임 씬을 통째로 한 번 더 그린다.
+        // 화면에 보이는 것은 한 번에 하나뿐이므로 고른 것만 켠다.
+        [Tooltip("원본 대체용 트윈 카메라입니다. 고르지 않은 동안 꺼 둡니다.")]
+        [SerializeField] UnityEngine.Camera robotCamCamera;
+        [Tooltip("검출 대체용 기판 카메라입니다. 고르지 않은 동안 꺼 둡니다.")]
+        [SerializeField] UnityEngine.Camera boardCamCamera;
+
+        [Tooltip("RUN 트윈 표시용 카메라입니다. 페이지를 나가면 원래 자세와 렌즈를 복원합니다.")]
+        [SerializeField] UnityEngine.Camera twinCamera;
+
+        VisualElement twinViewport, documentRoot;
+        Button twinOverviewButton, twinBoardButton, twinAssemblyButton, twinTrayButton, twinResetButton;
+        Vector3 originalCameraPosition, twinPivot;
+        Quaternion originalCameraRotation;
+        Rect originalCameraRect;
+        float originalNearClip, twinDistance, twinYaw, twinPitch;
+        bool twinCameraOwned, twinFree, hasBoardViewPosition, twinReferenceView;
+        Vector3 boardViewPosition;
+        int twinPreset, dragPointer = -1, dragButton;
+        Vector2 dragPosition;
+
+        readonly VisualElement[] jointFills = new VisualElement[JointCount];
+        readonly Label[] jointValues = new Label[JointCount];
+        readonly Label[] tcpValues = new Label[3];
+        readonly Label[] rpyValues = new Label[3];
+
+        Label gripperText, gripperValue, watchdogValue, realSource, mockNote;
+        Label progressNow, progressCount, unitPhase, unitStep;
+        VisualElement progressHost, progressRailFill;
+        readonly List<SlotGroup> slotGroups = new();
+        int planTotal;
+        bool warnedStepCount;
+        AssemblyProgressManager observedProgress;
+        bool progressDirty = true;
+        VisualElement gripperChip, gripperFill, watchdogDot, realStatus, poseBlock, safetyBlock;
+
+        // 4Hz × 120표본으로 30초 추세를 표시한다. 매 프레임 수집하지 않는다.
+        const float SampleHz = 4f;
+        const int SampleCapacity = 120;
+        Sparkline gripperSpark, watchdogSpark;
+        double nextSampleTime;
+
+        // 관측 칸. 이름은 카메라가 실제로 무엇을 비추는지에서 왔다.
+        //   TRAY      트레이 구획·수량 검출 (LIVE VIEW · DETECTION ENABLED)
+        //   PARTS     부품 OBB 검출 (TRAY PART OBB · ROI FILTERED)
+        //   CONVEYOR  정지선 모니터 (DUAL STOP-LINE MONITOR)
+        //   CELL      셀 전경 광각 원본. 대응하는 검출 스트림이 없다 (BEST_EFFORT 발행)
+        // 엔드포인트가 이미지 토픽에 qos_profile_sensor_data 를 쓰므로 BEST_EFFORT
+        // 발행자도 받는다.
+        sealed class CamTile
+        {
+            public string Title;
+            public string Topic;
+            public int Index;
+            public bool On;
+            public CamVisionReceiver Receiver;
+            public VisualElement Root;
+            public Label Age;
+            public Button Chip;
+            public Image Image;
+        }
+
+        readonly CamTile[] camTiles =
+        {
+            new CamTile { Index = 1, Title = "TRAY",     Topic = "/vision/tray/detections_image/compressed", On = true },
+            new CamTile { Index = 2, Title = "PCB",      Topic = "/vision/board/image/compressed" },
+            new CamTile { Index = 3, Title = "컨베이어", Topic = "/vision/conveyor/stop_image/compressed", On = true },
+            new CamTile { Index = 4, Title = "조립", Topic = "/vision/assembly/image/compressed", On = true },
+            new CamTile { Index = 5, Title = "CAMERA 3", Topic = "/camera3/image_raw/compressed" },
+        };
+
+        // 이 시간을 넘겨 프레임이 없으면 그 칸만 늦은 것으로 표시한다.
+        const double CamStaleSeconds = 2d;
+        const double CamNoSignalSeconds = 30d;
+        // 디코딩된 마지막 프레임 이후 100ms만 점등한다. 더 빠른 연속 수신에서는
+        // 점등이 이어지며, 새 프레임이 없으면 게임 시간 배율과 무관하게 소등한다.
+        const double CamPulseSeconds = 0.1d;
+        bool camExpanded, camSplit;
+        int selectedCamIndex;
+        Label camBadge;
+        VisualElement camPanel, camGrid;
+        Button camExpandButton, camSplitButton;
+
+        Label nowSlot, nowPart, recipeVersion, requestId, twinSource;
+
+        readonly System.Collections.Generic.List<(Label Value, System.Func<RobotStatusFrame, string> Read)> realRows = new();
+        bool cached;
+        Foldout eventFoldout;
+        ScrollView eventList;
+        int eventVersion = -1;
+        Label operationDetail, operationAge, calibrationState, calibrationDetail, calibrationAge;
+        double nextProgressRefreshTime;
+
+        void OnEnable()
+        {
+            cached = false;
+            slotGroups.Clear();
+            progressDirty = true;
+        }
+
+        void Update()
+        {
+            // 기판 묶음을 세우려면 UIMaster 가 먼저 잡혀 있어야 하므로 Build 앞에 둔다.
+            ResolveReferences();
+
+            // UIDocument 는 활성화된 뒤에야 rootVisualElement 를 만든다.
+            if (!cached) { Build(); if (!cached) return; }
+
+            var progress = uiMaster != null ? uiMaster.AssemblyProgress : null;
+            if (observedProgress != progress)
+            {
+                if (observedProgress != null) observedProgress.ProgressChanged -= OnProgressChanged;
+                observedProgress = progress;
+                if (observedProgress != null) observedProgress.ProgressChanged += OnProgressChanged;
+                progressDirty = true;
+            }
+            // Apply/Clear 알림은 갱신을 예약하고 UI는 Unity 프레임에서 최신 상태를 표시한다.
+            // 최초 연결과 페이지 재진입도 이미 수신한 Latest를 표시해야 한다.
+            if (progressDirty)
+            {
+                progressDirty = false;
+                RefreshAssembly();
+            }
+
+            RefreshJoints();
+            RefreshPose();
+            RefreshGripper();
+            RefreshLink();
+            RefreshCamera();
+            SampleTrends();
+            RefreshRealStatus();
+            if (Time.realtimeSinceStartupAsDouble >= nextProgressRefreshTime)
+            {
+                nextProgressRefreshTime = Time.realtimeSinceStartupAsDouble + 0.25d;
+                bool hasBoardView = TryGetBoardViewPosition(out _, out bool observed);
+                twinBoardButton?.SetEnabled(hasBoardView && twinCameraOwned);
+                twinAssemblyButton?.SetEnabled(hasBoardView && twinCameraOwned);
+                twinTrayButton?.SetEnabled(twinCameraOwned && TryGetTrayView(out _, out _));
+                string viewHint = observed ? "현재 기판 위치" : hasBoardView ? "기판 투입 기준 위치 · 기판 미표시" : "기판 위치 설정을 확인하세요";
+                if (twinBoardButton != null) twinBoardButton.tooltip = viewHint;
+                if (twinAssemblyButton != null) twinAssemblyButton.tooltip = viewHint;
+                if (slotGroups.Count == 0 && EnsureSlotGroups()) RefreshAssembly();
+                RefreshOperationStatus(observedProgress != null ? observedProgress.Latest : null);
+                RefreshCalibration();
+                RefreshEvents();
+            }
+        }
+
+        void ResolveReferences()
+        {
+            if (uiMaster == null) uiMaster = GetComponentInParent<UIMaster>();
+            if (uiMaster == null) return;
+            if (statusManager == null) statusManager = uiMaster.StatusManager;
+            if (gripper == null) gripper = uiMaster.Gripper;
+        }
+
+        void Build()
+        {
+            VisualElement root = GetComponent<UIDocument>().rootVisualElement;
+            if (root == null) return;
+
+            BuildPoseGrid(root.Q<VisualElement>("tcp-row"));
+            BuildJoints(root.Q<VisualElement>("joint-list"));
+            BuildJob(root);
+            progressHost = root.Q<VisualElement>("progress-groups");
+            progressRailFill = root.Q<VisualElement>("run-progress-fill");
+            progressNow = root.Q<Label>("progress-now");
+            progressCount = root.Q<Label>("progress-count");
+            unitPhase = root.Q<Label>("unit-phase");
+            unitStep = root.Q<Label>("unit-step");
+            eventFoldout = root.Q<Foldout>("session-events");
+            eventList = root.Q<ScrollView>("event-list");
+            var eventTitle = eventFoldout?.Q<Label>(className: "unity-foldout__text");
+            if (eventTitle != null) eventTitle.enableRichText = false;
+            eventVersion = -1;
+            operationDetail = root.Q<Label>("operation-detail");
+            operationAge = root.Q<Label>("operation-age");
+            calibrationState = root.Q<Label>("calibration-state");
+            calibrationDetail = root.Q<Label>("calibration-detail");
+            calibrationAge = root.Q<Label>("calibration-age");
+            if (operationDetail != null) operationDetail.enableRichText = false;
+            if (calibrationDetail != null) calibrationDetail.enableRichText = false;
+            nextProgressRefreshTime = 0d;
+
+            gripperChip = root.Q<VisualElement>("gripper-state-chip");
+            gripperText = root.Q<Label>("gripper-state-text");
+            gripperValue = root.Q<Label>("gripper-value");
+            gripperFill = root.Q<VisualElement>("gripper-fill");
+            watchdogDot = root.Q<VisualElement>("watchdog-dot");
+            watchdogValue = root.Q<Label>("watchdog-value");
+            realStatus = root.Q<VisualElement>("real-status");
+            realSource = root.Q<Label>("real-source");
+            poseBlock = root.Q<VisualElement>("pose-block");
+            safetyBlock = root.Q<VisualElement>("safety-block");
+            mockNote = root.Q<Label>("mock-note");
+            nowSlot = root.Q<Label>("now-slot");
+            nowPart = root.Q<Label>("now-part");
+            recipeVersion = root.Q<Label>("recipe-version");
+            requestId = root.Q<Label>("request-id");
+            twinSource = root.Q<Label>("twin-source");
+            BuildTwin(root);
+            BuildCamera(root);
+            BuildSparklines(root);
+            BuildRealStatus();
+            cached = true;
+        }
+
+        void BuildTwin(VisualElement root)
+        {
+            UnbindTwin();
+            hasBoardViewPosition = false;
+            if (uiMaster != null && uiMaster.Board != null)
+            {
+                try
+                {
+                    uiMaster.Board.ValidateConfiguration();
+                    boardViewPosition = uiMaster.Board.IncomingBoardPosition;
+                    hasBoardViewPosition = true;
+                }
+                catch (System.InvalidOperationException) { }
+            }
+            documentRoot = root;
+            twinViewport = root.Q<VisualElement>("twin-viewport");
+            twinOverviewButton = root.Q<Button>("twin-overview");
+            twinBoardButton = root.Q<Button>("twin-board");
+            twinAssemblyButton = root.Q<Button>("twin-assembly");
+            twinTrayButton = root.Q<Button>("twin-tray");
+            twinResetButton = root.Q<Button>("twin-reset");
+            root.Q<VisualElement>("twin-toolbar")?.SetEnabled(twinCamera != null);
+            if (twinCamera == null || twinViewport == null) return;
+
+            originalCameraPosition = twinCamera.transform.position;
+            originalCameraRotation = twinCamera.transform.rotation;
+            originalCameraRect = twinCamera.rect;
+            originalNearClip = twinCamera.nearClipPlane;
+            twinCameraOwned = true;
+            // 표시 좌표는 Unity 월드 m. 근접 관찰용 절단면이며 설비 안전 거리가 아니다.
+            twinCamera.nearClipPlane = 0.01f;
+            twinOverviewButton.clicked += ShowTwinOverview;
+            twinBoardButton.clicked += ShowTwinBoard;
+            twinAssemblyButton.clicked += ShowTwinAssembly;
+            if (twinTrayButton != null) twinTrayButton.clicked += ShowTwinTray;
+            twinResetButton.clicked += ResetTwinView;
+            twinViewport.RegisterCallback<GeometryChangedEvent>(OnTwinGeometryChanged);
+            documentRoot.RegisterCallback<GeometryChangedEvent>(OnTwinGeometryChanged);
+            twinViewport.RegisterCallback<PointerDownEvent>(OnTwinPointerDown);
+            twinViewport.RegisterCallback<PointerMoveEvent>(OnTwinPointerMove);
+            twinViewport.RegisterCallback<PointerUpEvent>(OnTwinPointerUp);
+            twinViewport.RegisterCallback<PointerCaptureOutEvent>(OnTwinCaptureOut);
+            twinViewport.RegisterCallback<WheelEvent>(OnTwinWheel);
+            UpdateTwinViewport();
+            ResetTwinView();
+        }
+
+        void UnbindTwin()
+        {
+            if (twinOverviewButton != null) twinOverviewButton.clicked -= ShowTwinOverview;
+            if (twinBoardButton != null) twinBoardButton.clicked -= ShowTwinBoard;
+            if (twinAssemblyButton != null) twinAssemblyButton.clicked -= ShowTwinAssembly;
+            if (twinTrayButton != null) twinTrayButton.clicked -= ShowTwinTray;
+            if (twinResetButton != null) twinResetButton.clicked -= ResetTwinView;
+            if (twinViewport != null)
+            {
+                if (dragPointer >= 0) twinViewport.ReleasePointer(dragPointer);
+                twinViewport.UnregisterCallback<GeometryChangedEvent>(OnTwinGeometryChanged);
+                twinViewport.UnregisterCallback<PointerDownEvent>(OnTwinPointerDown);
+                twinViewport.UnregisterCallback<PointerMoveEvent>(OnTwinPointerMove);
+                twinViewport.UnregisterCallback<PointerUpEvent>(OnTwinPointerUp);
+                twinViewport.UnregisterCallback<PointerCaptureOutEvent>(OnTwinCaptureOut);
+                twinViewport.UnregisterCallback<WheelEvent>(OnTwinWheel);
+            }
+            documentRoot?.UnregisterCallback<GeometryChangedEvent>(OnTwinGeometryChanged);
+            dragPointer = -1;
+            if (twinCameraOwned && twinCamera != null)
+            {
+                twinCamera.transform.SetPositionAndRotation(originalCameraPosition, originalCameraRotation);
+                twinCamera.rect = originalCameraRect;
+                twinCamera.nearClipPlane = originalNearClip;
+            }
+            twinCameraOwned = false;
+        }
+
+        void ShowTwinOverview() { twinPreset = 0; ResetTwinView(); }
+        void ShowTwinBoard() { twinPreset = 1; ResetTwinView(); }
+        void ShowTwinAssembly() { twinPreset = 2; ResetTwinView(); }
+        void ShowTwinTray() { twinPreset = 3; ResetTwinView(); }
+
+        void ResetTwinView()
+        {
+            if (!twinCameraOwned) return;
+            // 전체 프리셋은 이 셀의 작업면을 고정 구도로 보여준다. 공정 피드백으로
+            // 자동 이동하지 않으며, 기판 프리셋도 누른 시점의 위치만 관찰한다.
+            twinPivot = new Vector3(0.3f, 0.05f, 0f);
+            twinReferenceView = false;
+            twinDistance = 2.1f;
+            twinYaw = -43f;
+            twinPitch = 43f;
+            if (twinPreset == 3)
+            {
+                if (TryGetTrayView(out Vector3 center, out float distance))
+                {
+                    twinPivot = center;
+                    twinDistance = distance;
+                    twinPitch = 75f;
+                    twinYaw = 0f;
+                }
+                else twinPreset = 0;
+            }
+            else if (twinPreset != 0)
+            {
+                if (!TryGetBoardViewPosition(out twinPivot, out bool observed))
+                {
+                    twinPreset = 0;
+                    twinPivot = new Vector3(0.3f, 0.05f, 0f);
+                }
+                else
+                {
+                    twinReferenceView = !observed;
+                    twinDistance = twinPreset == 1 ? 0.38f : 0.45f;
+                    // 조립부는 벨트 길이 방향에서 내려다봐 측면 프레임의 가림을 줄인다.
+                    twinPitch = twinPreset == 1 ? 85f : 55f;
+                    twinYaw = twinPreset == 1 ? -43f : 180f;
+                }
+            }
+            twinFree = false;
+            ApplyTwinPose();
+        }
+
+        bool TryGetTrayView(out Vector3 center, out float distance)
+        {
+            center = default;
+            distance = 0f;
+            var board = uiMaster != null ? uiMaster.Board : null;
+            if (board == null || board.ItemGroups == null) return false;
+            Bounds bounds = default;
+            bool found = false;
+            foreach (var group in board.ItemGroups)
+            {
+                if (group?.SupplyPoints == null) continue;
+                foreach (Transform point in group.SupplyPoints)
+                {
+                    if (point == null) continue;
+                    if (!found) { bounds = new Bounds(point.position, Vector3.zero); found = true; }
+                    else bounds.Encapsulate(point.position);
+                }
+            }
+            if (!found) return false;
+            // 이동하는 부품 대신 Inspector의 고정 공급 위치를 사용한다.
+            // 구획 벽과 가장자리 부품 여백을 포함하는 관찰 거리이며 Unity 월드 m이다.
+            center = bounds.center;
+            distance = Mathf.Max(0.5f, Mathf.Max(bounds.size.x, bounds.size.z) * 1.8f);
+            return true;
+        }
+
+        bool TryGetBoardViewPosition(out Vector3 position, out bool observed)
+        {
+            var board = uiMaster != null ? uiMaster.Board : null;
+            Transform target = board != null ? board.ObservationBoard : null;
+            observed = target != null;
+            // 기판 생성 여부는 생산 상태다. 관찰 시점은 생성 전에도 기존 투입 위치를
+            // 사용할 수 있으며, 이를 현재 관측 위치로 표시하지 않는다.
+            position = observed ? target.position : boardViewPosition;
+            return observed || hasBoardViewPosition;
+        }
+
+        void OnTwinGeometryChanged(GeometryChangedEvent _) => UpdateTwinViewport();
+
+        void UpdateTwinViewport()
+        {
+            if (!twinCameraOwned || documentRoot == null || twinViewport == null) return;
+            Rect root = documentRoot.worldBound, view = twinViewport.worldBound;
+            if (!(root.width > 0 && root.height > 0 && view.width > 0 && view.height > 0)) return;
+            // UI는 좌상단, Camera.rect는 좌하단 원점이다. MANUAL과 같은 변환을
+            // 적용하며 소유 기간을 분리해 페이지 이동 시 원래 카메라를 복원한다.
+            twinCamera.rect = Rect.MinMaxRect(
+                Mathf.Clamp01((view.xMin - root.xMin) / root.width),
+                Mathf.Clamp01(1f - (view.yMax - root.yMin) / root.height),
+                Mathf.Clamp01((view.xMax - root.xMin) / root.width),
+                Mathf.Clamp01(1f - (view.yMin - root.yMin) / root.height));
+        }
+
+        void ApplyTwinPose()
+        {
+            Quaternion rotation = Quaternion.Euler(twinPitch, twinYaw, 0f);
+            twinCamera.transform.SetPositionAndRotation(twinPivot - rotation * Vector3.forward * twinDistance, rotation);
+            twinOverviewButton?.EnableInClassList("chip--accent", twinPreset == 0 && !twinFree);
+            twinBoardButton?.EnableInClassList("chip--accent", twinPreset == 1 && !twinFree);
+            twinAssemblyButton?.EnableInClassList("chip--accent", twinPreset == 2 && !twinFree);
+            twinTrayButton?.EnableInClassList("chip--accent", twinPreset == 3 && !twinFree);
+        }
+
+        void OnTwinPointerDown(PointerDownEvent evt)
+        {
+            if (!twinCameraOwned || dragPointer >= 0 || evt.button < 0 || evt.button > 2) return;
+            dragPointer = evt.pointerId;
+            dragButton = evt.button;
+            dragPosition = evt.position;
+            twinViewport.CapturePointer(dragPointer);
+            evt.StopPropagation();
+        }
+
+        void OnTwinPointerMove(PointerMoveEvent evt)
+        {
+            if (evt.pointerId != dragPointer || !twinCameraOwned) return;
+            Vector2 position = evt.position;
+            Vector2 delta = position - dragPosition;
+            dragPosition = position;
+            if (delta.sqrMagnitude == 0f) return;
+            if (dragButton == 0)
+            {
+                twinYaw += delta.x * 0.25f;
+                twinPitch = Mathf.Clamp(twinPitch + delta.y * 0.25f, 5f, 85f);
+            }
+            else
+            {
+                float unitsPerPixel = 2f * twinDistance * Mathf.Tan(twinCamera.fieldOfView * Mathf.Deg2Rad * 0.5f) /
+                    Mathf.Max(1f, twinViewport.resolvedStyle.height);
+                twinPivot += (-twinCamera.transform.right * delta.x + twinCamera.transform.up * delta.y) * unitsPerPixel;
+            }
+            twinFree = true;
+            ApplyTwinPose();
+            evt.StopPropagation();
+        }
+
+        void OnTwinPointerUp(PointerUpEvent evt)
+        {
+            if (evt.pointerId != dragPointer || evt.button != dragButton) return;
+            twinViewport.ReleasePointer(dragPointer);
+            dragPointer = -1;
+            evt.StopPropagation();
+        }
+
+        void OnTwinCaptureOut(PointerCaptureOutEvent _) => dragPointer = -1;
+
+        void OnTwinWheel(WheelEvent evt)
+        {
+            if (!twinCameraOwned) return;
+            twinDistance = Mathf.Clamp(twinDistance * Mathf.Exp(evt.delta.y * 0.06f), 0.12f, 8f);
+            twinFree = true;
+            ApplyTwinPose();
+            evt.StopPropagation();
+        }
+
+        void BuildCamera(VisualElement root)
+        {
+            UnbindCamera();
+            camPanel = root.Q<VisualElement>("cam-panel");
+            camGrid = root.Q<VisualElement>("cam-grid");
+            camBadge = root.Q<Label>("cam-badge");
+            camExpandButton = root.Q<Button>("cam-expand");
+
+            camSplitButton = root.Q<Button>("cam-split");
+            bool mock = uiMaster == null || uiMaster.IsSimulated;
+            SetMockCameras(false, false);
+            if (mock ? selectedCamIndex < 1 || selectedCamIndex > 2 : selectedCamIndex < 3 || selectedCamIndex > camTiles.Length)
+                selectedCamIndex = mock ? 1 : 3;
+            foreach (CamTile tile in camTiles)
+            {
+                tile.Root = root.Q<VisualElement>("cam-tile-" + tile.Index);
+                tile.Age = root.Q<Label>("cam-age-" + tile.Index);
+                tile.Chip = root.Q<Button>("cam-chip-" + tile.Index);
+                tile.Image = root.Q<Image>("cam-image-" + tile.Index);
+                if (tile.Image != null) tile.Image.scaleMode = ScaleMode.ScaleToFit;
+                bool supported = mock ? tile.Index <= 2 : tile.Index > 2;
+                tile.On = supported && (camSplit || tile.Index == selectedCamIndex);
+                if (!supported)
+                {
+                    tile.On = false;
+                    // 도메인 리로드 전에 생성된 중복 영상 수신기도 비활성화한다.
+                    tile.Receiver ??= transform.Find("CamReceiver " + tile.Index)?.GetComponent<CamVisionReceiver>();
+                    if (tile.Receiver != null) tile.Receiver.enabled = false;
+                    if (tile.Root != null) tile.Root.style.display = DisplayStyle.None;
+                }
+
+                Label title = root.Q<Label>("cam-title-" + tile.Index);
+                if (title != null)
+                    title.text = mock && supported ? (tile.Index == 1 ? "ROBOT" : "BOARD") : tile.Title;
+                if (tile.Chip != null)
+                {
+                    tile.Chip.style.display = supported ? DisplayStyle.Flex : DisplayStyle.None;
+                    Label chipText = tile.Chip.Q<Label>();
+                    if (chipText != null)
+                        chipText.text = mock && supported
+                            ? (tile.Index == 1 ? "ROBOT" : "BOARD") : tile.Title;
+                }
+                if (!supported) continue;
+
+                if (mock)
+                {
+                    if (tile.Image != null) tile.Image.image = GetMockTexture(tile);
+                }
+                else
+                {
+                    // 수신기는 DisallowMultipleComponent이므로 칸별 자식에 둔다.
+                    // 도메인 리로드 뒤에도 기존 자식을 재사용해 중복 구독을 막는다.
+                    if (tile.Receiver == null)
+                    {
+                        string hostName = "CamReceiver " + tile.Index;
+                        Transform found = transform.Find(hostName);
+                        if (found != null)
+                            tile.Receiver = found.GetComponent<CamVisionReceiver>();
+                        if (tile.Receiver == null)
+                        {
+                            var host = found != null ? found.gameObject : new GameObject(hostName);
+                            host.transform.SetParent(transform, false);
+                            tile.Receiver = host.AddComponent<CamVisionReceiver>();
+                            tile.Receiver.Configure(GetComponent<UIDocument>(), tile.Topic, "cam-image-" + tile.Index);
+                        }
+                    }
+
+                    // 토픽이 바뀌었으면 갈아탄다. 이름으로 되찾은 수신기는 이전 토픽을
+                    // 물고 있을 수 있다.
+                    tile.Receiver.TrySetTopic(tile.Topic);
+
+                    // 페이지를 껐다 켜면 UIDocument 가 비주얼 트리를 새로 만든다.
+                    // 수신기가 Start 에서 잡아 둔 Image 는 버려진 트리에 남으므로,
+                    // 화면을 다시 세우는 이쪽에서 새 Image 를 넘긴다.
+                    tile.Receiver.SetTargetImage(tile.Image);
+                    tile.Receiver.enabled = tile.On;
+                }
+
+                CamTile captured = tile;
+                if (tile.Chip != null) tile.Chip.clicked += () => ToggleCamTile(captured);
+            }
+            if (camExpandButton != null) camExpandButton.clicked += ToggleCamExpand;
+            if (camSplitButton != null) camSplitButton.clicked += ToggleCamSplit;
+        }
+
+        void UnbindCamera()
+        {
+            if (camExpandButton != null) camExpandButton.clicked -= ToggleCamExpand;
+            if (camSplitButton != null) camSplitButton.clicked -= ToggleCamSplit;
+        }
+
+        void OnProgressChanged(AssemblyProgressFrame frame)
+        {
+            progressDirty = true;
+        }
+
+        void OnDisable()
+        {
+            if (observedProgress != null) observedProgress.ProgressChanged -= OnProgressChanged;
+            observedProgress = null;
+            UnbindTwin();
+            UnbindCamera();
+            SetMockCameras(false, false);
+        }
+
+        void ToggleCamExpand() => camExpanded = !camExpanded;
+
+        void ToggleCamSplit() => camSplit = !camSplit;
+
+        void ToggleCamTile(CamTile tile)
+        {
+            bool mock = uiMaster == null || uiMaster.IsSimulated;
+            if (mock ? tile.Index > 2 : tile.Index <= 2) return;
+            selectedCamIndex = tile.Index;
+            camSplit = false;
+        }
+
+        // 분할은 두 열을 사용한다. 세 영상은 2×2 격자의 세 칸을 차지한다.
+        void RefreshCamera()
+        {
+            if (camGrid == null) return;
+
+            bool mock = uiMaster == null || uiMaster.IsSimulated;
+            foreach (CamTile tile in camTiles)
+                tile.On = (mock ? tile.Index <= 2 : tile.Index > 2) &&
+                    (camSplit || tile.Index == selectedCamIndex);
+            camSplitButton?.EnableInClassList("chip--accent", camSplit);
+            SetMockCameras(
+                mock && camTiles[0].On && GetMockTexture(camTiles[0]) != null,
+                mock && camTiles[1].On && GetMockTexture(camTiles[1]) != null);
+            camExpandButton?.EnableInClassList("chip--accent", camExpanded);
+            camPanel?.EnableInClassList("run-cam-panel--expanded", camExpanded);
+
+            int visible = 0;
+            foreach (CamTile t in camTiles) if (t.On) visible++;
+            int columns = visible <= 1 ? 1 : 2;
+            int rows = Mathf.Max(1, (visible + columns - 1) / columns);
+            float w = 100f / columns;
+            float h = 100f / rows;
+
+            double now = Time.realtimeSinceStartupAsDouble;
+            int live = 0;
+            foreach (CamTile tile in camTiles)
+            {
+                if (tile.Receiver != null) tile.Receiver.enabled = !mock && tile.On;
+                tile.Chip?.EnableInClassList("chip--accent", tile.On);
+                if (tile.Root == null) continue;
+
+                tile.Root.style.display = tile.On ? DisplayStyle.Flex : DisplayStyle.None;
+                if (!tile.On) continue;
+
+                tile.Root.style.width = Length.Percent(w);
+                tile.Root.style.height = Length.Percent(h);
+
+                if (mock)
+                {
+                    RenderTexture texture = GetMockTexture(tile);
+                    if (tile.Image != null) tile.Image.image = texture;
+                    bool assigned = texture != null;
+                    tile.Root.EnableInClassList("run-cam-tile--no-signal", !assigned);
+                    if (assigned) live++;
+                    if (tile.Age != null)
+                    {
+                        tile.Age.EnableInClassList("run-cam-tile__age--indicator", false);
+                        tile.Age.EnableInClassList("run-cam-tile__age--receiving", false);
+                        tile.Age.text = assigned ? "SIM" : "카메라 미할당";
+                        tile.Age.EnableInClassList("run-cam-tile__age--late", !assigned);
+                    }
+                    continue;
+                }
+
+                bool received = tile.Receiver != null && tile.Receiver.HasReceivedImage;
+                double age = received ? now - tile.Receiver.LastReceiveTimeSeconds : -1d;
+                bool late = !received || age > CamStaleSeconds;
+                // 표시만 숨겨 수신·디코딩을 유지한다. 새 프레임이 오면 같은 Image를 다시 드러낸다.
+                tile.Root.EnableInClassList("run-cam-tile--no-signal",
+                    !received || age >= CamNoSignalSeconds);
+                if (!late) live++;
+
+                if (tile.Age != null)
+                {
+                    tile.Age.text = !received ? "수신 없음" :
+                        late ? "마지막 수신 " + age.ToString("0.0") + "초 전" : string.Empty;
+                    tile.Age.EnableInClassList("run-cam-tile__age--indicator", !late);
+                    tile.Age.EnableInClassList("run-cam-tile__age--receiving",
+                        !late && age <= CamPulseSeconds);
+                    tile.Age.EnableInClassList("run-cam-tile__age--late", late);
+                }
+            }
+
+            if (camBadge != null)
+                camBadge.text = mock ? live + " / " + visible + " SIM" :
+                    live + " / " + visible + " 수신 중";
+        }
+
+        RenderTexture GetMockTexture(CamTile tile)
+        {
+            UnityEngine.Camera camera = tile.Index == 1 ? robotCamCamera : boardCamCamera;
+            if (camera == null) return null;
+
+            RenderTexture assigned = tile.Index == 1 ? robotCamTexture : boardCamTexture;
+            if (assigned != null) camera.targetTexture = assigned;
+            return assigned != null ? assigned : camera.targetTexture;
+        }
+
+        void SetMockCameras(bool robotOn, bool boardOn)
+        {
+            if (robotCamCamera != null) robotCamCamera.enabled = robotOn;
+            if (boardCamCamera != null) boardCamCamera.enabled = boardOn;
+        }
+
+
+        void BuildSparklines(VisualElement root)
+        {
+            gripperSpark = Attach(root, "gripper-spark");
+            // 그리퍼는 0~100% 로 범위가 정해져 있다. 자동 범위로 두면 26.0~26.4 같은
+            // 미세한 흔들림이 화면 전체 높이로 확대돼 큰 사건처럼 보인다.
+            gripperSpark?.SetRange(0f, 100f);
+
+            watchdogSpark = Attach(root, "watchdog-spark");
+            // 지연은 자동 범위다. 한계(50ms)를 넘는 순간이 아니라 한계로 다가가는
+            // 기울기를 읽는 것이 목적이라, 실제 변동 폭에 맞춰야 기울기가 보인다.
+            if (watchdogSpark != null) watchdogSpark.Limit = float.NaN;
+
+        }
+
+        static Sparkline Attach(VisualElement root, string hostName)
+        {
+            VisualElement host = root.Q<VisualElement>(hostName);
+            if (host == null) return null;
+            var spark = new Sparkline(SampleCapacity);
+            spark.style.flexGrow = 1;
+            host.Add(spark);
+            return spark;
+        }
+
+        /// <summary>
+        /// 고정 주기로만 표본을 넣는다. 프레임률이 바뀌어도 창 길이(30초)가 같아야
+        /// 두 번 본 기울기를 비교할 수 있다.
+        /// </summary>
+        void SampleTrends()
+        {
+            double now = Time.realtimeSinceStartupAsDouble;
+            if (now < nextSampleTime) return;
+            nextSampleTime = now + 1d / SampleHz;
+
+            RobotStatusFrame frame = statusManager != null ? statusManager.Latest : null;
+
+            if (watchdogSpark != null)
+            {
+                if (frame == null) watchdogSpark.ClearHistory();
+                else watchdogSpark.Push((float)((now - frame.ReceiveTimeSeconds) * 1000d));
+            }
+
+            if (gripperSpark != null)
+            {
+                if (statusManager != null && statusManager.HasFreshState && gripper != null && gripper.TryGetOpeningPercent(out float percent))
+                    gripperSpark.Push(percent);
+                else gripperSpark.ClearHistory();
+            }
+
+        }
+
+        /// <summary>
+        /// TCP 와 RPY 를 3행 2열로 짠다. 같은 포즈의 두 축이므로 나란히 두면
+        /// 세로가 절반이 되고, 좌측 열의 세로 예산(Real 704px)이 그만큼 산다.
+        /// 이전에는 X|Y|Z 가로 한 줄 + R|P|Y 가로 한 줄이라 98px 를 썼다.
+        /// </summary>
+        void BuildPoseGrid(VisualElement host)
+        {
+            if (host == null) return;
+            host.Clear();
+            string[] pos = { "X", "Y", "Z" };
+            string[] rot = { "R", "P", "Y" };
+            for (int i = 0; i < 3; i++)
+            {
+                var row = new VisualElement();
+                row.AddToClassList("row");
+                row.style.height = 24;
+                row.Add(AxisKey(pos[i]));
+                tcpValues[i] = AxisValue();
+                row.Add(tcpValues[i]);
+                row.Add(AxisKey(rot[i]));
+                rpyValues[i] = AxisValue();
+                row.Add(rpyValues[i]);
+                host.Add(row);
+            }
+        }
+
+        static Label AxisKey(string text)
+        {
+            var k = new Label(text);
+            k.AddToClassList("micro");
+            k.style.width = 22;
+            return k;
+        }
+
+        /// <summary>
+        /// 오른쪽 정렬이다. 왼쪽 정렬이면 412.8 에서 48.1 로 바뀔 때 소수점이
+        /// 가로로 뛰어, 값이 아니라 자리가 움직이는 것처럼 보인다.
+        /// (폰트에 tabular figures 가 없어 자릿수마다 폭이 다르다.)
+        /// </summary>
+        static Label AxisValue()
+        {
+            var v = new Label("—");
+            v.style.color = new Color(0.886f, 0.925f, 0.945f);
+            v.style.fontSize = 17;
+            v.style.unityFontStyleAndWeight = FontStyle.Bold;
+            // 계기 띠의 TCP 열은 246px 다. (키 22 + 값 88 + 홈통 10) 두 벌이면 240 으로 들어간다.
+            //
+            // 홈통이 있어야 한다. 값은 오른쪽 맞춤이라 제 상자의 오른쪽 끝까지 차는데,
+            // 그 바로 옆이 다음 벌의 키다. 0 이면 "-528.0" 과 "R" 이 맞닿아 "-528.0R" 로
+            // 읽힌다 — R 이 값의 단위처럼 보인다. 실제로 그 상태였다.
+            v.style.width = 88;
+            v.style.marginRight = 10;
+            v.style.unityTextAlign = TextAnchor.MiddleRight;
+            return v;
+        }
+
+        void BuildJoints(VisualElement host)
+        {
+            if (host == null) return;
+            host.Clear();
+            for (int i = 0; i < JointCount; i++)
+            {
+                var row = new VisualElement();
+                row.AddToClassList("row");
+                // 24px × 6 행 = 144px. 좌측 열은 카메라 타일 위(y772)에서 끝나야 하므로
+                // Real 에서 쓸 수 있는 세로가 704px 뿐이고, 관절이 그중 가장 큰 몫이다.
+                row.style.height = 24;
+
+                var k = new Label($"J{i + 1}");
+                k.AddToClassList("muted");
+                k.style.width = 30;
+                row.Add(k);
+
+                var track = new VisualElement();
+                track.AddToClassList("gauge");
+                track.style.flexGrow = 1;
+                var fill = new VisualElement();
+                fill.AddToClassList("gauge__fill");
+                fill.AddToClassList("gauge__fill--neutral");
+                fill.style.width = Length.Percent(0f);
+                jointFills[i] = fill;
+                track.Add(fill);
+                row.Add(track);
+
+                var v = new Label("—");
+                v.style.color = new Color(0.886f, 0.925f, 0.945f);
+                v.style.fontSize = 16;
+                v.style.unityFontStyleAndWeight = FontStyle.Bold;
+                v.style.width = 66;
+                v.style.unityTextAlign = TextAnchor.MiddleRight;
+                jointValues[i] = v;
+                row.Add(v);
+                host.Add(row);
+            }
+        }
+
+        /// <summary>
+        /// 작업 정보는 조회 경로가 없다. 지어내지 않고 무엇이 없는지 적는다.
+        /// jobs 조회가 생기면 이 메서드만 갈아끼운다.
+        /// </summary>
+        void BuildJob(VisualElement root)
+        {
+            FR5EmptyState.Present(root.Q<Label>("job-id"), "조회 미연결");
+            FR5EmptyState.Missing(root.Q<Label>("job-product"));
+            FR5EmptyState.Detail(root.Q<Label>("job-recipe"), "jobs · products 조회 필요");
+            FR5EmptyState.Dash(root.Q<Label>("job-progress-text"));
+            FR5EmptyState.Dash(root.Q<Label>("cycle-value"));
+            // unit-phase · unit-step 은 RefreshAssembly 가 조립 피드백으로 채운다
+
+            VisualElement fill = root.Q<VisualElement>("job-progress-fill");
+            if (fill != null) fill.style.width = 0;
+        }
+
+        // ─────────────────────── 조립 진행 ───────────────────────
+        //
+        // 칸 하나 = 슬롯 하나 = 레시피 스텝 하나다. 묶음 하나 = 부품 타입 하나.
+        // 칸 수와 순서는 씬의 기판이, 어디까지 놓였는지는 조립 피드백이 답한다.
+
+        /// <summary>부품 타입 하나의 진행 묶음이다. Start 는 첫 슬롯의 0-기준 스텝 번호다.</summary>
+        sealed class SlotGroup
+        {
+            public int Start;
+            public int Total;
+            public VisualElement Root;
+            public Label Count;
+            public VisualElement[] Cells;
+        }
+
+        /// <summary>
+        /// 기판 구성으로 묶음을 세운다. ItemManager 를 아직 못 잡았으면 다음 프레임에 다시 시도한다.
+        /// Build 에서 한 번만 하지 않는 이유는, UIDocument 가 씬 로드보다 먼저 살아날 수 있어서다.
+        /// </summary>
+        bool EnsureSlotGroups()
+        {
+            if (slotGroups.Count > 0) return true;
+            if (progressHost == null) return false;
+
+            ItemManager board = uiMaster != null ? uiMaster.Board : null;
+            if (board == null) return false;
+
+            progressHost.Clear();
+            planTotal = 0;
+            foreach (ItemManager.AssemblySlot group in board.AssemblySlots)
+            {
+                int total = group.Slots.Length;
+                if (total <= 0) continue;
+                slotGroups.Add(BuildSlotGroup(group.RequiredItemType, planTotal, total));
+                planTotal += total;
+            }
+            return slotGroups.Count > 0;
+        }
+
+        SlotGroup BuildSlotGroup(string partId, int start, int total)
+        {
+            var box = new VisualElement();
+            box.AddToClassList("grp");
+
+            var head = new VisualElement();
+            head.AddToClassList("grp__head");
+            // 머리줄을 칸 줄과 같은 너비로 묶는다. 묶음 상자는 서로 같은 폭으로 늘어나므로
+            // 그냥 두면 개수가 칸에서 한참 떨어진 곳에 떠서 어느 묶음의 수인지 흐려진다.
+            head.style.width = Mathf.Max(total * (CellWidth + CellGap) - CellGap, MinHeadWidth);
+
+            var name = new Label(string.IsNullOrEmpty(partId) ? "—" : partId.ToUpperInvariant());
+            name.AddToClassList("grp__name");
+            head.Add(name);
+
+            var spacer = new VisualElement();
+            spacer.AddToClassList("spacer");
+            head.Add(spacer);
+
+            var count = new Label(total.ToString());
+            count.AddToClassList("grp__count");
+            head.Add(count);
+            box.Add(head);
+
+            var cells = new VisualElement();
+            cells.AddToClassList("grp__cells");
+            var sink = new VisualElement[total];
+            for (int i = 0; i < total; i++)
+            {
+                var cell = new VisualElement();
+                cell.AddToClassList("cell");
+                cells.Add(cell);
+                sink[i] = cell;
+            }
+            box.Add(cells);
+            progressHost.Add(box);
+
+            return new SlotGroup { Start = start, Total = total, Root = box, Count = count, Cells = sink };
+        }
+
+        void RefreshAssembly()
+        {
+            AssemblyProgressManager manager = uiMaster != null ? uiMaster.AssemblyProgress : null;
+            AssemblyProgressFrame frame = manager != null ? manager.Latest : null;
+            EnsureSlotGroups();
+
+            int placed = frame != null ? frame.PlacedCount : 0;
+
+            // 피드백의 누적 수량은 슬롯별 이력이 아니다. 씬 그룹 순서에 배분하면
+            // 레시피 순서가 다르거나 중간에 연결했을 때 다른 슬롯을 완료로 표시한다.
+            foreach (SlotGroup group in slotGroups)
+            {
+                group.Count.text = $"{group.Total} 슬롯";
+                group.Root.tooltip = "트윈 구성 · 슬롯별 실물 장착 여부 미확인";
+                group.Root.EnableInClassList("grp--now", false);
+
+                for (int i = 0; i < group.Cells.Length; i++)
+                {
+                    VisualElement cell = group.Cells[i];
+                    cell.EnableInClassList("cell--done", false);
+                    cell.EnableInClassList("cell--now", false);
+                    cell.EnableInClassList("cell--bad", false);
+                }
+            }
+
+            WarnOnStepCountMismatch(frame);
+            RefreshProgressHeader(frame, placed);
+            RefreshUnitLine(frame);
+        }
+
+        /// <summary>
+        /// 레시피 스텝 수와 씬 슬롯 수가 다르면 화면의 칸이 실제 작업과 다른 것을 세게 된다.
+        /// 조립을 막지는 않는다 — 로봇은 옳은 자리에 놓고 표시만 어긋나기 때문이다.
+        /// </summary>
+        void WarnOnStepCountMismatch(AssemblyProgressFrame frame)
+        {
+            if (warnedStepCount || frame == null || frame.ExpectedStepCount <= 0) return;
+            if (frame.ExpectedStepCount == planTotal) return;
+            warnedStepCount = true;
+            Debug.LogWarning(
+                "조립 스텝 수가 기판 슬롯 수와 다르다 — 레시피 " + frame.ExpectedStepCount +
+                " vs 씬 " + planTotal + ". 둘 중 하나가 갱신되지 않았다.", this);
+        }
+
+        void RefreshProgressHeader(AssemblyProgressFrame frame, int placed)
+        {
+            if (progressCount != null)
+                progressCount.text = frame != null && frame.ExpectedStepCount > 0
+                    ? $"{placed} / {frame.ExpectedStepCount}" : "진행 수량 미확인";
+
+            // 분모는 씬 슬롯 수가 아닌 실행 피드백의 전체 단계 수다.
+            // 단계 수가 없으면 빈 레일과 미확인 문구를 함께 표시한다.
+            if (progressRailFill != null)
+                progressRailFill.style.width = Length.Percent(
+                    frame != null && frame.ExpectedStepCount > 0
+                        ? Mathf.Clamp01((float)placed / frame.ExpectedStepCount) * 100f : 0f);
+
+            if (progressNow == null) return;
+            progressNow.text = frame == null ? "진행 피드백 없음" : Describe(frame);
+            SetTone(progressNow, frame == null || frame.State == AssemblyState.Completed ||
+                frame.State == AssemblyState.Paused
+                ? "muted"
+                : frame.State == AssemblyState.Failed ? "bad" : "accent");
+        }
+
+        /// <summary>좌측 하단에는 callback 내부 동작이 아닌 Sequencer의 전체 공정 단계를 표시한다.</summary>
+        void RefreshUnitLine(AssemblyProgressFrame frame)
+        {
+            if (unitPhase != null)
+            {
+                unitPhase.text = "전체 공정 · " + DescribeWorkflow(frame);
+                // FAILED 가 RUNNING·IDLE 과 같은 무게로 보이면 실패를 못 알아본다.
+                // 진행 중은 색을 얻지 않는다 — 이상만 색을 얻는다(Docs/ui-design.md 1절).
+                SetTone(unitPhase, frame != null && frame.State == AssemblyState.Failed ? "bad" : "none");
+            }
+
+            RefreshNow(frame);
+            RefreshOperationStatus(frame);
+
+            if (unitStep == null) return;
+            if (frame == null)
+            {
+                unitStep.text = $"계획 슬롯 {planTotal}개 · 진행 미확인";
+                return;
+            }
+
+            unitStep.text = frame.ExpectedStepCount > 0
+                ? $"장착 완료 {frame.PlacedCount} / {frame.ExpectedStepCount}"
+                : "조립 단계 수 미확인";
+        }
+
+        void RefreshOperationStatus(AssemblyProgressFrame frame)
+        {
+            if (operationDetail != null)
+            {
+                bool hasCallback = frame != null && (!string.IsNullOrEmpty(frame.CurrentEvent) ||
+                    !string.IsNullOrEmpty(frame.CurrentAction) || !string.IsNullOrEmpty(frame.CurrentPhase));
+                string detail = hasCallback ? DescribeOperation(frame) : frame == null
+                    ? "마지막 callback 대기"
+                    : frame.State == AssemblyState.Failed
+                        ? string.IsNullOrEmpty(frame.Message) ? "실패 callback 없음" : frame.Message
+                        : frame.State == AssemblyState.Completed ? "작업 완료 · 마지막 callback 없음"
+                        : "마지막 callback 대기";
+                operationDetail.text = detail;
+                operationDetail.tooltip = detail;
+                SetTone(operationDetail, frame?.State == AssemblyState.Failed ? "bad" : "none");
+            }
+            if (operationAge != null)
+                operationAge.text = frame == null ? "callback 수신 기록 없음" :
+                    "마지막 callback 상태 수신 " + Age(frame.ReceiveTimeSeconds);
+        }
+
+        /// <summary>
+        /// "지금 무엇을, 어디에". 슬롯 코드가 화면에서 가장 큰 글자다 —
+        /// 실패했을 때 사람이 갈 좌표이고 DB · 레시피 · 검사가 같은 값을 쓴다.
+        /// 레시피 버전과 요청 ID 는 스텝 수가 어긋났을 때 되짚을 유일한 값이다.
+        /// </summary>
+        void RefreshNow(AssemblyProgressFrame frame)
+        {
+            if (nowSlot != null)
+            {
+                string slot = !string.IsNullOrEmpty(frame?.CurrentSlotCode) ? frame.CurrentSlotCode : frame?.SlotCode;
+                nowSlot.text = string.IsNullOrEmpty(slot) ? "—" : slot;
+                // 실패한 슬롯만 색을 얻는다. 진행 중은 색을 얻지 않는다.
+                SetTone(nowSlot, frame != null && frame.State == AssemblyState.Failed ? "bad" : "none");
+            }
+            if (nowPart != null)
+                nowPart.text = !string.IsNullOrEmpty(frame?.CurrentPartId) ? frame.CurrentPartId : frame?.PartId ?? "";
+
+            if (recipeVersion != null)
+                FR5EmptyState.Present(recipeVersion,
+                    frame != null && !string.IsNullOrEmpty(frame.RecipeVersion) ? frame.RecipeVersion : "—");
+            if (requestId != null)
+                FR5EmptyState.Present(requestId,
+                    frame != null && !string.IsNullOrEmpty(frame.JobId) ? frame.JobId : "—");
+        }
+
+        static string DescribeOperation(AssemblyProgressFrame frame)
+        {
+            string phase = frame.CurrentPhase ?? string.Empty;
+            // 경유점 번호는 레시피마다 달라진다. 동작 이름과 실제 이벤트로 표시한다.
+            int separator = phase.IndexOf('_');
+            if (separator > 0 && int.TryParse(phase.Substring(0, separator), out _))
+                phase = phase.Substring(separator + 1);
+            string operation = phase switch
+            {
+                "pre_pick_safe_vertical" => "집기 전 안전 높이 이동",
+                "pick_via_trayhome_high" => "트레이 상공 경유",
+                "pick_combined_xy_abc" => "집기 위치로 이동",
+                "pick_hover_100mm_vertical" => "집기 위치 상공 접근",
+                "PREOPEN" => "그리퍼 벌리기",
+                "pick_approach_50mm_vertical" => "집기 위치 접근",
+                "pick_final_50mm_vertical" => "집기 위해 하강",
+                "GRASP" => "그리퍼 닫기",
+                "post_grasp_lift_50mm_vertical" => "집기 후 들어 올리기",
+                "tray_after_raise" => "트레이 안전 높이로 상승",
+                "CONTINUOUS_TRANSFER" => "이송 경로 이동",
+                "tray_after_travel" => "트레이 확인 위치로 이동",
+                "tray_after_inspect" => "트레이 확인 위치 접근",
+                "TRAY_REMOVAL_INSPECTION" => "트레이 부품 제거 확인",
+                "tray_after_depart" => "트레이에서 배치 위치로 출발",
+                "place_hover_100mm_vertical" => "배치 위치 상공 접근",
+                "place_approach_50mm_vertical" => "배치 위치 접근",
+                "place_final_50mm_vertical" => "배치 위해 하강",
+                "RELEASE" => "그리퍼 열기",
+                "post_release_lift_50mm_vertical" => "놓기 후 상승",
+                "post_release_lift_100mm_vertical" => "배치 위치에서 안전 높이로 상승",
+                _ => phase
+            };
+            if (frame.CurrentEvent == "OPERATION_COMPLETED")
+                return frame.CurrentAction switch
+                {
+                    "robot.pick" => "집기 동작 완료",
+                    "robot.place" => "배치 동작 완료",
+                    _ => operation + " · 동작 완료"
+                };
+            return frame.CurrentEvent switch
+            {
+                "PHASE_STARTED" => operation + " 중",
+                "PHASE_COMPLETED" => operation + " 완료",
+                _ => operation + " · " + frame.CurrentEvent
+            };
+        }
+
+        // 제공자가 보고한 단계만 번역한다. 후속 촬영은 불량검사 PASS를 뜻하지 않는다.
+        static string DescribeStage(string stage) => stage switch
+        {
+            "stack_check" => "조립 실행 환경 확인 중",
+            "step_api_check" => "로봇 동작 준비 확인 중",
+            "capture_board" => "기판 촬영 중",
+            "capture_tray" => "트레이 촬영 중",
+            "refine_vrm" => "VRM 위치 보정 중",
+            "preflight_non-smd" => "일반 부품 조립 계획 검증 중",
+            "assemble_non-smd" => "일반 부품 조립 중",
+            "capture_smd_view" => "SMD 촬영 중",
+            "measure_smd" => "SMD 측정 중",
+            "merge_smd" => "SMD 측정 결과 통합 중",
+            "preflight_smd" => "SMD 조립 계획 검증 중",
+            "assemble_smd" => "SMD 조립 중",
+            "after_photo" => "조립 후 확인 촬영 중",
+            "Robot assembly running" => "로봇 조립 실행 중",
+            _ => stage
+        };
+
+        static string Describe(AssemblyProgressFrame frame)
+        {
+            switch (frame.State)
+            {
+                case AssemblyState.Failed:
+                    string reason = !string.IsNullOrEmpty(frame.ErrorCode) ? frame.ErrorCode : frame.Message;
+                    return string.IsNullOrEmpty(reason) ? "실패" : "실패   ·   " + reason;
+                case AssemblyState.ConveyorMoving:
+                    return "컨베이어 이동 중";
+                case AssemblyState.Paused:
+                    return "일시정지";
+                case AssemblyState.Completed:
+                    return "완료";
+                default:
+                    if (string.IsNullOrEmpty(frame.SlotCode))
+                        return string.IsNullOrEmpty(frame.PartId) ? "시작" : frame.PartId;
+                    return $"{frame.PartId}   ·   {frame.SlotCode}";
+            }
+        }
+
+        /// <summary>색 클래스는 하나만 걸린다. 정상에는 색을 주지 않는다(Docs/ui-design.md 1절).</summary>
+        static void SetTone(Label label, string tone)
+        {
+            if (label == null) return;
+            label.EnableInClassList("muted", tone == "muted");
+            label.EnableInClassList("accent", tone == "accent");
+            label.EnableInClassList("bad", tone == "bad");
+        }
+
+        static string Age(double receiveTime) => receiveTime < 0d ? "기록 없음" :
+            $"{System.Math.Max(0d, Time.realtimeSinceStartupAsDouble - receiveTime):0}초 전";
+
+        void RefreshCalibration()
+        {
+            if (calibrationState == null || calibrationDetail == null || calibrationAge == null) return;
+            var source = uiMaster != null ? uiMaster.Calibration : null;
+            bool mock = uiMaster != null && uiMaster.IsSimulated;
+            string state = mock ? "사용 안 함" : source == null ? "연결 없음" : source.Progress switch
+            {
+                TrayPartCalibrator.ProgressState.Preparing => "준비",
+                TrayPartCalibrator.ProgressState.Applied => "반영됨",
+                TrayPartCalibrator.ProgressState.Rejected => "거부",
+                TrayPartCalibrator.ProgressState.ConfigurationError => "설정 오류",
+                _ => "미수신"
+            };
+            bool error = !mock && source != null &&
+                (source.Progress == TrayPartCalibrator.ProgressState.Rejected ||
+                 source.Progress == TrayPartCalibrator.ProgressState.ConfigurationError);
+            string detail = mock ? "시뮬레이션 배치 사용" : source == null ? "트레이 좌표 수신기 연결 필요" :
+                source.Progress == TrayPartCalibrator.ProgressState.Rejected ?
+                    (source.LastAppliedTime >= 0d ? "결과 검증 실패 · 이전 배치 유지" : "결과 검증 실패 · 유효한 배치 없음") : source.ProgressDetail;
+            if (!mock && source != null && !source.isActiveAndEnabled && !error)
+            {
+                state = "수신 비활성";
+                detail = "현재 좌표 수신 및 배치 반영 중지";
+            }
+            else if (!mock && source != null && !error && source.LastReceiveTime >= 0d &&
+                Time.realtimeSinceStartupAsDouble - source.LastReceiveTime > 3d)
+                state = "수신 중단";
+            calibrationState.text = state;
+            SetTone(calibrationState, error ? "bad" : "none");
+            if (!mock && source != null)
+                detail += "\n" + source.SyncDetail + (string.IsNullOrEmpty(source.StorageDetail) ? "" : "\n" + source.StorageDetail) +
+                    "\n로봇 시각화: " + source.RobotDetail +
+                    (source.LastRobotReceiveTime >= 0d ? " · 수신 " + Age(source.LastRobotReceiveTime) : "");
+            calibrationDetail.text = detail;
+            calibrationDetail.tooltip = !mock && source != null ? source.ProgressDetail : detail;
+            calibrationAge.text = mock || source == null ? "수신 기록 없음" :
+                "수신 " + Age(source.LastReceiveTime) + " · 반영 " + Age(source.LastAppliedTime);
+            if (mock)
+            {
+                calibrationState.tooltip = detail + "\n" + calibrationAge.text;
+                if (calibrationState.parent?.parent != null)
+                    calibrationState.parent.parent.tooltip = calibrationState.tooltip;
+                return;
+            }
+            var board = uiMaster != null ? uiMaster.BoardCalibration : null;
+            string boardState = board == null ? "연결 없음" : board.Progress switch
+            {
+                BoardPartCalibrator.ProgressState.Preparing => "준비",
+                BoardPartCalibrator.ProgressState.Applied => "반영됨",
+                BoardPartCalibrator.ProgressState.Rejected => "거부",
+                BoardPartCalibrator.ProgressState.ConfigurationError => "설정 오류",
+                _ => "관측 대기"
+            };
+            bool boardError = board != null && (board.Progress == BoardPartCalibrator.ProgressState.Rejected ||
+                board.Progress == BoardPartCalibrator.ProgressState.ConfigurationError);
+            if (board != null && !board.isActiveAndEnabled && !boardError) boardState = "수신 비활성";
+            else if (board != null && !boardError && board.LastReceiveTime >= 0d &&
+                Time.realtimeSinceStartupAsDouble - board.LastReceiveTime > 3d)
+                boardState = "수신 중단";
+            calibrationState.text = "트레이 " + state + "  |  기판 " + boardState;
+            SetTone(calibrationState, error || boardError ? "bad" : "none");
+            calibrationDetail.text = "트레이: " + detail + "\n기판: " + (board != null ? board.ProgressDetail : "수신기 연결 필요");
+            calibrationDetail.tooltip = calibrationDetail.text;
+            calibrationAge.text = "트레이 " + calibrationAge.text + "\n기판 " + (board == null ? "수신 기록 없음" :
+                "수신 " + Age(board.LastReceiveTime) + " · 반영 " + Age(board.LastAppliedTime));
+            calibrationState.tooltip = "트레이: " + (source != null ? source.ProgressDetail : detail) +
+                "\n기판: " + (board != null ? board.ProgressDetail : "수신기 연결 필요") + "\n" + calibrationAge.text;
+            if (calibrationState.parent?.parent != null)
+                calibrationState.parent.parent.tooltip = calibrationState.tooltip;
+        }
+
+        void RefreshEvents()
+        {
+            if (uiMaster == null || eventFoldout == null || eventList == null) return;
+            string latest = uiMaster.Events.Count > 0 ? uiMaster.Events[uiMaster.Events.Count - 1].Source + " · " +
+                uiMaster.Events[uiMaster.Events.Count - 1].Message : "기록 없음";
+            eventFoldout.text = "최근 이벤트 · " + latest;
+            eventFoldout.tooltip = $"현재 세션 / 최근 200건 · {uiMaster.Events.Count}건 · " + latest;
+            if (!eventFoldout.value || eventVersion == uiMaster.EventVersion) return;
+            // 사용자가 과거 내용을 읽는 동안 현재 목록을 고정한다. 맨 아래로 돌아오면 갱신한다.
+            bool atBottom = eventList.verticalScroller.value >= eventList.verticalScroller.highValue - 2f;
+            if (eventVersion >= 0 && !atBottom) return;
+            eventVersion = uiMaster.EventVersion;
+            eventList.Clear();
+            foreach (var entry in uiMaster.Events)
+            {
+                var row = new Label($"{entry.Time:HH:mm:ss} · {entry.Source} · {entry.Message}" +
+                    (entry.Count > 1 ? $" · 반복 {entry.Count}회" : ""));
+                row.enableRichText = false;
+                row.AddToClassList("event-row");
+                if (entry.Error) row.AddToClassList("bad");
+                eventList.Add(row);
+            }
+            if (uiMaster.Events.Count == 0)
+                eventList.Add(new Label("이번 세션에서 기록된 이벤트가 없습니다."));
+            // 새 행의 레이아웃 이후 이동해야 첫 펼침에서도 최신 이벤트가 보인다.
+            eventList.schedule.Execute(() => eventList.ScrollTo(eventList.contentContainer[eventList.contentContainer.childCount - 1]))
+                .ExecuteLater(1);
+        }
+
+        /// <summary>
+        /// Real 백엔드만 채우는 안전·상태 값이다 (/nonrt_state_data).
+        ///
+        /// 6행에서 2행으로 줄였다. E-STOP · ALARM · 이상 정지는 셋 다 "지금 멈춰야 하는가"
+        /// 하나에 답하고, 그 세부는 이미 알람 띠가 크게 말한다. 좌측 열의 세로 예산은
+        /// 766px 이라 같은 답을 여섯 줄로 적을 자리가 없다.
+        /// </summary>
+        void BuildRealStatus()
+        {
+            if (realStatus == null) return;
+            realStatus.Clear();
+            realRows.Clear();
+
+            AddRealRow("정지 신호", f =>
+                f.EmergencyStop != 0 ? "E-STOP 작동" :
+                f.Alarm != 0 ? "ALARM 발생" :
+                f.AbnormalStop != 0 ? "이상 정지" : "수신 플래그 없음");
+            AddRealRow("프로그램", f => f.MainErrorCode == 0 && f.SubErrorCode == 0
+                ? $"mode {f.RobotMode} · state {f.ProgramState}"
+                : $"error {f.MainErrorCode}:{f.SubErrorCode}");
+        }
+
+        void AddRealRow(string key, System.Func<RobotStatusFrame, string> read)
+        {
+            var row = new VisualElement();
+            row.AddToClassList("row");
+            row.style.height = 20;
+
+            var k = new Label(key);
+            k.AddToClassList("muted");
+            k.style.fontSize = 12;
+            row.Add(k);
+
+            var spacer = new VisualElement();
+            spacer.AddToClassList("spacer");
+            row.Add(spacer);
+
+            var v = new Label("—");
+            v.style.fontSize = 13;
+            v.style.unityFontStyleAndWeight = FontStyle.Bold;
+            v.style.color = new Color(0.58f, 0.65f, 0.70f);
+            row.Add(v);
+
+            realRows.Add((v, read));
+            realStatus.Add(row);
+        }
+
+        /// <summary>
+        /// Mock 에서는 TCP · RPY · SAFETY 를 통째로 접는다.
+        ///
+        /// 값이 없다고 "—" 를 296px 만큼 세워 두면 자리만 먹고 아무 것도 답하지 않는다.
+        /// 접은 자리에는 한 줄 사유를 남긴다. Real 로 바꾸면 그대로 다시 펴진다.
+        /// </summary>
+        void RefreshModeBlocks(bool mock)
+        {
+            DisplayStyle real = mock ? DisplayStyle.None : DisplayStyle.Flex;
+            if (poseBlock != null) poseBlock.style.display = real;
+            if (safetyBlock != null) safetyBlock.style.display = real;
+            if (mockNote != null) mockNote.style.display = mock ? DisplayStyle.Flex : DisplayStyle.None;
+        }
+
+        void RefreshRealStatus()
+        {
+            bool mock = uiMaster == null || uiMaster.IsSimulated;
+            RobotStatusFrame frame = statusManager != null ? statusManager.Latest : null;
+
+            RefreshModeBlocks(mock);
+
+            if (realSource != null)
+                realSource.text = mock ? "Mock 미제공" : "/nonrt_state_data";
+
+            // 좌측 「기준」 창의 출처. 트윈이 무엇을 근거로 그려지는지 밝힌다.
+            if (twinSource != null)
+                twinSource.text = twinCamera == null ? "트윈 카메라 미연결" :
+                    statusManager == null || !statusManager.HasFreshState ? "현재 자세 미확인 · 상태 수신 대기" :
+                    mock ? "SIM · 수신 상태 기반" : "수신 상태 기반 트윈";
+            if (twinSource != null && (twinPreset == 1 || twinPreset == 2) && !twinFree)
+                twinSource.text += " · 선택 시점 위치" +
+                    (twinReferenceView ? " · 기판 투입 기준" : "");
+            if (twinSource != null && twinPreset == 3 && !twinFree)
+                twinSource.text += " · 부품 트레이 공급 위치";
+
+            foreach ((Label value, System.Func<RobotStatusFrame, string> read) in realRows)
+            {
+                if (mock || frame == null || !statusManager.HasFreshState)
+                {
+                    value.text = "—";
+                    value.style.color = new Color(0.29f, 0.33f, 0.37f);
+                    continue;
+                }
+                string text = read(frame);
+                value.text = text;
+                // 이상만 색을 얻는다. 정상 값에는 색을 주지 않는다.
+                bool bad = text != "정상" && !text.StartsWith("mode");
+                value.style.color = bad
+                    ? new Color(1f, 0.56f, 0.61f)
+                    : new Color(0.58f, 0.65f, 0.70f);
+            }
+        }
+
+        // ── 실데이터 ────────────────────────────────────────────────
+        void RefreshJoints()
+        {
+            float[] joints = statusManager != null ? statusManager.Latest?.JointDegrees : null;
+            bool live = statusManager != null && statusManager.HasFreshState && joints != null && joints.Length == JointCount;
+            for (int i = 0; i < JointCount; i++)
+            {
+                if (jointValues[i] != null) jointValues[i].text = live ? joints[i].ToString("0.0") : "—";
+                if (jointFills[i] == null) continue;
+
+                float ratio = live ? Mathf.InverseLerp(LimitLow[i], LimitHigh[i], joints[i]) : 0f;
+                jointFills[i].style.width = Length.Percent(ratio * 100f);
+                // 로컬 표시 범위는 설비의 안전 한계가 아니므로 경고 판정에 쓰지 않는다.
+                jointFills[i].EnableInClassList("gauge__fill--warn", false);
+                jointFills[i].EnableInClassList("gauge__fill--neutral", true);
+            }
+        }
+
+        void RefreshPose()
+        {
+            RobotStatusFrame frame = statusManager != null ? statusManager.Latest : null;
+            if (frame == null || !statusManager.HasFreshState)
+            {
+                foreach (Label l in tcpValues) if (l != null) l.text = "—";
+                foreach (Label l in rpyValues) if (l != null) l.text = "—";
+                return;
+            }
+            Vector3 p = frame.TcpPositionMillimeters, r = frame.TcpRotationDegrees;
+            SetAxis(tcpValues, 0, p.x); SetAxis(tcpValues, 1, p.y); SetAxis(tcpValues, 2, p.z);
+            SetAxis(rpyValues, 0, r.x); SetAxis(rpyValues, 1, r.y); SetAxis(rpyValues, 2, r.z);
+        }
+
+        /// <summary>Mock Backend 는 TCP/RPY 를 채우지 않는다. 0 을 실측으로 오인하지 않게 비운다.</summary>
+        void SetAxis(Label[] sink, int i, float v)
+        {
+            if (sink[i] == null) return;
+            bool blank = uiMaster != null && uiMaster.IsSimulated && Mathf.Approximately(v, 0f);
+            sink[i].text = blank ? "—" : v.ToString("0.0");
+        }
+
+        void RefreshGripper()
+        {
+            if (statusManager == null || !statusManager.HasFreshState || gripper == null || !gripper.TryGetOpeningPercent(out float percent))
+            {
+                if (gripperValue != null) gripperValue.text = "—";
+                if (gripperText != null) gripperText.text = "—";
+                if (gripperFill != null) gripperFill.style.width = Length.Percent(0f);
+                gripperChip?.EnableInClassList("chip--accent", false);
+                return;
+            }
+            // 개방률은 파지 센서가 아니므로 물체를 잡았다고 단정하지 않는다.
+            if (gripperValue != null) gripperValue.text = $"{percent:0} %";
+            if (gripperFill != null) gripperFill.style.width = Length.Percent(percent);
+            if (gripperText != null) gripperText.text = "파지 미확인";
+            gripperChip?.EnableInClassList("chip--accent", false);
+        }
+
+        /// <summary>모드·로봇상태·링크는 FR5ShellBinder 가 맡는다. 여기서는 페이지 고유값만 본다.</summary>
+        void RefreshLink()
+        {
+            bool live = statusManager != null && statusManager.HasFreshState;
+            // 기존 수신 유효성 기준만 사용한다. 장비 watchdog이나 안전 한계가 아니다.
+            watchdogDot?.EnableInClassList("dot--ok", live);
+            watchdogDot?.EnableInClassList("dot--good", false);
+            watchdogDot?.EnableInClassList("dot--bad", !live);
+            if (watchdogValue != null)
+            {
+                double ageMs = live
+                    ? (Time.realtimeSinceStartupAsDouble - statusManager.Latest.ReceiveTimeSeconds) * 1000d
+                    : -1d;
+                watchdogValue.text = live
+                    ? $"{ageMs:0} ms"
+                    : "수신 미확인";
+                SetTone(watchdogValue, !live ? "bad" : "none");
+            }
+            // 툴 오프셋 · 페이로드는 하드코딩된 상수였다. 레시피/툴 정의에서 오는 값이
+            // 생기기 전까지 지어낸 숫자를 띄우지 않는다. 카메라는 RefreshCamera 가 맡는다.
+        }
+
+        static string DescribeWorkflow(AssemblyProgressFrame frame)
+        {
+            if (frame == null) return "피드백 없음";
+            if (!frame.IsTerminal && frame.State != AssemblyState.Paused && !string.IsNullOrWhiteSpace(frame.Message))
+                return DescribeStage(frame.Message);
+            return frame.State switch
+            {
+                AssemblyState.Idle => "대기",
+                AssemblyState.Started => "시작",
+                AssemblyState.Picked => "부품 이동 중",
+                AssemblyState.Placed => "장착",
+                AssemblyState.ConveyorMoving => "컨베이어 이동",
+                AssemblyState.Paused => "일시정지",
+                AssemblyState.Completed => "완료",
+                AssemblyState.Failed => "실패",
+                _ => "확인 필요"
+            };
+        }
+    }
+}

@@ -1,0 +1,72 @@
+{
+  "schema": "fr5.full_fixed_cycle_run/v2",
+  "started_unix": 1788674982.7440057,
+  "cycle_id": "20260906-150530",
+  "plan_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/vrm03_plan_20260906.json",
+  "plan_sha256": "b6b2e25f60f98df012a361c8b077e6533dfe294aae88d61ae1af7d3e4276cfc6",
+  "motion_profile": "smooth_combined_transfer_v1",
+  "selected_slots": [
+    "VRM-03"
+  ],
+  "motion_completed_slots": [
+    "VRM-03"
+  ],
+  "grasp_verified_slots": [],
+  "placement_verified_slots": [],
+  "part_held_candidate": false,
+  "status": "motion_complete_awaiting_physical_verification",
+  "preflight": {
+    "passed": true,
+    "waypoints": 22,
+    "minimum_joint_soft_limit_margin_deg": 45.756912,
+    "maximum_joint_step_deg": 44.301918,
+    "minimum_j6_deg": -14.187526,
+    "maximum_j6_deg": 9.796103,
+    "j6_operational_bounds_deg": [
+      -178.0,
+      178.0
+    ]
+  },
+  "controller_global_speed_percent": 40,
+  "speed_contract": {
+    "command_percent": {
+      "travel": 25,
+      "combined_rotation": 25,
+      "vertical": 10
+    },
+    "effective_percent": {
+      "travel": 10.0,
+      "combined_rotation": 10.0,
+      "vertical": 4.0
+    },
+    "hover_clearance_mm": 100.0,
+    "slow_zone_mm": 50.0
+  },
+  "controller_global_speed_set_unix": 1788674984.1762547,
+  "gripper_current_samples_percent": {
+    "VRM-03": 0.0
+  },
+  "tray_inspections": [
+    {
+      "slot": "VRM-03",
+      "stage": "tray_after_inspect",
+      "timestamp_ros_ns": 1788675014752724365,
+      "picked_slot": "VRM-03",
+      "removed_slots": [
+        "VRM-03"
+      ],
+      "evidence": "picked_cell_absent_not_physical_holding_proof",
+      "distinct_consecutive_frames": 3
+    }
+  ],
+  "last_verified_tcp": [
+    -16.37125015258789,
+    -516.735595703125,
+    187.05010986328125,
+    179.98924255371094,
+    0.0027193406131118536,
+    -179.2529296875
+  ],
+  "last_gripper_position": 26,
+  "completed_unix": 1788675029.3156295
+}

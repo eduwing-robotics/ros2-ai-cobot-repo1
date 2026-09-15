@@ -1,0 +1,381 @@
+{
+  "schema_version": 1,
+  "status": "physical numbering finalized: HBM left top-to-bottom H1-H4, right top-to-bottom H5-H8; IND top I2 bottom I1",
+  "slots": [
+    {
+      "slot_code": "GPU-01",
+      "x_mm": 1.56,
+      "y_mm": -0.32,
+      "size_mm": [
+        29.72,
+        57.11
+      ],
+      "long_axis_board_deg": 90,
+      "color_bgr": [
+        255,
+        80,
+        0
+      ]
+    },
+    {
+      "slot_code": "HBM-08",
+      "x_mm": -23.83,
+      "y_mm": -24.43,
+      "size_mm": [
+        10.25,
+        14.31
+      ],
+      "long_axis_board_deg": 90,
+      "color_bgr": [
+        220,
+        0,
+        220
+      ]
+    },
+    {
+      "slot_code": "HBM-07",
+      "x_mm": -23.83,
+      "y_mm": -8.27,
+      "size_mm": [
+        10.25,
+        14.31
+      ],
+      "long_axis_board_deg": 90,
+      "color_bgr": [
+        220,
+        0,
+        220
+      ]
+    },
+    {
+      "slot_code": "HBM-06",
+      "x_mm": -23.83,
+      "y_mm": 8.17,
+      "size_mm": [
+        10.25,
+        14.31
+      ],
+      "long_axis_board_deg": 90,
+      "color_bgr": [
+        220,
+        0,
+        220
+      ]
+    },
+    {
+      "slot_code": "HBM-05",
+      "x_mm": -23.83,
+      "y_mm": 24.03,
+      "size_mm": [
+        10.25,
+        14.31
+      ],
+      "long_axis_board_deg": 90,
+      "color_bgr": [
+        220,
+        0,
+        220
+      ]
+    },
+    {
+      "slot_code": "HBM-04",
+      "x_mm": 23.53,
+      "y_mm": -24.43,
+      "size_mm": [
+        10.25,
+        14.31
+      ],
+      "long_axis_board_deg": 90,
+      "color_bgr": [
+        220,
+        0,
+        220
+      ]
+    },
+    {
+      "slot_code": "HBM-03",
+      "x_mm": 23.53,
+      "y_mm": -8.27,
+      "size_mm": [
+        10.25,
+        14.31
+      ],
+      "long_axis_board_deg": 90,
+      "color_bgr": [
+        220,
+        0,
+        220
+      ]
+    },
+    {
+      "slot_code": "HBM-02",
+      "x_mm": 23.53,
+      "y_mm": 8.17,
+      "size_mm": [
+        10.25,
+        14.31
+      ],
+      "long_axis_board_deg": 90,
+      "color_bgr": [
+        220,
+        0,
+        220
+      ]
+    },
+    {
+      "slot_code": "HBM-01",
+      "x_mm": 23.53,
+      "y_mm": 24.03,
+      "size_mm": [
+        10.25,
+        14.31
+      ],
+      "long_axis_board_deg": 90,
+      "color_bgr": [
+        220,
+        0,
+        220
+      ]
+    },
+    {
+      "slot_code": "PM-01",
+      "x_mm": -46.58,
+      "y_mm": 0.31,
+      "size_mm": [
+        12.13,
+        59.99
+      ],
+      "long_axis_board_deg": 90,
+      "color_bgr": [
+        0,
+        165,
+        255
+      ]
+    },
+    {
+      "slot_code": "PM-02",
+      "x_mm": 47.15,
+      "y_mm": 0.31,
+      "size_mm": [
+        12.13,
+        59.99
+      ],
+      "long_axis_board_deg": 90,
+      "color_bgr": [
+        0,
+        165,
+        255
+      ]
+    },
+    {
+      "slot_code": "PM-03",
+      "x_mm": 0.14,
+      "y_mm": 43.74,
+      "size_mm": [
+        12.13,
+        59.99
+      ],
+      "long_axis_board_deg": 0,
+      "color_bgr": [
+        0,
+        165,
+        255
+      ]
+    },
+    {
+      "slot_code": "PM-04",
+      "x_mm": 0.14,
+      "y_mm": -43.9,
+      "size_mm": [
+        12.13,
+        59.99
+      ],
+      "long_axis_board_deg": 0,
+      "color_bgr": [
+        0,
+        165,
+        255
+      ]
+    },
+    {
+      "slot_code": "VRM-01",
+      "x_mm": 61.07,
+      "y_mm": 36.49,
+      "size_mm": [
+        11.0,
+        14.0
+      ],
+      "long_axis_board_deg": 90,
+      "color_bgr": [
+        0,
+        0,
+        255
+      ]
+    },
+    {
+      "slot_code": "VRM-02",
+      "x_mm": 61.07,
+      "y_mm": 18.0,
+      "size_mm": [
+        11.0,
+        14.0
+      ],
+      "long_axis_board_deg": 90,
+      "color_bgr": [
+        0,
+        0,
+        255
+      ]
+    },
+    {
+      "slot_code": "VRM-03",
+      "x_mm": 61.07,
+      "y_mm": -0.2,
+      "size_mm": [
+        11.0,
+        14.0
+      ],
+      "long_axis_board_deg": 90,
+      "color_bgr": [
+        0,
+        0,
+        255
+      ]
+    },
+    {
+      "slot_code": "VRM-04",
+      "x_mm": 61.07,
+      "y_mm": -18.14,
+      "size_mm": [
+        11.0,
+        14.0
+      ],
+      "long_axis_board_deg": 90,
+      "color_bgr": [
+        0,
+        0,
+        255
+      ]
+    },
+    {
+      "slot_code": "VRM-05",
+      "x_mm": 61.07,
+      "y_mm": -36.35,
+      "size_mm": [
+        11.0,
+        14.0
+      ],
+      "long_axis_board_deg": 90,
+      "color_bgr": [
+        0,
+        0,
+        255
+      ]
+    },
+    {
+      "slot_code": "IND-02",
+      "x_mm": -60.1,
+      "y_mm": 44.43,
+      "size_mm": [
+        9.37,
+        9.37
+      ],
+      "long_axis_board_deg": 90,
+      "color_bgr": [
+        0,
+        255,
+        255
+      ]
+    },
+    {
+      "slot_code": "IND-01",
+      "x_mm": -60.1,
+      "y_mm": 32.97,
+      "size_mm": [
+        9.37,
+        9.37
+      ],
+      "long_axis_board_deg": 90,
+      "color_bgr": [
+        0,
+        255,
+        255
+      ]
+    },
+    {
+      "slot_code": "CAP-01",
+      "x_mm": -40.95,
+      "y_mm": -39.21,
+      "size_mm": [
+        3.84,
+        6.8
+      ],
+      "long_axis_board_deg": 0,
+      "color_bgr": [
+        0,
+        200,
+        0
+      ]
+    },
+    {
+      "slot_code": "CAP-02",
+      "x_mm": -60.25,
+      "y_mm": 32.47,
+      "size_mm": [
+        3.84,
+        6.8
+      ],
+      "long_axis_board_deg": 90,
+      "color_bgr": [
+        0,
+        200,
+        0
+      ]
+    },
+    {
+      "slot_code": "CAP-03",
+      "x_mm": -60.39,
+      "y_mm": 15.59,
+      "size_mm": [
+        3.84,
+        6.8
+      ],
+      "long_axis_board_deg": 90,
+      "color_bgr": [
+        0,
+        200,
+        0
+      ]
+    },
+    {
+      "slot_code": "CAP-04",
+      "x_mm": -59.98,
+      "y_mm": -1.38,
+      "size_mm": [
+        3.84,
+        6.8
+      ],
+      "long_axis_board_deg": 90,
+      "color_bgr": [
+        0,
+        200,
+        0
+      ]
+    },
+    {
+      "slot_code": "CAP-05",
+      "x_mm": -60.43,
+      "y_mm": -17.97,
+      "size_mm": [
+        3.84,
+        6.8
+      ],
+      "long_axis_board_deg": 90,
+      "color_bgr": [
+        0,
+        200,
+        0
+      ]
+    }
+  ]
+}

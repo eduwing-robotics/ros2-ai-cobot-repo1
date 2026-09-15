@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "contract_id": "ksmc.vision-inspection.v1",
+  "source_inspection_contract": "s22_hybrid_aoi_v1",
+  "station_id": "VISION_INSPECTION",
+  "camera_id": "S22_TELEPHOTO",
+  "recipe_version": "assembly-r1",
+  "component_types": {
+    "GPU": {
+      "part_id": "GPU",
+      "display_name": "AI GPU",
+      "manufacturer": "NVIDIA",
+      "manufacturer_basis": "DEMO_ASSIGNED_NOT_IMAGE_INFERRED",
+      "product_code": null
+    },
+    "HBM": {
+      "part_id": "HBM",
+      "display_name": "HBM",
+      "manufacturer": "SK hynix",
+      "manufacturer_basis": "DEMO_ASSIGNED_NOT_IMAGE_INFERRED",
+      "product_code": null
+    },
+    "Power Module": {
+      "part_id": "PM",
+      "display_name": "TPSM84424MOLR Power Module",
+      "manufacturer": "Texas Instruments",
+      "manufacturer_basis": "DEMO_ASSIGNED_NOT_IMAGE_INFERRED",
+      "product_code_basis": "LEGACY_DEMO_REFERENCE_NOT_VERIFIED_PHYSICAL_PART",
+      "product_code": "TPSM84424MOLR"
+    },
+    "VRM": {
+      "part_id": "VRM",
+      "display_name": "VRM",
+      "manufacturer": "Infineon Technologies",
+      "manufacturer_basis": "DEMO_ASSIGNED_NOT_IMAGE_INFERRED",
+      "product_code": null
+    },
+    "Inductor": {
+      "part_id": "IND",
+      "display_name": "Inductor",
+      "manufacturer": "TDK",
+      "manufacturer_basis": "DEMO_ASSIGNED_NOT_IMAGE_INFERRED",
+      "product_code": null
+    },
+    "SMD Capacitor": {
+      "part_id": "CAP",
+      "display_name": "SMD Capacitor",
+      "manufacturer": "Samsung Electro-Mechanics",
+      "manufacturer_basis": "DEMO_ASSIGNED_NOT_IMAGE_INFERRED",
+      "product_code": null
+    }
+  },
+  "finding_codes": {
+    "MISSING?": {
+      "defect_code": "COMPONENT_MISSING",
+      "defect_name_ko": "부품 누락"
+    },
+    "POSE?": {
+      "defect_code": "POSITION_ERROR",
+      "defect_name_ko": "위치 오류"
+    },
+    "RIGHT?": {
+      "defect_code": "POSITION_ERROR",
+      "defect_name_ko": "위치 오류"
+    },
+    "ROT?": {
+      "defect_code": "DIRECTION_ERROR",
+      "defect_name_ko": "방향 오류"
+    },
+    "DIR?": {
+      "defect_code": "DIRECTION_ERROR",
+      "defect_name_ko": "방향 오류"
+    },
+    "SEATING?": {
+      "defect_code": "SEATING_ERROR",
+      "defect_name_ko": "안착 오류"
+    },
+    "PINS?": {
+      "defect_code": "PIN_DEFECT",
+      "defect_name_ko": "핀 누락 또는 손상"
+    },
+    "SURFACE?": {
+      "defect_code": "SURFACE_ANOMALY",
+      "defect_name_ko": "표면 이상"
+    }
+  }
+}

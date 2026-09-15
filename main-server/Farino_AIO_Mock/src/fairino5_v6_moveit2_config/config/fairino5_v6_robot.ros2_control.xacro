@@ -1,0 +1,79 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <xacro:macro name="fairino5_v6_robot_ros2_control" params="name initial_positions_file use_fake_hardware">
+        <xacro:property name="initial_positions" value="${load_yaml(initial_positions_file)['initial_positions']}"/>
+
+        <ros2_control name="${name}" type="system">
+            <hardware>
+                <xacro:if value="${use_fake_hardware}">
+                    <!-- Simulation only — no real robot connection -->
+                    <plugin>mock_components/GenericSystem</plugin>
+                </xacro:if>
+                <xacro:unless value="${use_fake_hardware}">
+                    <!-- Talks to the real FR5 controller over RPC at CONTROLLER_IP_ADDRESS
+                         (192.168.58.2, hardcoded in fairino_hardware_interface.hpp). This
+                         plugin only supports exactly 6 joints (fixed-size C arrays internally)
+                         — never add finger_right_joint or any other joint to this block. -->
+                    <plugin>fairino_hardware/FairinoHardwareInterface</plugin>
+                </xacro:unless>
+            </hardware>
+            <joint name="j1">
+                <command_interface name="position"/>
+                <state_interface name="position">
+                  <param name="initial_value">${initial_positions['j1']}</param>
+                </state_interface>
+            </joint>
+            <joint name="j2">
+                <command_interface name="position"/>
+                <state_interface name="position">
+                  <param name="initial_value">${initial_positions['j2']}</param>
+                </state_interface>
+            </joint>
+            <joint name="j3">
+                <command_interface name="position"/>
+                <state_interface name="position">
+                  <param name="initial_value">${initial_positions['j3']}</param>
+                </state_interface>
+            </joint>
+            <joint name="j4">
+                <command_interface name="position"/>
+                <state_interface name="position">
+                  <param name="initial_value">${initial_positions['j4']}</param>
+                </state_interface>
+            </joint>
+            <joint name="j5">
+                <command_interface name="position"/>
+                <state_interface name="position">
+                  <param name="initial_value">${initial_positions['j5']}</param>
+                </state_interface>
+            </joint>
+            <joint name="j6">
+                <command_interface name="position"/>
+                <state_interface name="position">
+                  <param name="initial_value">${initial_positions['j6']}</param>
+                </state_interface>
+            </joint>
+
+        </ros2_control>
+
+        <!-- Gripper always stays on mock_components, even when use_fake_hardware=false for the
+             arm above. FairinoHardwareInterface has no gripper support and a hardcoded 6-joint
+             array, so this MUST be its own separate <ros2_control> block. Real gripper actuation
+             is done separately through the Lua/WebApp ActGripper/MoveGripper commands (Chapter 9)
+             — this block only keeps the RViz/MoveIt2 visualization in sync. -->
+        <ros2_control name="${name}_gripper" type="system">
+            <hardware>
+                <plugin>mock_components/GenericSystem</plugin>
+            </hardware>
+            <!-- finger_left_joint is a <mimic> of this joint in the URDF and is
+                 driven automatically by controller_manager — it must NOT be
+                 listed here. -->
+            <joint name="finger_right_joint">
+                <command_interface name="position"/>
+                <state_interface name="position">
+                  <param name="initial_value">${initial_positions['finger_right_joint']}</param>
+                </state_interface>
+            </joint>
+        </ros2_control>
+    </xacro:macro>
+</robot>

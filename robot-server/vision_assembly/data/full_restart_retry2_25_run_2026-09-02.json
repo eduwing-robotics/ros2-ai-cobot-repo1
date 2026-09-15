@@ -1,0 +1,342 @@
+{
+  "schema": "fr5.full_fixed_cycle_run/v1",
+  "started_unix": 1788351863.8562274,
+  "cycle_id": "20260902-211811",
+  "plan_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/full_restart_retry2_25_plan_2026-09-02.json",
+  "transfer_z_mm": 350.0,
+  "speeds_percent": {
+    "travel": 20,
+    "combined_rotation": 15,
+    "vertical": 10
+  },
+  "completed_slots": [
+    "GPU-01",
+    "HBM-01",
+    "HBM-02",
+    "HBM-03",
+    "HBM-04",
+    "HBM-05",
+    "HBM-06",
+    "HBM-07",
+    "HBM-08",
+    "PM-01",
+    "PM-02",
+    "PM-03",
+    "PM-04",
+    "VRM-01",
+    "VRM-02",
+    "VRM-03",
+    "VRM-04",
+    "VRM-05",
+    "IND-01",
+    "IND-02"
+  ],
+  "actual_orientation_decisions": [
+    {
+      "slot_code": "GPU-01",
+      "rotation_skipped": false,
+      "current_axis_base_deg": -0.2527951812970871,
+      "target_axis_base_deg": 90.8347610253621,
+      "symmetry_period_deg": 180.0,
+      "rotation_delta_deg": 91.0875562066592,
+      "target_tcp_abc_deg": [
+        179.96528625488278,
+        -0.004659254103902428,
+        -179.16523615173924
+      ],
+      "preferred_tcp_c_deg": 180.0
+    },
+    {
+      "slot_code": "HBM-01",
+      "rotation_skipped": false,
+      "current_axis_base_deg": 1.954913504498616,
+      "target_axis_base_deg": 90.8347610253621,
+      "symmetry_period_deg": 180.0,
+      "rotation_delta_deg": 88.87984752086345,
+      "target_tcp_abc_deg": [
+        179.96492004394528,
+        0.005269287619742716,
+        -179.16524220081624
+      ],
+      "preferred_tcp_c_deg": 180.0
+    },
+    {
+      "slot_code": "HBM-02",
+      "rotation_skipped": false,
+      "current_axis_base_deg": 1.9314193895628289,
+      "target_axis_base_deg": 90.8347610253621,
+      "symmetry_period_deg": 180.0,
+      "rotation_delta_deg": 88.90334163579928,
+      "target_tcp_abc_deg": [
+        -179.99765014648435,
+        -0.0004146091814554847,
+        -179.16523899164216
+      ],
+      "preferred_tcp_c_deg": 180.0
+    },
+    {
+      "slot_code": "HBM-03",
+      "rotation_skipped": false,
+      "current_axis_base_deg": 1.962966947233963,
+      "target_axis_base_deg": 90.8347610253621,
+      "symmetry_period_deg": 180.0,
+      "rotation_delta_deg": 88.87179407812812,
+      "target_tcp_abc_deg": [
+        -179.99655151367185,
+        -0.0004700092249453469,
+        -179.16523900292657
+      ],
+      "preferred_tcp_c_deg": 180.0
+    },
+    {
+      "slot_code": "HBM-04",
+      "rotation_skipped": false,
+      "current_axis_base_deg": 0.2066729044961321,
+      "target_axis_base_deg": 90.8347610253621,
+      "symmetry_period_deg": 180.0,
+      "rotation_delta_deg": 90.62808812086598,
+      "target_tcp_abc_deg": [
+        179.99302673339844,
+        0.001939413021330251,
+        -179.165239210677
+      ],
+      "preferred_tcp_c_deg": 180.0
+    },
+    {
+      "slot_code": "HBM-05",
+      "rotation_skipped": false,
+      "current_axis_base_deg": 0.10507971390691001,
+      "target_axis_base_deg": 90.8347610253621,
+      "symmetry_period_deg": 180.0,
+      "rotation_delta_deg": 90.72968131145524,
+      "target_tcp_abc_deg": [
+        179.99305725097653,
+        0.0005201453459370822,
+        -179.16523903766586
+      ],
+      "preferred_tcp_c_deg": 180.0
+    },
+    {
+      "slot_code": "HBM-06",
+      "rotation_skipped": false,
+      "current_axis_base_deg": 1.9640548273719292,
+      "target_axis_base_deg": 90.8347610253621,
+      "symmetry_period_deg": 180.0,
+      "rotation_delta_deg": 88.87070619799022,
+      "target_tcp_abc_deg": [
+        179.96510314941403,
+        0.007444859016683254,
+        -179.16524350904103
+      ],
+      "preferred_tcp_c_deg": 180.0
+    },
+    {
+      "slot_code": "HBM-07",
+      "rotation_skipped": false,
+      "current_axis_base_deg": 1.954478090542635,
+      "target_axis_base_deg": 90.8347610253621,
+      "symmetry_period_deg": 180.0,
+      "rotation_delta_deg": 88.88028293481943,
+      "target_tcp_abc_deg": [
+        179.9681701660156,
+        0.004838054068394337,
+        -179.16524166234854
+      ],
+      "preferred_tcp_c_deg": 180.0
+    },
+    {
+      "slot_code": "HBM-08",
+      "rotation_skipped": false,
+      "current_axis_base_deg": 1.9644859968454573,
+      "target_axis_base_deg": 90.8347610253621,
+      "symmetry_period_deg": 180.0,
+      "rotation_delta_deg": 88.87027502851663,
+      "target_tcp_abc_deg": [
+        179.98580932617185,
+        0.003344672732050253,
+        -179.16523980302634
+      ],
+      "preferred_tcp_c_deg": 180.0
+    },
+    {
+      "slot_code": "PM-01",
+      "rotation_skipped": false,
+      "current_axis_base_deg": -1.6542583605818602,
+      "target_axis_base_deg": 90.8347610253621,
+      "symmetry_period_deg": 180.0,
+      "rotation_delta_deg": 92.48901938594395,
+      "target_tcp_abc_deg": [
+        179.97412109375003,
+        0.0008135225507539407,
+        -179.1652393420834
+      ],
+      "preferred_tcp_c_deg": 180.0
+    },
+    {
+      "slot_code": "PM-02",
+      "rotation_skipped": false,
+      "current_axis_base_deg": 1.933158887831463,
+      "target_axis_base_deg": 90.8347610253621,
+      "symmetry_period_deg": 180.0,
+      "rotation_delta_deg": 88.90160213753063,
+      "target_tcp_abc_deg": [
+        179.9987640380859,
+        0.0006174664595231488,
+        -179.16523898795765
+      ],
+      "preferred_tcp_c_deg": null
+    },
+    {
+      "slot_code": "PM-03",
+      "rotation_skipped": true,
+      "current_axis_base_deg": 1.9344639617295165,
+      "target_axis_base_deg": -179.19067424390985,
+      "symmetry_period_deg": 180.0,
+      "rotation_delta_deg": -1.1251382056393595,
+      "target_tcp_abc_deg": [
+        -179.982666015625,
+        -0.001522973529061946,
+        90.80932529533717
+      ],
+      "preferred_tcp_c_deg": null
+    },
+    {
+      "slot_code": "PM-04",
+      "rotation_skipped": true,
+      "current_axis_base_deg": 1.9238081951013444,
+      "target_axis_base_deg": -179.19067424390985,
+      "symmetry_period_deg": 180.0,
+      "rotation_delta_deg": -1.1144824390112262,
+      "target_tcp_abc_deg": [
+        179.96939086914062,
+        0.00553747266532109,
+        90.8093227978052
+      ],
+      "preferred_tcp_c_deg": null
+    },
+    {
+      "slot_code": "VRM-01",
+      "rotation_skipped": false,
+      "current_axis_base_deg": 1.8953039046815898,
+      "target_axis_base_deg": 90.8347610253621,
+      "symmetry_period_deg": 180.0,
+      "rotation_delta_deg": 88.93945712068057,
+      "target_tcp_abc_deg": [
+        179.9505920410156,
+        -0.006428570486599779,
+        -179.16523343107724
+      ],
+      "preferred_tcp_c_deg": 180.0
+    },
+    {
+      "slot_code": "VRM-02",
+      "rotation_skipped": false,
+      "current_axis_base_deg": 0.6757121018061365,
+      "target_axis_base_deg": 90.8347610253621,
+      "symmetry_period_deg": 180.0,
+      "rotation_delta_deg": 90.15904892355593,
+      "target_tcp_abc_deg": [
+        179.93490600585938,
+        -0.007141098380095397,
+        -179.1652308616003
+      ],
+      "preferred_tcp_c_deg": 180.0
+    },
+    {
+      "slot_code": "VRM-03",
+      "rotation_skipped": false,
+      "current_axis_base_deg": 0.7100874287353125,
+      "target_axis_base_deg": 90.8347610253621,
+      "symmetry_period_deg": 180.0,
+      "rotation_delta_deg": 90.12467359662674,
+      "target_tcp_abc_deg": [
+        179.9701690673828,
+        -0.00616245809941429,
+        -179.16523576616623
+      ],
+      "preferred_tcp_c_deg": 180.0
+    },
+    {
+      "slot_code": "VRM-04",
+      "rotation_skipped": false,
+      "current_axis_base_deg": 0.6909401637607698,
+      "target_axis_base_deg": 90.8347610253621,
+      "symmetry_period_deg": 180.0,
+      "rotation_delta_deg": 90.14382086160128,
+      "target_tcp_abc_deg": [
+        179.972412109375,
+        -0.0014396125916279576,
+        -179.16523828146512
+      ],
+      "preferred_tcp_c_deg": 180.0
+    },
+    {
+      "slot_code": "VRM-05",
+      "rotation_skipped": false,
+      "current_axis_base_deg": 0.6781037138608921,
+      "target_axis_base_deg": 90.8347610253621,
+      "symmetry_period_deg": 180.0,
+      "rotation_delta_deg": 90.15665731150125,
+      "target_tcp_abc_deg": [
+        179.95639038085938,
+        0.004109569825225903,
+        -179.16524210256128
+      ],
+      "preferred_tcp_c_deg": 180.0
+    },
+    {
+      "slot_code": "IND-01",
+      "rotation_skipped": true,
+      "current_axis_base_deg": 90.35351747077134,
+      "target_axis_base_deg": -89.16523897463793,
+      "symmetry_period_deg": 180.0,
+      "rotation_delta_deg": 0.4812435545907192,
+      "target_tcp_abc_deg": [
+        179.9961700439453,
+        0.027612565085291283,
+        -179.16524082040928
+      ],
+      "preferred_tcp_c_deg": null
+    },
+    {
+      "slot_code": "IND-02",
+      "rotation_skipped": true,
+      "current_axis_base_deg": 90.36091648483472,
+      "target_axis_base_deg": 90.8347610253621,
+      "symmetry_period_deg": 180.0,
+      "rotation_delta_deg": 0.47384454052735236,
+      "target_tcp_abc_deg": [
+        179.99838256835938,
+        0.01229704078287674,
+        -179.16523932177736
+      ],
+      "preferred_tcp_c_deg": null
+    },
+    {
+      "slot_code": "CAP-01",
+      "rotation_skipped": false,
+      "current_axis_base_deg": 1.97601580619812,
+      "target_axis_base_deg": -179.19067424390985,
+      "symmetry_period_deg": 180.0,
+      "rotation_delta_deg": -1.1666900501079454,
+      "target_tcp_abc_deg": [
+        -179.99916076660156,
+        -0.026542084291570633,
+        0.8093257560901641
+      ],
+      "preferred_tcp_c_deg": null
+    }
+  ],
+  "status": "stopped_on_error",
+  "last_verified_tcp": [
+    104.03240966796875,
+    -563.340576171875,
+    188.20034790039062,
+    -179.99232482910156,
+    0.011922534555196762,
+    -179.6577911376953
+  ],
+  "last_gripper_position": 20,
+  "error": "RuntimeError: FR5 safety fault during motion: abnormal_stop=1",
+  "stopped_unix": 1788353489.2435918
+}

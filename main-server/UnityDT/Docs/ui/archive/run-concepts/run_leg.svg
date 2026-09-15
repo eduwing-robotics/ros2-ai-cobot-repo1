@@ -1,0 +1,296 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-labelledby="t d">
+  <title id="t">FR5 HUD — RUN (최초안 레이아웃 · 외곽 정리)</title>
+  <desc id="d">3D 트윈 위에 카드형 패널이 떠 있는 최초 레이아웃. 상단·좌측·하단 바를 넓히고 로봇 상태와 속도 오버라이드 등 빠져 있던 기능 요소를 채웠다.</desc>
+
+  <defs>
+    <linearGradient id="stage" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1a2530"/><stop offset="1" stop-color="#0b1016"/>
+    </linearGradient>
+    <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#26323d"/><stop offset="1" stop-color="#141c24"/>
+    </linearGradient>
+    <linearGradient id="cam" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2b3a45"/><stop offset="1" stop-color="#151d25"/>
+    </linearGradient>
+    <linearGradient id="estop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e0384c"/><stop offset="1" stop-color="#b31f31"/>
+    </linearGradient>
+    <style>
+      text { font-family: Inter, Pretendard, "Noto Sans KR", system-ui, sans-serif; }
+      .mi { fill:#6f8496; font-size:11px; letter-spacing:1.3px; font-weight:700 }
+      .lb { fill:#8ba0b0; font-size:13px; letter-spacing:1.5px; font-weight:700 }
+      .bd { fill:#c3d2dd; font-size:15px }
+      .sm { fill:#93a6b4; font-size:13px }
+      .vl { fill:#eaf3f8; font-size:20px; font-weight:700 }
+      .v2 { fill:#eaf3f8; font-size:26px; font-weight:700 }
+      .dp { fill:#f4fbff; font-size:40px; font-weight:800; letter-spacing:-1.5px }
+      .mu { fill:#63768a; font-size:13px }
+      .ac { fill:#facc33 } .re { fill:#3a96ff }
+      .bad { fill:#f0475a } .warn { fill:#f6ad37 } .ok { fill:#3ecf8e }
+      .pn  { fill:#0d131a; fill-opacity:.93; stroke:#ffffff; stroke-opacity:.10 }
+      .pn2 { fill:#111922; fill-opacity:.96; stroke:#ffffff; stroke-opacity:.08 }
+      .sunk{ fill:#ffffff; fill-opacity:.045 }
+      .ln  { stroke:#ffffff; stroke-opacity:.09; stroke-width:1 }
+      .btn { fill:#ffffff; fill-opacity:.07; stroke:#ffffff; stroke-opacity:.14 }
+    </style>
+  </defs>
+  <rect width="1920" height="1080" fill="#06090d"/>
+<rect x="96" y="80" width="1824" height="948" fill="url(#stage)"/>
+<rect x="96" y="516.08" width="1824" height="511.91999999999996" fill="url(#floor)"/>
+<line x1="96" y1="521" x2="1920" y2="521" stroke="#ffffff" stroke-opacity=".045"/>
+<line x1="96" y1="531" x2="1920" y2="531" stroke="#ffffff" stroke-opacity=".045"/>
+<line x1="96" y1="548" x2="1920" y2="548" stroke="#ffffff" stroke-opacity=".045"/>
+<line x1="96" y1="570" x2="1920" y2="570" stroke="#ffffff" stroke-opacity=".045"/>
+<line x1="96" y1="596" x2="1920" y2="596" stroke="#ffffff" stroke-opacity=".045"/>
+<line x1="96" y1="627" x2="1920" y2="627" stroke="#ffffff" stroke-opacity=".045"/>
+<line x1="96" y1="663" x2="1920" y2="663" stroke="#ffffff" stroke-opacity=".045"/>
+<line x1="96" y1="703" x2="1920" y2="703" stroke="#ffffff" stroke-opacity=".045"/>
+<line x1="96" y1="747" x2="1920" y2="747" stroke="#ffffff" stroke-opacity=".045"/>
+<line x1="96" y1="795" x2="1920" y2="795" stroke="#ffffff" stroke-opacity=".045"/>
+<line x1="96" y1="848" x2="1920" y2="848" stroke="#ffffff" stroke-opacity=".045"/>
+<line x1="96" y1="904" x2="1920" y2="904" stroke="#ffffff" stroke-opacity=".045"/>
+<line x1="96" y1="964" x2="1920" y2="964" stroke="#ffffff" stroke-opacity=".045"/>
+<rect x="748.0" y="636.08" width="520" height="26" rx="4" fill="#3c4a56"/>
+<rect x="758.0" y="662.08" width="14" height="150" fill="#2b363f"/>
+<rect x="1244.0" y="662.08" width="14" height="150" fill="#2b363f"/>
+<rect x="1048.0" y="620.08" width="150" height="20" rx="3" fill="#2f6f5f"/>
+<rect x="824.0" y="618.08" width="68" height="18" rx="4" fill="#54636f"/>
+<rect x="842.0" y="446.08000000000004" width="32" height="175" rx="14" fill="#7d8b96"/>
+<rect x="848.0" y="430.08000000000004" width="180" height="30" rx="15" fill="#8d9aa4"/>
+<rect x="1008.0" y="436.08000000000004" width="26" height="120" rx="12" fill="#7d8b96"/>
+<rect x="1010.0" y="550.08" width="22" height="34" rx="4" fill="#3f4c56"/>
+<circle cx="858.0" cy="445.08000000000004" r="7" fill="#f6ad37"/>
+<circle cx="1021.0" cy="440.08000000000004" r="7" fill="#f6ad37"/>
+<line x1="1021.0" y1="586.08" x2="1063.0" y2="572.08" stroke="#f0475a" stroke-width="2"/>
+<line x1="1021.0" y1="586.08" x2="991.0" y2="562.08" stroke="#3ecf8e" stroke-width="2"/>
+<line x1="1021.0" y1="586.08" x2="1021.0" y2="626.08" stroke="#3a96ff" stroke-width="2"/>
+<text x="1008.0" y="126" text-anchor="middle" fill="#4d5c69" font-size="12" letter-spacing="3.2" font-weight="700">DIGITAL TWIN VIEWPORT</text>
+<rect x="0" y="0" width="1920" height="80" fill="#080d13" fill-opacity=".96"/>
+<line x1="0" y1="80" x2="1920" y2="80" class="ln"/>
+<rect x="0" y="78" width="360" height="2" fill="#facc33" fill-opacity=".6"/>
+<rect x="40" y="26" width="4" height="28" fill="#facc33"/>
+<rect x="48" y="34" width="4" height="20" fill="#facc33" fill-opacity=".5"/>
+<text x="66" y="40" fill="#f8fdff" font-size="26" font-weight="800" letter-spacing="1.4">FR5</text>
+<text x="66" y="60" class="mu" font-size="13">FAIRINO · CELL A</text>
+<line x1="178" y1="18" x2="178" y2="62" stroke="#ffffff" stroke-opacity=".08"/>
+<text x="206" y="34" class="mi">MODE</text>
+<rect x="206" y="42" width="62" height="24" rx="3" fill="#facc33" fill-opacity=".16" stroke="#facc33" stroke-opacity=".65"/>
+<text x="237" y="59" text-anchor="middle" fill="#facc33" font-size="13" font-weight="800" letter-spacing="1.4">MOCK</text>
+<rect x="272" y="42" width="62" height="24" rx="3" fill="none" stroke="#ffffff" stroke-opacity=".10"/>
+<text x="303" y="59" text-anchor="middle" fill="#4d5c69" font-size="13" font-weight="800" letter-spacing="1.4">REAL</text>
+<line x1="362" y1="18" x2="362" y2="62" stroke="#ffffff" stroke-opacity=".08"/>
+<text x="390" y="34" class="mi">ROBOT</text>
+<rect x="390" y="42" width="118" height="24" rx="3" fill="#3ecf8e" fill-opacity=".14" stroke="#3ecf8e" stroke-opacity=".5"/>
+<circle cx="404" cy="54" r="4" fill="#3ecf8e"/>
+<text x="416" y="59" fill="#3ecf8e" font-size="12" font-weight="700" letter-spacing="1.2">RUNNING</text>
+<line x1="536" y1="18" x2="536" y2="62" stroke="#ffffff" stroke-opacity=".08"/>
+<text x="564" y="34" class="mi">LINK</text>
+<circle cx="568" cy="55" r="4" fill="#3ecf8e"/>
+<text x="580" y="60" fill="#93a6b4" font-size="14">joint_states</text>
+<text x="712" y="60" text-anchor="end" class="mu" font-size="12">31 ms</text>
+<circle cx="724" cy="55" r="4" fill="#3ecf8e"/>
+<text x="736" y="60" fill="#93a6b4" font-size="14">board/image</text>
+<text x="868" y="60" text-anchor="end" class="mu" font-size="12">68 ms</text>
+<circle cx="880" cy="55" r="4" fill="#46545f"/>
+<text x="892" y="60" fill="#93a6b4" font-size="14">assembly/fb</text>
+<text x="1024" y="60" text-anchor="end" class="mu" font-size="12">idle</text>
+<line x1="1040" y1="18" x2="1040" y2="62" stroke="#ffffff" stroke-opacity=".08"/>
+<text x="1068" y="34" class="mi">JOB</text>
+<text x="1068" y="60" fill="#eaf3f8" font-size="16" font-weight="700">JOB-20260807-0142</text>
+<rect x="1236" y="47" width="120" height="7" rx="3.5" fill="#ffffff" fill-opacity=".07"/>
+<rect x="1236" y="47" width="72" height="7" rx="3.5" fill="#facc33" fill-opacity=".95"/>
+<text x="1372" y="60" fill="#eaf3f8" font-size="16" font-weight="700">6 / 10</text>
+<line x1="1442" y1="18" x2="1442" y2="62" stroke="#ffffff" stroke-opacity=".08"/>
+<text x="1470" y="34" class="mi">CYCLE</text>
+<text x="1470" y="60" fill="#eaf3f8" font-size="16" font-weight="700">00:01:24</text>
+<line x1="1556" y1="18" x2="1556" y2="62" stroke="#ffffff" stroke-opacity=".08"/>
+<text x="1580" y="34" class="mi">SPEED</text>
+<text x="1692" y="34" text-anchor="end" fill="#eaf3f8" font-size="15" font-weight="700">45 %</text>
+<rect x="1580" y="48" width="112" height="7" rx="3.5" fill="#ffffff" fill-opacity=".07"/>
+<rect x="1580" y="48" width="50" height="7" rx="3.5" fill="#93a8b8" fill-opacity=".9"/>
+<rect x="1712" y="18" width="160" height="44" rx="5" fill="#f0475a" fill-opacity=".20" stroke="#f0475a" stroke-opacity=".8"/>
+<circle cx="1738" cy="40" r="8" fill="#ff8f9b"/>
+<text x="1760" y="47" fill="#ff8f9b" font-size="20" font-weight="800" letter-spacing="2.6">STOP</text>
+<rect x="0" y="80" width="96" height="1000" fill="#080d13" fill-opacity=".96"/>
+<line x1="96" y1="80" x2="96" y2="1080" class="ln"/>
+<text x="48.0" y="110" text-anchor="middle" class="mi" font-size="10">PAGE</text>
+<rect x="0" y="132" width="96" height="88" fill="#facc33" fill-opacity=".10"/>
+<rect x="0" y="132" width="3" height="88" fill="#facc33"/>
+<rect x="33.0" y="150" width="30" height="30" rx="6" fill="none" stroke="#facc33" stroke-opacity=".9" stroke-width="1.8"/>
+<text x="48.0" y="198" text-anchor="middle" fill="#facc33" font-size="11" font-weight="800" letter-spacing="0.8">RUN</text>
+<text x="48.0" y="213" text-anchor="middle" fill="#4a5764" font-size="11">운전</text>
+<rect x="33.0" y="254" width="30" height="30" rx="6" fill="none" stroke="#5c6d7c" stroke-opacity=".55" stroke-width="1.8"/>
+<text x="48.0" y="302" text-anchor="middle" fill="#5c6d7c" font-size="11" font-weight="800" letter-spacing="0.8">INSPECT</text>
+<text x="48.0" y="317" text-anchor="middle" fill="#4a5764" font-size="11">검사</text>
+<rect x="33.0" y="358" width="30" height="30" rx="6" fill="none" stroke="#5c6d7c" stroke-opacity=".55" stroke-width="1.8"/>
+<text x="48.0" y="406" text-anchor="middle" fill="#5c6d7c" font-size="11" font-weight="800" letter-spacing="0.8">MANUAL</text>
+<text x="48.0" y="421" text-anchor="middle" fill="#4a5764" font-size="11">수동</text>
+<rect x="33.0" y="462" width="30" height="30" rx="6" fill="none" stroke="#5c6d7c" stroke-opacity=".55" stroke-width="1.8"/>
+<text x="48.0" y="510" text-anchor="middle" fill="#5c6d7c" font-size="11" font-weight="800" letter-spacing="0.8">QUALITY</text>
+<text x="48.0" y="525" text-anchor="middle" fill="#4a5764" font-size="11">품질</text>
+<rect x="33.0" y="566" width="30" height="30" rx="6" fill="none" stroke="#5c6d7c" stroke-opacity=".55" stroke-width="1.8"/>
+<text x="48.0" y="614" text-anchor="middle" fill="#5c6d7c" font-size="11" font-weight="800" letter-spacing="0.8">SETUP</text>
+<text x="48.0" y="629" text-anchor="middle" fill="#4a5764" font-size="11">설정</text>
+<rect x="0" y="1028" width="1920" height="52" fill="#080d13" fill-opacity=".96"/>
+<line x1="0" y1="1028" x2="1920" y2="1028" class="ln"/>
+<circle cx="48" cy="1054" r="4" fill="#5a6b79"/>
+<text x="66" y="1059" fill="#93a6b4" font-size="14">10:42:34   VISION   보정 적용  X +0.18 / Y −0.24</text>
+<text x="1640" y="1059" fill="#8296a6" font-size="12" font-weight="700" letter-spacing="1.6">EVENTS</text>
+<rect x="1732" y="1042" width="140" height="26" rx="3" fill="#ffffff" fill-opacity=".04" stroke="#ffffff" stroke-opacity=".14"/>
+<text x="1802" y="1059" text-anchor="middle" fill="#7d8f9c" font-size="12" font-weight="700" letter-spacing="1.2">ALARM 0</text>
+<rect x="144" y="106" width="88" height="30" rx="4" fill="#facc33" fill-opacity=".16" stroke="#facc33" stroke-opacity=".55"/>
+<text x="188.0" y="126.0" text-anchor="middle" fill="#facc33" font-size="13" font-weight="700" letter-spacing="1.1">OVERVIEW</text>
+<rect x="240" y="106" width="88" height="30" rx="4" class="btn" />
+<text x="284.0" y="126.0" text-anchor="middle" fill="#c3d2dd" font-size="13" font-weight="700" letter-spacing="1.1">TOOL</text>
+<rect x="336" y="106" width="88" height="30" rx="4" class="btn" />
+<text x="380.0" y="126.0" text-anchor="middle" fill="#c3d2dd" font-size="13" font-weight="700" letter-spacing="1.1">TOP</text>
+<rect x="432" y="106" width="88" height="30" rx="4" class="btn" />
+<text x="476.0" y="126.0" text-anchor="middle" fill="#c3d2dd" font-size="13" font-weight="700" letter-spacing="1.1">FREE</text>
+<rect x="1528" y="106" width="344" height="492" rx="8" class="pn" />
+<text x="1548" y="136" class="mi">ASSEMBLY JOB</text>
+<rect x="1724" y="123" width="128" height="18" rx="3" fill="#3ecf8e" fill-opacity=".10" stroke="#3ecf8e" stroke-opacity=".35"/>
+<text x="1733" y="136" fill="#3ecf8e" font-size="10.5" font-weight="700" letter-spacing=".8">영속 · DB 기록</text>
+<text x="1548" y="168" fill="#eaf3f8" font-size="19" font-weight="700">HBM3 CARRIER</text>
+<text x="1548" y="190" class="mu" font-size="13">PRD-A · v3  ·  recipe mock-r1</text>
+<line x1="1544" y1="208" x2="1856" y2="208" class="ln"/>
+<text x="1548" y="264" fill="#f4fbff" font-size="52" font-weight="800" letter-spacing="-2">6</text>
+<text x="1604" y="264" fill="#63768a" font-size="26" font-weight="700">/ 10</text>
+<text x="1548" y="286" class="mi">COMPLETED UNITS</text>
+<text x="1852" y="240" text-anchor="end" class="ok" font-size="15" font-weight="700">RUNNING</text>
+<text x="1852" y="262" text-anchor="end" class="mu" font-size="13">tact 38.0s · avg 41.2s</text>
+<text x="1852" y="284" text-anchor="end" class="mu" font-size="13">잔여 4대 · 예정 10:47</text>
+<text x="1548" y="318" class="mi">UNITS</text>
+<text x="1852" y="318" text-anchor="end" class="ac" font-size="11" font-weight="700">클릭 → INSPECT</text>
+<rect x="1548" y="328" width="25" height="30" rx="3" fill="#3ecf8e" fill-opacity=".16" stroke="#3ecf8e" stroke-opacity=".45"/>
+<text x="1560" y="348" text-anchor="middle" fill="#3ecf8e" font-size="12" font-weight="700">1</text>
+<rect x="1579" y="328" width="25" height="30" rx="3" fill="#3ecf8e" fill-opacity=".16" stroke="#3ecf8e" stroke-opacity=".45"/>
+<text x="1591" y="348" text-anchor="middle" fill="#3ecf8e" font-size="12" font-weight="700">2</text>
+<rect x="1610" y="328" width="25" height="30" rx="3" fill="#f0475a" fill-opacity=".16" stroke="#f0475a" stroke-opacity=".7"/>
+<text x="1622" y="348" text-anchor="middle" fill="#f0475a" font-size="12" font-weight="700">3</text>
+<rect x="1641" y="328" width="25" height="30" rx="3" fill="#3ecf8e" fill-opacity=".16" stroke="#3ecf8e" stroke-opacity=".45"/>
+<text x="1653" y="348" text-anchor="middle" fill="#3ecf8e" font-size="12" font-weight="700">4</text>
+<rect x="1672" y="328" width="25" height="30" rx="3" fill="#3ecf8e" fill-opacity=".16" stroke="#3ecf8e" stroke-opacity=".45"/>
+<text x="1684" y="348" text-anchor="middle" fill="#3ecf8e" font-size="12" font-weight="700">5</text>
+<rect x="1703" y="328" width="25" height="30" rx="3" fill="#3ecf8e" fill-opacity=".16" stroke="#3ecf8e" stroke-opacity=".45"/>
+<text x="1715" y="348" text-anchor="middle" fill="#3ecf8e" font-size="12" font-weight="700">6</text>
+<rect x="1734" y="328" width="25" height="30" rx="3" fill="#facc33" fill-opacity=".16" stroke="#facc33" stroke-opacity=".85"/>
+<text x="1746" y="348" text-anchor="middle" fill="#facc33" font-size="12" font-weight="700">7</text>
+<rect x="1765" y="328" width="25" height="30" rx="3" fill="#ffffff" fill-opacity=".03" stroke="#ffffff" stroke-opacity=".10"/>
+<text x="1777" y="348" text-anchor="middle" fill="#8ba0b0" font-size="12" font-weight="700">8</text>
+<rect x="1796" y="328" width="25" height="30" rx="3" fill="#ffffff" fill-opacity=".03" stroke="#ffffff" stroke-opacity=".10"/>
+<text x="1808" y="348" text-anchor="middle" fill="#8ba0b0" font-size="12" font-weight="700">9</text>
+<rect x="1827" y="328" width="25" height="30" rx="3" fill="#ffffff" fill-opacity=".03" stroke="#ffffff" stroke-opacity=".10"/>
+<text x="1839" y="348" text-anchor="middle" fill="#8ba0b0" font-size="12" font-weight="700">10</text>
+<text x="1548" y="376" class="mu" font-size="12">OK 5</text>
+<text x="1594" y="376" fill="#ff8f9b" font-size="12" font-weight="700">NG 1</text>
+<text x="1852" y="376" text-anchor="end" class="mu" font-size="12">units 1행 = 완성품 1대</text>
+<rect x="1544" y="392" width="312" height="112" rx="5" class="sunk" />
+<text x="1558" y="416" class="mi">UNIT 7  ·  seq 7 / 10</text>
+<text x="1558" y="446" fill="#eaf3f8" font-size="20" font-weight="700">ASSEMBLED</text>
+<text x="1842" y="446" text-anchor="end" class="mu" font-size="12">unit_phase</text>
+<text x="1558" y="472" fill="#93a6b4" font-size="14">step 5 / 8  ·  slot <tspan class="ac" font-weight="700">SK_HYNIX-01</tspan></text>
+<text x="1558" y="492" class="mu" font-size="12">재고 차감 완료 · 검사 대기</text>
+<rect x="1544" y="520" width="100" height="36" rx="4" class="btn" />
+<text x="1594.0" y="543.0" text-anchor="middle" fill="#c3d2dd" font-size="13" font-weight="700" letter-spacing="1.1">PAUSE</text>
+<rect x="1652" y="520" width="100" height="36" rx="4" class="btn" />
+<text x="1702.0" y="543.0" text-anchor="middle" fill="#c3d2dd" font-size="13" font-weight="700" letter-spacing="1.1">STEP</text>
+<rect x="1760" y="520" width="96" height="36" rx="4" fill="#ffffff" fill-opacity=".03" stroke="#ffffff" stroke-opacity=".07"/>
+<text x="1808.0" y="543.0" text-anchor="middle" fill="#4d5c69" font-size="13" font-weight="700" letter-spacing="1.1">ABORT</text>
+<text x="1852" y="576" text-anchor="end" class="mu" font-size="11">ABORT — 취소 계약 미구현 (API.md 4.3)</text>
+<rect x="1528" y="768" width="344" height="240" rx="8" class="pn" />
+<text x="1548" y="796" class="mi">VISION  ·  /vision/board/image</text>
+<rect x="1544" y="808" width="312" height="175" rx="4" fill="url(#cam)"/>
+<rect x="1640" y="854" width="120" height="76" rx="2" fill="none" stroke="#facc33" stroke-opacity=".8" stroke-width="1.5"/>
+<text x="1640" y="848" class="ac" font-size="11" font-weight="700">BOARD 98.4%</text>
+<text x="1550" y="994" class="mu" font-size="11">1280×720 · 30 FPS · 68 ms</text>
+<text x="1850" y="994" text-anchor="end" class="ac" font-size="11" font-weight="700">INSPECT 열기 →</text>
+<rect x="144" y="520" width="336" height="492" rx="8" class="pn" />
+<text x="164" y="550" class="mi">ROBOT  ·  FR5-01</text>
+<rect x="322" y="537" width="140" height="18" rx="3" fill="none" stroke="#5c6d7c" stroke-opacity=".45" stroke-dasharray="3 3"/>
+<text x="331" y="550" fill="#7d8f9c" font-size="10.5" font-weight="700" letter-spacing=".8">휘발 · 표시 전용</text>
+<line x1="160" y1="566" x2="464" y2="566" class="ln"/>
+<text x="164" y="594" class="mi">TCP</text>
+<text x="460" y="594" text-anchor="end" class="mu" font-size="11">mm · base</text>
+<text x="164" y="620" class="mu" font-size="12">X</text>
+<text x="180" y="620" fill="#eaf3f8" font-size="17" font-weight="700">412.6</text>
+<text x="268" y="620" class="mu" font-size="12">Y</text>
+<text x="284" y="620" fill="#eaf3f8" font-size="17" font-weight="700">-88.1</text>
+<text x="372" y="620" class="mu" font-size="12">Z</text>
+<text x="388" y="620" fill="#eaf3f8" font-size="17" font-weight="700">305.9</text>
+<text x="164" y="650" class="mi">RPY</text>
+<text x="460" y="650" text-anchor="end" class="mu" font-size="11">deg</text>
+<text x="164" y="676" class="mu" font-size="12">R</text>
+<text x="180" y="676" fill="#eaf3f8" font-size="17" font-weight="700">179.4</text>
+<text x="268" y="676" class="mu" font-size="12">P</text>
+<text x="284" y="676" fill="#eaf3f8" font-size="17" font-weight="700">0.6</text>
+<text x="372" y="676" class="mu" font-size="12">Y</text>
+<text x="388" y="676" fill="#eaf3f8" font-size="17" font-weight="700">-90.2</text>
+<text x="164" y="710" class="mi">JOINTS</text>
+<text x="460" y="710" text-anchor="end" class="mu" font-size="11">deg · 리미트 대비</text>
+<text x="164" y="739" class="mu" font-size="12">J1</text>
+<rect x="190" y="728" width="196" height="10" rx="5" class="sunk" />
+<rect x="190" y="728" width="98" height="10" rx="5" fill="#8ba0b0" fill-opacity=".85"/>
+<text x="460" y="739" text-anchor="end" fill="#c3d2dd" font-size="15">0.0</text>
+<text x="164" y="767" class="mu" font-size="12">J2</text>
+<rect x="190" y="756" width="196" height="10" rx="5" class="sunk" />
+<rect x="190" y="756" width="24" height="10" rx="5" fill="#f6ad37" fill-opacity=".85"/>
+<text x="460" y="767" text-anchor="end" fill="#c3d2dd" font-size="15">-90.0</text>
+<text x="164" y="795" class="mu" font-size="12">J3</text>
+<rect x="190" y="784" width="196" height="10" rx="5" class="sunk" />
+<rect x="190" y="784" width="169" height="10" rx="5" fill="#f6ad37" fill-opacity=".85"/>
+<text x="460" y="795" text-anchor="end" fill="#c3d2dd" font-size="15">90.0</text>
+<text x="164" y="823" class="mu" font-size="12">J4</text>
+<rect x="190" y="812" width="196" height="10" rx="5" class="sunk" />
+<rect x="190" y="812" width="24" height="10" rx="5" fill="#f6ad37" fill-opacity=".85"/>
+<text x="460" y="823" text-anchor="end" fill="#c3d2dd" font-size="15">-90.0</text>
+<text x="164" y="851" class="mu" font-size="12">J5</text>
+<rect x="190" y="840" width="196" height="10" rx="5" class="sunk" />
+<rect x="190" y="840" width="98" height="10" rx="5" fill="#8ba0b0" fill-opacity=".85"/>
+<text x="460" y="851" text-anchor="end" fill="#c3d2dd" font-size="15">-90.0</text>
+<text x="164" y="879" class="mu" font-size="12">J6</text>
+<rect x="190" y="868" width="196" height="10" rx="5" class="sunk" />
+<rect x="190" y="868" width="98" height="10" rx="5" fill="#8ba0b0" fill-opacity=".85"/>
+<text x="460" y="879" text-anchor="end" fill="#c3d2dd" font-size="15">0.0</text>
+<line x1="160" y1="902" x2="464" y2="902" class="ln"/>
+<text x="164" y="930" class="mi">GRIPPER</text>
+<rect x="240" y="915" width="78" height="21" rx="3" fill="#facc33" fill-opacity=".16" stroke="#facc33" stroke-opacity=".5"/>
+<text x="279" y="930" text-anchor="middle" class="ac" font-size="11" font-weight="700">HOLDING</text>
+<text x="460" y="930" text-anchor="end" fill="#eaf3f8" font-size="17" font-weight="700">18.4 <tspan class="mu" font-size="12">/ 40 mm</tspan></text>
+<text x="164" y="952" class="mu" font-size="12">force 32 N  ·  watchdog 31 / 50 ms  ·  tool Z +142.0</text>
+<rect x="164" y="966" width="92" height="28" rx="4" class="btn" />
+<text x="210.0" y="985.0" text-anchor="middle" fill="#c3d2dd" font-size="13" font-weight="700" letter-spacing="1.1">SERVO</text>
+<rect x="264" y="966" width="92" height="28" rx="4" class="btn" />
+<text x="310.0" y="985.0" text-anchor="middle" fill="#c3d2dd" font-size="13" font-weight="700" letter-spacing="1.1">RESET</text>
+<text x="460" y="985" text-anchor="end" class="mu" font-size="11">서보 · 알람 해제</text>
+<rect x="512" y="912" width="984" height="96" rx="8" class="pn" />
+<text x="532" y="940" class="mi">ASSEMBLY STEP</text>
+<rect x="664" y="926" width="140" height="18" rx="3" fill="none" stroke="#5c6d7c" stroke-opacity=".45" stroke-dasharray="3 3"/>
+<text x="673" y="939" fill="#7d8f9c" font-size="10.5" font-weight="700" letter-spacing=".8">휘발 · 표시 전용</text>
+<text x="1476" y="940" class="ac" font-size="13" font-weight="700" text-anchor="end">TRANSFER · 5 / 8 · 18.2s</text>
+<line x1="544" y1="966" x2="1464" y2="966" stroke="#ffffff" stroke-opacity=".10" stroke-width="2"/>
+<line x1="544" y1="966" x2="1070" y2="966" stroke="#facc33" stroke-opacity=".9" stroke-width="2"/>
+<circle cx="544.0" cy="966" r="4" fill="#8ba0b0"/>
+<text x="544" y="990" text-anchor="middle" fill="#8ba0b0" font-size="12" font-weight="700" letter-spacing=".8">READY</text>
+<text x="544" y="1006" text-anchor="middle" class="mu" font-size="11">2.1s</text>
+<circle cx="675.4285714285714" cy="966" r="4" fill="#8ba0b0"/>
+<text x="675" y="990" text-anchor="middle" fill="#8ba0b0" font-size="12" font-weight="700" letter-spacing=".8">DETECT</text>
+<text x="675" y="1006" text-anchor="middle" class="mu" font-size="11">6.4s</text>
+<circle cx="806.8571428571429" cy="966" r="4" fill="#8ba0b0"/>
+<text x="807" y="990" text-anchor="middle" fill="#8ba0b0" font-size="12" font-weight="700" letter-spacing=".8">APPROACH</text>
+<text x="807" y="1006" text-anchor="middle" class="mu" font-size="11">4.9s</text>
+<circle cx="938.2857142857142" cy="966" r="4" fill="#8ba0b0"/>
+<text x="938" y="990" text-anchor="middle" fill="#8ba0b0" font-size="12" font-weight="700" letter-spacing=".8">PICK</text>
+<text x="938" y="1006" text-anchor="middle" class="mu" font-size="11">3.2s</text>
+<circle cx="1069.7142857142858" cy="966" r="6" fill="#facc33"/>
+<text x="1070" y="990" text-anchor="middle" fill="#facc33" font-size="12" font-weight="700" letter-spacing=".8">TRANSFER</text>
+<text x="1070" y="1006" text-anchor="middle" class="mu" font-size="11">18.2s</text>
+<circle cx="1201.142857142857" cy="966" r="4" fill="#4d5c69"/>
+<text x="1201" y="990" text-anchor="middle" fill="#4d5c69" font-size="12" font-weight="700" letter-spacing=".8">PLACE</text>
+<text x="1201" y="1006" text-anchor="middle" class="mu" font-size="11">—</text>
+<circle cx="1332.5714285714284" cy="966" r="4" fill="#4d5c69"/>
+<text x="1333" y="990" text-anchor="middle" fill="#4d5c69" font-size="12" font-weight="700" letter-spacing=".8">INSPECT</text>
+<text x="1333" y="1006" text-anchor="middle" class="mu" font-size="11">—</text>
+<circle cx="1464.0" cy="966" r="4" fill="#4d5c69"/>
+<text x="1464" y="990" text-anchor="middle" fill="#4d5c69" font-size="12" font-weight="700" letter-spacing=".8">RETURN</text>
+<text x="1464" y="1006" text-anchor="middle" class="mu" font-size="11">—</text>
+</svg>

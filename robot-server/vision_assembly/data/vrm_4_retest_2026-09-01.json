@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "mode": "single_part_hover_target",
+  "timestamp_unix": 1788240838.7037008,
+  "part_type": "black_block",
+  "display_name": "VRM",
+  "instance_index": 4,
+  "selection_mode": "instance_index",
+  "part_center_base_mm": [
+    -719.517,
+    -155.644,
+    -44.646
+  ],
+  "long_axis_angle_base_deg": 2.027,
+  "center_pixel": [
+    529.25,
+    199.74
+  ],
+  "center_pixel_span": [
+    0.23,
+    0.23
+  ],
+  "camera_xyz_m": [
+    -0.061368,
+    -0.096184,
+    0.48325
+  ],
+  "sample_count": 6,
+  "position_span_mm": [
+    0.121,
+    0.048,
+    0.999
+  ],
+  "angle_span_deg": 0.0,
+  "hover_offset_mm": 100.0,
+  "robot_motion_authorized": false,
+  "source_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/tray_detections_last.json"
+}

@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "mode": "single_part_hover_target",
+  "timestamp_unix": 1788070346.642876,
+  "part_type": "gpu",
+  "display_name": "GPU",
+  "part_center_base_mm": [
+    -516.86,
+    -169.211,
+    -42.801
+  ],
+  "long_axis_angle_base_deg": -1.284,
+  "sample_count": 6,
+  "position_span_mm": [
+    0.034,
+    0.007,
+    0.005
+  ],
+  "angle_span_deg": 0.081,
+  "hover_offset_mm": 100.0,
+  "robot_motion_authorized": false,
+  "source_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/tray_detections_last.json"
+}

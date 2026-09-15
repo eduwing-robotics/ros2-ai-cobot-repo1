@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "mode": "operator_two_terminal_axes",
+  "robot_motion_authorized": false,
+  "operator_confirmed_consumed_prefix_count": 3,
+  "timestamp_unix": 1788684444.4908566,
+  "set_index": 1,
+  "canonical_size": [
+    1200,
+    720
+  ],
+  "reference_tcp_base": [
+    -527.998,
+    -120.961,
+    77.862,
+    180.0,
+    0.0,
+    89.999
+  ],
+  "source_image_sha256": "c07801ceddaaf556da0d69aa6f9a7219d07b022c9de4d44a30925883817db083",
+  "click_semantics": "terminal A first, terminal B second; arrow A-to-B",
+  "parts": [
+    {
+      "instance_index": 4,
+      "detection_center_canonical_pixel": [
+        792.3259887695312,
+        191.84300231933594
+      ],
+      "terminal_endpoints_canonical_pixel": [
+        [
+          798.0,
+          167.0
+        ],
+        [
+          789.0,
+          218.0
+        ]
+      ],
+      "terminal_endpoints_source_pixel": [
+        [
+          746.885009765625,
+          321.13800048828125
+        ],
+        [
+          743.7639770507812,
+          349.4070129394531
+        ]
+      ],
+      "directed_axis_canonical_deg": 100.008,
+      "long_axis_canonical_deg": -79.992,
+      "detection_confidence": 0.8948
+    },
+    {
+      "instance_index": 5,
+      "detection_center_canonical_pixel": [
+        958.156982421875,
+        195.91299438476562
+      ],
+      "terminal_endpoints_canonical_pixel": [
+        [
+          959.0,
+          173.0
+        ],
+        [
+          959.0,
+          221.0
+        ]
+      ],
+      "terminal_endpoints_source_pixel": [
+        [
+          797.56298828125,
+          324.25201416015625
+        ],
+        [
+          797.4180297851562,
+          350.8909912109375
+        ]
+      ],
+      "directed_axis_canonical_deg": 90.0,
+      "long_axis_canonical_deg": -90.0,
+      "detection_confidence": 0.8931
+    }
+  ]
+}

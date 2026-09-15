@@ -1,0 +1,146 @@
+{
+  "schema": "fr5.full_fixed_cycle_plan/v1",
+  "created_unix": 1788607264.0519764,
+  "cycle_id": "20260905-201721",
+  "snapshot": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/gpu_restart_single_20260905.json",
+  "tray_inspection_reference": {
+    "handeye_sha256": "f08dc2dd9a40523e3f0c69e9285d88c774d69553659c3d9be891da727877c558",
+    "parts": [
+      {
+        "part_type": "gpu",
+        "instance_index": 1,
+        "base_xyz_mm": [
+          -518.702,
+          -190.41,
+          -42.145
+        ],
+        "long_axis_angle_base_deg": 179.728,
+        "observation_frames": 40,
+        "quality": {
+          "observation_frames": 40,
+          "median_detection_confidence": 0.823,
+          "median_mask_shape_score": 0.956,
+          "median_rectangularity": 0.954
+        },
+        "reference_center_pixel": [
+          686.5,
+          846.65
+        ],
+        "consumed": false
+      }
+    ],
+    "bindings": [
+      {
+        "part_type": "gpu",
+        "physical_index": 1,
+        "reference_center_pixel": [
+          686.5,
+          846.65
+        ]
+      }
+    ]
+  },
+  "source_captures": {
+    "tray_captured_unix": 1788607131.6514082,
+    "board_captured_unix": 1788607041.5996735,
+    "smd_captured_unix": null
+  },
+  "transfer_z_mm": 350.0,
+  "speeds_percent": {
+    "travel": 25,
+    "combined_rotation": 25,
+    "vertical": 10
+  },
+  "board_place_common_z_raise_mm": 0.3,
+  "motion_profile": "smooth_combined_transfer_v1",
+  "robot_motion_authorized": false,
+  "plan_selection": {
+    "mode": "single_slot",
+    "requested_only_slot": "GPU-01",
+    "selected_slots": [
+      "GPU-01"
+    ]
+  },
+  "cycle_overrides": {
+    "GPU-01": {
+      "preferred_tcp_c_deg": 180.0,
+      "preference_tie_threshold_deg": 10.0
+    },
+    "PM-01": {
+      "pick_reference_tcp_c_deg": 85.185,
+      "locked_place_reference_tcp_c_deg": 180.0
+    },
+    "pick_symmetric_solution": {
+      "rule": "choose the 180-degree-equivalent pick TCP C nearest the previous planned place TCP C, except HBM and PM-01 use their recorded pick references"
+    },
+    "HBM": {
+      "pick_reference_tcp_c_deg": 90.0,
+      "locked_place_reference_tcp_c_deg": 180.0,
+      "orientation_mode": "align_actual_carried_axis_to_current_slot_axis"
+    }
+  },
+  "plan": [
+    {
+      "slot_code": "GPU-01",
+      "part_type": "gpu",
+      "tray_instance_index": 1,
+      "tray_surface_base_mm": [
+        -518.702,
+        -190.41,
+        -42.145
+      ],
+      "tray_long_axis_base_deg": 179.728,
+      "pick_correction_base_mm": [
+        0.0,
+        0.0
+      ],
+      "pick_z_mode": "detected_surface_relative",
+      "pick_final_tcp": [
+        -518.702,
+        -190.41,
+        -49.145,
+        -180.0,
+        0.0,
+        89.72800000000001
+      ],
+      "place_final_tcp": [
+        38.062108,
+        -518.205769,
+        91.46085,
+        180.0,
+        0.0,
+        -178.81361640409474
+      ],
+      "calibrated_place_final_tcp_z_mm": 91.16085,
+      "board_place_common_z_raise_mm": 0.3,
+      "tray_open_position": 70,
+      "grip_position": 65,
+      "release_position": 70,
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "target_axis_base_deg": 91.18638359590528,
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 10.0,
+        "skip_rotation_below_deg": 0.5,
+        "preferred_tcp_c_deg": 180.0,
+        "rotation_delta_deg": 91.45838359590527,
+        "rotation_skipped_in_plan": false,
+        "planned_from_pick": {
+          "current_axis_base_deg": -0.27199999999999147,
+          "target_axis_base_deg": 91.18638359590528,
+          "symmetry_period_deg": 180.0,
+          "rotation_delta_deg": 91.45838359590527,
+          "target_tcp_abc_deg": [
+            180.0,
+            0.0,
+            -178.81361640409474
+          ],
+          "preferred_tcp_c_deg": 180.0
+        }
+      }
+    }
+  ],
+  "status": "planned_not_executed"
+}

@@ -1,0 +1,17 @@
+[
+  {
+    "branch": "Main_Server&DT",
+    "commit": "5a70ace1f0d96f74f2541b86750ff9c990ef9369",
+    "path": "main-server"
+  },
+  {
+    "branch": "fr5-robot-control-full",
+    "commit": "619fc9bb12c89e51df64a09a72c3d89a72c23fff",
+    "path": "robot-server"
+  },
+  {
+    "branch": "codex/conveyor-cell-integration",
+    "commit": "bcda51825a8c86dfd98d55259b82ba6a09578aaf",
+    "path": "vision-server"
+  }
+]

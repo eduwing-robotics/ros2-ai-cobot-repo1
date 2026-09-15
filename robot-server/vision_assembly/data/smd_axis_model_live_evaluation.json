@@ -1,0 +1,1164 @@
+{
+  "schema_version": 1,
+  "mode": "live_smd_obb_axis_vs_operator_reference",
+  "timestamp_unix": 1788435162.9794133,
+  "robot_motion_authorized": false,
+  "model": "vision_assembly/models/smd_obb/pilot_06/weights/best.pt",
+  "manual_axes": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/smd_manual_axes_set1.json",
+  "set_index": 1,
+  "captured_frames": 24,
+  "accepted_frames": 24,
+  "rejected_frames": [],
+  "limits": {
+    "max_angle_error_deg": 8.0,
+    "min_aspect_ratio": 1.35
+  },
+  "all_passed": true,
+  "results": [
+    {
+      "instance_index": 1,
+      "reference_angle_deg": -90.0,
+      "predicted_angle_median_deg": -88.241,
+      "angle_error_deg": 1.759,
+      "angle_span_deg": 7.1215,
+      "aspect_ratio_median": 1.6757,
+      "confidence_median": 0.8924,
+      "sample_count": 24,
+      "passed": true,
+      "samples": [
+        {
+          "angle_deg": -88.2467,
+          "aspect_ratio": 1.7511,
+          "confidence": 0.8868,
+          "center_canonical_pixel": [
+            299.6319885253906,
+            295.4840087890625
+          ]
+        },
+        {
+          "angle_deg": -89.7734,
+          "aspect_ratio": 1.6402,
+          "confidence": 0.8954,
+          "center_canonical_pixel": [
+            299.7489929199219,
+            294.84100341796875
+          ]
+        },
+        {
+          "angle_deg": -87.6293,
+          "aspect_ratio": 1.6003,
+          "confidence": 0.892,
+          "center_canonical_pixel": [
+            301.3320007324219,
+            295.1340026855469
+          ]
+        },
+        {
+          "angle_deg": -87.1444,
+          "aspect_ratio": 1.6387,
+          "confidence": 0.8948,
+          "center_canonical_pixel": [
+            299.3580017089844,
+            294.6919860839844
+          ]
+        },
+        {
+          "angle_deg": -88.58,
+          "aspect_ratio": 1.675,
+          "confidence": 0.8925,
+          "center_canonical_pixel": [
+            300.4779968261719,
+            294.8380126953125
+          ]
+        },
+        {
+          "angle_deg": -89.5447,
+          "aspect_ratio": 1.6824,
+          "confidence": 0.8938,
+          "center_canonical_pixel": [
+            300.13800048828125,
+            294.86700439453125
+          ]
+        },
+        {
+          "angle_deg": -88.6505,
+          "aspect_ratio": 1.7806,
+          "confidence": 0.8964,
+          "center_canonical_pixel": [
+            300.1470031738281,
+            295.0740051269531
+          ]
+        },
+        {
+          "angle_deg": -88.9268,
+          "aspect_ratio": 1.6364,
+          "confidence": 0.8932,
+          "center_canonical_pixel": [
+            300.4779968261719,
+            294.8479919433594
+          ]
+        },
+        {
+          "angle_deg": -88.2729,
+          "aspect_ratio": 1.6932,
+          "confidence": 0.8878,
+          "center_canonical_pixel": [
+            299.1470031738281,
+            294.6090087890625
+          ]
+        },
+        {
+          "angle_deg": -85.8209,
+          "aspect_ratio": 1.6966,
+          "confidence": 0.8952,
+          "center_canonical_pixel": [
+            299.7019958496094,
+            295.14599609375
+          ]
+        },
+        {
+          "angle_deg": -86.4196,
+          "aspect_ratio": 1.6412,
+          "confidence": 0.8952,
+          "center_canonical_pixel": [
+            300.4280090332031,
+            294.9620056152344
+          ]
+        },
+        {
+          "angle_deg": -88.2353,
+          "aspect_ratio": 1.6679,
+          "confidence": 0.8852,
+          "center_canonical_pixel": [
+            300.125,
+            295.39300537109375
+          ]
+        },
+        {
+          "angle_deg": -84.9432,
+          "aspect_ratio": 1.6512,
+          "confidence": 0.8849,
+          "center_canonical_pixel": [
+            298.7659912109375,
+            294.75799560546875
+          ]
+        },
+        {
+          "angle_deg": -87.2978,
+          "aspect_ratio": 1.6487,
+          "confidence": 0.8934,
+          "center_canonical_pixel": [
+            299.9159851074219,
+            295.4639892578125
+          ]
+        },
+        {
+          "angle_deg": -86.9678,
+          "aspect_ratio": 1.6905,
+          "confidence": 0.8976,
+          "center_canonical_pixel": [
+            299.75299072265625,
+            294.9150085449219
+          ]
+        },
+        {
+          "angle_deg": -86.3997,
+          "aspect_ratio": 1.6649,
+          "confidence": 0.8924,
+          "center_canonical_pixel": [
+            300.4049987792969,
+            294.9209899902344
+          ]
+        },
+        {
+          "angle_deg": -87.4866,
+          "aspect_ratio": 1.6436,
+          "confidence": 0.8918,
+          "center_canonical_pixel": [
+            299.8500061035156,
+            294.9949951171875
+          ]
+        },
+        {
+          "angle_deg": -89.6933,
+          "aspect_ratio": 1.678,
+          "confidence": 0.8895,
+          "center_canonical_pixel": [
+            299.9020080566406,
+            294.91900634765625
+          ]
+        },
+        {
+          "angle_deg": -87.2453,
+          "aspect_ratio": 1.6809,
+          "confidence": 0.8879,
+          "center_canonical_pixel": [
+            299.74200439453125,
+            294.4639892578125
+          ]
+        },
+        {
+          "angle_deg": -89.4894,
+          "aspect_ratio": 1.6763,
+          "confidence": 0.8939,
+          "center_canonical_pixel": [
+            299.64898681640625,
+            294.8760070800781
+          ]
+        },
+        {
+          "angle_deg": -88.7082,
+          "aspect_ratio": 1.7131,
+          "confidence": 0.8955,
+          "center_canonical_pixel": [
+            300.4570007324219,
+            294.8280029296875
+          ]
+        },
+        {
+          "angle_deg": -86.6226,
+          "aspect_ratio": 1.6584,
+          "confidence": 0.8883,
+          "center_canonical_pixel": [
+            300.125,
+            294.7919921875
+          ]
+        },
+        {
+          "angle_deg": -88.4439,
+          "aspect_ratio": 1.6842,
+          "confidence": 0.8918,
+          "center_canonical_pixel": [
+            300.2850036621094,
+            294.6130065917969
+          ]
+        },
+        {
+          "angle_deg": 87.9353,
+          "aspect_ratio": 1.7095,
+          "confidence": 0.8893,
+          "center_canonical_pixel": [
+            299.0060119628906,
+            294.8710021972656
+          ]
+        }
+      ]
+    },
+    {
+      "instance_index": 2,
+      "reference_angle_deg": 87.6141,
+      "predicted_angle_median_deg": 88.1444,
+      "angle_error_deg": 0.5303,
+      "angle_span_deg": 7.2872,
+      "aspect_ratio_median": 1.7018,
+      "confidence_median": 0.8962,
+      "sample_count": 24,
+      "passed": true,
+      "samples": [
+        {
+          "angle_deg": 89.2688,
+          "aspect_ratio": 1.7103,
+          "confidence": 0.9001,
+          "center_canonical_pixel": [
+            442.3580017089844,
+            276.7959899902344
+          ]
+        },
+        {
+          "angle_deg": 89.4812,
+          "aspect_ratio": 1.6811,
+          "confidence": 0.9054,
+          "center_canonical_pixel": [
+            442.0589904785156,
+            276.8919982910156
+          ]
+        },
+        {
+          "angle_deg": -89.1457,
+          "aspect_ratio": 1.7086,
+          "confidence": 0.8916,
+          "center_canonical_pixel": [
+            442.5150146484375,
+            276.85101318359375
+          ]
+        },
+        {
+          "angle_deg": 89.1911,
+          "aspect_ratio": 1.7583,
+          "confidence": 0.8826,
+          "center_canonical_pixel": [
+            442.1809997558594,
+            276.92999267578125
+          ]
+        },
+        {
+          "angle_deg": -89.165,
+          "aspect_ratio": 1.6551,
+          "confidence": 0.8959,
+          "center_canonical_pixel": [
+            442.6340026855469,
+            276.85101318359375
+          ]
+        },
+        {
+          "angle_deg": 88.4847,
+          "aspect_ratio": 1.647,
+          "confidence": 0.9069,
+          "center_canonical_pixel": [
+            442.4360046386719,
+            277.0849914550781
+          ]
+        },
+        {
+          "angle_deg": 89.5156,
+          "aspect_ratio": 1.7335,
+          "confidence": 0.8961,
+          "center_canonical_pixel": [
+            442.15399169921875,
+            276.83099365234375
+          ]
+        },
+        {
+          "angle_deg": 88.4498,
+          "aspect_ratio": 1.6913,
+          "confidence": 0.8903,
+          "center_canonical_pixel": [
+            441.8909912109375,
+            277.0159912109375
+          ]
+        },
+        {
+          "angle_deg": 85.0196,
+          "aspect_ratio": 1.7214,
+          "confidence": 0.8855,
+          "center_canonical_pixel": [
+            440.5660095214844,
+            276.9880065917969
+          ]
+        },
+        {
+          "angle_deg": 84.7219,
+          "aspect_ratio": 1.7489,
+          "confidence": 0.8976,
+          "center_canonical_pixel": [
+            441.875,
+            276.8810119628906
+          ]
+        },
+        {
+          "angle_deg": 85.1826,
+          "aspect_ratio": 1.7149,
+          "confidence": 0.9038,
+          "center_canonical_pixel": [
+            442.4079895019531,
+            277.5610046386719
+          ]
+        },
+        {
+          "angle_deg": 87.2051,
+          "aspect_ratio": 1.6574,
+          "confidence": 0.8977,
+          "center_canonical_pixel": [
+            442.6600036621094,
+            277.1940002441406
+          ]
+        },
+        {
+          "angle_deg": 88.3572,
+          "aspect_ratio": 1.5704,
+          "confidence": 0.889,
+          "center_canonical_pixel": [
+            441.5989990234375,
+            277.0530090332031
+          ]
+        },
+        {
+          "angle_deg": 89.2186,
+          "aspect_ratio": 1.6698,
+          "confidence": 0.9049,
+          "center_canonical_pixel": [
+            442.3869934082031,
+            277.06298828125
+          ]
+        },
+        {
+          "angle_deg": 87.7348,
+          "aspect_ratio": 1.6746,
+          "confidence": 0.8868,
+          "center_canonical_pixel": [
+            441.2909851074219,
+            276.87701416015625
+          ]
+        },
+        {
+          "angle_deg": 86.3007,
+          "aspect_ratio": 1.6809,
+          "confidence": 0.9001,
+          "center_canonical_pixel": [
+            442.5880126953125,
+            277.1369934082031
+          ]
+        },
+        {
+          "angle_deg": 87.8641,
+          "aspect_ratio": 1.6949,
+          "confidence": 0.8973,
+          "center_canonical_pixel": [
+            442.5979919433594,
+            277.177001953125
+          ]
+        },
+        {
+          "angle_deg": 87.7966,
+          "aspect_ratio": 1.7378,
+          "confidence": 0.8928,
+          "center_canonical_pixel": [
+            442.156005859375,
+            277.4580078125
+          ]
+        },
+        {
+          "angle_deg": 88.0459,
+          "aspect_ratio": 1.6903,
+          "confidence": 0.9018,
+          "center_canonical_pixel": [
+            442.47198486328125,
+            276.96099853515625
+          ]
+        },
+        {
+          "angle_deg": 87.0059,
+          "aspect_ratio": 1.7271,
+          "confidence": 0.8999,
+          "center_canonical_pixel": [
+            442.24200439453125,
+            276.9429931640625
+          ]
+        },
+        {
+          "angle_deg": 88.2428,
+          "aspect_ratio": 1.717,
+          "confidence": 0.8944,
+          "center_canonical_pixel": [
+            442.2550048828125,
+            276.5
+          ]
+        },
+        {
+          "angle_deg": -87.9909,
+          "aspect_ratio": 1.6299,
+          "confidence": 0.8933,
+          "center_canonical_pixel": [
+            441.77801513671875,
+            276.4960021972656
+          ]
+        },
+        {
+          "angle_deg": 87.2657,
+          "aspect_ratio": 1.7142,
+          "confidence": 0.8928,
+          "center_canonical_pixel": [
+            442.14599609375,
+            277.0480041503906
+          ]
+        },
+        {
+          "angle_deg": 85.9305,
+          "aspect_ratio": 1.7423,
+          "confidence": 0.8963,
+          "center_canonical_pixel": [
+            442.5379943847656,
+            277.3399963378906
+          ]
+        }
+      ]
+    },
+    {
+      "instance_index": 3,
+      "reference_angle_deg": 88.8983,
+      "predicted_angle_median_deg": 89.7561,
+      "angle_error_deg": 0.8578,
+      "angle_span_deg": 9.2878,
+      "aspect_ratio_median": 1.7738,
+      "confidence_median": 0.9023,
+      "sample_count": 24,
+      "passed": true,
+      "samples": [
+        {
+          "angle_deg": 88.269,
+          "aspect_ratio": 1.7755,
+          "confidence": 0.9043,
+          "center_canonical_pixel": [
+            578.0460205078125,
+            265.32000732421875
+          ]
+        },
+        {
+          "angle_deg": 89.2993,
+          "aspect_ratio": 1.8245,
+          "confidence": 0.9059,
+          "center_canonical_pixel": [
+            579.39599609375,
+            265.6990051269531
+          ]
+        },
+        {
+          "angle_deg": 87.1137,
+          "aspect_ratio": 1.8183,
+          "confidence": 0.9014,
+          "center_canonical_pixel": [
+            579.2069702148438,
+            266.12701416015625
+          ]
+        },
+        {
+          "angle_deg": 89.8092,
+          "aspect_ratio": 1.7824,
+          "confidence": 0.9001,
+          "center_canonical_pixel": [
+            578.166015625,
+            266.1159973144531
+          ]
+        },
+        {
+          "angle_deg": -89.3215,
+          "aspect_ratio": 1.8201,
+          "confidence": 0.9037,
+          "center_canonical_pixel": [
+            579.1170043945312,
+            265.5450134277344
+          ]
+        },
+        {
+          "angle_deg": -89.5952,
+          "aspect_ratio": 1.7721,
+          "confidence": 0.9027,
+          "center_canonical_pixel": [
+            578.5440063476562,
+            266.1109924316406
+          ]
+        },
+        {
+          "angle_deg": -86.0181,
+          "aspect_ratio": 1.8382,
+          "confidence": 0.9024,
+          "center_canonical_pixel": [
+            578.5969848632812,
+            265.5539855957031
+          ]
+        },
+        {
+          "angle_deg": 89.7031,
+          "aspect_ratio": 1.8848,
+          "confidence": 0.9038,
+          "center_canonical_pixel": [
+            578.9580078125,
+            265.90899658203125
+          ]
+        },
+        {
+          "angle_deg": -89.9159,
+          "aspect_ratio": 1.7404,
+          "confidence": 0.9048,
+          "center_canonical_pixel": [
+            578.6849975585938,
+            265.64801025390625
+          ]
+        },
+        {
+          "angle_deg": -88.7543,
+          "aspect_ratio": 1.8201,
+          "confidence": 0.9001,
+          "center_canonical_pixel": [
+            578.7750244140625,
+            265.510986328125
+          ]
+        },
+        {
+          "angle_deg": -87.5007,
+          "aspect_ratio": 1.7227,
+          "confidence": 0.8998,
+          "center_canonical_pixel": [
+            578.958984375,
+            266.0899963378906
+          ]
+        },
+        {
+          "angle_deg": 87.272,
+          "aspect_ratio": 1.7946,
+          "confidence": 0.9039,
+          "center_canonical_pixel": [
+            579.0440063476562,
+            265.8420104980469
+          ]
+        },
+        {
+          "angle_deg": 86.7213,
+          "aspect_ratio": 1.7656,
+          "confidence": 0.8967,
+          "center_canonical_pixel": [
+            579.6909790039062,
+            266.2080078125
+          ]
+        },
+        {
+          "angle_deg": 89.128,
+          "aspect_ratio": 1.7549,
+          "confidence": 0.9072,
+          "center_canonical_pixel": [
+            578.3499755859375,
+            265.6549987792969
+          ]
+        },
+        {
+          "angle_deg": 88.6336,
+          "aspect_ratio": 1.7526,
+          "confidence": 0.8997,
+          "center_canonical_pixel": [
+            578.25,
+            265.82000732421875
+          ]
+        },
+        {
+          "angle_deg": 84.6941,
+          "aspect_ratio": 1.8481,
+          "confidence": 0.8992,
+          "center_canonical_pixel": [
+            579.8189697265625,
+            266.02099609375
+          ]
+        },
+        {
+          "angle_deg": -88.4095,
+          "aspect_ratio": 1.7074,
+          "confidence": 0.9038,
+          "center_canonical_pixel": [
+            577.9349975585938,
+            266.0840148925781
+          ]
+        },
+        {
+          "angle_deg": 89.9716,
+          "aspect_ratio": 1.7095,
+          "confidence": 0.902,
+          "center_canonical_pixel": [
+            578.3489990234375,
+            266.0429992675781
+          ]
+        },
+        {
+          "angle_deg": 88.3252,
+          "aspect_ratio": 1.7097,
+          "confidence": 0.9031,
+          "center_canonical_pixel": [
+            579.6599731445312,
+            266.0740051269531
+          ]
+        },
+        {
+          "angle_deg": -89.1273,
+          "aspect_ratio": 1.7195,
+          "confidence": 0.9002,
+          "center_canonical_pixel": [
+            578.8159790039062,
+            265.5920104980469
+          ]
+        },
+        {
+          "angle_deg": -89.8183,
+          "aspect_ratio": 1.7343,
+          "confidence": 0.907,
+          "center_canonical_pixel": [
+            578.5859985351562,
+            265.9519958496094
+          ]
+        },
+        {
+          "angle_deg": 89.6948,
+          "aspect_ratio": 1.7854,
+          "confidence": 0.899,
+          "center_canonical_pixel": [
+            579.1099853515625,
+            265.3500061035156
+          ]
+        },
+        {
+          "angle_deg": 88.7244,
+          "aspect_ratio": 1.8519,
+          "confidence": 0.9023,
+          "center_canonical_pixel": [
+            578.6079711914062,
+            265.78900146484375
+          ]
+        },
+        {
+          "angle_deg": -89.9779,
+          "aspect_ratio": 1.7519,
+          "confidence": 0.9018,
+          "center_canonical_pixel": [
+            579.4000244140625,
+            265.6029968261719
+          ]
+        }
+      ]
+    },
+    {
+      "instance_index": 4,
+      "reference_angle_deg": 88.9191,
+      "predicted_angle_median_deg": -86.2959,
+      "angle_error_deg": 4.7851,
+      "angle_span_deg": 7.7024,
+      "aspect_ratio_median": 1.6529,
+      "confidence_median": 0.8991,
+      "sample_count": 24,
+      "passed": true,
+      "samples": [
+        {
+          "angle_deg": -85.6632,
+          "aspect_ratio": 1.6163,
+          "confidence": 0.9008,
+          "center_canonical_pixel": [
+            749.4530029296875,
+            256.88800048828125
+          ]
+        },
+        {
+          "angle_deg": -86.6294,
+          "aspect_ratio": 1.7209,
+          "confidence": 0.8983,
+          "center_canonical_pixel": [
+            750.1539916992188,
+            257.2439880371094
+          ]
+        },
+        {
+          "angle_deg": -87.4013,
+          "aspect_ratio": 1.686,
+          "confidence": 0.8929,
+          "center_canonical_pixel": [
+            751.0399780273438,
+            257.44500732421875
+          ]
+        },
+        {
+          "angle_deg": -89.3744,
+          "aspect_ratio": 1.6396,
+          "confidence": 0.8987,
+          "center_canonical_pixel": [
+            750.6539916992188,
+            257.3590087890625
+          ]
+        },
+        {
+          "angle_deg": -88.1493,
+          "aspect_ratio": 1.649,
+          "confidence": 0.8939,
+          "center_canonical_pixel": [
+            750.7550048828125,
+            257.1109924316406
+          ]
+        },
+        {
+          "angle_deg": -85.1588,
+          "aspect_ratio": 1.6422,
+          "confidence": 0.8992,
+          "center_canonical_pixel": [
+            750.8460083007812,
+            257.5320129394531
+          ]
+        },
+        {
+          "angle_deg": -85.03,
+          "aspect_ratio": 1.7185,
+          "confidence": 0.9006,
+          "center_canonical_pixel": [
+            750.6279907226562,
+            257.0459899902344
+          ]
+        },
+        {
+          "angle_deg": -86.1458,
+          "aspect_ratio": 1.5873,
+          "confidence": 0.9055,
+          "center_canonical_pixel": [
+            749.6229858398438,
+            257.62799072265625
+          ]
+        },
+        {
+          "angle_deg": -87.367,
+          "aspect_ratio": 1.5939,
+          "confidence": 0.8974,
+          "center_canonical_pixel": [
+            750.656982421875,
+            257.4949951171875
+          ]
+        },
+        {
+          "angle_deg": -84.9932,
+          "aspect_ratio": 1.6582,
+          "confidence": 0.9002,
+          "center_canonical_pixel": [
+            750.4140014648438,
+            257.27899169921875
+          ]
+        },
+        {
+          "angle_deg": -84.6892,
+          "aspect_ratio": 1.6115,
+          "confidence": 0.8942,
+          "center_canonical_pixel": [
+            750.7550048828125,
+            257.4020080566406
+          ]
+        },
+        {
+          "angle_deg": -85.8677,
+          "aspect_ratio": 1.6086,
+          "confidence": 0.8992,
+          "center_canonical_pixel": [
+            750.9000244140625,
+            257.53900146484375
+          ]
+        },
+        {
+          "angle_deg": -85.0872,
+          "aspect_ratio": 1.6938,
+          "confidence": 0.9016,
+          "center_canonical_pixel": [
+            750.1240234375,
+            257.18798828125
+          ]
+        },
+        {
+          "angle_deg": -86.8791,
+          "aspect_ratio": 1.7492,
+          "confidence": 0.8912,
+          "center_canonical_pixel": [
+            751.3250122070312,
+            256.739013671875
+          ]
+        },
+        {
+          "angle_deg": -86.134,
+          "aspect_ratio": 1.6676,
+          "confidence": 0.9001,
+          "center_canonical_pixel": [
+            750.8280029296875,
+            256.85101318359375
+          ]
+        },
+        {
+          "angle_deg": -87.1149,
+          "aspect_ratio": 1.7014,
+          "confidence": 0.8916,
+          "center_canonical_pixel": [
+            750.322998046875,
+            257.0780029296875
+          ]
+        },
+        {
+          "angle_deg": -86.3138,
+          "aspect_ratio": 1.6701,
+          "confidence": 0.8995,
+          "center_canonical_pixel": [
+            750.6909790039062,
+            257.135986328125
+          ]
+        },
+        {
+          "angle_deg": -86.6863,
+          "aspect_ratio": 1.5798,
+          "confidence": 0.8933,
+          "center_canonical_pixel": [
+            750.9400024414062,
+            257.6180114746094
+          ]
+        },
+        {
+          "angle_deg": -86.2779,
+          "aspect_ratio": 1.7416,
+          "confidence": 0.899,
+          "center_canonical_pixel": [
+            750.2020263671875,
+            257.3139953613281
+          ]
+        },
+        {
+          "angle_deg": -86.2114,
+          "aspect_ratio": 1.6494,
+          "confidence": 0.9,
+          "center_canonical_pixel": [
+            749.8060302734375,
+            257.17999267578125
+          ]
+        },
+        {
+          "angle_deg": -81.672,
+          "aspect_ratio": 1.6896,
+          "confidence": 0.8987,
+          "center_canonical_pixel": [
+            750.7459716796875,
+            257.0169982910156
+          ]
+        },
+        {
+          "angle_deg": -87.4635,
+          "aspect_ratio": 1.6362,
+          "confidence": 0.9017,
+          "center_canonical_pixel": [
+            749.9860229492188,
+            257.4519958496094
+          ]
+        },
+        {
+          "angle_deg": -88.2672,
+          "aspect_ratio": 1.6508,
+          "confidence": 0.9002,
+          "center_canonical_pixel": [
+            750.3179931640625,
+            257.3909912109375
+          ]
+        },
+        {
+          "angle_deg": -87.5016,
+          "aspect_ratio": 1.655,
+          "confidence": 0.8976,
+          "center_canonical_pixel": [
+            750.68701171875,
+            257.39801025390625
+          ]
+        }
+      ]
+    },
+    {
+      "instance_index": 5,
+      "reference_angle_deg": 67.2176,
+      "predicted_angle_median_deg": 70.6062,
+      "angle_error_deg": 3.3886,
+      "angle_span_deg": 5.2275,
+      "aspect_ratio_median": 1.8761,
+      "confidence_median": 0.9103,
+      "sample_count": 24,
+      "passed": true,
+      "samples": [
+        {
+          "angle_deg": 71.2668,
+          "aspect_ratio": 1.8954,
+          "confidence": 0.9136,
+          "center_canonical_pixel": [
+            899.198974609375,
+            252.93800354003906
+          ]
+        },
+        {
+          "angle_deg": 69.048,
+          "aspect_ratio": 1.927,
+          "confidence": 0.9114,
+          "center_canonical_pixel": [
+            898.302978515625,
+            252.7989959716797
+          ]
+        },
+        {
+          "angle_deg": 73.0629,
+          "aspect_ratio": 1.8241,
+          "confidence": 0.9098,
+          "center_canonical_pixel": [
+            897.8280029296875,
+            253.63499450683594
+          ]
+        },
+        {
+          "angle_deg": 71.1411,
+          "aspect_ratio": 1.8579,
+          "confidence": 0.9103,
+          "center_canonical_pixel": [
+            898.5640258789062,
+            253.6439971923828
+          ]
+        },
+        {
+          "angle_deg": 71.6397,
+          "aspect_ratio": 1.8696,
+          "confidence": 0.9067,
+          "center_canonical_pixel": [
+            898.9240112304688,
+            252.84800720214844
+          ]
+        },
+        {
+          "angle_deg": 69.8644,
+          "aspect_ratio": 1.8827,
+          "confidence": 0.9146,
+          "center_canonical_pixel": [
+            897.8989868164062,
+            253.4669952392578
+          ]
+        },
+        {
+          "angle_deg": 69.3307,
+          "aspect_ratio": 1.9139,
+          "confidence": 0.9092,
+          "center_canonical_pixel": [
+            899.1909790039062,
+            252.86599731445312
+          ]
+        },
+        {
+          "angle_deg": 67.8354,
+          "aspect_ratio": 1.7646,
+          "confidence": 0.9102,
+          "center_canonical_pixel": [
+            898.448974609375,
+            252.9029998779297
+          ]
+        },
+        {
+          "angle_deg": 71.3742,
+          "aspect_ratio": 1.8543,
+          "confidence": 0.9135,
+          "center_canonical_pixel": [
+            898.8920288085938,
+            253.08799743652344
+          ]
+        },
+        {
+          "angle_deg": 70.527,
+          "aspect_ratio": 1.9653,
+          "confidence": 0.9142,
+          "center_canonical_pixel": [
+            898.6539916992188,
+            253.125
+          ]
+        },
+        {
+          "angle_deg": 69.6808,
+          "aspect_ratio": 1.9335,
+          "confidence": 0.9071,
+          "center_canonical_pixel": [
+            899.22900390625,
+            253.26100158691406
+          ]
+        },
+        {
+          "angle_deg": 70.3901,
+          "aspect_ratio": 1.9048,
+          "confidence": 0.9069,
+          "center_canonical_pixel": [
+            899.1329956054688,
+            253.4010009765625
+          ]
+        },
+        {
+          "angle_deg": 71.2178,
+          "aspect_ratio": 1.883,
+          "confidence": 0.9089,
+          "center_canonical_pixel": [
+            898.4730224609375,
+            253.13600158691406
+          ]
+        },
+        {
+          "angle_deg": 70.0243,
+          "aspect_ratio": 1.8311,
+          "confidence": 0.9112,
+          "center_canonical_pixel": [
+            898.0079956054688,
+            253.44400024414062
+          ]
+        },
+        {
+          "angle_deg": 72.1455,
+          "aspect_ratio": 1.7887,
+          "confidence": 0.9114,
+          "center_canonical_pixel": [
+            897.5490112304688,
+            253.5260009765625
+          ]
+        },
+        {
+          "angle_deg": 68.9676,
+          "aspect_ratio": 1.9217,
+          "confidence": 0.9084,
+          "center_canonical_pixel": [
+            898.5689697265625,
+            253.1959991455078
+          ]
+        },
+        {
+          "angle_deg": 71.9851,
+          "aspect_ratio": 1.8669,
+          "confidence": 0.9175,
+          "center_canonical_pixel": [
+            898.3140258789062,
+            253.53900146484375
+          ]
+        },
+        {
+          "angle_deg": 69.2984,
+          "aspect_ratio": 1.9073,
+          "confidence": 0.9068,
+          "center_canonical_pixel": [
+            898.3980102539062,
+            253.1269989013672
+          ]
+        },
+        {
+          "angle_deg": 72.1688,
+          "aspect_ratio": 1.841,
+          "confidence": 0.9167,
+          "center_canonical_pixel": [
+            897.427978515625,
+            253.37899780273438
+          ]
+        },
+        {
+          "angle_deg": 70.8908,
+          "aspect_ratio": 1.8663,
+          "confidence": 0.9112,
+          "center_canonical_pixel": [
+            898.1019897460938,
+            253.07200622558594
+          ]
+        },
+        {
+          "angle_deg": 70.2772,
+          "aspect_ratio": 1.8459,
+          "confidence": 0.9095,
+          "center_canonical_pixel": [
+            898.218994140625,
+            253.4429931640625
+          ]
+        },
+        {
+          "angle_deg": 69.3209,
+          "aspect_ratio": 1.9125,
+          "confidence": 0.9107,
+          "center_canonical_pixel": [
+            898.1699829101562,
+            253.4980010986328
+          ]
+        },
+        {
+          "angle_deg": 71.1452,
+          "aspect_ratio": 1.8875,
+          "confidence": 0.9094,
+          "center_canonical_pixel": [
+            898.4030151367188,
+            252.98199462890625
+          ]
+        },
+        {
+          "angle_deg": 70.6855,
+          "aspect_ratio": 1.7933,
+          "confidence": 0.9073,
+          "center_canonical_pixel": [
+            898.948974609375,
+            253.1020050048828
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+yolo:
+  model_path: models/best.pt
+  image_size: 640
+  confidence: 0.50
+  iou: 0.45
+  device: auto
+  camera_timeout_sec: 2.0
+  output_topic: /vision/detections
+  status_topic: /vision/status

@@ -1,0 +1,256 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-labelledby="t d">
+  <title id="t">FR5 HUD — QUALITY v2 (부품 › 슬롯 계층 막대)</title>
+  <desc id="d">부품별 불량률을 부모 행으로 두고 슬롯별 불량률을 자식 행으로 접어 넣은 단일 가로 막대 차트. KPI 타일 밴드와 하단 경고 밴드를 걷어내고 요약을 머리 문장 한 줄과 차트 내부 평균선으로 옮겼다. 모든 수치는 목 DB 의 slot-rates 응답에서 계산한 실측이다.</desc>
+
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="0%" r="90%">
+      <stop offset="0" stop-color="#16222e" stop-opacity=".7"/>
+      <stop offset="1" stop-color="#070b10" stop-opacity="0"/>
+    </radialGradient>
+    <style>
+      text { font-family: Inter, Pretendard, "Noto Sans CJK KR", "Noto Sans KR", system-ui, sans-serif; font-kerning:normal; font-variant-numeric:tabular-nums; text-rendering:geometricPrecision; }
+      svg { shape-rendering:geometricPrecision; }
+      .mi { fill:#8494a0; font-size:12px; letter-spacing:1.2px; font-weight:700 }
+      .lb { fill:#93a5b2; font-size:14px; letter-spacing:1.4px; font-weight:700 }
+      .hd { fill:#8494a0; font-size:10px; letter-spacing:1.2px; font-weight:700 }
+      .bd { fill:#e2ecf1; font-size:16px }
+      .sm { fill:#93a5b2; font-size:15px }
+      .mu { fill:#8494a0; font-size:14px }
+      .dim{ fill:#64707a; font-size:14px }
+      .warn { fill:#f6ad37 }
+    </style>
+  </defs>
+
+  <rect width="1920" height="1080" fill="#070b10"/>
+  <rect width="1920" height="1080" fill="url(#glow)"/>
+
+  <!-- ============ 상단 바 (공용 셸) ============ -->
+  <rect x="0" y="0" width="1920" height="64" fill="#04070a" fill-opacity=".7"/>
+  <line x1="0" y1="64" x2="1920" y2="64" stroke="#ffffff" stroke-opacity=".10"/>
+  <rect x="0" y="63" width="300" height="2" fill="#facc33" fill-opacity=".55"/>
+  <text x="48" y="42" fill="#e2ecf1" font-size="27" font-weight="800" letter-spacing="1.5">FR5</text>
+  <text x="112" y="42" class="mu" font-size="14">FAIRINO · CELL A</text>
+  <text x="288" y="30" class="mi">MODE</text>
+  <text x="288" y="52" fill="#facc33" font-size="19" font-weight="800" letter-spacing="1.6">MOCK</text>
+  <text x="370" y="52" fill="#64707a" font-size="19" font-weight="800" letter-spacing="1.6">REAL</text>
+  <text x="520" y="30" class="mi">LINK</text>
+  <circle cx="524" cy="46" r="4" fill="#3ecf8e"/>
+  <text x="536" y="52" class="sm" font-size="14">joint_states</text>
+  <text x="670" y="52" text-anchor="end" class="mu" font-size="13">31 ms</text>
+  <circle cx="684" cy="46" r="4" fill="#3ecf8e"/>
+  <text x="696" y="52" class="sm" font-size="14">board/image</text>
+  <text x="830" y="52" text-anchor="end" class="mu" font-size="13">68 ms</text>
+  <circle cx="844" cy="46" r="4" fill="#64707a"/>
+  <text x="856" y="52" class="sm" font-size="14">assembly/fb</text>
+  <text x="990" y="52" text-anchor="end" class="mu" font-size="13">idle</text>
+  <text x="1020" y="30" class="mi">JOB</text>
+  <text x="1020" y="52" fill="#e2ecf1" font-size="17" font-weight="700">JOB-20260812-0002</text>
+  <rect x="1246" y="38" width="170" height="6" rx="3" fill="#ffffff" fill-opacity=".07"/>
+  <rect x="1246" y="38" width="170" height="6" rx="3" fill="#facc33" fill-opacity=".9"/>
+  <text x="1432" y="52" fill="#e2ecf1" font-size="17" font-weight="700">2 / 2</text>
+  <text x="1518" y="30" class="mi">CYCLE</text>
+  <text x="1518" y="52" fill="#e2ecf1" font-size="17" font-weight="700">00:27:00</text>
+  <text x="1704" y="30" text-anchor="end" fill="#3ecf8e" font-size="13" font-weight="700" letter-spacing="1.6">LINKED</text>
+  <circle cx="1716" cy="26" r="4" fill="#3ecf8e"/>
+  <text x="1716" y="52" text-anchor="end" class="mu" font-size="12" letter-spacing="1.4">SERVO · RESET</text>
+  <rect x="1744" y="14" width="128" height="40" rx="4" fill="#f0475a" fill-opacity=".18" stroke="#f0475a" stroke-opacity=".75"/>
+  <circle cx="1770" cy="34" r="7" fill="#ff8f9b"/>
+  <text x="1788" y="41" fill="#ff8f9b" font-size="19" font-weight="800" letter-spacing="1.8">STOP</text>
+
+  <!-- ============ 페이지 레일 ============ -->
+  <rect x="30" y="160" width="28" height="28" rx="6" fill="none" stroke="#64707a" stroke-opacity=".55" stroke-width="1.8"/>
+  <text x="44" y="204" text-anchor="middle" fill="#64707a" font-size="11.5" font-weight="800" letter-spacing="1">RUN</text>
+  <text x="44" y="220" text-anchor="middle" fill="#64707a" font-size="11">운전</text>
+  <rect x="30" y="278" width="28" height="28" rx="6" fill="none" stroke="#64707a" stroke-opacity=".55" stroke-width="1.8"/>
+  <text x="44" y="322" text-anchor="middle" fill="#64707a" font-size="11.5" font-weight="800" letter-spacing="1">INSPECT</text>
+  <text x="44" y="338" text-anchor="middle" fill="#64707a" font-size="11">검사</text>
+  <rect x="30" y="396" width="28" height="28" rx="6" fill="none" stroke="#64707a" stroke-opacity=".55" stroke-width="1.8"/>
+  <text x="44" y="440" text-anchor="middle" fill="#64707a" font-size="11.5" font-weight="800" letter-spacing="1">MANUAL</text>
+  <text x="44" y="456" text-anchor="middle" fill="#64707a" font-size="11">수동</text>
+  <rect x="0" y="510" width="3" height="76" fill="#facc33"/>
+  <rect x="30" y="514" width="28" height="28" rx="6" fill="none" stroke="#facc33" stroke-opacity=".9" stroke-width="1.8"/>
+  <text x="44" y="558" text-anchor="middle" fill="#facc33" font-size="11.5" font-weight="800" letter-spacing="1">QUALITY</text>
+  <text x="44" y="574" text-anchor="middle" fill="#64707a" font-size="11">품질</text>
+  <rect x="30" y="632" width="28" height="28" rx="6" fill="none" stroke="#64707a" stroke-opacity=".55" stroke-width="1.8"/>
+  <text x="44" y="676" text-anchor="middle" fill="#64707a" font-size="11.5" font-weight="800" letter-spacing="1">SETUP</text>
+  <text x="44" y="692" text-anchor="middle" fill="#64707a" font-size="11">설정</text>
+
+  <!-- ============ 조회 조건 ============ -->
+  <text x="136" y="112" class="mi">기간</text>
+  <text x="136" y="140" fill="#e2ecf1" font-size="20" font-weight="700">2026-08-08 ~ 2026-08-12</text>
+  <text x="560" y="112" class="mi">제품</text>
+  <text x="560" y="140" fill="#e2ecf1" font-size="20" font-weight="700">HBM-ACCELERATOR-PACKAGE-BOARD</text>
+  <text x="1108" y="112" class="mi">레시피</text>
+  <text x="1108" y="140" fill="#e2ecf1" font-size="20" font-weight="700">mock-sample-fail-202608-r1</text>
+  <text x="1872" y="140" text-anchor="end" class="dim" font-size="13">조회 전용 · production 읽기</text>
+  <line x1="136" y1="166" x2="1872" y2="166" stroke="#ffffff" stroke-opacity=".10"/>
+
+  <!-- ============ 머리 문장 — KPI 타일 4개를 대신한다 ============ -->
+  <text x="136" y="212" fill="#e2ecf1" font-size="27" font-weight="700" letter-spacing="-.2">검사 <tspan font-weight="800">100</tspan>건 중 불량 <tspan font-weight="800">2</tspan>건 <tspan class="dim" font-size="27" font-weight="400">—</tspan> PM-01 · HBM-01 각 1건</text>
+  <text x="136" y="240" class="dim" font-size="14">부품 6종 · 슬롯 25 · 검사 유닛 4대 · 전체 슬롯 불량률 2.00% · 임계 미연결로 색 판정 보류</text>
+
+  <!-- ============ 주 차트 : PART › SLOT 계층 막대 ============ -->
+  <rect x="136" y="272" width="1736" height="618" fill="#0a0f14"/>
+  <rect x="136" y="272" width="3" height="618" fill="#facc33"/>
+  <text x="152" y="304" class="lb">PART DEFECT RATE  ›  SLOT</text>
+  <text x="154" y="326" class="mu" font-size="13">부품별 누적 불량률 · 불량 있는 부품만 펼침 · 불량률 내림차순</text>
+  <text x="1856" y="304" text-anchor="end" class="dim" font-size="13">2 / 100 · 슬롯 기회 기준</text>
+  <text x="1856" y="326" text-anchor="end" class="dim" font-size="12">GET /products/{product_id}/quality/slot-rates</text>
+
+  <!-- 열 머리 -->
+  <text x="210" y="360" class="hd">부품 · 슬롯</text>
+  <text x="560" y="360" text-anchor="end" class="hd">불량 / 검사</text>
+  <text x="600" y="360" class="hd">불량률 (공통 축 0 ~ 25%)</text>
+  <text x="1620" y="360" text-anchor="end" class="hd">RATE</text>
+  <text x="1856" y="360" text-anchor="end" class="hd">상태</text>
+  <line x1="152" y1="370" x2="1856" y2="370" stroke="#ffffff" stroke-opacity=".12"/>
+
+  <!-- 축 안내선 -->
+  <g stroke="#ffffff" stroke-opacity=".05">
+    <line x1="780"  y1="370" x2="780"  y2="830"/>
+    <line x1="960"  y1="370" x2="960"  y2="830"/>
+    <line x1="1140" y1="370" x2="1140" y2="830"/>
+    <line x1="1320" y1="370" x2="1320" y2="830"/>
+    <line x1="1500" y1="370" x2="1500" y2="830"/>
+  </g>
+  <!-- 전체 평균 참조선 2.00% — 없어진 KPI 타일의 값이 여기로 들어온다 -->
+  <line x1="672" y1="370" x2="672" y2="830" stroke="#8494a0" stroke-opacity=".55" stroke-dasharray="3 4"/>
+  <text x="672" y="870" text-anchor="middle" class="dim" font-size="11">전체 평균 2.00%</text>
+
+  <!-- ── 부모 : PM 6.25% (펼침) ── -->
+  <rect x="152" y="370" width="1704" height="46" fill="#ffffff" fill-opacity=".04"/>
+  <text x="160" y="399" fill="#8494a0" font-size="12">▾</text>
+  <rect x="176" y="381" width="24" height="24" rx="4" fill="#ffffff" fill-opacity=".06"/>
+  <image href="../../Assets/UI/Icons/item-pm.png" x="176" y="381" width="24" height="24" preserveAspectRatio="xMidYMid meet"/>
+  <text x="210" y="399" fill="#e2ecf1" font-size="17" font-weight="700">PM</text>
+  <text x="252" y="399" class="dim" font-size="13">Power Module</text>
+  <text x="478" y="399" text-anchor="end" class="dim" font-size="12">슬롯 4</text>
+  <text x="560" y="399" text-anchor="end" class="mu" font-size="13">1 / 16</text>
+  <rect x="600" y="389" width="900" height="8" rx="4" fill="#ffffff" fill-opacity=".06"/>
+  <rect x="600" y="389" width="225" height="8" rx="4" fill="#e2ecf1" fill-opacity=".9"/>
+  <text x="1620" y="400" text-anchor="end" fill="#e2ecf1" font-size="21" font-weight="700">6.25%</text>
+  <text x="1856" y="399" text-anchor="end" class="dim" font-size="12" letter-spacing="1.2">불량 1</text>
+
+  <!-- 자식 : PM-01 -->
+  <rect x="234" y="416" width="2" height="46" fill="#ffffff" fill-opacity=".10"/>
+  <text x="252" y="445" class="sm" font-size="15">PM-01</text>
+  <text x="560" y="445" text-anchor="end" class="mu" font-size="13">1 / 4</text>
+  <rect x="600" y="436" width="900" height="6" rx="3" fill="#ffffff" fill-opacity=".06"/>
+  <rect x="600" y="436" width="900" height="6" rx="3" fill="#e2ecf1" fill-opacity=".75"/>
+  <text x="1620" y="445" text-anchor="end" class="bd" font-size="17">25.00%</text>
+  <text x="1856" y="445" text-anchor="end" class="dim" font-size="12">POSITION_ERROR</text>
+
+  <!-- 자식 : 정상 접기 -->
+  <rect x="234" y="462" width="2" height="46" fill="#ffffff" fill-opacity=".10"/>
+  <text x="252" y="491" class="dim" font-size="14">정상 슬롯 3</text>
+  <text x="560" y="491" text-anchor="end" class="dim" font-size="13">0 / 12</text>
+  <rect x="600" y="488" width="900" height="6" rx="3" fill="#ffffff" fill-opacity=".04"/>
+  <circle cx="603" cy="491" r="3" fill="#64707a"/>
+  <text x="1620" y="491" text-anchor="end" class="dim" font-size="15">0.00%</text>
+  <text x="1856" y="491" text-anchor="end" class="dim" font-size="12">PM-02 · 03 · 04</text>
+  <line x1="152" y1="508" x2="1856" y2="508" stroke="#ffffff" stroke-opacity=".055"/>
+
+  <!-- ── 부모 : HBM 3.13% (펼침) ── -->
+  <rect x="152" y="508" width="1704" height="46" fill="#ffffff" fill-opacity=".04"/>
+  <text x="160" y="537" fill="#8494a0" font-size="12">▾</text>
+  <rect x="176" y="519" width="24" height="24" rx="4" fill="#ffffff" fill-opacity=".06"/>
+  <image href="../../Assets/UI/Icons/item-hbm.png" x="176" y="519" width="24" height="24" preserveAspectRatio="xMidYMid meet"/>
+  <text x="210" y="537" fill="#e2ecf1" font-size="17" font-weight="700">HBM</text>
+  <text x="262" y="537" class="dim" font-size="13">High Bandwidth Memory</text>
+  <text x="478" y="537" text-anchor="end" class="dim" font-size="12">슬롯 8</text>
+  <text x="560" y="537" text-anchor="end" class="mu" font-size="13">1 / 32</text>
+  <rect x="600" y="527" width="900" height="8" rx="4" fill="#ffffff" fill-opacity=".06"/>
+  <rect x="600" y="527" width="113" height="8" rx="4" fill="#e2ecf1" fill-opacity=".9"/>
+  <text x="1620" y="538" text-anchor="end" fill="#e2ecf1" font-size="21" font-weight="700">3.13%</text>
+  <text x="1856" y="537" text-anchor="end" class="dim" font-size="12" letter-spacing="1.2">불량 1</text>
+
+  <!-- 자식 : HBM-01 -->
+  <rect x="234" y="554" width="2" height="46" fill="#ffffff" fill-opacity=".10"/>
+  <text x="252" y="583" class="sm" font-size="15">HBM-01</text>
+  <text x="560" y="583" text-anchor="end" class="mu" font-size="13">1 / 4</text>
+  <rect x="600" y="574" width="900" height="6" rx="3" fill="#ffffff" fill-opacity=".06"/>
+  <rect x="600" y="574" width="900" height="6" rx="3" fill="#e2ecf1" fill-opacity=".75"/>
+  <text x="1620" y="583" text-anchor="end" class="bd" font-size="17">25.00%</text>
+  <text x="1856" y="583" text-anchor="end" class="dim" font-size="12">MISSING</text>
+
+  <!-- 자식 : 정상 접기 -->
+  <rect x="234" y="600" width="2" height="46" fill="#ffffff" fill-opacity=".10"/>
+  <text x="252" y="629" class="dim" font-size="14">정상 슬롯 7</text>
+  <text x="560" y="629" text-anchor="end" class="dim" font-size="13">0 / 28</text>
+  <rect x="600" y="626" width="900" height="6" rx="3" fill="#ffffff" fill-opacity=".04"/>
+  <circle cx="603" cy="629" r="3" fill="#64707a"/>
+  <text x="1620" y="629" text-anchor="end" class="dim" font-size="15">0.00%</text>
+  <text x="1856" y="629" text-anchor="end" class="dim" font-size="12">HBM-02 … 08</text>
+  <line x1="152" y1="646" x2="1856" y2="646" stroke="#ffffff" stroke-opacity=".055"/>
+
+  <!-- ── 접힌 부모 4개 : 불량 0 ── -->
+  <text x="160" y="675" fill="#64707a" font-size="12">▸</text>
+  <rect x="176" y="657" width="24" height="24" rx="4" fill="#ffffff" fill-opacity=".06"/>
+  <image href="../../Assets/UI/Icons/item-cap.png" x="176" y="657" width="24" height="24" preserveAspectRatio="xMidYMid meet"/>
+  <text x="210" y="675" class="sm" font-size="17">CAP</text>
+  <text x="262" y="675" class="dim" font-size="13">Capacitor</text>
+  <text x="478" y="675" text-anchor="end" class="dim" font-size="12">슬롯 5</text>
+  <text x="560" y="675" text-anchor="end" class="dim" font-size="13">0 / 20</text>
+  <rect x="600" y="672" width="900" height="6" rx="3" fill="#ffffff" fill-opacity=".04"/>
+  <circle cx="603" cy="675" r="3" fill="#64707a"/>
+  <text x="1620" y="675" text-anchor="end" class="dim" font-size="16">0.00%</text>
+  <text x="1856" y="675" text-anchor="end" class="dim" font-size="12" letter-spacing="1.2">정상</text>
+  <line x1="152" y1="692" x2="1856" y2="692" stroke="#ffffff" stroke-opacity=".055"/>
+
+  <text x="160" y="721" fill="#64707a" font-size="12">▸</text>
+  <rect x="176" y="703" width="24" height="24" rx="4" fill="#ffffff" fill-opacity=".06"/>
+  <image href="../../Assets/UI/Icons/item-vrm.png" x="176" y="703" width="24" height="24" preserveAspectRatio="xMidYMid meet"/>
+  <text x="210" y="721" class="sm" font-size="17">VRM</text>
+  <text x="262" y="721" class="dim" font-size="13">Voltage Regulator</text>
+  <text x="478" y="721" text-anchor="end" class="dim" font-size="12">슬롯 5</text>
+  <text x="560" y="721" text-anchor="end" class="dim" font-size="13">0 / 20</text>
+  <rect x="600" y="718" width="900" height="6" rx="3" fill="#ffffff" fill-opacity=".04"/>
+  <circle cx="603" cy="721" r="3" fill="#64707a"/>
+  <text x="1620" y="721" text-anchor="end" class="dim" font-size="16">0.00%</text>
+  <text x="1856" y="721" text-anchor="end" class="dim" font-size="12" letter-spacing="1.2">정상</text>
+  <line x1="152" y1="738" x2="1856" y2="738" stroke="#ffffff" stroke-opacity=".055"/>
+
+  <text x="160" y="767" fill="#64707a" font-size="12">▸</text>
+  <rect x="176" y="749" width="24" height="24" rx="4" fill="#ffffff" fill-opacity=".06"/>
+  <image href="../../Assets/UI/Icons/item-ind.png" x="176" y="749" width="24" height="24" preserveAspectRatio="xMidYMid meet"/>
+  <text x="210" y="767" class="sm" font-size="17">IND</text>
+  <text x="262" y="767" class="dim" font-size="13">Inductor</text>
+  <text x="478" y="767" text-anchor="end" class="dim" font-size="12">슬롯 2</text>
+  <text x="560" y="767" text-anchor="end" class="dim" font-size="13">0 / 8</text>
+  <rect x="600" y="764" width="900" height="6" rx="3" fill="#ffffff" fill-opacity=".04"/>
+  <circle cx="603" cy="767" r="3" fill="#64707a"/>
+  <text x="1620" y="767" text-anchor="end" class="dim" font-size="16">0.00%</text>
+  <text x="1856" y="767" text-anchor="end" class="dim" font-size="12" letter-spacing="1.2">정상</text>
+  <line x1="152" y1="784" x2="1856" y2="784" stroke="#ffffff" stroke-opacity=".055"/>
+
+  <text x="160" y="813" fill="#64707a" font-size="12">▸</text>
+  <rect x="176" y="795" width="24" height="24" rx="4" fill="#ffffff" fill-opacity=".06"/>
+  <image href="../../Assets/UI/Icons/item-gpu.png" x="176" y="795" width="24" height="24" preserveAspectRatio="xMidYMid meet"/>
+  <text x="210" y="813" class="sm" font-size="17">GPU</text>
+  <text x="262" y="813" class="dim" font-size="13">GPU Die</text>
+  <text x="478" y="813" text-anchor="end" class="dim" font-size="12">슬롯 1</text>
+  <text x="560" y="813" text-anchor="end" class="dim" font-size="13">0 / 4</text>
+  <rect x="600" y="810" width="900" height="6" rx="3" fill="#ffffff" fill-opacity=".04"/>
+  <circle cx="603" cy="813" r="3" fill="#64707a"/>
+  <text x="1620" y="813" text-anchor="end" class="dim" font-size="16">0.00%</text>
+  <text x="1856" y="813" text-anchor="end" class="dim" font-size="12" letter-spacing="1.2">정상</text>
+
+  <!-- 축 -->
+  <line x1="600" y1="830" x2="1500" y2="830" stroke="#ffffff" stroke-opacity=".14"/>
+  <g class="dim" font-size="11" text-anchor="middle">
+    <text x="600"  y="848">0%</text>
+    <text x="780"  y="848">5%</text>
+    <text x="960"  y="848">10%</text>
+    <text x="1140" y="848">15%</text>
+    <text x="1320" y="848">20%</text>
+    <text x="1500" y="848">25%</text>
+  </g>
+
+  <!-- ============ 미연결 조회 — 한 줄, 상자 없음, 경고색 없음 ============ -->
+  <text x="136" y="932" class="dim" font-size="13">미연결 조회 2 <tspan fill="#4c565f">·</tspan> RECIPE A / B — 레시피 버전별 집계 <tspan fill="#4c565f">·</tspan> DEFECT REPORT alerts — GET /alerts <tspan fill="#4c565f">·</tspan> 임계 — defect_report.thresholds</text>
+
+  <line x1="0" y1="1036" x2="1920" y2="1036" stroke="#ffffff" stroke-opacity=".08"/>
+  <circle cx="48" cy="1059" r="4" fill="#64707a"/>
+  <text x="64" y="1064" class="sm" font-size="14">10:30:00   QUALITY   집계 갱신 · 기준 2026-08-08 ~ 2026-08-12</text>
+  <text x="1872" y="1064" text-anchor="end" class="mu" font-size="13" letter-spacing="1.4">EVENTS  ·  ALARM 0</text>
+</svg>

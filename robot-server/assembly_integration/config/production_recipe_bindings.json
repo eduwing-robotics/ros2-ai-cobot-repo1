@@ -1,0 +1,34 @@
+[
+  {
+    "product_id": "HBM-ACCELERATOR-PACKAGE-BOARD",
+    "production_recipe_version": "assembly-r1",
+    "robot_recipe_revision": "20260909_smd_restore_successful_gripper_profile",
+    "expected_slots": [
+      "GPU-01",
+      "HBM-01",
+      "HBM-02",
+      "HBM-03",
+      "HBM-04",
+      "HBM-05",
+      "HBM-06",
+      "HBM-07",
+      "HBM-08",
+      "PM-01",
+      "PM-02",
+      "PM-03",
+      "PM-04",
+      "VRM-01",
+      "VRM-02",
+      "VRM-03",
+      "VRM-04",
+      "VRM-05",
+      "IND-01",
+      "IND-02",
+      "CAP-01",
+      "CAP-02",
+      "CAP-03",
+      "CAP-04",
+      "CAP-05"
+    ]
+  }
+]

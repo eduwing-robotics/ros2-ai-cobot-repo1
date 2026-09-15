@@ -1,0 +1,111 @@
+{
+  "schema": "fr5.full_fixed_cycle_run/v2",
+  "started_unix": 1788505065.8646216,
+  "cycle_id": "20260904-153922",
+  "plan_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/full_restart_raise03_plan_2026-09-04.json",
+  "plan_sha256": "86b254318955c8606b6aee629610a7237e174e0436327a8f23fdb9f3f0ff1f10",
+  "motion_profile": "smooth_combined_transfer_v1",
+  "selected_slots": [
+    "GPU-01"
+  ],
+  "motion_completed_slots": [
+    "GPU-01",
+    "HBM-01",
+    "HBM-02",
+    "HBM-03",
+    "HBM-04",
+    "HBM-05",
+    "HBM-06",
+    "HBM-07",
+    "HBM-08",
+    "PM-01",
+    "PM-02",
+    "PM-03",
+    "PM-04",
+    "VRM-01",
+    "VRM-02",
+    "VRM-03",
+    "VRM-04",
+    "VRM-05",
+    "IND-01",
+    "IND-02",
+    "CAP-01",
+    "CAP-02",
+    "CAP-03",
+    "CAP-04",
+    "CAP-05"
+  ],
+  "grasp_verified_slots": [
+    "GPU-01"
+  ],
+  "placement_verified_slots": [],
+  "part_held_candidate": false,
+  "status": "motion_complete_awaiting_physical_verification",
+  "preflight": {
+    "passed": true,
+    "waypoints": 350,
+    "minimum_joint_soft_limit_margin_deg": 37.820847,
+    "maximum_joint_step_deg": 94.216902,
+    "minimum_j6_deg": -91.366615,
+    "maximum_j6_deg": 93.621506,
+    "j6_operational_bounds_deg": [
+      -178.0,
+      178.0
+    ]
+  },
+  "controller_global_speed_percent": 40,
+  "speed_contract": {
+    "command_percent": {
+      "travel": 25,
+      "combined_rotation": 25,
+      "vertical": 10
+    },
+    "effective_percent": {
+      "travel": 10.0,
+      "combined_rotation": 10.0,
+      "vertical": 4.0
+    },
+    "hover_clearance_mm": 100.0,
+    "slow_zone_mm": 50.0
+  },
+  "controller_global_speed_set_unix": 1788505112.2919066,
+  "gripper_current_samples_percent": {
+    "GPU-01": 0.0,
+    "HBM-01": 0.0,
+    "HBM-02": 0.0,
+    "HBM-03": 0.0,
+    "HBM-04": 0.0,
+    "HBM-05": 0.0,
+    "HBM-06": 0.0,
+    "HBM-07": 0.0,
+    "HBM-08": 0.0,
+    "PM-01": 0.0,
+    "PM-02": 0.0,
+    "PM-03": 0.0,
+    "PM-04": 0.0,
+    "VRM-01": 0.0,
+    "VRM-02": 0.0,
+    "VRM-03": 0.0,
+    "VRM-04": 0.0,
+    "VRM-05": 0.0,
+    "IND-01": 0.0,
+    "IND-02": 0.0,
+    "CAP-01": 0.0,
+    "CAP-02": 0.0,
+    "CAP-03": 0.0,
+    "CAP-04": 0.0,
+    "CAP-05": 0.0
+  },
+  "last_verified_tcp": [
+    99.64688110351562,
+    -483.6260681152344,
+    189.8475341796875,
+    179.99966430664062,
+    -0.02545117773115635,
+    90.75359344482422
+  ],
+  "last_gripper_position": 17,
+  "paused_unix": 1788505082.5155654,
+  "operator_confirmed_held_unix": 1788505110.9960582,
+  "completed_unix": 1788505883.4876988
+}

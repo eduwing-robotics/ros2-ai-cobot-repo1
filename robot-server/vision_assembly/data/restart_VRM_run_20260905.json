@@ -1,0 +1,99 @@
+{
+  "schema": "fr5.full_fixed_cycle_run/v2",
+  "started_unix": 1788608524.1995215,
+  "cycle_id": "20260905-204019",
+  "plan_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/restart_VRM_plan_20260905.json",
+  "plan_sha256": "cdd4b010779957000874fac98bfc6ba6569dc65f159689a3b7f782a7c89fb53c",
+  "motion_profile": "smooth_combined_transfer_v1",
+  "selected_slots": [
+    "VRM-01",
+    "VRM-02",
+    "VRM-03",
+    "VRM-04",
+    "VRM-05"
+  ],
+  "motion_completed_slots": [
+    "VRM-01",
+    "VRM-02"
+  ],
+  "grasp_verified_slots": [],
+  "placement_verified_slots": [],
+  "part_held_candidate": true,
+  "status": "stopped_on_error",
+  "preflight": {
+    "passed": true,
+    "waypoints": 109,
+    "minimum_joint_soft_limit_margin_deg": 41.07036600000001,
+    "maximum_joint_step_deg": 91.583695,
+    "minimum_j6_deg": -4.688828,
+    "maximum_j6_deg": 166.993622,
+    "j6_operational_bounds_deg": [
+      -178.0,
+      178.0
+    ]
+  },
+  "controller_global_speed_percent": 40,
+  "speed_contract": {
+    "command_percent": {
+      "travel": 25,
+      "combined_rotation": 25,
+      "vertical": 10
+    },
+    "effective_percent": {
+      "travel": 10.0,
+      "combined_rotation": 10.0,
+      "vertical": 4.0
+    },
+    "hover_clearance_mm": 100.0,
+    "slow_zone_mm": 50.0
+  },
+  "controller_global_speed_set_unix": 1788608525.241037,
+  "gripper_current_samples_percent": {
+    "VRM-01": 0.0,
+    "VRM-02": 0.0,
+    "VRM-03": 0.0
+  },
+  "tray_inspections": [
+    {
+      "slot": "VRM-01",
+      "stage": "tray_after_inspect",
+      "timestamp_ros_ns": 1788608555945991455,
+      "picked_slot": "VRM-01",
+      "removed_slots": [
+        "VRM-01"
+      ],
+      "evidence": "picked_cell_absent_not_physical_holding_proof",
+      "distinct_consecutive_frames": 3
+    },
+    {
+      "slot": "VRM-02",
+      "stage": "tray_after_inspect",
+      "timestamp_ros_ns": 1788608613116726074,
+      "picked_slot": "VRM-02",
+      "removed_slots": [
+        "VRM-01",
+        "VRM-02"
+      ],
+      "evidence": "picked_cell_absent_not_physical_holding_proof",
+      "distinct_consecutive_frames": 3
+    }
+  ],
+  "last_verified_tcp": [
+    -21.72608757019043,
+    -536.6680908203125,
+    186.22390747070312,
+    -179.9738311767578,
+    -0.006527388002723455,
+    0.5632381439208984
+  ],
+  "last_gripper_position": 26,
+  "held_slot": "VRM-03",
+  "stop_motion_on_error": {
+    "command": "StopMotion()",
+    "attempted_unix": 1788608657.2215326,
+    "response": "0",
+    "succeeded": true
+  },
+  "error": "RuntimeError: FR5 safety fault during motion: abnormal_stop=1",
+  "stopped_unix": 1788608657.2222679
+}

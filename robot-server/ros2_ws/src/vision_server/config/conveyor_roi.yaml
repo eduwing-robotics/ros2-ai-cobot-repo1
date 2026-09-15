@@ -1,0 +1,33 @@
+conveyor_roi:
+  image_topic: /camera2/image_raw/compressed
+  annotated_topic: /vision/conveyor/stop_image/compressed
+  jpeg_quality: 92
+
+  # Initial conveyor assumption: the board travels left -> right in the image.
+  # The stop line is therefore vertical and perpendicular to travel.
+  stop_line:
+    axis: x
+    # Calibrated from the PCB's desired physical stop pose (2026-08-17).
+    # 0.46055 * (1920 - 1) = 883.8 px.
+    position: 0.46055
+    span_start: 0.24
+    span_end: 0.86
+    thickness_px: 6
+
+  board_detection:
+    travel_direction: positive_x
+    search_x_start: 0.30
+    search_x_end: 0.84
+    search_y_start: 0.30
+    search_y_end: 0.84
+    dark_threshold: 105
+    close_kernel_px: 13
+    min_area_fraction: 0.05
+    max_area_fraction: 0.30
+    min_aspect_ratio: 1.10
+    max_aspect_ratio: 2.20
+    min_rectangularity: 0.60
+    stable_crossing_frames: 5
+    rearm_upstream_frames: 5
+    rearm_margin_px: 30
+    reset_missing_frames: 15

@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "mode": "single_part_hover_target",
+  "timestamp_unix": 1788144902.600127,
+  "part_type": "long_orange",
+  "display_name": "Power-Module-3",
+  "instance_index": 3,
+  "selection_mode": "instance_index",
+  "part_center_base_mm": [
+    -668.8,
+    -63.606,
+    -47.357
+  ],
+  "long_axis_angle_base_deg": 1.887,
+  "center_pixel": [
+    700.04,
+    297.615
+  ],
+  "center_pixel_span": [
+    0.22,
+    0.07
+  ],
+  "camera_xyz_m": [
+    0.029842,
+    -0.043929,
+    0.484
+  ],
+  "sample_count": 6,
+  "position_span_mm": [
+    0.005,
+    0.006,
+    0.003
+  ],
+  "angle_span_deg": 0.0,
+  "hover_offset_mm": 100.0,
+  "robot_motion_authorized": false,
+  "source_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/tray_detections_last.json"
+}

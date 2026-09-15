@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "source_timestamp_ros_ns": 1787727378037525635,
+  "reference_width": 1920,
+  "reference_height": 1080,
+  "layout": "/home/juchan-yoon/FR5_robot_control/vision_assembly/config/tray_layout_candidate.json",
+  "robot_motion_authorized": false
+}

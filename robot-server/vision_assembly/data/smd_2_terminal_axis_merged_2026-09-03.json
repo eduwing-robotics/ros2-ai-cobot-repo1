@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "mode": "smd_trayhome_xyz_plus_close_angle",
+  "timestamp_unix": 1788426682.4456618,
+  "robot_motion_authorized": false,
+  "part_type": "right_white_brown",
+  "display_name": "SMD Capacitor",
+  "instance_index": 2,
+  "part_center_base_mm": [
+    -621.1,
+    -155.891,
+    -46.525
+  ],
+  "long_axis_angle_base_deg": 85.835,
+  "coarse_fine_angle_error_deg": 84.178,
+  "coarse_angle_is_diagnostic_only": true,
+  "position_source": "TrayHome full-tray detection",
+  "angle_source": "SMD close-view three-batch two-white-terminal axis",
+  "coarse_file": "vision_assembly/data/smd_2_trayhome_current_2026-09-03.json",
+  "fine_file": "vision_assembly/data/smd_close_set1_terminal_median_repeat_24f_2026-09-03.json"
+}

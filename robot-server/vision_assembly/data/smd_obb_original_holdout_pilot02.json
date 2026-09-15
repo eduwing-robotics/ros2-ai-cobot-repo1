@@ -1,0 +1,307 @@
+{
+  "schema_version": 1,
+  "mode": "smd_obb_multiframe_holdout",
+  "timestamp_unix": 1788170491.6206915,
+  "robot_motion_authorized": false,
+  "model": "vision_assembly/models/smd_obb/pilot_02/weights/best.pt",
+  "frame_count": 8,
+  "limits": {
+    "max_center_span_px": 3.5,
+    "max_angle_span_deg": 1.5
+  },
+  "all_parts_stable": false,
+  "frames": [
+    {
+      "frame": "vision_assembly/data/smd_section_holdout_1920/frame_01.jpg",
+      "registration_inliers": 93,
+      "detection_count": 10
+    },
+    {
+      "frame": "vision_assembly/data/smd_section_holdout_1920/frame_02.jpg",
+      "registration_inliers": 161,
+      "detection_count": 10
+    },
+    {
+      "frame": "vision_assembly/data/smd_section_holdout_1920/frame_03.jpg",
+      "registration_inliers": 159,
+      "detection_count": 10
+    },
+    {
+      "frame": "vision_assembly/data/smd_section_holdout_1920/frame_04.jpg",
+      "registration_inliers": 155,
+      "detection_count": 10
+    },
+    {
+      "frame": "vision_assembly/data/smd_section_holdout_1920/frame_05.jpg",
+      "registration_inliers": 140,
+      "detection_count": 10
+    },
+    {
+      "frame": "vision_assembly/data/smd_section_holdout_1920/frame_06.jpg",
+      "registration_inliers": 137,
+      "detection_count": 10
+    },
+    {
+      "frame": "vision_assembly/data/smd_section_holdout_1920/frame_07.jpg",
+      "registration_inliers": 154,
+      "detection_count": 10
+    },
+    {
+      "frame": "vision_assembly/data/smd_section_holdout_1920/frame_08.jpg",
+      "registration_inliers": 87,
+      "detection_count": 10
+    }
+  ],
+  "detections": [
+    {
+      "instance_index": 1,
+      "center_canonical_pixel_median": [
+        278.088,
+        197.194
+      ],
+      "center_span_pixel": [
+        1.859,
+        0.505
+      ],
+      "long_axis_canonical_deg_median": -1.3315,
+      "angle_samples_deg": [
+        -1.8202,
+        -0.0589,
+        -1.1972,
+        -1.8404,
+        -0.7145,
+        -2.333,
+        -1.4658,
+        0.0306
+      ],
+      "angle_span_deg": 2.3636,
+      "confidence_median": 0.9672,
+      "stable": false
+    },
+    {
+      "instance_index": 2,
+      "center_canonical_pixel_median": [
+        422.387,
+        201.484
+      ],
+      "center_span_pixel": [
+        1.1,
+        0.28
+      ],
+      "long_axis_canonical_deg_median": -0.0447,
+      "angle_samples_deg": [
+        -0.3951,
+        -0.2408,
+        0.2473,
+        1.3481,
+        -0.0795,
+        -0.01,
+        -0.8045,
+        0.9918
+      ],
+      "angle_span_deg": 2.1526,
+      "confidence_median": 0.9593,
+      "stable": false
+    },
+    {
+      "instance_index": 3,
+      "center_canonical_pixel_median": [
+        604.254,
+        199.738
+      ],
+      "center_span_pixel": [
+        1.495,
+        0.334
+      ],
+      "long_axis_canonical_deg_median": -1.6039,
+      "angle_samples_deg": [
+        -5.3105,
+        0.5507,
+        -0.9091,
+        -2.517,
+        -0.5911,
+        -3.3124,
+        -0.7601,
+        -2.2988
+      ],
+      "angle_span_deg": 5.8612,
+      "confidence_median": 0.9656,
+      "stable": false
+    },
+    {
+      "instance_index": 4,
+      "center_canonical_pixel_median": [
+        764.15,
+        184.289
+      ],
+      "center_span_pixel": [
+        1.165,
+        0.32
+      ],
+      "long_axis_canonical_deg_median": -1.8624,
+      "angle_samples_deg": [
+        -1.5365,
+        -1.4037,
+        -3.0625,
+        -1.4556,
+        -1.16,
+        -2.1882,
+        -2.3462,
+        -2.3205
+      ],
+      "angle_span_deg": 1.9025,
+      "confidence_median": 0.9636,
+      "stable": false
+    },
+    {
+      "instance_index": 5,
+      "center_canonical_pixel_median": [
+        928.322,
+        180.179
+      ],
+      "center_span_pixel": [
+        1.2,
+        0.395
+      ],
+      "long_axis_canonical_deg_median": 4.0821,
+      "angle_samples_deg": [
+        2.9264,
+        4.4724,
+        3.5435,
+        3.7683,
+        3.5045,
+        4.3959,
+        4.5193,
+        4.8752
+      ],
+      "angle_span_deg": 1.9488,
+      "confidence_median": 0.9637,
+      "stable": false
+    },
+    {
+      "instance_index": 6,
+      "center_canonical_pixel_median": [
+        302.459,
+        402.092
+      ],
+      "center_span_pixel": [
+        2.016,
+        0.262
+      ],
+      "long_axis_canonical_deg_median": -1.3584,
+      "angle_samples_deg": [
+        -1.1735,
+        -1.5472,
+        -0.724,
+        -1.0158,
+        -1.771,
+        -0.7547,
+        -1.7088,
+        -1.5434
+      ],
+      "angle_span_deg": 1.0471,
+      "confidence_median": 0.9677,
+      "stable": true
+    },
+    {
+      "instance_index": 7,
+      "center_canonical_pixel_median": [
+        472.025,
+        404.121
+      ],
+      "center_span_pixel": [
+        2.576,
+        0.443
+      ],
+      "long_axis_canonical_deg_median": -0.6575,
+      "angle_samples_deg": [
+        -0.6277,
+        -0.6873,
+        0.6493,
+        -0.7677,
+        0.3349,
+        -1.2716,
+        -0.4265,
+        -2.7637
+      ],
+      "angle_span_deg": 3.413,
+      "confidence_median": 0.9647,
+      "stable": false
+    },
+    {
+      "instance_index": 8,
+      "center_canonical_pixel_median": [
+        632.737,
+        396.044
+      ],
+      "center_span_pixel": [
+        0.787,
+        0.49
+      ],
+      "long_axis_canonical_deg_median": -0.3383,
+      "angle_samples_deg": [
+        0.1502,
+        -0.537,
+        -1.0889,
+        -0.9006,
+        -0.2397,
+        0.4464,
+        -0.4368,
+        -0.0631
+      ],
+      "angle_span_deg": 1.5353,
+      "confidence_median": 0.966,
+      "stable": false
+    },
+    {
+      "instance_index": 9,
+      "center_canonical_pixel_median": [
+        755.375,
+        387.162
+      ],
+      "center_span_pixel": [
+        0.876,
+        0.413
+      ],
+      "long_axis_canonical_deg_median": -0.4817,
+      "angle_samples_deg": [
+        -0.5463,
+        -0.6726,
+        -0.1389,
+        0.2843,
+        -0.7393,
+        -0.5674,
+        -0.2463,
+        -0.4171
+      ],
+      "angle_span_deg": 1.0236,
+      "confidence_median": 0.9681,
+      "stable": true
+    },
+    {
+      "instance_index": 10,
+      "center_canonical_pixel_median": [
+        912.042,
+        394.859
+      ],
+      "center_span_pixel": [
+        1.24,
+        0.745
+      ],
+      "long_axis_canonical_deg_median": -0.298,
+      "angle_samples_deg": [
+        -0.6973,
+        -0.3266,
+        0.191,
+        -0.1549,
+        -0.2694,
+        0.2737,
+        -0.3506,
+        -0.7953
+      ],
+      "angle_span_deg": 1.069,
+      "confidence_median": 0.9621,
+      "stable": true
+    }
+  ]
+}

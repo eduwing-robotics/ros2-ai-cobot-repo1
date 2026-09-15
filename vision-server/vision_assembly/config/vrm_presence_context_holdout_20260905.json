@@ -1,0 +1,280 @@
+{
+  "purpose": "post_candidate_freeze_physical_validation",
+  "training_allowed": false,
+  "candidate": "runtime/inspection/vrm_presence_context_stress_20260905/classifier_candidate.npz",
+  "scenes": [{
+    "physical_scene_id": "20260905_after_user_bump_190202",
+    "image": "runtime/inspection/s22_inspection_roi_20260905_190202.png",
+    "image_sha256": "b6a82f0f4c865bbe2601d8fe2029d3ec165910934992cb5625634f810ef7f1b5",
+    "report": "runtime/inspection/vrm_recheck_190202/frozen_prediction.json",
+    "labels": {},
+    "expected_pose": {},
+    "user_motion_observation": {"vrm_02": "User observed a slight leftward shift after the bump; displacement and clearance not measured."},
+    "label_source": "User requested capture after a slight bump; post-bump physical seating labels not confirmed.",
+    "note": "All five no warning. This is not evidence to relabel the prior normal VRM2 as defective or to declare the current whole board PASS. Validation only."
+  }, {
+    "physical_scene_id": "20260905_vrm235_normal_185803",
+    "image": "runtime/inspection/s22_inspection_roi_20260905_185803.png",
+    "image_sha256": "87a3f94108c430ef77a23f065e91b502547ea681b225da8dbf6a2e89b9e29adf",
+    "report": "runtime/inspection/vrm_recheck_185803/frozen_prediction.json",
+    "labels": {"vrm_02": "PRESENT", "vrm_03": "PRESENT", "vrm_05": "PRESENT"},
+    "expected_pose": {"vrm_02": "PASS", "vrm_03": "PASS", "vrm_05": "PASS"},
+    "process_position_review": {"slot": "vrm_02", "physical_seating": "FLAT_AGAINST_RIGHT_WALL", "user_requested_disposition": "POSITION_ERROR", "reason": "Possible gripper interference with adjacent power module", "authority": "ADVISORY_ONLY", "status": "UNKNOWN", "collision_verified": false, "clearance_threshold_mm": null, "seating_label_preserved": true, "training_allowed": false},
+    "label_source": "User confirmed VRM3/5 restored normally and VRM2 unchanged from its confirmed normal right-wall placement, before bump.",
+    "note": "VRM2 false warning0.880559; VRM3/5 no warning. Only named slots labelled, no fitting."
+  }, {
+    "physical_scene_id": "20260905_vrm05_subtle_lip_184100",
+    "image": "runtime/inspection/s22_inspection_roi_20260905_184100.png",
+    "image_sha256": "6de29f1a1d6d3efaadeb4b89ddf07413e605380e3828b9f7b724e4f502335e0b",
+    "report": "runtime/inspection/vrm05_comparison_184100/frozen_prediction.json",
+    "labels": {"vrm_02": "PRESENT", "vrm_03": "PRESENT", "vrm_05": "PRESENT"},
+    "expected_pose": {"vrm_02": "PASS", "vrm_03": "FAIL", "vrm_05": "FAIL"},
+    "process_position_review": {"slot": "vrm_02", "physical_seating": "FLAT_AGAINST_RIGHT_WALL", "user_requested_disposition": "POSITION_ERROR", "reason": "Possible gripper interference with adjacent power module", "authority": "ADVISORY_ONLY", "status": "UNKNOWN", "collision_verified": false, "clearance_threshold_mm": null, "seating_label_preserved": true, "training_allowed": false},
+    "label_source": "User explicitly clarified VRM5 was intentionally still very slightly on the lip, not normally reseated.",
+    "label_correction": "Replaces assistant inference of normal return from ready message; explicit physical correction, not score-based.",
+    "other_components_motion": "User reports other components were not moved. On physical review VRM2 is flat against the right wall, VRM3 is very slightly on the lip. VRM1/4 unconfirmed.",
+    "additional_label_source": "Explicit user physical review of current VRM2/3; labels added to latest184100 only, not propagated to older frames.",
+    "note": "Frozen diagnostic0.5: VRM2 normal false warning0.797803; VRM3 subtle lip correct warning0.695407; VRM5 subtle lip correct warning0.623486. Validation only, no fitting or threshold change."
+  }, {
+    "physical_scene_id": "20260905_vrm05_controlled_lip_183451",
+    "image": "runtime/inspection/s22_inspection_roi_20260905_183451.png",
+    "image_sha256": "cb9ff9e2de75c1cf6726d7b6eabecb9087bb52a1a0ec3c2b702124faf50a474e",
+    "report": "runtime/inspection/vrm05_comparison_183451/frozen_prediction.json",
+    "labels": {"vrm_05": "PRESENT"},
+    "expected_pose": {"vrm_05": "FAIL"},
+    "label_source": "User ready after explicit lower-left lip placement instruction; physical height not independently measured.",
+    "note": "Controlled lip warning0.987525; VRM2/3 also warned but their physical labels are unconfirmed. Validation only, no fitting."
+  }, {
+    "physical_scene_id": "20260905_vrm05_normal_near_wall_181938",
+    "image": "runtime/inspection/s22_inspection_roi_20260905_181938.png",
+    "image_sha256": "b080de57756a4614d7905b5257123c4c97f0a879fe8b19b68ae2961ac410be2c",
+    "report": "runtime/inspection/vrm05_comparison_181938/frozen_prediction.json",
+    "labels": {"vrm_05": "PRESENT"},
+    "expected_pose": {"vrm_05": "PASS"},
+    "label_source": "User explicitly clarified current capture is normally seated against the wall, not on the lip; earlier defect comment referred to the historical image.",
+    "label_correction": "Replaces assistant-misattributed FAIL; not a model-driven relabel.",
+    "note": "Score0.028589 gives no warning, consistent with the corrected normal VRM05 label. Other slots unlabelled. Reserved validation only, no training or model fitting. Historical194959 remains defective."
+  }, {
+    "physical_scene_id": "20260905_all_normal_reseated_170142",
+    "image": "runtime/inspection/s22_inspection_roi_20260905_170142.png",
+    "image_sha256": "f1c4963e01331fb25c5ddcc32a7620e042951219720a176c5b2ff0ca54cd08ef",
+    "report": "runtime/inspection/vrm_multiscale_normal_holdout_170142.json",
+    "labels": {"vrm_01": "PRESENT", "vrm_02": "PRESENT", "vrm_03": "PRESENT", "vrm_04": "PRESENT", "vrm_05": "PRESENT"},
+    "expected_pose": {"vrm_01": "PASS", "vrm_02": "PASS", "vrm_03": "PASS", "vrm_04": "PASS", "vrm_05": "PASS"},
+    "other_20_components_empty": true,
+    "label_source": "user_ready_after_lift_and_reseat_all_normal_instruction_and_image_checked",
+    "note": "New normal reseating frozen validation, no fitting. All five no warning; mechanical seating height unmeasured."
+  }, {
+    "physical_scene_id": "20260905_vrm05_translation_postfreeze_165914",
+    "image": "runtime/inspection/s22_inspection_roi_20260905_165914.png",
+    "image_sha256": "abb6d6bf2479200245a9f9ffacc37e34d37fb7fda80fc63c9b18632d14fed093",
+    "report": "runtime/inspection/vrm_multiscale_translation_holdout_165914.json",
+    "labels": {"vrm_01": "PRESENT", "vrm_02": "PRESENT", "vrm_03": "PRESENT", "vrm_04": "PRESENT", "vrm_05": "PRESENT"},
+    "expected_pose": {"vrm_01": "PASS", "vrm_02": "PASS", "vrm_03": "PASS", "vrm_04": "PASS", "vrm_05": "FAIL"},
+    "other_20_components_empty": true,
+    "label_source": "user_ready_after_isolated05_on_lip_instruction_and_image_checked",
+    "note": "Frozen independent validation only,05 .875697 only warning. Physical height not measured."
+  }, {
+    "physical_scene_id": "20260905_vrm04_left_postfreeze_165642",
+    "image": "runtime/inspection/s22_inspection_roi_20260905_165642.png",
+    "image_sha256": "d8a7e9022e9843a944b4e7f2529aedacbd7de2976f3a1ad705e604944efad259",
+    "report": "runtime/inspection/vrm_multiscale_translation_holdout_165642.json",
+    "labels": {"vrm_01": "PRESENT", "vrm_02": "PRESENT", "vrm_03": "PRESENT", "vrm_04": "PRESENT", "vrm_05": "PRESENT"},
+    "expected_pose": {"vrm_01": "PASS", "vrm_02": "PASS", "vrm_03": "PASS", "vrm_04": "FAIL", "vrm_05": "PASS"},
+    "other_20_components_empty": true,
+    "label_source": "user_ready_after_new04_left_on_lip_validation_instruction_and_image_checked",
+    "note": "Frozen validation only;04 .811235 only warning. Physical height not measured."
+  }, {
+    "physical_scene_id": "20260905_all_normal_post165057_165413",
+    "image": "runtime/inspection/s22_inspection_roi_20260905_165413.png",
+    "image_sha256": "7ba79883f29bf4ec9cf455aed88b78554583052e91985233ba87789439b33ba7",
+    "report": "runtime/inspection/vrm_multiscale_normal_holdout_165413.json",
+    "labels": {"vrm_01": "PRESENT", "vrm_02": "PRESENT", "vrm_03": "PRESENT", "vrm_04": "PRESENT", "vrm_05": "PRESENT"},
+    "expected_pose": {"vrm_01": "PASS", "vrm_02": "PASS", "vrm_03": "PASS", "vrm_04": "PASS", "vrm_05": "PASS"},
+    "other_20_components_empty": true,
+    "label_source": "user_ready_after_all_normal_instruction_and_image_checked",
+    "note": "Fresh normal frozen validation after165057 fit; five scores below.014. Never trained. Physical height not measured."
+  }, {
+    "physical_scene_id": "20260905_vrm01_04_translation_postfreeze_164343",
+    "image": "runtime/inspection/s22_inspection_roi_20260905_164343.png",
+    "image_sha256": "97370da15c717a9f5919abb8e572dac11335557dcb8bdd9b61a39b42a2363945",
+    "report": "runtime/inspection/vrm_multiscale_translation_holdout_164343.json",
+    "labels": {"vrm_01": "PRESENT", "vrm_02": "PRESENT", "vrm_03": "PRESENT", "vrm_04": "PRESENT", "vrm_05": "PRESENT"},
+    "expected_pose": {"vrm_01": "FAIL", "vrm_02": "PASS", "vrm_03": "PASS", "vrm_04": "FAIL", "vrm_05": "PASS"},
+    "other_20_components_empty": true,
+    "label_source": "user_ready_after_explicit01_04_translation_on_lip_instruction_and_image_checked",
+    "note": "Fresh frozen validation.01 warning .996606;04 missed .441096 at unchanged diagnostic0.5. User seating labels retained, height not measured. Never fitted."
+  }, {
+    "physical_scene_id": "20260905_vrm03_translation_postfreeze_164022",
+    "image": "runtime/inspection/s22_inspection_roi_20260905_164022.png",
+    "image_sha256": "d7d39f3459905c09a1c4ae3663aaf779e60bd142beb4e8bb99dbb3271a205487",
+    "report": "runtime/inspection/vrm_multiscale_translation_holdout_164022.json",
+    "labels": {"vrm_01": "PRESENT", "vrm_02": "PRESENT", "vrm_03": "PRESENT", "vrm_04": "PRESENT", "vrm_05": "PRESENT"},
+    "expected_pose": {"vrm_01": "PASS", "vrm_02": "PASS", "vrm_03": "FAIL", "vrm_04": "PASS", "vrm_05": "PASS"},
+    "other_20_components_empty": true,
+    "label_source": "user_ready_after_isolated03_translation_on_lip_instruction_and_image_checked",
+    "note": "New frozen validation only.03 .996247 warning; other4 no warning. Physical seating height per setup, not measured."
+  }, {
+    "physical_scene_id": "20260905_vrm02_translation_postfreeze_163741",
+    "image": "runtime/inspection/s22_inspection_roi_20260905_163741.png",
+    "image_sha256": "31a523c5c1965fb552c93c15c49a53cbae156d595e9cfc655a4211971e0fc90b",
+    "report": "runtime/inspection/vrm_multiscale_translation_holdout_163741.json",
+    "labels": {"vrm_01": "PRESENT", "vrm_02": "PRESENT", "vrm_03": "PRESENT", "vrm_04": "PRESENT", "vrm_05": "PRESENT"},
+    "expected_pose": {"vrm_01": "PASS", "vrm_02": "FAIL", "vrm_03": "PASS", "vrm_04": "PASS", "vrm_05": "PASS"},
+    "other_20_components_empty": true,
+    "label_source": "user_ready_after_isolated02_translation_on_lip_instruction_and_image_checked",
+    "note": "Fresh frozen validation only.02 visibly displaced; seating height per setup not measured. Only02 warning .998406, no fit."
+  }, {
+    "physical_scene_id": "20260905_all_normal_post_multiscale_163509",
+    "image": "runtime/inspection/s22_inspection_roi_20260905_163509.png",
+    "image_sha256": "bb25240eb2a0a4fc70bce65ed25476d6a1c632ee5ed19fa7833d7cb8b876f47b",
+    "report": "runtime/inspection/vrm_multiscale_normal_holdout_163509.json",
+    "labels": {"vrm_01": "PRESENT", "vrm_02": "PRESENT", "vrm_03": "PRESENT", "vrm_04": "PRESENT", "vrm_05": "PRESENT"},
+    "expected_pose": {"vrm_01": "PASS", "vrm_02": "PASS", "vrm_03": "PASS", "vrm_04": "PASS", "vrm_05": "PASS"},
+    "other_20_components_empty": true,
+    "label_source": "user_ready_after_all_normal_instruction_and_image_checked",
+    "note": "Fresh post-freeze normal control, never trained. Model9fb72c96 max score .008891; no warnings. One physical scene, not five independent trials. Height not measured."
+  }, {
+    "physical_scene_id": "20260905_vrm02_translation_160027",
+    "image": "runtime/inspection/s22_inspection_roi_20260905_160027.png",
+    "image_sha256": "33952ec62ddaa392d3d3ba4d6587f7c183b8c1060804163336caa9dee0c85ae1",
+    "report": "runtime/inspection/vrm_spatial_translation_holdout_160027.json",
+    "labels": {"vrm_01": "PRESENT", "vrm_02": "PRESENT", "vrm_03": "PRESENT", "vrm_04": "PRESENT", "vrm_05": "PRESENT"},
+    "expected_pose": {"vrm_01": "PASS", "vrm_02": "FAIL", "vrm_03": "PASS", "vrm_04": "PASS", "vrm_05": "PASS"},
+    "other_20_components_empty": true,
+    "label_source": "user_ready_after_explicit_vrm02_translation_on_lip_instruction_and_image_checked",
+    "note": "Both frozen candidates miss02 at diagnostic0.5. Physical seating height per setup, unmeasured. Never fitted; no threshold adjustment."
+  }, {
+    "physical_scene_id": "20260905_vrm03_opposite_translation_155745",
+    "image": "runtime/inspection/s22_inspection_roi_20260905_155745.png",
+    "image_sha256": "e2aa27691dba1ab2b483994fc445b3a04c80ed075685468855c59ddb7c5dcb22",
+    "report": "runtime/inspection/vrm_spatial_translation_holdout_155745.json",
+    "labels": {"vrm_01": "PRESENT", "vrm_02": "PRESENT", "vrm_03": "PRESENT", "vrm_04": "PRESENT", "vrm_05": "PRESENT"},
+    "expected_pose": {"vrm_01": "PASS", "vrm_02": "PASS", "vrm_03": "FAIL", "vrm_04": "PASS", "vrm_05": "PASS"},
+    "other_20_components_empty": true,
+    "label_source": "user_ready_after_opposite_translation_on_lip_instruction_and_image_checked",
+    "note": "Independent frozen replay only.03 warning both models, no others. Physical height not metrically verified. No training."
+  }, {
+    "physical_scene_id": "20260905_vrm03_translation_frozen_spatial_155509",
+    "image": "runtime/inspection/s22_inspection_roi_20260905_155509.png",
+    "image_sha256": "4507070809d426ba3d46e7fa71118895566c4cf8b0e38442593ecc22304b4850",
+    "report": "runtime/inspection/vrm_spatial_translation_holdout_155509.json",
+    "labels": {"vrm_01": "PRESENT", "vrm_02": "PRESENT", "vrm_03": "PRESENT", "vrm_04": "PRESENT", "vrm_05": "PRESENT"},
+    "expected_pose": {"vrm_01": "PASS", "vrm_02": "PASS", "vrm_03": "FAIL", "vrm_04": "PASS", "vrm_05": "PASS"},
+    "other_20_components_empty": true,
+    "label_source": "user_ready_after_explicit_vrm03_translation_on_lip_instruction_and_image_checked",
+    "note": "Frozen independent validation, never fitted. Seating height per physical setup, not measured from image. Both candidates warn only on03 at diagnostic0.5; previous150807 miss remains."
+  }, {
+    "physical_scene_id": "20260905_all_vrm_normal_frozen_spatial_154927",
+    "image": "runtime/inspection/s22_inspection_roi_20260905_154927.png",
+    "image_sha256": "b9de1aacccdfa342a690b01e49d7486b8e17407f54cb8cc387546dfe9f4f0a49",
+    "report": "runtime/inspection/vrm_spatial_normal_holdout_154927.json",
+    "labels": {"vrm_01": "PRESENT", "vrm_02": "PRESENT", "vrm_03": "PRESENT", "vrm_04": "PRESENT", "vrm_05": "PRESENT"},
+    "expected_pose": {"vrm_01": "PASS", "vrm_02": "PASS", "vrm_03": "PASS", "vrm_04": "PASS", "vrm_05": "PASS"},
+    "other_20_components_empty": true,
+    "label_source": "user_ready_after_all_normal_instruction_and_image_checked",
+    "note": "Independent normal scene after freezing both spatial candidates. Never fitted. Ground-truth PASS is not model authority; physical seating height unmeasured."
+  }, {
+    "physical_scene_id": "20260905_vrm02_04_empty_a",
+    "image": "runtime/inspection/s22_inspection_roi_20260905_141311.png",
+    "report": "runtime/inspection/vrm_presence_context_stress_20260905/blind_141311.json",
+    "labels": {"vrm_01": "PRESENT", "vrm_02": "EMPTY", "vrm_03": "PRESENT", "vrm_04": "EMPTY", "vrm_05": "PRESENT"},
+    "other_20_components_empty": true,
+    "label_source": "user_ready_after_explicit_removal_instruction_and_image_checked",
+    "note": "One new physical scene; not five independent trials."
+  }, {
+    "physical_scene_id": "20260905_vrm01_03_05_empty_a",
+    "image": "runtime/inspection/s22_inspection_roi_20260905_141603.png",
+    "report": "runtime/inspection/vrm_presence_context_stress_20260905/blind_141603.json",
+    "labels": {"vrm_01": "EMPTY", "vrm_02": "PRESENT", "vrm_03": "EMPTY", "vrm_04": "PRESENT", "vrm_05": "EMPTY"},
+    "other_20_components_empty": true,
+    "label_source": "user_ready_after_explicit_removal_instruction_and_image_checked",
+    "note": "Second post-freeze physical scene; complementary presence, not pose validation."
+  }, {
+    "physical_scene_id": "20260905_vrm02_small_rotation_a",
+    "image": "runtime/inspection/s22_inspection_roi_20260905_142049.png",
+    "report": "runtime/inspection/vrm_presence_context_stress_20260905/blind_142049.json",
+    "labels": {"vrm_01": "EMPTY", "vrm_02": "PRESENT", "vrm_03": "EMPTY", "vrm_04": "PRESENT", "vrm_05": "EMPTY"},
+    "other_20_components_empty": true,
+    "label_source": "user_small_rotation_instead_of_90_degrees_and_image_checked",
+    "expected_pose": {"vrm_02": "FAIL"},
+    "defect_reason": {"vrm_02": "ROTATION_POSITION_ERROR"},
+    "pose_label_source": "user_explicitly_confirmed_defective_in_followup",
+    "note": "VRM02 slightly rotated and explicitly defective, exact angle unmeasured. PRESENT is not PASS. Exclude normal training. VRM04 unchanged."
+  }, {
+    "physical_scene_id": "20260905_vrm04_small_rotation_defect_a",
+    "image": "runtime/inspection/s22_inspection_roi_20260905_142337.png",
+    "report": "runtime/inspection/vrm_presence_context_stress_20260905/blind_142337.json",
+    "labels": {"vrm_01": "EMPTY", "vrm_02": "PRESENT", "vrm_03": "EMPTY", "vrm_04": "PRESENT", "vrm_05": "EMPTY"},
+    "expected_pose": {"vrm_04": "FAIL"},
+    "defect_reason": {"vrm_04": "ROTATION_POSITION_ERROR"},
+    "other_20_components_empty": true,
+    "label_source": "user_explicit_rotation_defect_and_image_checked",
+    "note": "VRM02 restored, VRM04 rotated. Ground-truth FAIL is not a model prediction; presence probe does not evaluate pose. Exclude normal training."
+  }, {
+    "physical_scene_id": "20260905_all_vrm_flat_143632",
+    "image": "runtime/inspection/s22_inspection_roi_20260905_143632.png",
+    "report": "runtime/inspection/vrm_presence_context_stress_20260905/blind_143632.json",
+    "outline_report": "runtime/inspection/vrm_outline_holdout_143632/edges.json",
+    "labels": {"vrm_01": "PRESENT", "vrm_02": "PRESENT", "vrm_03": "PRESENT", "vrm_04": "PRESENT", "vrm_05": "PRESENT"},
+    "expected_pose": {"vrm_01": "PASS", "vrm_02": "PASS", "vrm_03": "PASS", "vrm_04": "PASS", "vrm_05": "PASS"},
+    "other_20_components_empty": true,
+    "label_source": "user_ready_after_all_flat_instruction_and_image_checked",
+    "note": "Fresh normal control, ground truth only, not model PASS. Holdout excluded training."
+  }, {
+    "physical_scene_id": "20260905_vrm05_rotation_144017",
+    "image": "runtime/inspection/s22_inspection_roi_20260905_144017.png",
+    "report": "runtime/inspection/vrm_presence_context_stress_20260905/blind_144017.json",
+    "outline_report": "runtime/inspection/vrm_outline_holdout_144017/edges.json",
+    "labels": {"vrm_01": "PRESENT", "vrm_02": "PRESENT", "vrm_03": "PRESENT", "vrm_04": "PRESENT", "vrm_05": "PRESENT"},
+    "expected_pose": {"vrm_01": "PASS", "vrm_02": "PASS", "vrm_03": "PASS", "vrm_04": "PASS", "vrm_05": "FAIL"},
+    "defect_reason": {"vrm_05": "ROTATION_POSITION_ERROR"},
+    "other_20_components_empty": true,
+    "label_source": "user_explicitly_confirmed_accidental_vrm05_rotation_not_vrm01",
+    "note": "User corrected physical slot identity; no software remapping. Ground truth only, not authoritative model verdict; excluded training."
+  }, {
+    "physical_scene_id": "20260905_vrm01_rotation_lip_144513",
+    "image": "runtime/inspection/s22_inspection_roi_20260905_144513.png",
+    "report": "runtime/inspection/vrm_presence_context_stress_20260905/blind_144513.json",
+    "outline_report": "runtime/inspection/vrm_outline_holdout_144513/edges.json",
+    "labels": {"vrm_01": "PRESENT", "vrm_02": "PRESENT", "vrm_03": "PRESENT", "vrm_04": "PRESENT", "vrm_05": "PRESENT"},
+    "expected_pose": {"vrm_01": "FAIL", "vrm_02": "PASS", "vrm_03": "PASS", "vrm_04": "PASS", "vrm_05": "PASS"},
+    "defect_reason": {"vrm_01": "ROTATION_POSITION_ERROR"},
+    "other_20_components_empty": true,
+    "label_source": "user_ready_after_vrm01_rotation_lip_instruction_and_image_checked",
+    "note": "Outline minAreaRect reports only1.21deg despite defective setup; fit is not reliable component pose. Do not relabel normal or tune threshold to this sample. Holdout only."
+  }, {
+    "physical_scene_id": "20260905_normal_swap01_03_145643",
+    "image": "runtime/inspection/s22_inspection_roi_20260905_145643.png",
+    "report": "runtime/inspection/vrm_presence_context_stress_20260905/blind_145643.json",
+    "texture_motion_report": "runtime/inspection/vrm_texture_motion_holdout_145643/motion.json",
+    "labels": {"vrm_01": "PRESENT", "vrm_02": "PRESENT", "vrm_03": "PRESENT", "vrm_04": "PRESENT", "vrm_05": "PRESENT"},
+    "expected_pose": {"vrm_01": "PASS", "vrm_02": "PASS", "vrm_03": "PASS", "vrm_04": "PASS", "vrm_05": "PASS"},
+    "other_20_components_empty": true,
+    "label_source": "user_ready_after_normal_swap01_03_instruction_and_image_checked",
+    "note": "Physical normal parts swapped01/03; not a software slot remap. Texture motion fails correspondence on swapped parts; do not interpret spurious angles as defects. Excluded training."
+  }, {
+    "physical_scene_id": "20260905_vrm03_rotation_150517",
+    "image": "runtime/inspection/s22_inspection_roi_20260905_150517.png",
+    "report": "runtime/inspection/vrm_presence_context_stress_20260905/blind_150517.json",
+    "outline_report": "runtime/inspection/vrm_outline_blur1_holdout_150517/edges.json",
+    "outline_candidate": "vision_assembly/config/vrm_outline_candidate_20260905.json",
+    "labels": {"vrm_01": "PRESENT", "vrm_02": "PRESENT", "vrm_03": "PRESENT", "vrm_04": "PRESENT", "vrm_05": "PRESENT"},
+    "expected_pose": {"vrm_01": "PASS", "vrm_02": "PASS", "vrm_03": "FAIL", "vrm_04": "PASS", "vrm_05": "PASS"},
+    "defect_reason": {"vrm_03": "ROTATION_POSITION_ERROR"},
+    "other_20_components_empty": true,
+    "label_source": "user_ready_after_vrm03_rotation_instruction_and_image_checked",
+    "note": "First fresh physical scene after blur1 selection. Diagnostic3deg warning on03 only, not authoritative FAIL. No refit or threshold adjustment; excluded training."
+  }, {
+    "physical_scene_id": "20260905_vrm03_translation_lip_150807",
+    "image": "runtime/inspection/s22_inspection_roi_20260905_150807.png",
+    "report": "runtime/inspection/vrm_presence_context_stress_20260905/blind_150807.json",
+    "outline_report": "runtime/inspection/vrm_outline_blur1_holdout_150807/edges.json",
+    "labels": {"vrm_01": "PRESENT", "vrm_02": "PRESENT", "vrm_03": "PRESENT", "vrm_04": "PRESENT", "vrm_05": "PRESENT"},
+    "expected_pose": {"vrm_01": "PASS", "vrm_02": "PASS", "vrm_03": "FAIL", "vrm_04": "PASS", "vrm_05": "PASS"},
+    "defect_reason": {"vrm_03": "POSITION_SEATING_ERROR"},
+    "other_20_components_empty": true,
+    "label_source": "user_ready_after_translation_only_lip_instruction_and_image_checked",
+    "note": "Defective translation, not normal despite zero enclosing angle. Center delta versus145643=-7.5,+2 registered pixels, not calibrated physical displacement. No production threshold chosen."
+  }]
+}

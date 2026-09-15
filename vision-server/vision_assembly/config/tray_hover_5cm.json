@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "mode": "non_smd_tray_hover_only",
+  "status": "live_rgbd_baseline_measured_2026_09_04",
+  "hover_offset_mm": 50.0,
+  "source_topics": {
+    "unity_state": "/vision/tray/unity_state",
+    "registration": "/vision/tray/registration",
+    "robot_state": "/nonrt_state_data"
+  },
+  "required_state": {
+    "schema": "fr5.tray.unity_state/v1",
+    "registration_state_prefix": "TRACKING",
+    "base_transform_status": "VALID_COORDINATES_ONLY",
+    "coordinate_frame": "base_link",
+    "position_units": "mm",
+    "at_trayhome": true,
+    "minimum_observation_frames": 10,
+    "maximum_state_age_sec": 3.5
+  },
+  "capture": {
+    "frames": 5,
+    "max_position_jitter_mm": 2.0,
+    "max_axis_angle_jitter_deg": 3.0,
+    "timeout_sec": 30.0
+  },
+  "motion": {
+    "horizontal_speed_percent": 20,
+    "vertical_speed_percent": 15,
+    "rotation_speed_percent": 20,
+    "safe_clearance_mm": 100.0,
+    "maximum_target_distance_mm": 650.0,
+    "tool_id": 1,
+    "user_id": 0
+  },
+  "surface_workspace_base_mm": {
+    "x": [-805.0, -440.0],
+    "y": [-275.0, 140.0],
+    "z": [-70.0, -25.0]
+  },
+  "parts": {
+    "gpu": {
+      "display_name": "GPU",
+      "aliases": ["gpu", "nvidia"],
+      "orientation_mode": "long_axis",
+      "gripper_axis": "tool_y"
+    },
+    "hbm": {
+      "display_name": "HBM",
+      "aliases": ["hbm", "sk_hynix", "sk-hynix"],
+      "orientation_mode": "long_axis",
+      "gripper_axis": "tool_y"
+    },
+    "black_block": {
+      "display_name": "VRM (전압 조정 모듈)",
+      "aliases": ["vrm", "black_block", "black-block"],
+      "orientation_mode": "long_axis",
+      "gripper_axis": "tool_y"
+    },
+    "long_orange": {
+      "display_name": "Power Module (전원 모듈)",
+      "aliases": ["power_module", "power-module", "power", "long_orange", "long-orange"],
+      "orientation_mode": "long_axis",
+      "gripper_axis": "tool_y"
+    },
+    "marked_white": {
+      "display_name": "Inductor (인덕터)",
+      "aliases": ["inductor", "marked_white", "marked-white"],
+      "orientation_mode": "preserve",
+      "gripper_axis": "tool_y"
+    }
+  },
+  "excluded_parts": {
+    "right_white_brown": {
+      "display_name": "SMD Capacitor (SMD 커패시터)",
+      "aliases": ["smd", "smd_capacitor", "smd-capacitor", "right_white_brown", "right-white-brown"],
+      "reason": "SMD keeps its existing dedicated close-up workflow and is excluded from this non-SMD tray-hover runner."
+    }
+  },
+  "measured_live_baseline": {
+    "timestamp_ros_ns": 1788499799677326416,
+    "registration_state": "TRACKING",
+    "at_trayhome": true,
+    "visible_counts": {
+      "black_block": 5,
+      "long_orange": 4,
+      "marked_white": 2,
+      "gpu": 1,
+      "hbm": 8
+    },
+    "surface_xyz_range_base_mm": {
+      "x": [-748.308, -506.620],
+      "y": [-227.068, -24.103],
+      "z": [-47.836, -40.702]
+    },
+    "projected_non_smd_roi_xy_range_base_mm": {
+      "x": [-786.945, -457.330],
+      "y": [-258.050, 121.221]
+    },
+    "reference_xy_to_base_xy_fit_max_error_mm": 1.893,
+    "note": "Read-only live /vision/tray/unity_state sample at the default tray waiting pose; no robot or gripper command was sent."
+  }
+}

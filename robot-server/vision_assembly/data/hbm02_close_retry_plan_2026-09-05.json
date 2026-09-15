@@ -1,0 +1,120 @@
+{
+  "schema": "fr5.full_fixed_cycle_plan/v1",
+  "created_unix": 1788589658.6864061,
+  "cycle_id": "20260905-150655",
+  "snapshot": "in_memory",
+  "transfer_z_mm": 350.0,
+  "speeds_percent": {
+    "travel": 25,
+    "combined_rotation": 25,
+    "vertical": 10
+  },
+  "board_place_common_z_raise_mm": 0.3,
+  "motion_profile": "smooth_combined_transfer_v1",
+  "robot_motion_authorized": false,
+  "plan_selection": {
+    "mode": "explicit_slots",
+    "requested_only_slot": null,
+    "selected_slots": [
+      "HBM-02"
+    ]
+  },
+  "cycle_overrides": {
+    "GPU-01": {
+      "preferred_tcp_c_deg": 180.0,
+      "preference_tie_threshold_deg": 10.0
+    },
+    "pick_symmetric_solution": {
+      "rule": "choose the 180-degree-equivalent pick TCP C nearest the previous planned place TCP C"
+    },
+    "HBM": {
+      "orientation_mode": "align_actual_carried_axis_to_current_slot_axis"
+    }
+  },
+  "plan": [
+    {
+      "slot_code": "HBM-02",
+      "part_type": "hbm",
+      "tray_instance_index": 2,
+      "tray_surface_base_mm": [
+        -591.788,
+        -13.087,
+        -42.99
+      ],
+      "tray_long_axis_base_deg": 1.806,
+      "pick_correction_base_mm": [
+        -0.717,
+        1.253
+      ],
+      "pick_z_mode": "detected_surface_relative",
+      "pick_final_tcp": [
+        -592.505,
+        -11.834,
+        -43.0,
+        -180.0,
+        0.0,
+        91.80599999999998
+      ],
+      "place_final_tcp": [
+        62.230413,
+        -526.173838,
+        91.78417999999999,
+        180.0,
+        0.0,
+        -179.95850692753885
+      ],
+      "calibrated_place_final_tcp_z_mm": 91.48418,
+      "board_place_common_z_raise_mm": 0.3,
+      "tray_open_position": 25,
+      "grip_position": 18,
+      "release_position": 25,
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "target_axis_base_deg": 90.04149307246121,
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 10.0,
+        "skip_rotation_below_deg": 3.0,
+        "preferred_tcp_c_deg": 180.0,
+        "rotation_delta_deg": 88.23549307246117,
+        "rotation_skipped_in_plan": false,
+        "planned_from_pick": {
+          "current_axis_base_deg": 1.8059999999999816,
+          "target_axis_base_deg": 90.04149307246121,
+          "symmetry_period_deg": 180.0,
+          "rotation_delta_deg": 88.23549307246117,
+          "target_tcp_abc_deg": [
+            180.0,
+            0.0,
+            -179.95850692753885
+          ],
+          "preferred_tcp_c_deg": 180.0
+        }
+      }
+    }
+  ],
+  "status": "planned_not_executed",
+  "source_captures": {
+    "tray_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/hbm02_retry_fresh_2026-09-05.json",
+    "board_file": "vision_assembly/data/remaining15_board_2026-09-05.json",
+    "tray_captured_unix": 1788589658.6864061,
+    "board_captured_unix": 1788588415.1930695
+  },
+  "route_revision": {
+    "symmetric_pick_flips": [
+      "HBM-06",
+      "PM-03",
+      "PM-04",
+      "VRM-02",
+      "VRM-03",
+      "VRM-04",
+      "VRM-05"
+    ],
+    "height_overrides_mm": {
+      "HBM-04": 400
+    },
+    "status": "joint_preflight_only_not_physical_collision_validation"
+  },
+  "execution_scope": "close_only_no_lift_or_board"
+}

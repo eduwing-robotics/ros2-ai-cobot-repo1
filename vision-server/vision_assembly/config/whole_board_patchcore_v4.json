@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "model": "pcb_whole_smd_v4",
+  "decision": {
+    "pass_candidate_max": 0.4,
+    "anomaly_candidate_min": 0.55
+  },
+  "visualization": {
+    "heatmap_visible_min": 0.35
+  },
+  "evidence": {
+    "held_out_normal_count": 14,
+    "held_out_normal_score_range": [0.0, 0.0],
+    "verified_recent_normal_score": 0.27388602,
+    "legacy_mixed_defect_count": 13,
+    "legacy_mixed_defect_score_range": [0.45584026, 0.68317264],
+    "current_obvious_change_score": 0.63822502
+  },
+  "status": "PROVISIONAL_TRIAGE_ONLY",
+  "warning": "Do not drive conveyor PASS/FAIL until controlled defect captures validate these thresholds."
+}

@@ -1,0 +1,743 @@
+{
+  "schema_version": 1,
+  "reference_image": "runtime/inspection/reference/s22_package_legs_golden.png",
+  "board_layout": "/home/hc/KSMC/runtime/inspection/cad_yellow_trial_a8puvcqm/layout.json",
+  "physical_board": "/home/hc/KSMC/runtime/inspection/cad_yellow_trial_a8puvcqm/physical.json",
+  "socket_clearance": "vision_assembly/config/unity_socket_clearance.json",
+  "coordinate_mapping": {
+    "image_x_from_board_x_sign": -1.0,
+    "image_y_from_board_y_sign": -1.0,
+    "note": "Board +Y points toward the fixture handle/image top. Physical overrides make S1 horizontal, S2-S5 the right vertical column, and I1-I2 the lower-right round slots."
+  },
+  "global_alignment": {
+    "downscale": 0.35,
+    "iterations": 90,
+    "epsilon": 1e-05,
+    "gaussian_filter_size": 3,
+    "minimum_score": 0.82,
+    "max_translation_px": 45.0,
+    "determinant_range": [
+      0.94,
+      1.06
+    ],
+    "component_exclusion_margin_mm": 2.5
+  },
+  "measurement_uncertainty": {
+    "position_mm": 0.25,
+    "axis_angle_deg": 1.5,
+    "common_projection_bias_max_mm": 1.5
+  },
+  "auxiliary_pose_slot_reference_offsets_mm": {
+    "ai_gpu": {
+      "offset_mm": [
+        0.5440398406982422,
+        -0.791552213695942
+      ],
+      "calibration_id": "s22_fixed_raw_centroid_development_20260910_v1",
+      "sample_count": 3,
+      "maximum_reference_residual_mm": 0.26741463329545034
+    },
+    "hbm_01": {
+      "offset_mm": [
+        0.7047857593354584,
+        -0.42846120996848586
+      ],
+      "calibration_id": "s22_fixed_raw_centroid_development_20260910_v1",
+      "sample_count": 3,
+      "maximum_reference_residual_mm": 0.1396075943833386
+    },
+    "hbm_02": {
+      "offset_mm": [
+        0.6299508085704845,
+        -0.7719486607053515
+      ],
+      "calibration_id": "s22_fixed_raw_centroid_development_20260910_v1",
+      "sample_count": 3,
+      "maximum_reference_residual_mm": 0.2537265728910279
+    },
+    "hbm_03": {
+      "offset_mm": [
+        0.47372710455030215,
+        -0.768160854170899
+      ],
+      "calibration_id": "s22_fixed_raw_centroid_development_20260910_v1",
+      "sample_count": 3,
+      "maximum_reference_residual_mm": 0.3957120962405833
+    },
+    "hbm_04": {
+      "offset_mm": [
+        0.2266586485363047,
+        -0.9651706736055145
+      ],
+      "calibration_id": "s22_fixed_raw_centroid_development_20260910_v1",
+      "sample_count": 3,
+      "maximum_reference_residual_mm": 0.27275994290172545
+    },
+    "hbm_05": {
+      "offset_mm": [
+        0.45222482536389036,
+        -0.6490801585207665
+      ],
+      "calibration_id": "s22_fixed_raw_centroid_development_20260910_v1",
+      "sample_count": 3,
+      "maximum_reference_residual_mm": 0.3001749758900914
+    },
+    "hbm_06": {
+      "offset_mm": [
+        0.1836567864234607,
+        -0.9164735789908801
+      ],
+      "calibration_id": "s22_fixed_raw_centroid_development_20260910_v1",
+      "sample_count": 3,
+      "maximum_reference_residual_mm": 0.38120025994874507
+    },
+    "hbm_07": {
+      "offset_mm": [
+        0.17913911674572627,
+        -0.6857330202883457
+      ],
+      "calibration_id": "s22_fixed_raw_centroid_development_20260910_v1",
+      "sample_count": 3,
+      "maximum_reference_residual_mm": 0.2459408469644961
+    },
+    "hbm_08": {
+      "offset_mm": [
+        0.08965953281947969,
+        -0.8930749471765153
+      ],
+      "calibration_id": "s22_fixed_raw_centroid_development_20260910_v1",
+      "sample_count": 3,
+      "maximum_reference_residual_mm": 0.18088304032715508
+    },
+    "inductor_01": {
+      "offset_mm": [
+        0.17038689196195908,
+        -0.1098171875704486
+      ],
+      "calibration_id": "s22_fixed_raw_centroid_development_20260910_v1",
+      "sample_count": 3,
+      "maximum_reference_residual_mm": 0.1322468963015969
+    },
+    "inductor_02": {
+      "offset_mm": [
+        -0.03335718254162164,
+        -0.17038473004483087
+      ],
+      "calibration_id": "s22_fixed_raw_centroid_development_20260910_v1",
+      "sample_count": 3,
+      "maximum_reference_residual_mm": 0.09053419693265088
+    },
+    "power_module_01": {
+      "offset_mm": [
+        -0.3584125661417574,
+        0.3147374677733223
+      ],
+      "calibration_id": "s22_fixed_raw_centroid_development_20260910_v1",
+      "sample_count": 3,
+      "maximum_reference_residual_mm": 0.675117620307476
+    },
+    "power_module_02": {
+      "offset_mm": [
+        0.2828370427652926,
+        -0.09158407738613657
+      ],
+      "calibration_id": "s22_fixed_raw_centroid_development_20260910_v1",
+      "sample_count": 3,
+      "maximum_reference_residual_mm": 0.4908118121550926
+    },
+    "power_module_03": {
+      "offset_mm": [
+        -0.14988553365071614,
+        -0.3643413884922251
+      ],
+      "calibration_id": "s22_fixed_raw_centroid_development_20260910_v1",
+      "sample_count": 3,
+      "maximum_reference_residual_mm": 0.5107104229827588
+    },
+    "power_module_04": {
+      "offset_mm": [
+        -0.3312427520751953,
+        -0.32321605384794977
+      ],
+      "calibration_id": "s22_fixed_raw_centroid_development_20260910_v1",
+      "sample_count": 3,
+      "maximum_reference_residual_mm": 0.7471516142439343
+    },
+    "smd_capacitor_01": {
+      "offset_mm": [
+        0.8585679987153582,
+        -0.21541485440937946
+      ],
+      "calibration_id": "s22_fixed_raw_centroid_development_20260910_v1",
+      "sample_count": 3,
+      "maximum_reference_residual_mm": 0.6350200790697456
+    },
+    "smd_capacitor_02": {
+      "offset_mm": [
+        0.27633835887509534,
+        -0.18096670020532601
+      ],
+      "calibration_id": "s22_fixed_raw_centroid_development_20260910_v1",
+      "sample_count": 3,
+      "maximum_reference_residual_mm": 0.29972913788369243
+    },
+    "smd_capacitor_03": {
+      "offset_mm": [
+        0.13086798127092863,
+        -0.4844703136389645
+      ],
+      "calibration_id": "s22_fixed_raw_centroid_development_20260910_v1",
+      "sample_count": 3,
+      "maximum_reference_residual_mm": 0.23876399201287804
+    },
+    "smd_capacitor_04": {
+      "offset_mm": [
+        0.31868002350725677,
+        -0.2711661338827102
+      ],
+      "calibration_id": "s22_fixed_raw_centroid_development_20260910_v1",
+      "sample_count": 3,
+      "maximum_reference_residual_mm": 0.40974152573083794
+    },
+    "smd_capacitor_05": {
+      "offset_mm": [
+        0.012273849801202058,
+        -0.02338255183845693
+      ],
+      "calibration_id": "s22_fixed_raw_centroid_development_20260910_v1",
+      "sample_count": 3,
+      "maximum_reference_residual_mm": 0.314569340234433
+    },
+    "vrm_01": {
+      "offset_mm": [
+        -0.20693733624049035,
+        -0.31798439366257997
+      ],
+      "calibration_id": "s22_fixed_raw_centroid_development_20260910_v1",
+      "sample_count": 3,
+      "maximum_reference_residual_mm": 0.3203481113250822
+    },
+    "vrm_02": {
+      "offset_mm": [
+        -0.4490420557203691,
+        -0.795601950853142
+      ],
+      "calibration_id": "s22_fixed_raw_centroid_development_20260910_v1",
+      "sample_count": 3,
+      "maximum_reference_residual_mm": 0.5588707799692472
+    },
+    "vrm_03": {
+      "offset_mm": [
+        -0.10951028119949503,
+        -0.7804355149610182
+      ],
+      "calibration_id": "s22_fixed_raw_centroid_development_20260910_v1",
+      "sample_count": 3,
+      "maximum_reference_residual_mm": 0.17168854242626044
+    },
+    "vrm_04": {
+      "offset_mm": [
+        -0.12083151987620198,
+        -0.5802490241869023
+      ],
+      "calibration_id": "s22_fixed_raw_centroid_development_20260910_v1",
+      "sample_count": 2,
+      "maximum_reference_residual_mm": 0.20466592971380734
+    },
+    "vrm_05": {
+      "offset_mm": [
+        -0.10040490559168659,
+        -0.6118540251698509
+      ],
+      "calibration_id": "s22_fixed_raw_centroid_development_20260910_v1",
+      "sample_count": 3,
+      "maximum_reference_residual_mm": 0.4389596069811635
+    }
+  },
+  "pose_search": {
+    "margin_mm": 2.0,
+    "rotation_step_deg": 1.0,
+    "rotation_search_deg": 12.0
+  },
+  "white_features": {
+    "lab_l_min": 130,
+    "hsv_s_max": 105,
+    "open_kernel_px": 2,
+    "dot_min_radius_mm": 0.42,
+    "dot_rank_winner_margin_min": 0.15,
+    "dot_geometry_scale": 1.18,
+    "dot_anchor_penalty": 0.8,
+    "hbm_logo_half_x": 0.42,
+    "hbm_logo_half_y": 0.28,
+    "hbm_logo_hue_max": 42,
+    "hbm_logo_s_min": 45,
+    "hbm_logo_v_min": 45,
+    "hbm_logo_present_ratio_min": 0.3,
+    "hbm_logo_missing_ratio_max": 0.08,
+    "inductor_mark_contrast_min": 7.0,
+    "inductor_mark_radius_scale": 0.48,
+    "inductor_mark_radial_min": 0.18,
+    "inductor_mark_radial_max": 0.72,
+    "inductor_mark_angle_bins": 72,
+    "inductor_expected_mark_angle_deg": 180.0,
+    "inductor_mark_angle_tolerance_deg": 50.0,
+    "inductor_mark_axis_tolerance_deg": 10.0,
+    "inductor_mark_inner_edge_reference_deg": {
+      "inductor_01": 87.3,
+      "inductor_02": 85.6
+    }
+  },
+  "leg_inspection": {
+    "GPU": {
+      "strip_half_width_mm": 2.3,
+      "minimum_reference_peaks": 31,
+      "maximum_reference_peaks": 35,
+      "peak_min_distance_px": 9,
+      "peak_profile_min": 0.022,
+      "left_keep_fraction": 0.9,
+      "reference_peak_radius_px": 3,
+      "sample_peak_radius_px": 5,
+      "missing_evidence_ratio": 0.2,
+      "uncertain_evidence_ratio": 0.3,
+      "maximum_lateral_shift_mm": 0.7,
+      "maximum_extra_width_mm": 0.8,
+      "adaptive_lab_min": 70,
+      "adaptive_lab_max": 145,
+      "adaptive_lab_offset": 5,
+      "adaptive_hsv_s_max": 130,
+      "fallen_end_ignore_fraction": 0.16,
+      "max_profile_shift_px": 6,
+      "sample_peak_search_radius_px": 6
+    },
+    "HBM": {
+      "strip_half_width_mm": 2.0,
+      "minimum_reference_peaks": 8,
+      "maximum_reference_peaks": 9,
+      "peak_min_distance_px": 9,
+      "peak_profile_min": 0.022,
+      "left_keep_fraction": 0.9,
+      "reference_peak_radius_px": 3,
+      "sample_peak_radius_px": 5,
+      "missing_evidence_ratio": 0.2,
+      "uncertain_evidence_ratio": 0.24,
+      "maximum_lateral_shift_mm": 0.9,
+      "fallen_recheck_lateral_shift_mm": 0.7,
+      "maximum_extra_width_mm": 1.0,
+      "adaptive_lab_min": 70,
+      "adaptive_lab_max": 145,
+      "adaptive_lab_offset": 5,
+      "adaptive_hsv_s_max": 85,
+      "fallen_end_ignore_fraction": 0.16,
+      "max_profile_shift_px": 6,
+      "sample_peak_search_radius_px": 6,
+      "remove_common_lateral_trend": true
+    }
+  },
+  "component_types": {
+    "GPU": {
+      "detector": "edge_template",
+      "orientation": "lower_left_white_dot",
+      "template_scale": [
+        0.82,
+        0.8
+      ],
+      "presence_pass_score": 0.38,
+      "presence_fail_score": 0.16,
+      "rotation_search_deg": 5.0,
+      "search_margin_mm": 3.0,
+      "inspect_legs": true
+    },
+    "HBM": {
+      "detector": "edge_template",
+      "orientation": "lower_left_white_dot",
+      "template_scale": [
+        0.72,
+        0.68
+      ],
+      "presence_pass_score": 0.34,
+      "presence_fail_score": 0.14,
+      "rotation_search_deg": 45.0,
+      "search_margin_mm": 5.0,
+      "inspect_legs": true
+    },
+    "Power Module": {
+      "detector": "yellow_mask",
+      "orientation": "axis_only",
+      "presence_pass_ratio": 0.55,
+      "presence_fail_ratio": 0.16
+    },
+    "VRM": {
+      "detector": "dark_rect_mask",
+      "orientation": "axis_only",
+      "presence_pass_ratio": 0.4,
+      "presence_fail_ratio": 0.12
+    },
+    "Inductor": {
+      "detector": "circle_edge",
+      "orientation": "left_black_mark",
+      "presence_pass_ratio": 0.48,
+      "presence_fail_ratio": 0.14,
+      "rotation_search_deg": 18.0
+    },
+    "SMD Capacitor": {
+      "detector": "white_mask",
+      "orientation": "axis_only",
+      "presence_pass_ratio": 0.42,
+      "presence_fail_ratio": 0.12,
+      "position_extra_tolerance_mm": [
+        0.15,
+        0.15
+      ],
+      "axis_angle_extra_tolerance_deg": 2.0
+    }
+  },
+  "auxiliary_pose_use_active_slot_centers": true,
+  "provider_crop_config": "/home/hc/KSMC/vision_assembly/config/full_board_inspection.json",
+  "component_bias_diagnostic_only": true,
+  "fixed_pose_reference": {
+    "calibration_id": "s22_fixed_raw_centroid_development_20260910_v1",
+    "entries_sha256": "0a80f3ad2f046fd6f5378beaa5dcfed5f9e6a05c31c205de6622e9ba2b911919",
+    "samples": [
+      {
+        "source_sha256": "5aef56af45125dce32ed5ec8558918d46e76c2e7790dfba95984fc7f44e644c5",
+        "source_image": "/home/hc/KSMC/runtime/inspection/s22_inspection_roi_20260909_154203.png",
+        "report": "/home/hc/KSMC/runtime/inspection/model_completion_20260910/normal_replay/20260910_093833_292092/hybrid_report.json",
+        "normal_placement_provenance": "docs/logs/vision.md: 2026-09-10 Inspection completion baseline replay, verified normal source154203",
+        "raw_offsets_mm": {
+          "ai_gpu": [
+            0.28336181640625,
+            -0.7319069812648104
+          ],
+          "hbm_01": [
+            0.7998547799246511,
+            -0.5130244708027242
+          ],
+          "hbm_02": [
+            0.7421961648123464,
+            -0.7738454430887606
+          ],
+          "hbm_03": [
+            0.6916215951101979,
+            -0.5253143737556311
+          ],
+          "hbm_04": [
+            0.4403606850760183,
+            -1.011331604060277
+          ],
+          "hbm_05": [
+            0.4811637164568266,
+            -0.6549967760764702
+          ],
+          "hbm_06": [
+            0.3747545672869047,
+            -0.8003508998052891
+          ],
+          "hbm_07": [
+            0.42253475680106484,
+            -0.721024132592519
+          ],
+          "hbm_08": [
+            0.2264462988717258,
+            -1.0021832437923328
+          ],
+          "inductor_01": [
+            0.03832812527901638,
+            -0.11686869262862065
+          ],
+          "inductor_02": [
+            -0.0307519223284055,
+            -0.18440995970929241
+          ],
+          "power_module_01": [
+            -0.8320273096923759,
+            -0.08657430918988197
+          ],
+          "power_module_02": [
+            0.5274769862060478,
+            0.23931341003528586
+          ],
+          "power_module_03": [
+            -0.21501880645751953,
+            -0.16320467539898528
+          ],
+          "power_module_04": [
+            -0.5242882919311523,
+            -0.6402767966204101
+          ],
+          "smd_capacitor_01": [
+            0.880654383806504,
+            -0.05050968999307482
+          ],
+          "smd_capacitor_02": [
+            0.35419569428362396,
+            -0.025787627749428183
+          ],
+          "smd_capacitor_03": [
+            0.2347001498500302,
+            -0.6029935804076585
+          ],
+          "smd_capacitor_04": [
+            0.7165955203334287,
+            -0.17343499609226126
+          ],
+          "smd_capacitor_05": [
+            0.2728776400844052,
+            0.08741879540896358
+          ],
+          "vrm_01": [
+            -0.48289165905543174,
+            -0.15528183022458628
+          ],
+          "vrm_02": [
+            0.0793699795859257,
+            -0.6136204417735277
+          ],
+          "vrm_03": [
+            0.007592983927051194,
+            -0.9032420097958819
+          ],
+          "vrm_05": [
+            0.08265417167119182,
+            -0.3292723402678466
+          ]
+        }
+      },
+      {
+        "source_sha256": "c7c1c755c467175db9c4580cc70b8ad9b3fd3abde7d5b3fa8065a6ecfeae5196",
+        "source_image": "/home/hc/KSMC/runtime/inspection/s22_inspection_roi_20260910_094352.png",
+        "report": "/home/hc/KSMC/runtime/inspection/model_completion_20260910/fresh_normal/20260910_094513_301104/hybrid_report.json",
+        "normal_placement_provenance": "docs/logs/vision.md: 2026-09-10 CAD common-bias counterfactual, fresh normal094352",
+        "raw_offsets_mm": {
+          "ai_gpu": [
+            0.6656245422363282,
+            -0.8875668783323459
+          ],
+          "hbm_01": [
+            0.5943114144461354,
+            -0.48265297208012353
+          ],
+          "hbm_02": [
+            0.3914828927176198,
+            -0.6852870954078266
+          ],
+          "hbm_03": [
+            0.3451502663748464,
+            -1.1424014984038835
+          ],
+          "hbm_04": [
+            0.23606869288851826,
+            -1.0759141274484088
+          ],
+          "hbm_05": [
+            0.16683041109793983,
+            -0.7421126499224912
+          ],
+          "hbm_06": [
+            -0.09478084073311487,
+            -1.176831267504983
+          ],
+          "hbm_07": [
+            0.01259335055106483,
+            -0.6882290656987591
+          ],
+          "hbm_08": [
+            0.029821619306296086,
+            -0.9476662179728225
+          ],
+          "inductor_01": [
+            0.2753255007672976,
+            -0.11494362644452705
+          ],
+          "inductor_02": [
+            -0.068165862758093,
+            -0.08680963449700964
+          ],
+          "power_module_01": [
+            -0.5298657305602958,
+            0.5168729525782361
+          ],
+          "power_module_02": [
+            0.29201731518553997,
+            -0.002396415139970834
+          ],
+          "power_module_03": [
+            -0.23058143615722657,
+            -0.07603046621405243
+          ],
+          "power_module_04": [
+            0.26999439239501954,
+            0.12034840683011065
+          ],
+          "smd_capacitor_01": [
+            0.5724878036063086,
+            0.19722458472799545
+          ],
+          "smd_capacitor_02": [
+            0.4129466098109677,
+            -0.12676079619334604
+          ],
+          "smd_capacitor_03": [
+            0.26564512665667084,
+            -0.35735407467478925
+          ],
+          "smd_capacitor_04": [
+            0.22948255951799895,
+            -0.174678599453611
+          ],
+          "smd_capacitor_05": [
+            0.006377548531670812,
+            0.05041828090091659
+          ],
+          "vrm_01": [
+            -0.07813470295496786,
+            -0.3451474487450246
+          ],
+          "vrm_02": [
+            -0.7157531397683223,
+            -0.7774844087771315
+          ],
+          "vrm_03": [
+            -0.13016280106135214,
+            -0.7996649639514407
+          ],
+          "vrm_04": [
+            0.03742643901280559,
+            -0.7100279178248984
+          ],
+          "vrm_05": [
+            -0.04566395214625203,
+            -1.0473869912894573
+          ]
+        }
+      },
+      {
+        "source_sha256": "4d74c3ccbd0e2640ba838ced15f52358394ec67b2117fd9ef80a78251ccdd1a5",
+        "source_image": "/home/hc/KSMC/runtime/inspection/s22_inspection_roi_20260910_161501.png",
+        "report": "/home/hc/KSMC/runtime/inspection/model_completion_20260910/fresh_normal_followup_cad/20260910_161931_875606/hybrid_report.json",
+        "normal_placement_provenance": "runtime/inspection/model_completion_20260910/fresh_normal_followup/20260910_161511_032225/ground_truth_confirmation.json",
+        "raw_offsets_mm": {
+          "ai_gpu": [
+            0.6831331634521485,
+            -0.7551827814906694
+          ],
+          "hbm_01": [
+            0.7201910836355886,
+            -0.2897061870226097
+          ],
+          "hbm_02": [
+            0.7561733681814871,
+            -0.8567134436194676
+          ],
+          "hbm_03": [
+            0.38440945216586203,
+            -0.6367666903531825
+          ],
+          "hbm_04": [
+            0.003546567644377632,
+            -0.8082662893078578
+          ],
+          "hbm_05": [
+            0.7086803485369048,
+            -0.5501310495633384
+          ],
+          "hbm_06": [
+            0.2709966327165922,
+            -0.7722385696623685
+          ],
+          "hbm_07": [
+            0.1022892428850492,
+            -0.6479458625737591
+          ],
+          "hbm_08": [
+            0.01271068028041718,
+            -0.7293753797643904
+          ],
+          "inductor_01": [
+            0.19750704983956327,
+            -0.09763924363819806
+          ],
+          "inductor_02": [
+            -0.0011537625383664363,
+            -0.23993459592819052
+          ],
+          "power_module_01": [
+            0.2866553418273995,
+            0.5139137599316128
+          ],
+          "power_module_02": [
+            0.029016826904289986,
+            -0.5116692270537248
+          ],
+          "power_module_03": [
+            -0.004056358337402344,
+            -0.8537890238636376
+          ],
+          "power_module_04": [
+            -0.7394343566894531,
+            -0.4497197717535497
+          ],
+          "smd_capacitor_01": [
+            1.1225618087332618,
+            -0.792959457963059
+          ],
+          "smd_capacitor_02": [
+            0.06187277253069425,
+            -0.39035167667320386
+          ],
+          "smd_capacitor_03": [
+            -0.10774133269391513,
+            -0.49306328583444564
+          ],
+          "smd_capacitor_04": [
+            0.009961990670342686,
+            -0.4653848061022583
+          ],
+          "smd_capacitor_05": [
+            -0.24243363921246983,
+            -0.20798473182525096
+          ],
+          "vrm_01": [
+            -0.059785646711071366,
+            -0.4535239020181289
+          ],
+          "vrm_02": [
+            -0.7107430069787105,
+            -0.9957010020087667
+          ],
+          "vrm_03": [
+            -0.20596102646418415,
+            -0.6383995711357319
+          ],
+          "vrm_04": [
+            -0.27908947876520956,
+            -0.4504701305489061
+          ],
+          "vrm_05": [
+            -0.3382049362999996,
+            -0.4589027439522487
+          ]
+        }
+      }
+    ],
+    "dependencies": {
+      "/home/hc/KSMC/runtime/inspection/model_completion_20260910/normal_replay/20260910_093833_292092/hybrid_report.json": "1284db1048f675a2d2af1ec146a097d3f3b872801a3a08eee81b8971600c55d7",
+      "/home/hc/KSMC/runtime/inspection/s22_inspection_roi_20260909_154203.png": "5aef56af45125dce32ed5ec8558918d46e76c2e7790dfba95984fc7f44e644c5",
+      "/home/hc/KSMC/runtime/inspection/model_completion_20260910/normal_replay/20260910_093833_292092/geometry_reference.json": "ca925ad2f544f9dc72b06a4e8f044eb9c2c9845fecdb214a15e24e35401221bc",
+      "/home/hc/KSMC/runtime/inspection/model_completion_20260910/fresh_normal/20260910_094513_301104/hybrid_report.json": "12bac94a4ec438780477c0bf7ddd397577e1cc99977f6c7be8339f029c286baf",
+      "/home/hc/KSMC/runtime/inspection/s22_inspection_roi_20260910_094352.png": "c7c1c755c467175db9c4580cc70b8ad9b3fd3abde7d5b3fa8065a6ecfeae5196",
+      "/home/hc/KSMC/runtime/inspection/model_completion_20260910/fresh_normal/20260910_094513_301104/geometry_reference.json": "ca925ad2f544f9dc72b06a4e8f044eb9c2c9845fecdb214a15e24e35401221bc",
+      "/home/hc/KSMC/runtime/inspection/model_completion_20260910/fresh_normal_followup_cad/20260910_161931_875606/hybrid_report.json": "7bbc143334521631d9d04507ac23e736d379452b90fbd753a93ea7cf1044cf1e",
+      "/home/hc/KSMC/runtime/inspection/s22_inspection_roi_20260910_161501.png": "4d74c3ccbd0e2640ba838ced15f52358394ec67b2117fd9ef80a78251ccdd1a5",
+      "/home/hc/KSMC/runtime/inspection/model_completion_20260910/fresh_normal_followup_cad/20260910_161931_875606/geometry_reference.json": "9a8f32a4bd5b93ae6423132071c14a9aeab7f10cf60b5ad9590263b242734ab4",
+      "/home/hc/KSMC/runtime/inspection/cad_yellow_trial_a8puvcqm/layout.json": "8121bb69626ccdf8d234df59e5158e3f6718ab8726d415f5277929039139fead",
+      "/home/hc/KSMC/runtime/inspection/cad_yellow_trial_a8puvcqm/physical.json": "3f3255fe3da4192ec2ee6d9f09d98dd4e77031aa2f98d8858c07731328c3df88",
+      "/home/hc/KSMC/vision_assembly/config/full_board_inspection.json": "18651e2ab3061e6913b04e0290d4b37abee18b57b7faa67304e5dfacfc0e2382",
+      "/home/hc/KSMC/runtime/inspection/reference/s22_package_legs_golden.png": "44ec302a9afaf929a5c69505d230a6d016059ac300b34080d01e4b72f5505bc1",
+      "/home/hc/KSMC/vision_assembly/config/unity_socket_clearance.json": "ef6b7aff6016c66c4c3a8ee74ca625bb3c56d519e5156f03848672f067b1ce2b",
+      "/home/hc/KSMC/vision_assembly/segmentation/models/s22_parts_seg_candidate.pt": "2f50e85b98286c27579cd79102b8b4db24527b9e00ddc4d926a137cbbdf8b8a7"
+    },
+    "status": "ACTIVE_ADVISORY_CURRENT_S22_NOT_PRODUCTION_CALIBRATION",
+    "method": "Per-slot arithmetic mean of frozen normal raw offsets (constant least-squares intercept); original .75mm and 3deg tolerances retained.",
+    "holdout": "PM01 displacement162213 and restoration162412 excluded; historical reports are developmental controls, not independent qualification."
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "schema": "fr5.assembly.progress/v1",
+  "valid": true,
+  "sequence": 1788242695161222505,
+  "cycle_id": "unity-test-001",
+  "recipe_version": "assembly-r1",
+  "cycle_status": "RUNNING",
+  "completed_count": 1,
+  "total_count": 25,
+  "next_step": {
+    "order": 2,
+    "part_id": "HBM",
+    "slot_code": "HBM-01"
+  },
+  "assembled": [
+    {
+      "event_id": "example-event-id",
+      "cycle_id": "unity-test-001",
+      "step_order": 1,
+      "part_id": "GPU",
+      "source_instance": 1,
+      "slot_code": "GPU-01",
+      "status": "ASSEMBLED",
+      "timestamp_unix": 1788242695.16,
+      "details_json": "{}"
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "schema": "fr5.full_fixed_cycle_run/v2",
+  "started_unix": 1788502148.9424028,
+  "cycle_id": "20260904-131552",
+  "plan_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/full_restart_25_plan_2026-09-04.json",
+  "plan_sha256": "a4d441385b65d5854d154322d6ad83989c7f0808630b802940c249dc59da9b56",
+  "motion_profile": "smooth_combined_transfer_v1",
+  "selected_slots": [
+    "GPU-01"
+  ],
+  "motion_completed_slots": [
+    "GPU-01",
+    "HBM-01",
+    "HBM-02",
+    "HBM-03"
+  ],
+  "grasp_verified_slots": [
+    "GPU-01"
+  ],
+  "placement_verified_slots": [],
+  "part_held_candidate": false,
+  "status": "stopped_on_error",
+  "preflight": {
+    "passed": true,
+    "waypoints": 350,
+    "minimum_joint_soft_limit_margin_deg": 37.774399,
+    "maximum_joint_step_deg": 93.087125,
+    "minimum_j6_deg": -92.787277,
+    "maximum_j6_deg": 94.324112,
+    "j6_operational_bounds_deg": [
+      -178.0,
+      178.0
+    ]
+  },
+  "controller_global_speed_percent": 40,
+  "speed_contract": {
+    "command_percent": {
+      "travel": 25,
+      "combined_rotation": 25,
+      "vertical": 10
+    },
+    "effective_percent": {
+      "travel": 10.0,
+      "combined_rotation": 10.0,
+      "vertical": 4.0
+    },
+    "hover_clearance_mm": 100.0,
+    "slow_zone_mm": 50.0
+  },
+  "controller_global_speed_set_unix": 1788502355.6686752,
+  "gripper_current_samples_percent": {
+    "GPU-01": 0.0,
+    "HBM-01": 0.0,
+    "HBM-02": 0.0,
+    "HBM-03": 0.0,
+    "HBM-04": 0.0
+  },
+  "last_verified_tcp": [
+    57.60462188720703,
+    -510.0540771484375,
+    188.497314453125,
+    179.98226928710938,
+    0.0019709868356585503,
+    -178.89854431152344
+  ],
+  "last_gripper_position": 25,
+  "paused_unix": 1788502161.256166,
+  "operator_confirmed_held_unix": 1788502354.4118443,
+  "stop_motion_on_error": {
+    "command": "StopMotion()",
+    "attempted_unix": 1788502497.7067876,
+    "response": "0",
+    "succeeded": true
+  },
+  "error": "RuntimeError: FR5 safety fault during motion: abnormal_stop=1",
+  "stopped_unix": 1788502497.7085996
+}

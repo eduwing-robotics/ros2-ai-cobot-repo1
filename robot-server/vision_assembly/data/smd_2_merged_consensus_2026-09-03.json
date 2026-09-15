@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "mode": "smd_trayhome_xyz_plus_close_angle",
+  "timestamp_unix": 1788421996.423128,
+  "robot_motion_authorized": false,
+  "part_type": "right_white_brown",
+  "display_name": "SMD Capacitor",
+  "instance_index": 2,
+  "part_center_base_mm": [
+    -621.1,
+    -155.891,
+    -46.525
+  ],
+  "long_axis_angle_base_deg": 7.026,
+  "coarse_fine_angle_error_deg": 5.368,
+  "position_source": "TrayHome full-tray detection",
+  "angle_source": "SMD close-view independent multibatch median consensus",
+  "coarse_file": "vision_assembly/data/smd_2_trayhome_current_2026-09-03.json",
+  "fine_files": [
+    "vision_assembly/data/smd_2_close_retry_24f_2026-09-03.json",
+    "vision_assembly/data/smd_2_close_retry2_24f_2026-09-03.json"
+  ],
+  "fine_consensus": {
+    "method": "independent_multibatch_median_consensus",
+    "batch_median_base_angles_deg": [
+      7.489,
+      6.562
+    ],
+    "batch_median_span_deg": 0.927,
+    "batch_center_max_distance_mm": 0.019,
+    "frames_per_batch": [
+      24,
+      24
+    ]
+  }
+}

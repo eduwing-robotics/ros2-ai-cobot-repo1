@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <defs>
+    <linearGradient id="sceneBg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0B111B"/><stop offset="1" stop-color="#172234"/></linearGradient>
+    <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#233247"/><stop offset="1" stop-color="#0B111B"/></linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000" flood-opacity=".32"/></filter>
+    <filter id="glow"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <style>
+      text{font-family:'Noto Sans KR','Noto Sans',Arial,sans-serif;fill:#EAF2FC}.title{font-size:18px;font-weight:700}.h2{font-size:14px;font-weight:700;letter-spacing:.5px}.body{font-size:13px}.small{font-size:11px;fill:#93A4B8}.value{font-size:13px;font-weight:700}.mono{font-family:'Fira Code','Noto Sans Mono',monospace;font-size:12px}.panel{fill:#101927;fill-opacity:.72;stroke:#5B7493;stroke-opacity:.55;stroke-width:1}.subpanel{fill:#1B293A;fill-opacity:.68;stroke:#66809D;stroke-opacity:.35}.divider{stroke:#7890AA;stroke-opacity:.28}.muted{fill:#93A4B8}.green{fill:#4ADE80}.blue{fill:#60A5FA}.orange{fill:#FBBF24}.red{fill:#FB7185}
+    </style>
+  </defs>
+
+  <g id="Background_Unity_Scene">
+    <rect width="1440" height="900" fill="url(#sceneBg)"/>
+    <path d="M0 520H1440V900H0Z" fill="url(#floor)"/>
+    <g opacity=".18" stroke="#8DA5BF"><path d="M0 570H1440M0 640H1440M0 720H1440M0 810H1440"/><path d="M80 900L570 520M300 900L690 520M520 900L810 520M740 900L930 520M960 900L1050 520M1180 900L1170 520M1400 900L1290 520"/></g>
+    <g id="Cell_Equipment" opacity=".75"><rect x="90" y="312" width="340" height="190" rx="10" fill="#25364B" stroke="#516A85"/><rect x="122" y="344" width="276" height="92" rx="6" fill="#121B28"/><rect x="520" y="450" width="560" height="64" rx="16" fill="#30425A"/><path d="M550 482H1050" stroke="#A0AEC0" stroke-width="18" stroke-dasharray="36 22"/><rect x="796" y="424" width="126" height="50" rx="6" fill="#64748B"/><rect x="818" y="436" width="82" height="27" rx="4" fill="#A7B4C5"/></g>
+    <g id="FR5_Robot" stroke-linecap="round" stroke-linejoin="round"><path d="M615 641L615 565L557 514L621 435L729 478L806 392" stroke="#DCE7F2" stroke-width="27"/><g fill="#3B82F6" stroke="#DDEBFA" stroke-width="6"><circle cx="615" cy="641" r="34"/><circle cx="615" cy="565" r="25"/><circle cx="557" cy="514" r="24"/><circle cx="621" cy="435" r="24"/><circle cx="729" cy="478" r="24"/><circle cx="806" cy="392" r="21"/></g><path d="M806 392L856 364" stroke="#F8FAFC" stroke-width="18"/><path d="M856 364l22-17m-22 17 23 12" stroke="#60A5FA" stroke-width="7"/><ellipse cx="615" cy="683" rx="64" ry="17" fill="#0A0F18" opacity=".6" stroke="none"/></g>
+    <g id="Scene_Labels"><text x="40" y="870" class="small">UNITY SCENE · CELL A · MAIN CAMERA</text><text x="1180" y="870" class="small">Perspective · 60 FPS</text></g>
+  </g>
+
+  <g id="Top_Mode_HUD" filter="url(#shadow)">
+    <rect x="24" y="24" width="1392" height="76" rx="14" class="panel"/>
+    <rect x="42" y="42" width="112" height="40" rx="10" fill="#2563EB" fill-opacity=".9"/><circle cx="60" cy="62" r="5" fill="#A7F3D0" filter="url(#glow)"/><text x="74" y="67" class="h2">자동 운전</text>
+    <text x="176" y="57" class="title">FR5 반도체 정밀 조립</text><text x="176" y="78" class="small">Unity Digital Twin · Cell A · JOB-20260807-0142</text>
+    <g transform="translate(946 42)"><rect width="210" height="40" rx="10" fill="#123424" fill-opacity=".82" stroke="#4ADE80" stroke-opacity=".5"/><circle cx="17" cy="20" r="5" fill="#4ADE80"/><text x="31" y="25" class="body">ROS 2 · FR5 연결됨 · 12 ms</text></g>
+    <g transform="translate(1172 42)"><rect width="226" height="40" rx="10" fill="#1A2637" fill-opacity=".75"/><text x="16" y="17" class="small">현재 작업</text><text x="16" y="33" class="value">조립 위치 정렬 · 60%</text></g>
+  </g>
+
+  <g id="Left_Robot_Status_HUD" filter="url(#shadow)">
+    <rect x="24" y="120" width="288" height="322" rx="14" class="panel"/>
+    <text x="44" y="151" class="h2">FR5-01 · ROBOT STATUS</text><text x="279" y="151" class="blue">●</text><line x1="44" y1="166" x2="292" y2="166" class="divider"/>
+    <text x="44" y="191" class="small">현재 상태</text><text x="44" y="212" class="value blue">조립 위치로 이동 중</text>
+    <text x="44" y="242" class="small">TCP POSITION</text><text x="44" y="263" class="mono">X  432.18 mm</text><text x="44" y="283" class="mono">Y -126.42 mm</text><text x="44" y="303" class="mono">Z  284.70 mm</text>
+    <line x1="44" y1="321" x2="292" y2="321" class="divider"/>
+    <text x="44" y="345" class="small">관절 속도</text><rect x="121" y="336" width="150" height="8" rx="4" fill="#334155"/><rect x="121" y="336" width="45" height="8" rx="4" fill="#60A5FA"/><text x="277" y="345" class="small">18%</text>
+    <text x="44" y="375" class="small">그리퍼</text><text x="121" y="375" class="body green">부품 파지 완료</text><text x="44" y="402" class="small">안전 영역</text><text x="121" y="402" class="body green">정상 · 충돌 없음</text>
+    <rect x="44" y="416" width="228" height="1" fill="#7890AA" opacity=".28"/><text x="44" y="432" class="small">J1  12.4°  J2 -38.1°  J3  72.6°</text>
+  </g>
+
+  <g id="Right_Camera_Panel" filter="url(#shadow)">
+    <rect x="1040" y="120" width="376" height="474" rx="14" class="panel"/>
+    <text x="1060" y="151" class="h2">실시간 카메라 · CAM-01</text><text x="1341" y="151" class="small">LIVE ●  접기  ⌃</text>
+    <g id="Camera_Feed"><rect x="1060" y="170" width="336" height="220" rx="10" fill="#0A1019" stroke="#617A97" stroke-opacity=".55"/><rect x="1112" y="228" width="232" height="112" rx="7" fill="#3A4657"/><rect x="1160" y="252" width="62" height="49" rx="5" fill="#8794A6"/><rect x="1233" y="252" width="62" height="49" rx="5" fill="#8794A6"/><rect x="1179" y="265" width="98" height="66" rx="5" fill="none" stroke="#4ADE80" stroke-width="2"/><text x="1180" y="258" class="small green">BOARD 98.4%</text><path d="M1228 170V390M1060 280H1396" stroke="#A8B8C9" opacity=".17"/><circle cx="1228" cy="280" r="4" fill="#FB7185"/></g>
+    <g id="Camera_Samples"><rect x="1060" y="406" width="336" height="52" rx="9" class="subpanel"/><text x="1074" y="426" class="small">STREAM</text><text x="1074" y="446" class="body">1280 × 720 · 30 FPS · 지연 46 ms</text><rect x="1060" y="468" width="336" height="104" rx="9" fill="#123424" fill-opacity=".56" stroke="#4ADE80" stroke-opacity=".35"/><text x="1074" y="489" class="small">VISION RESULT</text><text x="1074" y="511" class="value green">정렬 정상 · 신뢰도 98.4%</text><text x="1074" y="534" class="mono">보정값 X +0.18 mm / Y -0.24 mm</text><text x="1074" y="555" class="small">검출 대상: 반도체 보드 · 조립 위치 확인</text></g>
+  </g>
+
+  <g id="Bottom_Job_Drawer" filter="url(#shadow)">
+    <rect x="24" y="648" width="1392" height="228" rx="16" class="panel"/>
+    <text x="46" y="680" class="h2">작업 상태 · JOB-20260807-0142</text><text x="1320" y="680" class="small">펼침  ⌄</text><line x1="46" y1="696" x2="1394" y2="696" class="divider"/>
+    <g id="Job_Summary"><text x="46" y="722" class="small">작업명</text><text x="46" y="744" class="value">반도체 칩 정밀 조립</text><text x="262" y="722" class="small">현재 단계</text><text x="262" y="744" class="value blue">조립 위치 정렬</text><text x="470" y="722" class="small">전체 진행률</text><text x="470" y="744" class="value">6 / 10 · 60%</text><rect x="590" y="732" width="250" height="9" rx="5" fill="#344359"/><rect x="590" y="732" width="150" height="9" rx="5" fill="#3B82F6"/><text x="866" y="722" class="small">예상 완료</text><text x="866" y="744" class="value">00:01:24</text><text x="1054" y="722" class="small">누적 결과</text><text x="1054" y="744" class="value green">성공 42 · 불량 1</text></g>
+    <line x1="46" y1="762" x2="1394" y2="762" class="divider"/>
+    <g id="Job_Log"><text x="46" y="790" class="mono muted">10:42:18</text><text x="136" y="790" class="body green">● 완료</text><text x="206" y="790" class="body">부품 위치 인식 완료</text><text x="46" y="818" class="mono muted">10:42:25</text><text x="136" y="818" class="body green">● 완료</text><text x="206" y="818" class="body">진공 그리퍼 파지 완료</text><text x="540" y="790" class="mono muted">10:42:31</text><text x="630" y="790" class="body blue">● 진행</text><text x="700" y="790" class="body">조립 위치 정렬 중</text><text x="540" y="818" class="mono muted">10:42:34</text><text x="630" y="818" class="body blue">● 적용</text><text x="700" y="818" class="body">비전 보정값 적용: X +0.18 mm / Y -0.24 mm</text><text x="1110" y="790" class="small">최근 경고</text><text x="1110" y="816" class="body orange">없음 · 시스템 정상</text></g>
+    <text x="46" y="855" class="small">샘플 데이터 · 패널과 텍스트는 Penpot에서 개별 선택 및 편집 가능</text>
+  </g>
+</svg>

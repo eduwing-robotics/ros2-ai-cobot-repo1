@@ -1,0 +1,1652 @@
+{
+  "schema": "fr5.fixed_fixture_cycle_snapshot/v1",
+  "cycle_id": "20260902-211811",
+  "created_unix": 1788351491.1889634,
+  "mode": "fixed_board_and_tray_one_capture_per_cycle",
+  "robot_motion_authorized": false,
+  "invalidation_rules": [
+    "invalidate if the PCB, fixture, or tray is touched or moved",
+    "invalidate after collision, emergency stop, or unexpected contact",
+    "invalidate a pick target after that frozen tray item is consumed",
+    "recapture after a failed grasp or uncertain part identity"
+  ],
+  "motion_invariants": {
+    "travel_speed_percent": 40,
+    "vertical_clearance_mm": 100.0,
+    "vertical_speed_percent": 20,
+    "forbid_simultaneous_xy_z_change": true,
+    "require_vertical_retract_before_rotation_or_horizontal_motion": true
+  },
+  "board_captured": true,
+  "tray_captured": true,
+  "ready_for_continuous_execution": true,
+  "board_capture": {
+    "captured_unix": 1788351491.1889665,
+    "source_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/board_pose_3d_live.json",
+    "source_age_sec": 0.005,
+    "hole_fit_rms_mm": 0.5398064684217126,
+    "plane_residual_mad_mm": 0.8826203203382618,
+    "T_base_board": [
+      [
+        -0.9995276473570555,
+        -0.014566888131214501,
+        0.027060819260376272,
+        0.04683571149937972
+      ],
+      [
+        -0.01411966609223798,
+        0.9997617649253275,
+        0.01664477163670085,
+        -0.5189713182336381
+      ],
+      [
+        -0.02729683495048051,
+        0.01625481970268813,
+        -0.9994952044097659,
+        0.08860113026531
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "slot_count": 25
+  },
+  "resolved_placements": {
+    "GPU-01": {
+      "slot_code": "GPU-01",
+      "part_type": "gpu",
+      "surface_base_mm": [
+        44.530949,
+        -519.835691,
+        88.617953
+      ],
+      "place_tcp_compensation_board_mm": [
+        0.0,
+        0.0
+      ],
+      "place_tcp_compensation_base_mm": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "place_tcp_correction_base_mm": [
+        0.0,
+        0.0
+      ],
+      "corrected_surface_base_mm": [
+        44.530949,
+        -519.835691,
+        88.617953
+      ],
+      "corrected_place_xy_base_mm": [
+        44.530949,
+        -519.835691
+      ],
+      "final_tcp_z_mm": 88.16085,
+      "final_z_mode": "fixed_fixture_absolute",
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 0.5,
+        "slot_long_axis_board_deg": 90.0,
+        "slot_long_axis_base_deg": 90.8347610253621,
+        "preferred_tcp_c_deg": null
+      },
+      "legacy_absolute_placement_tcp_abc_deg": [
+        179.998,
+        0.001,
+        180.0
+      ],
+      "placement_ready": true,
+      "blocking_reasons": []
+    },
+    "HBM-01": {
+      "slot_code": "HBM-01",
+      "part_type": "hbm",
+      "surface_base_mm": [
+        68.767731,
+        -543.867523,
+        88.873945
+      ],
+      "place_tcp_compensation_board_mm": [
+        0.0,
+        0.0
+      ],
+      "place_tcp_compensation_base_mm": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "place_tcp_correction_base_mm": [
+        0.0,
+        0.0
+      ],
+      "corrected_surface_base_mm": [
+        68.767731,
+        -543.867523,
+        88.873945
+      ],
+      "corrected_place_xy_base_mm": [
+        68.767731,
+        -543.867523
+      ],
+      "final_tcp_z_mm": 88.611865,
+      "final_z_mode": "surface_relative",
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 10.0,
+        "skip_rotation_below_deg": 3.0,
+        "slot_long_axis_board_deg": 90.0,
+        "slot_long_axis_base_deg": 90.8347610253621,
+        "preferred_tcp_c_deg": 180.0
+      },
+      "legacy_absolute_placement_tcp_abc_deg": [
+        179.998,
+        0.001,
+        180.0
+      ],
+      "placement_ready": true,
+      "blocking_reasons": []
+    },
+    "HBM-02": {
+      "slot_code": "HBM-02",
+      "part_type": "hbm",
+      "surface_base_mm": [
+        68.391624,
+        -527.660362,
+        89.133663
+      ],
+      "place_tcp_compensation_board_mm": [
+        0.0,
+        0.0
+      ],
+      "place_tcp_compensation_base_mm": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "place_tcp_correction_base_mm": [
+        0.0,
+        0.0
+      ],
+      "corrected_surface_base_mm": [
+        68.391624,
+        -527.660362,
+        89.133663
+      ],
+      "corrected_place_xy_base_mm": [
+        68.391624,
+        -527.660362
+      ],
+      "final_tcp_z_mm": 88.871583,
+      "final_z_mode": "surface_relative",
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 10.0,
+        "skip_rotation_below_deg": 3.0,
+        "slot_long_axis_board_deg": 90.0,
+        "slot_long_axis_base_deg": 90.8347610253621,
+        "preferred_tcp_c_deg": 180.0
+      },
+      "legacy_absolute_placement_tcp_abc_deg": [
+        179.998,
+        0.001,
+        180.0
+      ],
+      "placement_ready": true,
+      "blocking_reasons": []
+    },
+    "HBM-03": {
+      "slot_code": "HBM-03",
+      "part_type": "hbm",
+      "surface_base_mm": [
+        68.163159,
+        -511.294121,
+        89.400027
+      ],
+      "place_tcp_compensation_board_mm": [
+        0.0,
+        0.0
+      ],
+      "place_tcp_compensation_base_mm": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "place_tcp_correction_base_mm": [
+        1.6194,
+        -0.4085
+      ],
+      "corrected_surface_base_mm": [
+        69.782559,
+        -511.702621,
+        89.400027
+      ],
+      "corrected_place_xy_base_mm": [
+        69.782559,
+        -511.702621
+      ],
+      "final_tcp_z_mm": 89.137947,
+      "final_z_mode": "surface_relative",
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 10.0,
+        "skip_rotation_below_deg": 3.0,
+        "slot_long_axis_board_deg": 90.0,
+        "slot_long_axis_base_deg": 90.8347610253621,
+        "preferred_tcp_c_deg": 180.0
+      },
+      "legacy_absolute_placement_tcp_abc_deg": [
+        179.998,
+        0.001,
+        180.0
+      ],
+      "placement_ready": true,
+      "blocking_reasons": []
+    },
+    "HBM-04": {
+      "slot_code": "HBM-04",
+      "part_type": "hbm",
+      "surface_base_mm": [
+        67.797493,
+        -495.391803,
+        89.654951
+      ],
+      "place_tcp_compensation_board_mm": [
+        0.0,
+        0.0
+      ],
+      "place_tcp_compensation_base_mm": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "place_tcp_correction_base_mm": [
+        0.1922,
+        -1.7609
+      ],
+      "corrected_surface_base_mm": [
+        67.989693,
+        -497.152703,
+        89.654951
+      ],
+      "corrected_place_xy_base_mm": [
+        67.989693,
+        -497.152703
+      ],
+      "final_tcp_z_mm": 89.392871,
+      "final_z_mode": "surface_relative",
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 10.0,
+        "skip_rotation_below_deg": 3.0,
+        "slot_long_axis_board_deg": 90.0,
+        "slot_long_axis_base_deg": 90.8347610253621,
+        "preferred_tcp_c_deg": 180.0
+      },
+      "legacy_absolute_placement_tcp_abc_deg": [
+        179.998,
+        0.001,
+        180.0
+      ],
+      "placement_ready": true,
+      "blocking_reasons": []
+    },
+    "HBM-05": {
+      "slot_code": "HBM-05",
+      "part_type": "hbm",
+      "surface_base_mm": [
+        21.242385,
+        -544.62088,
+        87.574675
+      ],
+      "place_tcp_compensation_board_mm": [
+        0.0,
+        0.0
+      ],
+      "place_tcp_compensation_base_mm": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "place_tcp_correction_base_mm": [
+        0.0,
+        0.0
+      ],
+      "corrected_surface_base_mm": [
+        21.242385,
+        -544.62088,
+        87.574675
+      ],
+      "corrected_place_xy_base_mm": [
+        21.242385,
+        -544.62088
+      ],
+      "final_tcp_z_mm": 87.312595,
+      "final_z_mode": "surface_relative",
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 10.0,
+        "skip_rotation_below_deg": 3.0,
+        "slot_long_axis_board_deg": 90.0,
+        "slot_long_axis_base_deg": 90.8347610253621,
+        "preferred_tcp_c_deg": 180.0
+      },
+      "legacy_absolute_placement_tcp_abc_deg": [
+        179.998,
+        0.001,
+        180.0
+      ],
+      "placement_ready": true,
+      "blocking_reasons": []
+    },
+    "HBM-06": {
+      "slot_code": "HBM-06",
+      "part_type": "hbm",
+      "surface_base_mm": [
+        21.017813,
+        -528.384579,
+        87.838981
+      ],
+      "place_tcp_compensation_board_mm": [
+        0.0,
+        0.0
+      ],
+      "place_tcp_compensation_base_mm": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "place_tcp_correction_base_mm": [
+        0.0,
+        0.0
+      ],
+      "corrected_surface_base_mm": [
+        21.017813,
+        -528.384579,
+        87.838981
+      ],
+      "corrected_place_xy_base_mm": [
+        21.017813,
+        -528.384579
+      ],
+      "final_tcp_z_mm": 87.576901,
+      "final_z_mode": "surface_relative",
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 10.0,
+        "skip_rotation_below_deg": 3.0,
+        "slot_long_axis_board_deg": 90.0,
+        "slot_long_axis_base_deg": 90.8347610253621,
+        "preferred_tcp_c_deg": 180.0
+      },
+      "legacy_absolute_placement_tcp_abc_deg": [
+        179.998,
+        0.001,
+        180.0
+      ],
+      "placement_ready": true,
+      "blocking_reasons": []
+    },
+    "HBM-07": {
+      "slot_code": "HBM-07",
+      "part_type": "hbm",
+      "surface_base_mm": [
+        20.783786,
+        -511.842422,
+        88.108124
+      ],
+      "place_tcp_compensation_board_mm": [
+        0.0,
+        0.0
+      ],
+      "place_tcp_compensation_base_mm": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "place_tcp_correction_base_mm": [
+        0.0,
+        0.0
+      ],
+      "corrected_surface_base_mm": [
+        20.783786,
+        -511.842422,
+        88.108124
+      ],
+      "corrected_place_xy_base_mm": [
+        20.783786,
+        -511.842422
+      ],
+      "final_tcp_z_mm": 87.846044,
+      "final_z_mode": "surface_relative",
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 10.0,
+        "skip_rotation_below_deg": 3.0,
+        "slot_long_axis_board_deg": 90.0,
+        "slot_long_axis_base_deg": 90.8347610253621,
+        "preferred_tcp_c_deg": 180.0
+      },
+      "legacy_absolute_placement_tcp_abc_deg": [
+        179.998,
+        0.001,
+        180.0
+      ],
+      "placement_ready": true,
+      "blocking_reasons": []
+    },
+    "HBM-08": {
+      "slot_code": "HBM-08",
+      "part_type": "hbm",
+      "surface_base_mm": [
+        20.57179,
+        -495.988932,
+        88.366395
+      ],
+      "place_tcp_compensation_board_mm": [
+        0.0,
+        0.0
+      ],
+      "place_tcp_compensation_base_mm": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "place_tcp_correction_base_mm": [
+        0.0,
+        0.0
+      ],
+      "corrected_surface_base_mm": [
+        20.57179,
+        -495.988932,
+        88.366395
+      ],
+      "corrected_place_xy_base_mm": [
+        20.57179,
+        -495.988932
+      ],
+      "final_tcp_z_mm": 88.104315,
+      "final_z_mode": "surface_relative",
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 10.0,
+        "skip_rotation_below_deg": 3.0,
+        "slot_long_axis_board_deg": 90.0,
+        "slot_long_axis_base_deg": 90.8347610253621,
+        "preferred_tcp_c_deg": 180.0
+      },
+      "legacy_absolute_placement_tcp_abc_deg": [
+        179.998,
+        0.001,
+        180.0
+      ],
+      "placement_ready": true,
+      "blocking_reasons": []
+    },
+    "PM-01": {
+      "slot_code": "PM-01",
+      "part_type": "long_orange",
+      "surface_base_mm": [
+        -2.849737,
+        -520.088021,
+        87.330943
+      ],
+      "place_tcp_compensation_board_mm": [
+        0.0,
+        0.0
+      ],
+      "place_tcp_compensation_base_mm": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "place_tcp_correction_base_mm": [
+        1.007,
+        -2.007
+      ],
+      "corrected_surface_base_mm": [
+        -1.842737,
+        -522.095021,
+        87.330943
+      ],
+      "corrected_place_xy_base_mm": [
+        -1.842737,
+        -522.095021
+      ],
+      "final_tcp_z_mm": 87.428943,
+      "final_z_mode": "surface_relative",
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 3.0,
+        "slot_long_axis_board_deg": 90.0,
+        "slot_long_axis_base_deg": 90.8347610253621,
+        "preferred_tcp_c_deg": 180.0
+      },
+      "legacy_absolute_placement_tcp_abc_deg": [
+        179.998,
+        0.001,
+        180.0
+      ],
+      "placement_ready": true,
+      "blocking_reasons": []
+    },
+    "PM-02": {
+      "slot_code": "PM-02",
+      "part_type": "long_orange",
+      "surface_base_mm": [
+        90.994109,
+        -518.844348,
+        89.892428
+      ],
+      "place_tcp_compensation_board_mm": [
+        0.0,
+        0.0
+      ],
+      "place_tcp_compensation_base_mm": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "place_tcp_correction_base_mm": [
+        0.0,
+        0.0
+      ],
+      "corrected_surface_base_mm": [
+        90.994109,
+        -518.844348,
+        89.892428
+      ],
+      "corrected_place_xy_base_mm": [
+        90.994109,
+        -518.844348
+      ],
+      "final_tcp_z_mm": 89.990428,
+      "final_z_mode": "surface_relative",
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 3.0,
+        "slot_long_axis_board_deg": 90.0,
+        "slot_long_axis_base_deg": 90.8347610253621,
+        "preferred_tcp_c_deg": null
+      },
+      "legacy_absolute_placement_tcp_abc_deg": [
+        179.998,
+        0.001,
+        90.0
+      ],
+      "placement_ready": true,
+      "blocking_reasons": []
+    },
+    "PM-03": {
+      "slot_code": "PM-03",
+      "part_type": "long_orange",
+      "surface_base_mm": [
+        45.051182,
+        -563.842914,
+        87.899178
+      ],
+      "place_tcp_compensation_board_mm": [
+        0.002,
+        3.999
+      ],
+      "place_tcp_compensation_base_mm": [
+        -0.060252,
+        3.998019,
+        0.064948
+      ],
+      "place_tcp_correction_base_mm": [
+        0.0,
+        0.0
+      ],
+      "corrected_surface_base_mm": [
+        44.99093,
+        -559.844895,
+        87.964126
+      ],
+      "corrected_place_xy_base_mm": [
+        44.99093,
+        -559.844895
+      ],
+      "final_tcp_z_mm": 88.062126,
+      "final_z_mode": "surface_relative",
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 3.0,
+        "slot_long_axis_board_deg": 0.0,
+        "slot_long_axis_base_deg": -179.19067424390985,
+        "preferred_tcp_c_deg": null
+      },
+      "legacy_absolute_placement_tcp_abc_deg": [
+        179.998,
+        0.001,
+        180.0
+      ],
+      "placement_ready": true,
+      "blocking_reasons": []
+    },
+    "PM-04": {
+      "slot_code": "PM-04",
+      "part_type": "long_orange",
+      "surface_base_mm": [
+        43.710024,
+        -475.912714,
+        89.327184
+      ],
+      "place_tcp_compensation_board_mm": [
+        0.002,
+        3.999
+      ],
+      "place_tcp_compensation_base_mm": [
+        -0.060252,
+        3.998019,
+        0.064948
+      ],
+      "place_tcp_correction_base_mm": [
+        0.0,
+        0.0
+      ],
+      "corrected_surface_base_mm": [
+        43.649772,
+        -471.914695,
+        89.392132
+      ],
+      "corrected_place_xy_base_mm": [
+        43.649772,
+        -471.914695
+      ],
+      "final_tcp_z_mm": 89.490132,
+      "final_z_mode": "surface_relative",
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 3.0,
+        "slot_long_axis_board_deg": 0.0,
+        "slot_long_axis_base_deg": -179.19067424390985,
+        "preferred_tcp_c_deg": null
+      },
+      "legacy_absolute_placement_tcp_abc_deg": [
+        179.998,
+        0.001,
+        180.0
+      ],
+      "placement_ready": true,
+      "blocking_reasons": []
+    },
+    "VRM-01": {
+      "slot_code": "VRM-01",
+      "part_type": "black_block",
+      "surface_base_mm": [
+        -16.389381,
+        -557.328084,
+        86.344199
+      ],
+      "place_tcp_compensation_board_mm": [
+        0.0,
+        0.0
+      ],
+      "place_tcp_compensation_base_mm": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "place_tcp_correction_base_mm": [
+        0.0,
+        0.0
+      ],
+      "corrected_surface_base_mm": [
+        -16.389381,
+        -557.328084,
+        86.344199
+      ],
+      "corrected_place_xy_base_mm": [
+        -16.389381,
+        -557.328084
+      ],
+      "final_tcp_z_mm": 84.187146,
+      "final_z_mode": "surface_relative",
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 2.0,
+        "slot_long_axis_board_deg": 90.0,
+        "slot_long_axis_base_deg": 90.8347610253621,
+        "preferred_tcp_c_deg": 180.0
+      },
+      "legacy_absolute_placement_tcp_abc_deg": [
+        179.998,
+        0.001,
+        90.0
+      ],
+      "placement_ready": true,
+      "blocking_reasons": []
+    },
+    "VRM-02": {
+      "slot_code": "VRM-02",
+      "part_type": "black_block",
+      "surface_base_mm": [
+        -16.683457,
+        -538.928835,
+        86.642643
+      ],
+      "place_tcp_compensation_board_mm": [
+        0.0,
+        0.0
+      ],
+      "place_tcp_compensation_base_mm": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "place_tcp_correction_base_mm": [
+        0.0,
+        0.0
+      ],
+      "corrected_surface_base_mm": [
+        -16.683457,
+        -538.928835,
+        86.642643
+      ],
+      "corrected_place_xy_base_mm": [
+        -16.683457,
+        -538.928835
+      ],
+      "final_tcp_z_mm": 84.48559,
+      "final_z_mode": "surface_relative",
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 2.0,
+        "slot_long_axis_board_deg": 90.0,
+        "slot_long_axis_base_deg": 90.8347610253621,
+        "preferred_tcp_c_deg": 180.0
+      },
+      "legacy_absolute_placement_tcp_abc_deg": [
+        179.998,
+        0.001,
+        90.0
+      ],
+      "placement_ready": true,
+      "blocking_reasons": []
+    },
+    "VRM-03": {
+      "slot_code": "VRM-03",
+      "part_type": "black_block",
+      "surface_base_mm": [
+        -16.969078,
+        -520.835457,
+        86.936222
+      ],
+      "place_tcp_compensation_board_mm": [
+        0.0,
+        0.0
+      ],
+      "place_tcp_compensation_base_mm": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "place_tcp_correction_base_mm": [
+        0.0,
+        0.0
+      ],
+      "corrected_surface_base_mm": [
+        -16.969078,
+        -520.835457,
+        86.936222
+      ],
+      "corrected_place_xy_base_mm": [
+        -16.969078,
+        -520.835457
+      ],
+      "final_tcp_z_mm": 84.779169,
+      "final_z_mode": "surface_relative",
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 2.0,
+        "slot_long_axis_board_deg": 90.0,
+        "slot_long_axis_base_deg": 90.8347610253621,
+        "preferred_tcp_c_deg": 180.0
+      },
+      "legacy_absolute_placement_tcp_abc_deg": [
+        179.998,
+        0.001,
+        90.0
+      ],
+      "placement_ready": true,
+      "blocking_reasons": []
+    },
+    "VRM-04": {
+      "slot_code": "VRM-04",
+      "part_type": "black_block",
+      "surface_base_mm": [
+        -17.26317,
+        -502.435209,
+        87.234682
+      ],
+      "place_tcp_compensation_board_mm": [
+        0.0,
+        0.0
+      ],
+      "place_tcp_compensation_base_mm": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "place_tcp_correction_base_mm": [
+        0.0,
+        0.0
+      ],
+      "corrected_surface_base_mm": [
+        -17.26317,
+        -502.435209,
+        87.234682
+      ],
+      "corrected_place_xy_base_mm": [
+        -17.26317,
+        -502.435209
+      ],
+      "final_tcp_z_mm": 85.077629,
+      "final_z_mode": "surface_relative",
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 2.0,
+        "slot_long_axis_board_deg": 90.0,
+        "slot_long_axis_base_deg": 90.8347610253621,
+        "preferred_tcp_c_deg": 180.0
+      },
+      "legacy_absolute_placement_tcp_abc_deg": [
+        179.998,
+        0.001,
+        90.0
+      ],
+      "placement_ready": true,
+      "blocking_reasons": []
+    },
+    "VRM-05": {
+      "slot_code": "VRM-05",
+      "part_type": "black_block",
+      "surface_base_mm": [
+        -17.563502,
+        -483.881054,
+        87.535536
+      ],
+      "place_tcp_compensation_board_mm": [
+        0.0,
+        0.0
+      ],
+      "place_tcp_compensation_base_mm": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "place_tcp_correction_base_mm": [
+        0.0,
+        0.0
+      ],
+      "corrected_surface_base_mm": [
+        -17.563502,
+        -483.881054,
+        87.535536
+      ],
+      "corrected_place_xy_base_mm": [
+        -17.563502,
+        -483.881054
+      ],
+      "final_tcp_z_mm": 85.378483,
+      "final_z_mode": "surface_relative",
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 2.0,
+        "slot_long_axis_board_deg": 90.0,
+        "slot_long_axis_base_deg": 90.8347610253621,
+        "preferred_tcp_c_deg": 180.0
+      },
+      "legacy_absolute_placement_tcp_abc_deg": [
+        179.998,
+        0.001,
+        90.0
+      ],
+      "placement_ready": true,
+      "blocking_reasons": []
+    },
+    "IND-01": {
+      "slot_code": "IND-01",
+      "part_type": "marked_white",
+      "surface_base_mm": [
+        104.445043,
+        -551.746261,
+        89.708684
+      ],
+      "place_tcp_compensation_board_mm": [
+        0.0,
+        0.0
+      ],
+      "place_tcp_compensation_base_mm": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "place_tcp_correction_base_mm": [
+        0.0,
+        0.0
+      ],
+      "corrected_surface_base_mm": [
+        104.445043,
+        -551.746261,
+        89.708684
+      ],
+      "corrected_place_xy_base_mm": [
+        104.445043,
+        -551.746261
+      ],
+      "final_tcp_z_mm": 88.587684,
+      "final_z_mode": "surface_relative",
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 1.0,
+        "slot_long_axis_board_deg": -90.0,
+        "slot_long_axis_base_deg": -89.16523897463793,
+        "preferred_tcp_c_deg": null
+      },
+      "legacy_absolute_placement_tcp_abc_deg": [
+        179.998,
+        0.001,
+        180.0
+      ],
+      "placement_ready": true,
+      "blocking_reasons": []
+    },
+    "IND-02": {
+      "slot_code": "IND-02",
+      "part_type": "marked_white",
+      "surface_base_mm": [
+        104.514069,
+        -563.207914,
+        89.51968
+      ],
+      "place_tcp_compensation_board_mm": [
+        0.0,
+        0.0
+      ],
+      "place_tcp_compensation_base_mm": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "place_tcp_correction_base_mm": [
+        0.0,
+        0.0
+      ],
+      "corrected_surface_base_mm": [
+        104.514069,
+        -563.207914,
+        89.51968
+      ],
+      "corrected_place_xy_base_mm": [
+        104.514069,
+        -563.207914
+      ],
+      "final_tcp_z_mm": 88.39868,
+      "final_z_mode": "surface_relative",
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 1.0,
+        "slot_long_axis_board_deg": 90.0,
+        "slot_long_axis_base_deg": 90.8347610253621,
+        "preferred_tcp_c_deg": null
+      },
+      "legacy_absolute_placement_tcp_abc_deg": [
+        179.998,
+        0.001,
+        180.0
+      ],
+      "placement_ready": true,
+      "blocking_reasons": []
+    },
+    "CAP-01": {
+      "slot_code": "CAP-01",
+      "part_type": "right_white_brown",
+      "surface_base_mm": [
+        85.974801,
+        -558.458969,
+        89.096824
+      ],
+      "place_tcp_compensation_board_mm": [
+        0.0,
+        0.0
+      ],
+      "place_tcp_compensation_base_mm": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "place_tcp_correction_base_mm": [
+        0.0,
+        0.0
+      ],
+      "corrected_surface_base_mm": [
+        85.974801,
+        -558.458969,
+        89.096824
+      ],
+      "corrected_place_xy_base_mm": [
+        85.974801,
+        -558.458969
+      ],
+      "final_tcp_z_mm": 88.091824,
+      "final_z_mode": "surface_relative",
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "gripper_axis": "tool_x",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 0.5,
+        "slot_long_axis_board_deg": 0.0,
+        "slot_long_axis_base_deg": -179.19067424390985,
+        "preferred_tcp_c_deg": null
+      },
+      "legacy_absolute_placement_tcp_abc_deg": [
+        179.998,
+        0.001,
+        180.0
+      ],
+      "placement_ready": true,
+      "blocking_reasons": []
+    },
+    "CAP-02": {
+      "slot_code": "CAP-02",
+      "part_type": "right_white_brown",
+      "surface_base_mm": [
+        105.025523,
+        -536.900543,
+        89.971628
+      ],
+      "place_tcp_compensation_board_mm": [
+        4.9978,
+        0.3433
+      ],
+      "place_tcp_compensation_base_mm": [
+        -5.00044,
+        0.272651,
+        -0.130844
+      ],
+      "place_tcp_correction_base_mm": [
+        0.0,
+        0.0
+      ],
+      "corrected_surface_base_mm": [
+        100.025083,
+        -536.627892,
+        89.840785
+      ],
+      "corrected_place_xy_base_mm": [
+        100.025083,
+        -536.627892
+      ],
+      "final_tcp_z_mm": 88.835785,
+      "final_z_mode": "surface_relative",
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "gripper_axis": "tool_x",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 0.5,
+        "slot_long_axis_board_deg": 90.0,
+        "slot_long_axis_base_deg": 90.8347610253621,
+        "preferred_tcp_c_deg": null
+      },
+      "legacy_absolute_placement_tcp_abc_deg": [
+        179.998,
+        0.001,
+        90.0
+      ],
+      "placement_ready": true,
+      "blocking_reasons": []
+    },
+    "CAP-03": {
+      "slot_code": "CAP-03",
+      "part_type": "right_white_brown",
+      "surface_base_mm": [
+        104.181327,
+        -520.267009,
+        90.225773
+      ],
+      "place_tcp_compensation_board_mm": [
+        2.5846,
+        0.7203
+      ],
+      "place_tcp_compensation_base_mm": [
+        -2.593872,
+        0.683635,
+        -0.058843
+      ],
+      "place_tcp_correction_base_mm": [
+        0.0,
+        0.0
+      ],
+      "corrected_surface_base_mm": [
+        101.587455,
+        -519.583374,
+        90.16693
+      ],
+      "corrected_place_xy_base_mm": [
+        101.587455,
+        -519.583374
+      ],
+      "final_tcp_z_mm": 89.16193,
+      "final_z_mode": "surface_relative",
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "gripper_axis": "tool_x",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 0.5,
+        "slot_long_axis_board_deg": 90.0,
+        "slot_long_axis_base_deg": 90.8347610253621,
+        "preferred_tcp_c_deg": null
+      },
+      "legacy_absolute_placement_tcp_abc_deg": [
+        179.998,
+        0.001,
+        90.0
+      ],
+      "placement_ready": true,
+      "blocking_reasons": []
+    },
+    "CAP-04": {
+      "slot_code": "CAP-04",
+      "part_type": "right_white_brown",
+      "surface_base_mm": [
+        104.24124,
+        -503.451708,
+        90.507424
+      ],
+      "place_tcp_compensation_board_mm": [
+        2.9946,
+        0.3338
+      ],
+      "place_tcp_compensation_base_mm": [
+        -2.998048,
+        0.291438,
+        -0.076317
+      ],
+      "place_tcp_correction_base_mm": [
+        0.0,
+        0.0
+      ],
+      "corrected_surface_base_mm": [
+        101.243192,
+        -503.16027,
+        90.431106
+      ],
+      "corrected_place_xy_base_mm": [
+        101.243192,
+        -503.16027
+      ],
+      "final_tcp_z_mm": 89.426106,
+      "final_z_mode": "surface_relative",
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "gripper_axis": "tool_x",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 0.5,
+        "slot_long_axis_board_deg": 90.0,
+        "slot_long_axis_base_deg": 90.8347610253621,
+        "preferred_tcp_c_deg": null
+      },
+      "legacy_absolute_placement_tcp_abc_deg": [
+        179.998,
+        0.001,
+        90.0
+      ],
+      "placement_ready": true,
+      "blocking_reasons": []
+    },
+    "CAP-05": {
+      "slot_code": "CAP-05",
+      "part_type": "right_white_brown",
+      "surface_base_mm": [
+        103.998355,
+        -486.644685,
+        90.780738
+      ],
+      "place_tcp_compensation_board_mm": [
+        2.993,
+        0.9371
+      ],
+      "place_tcp_compensation_base_mm": [
+        -3.005237,
+        0.894617,
+        -0.066467
+      ],
+      "place_tcp_correction_base_mm": [
+        0.0,
+        0.0
+      ],
+      "corrected_surface_base_mm": [
+        100.993119,
+        -485.750068,
+        90.714271
+      ],
+      "corrected_place_xy_base_mm": [
+        100.993119,
+        -485.750068
+      ],
+      "final_tcp_z_mm": 89.709271,
+      "final_z_mode": "surface_relative",
+      "placement_orientation": {
+        "mode": "align_actual_carried_axis_to_current_slot_axis",
+        "gripper_axis": "tool_x",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 0.5,
+        "slot_long_axis_board_deg": 90.0,
+        "slot_long_axis_base_deg": 90.8347610253621,
+        "preferred_tcp_c_deg": null
+      },
+      "legacy_absolute_placement_tcp_abc_deg": [
+        179.998,
+        0.001,
+        90.0
+      ],
+      "placement_ready": true,
+      "blocking_reasons": []
+    }
+  },
+  "placement_ready_count": 25,
+  "placement_blocked_slots": [],
+  "tray_capture": {
+    "captured_unix": 1788351680.230788,
+    "source_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/tray_detections_full_restart_retry2_filtered.json",
+    "source_age_sec": 0.123,
+    "counts": {
+      "gpu": 1,
+      "hbm": 8,
+      "long_orange": 4,
+      "black_block": 5,
+      "marked_white": 2,
+      "right_white_brown": 5
+    },
+    "part_count": 25,
+    "parts": [
+      {
+        "part_type": "black_block",
+        "instance_index": 1,
+        "base_xyz_mm": [
+          -753.131,
+          -223.147,
+          -47.076
+        ],
+        "long_axis_angle_base_deg": 1.887,
+        "observation_frames": 40,
+        "consumed": false
+      },
+      {
+        "part_type": "black_block",
+        "instance_index": 2,
+        "base_xyz_mm": [
+          -755.181,
+          -200.535,
+          -45.095
+        ],
+        "long_axis_angle_base_deg": -179.332,
+        "observation_frames": 40,
+        "consumed": false
+      },
+      {
+        "part_type": "black_block",
+        "instance_index": 3,
+        "base_xyz_mm": [
+          -752.857,
+          -177.058,
+          -44.257
+        ],
+        "long_axis_angle_base_deg": -179.292,
+        "observation_frames": 40,
+        "consumed": false
+      },
+      {
+        "part_type": "black_block",
+        "instance_index": 4,
+        "base_xyz_mm": [
+          -752.2,
+          -153.731,
+          -44.366
+        ],
+        "long_axis_angle_base_deg": -179.332,
+        "observation_frames": 40,
+        "consumed": false
+      },
+      {
+        "part_type": "black_block",
+        "instance_index": 5,
+        "base_xyz_mm": [
+          -751.676,
+          -129.467,
+          -44.474
+        ],
+        "long_axis_angle_base_deg": -179.342,
+        "observation_frames": 40,
+        "consumed": false
+      },
+      {
+        "part_type": "gpu",
+        "instance_index": 1,
+        "base_xyz_mm": [
+          -518.15,
+          -182.051,
+          -41.696
+        ],
+        "long_axis_angle_base_deg": 179.758,
+        "observation_frames": 40,
+        "consumed": false
+      },
+      {
+        "part_type": "hbm",
+        "instance_index": 1,
+        "base_xyz_mm": [
+          -600.463,
+          -46.976,
+          -45.591
+        ],
+        "long_axis_angle_base_deg": 1.907,
+        "observation_frames": 40,
+        "consumed": false
+      },
+      {
+        "part_type": "hbm",
+        "instance_index": 2,
+        "base_xyz_mm": [
+          -598.799,
+          -21.403,
+          -47.741
+        ],
+        "long_axis_angle_base_deg": 1.917,
+        "observation_frames": 40,
+        "consumed": false
+      },
+      {
+        "part_type": "hbm",
+        "instance_index": 3,
+        "base_xyz_mm": [
+          -572.182,
+          -47.132,
+          -46.49
+        ],
+        "long_axis_angle_base_deg": 1.917,
+        "observation_frames": 40,
+        "consumed": false
+      },
+      {
+        "part_type": "hbm",
+        "instance_index": 4,
+        "base_xyz_mm": [
+          -569.842,
+          -21.288,
+          -45.661
+        ],
+        "long_axis_angle_base_deg": -179.842,
+        "observation_frames": 40,
+        "consumed": false
+      },
+      {
+        "part_type": "hbm",
+        "instance_index": 5,
+        "base_xyz_mm": [
+          -535.269,
+          -49.296,
+          -43.653
+        ],
+        "long_axis_angle_base_deg": -179.942,
+        "observation_frames": 40,
+        "consumed": false
+      },
+      {
+        "part_type": "hbm",
+        "instance_index": 6,
+        "base_xyz_mm": [
+          -535.179,
+          -21.056,
+          -46.764
+        ],
+        "long_axis_angle_base_deg": 1.917,
+        "observation_frames": 40,
+        "consumed": false
+      },
+      {
+        "part_type": "hbm",
+        "instance_index": 7,
+        "base_xyz_mm": [
+          -509.641,
+          -49.137,
+          -44.469
+        ],
+        "long_axis_angle_base_deg": 1.907,
+        "observation_frames": 40,
+        "consumed": false
+      },
+      {
+        "part_type": "hbm",
+        "instance_index": 8,
+        "base_xyz_mm": [
+          -507.976,
+          -20.511,
+          -46.63
+        ],
+        "long_axis_angle_base_deg": 1.917,
+        "observation_frames": 40,
+        "consumed": false
+      },
+      {
+        "part_type": "long_orange",
+        "instance_index": 1,
+        "base_xyz_mm": [
+          -746.609,
+          -66.709,
+          -45.872
+        ],
+        "long_axis_angle_base_deg": 178.329,
+        "observation_frames": 40,
+        "consumed": false
+      },
+      {
+        "part_type": "long_orange",
+        "instance_index": 2,
+        "base_xyz_mm": [
+          -747.192,
+          -23.413,
+          -45.017
+        ],
+        "long_axis_angle_base_deg": 1.917,
+        "observation_frames": 40,
+        "consumed": false
+      },
+      {
+        "part_type": "long_orange",
+        "instance_index": 3,
+        "base_xyz_mm": [
+          -668.994,
+          -61.015,
+          -46.361
+        ],
+        "long_axis_angle_base_deg": 1.917,
+        "observation_frames": 40,
+        "consumed": false
+      },
+      {
+        "part_type": "long_orange",
+        "instance_index": 4,
+        "base_xyz_mm": [
+          -673.917,
+          -17.11,
+          -46.37
+        ],
+        "long_axis_angle_base_deg": 1.917,
+        "observation_frames": 40,
+        "consumed": false
+      },
+      {
+        "part_type": "marked_white",
+        "instance_index": 1,
+        "base_xyz_mm": [
+          -620.9,
+          -229.575,
+          -44.253
+        ],
+        "long_axis_angle_base_deg": 90.333,
+        "observation_frames": 40,
+        "consumed": false
+      },
+      {
+        "part_type": "marked_white",
+        "instance_index": 2,
+        "base_xyz_mm": [
+          -622.066,
+          -205.573,
+          -47.308
+        ],
+        "long_axis_angle_base_deg": 90.343,
+        "observation_frames": 40,
+        "consumed": false
+      },
+      {
+        "part_type": "right_white_brown",
+        "instance_index": 1,
+        "base_xyz_mm": [
+          -626.244,
+          -166.371,
+          -47.323
+        ],
+        "long_axis_angle_base_deg": 1.897,
+        "observation_frames": 40,
+        "consumed": false
+      },
+      {
+        "part_type": "right_white_brown",
+        "instance_index": 2,
+        "base_xyz_mm": [
+          -626.399,
+          -153.359,
+          -49.368
+        ],
+        "long_axis_angle_base_deg": 1.897,
+        "observation_frames": 40,
+        "consumed": false
+      },
+      {
+        "part_type": "right_white_brown",
+        "instance_index": 3,
+        "base_xyz_mm": [
+          -627.939,
+          -141.676,
+          -47.362
+        ],
+        "long_axis_angle_base_deg": 1.897,
+        "observation_frames": 40,
+        "consumed": false
+      },
+      {
+        "part_type": "right_white_brown",
+        "instance_index": 4,
+        "base_xyz_mm": [
+          -628.871,
+          -131.463,
+          -47.371
+        ],
+        "long_axis_angle_base_deg": 1.897,
+        "observation_frames": 40,
+        "consumed": false
+      },
+      {
+        "part_type": "right_white_brown",
+        "instance_index": 5,
+        "base_xyz_mm": [
+          -625.901,
+          -117.091,
+          -47.519
+        ],
+        "long_axis_angle_base_deg": 1.897,
+        "observation_frames": 40,
+        "consumed": false
+      }
+    ]
+  }
+}

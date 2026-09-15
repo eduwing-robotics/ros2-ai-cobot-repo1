@@ -1,0 +1,307 @@
+{
+  "schema_version": 1,
+  "mode": "smd_obb_multiframe_holdout",
+  "timestamp_unix": 1788170075.7172356,
+  "robot_motion_authorized": false,
+  "model": "/home/juchan-yoon/FR5_robot_control/vision_assembly/models/smd_obb/pilot_01/weights/best.pt",
+  "frame_count": 8,
+  "limits": {
+    "max_center_span_px": 3.5,
+    "max_angle_span_deg": 1.5
+  },
+  "all_parts_stable": false,
+  "frames": [
+    {
+      "frame": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/smd_section_holdout_1920/frame_01.jpg",
+      "registration_inliers": 93,
+      "detection_count": 10
+    },
+    {
+      "frame": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/smd_section_holdout_1920/frame_02.jpg",
+      "registration_inliers": 161,
+      "detection_count": 10
+    },
+    {
+      "frame": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/smd_section_holdout_1920/frame_03.jpg",
+      "registration_inliers": 159,
+      "detection_count": 10
+    },
+    {
+      "frame": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/smd_section_holdout_1920/frame_04.jpg",
+      "registration_inliers": 155,
+      "detection_count": 10
+    },
+    {
+      "frame": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/smd_section_holdout_1920/frame_05.jpg",
+      "registration_inliers": 140,
+      "detection_count": 10
+    },
+    {
+      "frame": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/smd_section_holdout_1920/frame_06.jpg",
+      "registration_inliers": 137,
+      "detection_count": 10
+    },
+    {
+      "frame": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/smd_section_holdout_1920/frame_07.jpg",
+      "registration_inliers": 154,
+      "detection_count": 10
+    },
+    {
+      "frame": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/smd_section_holdout_1920/frame_08.jpg",
+      "registration_inliers": 87,
+      "detection_count": 10
+    }
+  ],
+  "detections": [
+    {
+      "instance_index": 1,
+      "center_canonical_pixel_median": [
+        278.654,
+        197.844
+      ],
+      "center_span_pixel": [
+        3.016,
+        0.558
+      ],
+      "long_axis_canonical_deg_median": 0.9024,
+      "angle_samples_deg": [
+        0.273,
+        1.3194,
+        1.1866,
+        0.8396,
+        1.3386,
+        0.9265,
+        0.8783,
+        0.7992
+      ],
+      "angle_span_deg": 1.0656,
+      "confidence_median": 0.9611,
+      "stable": true
+    },
+    {
+      "instance_index": 2,
+      "center_canonical_pixel_median": [
+        422.574,
+        201.727
+      ],
+      "center_span_pixel": [
+        0.783,
+        0.68
+      ],
+      "long_axis_canonical_deg_median": -0.2768,
+      "angle_samples_deg": [
+        -0.3929,
+        -0.0574,
+        -0.4224,
+        0.5202,
+        -0.1607,
+        -0.7894,
+        -0.6162,
+        -0.0056
+      ],
+      "angle_span_deg": 1.3096,
+      "confidence_median": 0.9706,
+      "stable": true
+    },
+    {
+      "instance_index": 3,
+      "center_canonical_pixel_median": [
+        605.05,
+        199.613
+      ],
+      "center_span_pixel": [
+        0.809,
+        0.484
+      ],
+      "long_axis_canonical_deg_median": 1.3633,
+      "angle_samples_deg": [
+        -1.5128,
+        3.1219,
+        1.4454,
+        1.2813,
+        1.5725,
+        0.5758,
+        2.1568,
+        1.1806
+      ],
+      "angle_span_deg": 4.6347,
+      "confidence_median": 0.9702,
+      "stable": false
+    },
+    {
+      "instance_index": 4,
+      "center_canonical_pixel_median": [
+        764.237,
+        184.322
+      ],
+      "center_span_pixel": [
+        2.827,
+        0.238
+      ],
+      "long_axis_canonical_deg_median": -1.4616,
+      "angle_samples_deg": [
+        -1.6602,
+        -1.4235,
+        -2.5219,
+        -0.4549,
+        -1.1031,
+        -1.4997,
+        -1.8346,
+        -1.1615
+      ],
+      "angle_span_deg": 2.067,
+      "confidence_median": 0.967,
+      "stable": false
+    },
+    {
+      "instance_index": 5,
+      "center_canonical_pixel_median": [
+        929.144,
+        180.517
+      ],
+      "center_span_pixel": [
+        1.567,
+        0.596
+      ],
+      "long_axis_canonical_deg_median": 2.6612,
+      "angle_samples_deg": [
+        1.4207,
+        2.7711,
+        2.6056,
+        2.6633,
+        2.6591,
+        2.5524,
+        3.4934,
+        3.6457
+      ],
+      "angle_span_deg": 2.225,
+      "confidence_median": 0.9705,
+      "stable": false
+    },
+    {
+      "instance_index": 6,
+      "center_canonical_pixel_median": [
+        302.703,
+        402.009
+      ],
+      "center_span_pixel": [
+        1.689,
+        0.686
+      ],
+      "long_axis_canonical_deg_median": -0.9347,
+      "angle_samples_deg": [
+        -1.4968,
+        -0.6693,
+        -0.155,
+        -0.5559,
+        -1.2,
+        -0.5714,
+        -1.2748,
+        -1.5832
+      ],
+      "angle_span_deg": 1.4282,
+      "confidence_median": 0.975,
+      "stable": true
+    },
+    {
+      "instance_index": 7,
+      "center_canonical_pixel_median": [
+        472.636,
+        404.092
+      ],
+      "center_span_pixel": [
+        2.526,
+        0.355
+      ],
+      "long_axis_canonical_deg_median": -0.8776,
+      "angle_samples_deg": [
+        -1.5872,
+        -0.4623,
+        -0.2065,
+        -0.6272,
+        -0.6845,
+        -1.4743,
+        -1.0707,
+        -2.9606
+      ],
+      "angle_span_deg": 2.7541,
+      "confidence_median": 0.9649,
+      "stable": false
+    },
+    {
+      "instance_index": 8,
+      "center_canonical_pixel_median": [
+        633.187,
+        396.646
+      ],
+      "center_span_pixel": [
+        1.267,
+        0.738
+      ],
+      "long_axis_canonical_deg_median": 0.2639,
+      "angle_samples_deg": [
+        1.0521,
+        -0.5047,
+        -0.1427,
+        -0.5022,
+        0.3668,
+        0.6692,
+        0.1611,
+        0.8998
+      ],
+      "angle_span_deg": 1.5568,
+      "confidence_median": 0.9422,
+      "stable": false
+    },
+    {
+      "instance_index": 9,
+      "center_canonical_pixel_median": [
+        755.539,
+        387.735
+      ],
+      "center_span_pixel": [
+        1.366,
+        0.604
+      ],
+      "long_axis_canonical_deg_median": -0.6804,
+      "angle_samples_deg": [
+        -0.6684,
+        -0.9271,
+        -0.4498,
+        0.2861,
+        -1.334,
+        -0.7844,
+        -0.6924,
+        0.1098
+      ],
+      "angle_span_deg": 1.6201,
+      "confidence_median": 0.9523,
+      "stable": false
+    },
+    {
+      "instance_index": 10,
+      "center_canonical_pixel_median": [
+        912.467,
+        394.529
+      ],
+      "center_span_pixel": [
+        1.098,
+        0.546
+      ],
+      "long_axis_canonical_deg_median": 0.1461,
+      "angle_samples_deg": [
+        0.0983,
+        -0.0911,
+        0.1939,
+        1.0395,
+        0.028,
+        0.2366,
+        0.4053,
+        -0.5435
+      ],
+      "angle_span_deg": 1.583,
+      "confidence_median": 0.9502,
+      "stable": false
+    }
+  ]
+}

@@ -1,0 +1,364 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-labelledby="t d">
+  <title id="t">FR5 HUD — QUALITY v3 (판매용)</title>
+  <desc id="d">mock-05-quality.svg 의 디자인 언어(큰 수치 · 상자 없는 헤어라인 · 다크)를 유지하고, 슬롯 영역을 상위 8칸 + 전체 25칸 압축 격자로 다시 채운 품질 조회 화면. 수치는 실제 제품 어휘(HBM · PM · GPU · CAP · IND · VRM)로 구성한 시연용 예시다.</desc>
+
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="0%" r="90%">
+      <stop offset="0" stop-color="#16222e" stop-opacity=".7"/>
+      <stop offset="1" stop-color="#070b10" stop-opacity="0"/>
+    </radialGradient>
+    <style>
+      text { font-family: Inter, Pretendard, "Noto Sans CJK KR", "Noto Sans KR", system-ui, sans-serif; font-kerning:normal; font-variant-numeric:tabular-nums; text-rendering:geometricPrecision; }
+      svg { shape-rendering:geometricPrecision; }
+      .mi { fill:#8494a0; font-size:12px; letter-spacing:1.2px; font-weight:700 }
+      .lb { fill:#93a5b2; font-size:14px; letter-spacing:1.4px; font-weight:700 }
+      .bd { fill:#e2ecf1; font-size:16px }
+      .sm { fill:#93a5b2; font-size:15px }
+      .mu { fill:#8494a0; font-size:14px }
+      .vl { fill:#e2ecf1; font-size:26px; font-weight:700 }
+      .ac { fill:#facc33 } .ok { fill:#3ecf8e } .warn { fill:#f6ad37 } .bad { fill:#f0475a }
+    </style>
+  </defs>
+
+  <rect width="1920" height="1080" fill="#070b10"/>
+  <rect width="1920" height="1080" fill="url(#glow)"/>
+
+  <!-- ===== 상단 바 ===== -->
+  <rect x="0" y="0" width="1920" height="64" fill="#04070a" fill-opacity=".7"/>
+  <line x1="0" y1="64" x2="1920" y2="64" stroke="#ffffff" stroke-opacity=".10"/>
+  <rect x="0" y="63" width="300" height="2" fill="#facc33" fill-opacity=".55"/>
+  <text x="48" y="42" fill="#e2ecf1" font-size="27" font-weight="800" letter-spacing="1.5">FR5</text>
+  <text x="112" y="42" class="mu" font-size="14">FAIRINO · CELL A</text>
+  <text x="288" y="30" class="mi">MODE</text>
+  <text x="288" y="52" fill="#facc33" font-size="19" font-weight="800" letter-spacing="1.6">MOCK</text>
+  <text x="370" y="52" fill="#64707a" font-size="19" font-weight="800" letter-spacing="1.6">REAL</text>
+  <text x="520" y="30" class="mi">LINK</text>
+  <circle cx="524" cy="46" r="4" fill="#3ecf8e"/>
+  <text x="536" y="52" class="sm" font-size="14">joint_states</text>
+  <text x="670" y="52" text-anchor="end" class="mu" font-size="13">31 ms</text>
+  <circle cx="684" cy="46" r="4" fill="#3ecf8e"/>
+  <text x="696" y="52" class="sm" font-size="14">board/image</text>
+  <text x="830" y="52" text-anchor="end" class="mu" font-size="13">68 ms</text>
+  <circle cx="844" cy="46" r="4" fill="#64707a"/>
+  <text x="856" y="52" class="sm" font-size="14">assembly/fb</text>
+  <text x="990" y="52" text-anchor="end" class="mu" font-size="13">idle</text>
+  <text x="1020" y="30" class="mi">JOB</text>
+  <text x="1020" y="52" fill="#e2ecf1" font-size="17" font-weight="700">JOB-20260819-0311</text>
+  <rect x="1246" y="38" width="170" height="6" rx="3" fill="#ffffff" fill-opacity=".07"/>
+  <rect x="1246" y="38" width="122" height="6" rx="3" fill="#facc33" fill-opacity=".9"/>
+  <text x="1432" y="52" fill="#e2ecf1" font-size="17" font-weight="700">7 / 10</text>
+  <text x="1518" y="30" class="mi">CYCLE</text>
+  <text x="1518" y="52" fill="#e2ecf1" font-size="17" font-weight="700">00:01:24</text>
+  <text x="1704" y="30" text-anchor="end" fill="#3ecf8e" font-size="13" font-weight="700" letter-spacing="1.6">LINKED</text>
+  <circle cx="1716" cy="26" r="4" fill="#3ecf8e"/>
+  <text x="1716" y="52" text-anchor="end" class="mu" font-size="12" letter-spacing="1.4">SERVO · RESET</text>
+  <rect x="1744" y="14" width="128" height="40" rx="4" fill="#f0475a" fill-opacity=".18" stroke="#f0475a" stroke-opacity=".75"/>
+  <circle cx="1770" cy="34" r="7" fill="#ff8f9b"/>
+  <text x="1788" y="41" fill="#ff8f9b" font-size="19" font-weight="800" letter-spacing="1.8">STOP</text>
+
+  <!-- ===== 레일 ===== -->
+  <rect x="30" y="160" width="28" height="28" rx="6" fill="none" stroke="#64707a" stroke-opacity=".55" stroke-width="1.8"/>
+  <text x="44" y="204" text-anchor="middle" fill="#64707a" font-size="11.5" font-weight="800" letter-spacing="1">RUN</text>
+  <text x="44" y="220" text-anchor="middle" fill="#64707a" font-size="11">운전</text>
+  <rect x="30" y="278" width="28" height="28" rx="6" fill="none" stroke="#64707a" stroke-opacity=".55" stroke-width="1.8"/>
+  <text x="44" y="322" text-anchor="middle" fill="#64707a" font-size="11.5" font-weight="800" letter-spacing="1">INSPECT</text>
+  <text x="44" y="338" text-anchor="middle" fill="#64707a" font-size="11">검사</text>
+  <rect x="30" y="396" width="28" height="28" rx="6" fill="none" stroke="#64707a" stroke-opacity=".55" stroke-width="1.8"/>
+  <text x="44" y="440" text-anchor="middle" fill="#64707a" font-size="11.5" font-weight="800" letter-spacing="1">MANUAL</text>
+  <text x="44" y="456" text-anchor="middle" fill="#64707a" font-size="11">수동</text>
+  <rect x="0" y="510" width="3" height="76" fill="#facc33"/>
+  <rect x="30" y="514" width="28" height="28" rx="6" fill="none" stroke="#facc33" stroke-opacity=".9" stroke-width="1.8"/>
+  <text x="44" y="558" text-anchor="middle" fill="#facc33" font-size="11.5" font-weight="800" letter-spacing="1">QUALITY</text>
+  <text x="44" y="574" text-anchor="middle" fill="#64707a" font-size="11">품질</text>
+  <rect x="30" y="632" width="28" height="28" rx="6" fill="none" stroke="#64707a" stroke-opacity=".55" stroke-width="1.8"/>
+  <text x="44" y="676" text-anchor="middle" fill="#64707a" font-size="11.5" font-weight="800" letter-spacing="1">SETUP</text>
+  <text x="44" y="692" text-anchor="middle" fill="#64707a" font-size="11">설정</text>
+
+  <!-- ===== 조회 조건 ===== -->
+  <text x="136" y="130" class="mi">기간</text>
+  <text x="136" y="160" class="vl" font-size="22">최근 90일 <tspan fill="#64707a" font-size="16">▾</tspan></text>
+  <text x="436" y="130" class="mi">제품</text>
+  <text x="436" y="160" class="vl" font-size="22">HBM ACCELERATOR BOARD <tspan fill="#64707a" font-size="16">▾</tspan></text>
+  <text x="936" y="130" class="mi">레시피</text>
+  <text x="936" y="160" class="vl" font-size="22">전체 <tspan fill="#64707a" font-size="16">▾</tspan></text>
+  <text x="1136" y="130" class="mi">불량 유형</text>
+  <text x="1136" y="160" class="vl" font-size="22">전체 <tspan fill="#64707a" font-size="16">▾</tspan></text>
+  <text x="1872" y="130" text-anchor="end" class="mu" font-size="13">검사 완료 1,240대 · 슬롯 검사 31,000건 · 불량 26건</text>
+  <text x="1872" y="160" text-anchor="end" font-size="20" font-weight="700"><tspan class="mu" font-size="13" font-weight="400">직행률 </tspan><tspan class="ok">98.1</tspan><tspan class="ok" font-size="14">%</tspan><tspan class="mu" font-size="13" font-weight="400">   ·   슬롯 임계 </tspan><tspan fill="#e2ecf1" font-size="16">0.30%</tspan></text>
+  <line x1="136" y1="190" x2="1872" y2="190" stroke="#ffffff" stroke-opacity=".10"/>
+
+  <!-- ================= 좌 : SLOT DEFECT RATE ================= -->
+  <rect x="136" y="229" width="3" height="14" fill="#facc33"/>
+  <text x="150" y="240" class="lb">SLOT DEFECT RATE</text>
+  <text x="152" y="262" class="mu" font-size="13">슬롯별 누적 불량률 · 임계 0.30% 초과 3</text>
+  <text x="1020" y="240" text-anchor="end" class="mu" font-size="13">25 슬롯 중 상위 8</text>
+
+  <!-- 1행 -->
+  <rect x="136" y="284" width="24" height="24" rx="4" fill="#ffffff" fill-opacity=".06"/>
+  <image href="../../Assets/UI/Icons/item-pm.png" x="136" y="284" width="24" height="24" preserveAspectRatio="xMidYMid meet"/>
+  <text x="168" y="302" fill="#e2ecf1" font-size="14" font-weight="700" letter-spacing=".6">PM-01</text>
+  <text x="324" y="302" text-anchor="end" class="bad" font-size="11" font-weight="700" letter-spacing="1.2">임계 초과</text>
+  <text x="136" y="360" class="bad" font-size="52" font-weight="800" letter-spacing="-2">0.65<tspan font-size="24">%</tspan></text>
+  <rect x="136" y="378" width="188" height="5" rx="2.5" fill="#ffffff" fill-opacity=".06"/>
+  <rect x="136" y="378" width="173" height="5" rx="2.5" fill="#f0475a" fill-opacity=".9"/>
+  <line x1="217" y1="374" x2="217" y2="387" stroke="#f0475a" stroke-opacity=".85"/>
+  <text x="136" y="406" class="mu" font-size="12">8 / 1,240</text>
+  <text x="324" y="406" text-anchor="end" fill="#64707a" font-size="12">POSITION_ERROR</text>
+
+  <rect x="368" y="284" width="24" height="24" rx="4" fill="#ffffff" fill-opacity=".06"/>
+  <image href="../../Assets/UI/Icons/item-hbm.png" x="368" y="284" width="24" height="24" preserveAspectRatio="xMidYMid meet"/>
+  <text x="400" y="302" fill="#e2ecf1" font-size="14" font-weight="700" letter-spacing=".6">HBM-05</text>
+  <text x="556" y="302" text-anchor="end" class="bad" font-size="11" font-weight="700" letter-spacing="1.2">임계 초과</text>
+  <text x="368" y="360" class="bad" font-size="52" font-weight="800" letter-spacing="-2">0.48<tspan font-size="24">%</tspan></text>
+  <rect x="368" y="378" width="188" height="5" rx="2.5" fill="#ffffff" fill-opacity=".06"/>
+  <rect x="368" y="378" width="130" height="5" rx="2.5" fill="#f0475a" fill-opacity=".9"/>
+  <line x1="449" y1="374" x2="449" y2="387" stroke="#f0475a" stroke-opacity=".85"/>
+  <text x="368" y="406" class="mu" font-size="12">6 / 1,240</text>
+  <text x="556" y="406" text-anchor="end" fill="#64707a" font-size="12">MISSING</text>
+
+  <rect x="600" y="284" width="24" height="24" rx="4" fill="#ffffff" fill-opacity=".06"/>
+  <image href="../../Assets/UI/Icons/item-vrm.png" x="600" y="284" width="24" height="24" preserveAspectRatio="xMidYMid meet"/>
+  <text x="632" y="302" fill="#e2ecf1" font-size="14" font-weight="700" letter-spacing=".6">VRM-03</text>
+  <text x="788" y="302" text-anchor="end" class="bad" font-size="11" font-weight="700" letter-spacing="1.2">임계 초과</text>
+  <text x="600" y="360" class="bad" font-size="52" font-weight="800" letter-spacing="-2">0.32<tspan font-size="24">%</tspan></text>
+  <rect x="600" y="378" width="188" height="5" rx="2.5" fill="#ffffff" fill-opacity=".06"/>
+  <rect x="600" y="378" width="87" height="5" rx="2.5" fill="#f0475a" fill-opacity=".9"/>
+  <line x1="681" y1="374" x2="681" y2="387" stroke="#f0475a" stroke-opacity=".85"/>
+  <text x="600" y="406" class="mu" font-size="12">4 / 1,240</text>
+  <text x="788" y="406" text-anchor="end" fill="#64707a" font-size="12">TILT</text>
+
+  <rect x="832" y="284" width="24" height="24" rx="4" fill="#ffffff" fill-opacity=".06"/>
+  <image href="../../Assets/UI/Icons/item-cap.png" x="832" y="284" width="24" height="24" preserveAspectRatio="xMidYMid meet"/>
+  <text x="864" y="302" fill="#e2ecf1" font-size="14" font-weight="700" letter-spacing=".6">CAP-02</text>
+  <text x="1020" y="302" text-anchor="end" class="warn" font-size="11" font-weight="700" letter-spacing="1.2">임계 근접</text>
+  <text x="832" y="360" class="warn" font-size="52" font-weight="800" letter-spacing="-2">0.24<tspan font-size="24">%</tspan></text>
+  <rect x="832" y="378" width="188" height="5" rx="2.5" fill="#ffffff" fill-opacity=".06"/>
+  <rect x="832" y="378" width="65" height="5" rx="2.5" fill="#f6ad37" fill-opacity=".9"/>
+  <line x1="913" y1="374" x2="913" y2="387" stroke="#f0475a" stroke-opacity=".85"/>
+  <text x="832" y="406" class="mu" font-size="12">3 / 1,240</text>
+  <text x="1020" y="406" text-anchor="end" fill="#64707a" font-size="12">OFFSET</text>
+
+  <!-- 2행 -->
+  <rect x="136" y="440" width="24" height="24" rx="4" fill="#ffffff" fill-opacity=".06"/>
+  <image href="../../Assets/UI/Icons/item-hbm.png" x="136" y="440" width="24" height="24" preserveAspectRatio="xMidYMid meet"/>
+  <text x="168" y="458" fill="#e2ecf1" font-size="14" font-weight="700" letter-spacing=".6">HBM-01</text>
+  <text x="136" y="516" class="ok" font-size="52" font-weight="800" letter-spacing="-2">0.16<tspan font-size="24">%</tspan></text>
+  <rect x="136" y="534" width="188" height="5" rx="2.5" fill="#ffffff" fill-opacity=".06"/>
+  <rect x="136" y="534" width="43" height="5" rx="2.5" fill="#3ecf8e" fill-opacity=".85"/>
+  <line x1="217" y1="530" x2="217" y2="543" stroke="#f0475a" stroke-opacity=".85"/>
+  <text x="136" y="562" class="mu" font-size="12">2 / 1,240</text>
+  <text x="324" y="562" text-anchor="end" fill="#64707a" font-size="12">MISSING</text>
+
+  <rect x="368" y="440" width="24" height="24" rx="4" fill="#ffffff" fill-opacity=".06"/>
+  <image href="../../Assets/UI/Icons/item-ind.png" x="368" y="440" width="24" height="24" preserveAspectRatio="xMidYMid meet"/>
+  <text x="400" y="458" fill="#e2ecf1" font-size="14" font-weight="700" letter-spacing=".6">IND-01</text>
+  <text x="368" y="516" class="ok" font-size="52" font-weight="800" letter-spacing="-2">0.08<tspan font-size="24">%</tspan></text>
+  <rect x="368" y="534" width="188" height="5" rx="2.5" fill="#ffffff" fill-opacity=".06"/>
+  <rect x="368" y="534" width="22" height="5" rx="2.5" fill="#3ecf8e" fill-opacity=".85"/>
+  <line x1="449" y1="530" x2="449" y2="543" stroke="#f0475a" stroke-opacity=".85"/>
+  <text x="368" y="562" class="mu" font-size="12">1 / 1,240</text>
+  <text x="556" y="562" text-anchor="end" fill="#64707a" font-size="12">POSITION_ERROR</text>
+
+  <rect x="600" y="440" width="24" height="24" rx="4" fill="#ffffff" fill-opacity=".06"/>
+  <image href="../../Assets/UI/Icons/item-gpu.png" x="600" y="440" width="24" height="24" preserveAspectRatio="xMidYMid meet"/>
+  <text x="632" y="458" fill="#e2ecf1" font-size="14" font-weight="700" letter-spacing=".6">GPU-01</text>
+  <text x="600" y="516" class="ok" font-size="52" font-weight="800" letter-spacing="-2">0.08<tspan font-size="24">%</tspan></text>
+  <rect x="600" y="534" width="188" height="5" rx="2.5" fill="#ffffff" fill-opacity=".06"/>
+  <rect x="600" y="534" width="22" height="5" rx="2.5" fill="#3ecf8e" fill-opacity=".85"/>
+  <line x1="681" y1="530" x2="681" y2="543" stroke="#f0475a" stroke-opacity=".85"/>
+  <text x="600" y="562" class="mu" font-size="12">1 / 1,240</text>
+  <text x="788" y="562" text-anchor="end" fill="#64707a" font-size="12">OFFSET</text>
+
+  <rect x="832" y="440" width="24" height="24" rx="4" fill="#ffffff" fill-opacity=".06"/>
+  <image href="../../Assets/UI/Icons/item-cap.png" x="832" y="440" width="24" height="24" preserveAspectRatio="xMidYMid meet"/>
+  <text x="864" y="458" fill="#e2ecf1" font-size="14" font-weight="700" letter-spacing=".6">CAP-05</text>
+  <text x="832" y="516" class="ok" font-size="52" font-weight="800" letter-spacing="-2">0.08<tspan font-size="24">%</tspan></text>
+  <rect x="832" y="534" width="188" height="5" rx="2.5" fill="#ffffff" fill-opacity=".06"/>
+  <rect x="832" y="534" width="22" height="5" rx="2.5" fill="#3ecf8e" fill-opacity=".85"/>
+  <line x1="913" y1="530" x2="913" y2="543" stroke="#f0475a" stroke-opacity=".85"/>
+  <text x="832" y="562" class="mu" font-size="12">1 / 1,240</text>
+  <text x="1020" y="562" text-anchor="end" fill="#64707a" font-size="12">TILT</text>
+
+  <!-- ===== 전체 25 슬롯 압축 격자 ===== -->
+  <text x="136" y="614" class="mi" font-size="11">ALL SLOTS · 25 · 부품 그룹별</text>
+  <text x="1020" y="614" text-anchor="end" class="mu" font-size="11">
+    <tspan fill="#64707a">무불량</tspan><tspan fill="#64707a" font-size="10">  ·  </tspan><tspan fill="#3ecf8e">정상</tspan><tspan fill="#64707a" font-size="10">  ·  </tspan><tspan fill="#f6ad37">근접</tspan><tspan fill="#64707a" font-size="10">  ·  </tspan><tspan fill="#f0475a">초과</tspan>
+  </text>
+
+  <g>
+    <!-- HBM 8 -->
+    <rect x="136" y="626" width="28" height="30" fill="#3ecf8e" fill-opacity=".38"/>
+    <rect x="166" y="626" width="28" height="30" fill="#ffffff" fill-opacity=".05"/>
+    <rect x="196" y="626" width="28" height="30" fill="#ffffff" fill-opacity=".05"/>
+    <rect x="226" y="626" width="28" height="30" fill="#ffffff" fill-opacity=".05"/>
+    <rect x="256" y="626" width="28" height="30" fill="#f0475a" fill-opacity=".85"/>
+    <rect x="286" y="626" width="28" height="30" fill="#ffffff" fill-opacity=".05"/>
+    <rect x="316" y="626" width="28" height="30" fill="#ffffff" fill-opacity=".05"/>
+    <rect x="346" y="626" width="28" height="30" fill="#ffffff" fill-opacity=".05"/>
+    <text x="255" y="674" text-anchor="middle" class="mu" font-size="11">HBM · 8</text>
+    <!-- PM 4 -->
+    <rect x="388" y="626" width="28" height="30" fill="#f0475a" fill-opacity=".95"/>
+    <rect x="418" y="626" width="28" height="30" fill="#ffffff" fill-opacity=".05"/>
+    <rect x="448" y="626" width="28" height="30" fill="#ffffff" fill-opacity=".05"/>
+    <rect x="478" y="626" width="28" height="30" fill="#ffffff" fill-opacity=".05"/>
+    <text x="447" y="674" text-anchor="middle" class="mu" font-size="11">PM · 4</text>
+    <!-- GPU 1 -->
+    <rect x="520" y="626" width="28" height="30" fill="#3ecf8e" fill-opacity=".28"/>
+    <text x="534" y="674" text-anchor="middle" class="mu" font-size="11">GPU · 1</text>
+    <!-- CAP 5 -->
+    <rect x="562" y="626" width="28" height="30" fill="#ffffff" fill-opacity=".05"/>
+    <rect x="592" y="626" width="28" height="30" fill="#f6ad37" fill-opacity=".85"/>
+    <rect x="622" y="626" width="28" height="30" fill="#ffffff" fill-opacity=".05"/>
+    <rect x="652" y="626" width="28" height="30" fill="#ffffff" fill-opacity=".05"/>
+    <rect x="682" y="626" width="28" height="30" fill="#3ecf8e" fill-opacity=".28"/>
+    <text x="636" y="674" text-anchor="middle" class="mu" font-size="11">CAP · 5</text>
+    <!-- IND 2 -->
+    <rect x="724" y="626" width="28" height="30" fill="#3ecf8e" fill-opacity=".28"/>
+    <rect x="754" y="626" width="28" height="30" fill="#ffffff" fill-opacity=".05"/>
+    <text x="753" y="674" text-anchor="middle" class="mu" font-size="11">IND · 2</text>
+    <!-- VRM 5 -->
+    <rect x="796" y="626" width="28" height="30" fill="#ffffff" fill-opacity=".05"/>
+    <rect x="826" y="626" width="28" height="30" fill="#ffffff" fill-opacity=".05"/>
+    <rect x="856" y="626" width="28" height="30" fill="#f0475a" fill-opacity=".85"/>
+    <rect x="886" y="626" width="28" height="30" fill="#ffffff" fill-opacity=".05"/>
+    <rect x="916" y="626" width="28" height="30" fill="#ffffff" fill-opacity=".05"/>
+    <text x="870" y="674" text-anchor="middle" class="mu" font-size="11">VRM · 5</text>
+  </g>
+
+  <!-- ===== 좌 하단 : DEFECT REPORT ===== -->
+  <line x1="136" y1="706" x2="1020" y2="706" stroke="#ffffff" stroke-opacity=".10"/>
+  <rect x="136" y="737" width="3" height="14" fill="#facc33"/>
+  <text x="150" y="748" class="lb">DEFECT REPORT · alerts</text>
+  <text x="1020" y="748" text-anchor="end" class="mu" font-size="13">발행 3 · 미종결 1</text>
+  <line x1="136" y1="770" x2="1020" y2="770" stroke="#ffffff" stroke-opacity=".06"/>
+
+  <rect x="120" y="784" width="3" height="24" fill="#f6ad37" fill-opacity=".85"/>
+  <text x="136" y="802" class="bd" font-size="15">QA-ALERT-PM-20260819-001</text>
+  <text x="520" y="802" class="mu" font-size="13">PM-01 · POSITION_ERROR · 기한 08-26</text>
+  <text x="1020" y="802" text-anchor="end" class="warn" font-size="13" font-weight="700" letter-spacing="1.4">IN_PROGRESS</text>
+  <line x1="136" y1="826" x2="1020" y2="826" stroke="#ffffff" stroke-opacity=".06"/>
+
+  <rect x="120" y="840" width="3" height="24" fill="#64707a" fill-opacity=".8"/>
+  <text x="136" y="858" class="bd" font-size="15">QA-ALERT-HBM-20260712-001</text>
+  <text x="520" y="858" class="mu" font-size="13">HBM-05 · MISSING · 종결 07-30</text>
+  <text x="1020" y="858" text-anchor="end" fill="#64707a" font-size="13" font-weight="700" letter-spacing="1.4">CLOSED</text>
+  <line x1="136" y1="882" x2="1020" y2="882" stroke="#ffffff" stroke-opacity=".06"/>
+
+  <rect x="120" y="896" width="3" height="24" fill="#64707a" fill-opacity=".8"/>
+  <text x="136" y="914" class="bd" font-size="15">QA-ALERT-VRM-20260430-002</text>
+  <text x="520" y="914" class="mu" font-size="13">VRM-03 · TILT · 종결 05-14</text>
+  <text x="1020" y="914" text-anchor="end" fill="#64707a" font-size="13" font-weight="700" letter-spacing="1.4">CLOSED</text>
+
+  <!-- ================= 우 : PART DEFECT RATE ================= -->
+  <rect x="1080" y="229" width="3" height="14" fill="#facc33"/>
+  <text x="1094" y="240" class="lb">PART DEFECT RATE</text>
+  <text x="1096" y="262" class="mu" font-size="13">부품별 누적 · 슬롯 수로 나눈 기회 기준 · 임계 0.08%</text>
+  <text x="1872" y="240" text-anchor="end" class="mu" font-size="13">6 부품 · 25 슬롯</text>
+  <line x1="1080" y1="288" x2="1872" y2="288" stroke="#ffffff" stroke-opacity=".07"/>
+
+  <rect x="1080" y="303" width="24" height="24" rx="4" fill="#ffffff" fill-opacity=".06"/>
+  <image href="../../Assets/UI/Icons/item-pm.png" x="1080" y="303" width="24" height="24" preserveAspectRatio="xMidYMid meet"/>
+  <text x="1114" y="322" class="bd">PM</text>
+  <text x="1186" y="322" class="mu" font-size="12">슬롯 4</text>
+  <text x="1262" y="322" fill="#64707a" font-size="12">최다 PM-01</text>
+  <text x="1430" y="322" text-anchor="end" class="mu" font-size="13">8 / 4,960</text>
+  <rect x="1450" y="311" width="200" height="6" rx="3" fill="#ffffff" fill-opacity=".06"/>
+  <rect x="1450" y="311" width="161" height="6" rx="3" fill="#f0475a" fill-opacity=".85"/>
+  <line x1="1530" y1="307" x2="1530" y2="322" stroke="#f0475a" stroke-opacity=".8"/>
+  <text x="1872" y="322" text-anchor="end" class="bad" font-size="22" font-weight="700">0.16%</text>
+  <line x1="1080" y1="344" x2="1872" y2="344" stroke="#ffffff" stroke-opacity=".07"/>
+
+  <rect x="1080" y="359" width="24" height="24" rx="4" fill="#ffffff" fill-opacity=".06"/>
+  <image href="../../Assets/UI/Icons/item-hbm.png" x="1080" y="359" width="24" height="24" preserveAspectRatio="xMidYMid meet"/>
+  <text x="1114" y="378" class="bd">HBM</text>
+  <text x="1186" y="378" class="mu" font-size="12">슬롯 8</text>
+  <text x="1262" y="378" fill="#64707a" font-size="12">최다 HBM-05</text>
+  <text x="1430" y="378" text-anchor="end" class="mu" font-size="13">8 / 9,920</text>
+  <rect x="1450" y="367" width="200" height="6" rx="3" fill="#ffffff" fill-opacity=".06"/>
+  <rect x="1450" y="367" width="81" height="6" rx="3" fill="#f6ad37" fill-opacity=".85"/>
+  <line x1="1530" y1="363" x2="1530" y2="378" stroke="#f0475a" stroke-opacity=".8"/>
+  <text x="1872" y="378" text-anchor="end" class="warn" font-size="22" font-weight="700">0.08%</text>
+  <line x1="1080" y1="400" x2="1872" y2="400" stroke="#ffffff" stroke-opacity=".07"/>
+
+  <rect x="1080" y="415" width="24" height="24" rx="4" fill="#ffffff" fill-opacity=".06"/>
+  <image href="../../Assets/UI/Icons/item-gpu.png" x="1080" y="415" width="24" height="24" preserveAspectRatio="xMidYMid meet"/>
+  <text x="1114" y="434" class="bd">GPU</text>
+  <text x="1186" y="434" class="mu" font-size="12">슬롯 1</text>
+  <text x="1262" y="434" fill="#64707a" font-size="12">최다 GPU-01</text>
+  <text x="1430" y="434" text-anchor="end" class="mu" font-size="13">1 / 1,240</text>
+  <rect x="1450" y="423" width="200" height="6" rx="3" fill="#ffffff" fill-opacity=".06"/>
+  <rect x="1450" y="423" width="81" height="6" rx="3" fill="#f6ad37" fill-opacity=".85"/>
+  <line x1="1530" y1="419" x2="1530" y2="434" stroke="#f0475a" stroke-opacity=".8"/>
+  <text x="1872" y="434" text-anchor="end" class="warn" font-size="22" font-weight="700">0.08%</text>
+  <line x1="1080" y1="456" x2="1872" y2="456" stroke="#ffffff" stroke-opacity=".07"/>
+
+  <rect x="1080" y="471" width="24" height="24" rx="4" fill="#ffffff" fill-opacity=".06"/>
+  <image href="../../Assets/UI/Icons/item-cap.png" x="1080" y="471" width="24" height="24" preserveAspectRatio="xMidYMid meet"/>
+  <text x="1114" y="490" class="bd">CAP</text>
+  <text x="1186" y="490" class="mu" font-size="12">슬롯 5</text>
+  <text x="1262" y="490" fill="#64707a" font-size="12">최다 CAP-02</text>
+  <text x="1430" y="490" text-anchor="end" class="mu" font-size="13">4 / 6,200</text>
+  <rect x="1450" y="479" width="200" height="6" rx="3" fill="#ffffff" fill-opacity=".06"/>
+  <rect x="1450" y="479" width="65" height="6" rx="3" fill="#e2ecf1" fill-opacity=".8"/>
+  <line x1="1530" y1="475" x2="1530" y2="490" stroke="#f0475a" stroke-opacity=".8"/>
+  <text x="1872" y="490" text-anchor="end" fill="#e2ecf1" font-size="22" font-weight="700">0.06%</text>
+  <line x1="1080" y1="512" x2="1872" y2="512" stroke="#ffffff" stroke-opacity=".07"/>
+
+  <rect x="1080" y="527" width="24" height="24" rx="4" fill="#ffffff" fill-opacity=".06"/>
+  <image href="../../Assets/UI/Icons/item-vrm.png" x="1080" y="527" width="24" height="24" preserveAspectRatio="xMidYMid meet"/>
+  <text x="1114" y="546" class="bd">VRM</text>
+  <text x="1186" y="546" class="mu" font-size="12">슬롯 5</text>
+  <text x="1262" y="546" fill="#64707a" font-size="12">최다 VRM-03</text>
+  <text x="1430" y="546" text-anchor="end" class="mu" font-size="13">4 / 6,200</text>
+  <rect x="1450" y="535" width="200" height="6" rx="3" fill="#ffffff" fill-opacity=".06"/>
+  <rect x="1450" y="535" width="65" height="6" rx="3" fill="#e2ecf1" fill-opacity=".8"/>
+  <line x1="1530" y1="531" x2="1530" y2="546" stroke="#f0475a" stroke-opacity=".8"/>
+  <text x="1872" y="546" text-anchor="end" fill="#e2ecf1" font-size="22" font-weight="700">0.06%</text>
+  <line x1="1080" y1="568" x2="1872" y2="568" stroke="#ffffff" stroke-opacity=".07"/>
+
+  <rect x="1080" y="583" width="24" height="24" rx="4" fill="#ffffff" fill-opacity=".06"/>
+  <image href="../../Assets/UI/Icons/item-ind.png" x="1080" y="583" width="24" height="24" preserveAspectRatio="xMidYMid meet"/>
+  <text x="1114" y="602" class="bd">IND</text>
+  <text x="1186" y="602" class="mu" font-size="12">슬롯 2</text>
+  <text x="1262" y="602" fill="#64707a" font-size="12">최다 IND-01</text>
+  <text x="1430" y="602" text-anchor="end" class="mu" font-size="13">1 / 2,480</text>
+  <rect x="1450" y="591" width="200" height="6" rx="3" fill="#ffffff" fill-opacity=".06"/>
+  <rect x="1450" y="591" width="40" height="6" rx="3" fill="#e2ecf1" fill-opacity=".8"/>
+  <line x1="1530" y1="587" x2="1530" y2="602" stroke="#f0475a" stroke-opacity=".8"/>
+  <text x="1872" y="602" text-anchor="end" fill="#e2ecf1" font-size="22" font-weight="700">0.04%</text>
+
+  <text x="1080" y="646" fill="#64707a" font-size="12">PM 은 불량 8건이 슬롯 4개에 몰려 기회 기준 불량률이 HBM 의 2배다 — 같은 8건이라도 분모가 다르다.</text>
+
+  <!-- ===== 우 하단 : RECIPE A / B ===== -->
+  <line x1="1080" y1="706" x2="1872" y2="706" stroke="#ffffff" stroke-opacity=".10"/>
+  <rect x="1080" y="737" width="3" height="14" fill="#facc33"/>
+  <text x="1094" y="748" class="lb">RECIPE A / B</text>
+  <text x="1096" y="770" class="mu" font-size="13">PM-01 POSITION_ERROR · 각 620대</text>
+  <text x="1872" y="748" text-anchor="end" class="mu" font-size="13">적용 2026-07-30</text>
+
+  <text x="1080" y="812" class="mi" font-size="11">assembly-r1</text>
+  <text x="1080" y="858" class="bad" font-size="46" font-weight="800" letter-spacing="-2">0.65<tspan font-size="22">%</tspan></text>
+  <rect x="1080" y="874" width="200" height="6" rx="3" fill="#ffffff" fill-opacity=".06"/>
+  <rect x="1080" y="874" width="186" height="6" rx="3" fill="#f0475a" fill-opacity=".9"/>
+  <text x="1080" y="900" class="mu" font-size="12">8 / 620</text>
+
+  <text x="1330" y="812" class="mi" font-size="11">assembly-r2</text>
+  <text x="1330" y="858" class="ok" font-size="46" font-weight="800" letter-spacing="-2">0.24<tspan font-size="22">%</tspan></text>
+  <rect x="1330" y="874" width="200" height="6" rx="3" fill="#ffffff" fill-opacity=".06"/>
+  <rect x="1330" y="874" width="69" height="6" rx="3" fill="#3ecf8e" fill-opacity=".9"/>
+  <text x="1330" y="900" class="mu" font-size="12">3 / 620</text>
+
+  <text x="1620" y="852" class="ok" font-size="30" font-weight="800">−63%</text>
+  <text x="1620" y="876" class="mu" font-size="12" letter-spacing="1.4">EFFECTIVE</text>
+  <text x="1620" y="900" fill="#64707a" font-size="12">대책 유효 · 유지</text>
+
+  <!-- ===== 출처 ===== -->
+  <line x1="136" y1="952" x2="1872" y2="952" stroke="#ffffff" stroke-opacity=".10"/>
+  <text x="136" y="978" fill="#64707a" font-size="12">production units · unit_defects · product_slots      ·      defect_report thresholds · alerts      ·      집계 갱신 10:30:00</text>
+  <text x="1872" y="978" text-anchor="end" fill="#64707a" font-size="12">MainServer HTTP · 조회 전용</text>
+
+  <line x1="0" y1="1036" x2="1920" y2="1036" stroke="#ffffff" stroke-opacity=".08"/>
+  <circle cx="48" cy="1059" r="4" fill="#64707a"/>
+  <text x="64" y="1064" class="sm" font-size="14">10:30:00   QUALITY   집계 갱신 · 기준 2026-05-20 ~ 2026-08-20</text>
+  <text x="1872" y="1064" text-anchor="end" class="mu" font-size="13" letter-spacing="1.4">EVENTS  ·  ALARM 0</text>
+</svg>

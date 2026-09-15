@@ -1,0 +1,227 @@
+-- Run after production_schema.sql, 005_roles.sql and 002_query_samples.sql in the same psql session.
+-- All test rows are rolled back.
+
+BEGIN;
+
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM pg_tables
+        WHERE schemaname = 'production'
+          AND (NOT has_table_privilege('job_submitter',
+                   format('%I.%I', schemaname, tablename), 'SELECT')
+               OR NOT has_table_privilege('production_writer',
+                   format('%I.%I', schemaname, tablename), 'SELECT'))
+    ) THEN
+        RAISE EXCEPTION 'both application roles must read all production tables';
+    END IF;
+
+    IF NOT has_column_privilege('job_submitter', 'production.jobs', 'job_id', 'INSERT')
+       OR has_column_privilege('job_submitter', 'production.jobs', 'job_status', 'INSERT')
+       OR has_any_column_privilege('job_submitter', 'production.jobs', 'UPDATE')
+       OR has_table_privilege('job_submitter', 'production.jobs', 'DELETE')
+       OR has_table_privilege('job_submitter', 'production.jobs', 'TRUNCATE')
+       OR NOT has_column_privilege('production_writer', 'production.jobs', 'job_status', 'UPDATE')
+       OR has_any_column_privilege('production_writer', 'production.jobs', 'INSERT') THEN
+        RAISE EXCEPTION 'Job submission and execution write privileges must remain separate';
+    END IF;
+
+    IF NOT has_function_privilege(
+        'job_submitter', 'production.cancel_pending_job(uuid)', 'EXECUTE'
+    ) THEN
+        RAISE EXCEPTION 'job_submitter must invoke the pre-claim cancellation boundary';
+    END IF;
+END
+$$;
+
+INSERT INTO production.parts (
+    part_id, part_name, part_category, stock_quantity
+) VALUES (
+    '__DATASTATION_TEST_PART__', 'test-part', 'TEST', 2
+);
+
+INSERT INTO production.inventory_movements (
+    inventory_movement_id,
+    part_id,
+    quantity_delta,
+    movement_type,
+    reason,
+    recorded_at
+) VALUES (
+    -6001,
+    '__DATASTATION_TEST_PART__',
+    2,
+    'OPENING',
+    'DATASTATION_SMOKE_TEST',
+    '2026-01-01T00:00:00Z'
+);
+
+INSERT INTO production.products (
+    product_id,
+    product_code,
+    product_name,
+    product_version,
+    is_selectable,
+    definition_locked_at
+) VALUES (
+    -1001,
+    '__DATASTATION_TEST_PRODUCT__',
+    'DataStation smoke product',
+    'test-v1',
+    true,
+    '2026-01-01T00:00:00Z'
+);
+
+INSERT INTO production.product_slots (
+    product_slot_id, product_id, slot_code, part_id
+) VALUES (
+    -5001, -1001, 'TEST-01', '__DATASTATION_TEST_PART__'
+);
+
+INSERT INTO production.jobs (
+    job_id,
+    product_id,
+    requested_quantity,
+    recipe_version,
+    job_status,
+    requested_at,
+    job_started_at,
+    job_finished_at
+) VALUES (
+    '00000000-0000-0000-0000-000000007001',
+    -1001,
+    3,
+    '__DATASTATION_TEST_PRODUCT__-test-v1-R1',
+    'COMPLETED',
+    '2026-01-01T00:00:00Z',
+    '2026-01-01T00:01:00Z',
+    '2026-01-01T00:40:00Z'
+);
+
+INSERT INTO production.units (
+    unit_id,
+    job_id,
+    unit_sequence_in_job,
+    unit_status,
+    inspection_result,
+    assembly_started_at,
+    assembly_completed_at,
+    inspected_at
+) VALUES
+    (-8001, '00000000-0000-0000-0000-000000007001', 1, 'COMPLETED', 'PASS',
+     '2026-01-01T00:01:00Z', '2026-01-01T00:10:00Z', '2026-01-01T00:11:00Z'),
+    (-8002, '00000000-0000-0000-0000-000000007001', 2, 'COMPLETED', 'FAIL',
+     '2026-01-01T00:12:00Z', '2026-01-01T00:20:00Z', '2026-01-01T00:21:00Z'),
+    (-8003, '00000000-0000-0000-0000-000000007001', 3, 'COMPLETED', 'PASS',
+     '2026-01-01T00:22:00Z', '2026-01-01T00:30:00Z', '2026-01-01T00:31:00Z'),
+    (-8004, '00000000-0000-0000-0000-000000007001', 4, 'COMPLETED', 'PASS',
+     '2026-01-01T00:32:00Z', '2026-01-01T00:38:00Z', '2026-01-01T00:39:00Z');
+
+INSERT INTO production.unit_defects (
+    unit_defect_id, unit_id, product_slot_id, defect_type
+) VALUES (
+    -9001, -8002, -5001, 'CRACK'
+);
+
+INSERT INTO production.defect_report_deliveries (unit_defect_id)
+VALUES (-9001);
+
+INSERT INTO production.jobs (
+    job_id, product_id, requested_quantity, recipe_version, job_status
+) VALUES
+    ('00000000-0000-0000-0000-000000007011', -1001, 1, '__QUEUE_PENDING_1__', 'PENDING'),
+    ('00000000-0000-0000-0000-000000007012', -1001, 1, '__QUEUE_PENDING_2__', 'PENDING'),
+    ('00000000-0000-0000-0000-000000007013', -1001, 1, '__QUEUE_RUNNING__', 'RUNNING');
+
+INSERT INTO production.units (
+    unit_id, job_id, unit_sequence_in_job
+) VALUES (
+    -8101, '00000000-0000-0000-0000-000000007013', 1
+);
+
+DO $$
+BEGIN
+    BEGIN
+        INSERT INTO production.jobs (
+            job_id, product_id, requested_quantity, recipe_version, job_status
+        ) VALUES (
+            '00000000-0000-0000-0000-000000007014', -1001, 1,
+            '__QUEUE_SECOND_RUNNING__', 'RUNNING'
+        );
+        RAISE EXCEPTION 'second RUNNING Job was accepted';
+    EXCEPTION WHEN unique_violation THEN
+        NULL;
+    END;
+
+    BEGIN
+        INSERT INTO production.units (
+            unit_id, job_id, unit_sequence_in_job
+        ) VALUES (
+            -8102, '00000000-0000-0000-0000-000000007013', 2
+        );
+        RAISE EXCEPTION 'second RUNNING Unit was accepted';
+    EXCEPTION WHEN unique_violation THEN
+        NULL;
+    END;
+END
+$$;
+
+DO $$
+DECLARE
+    inspected bigint;
+    defective bigint;
+    defect_rate numeric;
+    shortage bigint;
+BEGIN
+    SELECT COUNT(u.unit_id),
+           COUNT(ud.defect_type),
+           ROUND(
+               100.0 * COUNT(ud.defect_type)
+               / NULLIF(COUNT(u.unit_id), 0),
+               2
+           )
+      INTO inspected, defective, defect_rate
+    FROM production.product_slots ps
+    JOIN production.jobs j ON j.product_id = ps.product_id
+    JOIN production.units u
+      ON u.job_id = j.job_id
+     AND u.inspection_result IN ('PASS', 'FAIL')
+    LEFT JOIN production.unit_defects ud
+      ON ud.unit_id = u.unit_id
+     AND ud.product_slot_id = ps.product_slot_id
+    WHERE ps.product_id = -1001;
+
+    SELECT GREATEST(COUNT(*) * 3 - p.stock_quantity, 0)
+      INTO shortage
+    FROM production.product_slots ps
+    JOIN production.parts p ON p.part_id = ps.part_id
+    WHERE ps.product_id = -1001
+    GROUP BY p.part_id, p.stock_quantity;
+
+    IF inspected <> 4 OR defective <> 1 OR defect_rate <> 25.00 THEN
+        RAISE EXCEPTION
+            'slot-rate check failed: inspected=%, defective=%, rate=%',
+            inspected, defective, defect_rate;
+    END IF;
+
+    IF shortage <> 1 THEN
+        RAISE EXCEPTION 'requirement check failed: shortage=%', shortage;
+    END IF;
+
+    IF (SELECT delivery_status FROM production.defect_report_deliveries
+        WHERE unit_defect_id = -9001) <> 'PENDING' THEN
+        RAISE EXCEPTION 'defect report delivery was not queued';
+    END IF;
+END
+$$;
+
+EXECUTE datastation_product(-1001);
+EXECUTE datastation_product_requirements(-1001, 3);
+EXECUTE datastation_job('00000000-0000-0000-0000-000000007001');
+EXECUTE datastation_slot_rates(-1001);
+EXECUTE datastation_part_rates(
+    '2026-01-01T00:00:00Z',
+    '2026-01-02T00:00:00Z'
+);
+
+ROLLBACK;

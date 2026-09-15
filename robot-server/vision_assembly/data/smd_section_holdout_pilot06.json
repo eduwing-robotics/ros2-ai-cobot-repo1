@@ -1,0 +1,378 @@
+{
+  "schema_version": 1,
+  "mode": "learned_multiframe_smd_section_evaluation",
+  "timestamp_unix": 1788169408.7059398,
+  "robot_motion_authorized": false,
+  "tape_required": false,
+  "model": "vision_assembly/models/tray_segmentation/pilot_06/weights/best.pt",
+  "frame_count": 8,
+  "confidence_threshold": 0.2,
+  "image_size": 1280,
+  "stability_limits": {
+    "max_center_span_px": 3.0,
+    "max_angle_span_deg": 3.0
+  },
+  "all_parts_stable": false,
+  "registrations": [
+    {
+      "frame": "vision_assembly/data/smd_section_holdout_1920/frame_01.jpg",
+      "mode": "clean_section_feature_homography",
+      "reference_image": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/smd_section_clean_reference_1920_raw.jpg",
+      "matches": 180,
+      "inliers": 93,
+      "scale_area": 1.00056,
+      "current_polygon_pixel": [
+        [
+          750.302001953125,
+          346.9010009765625
+        ],
+        [
+          1309.72998046875,
+          343.3179931640625
+        ],
+        [
+          1310.906005859375,
+          953.1799926757812
+        ],
+        [
+          730.68798828125,
+          951.3280029296875
+        ]
+      ]
+    },
+    {
+      "frame": "vision_assembly/data/smd_section_holdout_1920/frame_02.jpg",
+      "mode": "clean_section_feature_homography",
+      "reference_image": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/smd_section_clean_reference_1920_raw.jpg",
+      "matches": 259,
+      "inliers": 161,
+      "scale_area": 1.00071,
+      "current_polygon_pixel": [
+        [
+          750.6430053710938,
+          346.4179992675781
+        ],
+        [
+          1309.9990234375,
+          342.98199462890625
+        ],
+        [
+          1310.697998046875,
+          952.9810180664062
+        ],
+        [
+          730.7100219726562,
+          951.2109985351562
+        ]
+      ]
+    },
+    {
+      "frame": "vision_assembly/data/smd_section_holdout_1920/frame_03.jpg",
+      "mode": "clean_section_feature_homography",
+      "reference_image": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/smd_section_clean_reference_1920_raw.jpg",
+      "matches": 242,
+      "inliers": 159,
+      "scale_area": 1.00091,
+      "current_polygon_pixel": [
+        [
+          750.4450073242188,
+          346.53900146484375
+        ],
+        [
+          1310.362060546875,
+          343.03900146484375
+        ],
+        [
+          1310.4649658203125,
+          953.1069946289062
+        ],
+        [
+          730.6729736328125,
+          951.1160278320312
+        ]
+      ]
+    },
+    {
+      "frame": "vision_assembly/data/smd_section_holdout_1920/frame_04.jpg",
+      "mode": "clean_section_feature_homography",
+      "reference_image": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/smd_section_clean_reference_1920_raw.jpg",
+      "matches": 247,
+      "inliers": 155,
+      "scale_area": 1.00076,
+      "current_polygon_pixel": [
+        [
+          750.3939819335938,
+          346.45001220703125
+        ],
+        [
+          1310.10595703125,
+          343.27398681640625
+        ],
+        [
+          1310.7559814453125,
+          953.1069946289062
+        ],
+        [
+          730.7830200195312,
+          951.094970703125
+        ]
+      ]
+    },
+    {
+      "frame": "vision_assembly/data/smd_section_holdout_1920/frame_05.jpg",
+      "mode": "clean_section_feature_homography",
+      "reference_image": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/smd_section_clean_reference_1920_raw.jpg",
+      "matches": 239,
+      "inliers": 140,
+      "scale_area": 1.00066,
+      "current_polygon_pixel": [
+        [
+          750.5239868164062,
+          346.57501220703125
+        ],
+        [
+          1310.041015625,
+          343.27899169921875
+        ],
+        [
+          1310.6290283203125,
+          953.2310180664062
+        ],
+        [
+          730.5709838867188,
+          951.093994140625
+        ]
+      ]
+    },
+    {
+      "frame": "vision_assembly/data/smd_section_holdout_1920/frame_06.jpg",
+      "mode": "clean_section_feature_homography",
+      "reference_image": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/smd_section_clean_reference_1920_raw.jpg",
+      "matches": 227,
+      "inliers": 137,
+      "scale_area": 1.00076,
+      "current_polygon_pixel": [
+        [
+          750.385986328125,
+          346.64300537109375
+        ],
+        [
+          1309.8179931640625,
+          343.1629943847656
+        ],
+        [
+          1310.6920166015625,
+          953.14697265625
+        ],
+        [
+          730.551025390625,
+          951.2579956054688
+        ]
+      ]
+    },
+    {
+      "frame": "vision_assembly/data/smd_section_holdout_1920/frame_07.jpg",
+      "mode": "clean_section_feature_homography",
+      "reference_image": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/smd_section_clean_reference_1920_raw.jpg",
+      "matches": 235,
+      "inliers": 154,
+      "scale_area": 1.00067,
+      "current_polygon_pixel": [
+        [
+          750.5040283203125,
+          346.7619934082031
+        ],
+        [
+          1310.113037109375,
+          343.2349853515625
+        ],
+        [
+          1310.822021484375,
+          953.1370239257812
+        ],
+        [
+          730.6400146484375,
+          951.1270141601562
+        ]
+      ]
+    },
+    {
+      "frame": "vision_assembly/data/smd_section_holdout_1920/frame_08.jpg",
+      "mode": "clean_section_feature_homography",
+      "reference_image": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/smd_section_clean_reference_1920_raw.jpg",
+      "matches": 168,
+      "inliers": 87,
+      "scale_area": 1.00094,
+      "current_polygon_pixel": [
+        [
+          750.2429809570312,
+          346.7120056152344
+        ],
+        [
+          1309.7430419921875,
+          343.2120056152344
+        ],
+        [
+          1311.1240234375,
+          953.27001953125
+        ],
+        [
+          730.8049926757812,
+          951.2150268554688
+        ]
+      ]
+    }
+  ],
+  "detections": [
+    {
+      "instance_index": 1,
+      "center_canonical_pixel_median": [
+        276.831,
+        197.024
+      ],
+      "center_span_pixel": [
+        2.958,
+        0.516
+      ],
+      "long_axis_canonical_deg_median": 0.0,
+      "angle_span_deg": 0.0,
+      "confidence_median": 0.9181,
+      "stable": true
+    },
+    {
+      "instance_index": 2,
+      "center_canonical_pixel_median": [
+        422.702,
+        201.478
+      ],
+      "center_span_pixel": [
+        1.815,
+        0.808
+      ],
+      "long_axis_canonical_deg_median": 0.0,
+      "angle_span_deg": 0.0,
+      "confidence_median": 0.9309,
+      "stable": true
+    },
+    {
+      "instance_index": 3,
+      "center_canonical_pixel_median": [
+        605.073,
+        199.049
+      ],
+      "center_span_pixel": [
+        0.817,
+        0.231
+      ],
+      "long_axis_canonical_deg_median": 0.0,
+      "angle_span_deg": 0.0,
+      "confidence_median": 0.923,
+      "stable": true
+    },
+    {
+      "instance_index": 4,
+      "center_canonical_pixel_median": [
+        763.245,
+        184.243
+      ],
+      "center_span_pixel": [
+        1.888,
+        0.777
+      ],
+      "long_axis_canonical_deg_median": 0.0,
+      "angle_span_deg": 0.0,
+      "confidence_median": 0.928,
+      "stable": true
+    },
+    {
+      "instance_index": 5,
+      "center_canonical_pixel_median": [
+        929.833,
+        180.165
+      ],
+      "center_span_pixel": [
+        1.271,
+        0.527
+      ],
+      "long_axis_canonical_deg_median": 0.0,
+      "angle_span_deg": 0.0,
+      "confidence_median": 0.9275,
+      "stable": true
+    },
+    {
+      "instance_index": 6,
+      "center_canonical_pixel_median": [
+        301.45,
+        401.841
+      ],
+      "center_span_pixel": [
+        1.972,
+        0.485
+      ],
+      "long_axis_canonical_deg_median": 0.0,
+      "angle_span_deg": 0.0,
+      "confidence_median": 0.9533,
+      "stable": true
+    },
+    {
+      "instance_index": 7,
+      "center_canonical_pixel_median": [
+        471.884,
+        404.14
+      ],
+      "center_span_pixel": [
+        3.099,
+        0.569
+      ],
+      "long_axis_canonical_deg_median": 0.0,
+      "angle_span_deg": 0.0,
+      "confidence_median": 0.9564,
+      "stable": false
+    },
+    {
+      "instance_index": 8,
+      "center_canonical_pixel_median": [
+        634.181,
+        396.043
+      ],
+      "center_span_pixel": [
+        1.604,
+        0.937
+      ],
+      "long_axis_canonical_deg_median": 0.0,
+      "angle_span_deg": 0.0,
+      "confidence_median": 0.8973,
+      "stable": true
+    },
+    {
+      "instance_index": 9,
+      "center_canonical_pixel_median": [
+        755.212,
+        387.317
+      ],
+      "center_span_pixel": [
+        1.668,
+        0.553
+      ],
+      "long_axis_canonical_deg_median": 0.0,
+      "angle_span_deg": 0.0,
+      "confidence_median": 0.9501,
+      "stable": true
+    },
+    {
+      "instance_index": 10,
+      "center_canonical_pixel_median": [
+        913.095,
+        394.335
+      ],
+      "center_span_pixel": [
+        1.031,
+        0.407
+      ],
+      "long_axis_canonical_deg_median": 0.0,
+      "angle_span_deg": 0.0,
+      "confidence_median": 0.9498,
+      "stable": true
+    }
+  ]
+}

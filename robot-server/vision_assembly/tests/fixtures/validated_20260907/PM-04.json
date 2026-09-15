@@ -1,0 +1,190 @@
+{
+  "snapshot": {
+    "schema": "fr5.fixed_fixture_cycle_snapshot/v1",
+    "cycle_id": "20260907-115129",
+    "board_captured": true,
+    "board_capture": {
+      "captured_unix": 1788749489.3386035,
+      "source_file": "/home/juchan-yoon/FR5_robot_control/runtime/assembly_cycles/pm34_test_20260907/pm04/board_measurement.json",
+      "source_age_sec": 0.0,
+      "hole_fit_rms_mm": 0.5353242076145797,
+      "plane_residual_mad_mm": 1.045643615986471,
+      "T_base_board": [
+        [
+          -0.9994324602828093,
+          -0.021862157066150262,
+          0.025628176319543516,
+          0.04088393526857047
+        ],
+        [
+          -0.021212759772656815,
+          0.9994537275561468,
+          0.02534295359564604,
+          -0.5177015894384459
+        ],
+        [
+          -0.026168227985062107,
+          0.024784926115251828,
+          -0.9993502545562207,
+          0.08815490669534179
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "slot_count": 25,
+      "image_timestamp_ros_ns": 1788749489221354240,
+      "arrived_unix": 1788749485.2641332
+    },
+    "tray_captured": true,
+    "authorized_selected_slots": [
+      "PM-04"
+    ],
+    "tray_capture": {
+      "captured_unix": 1788749568.1442058,
+      "handeye_sha256": "f08dc2dd9a40523e3f0c69e9285d88c774d69553659c3d9be891da727877c558",
+      "parts": [
+        {
+          "part_type": "long_orange",
+          "instance_index": 4,
+          "base_xyz_mm": [
+            -658.727,
+            -32.026,
+            -45.795
+          ],
+          "long_axis_angle_base_deg": 1.787,
+          "observation_frames": 23,
+          "quality": {
+            "observation_frames": 23,
+            "median_detection_confidence": 0.967,
+            "median_mask_shape_score": 0.935,
+            "median_rectangularity": 0.94
+          },
+          "reference_center_pixel": [
+            1151.9,
+            449.06
+          ],
+          "consumed": false
+        }
+      ],
+      "part_count": 3,
+      "capture_scope": {
+        "mode": "part_instance_subset",
+        "selected_part_types": [
+          "long_orange"
+        ],
+        "selected_instance_indices": [
+          1,
+          2,
+          4
+        ]
+      },
+      "quality_gate": {
+        "minimum_observation_frames": 20,
+        "parts": {
+          "gpu": {
+            "minimum_detection_confidence": 0.45,
+            "minimum_mask_shape_score": 0.45,
+            "minimum_rectangularity": 0.45
+          },
+          "hbm": {
+            "minimum_detection_confidence": 0.55,
+            "minimum_mask_shape_score": 0.45,
+            "minimum_rectangularity": 0.45
+          },
+          "long_orange": {
+            "minimum_detection_confidence": 0.7,
+            "minimum_mask_shape_score": 0.6,
+            "minimum_rectangularity": 0.6
+          },
+          "black_block": {
+            "minimum_detection_confidence": 0.7,
+            "minimum_mask_shape_score": 0.65,
+            "minimum_rectangularity": 0.7
+          },
+          "marked_white": {
+            "minimum_detection_confidence": 0.7,
+            "minimum_mask_shape_score": 0.35,
+            "minimum_rectangularity": 0.35
+          },
+          "right_white_brown": {
+            "minimum_detection_confidence": 0.7,
+            "minimum_mask_shape_score": 0.35,
+            "minimum_rectangularity": 0.35
+          }
+        },
+        "rules": [
+          "Every frozen part must carry detector-generated median quality metrics.",
+          "A complete count never overrides a low-confidence or malformed mask.",
+          "Any quality failure blocks snapshot creation and forces a fresh tray measurement."
+        ]
+      },
+      "source": "/home/juchan-yoon/FR5_robot_control/runtime/assembly_cycles/pm34_test_20260907/pm04/pm_tray_measurement.json",
+      "distinct_valid_frames": 4
+    },
+    "resolved_placements": {
+      "PM-04": {
+        "slot_code": "PM-04",
+        "part_type": "long_orange",
+        "surface_base_mm": [
+          37.438456,
+          -474.652947,
+          89.254263
+        ],
+        "place_tcp_compensation_board_mm": [
+          0.002,
+          3.999
+        ],
+        "place_tcp_compensation_base_mm": [
+          -0.089426,
+          3.996773,
+          0.099063
+        ],
+        "place_tcp_correction_base_mm": [
+          0.0,
+          0.0
+        ],
+        "corrected_surface_base_mm": [
+          37.34903,
+          -470.656174,
+          89.353326
+        ],
+        "corrected_place_xy_base_mm": [
+          37.34903,
+          -470.656174
+        ],
+        "final_tcp_z_mm": 89.451326,
+        "final_z_mode": "surface_relative",
+        "placement_orientation": {
+          "mode": "align_actual_carried_axis_to_current_slot_axis",
+          "gripper_axis": "tool_y",
+          "symmetry_period_deg": 180.0,
+          "maximum_intentional_rotation_deg": 95.0,
+          "preference_tie_threshold_deg": 5.0,
+          "skip_rotation_below_deg": 3.0,
+          "slot_long_axis_board_deg": 0.0,
+          "slot_long_axis_base_deg": -178.78409077682903,
+          "preferred_tcp_c_deg": null
+        },
+        "legacy_absolute_placement_tcp_abc_deg": [
+          179.998,
+          0.001,
+          180.0
+        ],
+        "placement_ready": true,
+        "blocking_reasons": []
+      }
+    }
+  },
+  "expected": [
+    33.59474573588138,
+    -474.8953461587327,
+    89.75132599999999,
+    -180.0,
+    0.0,
+    91.21590922317093
+  ]
+}

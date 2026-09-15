@@ -1,0 +1,313 @@
+{
+  "schema": "fr5.cached_vrm_02_05_run/v1",
+  "started_unix": 1788348269.291306,
+  "tray_snapshot": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/fixed_cycle_tray_vrm_remaining_2026-09-02.json",
+  "transfer_z_mm": 387.88,
+  "plan": [
+    {
+      "slot_code": "VRM-02",
+      "tray_instance_index": 1,
+      "tray_surface_base_mm": [
+        -734.964,
+        -208.267,
+        -47.711
+      ],
+      "tray_long_axis_base_deg": 1.887,
+      "pick_final_tcp": [
+        -734.964,
+        -206.667,
+        -55.943,
+        -180.0,
+        0.0,
+        91.887
+      ],
+      "board_target_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/vrm02_3d_surface_current_2026-09-02.json",
+      "board_surface_base_mm": [
+        -14.081502966147514,
+        -537.6673134886507,
+        87.17688706640833
+      ],
+      "place_final_tcp": [
+        -14.081502966147514,
+        -537.6673134886507,
+        85.01983406640832,
+        180.0,
+        0.0,
+        -178.51183141877658
+      ],
+      "placement_z_offset_mm": -2.157053,
+      "placement_orientation": {
+        "target_axis_base_deg": 91.4881685812234,
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 2.0,
+        "preferred_tcp_c_deg": 180.0,
+        "planned_from_pick": {
+          "current_axis_base_deg": 1.8869999999999985,
+          "target_axis_base_deg": 91.4881685812234,
+          "symmetry_period_deg": 180.0,
+          "rotation_delta_deg": 89.60116858122342,
+          "target_tcp_abc_deg": [
+            180.0,
+            0.0,
+            -178.51183141877658
+          ],
+          "preferred_tcp_c_deg": 180.0
+        }
+      },
+      "tray_open_position": 28,
+      "grip_position": 24,
+      "release_position": 26
+    },
+    {
+      "slot_code": "VRM-03",
+      "tray_instance_index": 2,
+      "tray_surface_base_mm": [
+        -735.449,
+        -184.387,
+        -46.785
+      ],
+      "tray_long_axis_base_deg": 1.907,
+      "pick_final_tcp": [
+        -735.449,
+        -182.787,
+        -55.016999999999996,
+        -180.0,
+        0.0,
+        91.90699999999998
+      ],
+      "board_target_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/vrm03_3d_surface_current_2026-09-02.json",
+      "board_surface_base_mm": [
+        -14.582089805249709,
+        -519.501223197967,
+        87.33478587119475
+      ],
+      "place_final_tcp": [
+        -14.582089805249709,
+        -519.501223197967,
+        85.17773287119475,
+        -179.99999999999997,
+        0.0,
+        -178.53840688200611
+      ],
+      "placement_z_offset_mm": -2.157053,
+      "placement_orientation": {
+        "target_axis_base_deg": 91.46159311799393,
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 2.0,
+        "preferred_tcp_c_deg": 180.0,
+        "planned_from_pick": {
+          "current_axis_base_deg": 1.9069999999999645,
+          "target_axis_base_deg": 91.46159311799393,
+          "symmetry_period_deg": 180.0,
+          "rotation_delta_deg": 89.55459311799393,
+          "target_tcp_abc_deg": [
+            -179.99999999999997,
+            0.0,
+            -178.53840688200611
+          ],
+          "preferred_tcp_c_deg": 180.0
+        }
+      },
+      "tray_open_position": 28,
+      "grip_position": 24,
+      "release_position": 26
+    },
+    {
+      "slot_code": "VRM-04",
+      "tray_instance_index": 3,
+      "tray_surface_base_mm": [
+        -734.446,
+        -159.647,
+        -43.909
+      ],
+      "tray_long_axis_base_deg": 1.917,
+      "pick_final_tcp": [
+        -734.446,
+        -158.047,
+        -52.141,
+        -180.0,
+        0.0,
+        91.91700000000003
+      ],
+      "board_target_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/vrm04_3d_surface_current_2026-09-02.json",
+      "board_surface_base_mm": [
+        -15.057050990123525,
+        -501.1359598004359,
+        87.78019725784672
+      ],
+      "place_final_tcp": [
+        -15.057050990123525,
+        -501.1359598004359,
+        85.62314425784672,
+        -179.99999999999997,
+        0.0,
+        -178.51246106767306
+      ],
+      "placement_z_offset_mm": -2.157053,
+      "placement_orientation": {
+        "target_axis_base_deg": 91.48753893232691,
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 2.0,
+        "preferred_tcp_c_deg": 180.0,
+        "planned_from_pick": {
+          "current_axis_base_deg": 1.9170000000000185,
+          "target_axis_base_deg": 91.48753893232691,
+          "symmetry_period_deg": 180.0,
+          "rotation_delta_deg": 89.57053893232694,
+          "target_tcp_abc_deg": [
+            -179.99999999999997,
+            0.0,
+            -178.51246106767306
+          ],
+          "preferred_tcp_c_deg": 180.0
+        }
+      },
+      "tray_open_position": 28,
+      "grip_position": 24,
+      "release_position": 26
+    },
+    {
+      "slot_code": "VRM-05",
+      "tray_instance_index": 4,
+      "tray_surface_base_mm": [
+        -731.917,
+        -135.579,
+        -42.079
+      ],
+      "tray_long_axis_base_deg": 1.937,
+      "pick_final_tcp": [
+        -731.917,
+        -133.979,
+        -50.311,
+        -180.0,
+        0.0,
+        91.93700000000001
+      ],
+      "board_target_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/vrm05_3d_surface_current_2026-09-02.json",
+      "board_surface_base_mm": [
+        -15.610990501459193,
+        -482.6896293520943,
+        88.01394938703771
+      ],
+      "place_final_tcp": [
+        -15.610990501459193,
+        -482.6896293520943,
+        85.85689638703771,
+        -179.99999999999997,
+        0.0,
+        -178.48636626891107
+      ],
+      "placement_z_offset_mm": -2.157053,
+      "placement_orientation": {
+        "target_axis_base_deg": 91.51363373108893,
+        "gripper_axis": "tool_y",
+        "symmetry_period_deg": 180.0,
+        "maximum_intentional_rotation_deg": 95.0,
+        "preference_tie_threshold_deg": 5.0,
+        "skip_rotation_below_deg": 2.0,
+        "preferred_tcp_c_deg": 180.0,
+        "planned_from_pick": {
+          "current_axis_base_deg": 1.9370000000000127,
+          "target_axis_base_deg": 91.51363373108893,
+          "symmetry_period_deg": 180.0,
+          "rotation_delta_deg": 89.57663373108892,
+          "target_tcp_abc_deg": [
+            -179.99999999999997,
+            0.0,
+            -178.48636626891107
+          ],
+          "preferred_tcp_c_deg": 180.0
+        }
+      },
+      "tray_open_position": 28,
+      "grip_position": 24,
+      "release_position": 26
+    }
+  ],
+  "completed_slots": [
+    "VRM-02",
+    "VRM-03",
+    "VRM-04",
+    "VRM-05"
+  ],
+  "actual_orientation_decisions": [
+    {
+      "slot_code": "VRM-02",
+      "rotation_skipped": false,
+      "current_axis_base_deg": 1.842002820406157,
+      "target_axis_base_deg": 91.4881685812234,
+      "symmetry_period_deg": 180.0,
+      "rotation_delta_deg": 89.64616576081721,
+      "target_tcp_abc_deg": [
+        179.9857940673828,
+        -0.00019458794848749465,
+        -178.51183137053044
+      ],
+      "preferred_tcp_c_deg": 180.0
+    },
+    {
+      "slot_code": "VRM-03",
+      "rotation_skipped": false,
+      "current_axis_base_deg": 1.9377281871095895,
+      "target_axis_base_deg": 91.46159311799393,
+      "symmetry_period_deg": 180.0,
+      "rotation_delta_deg": 89.52386493088432,
+      "target_tcp_abc_deg": [
+        179.98294067382812,
+        -0.0023333211429354345,
+        -178.53840618727975
+      ],
+      "preferred_tcp_c_deg": 180.0
+    },
+    {
+      "slot_code": "VRM-04",
+      "rotation_skipped": false,
+      "current_axis_base_deg": 1.9438156227768923,
+      "target_axis_base_deg": 91.48753893232691,
+      "symmetry_period_deg": 180.0,
+      "rotation_delta_deg": 89.54372330955005,
+      "target_tcp_abc_deg": [
+        179.95588684082028,
+        -0.0019688992761073385,
+        -178.51245955177808
+      ],
+      "preferred_tcp_c_deg": 180.0
+    },
+    {
+      "slot_code": "VRM-05",
+      "rotation_skipped": false,
+      "current_axis_base_deg": 1.9673141368777511,
+      "target_axis_base_deg": 91.51363373108893,
+      "symmetry_period_deg": 180.0,
+      "rotation_delta_deg": 89.54631959421113,
+      "target_tcp_abc_deg": [
+        179.92538452148438,
+        -0.001180193736207982,
+        -178.48636473196075
+      ],
+      "preferred_tcp_c_deg": 180.0
+    }
+  ],
+  "status": "completed_motion_operator_rejected_offcenter_pick",
+  "last_verified_tcp": [
+    -16.032669067382812,
+    -482.8596496582031,
+    185.6027374267578,
+    179.92376708984375,
+    -0.0017141689313575625,
+    -178.54522705078125
+  ],
+  "completed_unix": 1788348672.7543807,
+  "operator_result": "VRM-02..05 grasp was not centered; placements are not physically validated",
+  "diagnosed_cause": "validated Base X -2.0 mm correction was omitted; only Base Y +1.6 mm was applied",
+  "superseded_unix": 1788348943.6824172
+}

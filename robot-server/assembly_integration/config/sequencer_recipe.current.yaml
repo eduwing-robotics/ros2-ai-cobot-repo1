@@ -1,0 +1,152 @@
+# Reviewed values from active robot planner, 2026-09-08.
+# Integration reference only: ready points remain placeholders; transfer uncommissioned.
+# Sequencer owns this order via /real/robot/command; batch assembly.start is retired.
+# Agreed exception: each Pick ends at TrayHome after removal inspection.
+recipe_version: assembly-r1-sequencer-review-20260908
+frame: base_link
+real_execution_ready: false
+joint_points:
+  home:
+  - -4.689
+  - -86.951
+  - 84.467
+  - -87.516
+  - -90.0
+  - -4.688
+  item_ready:
+  - -4.689
+  - -86.951
+  - 84.467
+  - -87.516
+  - -90.0
+  - -4.688
+  assembly_ready:
+  - -4.689
+  - -86.951
+  - 84.467
+  - -87.516
+  - -90.0
+  - -4.688
+motion:
+  approach_dz_mm: 100.0
+  retract_dz_mm: 100.0
+  assembled_pcb_drop_approach_dz_mm: 150.0
+workflow:
+  before_all:
+  - conveyor.move_to: ASSEMBLY
+  - vision.resolve_targets: recipe_steps
+  per_step:
+  - robot.move_joint: home
+  - robot.pick: current_part
+  - robot.move_joint: home
+  - robot.move_joint: assembly_ready
+  - robot.place: current_slot
+  after_all:
+  - conveyor.move_to: INSPECTION
+  - inspection.run: assembled_pcb
+  - robot.transfer: assembled_pcb
+gripper:
+  parts:
+    HBM:
+      pregrasp_opening_percent: 25
+      grasp_opening_percent: 18
+      release_opening_percent: 25
+    PM:
+      pregrasp_opening_percent: 30
+      grasp_opening_percent: 25
+      release_opening_percent: 30
+    GPU:
+      pregrasp_opening_percent: 70
+      grasp_opening_percent: 65
+      release_opening_percent: 70
+    CAP:
+      pregrasp_opening_percent: 18
+      grasp_opening_percent: 12
+      release_opening_percent: 17
+    IND:
+      pregrasp_opening_percent: 21
+      grasp_opening_percent: 14
+      release_opening_percent: 20
+    VRM:
+      pregrasp_opening_percent: 30
+      grasp_opening_percent: 24
+      release_opening_percent: 28
+  assembled_pcb:
+    grasp_opening_percent: 0
+    release_opening_percent: 100
+steps:
+- order: 1
+  part_id: HBM
+  slot_code: HBM-01
+- order: 2
+  part_id: HBM
+  slot_code: HBM-02
+- order: 3
+  part_id: HBM
+  slot_code: HBM-03
+- order: 4
+  part_id: HBM
+  slot_code: HBM-04
+- order: 5
+  part_id: HBM
+  slot_code: HBM-05
+- order: 6
+  part_id: HBM
+  slot_code: HBM-06
+- order: 7
+  part_id: HBM
+  slot_code: HBM-07
+- order: 8
+  part_id: HBM
+  slot_code: HBM-08
+- order: 9
+  part_id: PM
+  slot_code: PM-01
+- order: 10
+  part_id: PM
+  slot_code: PM-02
+- order: 11
+  part_id: PM
+  slot_code: PM-03
+- order: 12
+  part_id: PM
+  slot_code: PM-04
+- order: 13
+  part_id: GPU
+  slot_code: GPU-01
+- order: 14
+  part_id: CAP
+  slot_code: CAP-01
+- order: 15
+  part_id: CAP
+  slot_code: CAP-02
+- order: 16
+  part_id: CAP
+  slot_code: CAP-03
+- order: 17
+  part_id: CAP
+  slot_code: CAP-04
+- order: 18
+  part_id: CAP
+  slot_code: CAP-05
+- order: 19
+  part_id: IND
+  slot_code: IND-01
+- order: 20
+  part_id: IND
+  slot_code: IND-02
+- order: 21
+  part_id: VRM
+  slot_code: VRM-01
+- order: 22
+  part_id: VRM
+  slot_code: VRM-02
+- order: 23
+  part_id: VRM
+  slot_code: VRM-03
+- order: 24
+  part_id: VRM
+  slot_code: VRM-04
+- order: 25
+  part_id: VRM
+  slot_code: VRM-05

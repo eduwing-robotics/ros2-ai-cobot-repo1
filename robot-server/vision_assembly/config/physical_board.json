@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "name": "printed_semiconductor_package_board",
+  "size_mm": {
+    "x": 139.0,
+    "y": 110.0
+  },
+  "unity_source_size_mm": {
+    "x": 140.0,
+    "y": 110.33742
+  },
+  "unity_to_physical_scale": {
+    "x": 0.9928571428571429,
+    "y": 0.996941833034905
+  },
+  "origin": "geometric center of the physical board",
+  "canonical_orientation": {
+    "defined_from": "D435 reference image captured 2026-08-13 with empty board left and assembled board right",
+    "visual_rule": "dense gold pad cluster at upper-right; asymmetric lower-right pad cluster",
+    "board_x_axis_in_canonical_view": "image right",
+    "board_y_axis_in_canonical_view": "image down"
+  },
+  "physical_slot_overrides": {
+    "right_white_brown": {
+      "source": "D435 measurement from five parts manually placed in physical slots on 2026-08-13",
+      "status": "provisional visual measurement; validate TCP above each slot before placement",
+      "slots": [
+        {"slot_id": "right_white_brown_01", "x_mm": -40.95, "y_mm": -39.21, "long_axis_board_deg": 0.0},
+        {"slot_id": "right_white_brown_02", "x_mm": -60.43, "y_mm": -17.97, "long_axis_board_deg": 90.0, "place_tcp_compensation_board_mm": [-1.40, -4.05]},
+        {"slot_id": "right_white_brown_03", "x_mm": -59.98, "y_mm": -1.38, "long_axis_board_deg": 90.0, "place_tcp_compensation_board_mm": [-1.40, -4.05]},
+        {"slot_id": "right_white_brown_04", "x_mm": -60.39, "y_mm": 15.59, "long_axis_board_deg": 90.0, "place_tcp_compensation_board_mm": [-1.40, -4.05]},
+        {"slot_id": "right_white_brown_05", "x_mm": -60.25, "y_mm": 32.47, "long_axis_board_deg": 90.0, "place_tcp_compensation_board_mm": [-1.40, -4.05]}
+      ]
+    }
+  },
+  "status": "physical dimensions supplied by user; verify with calipers before precision placement"
+}

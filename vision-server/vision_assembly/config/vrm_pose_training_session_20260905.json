@@ -1,0 +1,78 @@
+{
+  "purpose": "explicit_current_camera_supervised_pose_training",
+  "training_allowed": true,
+  "task": "vrm_normal_vs_placement_defect",
+  "normal_patchcore_training_allowed": false,
+  "reserved_validation_manifest": "vision_assembly/config/vrm_presence_context_holdout_20260905.json",
+  "scenes": [{
+    "physical_scene_id": "20260905_pose_train_04_left_translation_165057",
+    "image": "runtime/inspection/s22_inspection_roi_20260905_165057.png",
+    "image_sha256": "9f11647257c729e8ef0f2849d92b7a801fba134fada3cbdf6e088c324e84f2ee",
+    "split": "train",
+    "labels": {"vrm_01": "NORMAL", "vrm_02": "NORMAL", "vrm_03": "NORMAL", "vrm_04": "PLACEMENT_DEFECT", "vrm_05": "NORMAL"},
+    "presence": "ALL_FIVE_PRESENT",
+    "other_20_components_empty": true,
+    "label_source": "user_ready_after_explicit_new04_left_on_lip_training_instruction_and_image_checked",
+    "note": "New physical training scene, previous164343 remains validation. Height per user setup not measured. Never normal PatchCore input."
+  }, {
+    "physical_scene_id": "20260905_pose_train_02_03_translation_163146",
+    "image": "runtime/inspection/s22_inspection_roi_20260905_163146.png",
+    "image_sha256": "99d03b6aa756fab7d71cd4677a9644656825ac2bab6758d67eb16f7bb6c9f745",
+    "split": "train",
+    "labels": {"vrm_01": "NORMAL", "vrm_02": "PLACEMENT_DEFECT", "vrm_03": "PLACEMENT_DEFECT", "vrm_04": "NORMAL", "vrm_05": "NORMAL"},
+    "presence": "ALL_FIVE_PRESENT",
+    "other_20_components_empty": true,
+    "label_source": "user_ready_after_explicit_new02_03_translation_on_lip_training_setup_and_image_checked",
+    "note": "New physical placement for supervised training only; not a reused validation scene. Height per user setup, unmeasured. Never normal PatchCore input."
+  }, {
+    "physical_scene_id": "20260905_pose_train_odd_defects_152604",
+    "image": "runtime/inspection/s22_inspection_roi_20260905_152604.png",
+    "image_sha256": "76e47fc587a4ad355c1e36b3721d01961aa6239f239ccf9b30b3ce3ac32a54fd",
+    "split": "excluded",
+    "labels": {"vrm_01": "UNCONFIRMED_UPSIDE_DOWN", "vrm_02": "NORMAL", "vrm_03": "NORMAL", "vrm_04": "NORMAL", "vrm_05": "PLACEMENT_DEFECT"},
+    "presence": "ALL_FIVE_PRESENT",
+    "other_20_components_empty": true,
+    "label_source": "user_followup_invalidated_capture_vrm01_flipped_vrm03_settled",
+    "note": "ENTIRE SCENE EXCLUDED: VRM01 flipped exposing regular print texture; VRM03 settled normally. Previously generated five crops quarantined, no model trained. Retain source for provenance only."
+  }, {
+    "physical_scene_id": "20260905_pose_train_odd_defects_153051",
+    "image": "runtime/inspection/s22_inspection_roi_20260905_153051.png",
+    "image_sha256": "cbeb5fb3a719250e20e251a91c16ae0395150fc111a81a9ecd819280e4222e2d",
+    "split": "train",
+    "labels": {"vrm_01": "PLACEMENT_DEFECT", "vrm_02": "NORMAL", "vrm_03": "PLACEMENT_DEFECT", "vrm_04": "NORMAL", "vrm_05": "PLACEMENT_DEFECT"},
+    "presence": "ALL_FIVE_PRESENT",
+    "other_20_components_empty": true,
+    "label_source": "user_ready_after_correcting01_face_and_ensuring_odd_slots_remain_on_lip; image_checked",
+    "note": "Corrected new physical scene. Five crops from one scene, not five independent scenes. Height not quantitatively measured. Training only, never normal PatchCore input."
+  }, {
+    "physical_scene_id": "20260905_pose_train_even_defects_153405",
+    "image": "runtime/inspection/s22_inspection_roi_20260905_153405.png",
+    "image_sha256": "9c087d3c9c791352b14cdda0fd930695b243483dfd93096d28b1aeb7fd11b67c",
+    "split": "train",
+    "labels": {"vrm_01": "NORMAL", "vrm_02": "PLACEMENT_DEFECT", "vrm_03": "NORMAL", "vrm_04": "PLACEMENT_DEFECT", "vrm_05": "NORMAL"},
+    "presence": "ALL_FIVE_PRESENT",
+    "other_20_components_empty": true,
+    "label_source": "user_ready_after_even_slots_rotated_on_lip_instruction_and_image_checked",
+    "note": "Complementary training scene, all rough faces upward. Height not quantitatively measured. Excluded validation and normal PatchCore training."
+  }, {
+    "physical_scene_id": "20260905_pose_train_odd_translation_153909",
+    "image": "runtime/inspection/s22_inspection_roi_20260905_153909.png",
+    "image_sha256": "8c535710bf64f1d4e77e5af6ff0f28ce8f4f68b70a5e8bb7a9d23614d1e00ef5",
+    "split": "train",
+    "labels": {"vrm_01": "PLACEMENT_DEFECT", "vrm_02": "NORMAL", "vrm_03": "PLACEMENT_DEFECT", "vrm_04": "NORMAL", "vrm_05": "PLACEMENT_DEFECT"},
+    "presence": "ALL_FIVE_PRESENT",
+    "other_20_components_empty": true,
+    "label_source": "user_ready_after_odd_slots_translation_only_on_lip_instruction_and_image_checked",
+    "note": "Translation/on-lip defects per user physical setup; height not measured visually. One physical scene, training only."
+  }, {
+    "physical_scene_id": "20260905_pose_train_even_translation_154302",
+    "image": "runtime/inspection/s22_inspection_roi_20260905_154302.png",
+    "image_sha256": "e5bd2cf330249b5edcb907c9b3c2fd46228a312c0fc56867f28675e1d4185031",
+    "split": "train",
+    "labels": {"vrm_01": "NORMAL", "vrm_02": "PLACEMENT_DEFECT", "vrm_03": "NORMAL", "vrm_04": "PLACEMENT_DEFECT", "vrm_05": "NORMAL"},
+    "presence": "ALL_FIVE_PRESENT",
+    "other_20_components_empty": true,
+    "label_source": "user_ready_after_even_slots_translation_on_lip_instruction_and_image_checked",
+    "note": "Complementary translation training; physical seating per user, height unmeasured. Excluded validation and normal PatchCore training."
+  }]
+}

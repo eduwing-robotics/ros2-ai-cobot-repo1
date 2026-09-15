@@ -1,0 +1,8 @@
+# Dedicated PCB anomaly-detection environment (Python 3.12, RTX 5070 Ti host).
+anomalib==2.6.0
+matplotlib==3.11.1
+
+# This workstation's torch 2.13.0+cu130 stack was GPU-validated with cuDNN 9.24.
+# The anomalib dependency resolver initially selected 9.20, which produced
+# CUDNN_STATUS_SUBLIBRARY_VERSION_MISMATCH here.
+nvidia-cudnn-cu13==9.24.0.43

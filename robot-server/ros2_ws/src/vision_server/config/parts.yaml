@@ -1,0 +1,36 @@
+parts:
+  gpu:
+    class_id: 0
+    label: GPU
+    expected: 1
+    min_score: 0.60
+
+  hbm:
+    class_id: 1
+    label: HBM
+    expected: 8
+    min_score: 0.55
+
+  black_block:
+    class_id: 2
+    label: Black block
+    expected: 5
+    min_score: 0.55
+
+  cap_small:
+    class_id: 3
+    label: Small white/brown part
+    expected: 5
+    min_score: 0.50
+
+  marked_white:
+    class_id: 4
+    label: White part with black mark
+    expected: 2
+    min_score: 0.55
+
+  long_orange:
+    class_id: 5
+    label: Long orange part
+    expected: 4
+    min_score: 0.55

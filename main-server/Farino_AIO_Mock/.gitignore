@@ -1,0 +1,9 @@
+build/
+install/
+log/
+build_current/
+log_current/
+.rollback/
+__pycache__/
+*.pyc
+

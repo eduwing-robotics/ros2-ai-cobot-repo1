@@ -1,0 +1,86 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <ui:Style src="project://database/Assets/UI/FR5Theme.uss" />
+    <ui:Template src="project://database/Assets/UI/FR5Shell.uxml" name="FR5Shell" />
+    <ui:VisualElement name="fr5-inspect" class="page page--dim page--inspect fr5--mock">
+        <ui:VisualElement class="page-heading">
+            <ui:Label text="INSPECT" class="page-heading__title" />
+            <ui:Label text="/" class="page-heading__divider" />
+            <ui:Label text="검사" class="page-heading__title" />
+            <ui:VisualElement class="spacer" />
+            <ui:Label name="inspect-page-note" text="판정 기록과 영상 확인 · 읽기 전용" class="page-heading__meta" />
+        </ui:VisualElement>
+
+        <ui:VisualElement name="camera-panel" class="panel" style="position:absolute; left:112px; top:164px; width:1050px; height:744px;">
+            <ui:VisualElement class="panel__spine" />
+            <ui:VisualElement class="panel__head">
+                <ui:Label text="검사 영상" class="panel__title" />
+                <ui:VisualElement class="spacer" />
+                <ui:Label name="camera-source" text="현재 영상" class="panel__badge" />
+            </ui:VisualElement>
+            <ui:VisualElement class="inspect-camera-body">
+                <ui:VisualElement class="row inspect-video-tabs">
+                    <ui:Button name="camera-live" text="현재 영상" class="btn" />
+                    <ui:Button name="camera-evidence" text="검사 기록 이미지" class="btn" />
+                </ui:VisualElement>
+                <ui:VisualElement name="camera-frame" class="inspect-camera-frame">
+                    <ui:Image name="camera-image" class="inspect-image" />
+                    <ui:Image name="evidence-image" picking-mode="Ignore" class="inspect-image" style="display:none;" />
+                    <ui:VisualElement name="camera-empty" class="empty">
+                        <ui:Label name="camera-empty-title" text="영상 수신 대기" class="empty__title" />
+                        <ui:Label name="camera-empty-desc" text="카메라 연결을 확인하세요." class="empty__desc" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:Label name="camera-stats" text="수신 기록 없음" class="inspect-support" />
+                <ui:Label name="camera-note" text="현재 영상은 선택한 생산 시도의 검사 기록과 다를 수 있습니다." class="inspect-support" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:VisualElement name="verdict-panel" class="panel" style="position:absolute; left:1186px; top:164px; width:710px; height:368px;">
+            <ui:VisualElement class="panel__spine" />
+            <ui:VisualElement class="panel__head">
+                <ui:Label name="verdict-title" text="검사 판정" class="panel__title" />
+                <ui:VisualElement class="spacer" />
+                <ui:Button name="inspect-refresh" text="새로고침" class="btn inspect-refresh" />
+            </ui:VisualElement>
+            <ui:VisualElement class="panel__body">
+                <ui:Label name="inspection-context" text="조회 중" class="inspect-support" />
+                <ui:Label name="verdict-value" text="조회 중" class="inspect-verdict inspect-verdict--status" />
+                <ui:Label name="inspection-message" text="검사 기록을 불러오고 있습니다." class="inspect-message" />
+                <ui:VisualElement name="check-list" class="vlist inspect-checks" />
+                <ui:VisualElement class="spacer" />
+                <ui:VisualElement class="row inspect-time-row">
+                    <ui:Label text="검사 시각 · 로컬" class="inspect-support" />
+                    <ui:VisualElement class="spacer" />
+                    <ui:Label name="verdict-score" text="—" class="inspect-time" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:VisualElement name="defect-panel" class="panel" style="position:absolute; left:1186px; top:556px; width:710px; height:352px;">
+            <ui:VisualElement class="panel__spine" />
+            <ui:VisualElement class="panel__head">
+                <ui:Label text="불량 위치" class="panel__title" />
+                <ui:VisualElement class="spacer" />
+                <ui:Label name="defect-sql" text="—" class="panel__badge" />
+            </ui:VisualElement>
+            <ui:VisualElement class="panel__body">
+                <ui:ScrollView mode="Vertical" class="inspect-defects-scroll">
+                    <ui:VisualElement name="defect-grid" class="row vlist" style="flex-wrap:wrap;" />
+                </ui:ScrollView>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:VisualElement name="units-panel" class="panel" style="position:absolute; left:112px; top:932px; width:1784px; height:124px;">
+            <ui:VisualElement class="panel__spine" />
+            <ui:VisualElement class="panel__head">
+                <ui:Label text="생산 시도 이력" class="panel__title" />
+                <ui:VisualElement class="spacer" />
+                <ui:Label name="units-summary" text="기록 선택 전" class="panel__badge" />
+            </ui:VisualElement>
+            <ui:ScrollView mode="Horizontal" class="inspect-units-scroll">
+                <ui:VisualElement name="unit-strip" class="row" />
+            </ui:ScrollView>
+        </ui:VisualElement>
+        <ui:Instance template="FR5Shell" name="shell" class="shell-host" picking-mode="Ignore" />
+    </ui:VisualElement>
+</ui:UXML>

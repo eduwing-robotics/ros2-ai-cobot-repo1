@@ -1,0 +1,36 @@
+{
+  "diagnostic_only": true,
+  "physical_grasp_validated": false,
+  "gripper_commands": 0,
+  "center_correction_applied": true,
+  "correction_base_xy_mm": [
+    -2.089,
+    2.779
+  ],
+  "clearance_above_taught_pick_mm": 10,
+  "measurement_timestamp": 1788679704.9315565,
+  "surface_plane_assumed_z": -47.291,
+  "minimum_surface_clearance_mm": 5.113999999999997,
+  "summary": {
+    "passed": true,
+    "waypoints": 8,
+    "minimum_joint_soft_limit_margin_deg": 57.155632,
+    "maximum_joint_step_deg": 32.194656,
+    "minimum_j6_deg": 1.8698513507843018,
+    "maximum_j6_deg": 97.981895,
+    "j6_operational_bounds_deg": [
+      -178.0,
+      178.0
+    ]
+  },
+  "status": "arrived_noncontact_inspection",
+  "actual_tcp": [
+    -628.3091430664062,
+    -162.30575561523438,
+    -42.0468635559082,
+    179.99583435058594,
+    0.009302262216806412,
+    -2.3180065155029297
+  ],
+  "completed_unix": 1788679805.384
+}

@@ -1,0 +1,18 @@
+# Parameters for the FR5 eye-in-hand D435 stream.
+enable_infra: false
+enable_infra1: false
+enable_infra2: false
+enable_rgbd: false
+enable_gyro: false
+enable_accel: false
+enable_motion: false
+pointcloud.enable: false
+colorizer.enable: false
+decimation_filter.enable: false
+spatial_filter.enable: false
+temporal_filter.enable: false
+hole_filling_filter.enable: false
+disparity_filter.enable: false
+hdr_merge.enable: false
+enable_sync: true
+align_depth.enable: true

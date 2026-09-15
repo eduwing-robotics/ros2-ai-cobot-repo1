@@ -1,0 +1,42 @@
+{
+  "samples": 30,
+  "median_corners_image_px": [
+    [
+      328.426,
+      51.775
+    ],
+    [
+      1026.594,
+      56.285
+    ],
+    [
+      1028.355,
+      657.436
+    ],
+    [
+      318.29,
+      657.078
+    ]
+  ],
+  "per_corner_uv_span_px": [
+    [
+      0.34,
+      0.142
+    ],
+    [
+      0.302,
+      0.299
+    ],
+    [
+      0.526,
+      2.411
+    ],
+    [
+      0.361,
+      0.785
+    ]
+  ],
+  "max_radial_error_px": 1.996,
+  "rms_radial_error_px": 0.327,
+  "robot_motion_authorized": false
+}

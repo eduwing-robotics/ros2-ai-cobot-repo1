@@ -1,0 +1,35 @@
+build/
+install/
+log/
+runtime/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+config/ksmc.env
+*.bag
+*.db3
+
+# Runtime observations are regenerated on the connected cell.
+calibration/data/*_last.json
+vision_assembly/data/*_last.json
+
+
+# Local vision environments, training outputs, and recovery snapshots
+.venv-vision/
+runs/
+robot_ws/backups/
+vision_assembly/backups/
+vision_assembly/datasets/
+vision_assembly/models/
+weights/
+*.orig
+*.pt
+
+# Historical snapshots and generated handoff bundles stay local.
+/vision_assembly/checkpoints/**
+/vision_assembly/data/*/
+/unity_integration/*.zip
+# Frequently regenerated observations (keep validated fixtures under tests/).
+/vision_assembly/data/board_pose_3d_live.json
+/vision_assembly/data/safe_pick_*.json
+/vision_assembly/data/smd_close_targets_current.json

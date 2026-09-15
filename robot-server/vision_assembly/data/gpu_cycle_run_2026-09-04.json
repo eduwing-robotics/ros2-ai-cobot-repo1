@@ -1,0 +1,46 @@
+{
+  "schema": "fr5.full_fixed_cycle_run/v2",
+  "started_unix": 1788488678.65058,
+  "cycle_id": "20260904-111420",
+  "plan_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/gpu_cycle_plan_2026-09-04.json",
+  "motion_profile": "smooth_combined_transfer_v1",
+  "selected_slots": [
+    "GPU-01"
+  ],
+  "motion_completed_slots": [
+    "GPU-01"
+  ],
+  "grasp_verified_slots": [
+    "GPU-01"
+  ],
+  "placement_verified_slots": [],
+  "part_held_candidate": false,
+  "status": "motion_complete_awaiting_physical_verification",
+  "preflight": {
+    "passed": true,
+    "waypoints": 5,
+    "minimum_joint_soft_limit_margin_deg": 46.523315,
+    "maximum_joint_step_deg": 76.397745,
+    "minimum_j6_deg": -8.588062,
+    "maximum_j6_deg": 4.26204252243042,
+    "j6_operational_bounds_deg": [
+      -178.0,
+      178.0
+    ]
+  },
+  "gripper_current_samples_percent": {
+    "GPU-01": 0.0
+  },
+  "last_verified_tcp": [
+    34.586669921875,
+    -520.3837280273438,
+    188.25323486328125,
+    179.97720336914062,
+    0.003443415742367506,
+    -179.11587524414062
+  ],
+  "last_gripper_position": 70,
+  "paused_unix": 1788488687.2425623,
+  "operator_confirmed_held_unix": 1788488716.6234174,
+  "completed_unix": 1788488725.7666268
+}

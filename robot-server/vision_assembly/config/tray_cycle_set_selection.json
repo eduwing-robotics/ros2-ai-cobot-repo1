@@ -1,0 +1,156 @@
+{
+  "schema": "fr5.tray_set_selection/v1",
+  "set_index": 1,
+  "reference_image_size_px": {
+    "width": 1920,
+    "height": 1080
+  },
+  "boundary_margin_px": 12,
+  "parts": {
+    "black_block": {
+      "axis": "y",
+      "boundary_px": 270,
+      "per_set_count": 5,
+      "capacity": 10,
+      "section_polygon_normalized": [
+        [
+          0.276,
+          0.075
+        ],
+        [
+          0.507,
+          0.075
+        ],
+        [
+          0.507,
+          0.438
+        ],
+        [
+          0.276,
+          0.438
+        ]
+      ]
+    },
+    "long_orange": {
+      "axis": "x",
+      "boundary_px": 1220,
+      "per_set_count": 4,
+      "capacity": 8,
+      "section_polygon_normalized": [
+        [
+          0.511,
+          0.075
+        ],
+        [
+          0.811,
+          0.075
+        ],
+        [
+          0.811,
+          0.52
+        ],
+        [
+          0.511,
+          0.52
+        ]
+      ]
+    },
+    "marked_white": {
+      "axis": "y",
+      "boundary_px": 610,
+      "per_set_count": 2,
+      "capacity": 4,
+      "section_polygon_normalized": [
+        [
+          0.276,
+          0.448
+        ],
+        [
+          0.376,
+          0.448
+        ],
+        [
+          0.376,
+          0.68
+        ],
+        [
+          0.276,
+          0.68
+        ]
+      ]
+    },
+    "right_white_brown": {
+      "axis": "y",
+      "boundary_px": 590,
+      "per_set_count": 5,
+      "capacity": 10,
+      "section_polygon_normalized": [
+        [
+          0.379,
+          0.448
+        ],
+        [
+          0.508,
+          0.448
+        ],
+        [
+          0.508,
+          0.68
+        ],
+        [
+          0.379,
+          0.68
+        ]
+      ]
+    },
+    "gpu": {
+      "axis": "x",
+      "boundary_px": 800,
+      "per_set_count": 1,
+      "capacity": 2,
+      "section_polygon_normalized": [
+        [
+          0.276,
+          0.681
+        ],
+        [
+          0.525,
+          0.681
+        ],
+        [
+          0.525,
+          0.904
+        ],
+        [
+          0.276,
+          0.904
+        ]
+      ]
+    },
+    "hbm": {
+      "axis": "x",
+      "boundary_px": 1250,
+      "per_set_count": 8,
+      "capacity": 16,
+      "section_polygon_normalized": [
+        [
+          0.532,
+          0.527
+        ],
+        [
+          0.818,
+          0.527
+        ],
+        [
+          0.818,
+          0.904
+        ],
+        [
+          0.532,
+          0.904
+        ]
+      ]
+    }
+  },
+  "evidence": "Existing detector set order; separator lies in empty gap of registered 50-part observation on 2026-09-11. Fixed reference coordinates; never recompute from partial detections. HBM boundary revised to 1250px on 2026-09-14: current first-set right edge center 1214.54px; original two-set fixture second-set leftmost center 1284.69px. Retain 12px margin and fixed physical membership; no per-frame boundary recomputation."
+}

@@ -1,0 +1,151 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-labelledby="t d">
+  <title id="t">RUN 후보 B — 트윈 전면</title>
+  <desc id="d">3D가 화면 전부를 차지하고 정보가 객체에 붙는 안. 크롬은 부유형으로 최소화한다.</desc>
+<style>
+      text { font-family: Inter, Pretendard, "Noto Sans KR", system-ui, sans-serif; }
+      .l { fill:#9fb0bd; font-size:11px; letter-spacing:1.6px; font-weight:700 }
+      .b { fill:#f2f6f9; font-size:15px }
+      .v { fill:#f2f6f9; font-size:20px; font-weight:700 }
+    </style>
+<g clip-path="url(#clip0_0)">
+<clipPath id="clip0_0"><rect x="0" y="0" width="1920" height="1080"/></clipPath>
+<rect x="0" y="0" width="1920" height="1080" fill="#dcd6c8"/>
+<g transform="translate(0.0 -132.0) scale(1.9200)">
+<rect x="0" y="300" width="1000" height="400" fill="#d3d8dc"/>
+<line x1="0" y1="308" x2="1000" y2="308" stroke="#b9c1c8" stroke-opacity=".35"/>
+<line x1="0" y1="326" x2="1000" y2="326" stroke="#b9c1c8" stroke-opacity=".35"/>
+<line x1="0" y1="352" x2="1000" y2="352" stroke="#b9c1c8" stroke-opacity=".35"/>
+<line x1="0" y1="384" x2="1000" y2="384" stroke="#b9c1c8" stroke-opacity=".35"/>
+<line x1="0" y1="423" x2="1000" y2="423" stroke="#b9c1c8" stroke-opacity=".35"/>
+<line x1="0" y1="468" x2="1000" y2="468" stroke="#b9c1c8" stroke-opacity=".35"/>
+<line x1="0" y1="518" x2="1000" y2="518" stroke="#b9c1c8" stroke-opacity=".35"/>
+<line x1="0" y1="574" x2="1000" y2="574" stroke="#b9c1c8" stroke-opacity=".35"/>
+<line x1="0" y1="634" x2="1000" y2="634" stroke="#b9c1c8" stroke-opacity=".35"/>
+<ellipse cx="520" cy="600" rx="290" ry="26" fill="#000" fill-opacity=".14"/>
+<rect x="250" y="430" width="520" height="22" rx="3" fill="#f4f6f8" stroke="#b9c1c8"/>
+<rect x="262" y="452" width="12" height="140" fill="#b9c1c8"/>
+<rect x="746" y="452" width="12" height="140" fill="#b9c1c8"/>
+<rect x="270" y="398" width="230" height="32" rx="3" fill="#c3c9cf"/>
+<line x1="278" y1="400" x2="278" y2="428" stroke="#b9c1c8"/>
+<line x1="304" y1="400" x2="304" y2="428" stroke="#b9c1c8"/>
+<line x1="330" y1="400" x2="330" y2="428" stroke="#b9c1c8"/>
+<line x1="356" y1="400" x2="356" y2="428" stroke="#b9c1c8"/>
+<line x1="382" y1="400" x2="382" y2="428" stroke="#b9c1c8"/>
+<line x1="408" y1="400" x2="408" y2="428" stroke="#b9c1c8"/>
+<line x1="434" y1="400" x2="434" y2="428" stroke="#b9c1c8"/>
+<line x1="460" y1="400" x2="460" y2="428" stroke="#b9c1c8"/>
+<line x1="486" y1="400" x2="486" y2="428" stroke="#b9c1c8"/>
+<rect x="560" y="408" width="150" height="20" rx="3" fill="#2f6f5f"/>
+<rect x="294" y="410" width="72" height="20" rx="5" fill="#b9c1c8"/>
+<rect x="314" y="300" width="32" height="130" rx="14" fill="#eef1f3" stroke="#b9c1c8"/>
+<rect x="317" y="140" width="26" height="160" rx="12" fill="#eef1f3" stroke="#b9c1c8" transform="rotate(40 330 300)"/>
+<rect x="422" y="177" width="22" height="145" rx="10" fill="#eef1f3" stroke="#b9c1c8" transform="rotate(-32 433 177)"/>
+<rect x="498" y="296" width="24" height="32" rx="4" fill="#3c454d"/>
+<rect x="495" y="326" width="7" height="19" rx="2" fill="#3c454d"/>
+<rect x="518" y="326" width="7" height="19" rx="2" fill="#3c454d"/>
+<circle cx="330" cy="300" r="11" fill="none" stroke="#e0662e" stroke-width="3.5"/>
+<circle cx="433" cy="177" r="10" fill="none" stroke="#e0662e" stroke-width="3.5"/>
+<line x1="510" y1="350" x2="550" y2="337" stroke="#e0435a" stroke-width="2.5"/>
+<line x1="510" y1="350" x2="482" y2="328" stroke="#2bbd7e" stroke-width="2.5"/>
+<line x1="510" y1="350" x2="510" y2="386" stroke="#3f8fe0" stroke-width="2.5"/>
+</g>
+</g>
+<rect x="560.0" y="26" width="800" height="56" rx="28.0" fill="#0c1218" fill-opacity=".88" stroke="#ffffff" stroke-opacity=".14"/>
+<rect x="578.0" y="42" width="62" height="24" rx="12" fill="#ffc043" fill-opacity=".2" stroke="#ffc043"/>
+<text x="609.0" y="59" text-anchor="middle" fill="#ffc043" font-size="12" font-weight="800" letter-spacing="1.4">MOCK</text>
+<circle cx="664.0" cy="54" r="4" fill="#3ddc97"/>
+<text x="676.0" y="59" fill="#3ddc97" font-size="13" font-weight="700" letter-spacing="1.2">RUNNING</text>
+<line x1="770.0" y1="38" x2="770.0" y2="70" stroke="#ffffff" stroke-opacity=".14"/>
+<text x="790.0" y="59" class="b" font-size="14">JOB-20260807-0142</text>
+<rect x="960.0" y="50" width="150" height="8" rx="4" fill="#ffffff" fill-opacity=".16"/>
+<rect x="960.0" y="50" width="90" height="8" rx="4" fill="#ffc043"/>
+<text x="1126.0" y="59" class="v" font-size="18">6 / 10</text>
+<line x1="1210.0" y1="38" x2="1210.0" y2="70" stroke="#ffffff" stroke-opacity=".14"/>
+<text x="1230.0" y="59" fill="#9fb0bd" font-size="14">00:01:24</text>
+<circle cx="1846" cy="60" r="36" fill="#ff5470" fill-opacity=".92"/>
+<circle cx="1846" cy="60" r="30" fill="none" stroke="#ffffff" stroke-opacity=".5" stroke-width="2"/>
+<text x="1846" y="66" text-anchor="middle" fill="#fff" font-size="14" font-weight="800" letter-spacing="1.2">STOP</text>
+<circle cx="46" cy="420" r="7" fill="#ffc043" fill-opacity="1" stroke="#ffffff" stroke-opacity=".3"/>
+<rect x="66" y="403" width="118" height="34" rx="17" fill="#0c1218" fill-opacity=".88" stroke="#ffffff" stroke-opacity=".14"/>
+<text x="82" y="425" fill="#ffc043" font-size="12" font-weight="800" letter-spacing="1.4">RUN</text>
+<circle cx="46" cy="484" r="5" fill="#0c1218" fill-opacity="0.55" stroke="#ffffff" stroke-opacity=".3"/>
+<circle cx="46" cy="548" r="5" fill="#0c1218" fill-opacity="0.55" stroke="#ffffff" stroke-opacity=".3"/>
+<circle cx="46" cy="612" r="5" fill="#0c1218" fill-opacity="0.55" stroke="#ffffff" stroke-opacity=".3"/>
+<circle cx="46" cy="676" r="5" fill="#0c1218" fill-opacity="0.55" stroke="#ffffff" stroke-opacity=".3"/>
+<circle cx="978" cy="445" r="5" fill="#ffc043"/>
+<path d="M978 445 L1068 349 L1128 349" fill="none" stroke="#ffc043" stroke-width="1.6"/>
+<rect x="1128.432" y="322.7679999999999" width="246" height="52" rx="8" fill="#0c1218" fill-opacity=".88" stroke="#ffffff" stroke-opacity=".14"/>
+<text x="1146" y="345" fill="#ffc043" font-size="11" font-weight="800" letter-spacing="1.6">HOLDING</text>
+<text x="1146" y="365" class="v" font-size="17">HBM3 <tspan fill="#9fb0bd" font-size="13">· 18.4 / 40 mm</tspan></text>
+<rect x="1298" y="643" width="65" height="54" fill="none" stroke="#ffc043" stroke-width="3" stroke-dasharray="6 5"/>
+<path d="M1363 690 L1443 780 L1513 780" fill="none" stroke="#ffc043" stroke-width="1.6"/>
+<rect x="1513.2" y="753.76" width="236" height="52" rx="8" fill="#0c1218" fill-opacity=".88" stroke="#ffffff" stroke-opacity=".14"/>
+<text x="1531" y="776" fill="#ffc043" font-size="11" font-weight="800" letter-spacing="1.6">TARGET SLOT</text>
+<text x="1531" y="796" class="v" font-size="17">SK_HYNIX-01</text>
+<rect x="1075.2" y="594.3199999999999" width="128" height="28" rx="6" fill="#0c1218" fill-opacity=".88" stroke="#ffffff" stroke-opacity=".14"/>
+<text x="1091" y="613" class="b" font-size="13">UNIT 7 · seq 7</text>
+<rect x="348.0" y="213.59999999999997" width="116" height="268" rx="10" fill="#0c1218" fill-opacity=".88" stroke="#ffffff" stroke-opacity=".14"/>
+<text x="366" y="238" class="l">J1–J6</text>
+<text x="366" y="268" fill="#9fb0bd" font-size="11">J1</text>
+<rect x="392" y="260" width="44" height="7" rx="3" fill="#ffffff" fill-opacity=".16"/>
+<rect x="392" y="260" width="22" height="7" rx="3" fill="#9fb0bd"/>
+<text x="462" y="268" text-anchor="end" fill="#f2f6f9" font-size="12" font-weight="700">0</text>
+<text x="366" y="304" fill="#9fb0bd" font-size="11">J2</text>
+<rect x="392" y="296" width="44" height="7" rx="3" fill="#ffffff" fill-opacity=".16"/>
+<rect x="392" y="296" width="5" height="7" rx="3" fill="#ffb020"/>
+<text x="462" y="304" text-anchor="end" fill="#f2f6f9" font-size="12" font-weight="700">-90</text>
+<text x="366" y="340" fill="#9fb0bd" font-size="11">J3</text>
+<rect x="392" y="332" width="44" height="7" rx="3" fill="#ffffff" fill-opacity=".16"/>
+<rect x="392" y="332" width="38" height="7" rx="3" fill="#ffb020"/>
+<text x="462" y="340" text-anchor="end" fill="#f2f6f9" font-size="12" font-weight="700">90</text>
+<text x="366" y="376" fill="#9fb0bd" font-size="11">J4</text>
+<rect x="392" y="368" width="44" height="7" rx="3" fill="#ffffff" fill-opacity=".16"/>
+<rect x="392" y="368" width="5" height="7" rx="3" fill="#ffb020"/>
+<text x="462" y="376" text-anchor="end" fill="#f2f6f9" font-size="12" font-weight="700">-90</text>
+<text x="366" y="412" fill="#9fb0bd" font-size="11">J5</text>
+<rect x="392" y="404" width="44" height="7" rx="3" fill="#ffffff" fill-opacity=".16"/>
+<rect x="392" y="404" width="22" height="7" rx="3" fill="#9fb0bd"/>
+<text x="462" y="412" text-anchor="end" fill="#f2f6f9" font-size="12" font-weight="700">-90</text>
+<text x="366" y="448" fill="#9fb0bd" font-size="11">J6</text>
+<rect x="392" y="440" width="44" height="7" rx="3" fill="#ffffff" fill-opacity=".16"/>
+<rect x="392" y="440" width="22" height="7" rx="3" fill="#9fb0bd"/>
+<text x="462" y="448" text-anchor="end" fill="#f2f6f9" font-size="12" font-weight="700">0</text>
+<rect x="400.0" y="928" width="1120" height="74" rx="12" fill="#0c1218" fill-opacity=".88" stroke="#ffffff" stroke-opacity=".14"/>
+<text x="424.0" y="956" class="l">ASSEMBLY STEP · U7</text>
+<text x="1496.0" y="956" text-anchor="end" fill="#ffc043" font-size="13" font-weight="700">TRANSFER · 5 / 8 · 18.2s</text>
+<line x1="475" y1="978" x2="614" y2="978" stroke="#ffc043" stroke-opacity="1" stroke-width="2"/>
+<circle cx="475" cy="978" r="3.5" fill="#f2f6f9"/>
+<text x="475" y="998" text-anchor="middle" fill="#f2f6f9" font-size="10.5" font-weight="700">READY</text>
+<line x1="614" y1="978" x2="752" y2="978" stroke="#ffc043" stroke-opacity="1" stroke-width="2"/>
+<circle cx="614" cy="978" r="3.5" fill="#f2f6f9"/>
+<text x="614" y="998" text-anchor="middle" fill="#f2f6f9" font-size="10.5" font-weight="700">DETECT</text>
+<line x1="752" y1="978" x2="891" y2="978" stroke="#ffc043" stroke-opacity="1" stroke-width="2"/>
+<circle cx="752" cy="978" r="3.5" fill="#f2f6f9"/>
+<text x="752" y="998" text-anchor="middle" fill="#f2f6f9" font-size="10.5" font-weight="700">APPROACH</text>
+<line x1="891" y1="978" x2="1029" y2="978" stroke="#ffc043" stroke-opacity="1" stroke-width="2"/>
+<circle cx="891" cy="978" r="3.5" fill="#f2f6f9"/>
+<text x="891" y="998" text-anchor="middle" fill="#f2f6f9" font-size="10.5" font-weight="700">PICK</text>
+<line x1="1029" y1="978" x2="1168" y2="978" stroke="#ffffff" stroke-opacity="0.16" stroke-width="2"/>
+<circle cx="1029" cy="978" r="6" fill="#ffc043"/>
+<text x="1029" y="998" text-anchor="middle" fill="#ffc043" font-size="10.5" font-weight="700">TRANSFER</text>
+<line x1="1168" y1="978" x2="1306" y2="978" stroke="#ffffff" stroke-opacity="0.16" stroke-width="2"/>
+<circle cx="1168" cy="978" r="3.5" fill="#5b6b78"/>
+<text x="1168" y="998" text-anchor="middle" fill="#5b6b78" font-size="10.5" font-weight="700">PLACE</text>
+<line x1="1306" y1="978" x2="1445" y2="978" stroke="#ffffff" stroke-opacity="0.16" stroke-width="2"/>
+<circle cx="1306" cy="978" r="3.5" fill="#5b6b78"/>
+<text x="1306" y="998" text-anchor="middle" fill="#5b6b78" font-size="10.5" font-weight="700">INSPECT</text>
+<circle cx="1445" cy="978" r="3.5" fill="#5b6b78"/>
+<text x="1445" y="998" text-anchor="middle" fill="#5b6b78" font-size="10.5" font-weight="700">RETURN</text>
+<rect x="40" y="860" width="172" height="40" rx="8" fill="#0c1218" fill-opacity=".88" stroke="#ffffff" stroke-opacity=".14"/>
+<text x="60" y="886" class="b" font-size="13">TELEMETRY</text>
+<rect x="40" y="912" width="172" height="40" rx="8" fill="#0c1218" fill-opacity=".88" stroke="#ffffff" stroke-opacity=".14"/>
+<text x="60" y="938" class="b" font-size="13">EVENTS 0</text>
+<rect x="40" y="964" width="172" height="40" rx="8" fill="#0c1218" fill-opacity=".88" stroke="#ffffff" stroke-opacity=".14"/>
+<text x="60" y="990" class="b" font-size="13">OK 5 · NG 1</text>
+<rect x="1548" y="806" width="332" height="236" rx="12" fill="#0c1218" fill-opacity=".88" stroke="#ffffff" stroke-opacity=".14"/>
+<text x="1568" y="834" class="l">VISION</text>
+<text x="1860" y="834" text-anchor="end" fill="#ffc043" font-size="11" font-weight="700">INSPECT →</text>
+<rect x="1568" y="846" width="292" height="164" rx="6" fill="#101a22"/>
+<rect x="1634" y="884" width="130" height="82" fill="none" stroke="#ffc043" stroke-width="1.5"/>
+<text x="1634" y="876" fill="#ffc043" font-size="11" font-weight="700">BOARD 98.4%</text>
+</svg>

@@ -1,0 +1,1194 @@
+/*
+  FR5 공용 테마 — Docs/ui/mock-01-run.svg 에서 확정한 패널 언어.
+
+  원칙 (Docs/ui-design.md)
+    · 대비를 배경에 맡기지 않는다. 패널은 완전히 불투명한 계기 표면이다.
+      트윈에서 배경은 변수이므로 스크림·글자그림자로는 가독성이 상수가 되지 않는다.
+      알파를 조금이라도 남기면 밝은 셀 렌더가 그만큼 비쳐 대비가 배경에 종속된다.
+    · 액센트(MOCK 노랑 / REAL 파랑)는 모드와 "지금 여기"에만 쓴다.
+    · 정상에는 색을 주지 않는다(--c-ok 는 회색). 이상만 색을 얻는다.
+    · 테두리는 "눌러야 하는 것"에만 붙인다.
+
+  격자: 상단 바 64 / 페이지 레일 88 / 여백 24 → 좌 112, 우 1896
+  PanelSettings 는 ScaleWithScreenSize · 1920x1080 이므로 px 가 목업과 1:1 이다.
+*/
+
+/*
+  변수는 :root 뿐 아니라 .page 에도 건다.
+  <ui:Style> 로 붙인 스타일시트에서 :root 가 항상 페이지 루트에 걸리지는 않아
+  var() 가 통째로 해석되지 않고 패널이 투명해지는 일이 있었다.
+*/
+:root, /*
+  <ui:Instance> 는 TemplateContainer 로 들어가며 기본이 흐름 배치다.
+  그대로 두면 셸이 내용 높이(45px)로 눌려 레일이 잘린다.
+*/
+.shell-host {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+}
+
+.page {
+    /* 알파 없음. 0.97 은 밝은 배경 위에서 실측 밝기 편차 5, 페이지에 따라 45 까지 벌어졌다 */
+    --c-panel: rgb(10, 15, 20);
+    --c-sunk: rgba(255, 255, 255, 0.05);
+    --c-sunk-2: rgba(255, 255, 255, 0.07);
+    --c-line: rgba(255, 255, 255, 0.09);
+    --c-edge: rgba(255, 255, 255, 0.16);
+
+    /*
+      ink-3 는 화면의 모든 라벨(.micro · .sect__title · .panel__badge · 표 머리)이다.
+      11~12px 로 쓰이므로 본문 기준 4.5:1 을 넘겨야 한다. 이전 값 rgb(96,112,124) 는
+      패널 위에서 3.0:1 이라 현장 조명에서 읽히지 않았다.
+      ink-4 는 비활성·부연이라 그래픽 기준 3:1 만 넘긴다 (이전 2.0:1).
+    */
+    --c-ink: rgb(226, 236, 241);
+    --c-ink-2: rgb(147, 165, 178);
+    --c-ink-3: rgb(132, 148, 160);
+    --c-ink-4: rgb(100, 112, 122);
+
+    --c-real: rgb(58, 150, 255);
+    --c-mock: rgb(250, 204, 51);
+    --c-accent: var(--c-real);
+
+    /*
+      액센트의 "채움"도 변수여야 한다.
+
+      USS 에는 color-mix 도 rgba(var(--x), a) 도 없어서, 지금까지 칩·버튼·선택행의
+      배경이 rgba(250,204,51,...) 로 직접 적혀 있었다. 그래서 REAL 로 바꾸면 테두리와
+      글자만 파랗게 변하고 채움은 노란 채로 남아, 한 화면에 액센트가 둘이 됐다.
+      (액센트가 둘이면 어느 쪽도 "지금 여기"를 뜻하지 못한다.)
+    */
+    --c-accent-fill: rgba(58, 150, 255, 0.16);
+    --c-accent-wash: rgba(58, 150, 255, 0.10);
+    --c-accent-tint: rgba(58, 150, 255, 0.07);
+
+    --c-ok: rgb(143, 166, 180);
+    --c-warn: rgb(246, 173, 55);
+    --c-bad: rgb(240, 71, 90);
+    --c-bad-ink: rgb(255, 143, 155);
+
+    --fs-micro: 11px;
+    --fs-label: 12px;
+    --fs-body: 15px;
+    --fs-value: 20px;
+}
+
+.fr5--mock {
+    --c-accent: var(--c-mock);
+    --c-accent-fill: rgba(250, 204, 51, 0.16);
+    --c-accent-wash: rgba(250, 204, 51, 0.10);
+    --c-accent-tint: rgba(250, 204, 51, 0.07);
+}
+
+.page {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    background-color: rgba(0, 0, 0, 0);
+    color: var(--c-ink-2);
+    font-size: var(--fs-body);
+}
+
+/*
+  기본 런타임 테마가 라벨에 씌운 상자를 지운다.
+
+  UnityDefaultRuntimeTheme 의 .unity-label 은 margin L2/T4/R4/B2 · padding
+  L1/T4/R2/B4 를 갖는다. 네 값이 축마다 다르다 — 글자 왼쪽에 3px, 오른쪽에 6px,
+  위에 8px, 아래에 6px 이 붙는다. align-items:center 는 글자가 아니라 이 여백까지
+  포함한 상자를 가운데 놓으므로, 화면의 모든 라벨이 오른쪽 아래로 밀려 있었다.
+  실측으로 가운데 정렬을 선언한 컨테이너 97곳이 어긋나 있었고, 그중 페이지 제목은
+  국문이 영문보다 6px 아래에 놓여 36px 띠 밖으로 4px 삐져나갔다.
+
+  이 파일 머리의 "px 가 목업과 1:1 이다" 는 이 상자가 남아 있는 한 성립하지 않는다.
+
+  타입 선택자(Label)가 아니라 클래스 선택자여야 한다 — 기본 테마의 규칙이 (0,1,0)
+  이라 (0,0,1)인 타입 선택자로는 이기지 못한다. 같은 특이성일 때는 뒤에 적용된
+  시트가 이기고, 이 시트는 페이지가 <ui:Style> 로 직접 붙이므로 항상 뒤에 온다.
+
+  이 규칙은 반드시 다른 클래스 규칙보다 "앞"에 있어야 한다.
+  라벨에 거는 클래스 규칙도 특이성이 똑같은 (0,1,0) 이라, 이것이 뒤에 있으면 같은
+  시트 안에서 순서로 이겨 버린다. 실제로 파일 중간에 있던 동안 이 아래에 적힌
+  .page-heading__divider 의 margin-left/right:10px 이 통째로 0 이 되어, 페이지 제목의
+  구분선 "/" 가 영문과 국문 사이에 여백 없이 끼어 "INSPECT/검사" 로 붙어 있었다.
+  (font-size · color 는 .unity-label 이 건드리지 않아 살아남았고, 그래서 여백만
+  조용히 사라져 원인이 보이지 않았다.)
+
+  글자 크기·색은 건드리지 않는다. 그래서 위 주석이 경계하는 특이성 충돌이 없다.
+*/
+.unity-label { margin: 0; padding: 0; }
+
+/*
+  스크롤 막대도 기본 런타임 테마를 덮는다.
+
+  기본값은 손잡이가 rgb(231,231,231) 이다. 이 화면에서 가장 밝게 쓰는 글자색이
+  rgb(226,236,241) 이므로, 아무 뜻도 없는 막대가 화면에서 가장 밝은 것이 된다.
+  액센트를 "지금 여기" 하나에만 쓰기로 한 규칙과 같은 이유로 밝기도 아껴야 한다.
+  위아래 화살표 단추는 지운다 — 끌거나 굴려서 움직이는 것이고, 한 칸씩 누르는
+  단추는 4K 에서 손가락보다 작다.
+*/
+.unity-scroller { background-color: rgba(0, 0, 0, 0); border-width: 0; }
+.unity-scroller__low-button, .unity-scroller__high-button { display: none; }
+/* background-image 도 같이 지운다. 기본 테마는 손잡이를 스프라이트로 그리므로,
+   background-color 만 바꾸면 그 그림이 위에 얹혀 색이 그대로 밝게 남는다. */
+.unity-scroller .unity-base-slider__tracker {
+    background-image: none;
+    background-color: rgb(22, 28, 34);
+    border-width: 0;
+    border-radius: 0;
+}
+.unity-scroller .unity-base-slider__dragger,
+.unity-scroller .unity-base-slider__dragger-border {
+    background-image: none;
+    background-color: rgb(58, 68, 78);
+    border-width: 0;
+    border-radius: 3px;
+}
+.unity-scroller .unity-base-slider__dragger:hover { background-color: rgb(84, 96, 108); }
+
+/*
+  공통 알람 띠(64..108) 아래의 페이지 제목. 콘텐츠는 164부터 시작한다.
+
+  제목 띠는 자기 바탕을 갖는다.
+
+  이 띠는 패널이 아니라 3D 트윈 위에 바로 얹힌다. 배경이 변수라 대비가 상수가 되지
+  않는다 — 실측으로 JOBS 의 "작업 현황"이 밝은 작업대 띠(222,215,212) 위에 놓여
+  1.18:1 이었고 MANUAL 의 "PREVIEW ONLY · DB 비기록 · 실동작 차단"이 2.05:1 이었다.
+  둘 다 이 파일 머리의 첫 번째 원칙(대비를 배경에 맡기지 않는다)을 어긴 자리다.
+  page--dim 으로는 못 고친다. MANUAL 은 가운데 창으로 트윈을 봐야 하는 화면이라
+  화면 전체를 눌러 버리면 화면의 목적이 사라진다.
+
+  바탕은 패널과 같은 --c-panel 이다. 새 색을 들이지 않으므로 새 층으로 읽히지 않고
+  아래 패널들과 같은 계기 표면으로 읽힌다. 좌우로 16px 씩 흘려 내고 그만큼 안쪽
+  여백을 주어, 글자는 아래 패널과 같은 112 · 1896 격자에 그대로 선다.
+*/
+.page-heading {
+    position: absolute;
+    left: 96px; top: 112px; right: 8px; height: 44px;
+    flex-direction: row;
+    align-items: center;
+    background-color: var(--c-panel);
+    padding-left: 16px; padding-right: 16px;
+}
+.page-heading__title { color: var(--c-ink); font-size: 22px; letter-spacing: 0.8px; -unity-font-style: bold; }
+.page-heading__divider { color: var(--c-ink-4); font-size: 18px; margin-left: 10px; margin-right: 10px; }
+.page-heading__meta { color: var(--c-ink-3); font-size: 12px; letter-spacing: 1.2px; }
+
+/*
+  트윈 위에 바로 얹히는 글자.
+
+  칸 이름표(.run-cam-tile__title)와 같은 처리를 3D 위 라벨에도 준다. 패널 밖에 있는
+  글자는 배경이 셀 렌더라 프레임마다 밝기가 바뀐다 — RUN 의 "SIM · joint_states" 와
+  MANUAL 의 "ACTUAL / GHOST TARGET" 이 밝은 바닥 위에서 실제로 씻겨 나갔다.
+  알파 0.85 는 셀에서 가장 밝은 면(222,215,212) 위에 합성해도 ink-3 기준 4.9:1 이
+  남는 값이다. 완전 불투명으로 두지 않는 이유는 이 글자들이 트윈을 가리는 자리라서다.
+*/
+.on-twin {
+    background-color: rgba(3, 6, 9, 0.85);
+    padding-left: 8px; padding-right: 8px;
+    padding-top: 3px; padding-bottom: 3px;
+}
+
+/*
+  조회 화면(INSPECT · QUALITY)의 배경 스크림.
+
+  RUN · MANUAL 에서 트윈은 근거다 — 로봇이 실제로 어떻게 움직이는지가 화면의 내용이다.
+  그러나 불량률 표와 판정 목록을 보는 동안 뒤에서 밝은 셀 렌더가 계속 움직이는 것은
+  정보가 아니라 소음이다. 움직임은 시선을 끌기 때문에 값을 읽는 일과 경쟁한다.
+
+  트윈을 끄지는 않는다. 어디를 보고 있는지는 남겨 두고 밝기만 눌러, 패널 사이 여백으로
+  새어 들어오던 밝은 면을 계기와 같은 어둠으로 되돌린다.
+*/
+.page--dim { background-color: rgba(8, 12, 16, 0.82); }
+
+/*
+  트윈 집중(declutter) — 상단 바의 TWIN 칩이 페이지 뿌리에 .page--focus 를 붙인다.
+
+  왜 필요한가. 이 화면은 계기이면서 동시에 트윈이다. 계기를 다 펼치면 RUN 에서 화면의
+  절반, MANUAL 에서 3/4 이 불투명한 패널로 덮인다 — 로봇을 보면서 조그하라고 만든
+  화면인데 정작 로봇이 안 보였다.
+
+  패널을 반투명하게 만드는 방향은 이미 한 번 실패했다(위 --c-panel 주석). 대비를
+  배경에 맡길 수 없으니 남는 답은 하나다: 덮는 넓이 자체를 줄인다. 항공 HUD 연구가
+  declutter 모드를 "있으면 좋은 것"이 아니라 요건으로 두는 이유와 같고, 3D 도구들이
+  전부 패널 접기 단축키를 두는 이유와도 같다.
+
+  무엇을 지우는가. 지금 당장 봐야 하는 것(로봇 상태 · 작업 · 조그)은 남기고, 궁금할 때
+  찾아보는 것(영상 · 이벤트 · 이력 · 진행 표)만 .panel--aux 로 표시해 지운다.
+  상단 바 · 페이지 레일 · 알람 띠는 절대 지우지 않는다 — 알람이 declutter 로 사라지면
+  declutter 가 위험이 된다.
+
+  visibility 가 아니라 display 다. visibility 는 자리를 남겨 아래 패널이 밀리지 않지만,
+  여기서는 자리 자체가 목적이다.
+*/
+.page--focus .panel--aux { display: none; }
+
+/* 집중 중에는 조회 화면의 스크림도 걷는다 — 스크림은 패널을 읽을 때만 필요하다. */
+.page--focus.page--dim { background-color: rgba(8, 12, 16, 0.35); }
+
+/*
+  flex-shrink 를 0 으로 둔다. 세로로 쌓인 계기에서 이 값이 1 이면, 내용이 한 줄만
+  넘쳐도 구분선·섹션 제목·게이지가 height 0 으로 눌려 조용히 사라진다.
+  (ROBOT 패널이 실제로 이 상태였다. 넘침은 잘리는 편이 낫다 — 보이니까 고친다)
+*/
+.row { flex-direction: row; align-items: center; flex-shrink: 0; }
+.spacer { flex-grow: 1; }
+.rule { height: 1px; background-color: var(--c-line); flex-shrink: 0; }
+
+/* ============================ 패널 ============================ */
+
+.panel {
+    background-color: var(--c-panel);
+    border-width: 1px;
+    border-color: var(--c-line);
+}
+
+/* 좌측 3px 액센트 척추. 헤더 박스를 따로 세우지 않는다. */
+.panel__spine {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background-color: var(--c-accent);
+}
+
+.panel__head {
+    height: 40px;
+    flex-direction: row;
+    align-items: center;
+    padding-left: 18px;
+    padding-right: 14px;
+    border-bottom-width: 1px;
+    border-bottom-color: var(--c-line);
+}
+
+.panel__title {
+    color: var(--c-ink-2);
+    font-size: var(--fs-label);
+    letter-spacing: 1.4px;
+    -unity-font-style: bold;
+}
+
+.panel__badge { color: var(--c-ink-3); font-size: var(--fs-micro); letter-spacing: 1.2px; }
+.panel__body { padding: 18px; flex-grow: 1; }
+
+/* 섹션 제목 — 2px 액센트 조각 + 라벨 */
+.sect { flex-direction: row; align-items: center; margin-bottom: 10px; flex-shrink: 0; }
+.sect__tick { width: 2px; height: 11px; background-color: var(--c-accent); opacity: 0.8; margin-right: 8px; }
+.sect__title { color: var(--c-ink-3); font-size: var(--fs-micro); letter-spacing: 1.2px; -unity-font-style: bold; }
+.sect__unit { color: var(--c-ink-3); font-size: var(--fs-micro); letter-spacing: 1.2px; }
+
+/* ============================ 텍스트 ============================ */
+
+/*
+  포괄 규칙(.page Label)은 쓰지 않는다. 특이성이 (0,1,1)이라 .value / .micro 같은
+  단일 클래스 규칙(0,1,0)을 전부 이겨 글자 크기가 한 값으로 눌린다.
+  기본값은 상속되는 .page 에 걸어 클래스 규칙이 항상 이기게 한다.
+*/
+
+.micro { color: var(--c-ink-3); font-size: var(--fs-micro); letter-spacing: 1.2px; -unity-font-style: bold; }
+.muted { color: var(--c-ink-3); font-size: 13px; }
+.value { color: var(--c-ink); font-size: var(--fs-value); -unity-font-style: bold; }
+.value--lg { font-size: 28px; }
+.value--xl { font-size: 52px; letter-spacing: -2px; }
+.accent { color: var(--c-accent); -unity-font-style: bold; }
+.bad { color: var(--c-bad-ink); -unity-font-style: bold; }
+.warn { color: var(--c-warn); -unity-font-style: bold; }
+.mono { -unity-font-definition: initial; font-size: 13px; }
+
+/* ============================ 조각 ============================ */
+
+.dot { width: 8px; height: 8px; border-radius: 4px; background-color: var(--c-ink-4); }
+.dot--ok { background-color: var(--c-ok); }
+.dot--good { background-color: rgb(62, 207, 142); }
+.dot--warn { background-color: var(--c-warn); }
+.dot--bad { background-color: var(--c-bad); }
+
+.gauge { height: 7px; background-color: var(--c-sunk-2); flex-shrink: 0; }
+.gauge__fill { height: 7px; width: 0; background-color: var(--c-accent); }
+.gauge__fill--neutral { background-color: var(--c-ok); }
+.gauge__fill--warn { background-color: var(--c-warn); }
+
+/*
+  상하 패딩을 0 으로 못박는다. 좌우만 적으면 Button 에 붙었을 때 기본 테마의
+  .unity-button padding:10px 이 상하에 남아, 24px 짜리 칩의 내용 높이가
+  24 - 2(테두리) - 20 = 2px 이 된다. 자식 라벨이 그 2px 로 눌려 글자가 칩
+  아래로 흘렀다 (MODE · 카메라 칩 · 확대가 전부 이 상태였다).
+*/
+.chip {
+    height: 24px;
+    padding-left: 10px; padding-right: 10px;
+    padding-top: 0; padding-bottom: 0;
+    align-items: center; justify-content: center;
+    border-width: 1px;
+    border-color: var(--c-edge);
+    background-color: rgba(255, 255, 255, 0.04);
+}
+.chip__text { color: var(--c-ink-2); font-size: var(--fs-micro); letter-spacing: 1.1px; -unity-font-style: bold; }
+/* 누를 수 있는 칩(MODE · TWIN)만 반응한다. 상태 표시용 칩은 Button 이 아니라 무반응이다. */
+Button.chip { transition-property: background-color; transition-duration: 120ms; }
+Button.chip:hover { background-color: rgba(255, 255, 255, 0.09); }
+Button.chip:active { background-color: rgba(255, 255, 255, 0.15); }
+.chip--accent { border-color: var(--c-accent); background-color: var(--c-accent-fill); }
+.chip--accent .chip__text { color: var(--c-accent); }
+.chip--bad { border-color: var(--c-bad); background-color: rgba(240, 71, 90, 0.14); }
+.chip--bad .chip__text { color: var(--c-bad-ink); }
+.chip--good { border-color: rgb(62, 207, 142); background-color: rgba(62, 207, 142, 0.12); }
+.chip--good .chip__text { color: rgb(62, 207, 142); }
+
+/* 테두리는 눌러야 하는 것에만 */
+.btn {
+    height: 40px;
+    margin: 0;
+    padding: 0;
+    border-width: 1px;
+    border-color: var(--c-edge);
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--c-ink);
+    font-size: 13px;
+    letter-spacing: 1.4px;
+    -unity-font-style: bold;
+}
+/*
+  눌린 느낌.
+
+  이 화면은 터치 패널에서도 쓴다. 터치에는 hover 가 없으므로, 눌렀다는 확인이
+  :hover 에만 있으면 손가락으로는 아무 확인도 못 받는다. :active 를 따로 준다.
+  전환은 120ms 다 — 계기에서 애니메이션은 값보다 늦으면 안 되고, 0ms 면 눌렀는지
+  안 눌렸는지 구분이 안 된다.
+*/
+.btn { transition-property: background-color, border-color; transition-duration: 120ms; }
+.btn:hover { background-color: rgba(255, 255, 255, 0.1); }
+.btn:active { background-color: rgba(255, 255, 255, 0.18); border-color: var(--c-edge); }
+.btn--accent:active { background-color: var(--c-accent-fill); border-color: var(--c-accent); }
+.btn--danger:active { background-color: rgba(240, 71, 90, 0.24); }
+.btn:disabled { border-color: var(--c-line); background-color: rgba(255, 255, 255, 0.02); color: var(--c-ink-4); }
+.btn--accent { border-color: var(--c-accent); background-color: var(--c-accent-fill); color: var(--c-accent); }
+.btn--danger { border-color: rgba(240, 71, 90, 0.55); background-color: rgba(240, 71, 90, 0.1); color: var(--c-bad-ink); }
+
+/* 밑줄 탭 */
+/* margin-right 는 지웠다 — 가로 탭 시절 값이라 세로 레일에서는 탭을 14px 왼쪽으로 밀 뿐이다. */
+/*
+  align-items · justify-content 를 둘 다 center 로 둔다.
+
+  이 탭은 세로 레일 항목이라 주축이 세로다. 그래서 align-items(가로)만 맞추면
+  가로만 가운데로 가고, 아이콘 · 영문 · 국문 세 줄(합 56px)이 96px 상자의 위쪽에
+  붙은 채 아래로 40px 이 빈다. 활성 탭은 테두리가 그려지므로 그 빈 곳이 그대로
+  보였다 — 아이콘과 글자가 상자 위쪽으로 쏠린 것으로 읽힌다.
+  높이 96 은 그대로 둔다. 남는 40px 을 위아래 20px 씩 나눠 가지면 그게 항목 사이
+  간격이 된다 (레일에는 따로 margin 이 없다).
+*/
+.tab { background-color: rgba(0, 0, 0, 0); border-width: 0; padding: 0; margin: 0; align-items: center; justify-content: center; transition-property: background-color; transition-duration: 120ms; }
+#navrail .tab:hover { background-color: rgba(255, 255, 255, 0.05); }
+#navrail .tab:active { background-color: rgba(255, 255, 255, 0.09); }
+#navrail .tab--on { border-width: 1px; border-color: var(--c-accent); border-radius: 6px; background-color: var(--c-accent-wash); }
+.tab__text { color: rgb(130, 150, 166); font-size: 13px; letter-spacing: 1.6px; -unity-font-style: bold; }
+.tab__bar { height: 2px; width: 0; margin-top: 6px; background-color: var(--c-accent); }
+.tab--on .tab__text { color: var(--c-accent); }
+
+/*
+  레일 아이콘 — Siemens iX (MIT). Assets/UI/Icons/README.md 참고.
+
+  이전에는 VisualElement 를 겹쳐 손으로 그렸다. 7개가 서로 굵기와 여백이 달랐고
+  새 항목마다 좌표를 손으로 맞춰야 했다. 지금은 한 벌에서 나온 이미지다.
+
+  색은 이미지가 아니라 tint 가 정한다. 이미지에 색을 구우면 활성 탭이
+  --c-accent 를 따라가지 못해 모드 전환(MOCK 노랑 / REAL 파랑)에서 어긋난다.
+*/
+.tab__icon {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    margin-bottom: 6px;
+    -unity-background-scale-mode: scale-to-fit;
+    -unity-background-image-tint-color: rgb(132, 148, 160);
+}
+.tab--on .tab__icon { -unity-background-image-tint-color: var(--c-accent); }
+
+/*
+  슬롯 칩 — 완성체의 장착 위치 하나.
+  같은 그림을 요청 · 검사 · 품질이 재사용한다 (Docs/ui-design.md의 화면 안정성).
+*/
+.slotchip {
+    width: 138px;
+    height: 62px;
+    margin-right: 8px;
+    margin-bottom: 8px;
+    padding-left: 10px;
+    justify-content: center;
+    border-left-width: 3px;
+    border-left-color: rgba(143, 166, 180, 0.45);
+    background-color: rgba(255, 255, 255, 0.035);
+}
+.slotchip--target { border-left-color: var(--c-accent); background-color: var(--c-accent-wash); }
+.slotchip--bad { border-left-color: var(--c-bad); background-color: rgba(240, 71, 90, 0.10); }
+.slotchip__code { color: var(--c-ink); font-size: 13px; -unity-font-style: bold; }
+.slotchip__part { color: var(--c-ink-3); font-size: 11px; margin-top: 3px; }
+.tab--on .tab__bar { width: 100%; }
+
+/*
+  부품 타일 — 완성체가 요구하는 부품 타입 하나.
+
+  칸 하나가 슬롯 하나인 .slotchip 과 달리 타일 하나는 부품 타입 하나이고, 개수는
+  ×N 으로 접는다. product_slots 25행을 25칸으로 펼치면 좌측 패널이 글자벽이 되고,
+  부품 단위로 세는 우측 재고표와 세는 단위도 어긋난다.
+
+  그림은 tint 하지 않는다. 레일 아이콘(.tab__icon)은 흰 실루엣이라 tint 로 모드색을
+  따라가지만, 이 그림들은 부품 실물 렌더라 tint 를 걸면 형태만 남고 무엇인지 알아볼
+  수 없게 된다. 대신 타일에 상태색(--c-ok / --c-accent / --c-bad)을 쓰지 않는다.
+  여기는 "무엇이 몇 개 필요한가"만 말하는 자리이고, 놓였는가는 RUN 의 칸이 말한다.
+
+  part_id 와 그림의 매핑은 여기 있고 바인더에 없다. 바인더는 part_id 를 소문자로
+  바꿔 클래스를 붙일 뿐이라, 부품이 늘 때 손대는 곳은 아래 규칙 목록 하나다.
+  규칙이 없는 part_id 는 어느 규칙에도 걸리지 않아 이니셜 글자가 그대로 남는다 —
+  빈 칸이 되지 않는다 (FR5EmptyState 2번 규칙).
+*/
+.parttile {
+    width: 176px;
+    height: 132px;
+    margin-right: 8px;
+    margin-bottom: 8px;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.035);
+    border-left-width: 3px;
+    border-left-color: rgba(143, 166, 180, 0.45);
+}
+.parttile__icon {
+    width: 64px;
+    height: 64px;
+    align-items: center;
+    justify-content: center;
+    -unity-background-scale-mode: scale-to-fit;
+}
+.parttile__fallback { color: var(--c-ink-3); font-size: 20px; -unity-font-style: bold; letter-spacing: 1px; }
+.parttile__line { flex-direction: row; align-items: center; margin-top: 10px; }
+.parttile__name { color: var(--c-ink); font-size: 14px; -unity-font-style: bold; letter-spacing: 1.1px; }
+.parttile__count { color: var(--c-ink-2); font-size: 14px; -unity-font-style: bold; margin-left: 8px; }
+
+.parttile--compact {
+    width: 91px;
+    height: 112px;
+    margin-right: 6px;
+    margin-bottom: 6px;
+}
+.parttile--compact .parttile__icon { width: 42px; height: 42px; }
+.parttile--compact .parttile__fallback { font-size: 15px; }
+.parttile--compact .parttile__line { margin-top: 5px; }
+.parttile--compact .parttile__name,
+.parttile--compact .parttile__count { font-size: 11px; }
+.parttile--compact .parttile__count { margin-left: 4px; }
+.parttile__stock { color: var(--c-ink-3); font-size: 10px; margin-top: 4px; }
+
+.job-filter { width: 112px; height: 34px; margin-right: 7px; font-size: 12px; }
+.job-filter--on { border-bottom-width: 2px; border-bottom-color: var(--c-accent); color: var(--c-accent); }
+.job-link { height: 28px; min-width: 52px; margin-right: 5px; padding-left: 8px; padding-right: 8px; font-size: 11px; }
+.job-status { font-size: 11px; -unity-font-style: bold; letter-spacing: 0.7px; }
+.job-status--running { color: var(--c-accent); }
+.job-status--pending { color: var(--c-warn); }
+.job-status--failed { color: var(--c-bad); }
+.job-status--completed { color: var(--c-ok); }
+
+/*
+  part_id 하나 = 규칙 두 줄. 그림을 얹고, 그림이 가린 이니셜을 걷는다.
+  그림 출처는 Assets/UI/Icons/README.md 참고.
+*/
+.parttile__icon--hbm { background-image: url("project://database/Assets/UI/Icons/item-hbm.png"); }
+.parttile__icon--hbm .parttile__fallback { display: none; }
+.parttile__icon--pm { background-image: url("project://database/Assets/UI/Icons/item-pm.png"); }
+.parttile__icon--pm .parttile__fallback { display: none; }
+.parttile__icon--gpu { background-image: url("project://database/Assets/UI/Icons/item-gpu.png"); }
+.parttile__icon--gpu .parttile__fallback { display: none; }
+.parttile__icon--cap { background-image: url("project://database/Assets/UI/Icons/item-cap.png"); }
+.parttile__icon--cap .parttile__fallback { display: none; }
+.parttile__icon--ind { background-image: url("project://database/Assets/UI/Icons/item-ind.png"); }
+.parttile__icon--ind .parttile__fallback { display: none; }
+.parttile__icon--vrm { background-image: url("project://database/Assets/UI/Icons/item-vrm.png"); }
+.parttile__icon--vrm .parttile__fallback { display: none; }
+
+/*
+  조립 진행 — 부품 타입 하나가 묶음 하나, 칸 하나가 슬롯 하나다.
+  레시피의 한 스텝이 곧 슬롯 하나이므로 칸을 세는 것이 곧 스텝을 세는 것이다
+  (DATA_STATION/DB/README.md의 슬롯 계약). 같은 칸 어휘를 INSPECT · QUALITY 의 슬롯 맵이 재사용한다.
+*/
+.grp { flex-grow: 1; flex-shrink: 0; margin-right: 16px; }
+.grp__head { flex-direction: row; align-items: center; margin-bottom: 9px; }
+.grp__name { color: var(--c-ink-2); font-size: var(--fs-micro); letter-spacing: 1.2px; -unity-font-style: bold; }
+.grp__count { color: var(--c-ink-3); font-size: var(--fs-micro); -unity-font-style: bold; }
+.grp__cells { flex-direction: row; align-items: center; }
+/* 액센트는 "지금 여기" 하나에만 — 진행 중인 묶음이다 */
+.grp--now .grp__name { color: var(--c-accent); }
+.grp--now .grp__count { color: var(--c-ink); }
+
+/* 놓인 칸은 회색이다. 정상에는 색을 주지 않는다 */
+.cell { width: 15px; height: 15px; margin-right: 4px; background-color: var(--c-sunk-2); flex-shrink: 0; }
+.cell--done { background-color: var(--c-ok); }
+.cell--now { background-color: var(--c-accent); }
+.cell--bad { background-color: var(--c-bad); }
+
+/* 표 — 세로줄과 바깥 테두리를 두지 않는다 */
+.trow { flex-direction: row; align-items: center; min-height: 42px; flex-shrink: 0; border-bottom-width: 1px; border-bottom-color: rgba(255, 255, 255, 0.055); }
+.trow--head { height: 28px; border-bottom-color: var(--c-line); }
+.trow--sel { background-color: var(--c-accent-tint); }
+.trow--bad { background-color: rgba(240, 71, 90, 0.08); }
+/*
+  칸은 넘치면 잘린다. 기본값이면 Label 이 제 너비를 넘어 옆 칸 위로 그려져서 두 칸의
+  글자가 겹친다 (PART DEFECT RATE 의 부품명 · 유형이 실제로 이 상태였다).
+  겹친 글자는 둘 다 못 읽지만, 잘린 글자는 잘렸다는 것이 보인다.
+
+  칸 폭에는 홈통이 들어 있다. 칸 사이에 세로줄을 두지 않기로 했으므로 칸을 가르는
+  것은 여백뿐인데, 그 여백이 0 이면 앞 칸의 끝과 뒷 칸의 시작이 그대로 맞닿는다.
+  실제로 머리줄이 "PASS / TARGETRESULT" 로, 본문이 "0 / 1실행 실패 1" 로 붙어
+  한 낱말처럼 읽혔다 — 오른쪽 맞춤(.tcell--num)이라 더 심했다.
+  폭은 UI Toolkit 의 border-box 라 padding 을 넣어도 격자가 밀리지 않는다.
+*/
+.tcell {
+    color: var(--c-ink-2);
+    font-size: 14px;
+    padding-right: 14px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+.tcell--head { color: var(--c-ink-3); font-size: 10px; letter-spacing: 1.2px; -unity-font-style: bold; }
+
+/*
+  줄바꿈 허용 — UI Toolkit 의 white-space 기본값은 CSS 와 달리 nowrap 이다.
+  그래서 칸보다 긴 글은 줄을 바꾸지 않고 칸 밖으로 밀려 나간다. 표 칸(.tcell)처럼
+  잘라도 되는 곳은 ellipsis 로 처리하지만, 제품명이나 주석처럼 끝까지 읽혀야 하는
+  글은 잘리면 안 되므로 여기서 줄을 바꾼다.
+*/
+.wrap { white-space: normal; }
+
+.tcell--num { -unity-text-align: middle-right; color: var(--c-ink); -unity-font-style: bold; }
+
+/* 빈 상태 — 0 을 그리지 않는다 */
+/*
+  런타임에 자식이 채워지는 컨테이너. flex 기본값(shrink:1)이면 형제가 커질 때
+  이 컨테이너가 눌리고 자식이 밖으로 넘쳐 다음 섹션과 겹친다.
+*/
+.vlist { flex-shrink: 0; }
+
+.empty { flex-grow: 1; align-items: center; justify-content: center; }
+.empty__title { color: var(--c-ink-3); font-size: 16px; -unity-font-style: bold; letter-spacing: 1.4px; }
+.empty__desc { color: var(--c-ink-4); font-size: 13px; margin-top: 10px; }
+/*
+  조회 경로가 아직 없는 자리.
+
+  이전에는 warn(노랑)이었다. 그런데 미연결 자리가 한 화면에 3~4개씩 있어(QUALITY 4개,
+  INSPECT 3개) 화면이 통째로 노래졌고, 그러면 진짜 이상이 묻힌다 — 붉은색을 아껴 둔
+  이유와 정확히 같은 이유로 노란색도 아껴야 했다. 게다가 이 노랑은 MOCK 모드 액센트와
+  같은 계열이라 "지금 MOCK" 신호까지 함께 흐려졌다.
+
+  부재는 이상이 아니라 없음이다. 그래서 무채색으로 두되, 본문(--c-ink-3)보다 한 단계
+  밝게 해서 "이 자리의 주된 낱말"이라는 것만 남긴다. 무엇이 없는지는 .empty__desc 가
+  적는다 — 색이 아니라 글자가 설명하게 한다.
+*/
+.empty__title--miss { color: var(--c-ink-2); }
+
+/* 값 한 칸이 비어 있을 때. 위와 같은 이유로 무채색이다 (FR5EmptyState.Missing) */
+.miss { color: var(--c-ink-2); }
+
+/* ========================= RUN 전용 =========================
+   여기 규칙은 전부 run- 으로 시작하고 .page--run 안에서만 쓴다.
+   요청 · 검사 · 품질은 공용 .panel 을 그대로 쓰므로 영향을 받지 않는다.
+
+   왜 RUN 만 다른가.
+   표를 읽는 화면(요청 · 검사 · 품질)에서 트윈은 소음이고, 그래서 그 화면들은
+   패널로 덮고 page--dim 으로 눌러 둔다. 그러나 RUN 에서 "로봇이 지금 무엇을
+   하고 있는가"의 답은 절반이 트윈에 있다. 계기를 상자에 담아 트윈 위에 띄우면
+   답의 절반을 가리게 된다. 그래서 상자를 없애고 화면 양 가장자리에 얹는다.
+
+   왜 알파를 다시 쓰는가.
+   패널을 불투명하게 만든 이유는 밝은 셀 렌더가 비쳐 대비가 배경에 종속되기
+   때문이었다. 그 조건 자체를 없애는 대신 최악의 경우를 재고 그 안에서 쓴다.
+   스크림 rgba(6,10,14,0.88) 이 순백(255,255,255) 위에 놓인 최악의 합성은
+   rgb(36,39,43) 이고, 그 위에서 ink 12.5:1 · ink-3 4.8:1 이다. 본문 기준
+   4.5:1 을 배경이 무엇이든 넘긴다 — 비네트에도, 카메라 각도에도 기대지 않는다.
+
+   0.88 을 낮추지 말 것. 0.86 에서 이미 4.49:1 로 기준에 걸치고 0.78 이면
+   3.3:1 이다. 한때 비네트를 0.62 로 올리고 0.82 로 낮춘 적이 있는데(실측
+   5.8:1), 그때는 가독성이 후처리 설정 하나에 매달려 있었다. 비네트를 되돌리면서
+   이 값도 함께 되돌렸다. */
+
+.run-edge {
+    position: absolute;
+    background-color: rgba(6, 10, 14, 0.88);
+}
+
+/*
+  레일에 딱 붙인다. 24px 여백을 두면 계기가 다시 "떠 있는 상자"가 된다.
+
+  bottom 을 잡지 않는다. 화면 아래까지 늘리면 Mock 에서 TCP·RPY·SAFETY 가 접힌
+  만큼(약 420px) 열 한가운데가 텅 비고, 상자가 없어진 지금은 그 구멍이 더 도드라진다.
+  내용 높이에 맞춰 끝내면 남는 자리는 구멍이 아니라 트윈이 이어지는 자리가 된다.
+  Mock/Real 사이에 높이가 달라지지만 모드는 에디터에서만 바뀌므로 실행 중에는 고정이다.
+*/
+.run-edge--left {
+    left: 88px; top: 68px; width: 412px;
+    padding-left: 28px; padding-right: 28px;
+    padding-top: 22px; padding-bottom: 18px;
+    /* 아래에 카메라 타일(y772)이 있다. 넘치면 눌리지 않고 삐져나와 눈에 보인다. */
+    max-height: 704px;
+    overflow: hidden;
+}
+
+.run-edge--right {
+    right: 0; top: 68px; bottom: 0; width: 360px;
+}
+
+/* 조립 진행. 트윈 위에 얹혀 화면 아래 가장자리를 덮는다. */
+/*
+  이중 시야 배치에서 계기 띠는 트윈 위에 얹힌 가장자리 층이 아니라
+  화면 폭을 차지하는 계기 선반이다. 그러므로 예외를 두지 않고 완전 불투명이다.
+  0.88 로 두었을 때 밝은 작업대가 비쳐 IDLE · 슬롯 문구가 실제로 흐렸다.
+*/
+.run-deck {
+    position: absolute;
+    left: 88px; right: 0; bottom: 0; height: 270px;
+    background-color: var(--c-panel);
+    border-top-width: 1px;
+    border-top-color: rgba(255, 255, 255, 0.10);
+    padding-left: 26px; padding-right: 26px;
+    padding-top: 14px; padding-bottom: 14px;
+}
+
+/* 진행 레일 — 화면에서 크게 움직이는 유일한 것.
+   조립 진행(놓인 슬롯 / 전체)이다. 아직 연결되지 않은 jobs 진행이 아니다. */
+.run-rail {
+    position: absolute;
+    left: 88px; top: 64px; right: 0; height: 4px;
+    background-color: rgba(255, 255, 255, 0.07);
+}
+.run-rail__fill {
+    height: 4px; width: 0;
+    background-color: var(--c-accent);
+    transition-property: width;
+    transition-duration: 400ms;
+}
+
+/* 섹션 제목. 액센트 조각을 붙이지 않는다 — 액센트는 "지금 여기" 하나에만 쓴다.
+   구분은 색이 아니라 자간과 규칙선이 한다. */
+.run-sect { flex-direction: row; align-items: center; flex-shrink: 0; margin-bottom: 9px; }
+.run-sect__title { color: var(--c-ink-2); font-size: 11px; letter-spacing: 2.2px; -unity-font-style: bold; }
+.run-sect__unit { color: var(--c-ink-4); font-size: 11px; letter-spacing: 1.2px; }
+.run-hr { height: 1px; background-color: rgba(255, 255, 255, 0.10); flex-shrink: 0; }
+
+/* 타입 스케일을 벌린다. 이전에는 11 · 12 · 15 · 20 네 단계가 9px 안에 몰려 있어
+   무엇이 중요한지 크기로 구별되지 않았다. */
+.run-lead { color: var(--c-ink); font-size: 40px; -unity-font-style: bold; letter-spacing: -1.5px; }
+.run-val { color: var(--c-ink); font-size: 22px; -unity-font-style: bold; }
+.run-sub { color: var(--c-ink-3); font-size: 12px; }
+
+/* 카메라. 영상은 자기 표면이 있으므로 테두리도 헤더도 주지 않는다.
+   360 폭에 4:3 이라 270 이다. 이름은 영상 위에 얹는다. */
+/*
+  이전 배경 rgb(14,19,25) 는 열 스크림과 거의 같은 밝기라 타일 경계가 보이지 않았다.
+  영상이 없을 때 "여기가 화면"이라는 것 자체가 읽히지 않는다. 열보다 확실히 어둡게
+  내리고 아래에 규칙선을 하나 그어 오목한 면으로 만든다.
+*/
+.run-cam {
+    height: 270px;
+    background-color: rgb(3, 6, 9);
+    flex-shrink: 0;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(255, 255, 255, 0.10);
+}
+/* 태그는 영상 위에도 얹힌다. 밝은 프레임이 오면 글자가 씻기므로 자기 바탕을 갖는다. */
+.run-cam__tag {
+    position: absolute; left: 10px; top: 10px;
+    color: rgb(205, 218, 226); font-size: 10px;
+    letter-spacing: 1.8px; -unity-font-style: bold;
+    background-color: rgba(3, 6, 9, 0.72);
+    padding-left: 6px; padding-right: 6px;
+    padding-top: 2px; padding-bottom: 2px;
+}
+
+/* 추세 — 값 하나의 최근 이력 (Sparkline.cs, Docs/ui-design.md 3.1절).
+   값만 보여 주면 "지금 얼마인가"만 알고 "어느 쪽으로 가고 있는가"는 모른다.
+   그래서 이상을 알람이 뜬 뒤에야 알아챈다.
+
+   22px 는 세로 예산에서 나온 값이다. 기울기가 읽히는 최소 높이이고, 더 키우면
+   좌측 열에서 관절 6행(156px)이 가져갈 몫을 뺏는다. Real 에서 열 전체가
+   704px(카메라 타일 위)에 들어가야 한다. */
+.spark { height: 22px; flex-shrink: 0; }
+
+
+/* ===== MONITOR 재구성 (Docs/ui-design.md 2절) ===== */
+
+/*
+  "지금" 띠 — 무엇을, 어디에. 트윈 바로 위에 얹어 3D 를 보는 시선과 같은
+  시야에 들어오게 한다. 우측 열을 없앤 자리가 여기로 왔다.
+*/
+.run-now {
+    position: absolute;
+    left: 500px; right: 0; top: 68px; height: 96px;
+    flex-direction: row;
+    align-items: center;
+    background-color: rgba(6, 10, 14, 0.88);
+    padding-left: 28px; padding-right: 28px;
+}
+.run-now__phase { color: var(--c-ink-2); font-size: 13px; letter-spacing: 2.4px; -unity-font-style: bold; }
+/*
+  화면에서 가장 큰 글자다. 실패했을 때 사람이 갈 좌표이고, DB · 레시피 · 검사가
+  모두 같은 값을 쓴다. 이전에는 12px 로 "step 7 / 25 · slot HBM-03" 안에 묻혀 있었다.
+*/
+.run-now__slot { color: var(--c-ink); font-size: 38px; -unity-font-style: bold; letter-spacing: -0.5px; }
+.run-now__part { color: var(--c-ink-3); font-size: 15px; margin-left: 18px; }
+.run-now__count { color: var(--c-ink); font-size: 26px; -unity-font-style: bold; }
+
+/*
+  카메라 타일. 좌측 계기 열 아래, 화면 왼쪽 아래 모서리에 고정한다.
+  트윈 위에 얹지 않는다 — 트윈을 지면으로 두기로 한 것이 이 배치의 전제다.
+  412 x 308 은 4:3 이라 640x480 텍스처가 레터박스 없이 들어간다.
+*/
+.run-cam-panel {
+    position: absolute;
+    left: 88px; bottom: 0; width: 412px; height: 308px;
+    background-color: rgba(6, 10, 14, 0.88);
+    padding: 12px;
+}
+.run-cam-panel .run-cam { flex-grow: 1; height: auto; }
+/*
+  소스 전환과 확대는 영상 위에 얹힌다.
+
+  칩 하나하나가 자기 바탕을 갖는다고 봤지만 그 바탕은 rgba(255,255,255,0.04) 라
+  사실상 투명이다. 컨베이어처럼 밝은 프레임이 들어오면 칩 글자(BOARD)도, 바탕이
+  아예 없는 띠 제목(관측)과 수신 배지(1 / 1 · SIM)도 같이 씻겨 나갔다.
+  칸 이름표(.run-cam-tile__title)가 이미 쓰는 방법을 띠 전체에 그대로 쓴다 —
+  글자마다가 아니라 띠가 자기 바탕을 갖는다. 대비가 영상 밝기에 의존하지 않는다.
+*/
+.run-cam__bar {
+    position: absolute;
+    left: 8px; right: 8px; bottom: 8px;
+    flex-direction: row;
+    align-items: center;
+    background-color: rgba(3, 6, 9, 0.82);
+    padding-left: 10px; padding-right: 10px;
+    padding-top: 6px; padding-bottom: 6px;
+}
+
+/*
+  확대 — 카메라와 트윈이 자리를 바꾼다. REAL 에서 "트윈이 놓았다고 하는데
+  실제로 놓였나"를 크게 봐야 할 때 쓴다. 좌표는 트윈 자리 그대로다.
+*/
+.run-cam-panel--expanded {
+    left: 500px; top: 164px; width: auto; height: auto;
+    right: 0; bottom: 140px;
+}
+
+
+/* ===== MONITOR · 이중 시야 (Docs/ui-design.md 2절) =====
+   좌우 두 그림이 같은 크기를 지키는 것이 이 배치의 전부다.
+   크기가 다르면 사람이 한쪽을 먼저 보고, 그러면 비교가 아니라 확인이 된다. */
+
+/*
+  top 은 70 이 아니라 112 다. 70 은 셸의 alarm-banner(top:64 · height:44) 자리이고,
+  그 띠는 로봇이 끊기면 켜진다. 두 창의 제목이 실제로 가려졌다.
+  알람 띠 자리는 켜지든 안 켜지든 항상 비워 둔다 (Docs/ui-design.md 2절).
+*/
+.run-pane { position: absolute; top: 112px; height: 698px; }
+
+/* 기준 쪽은 아무것도 덮지 않는다. 3D 트윈이 그대로 보이는 자리다. */
+.run-pane--twin {
+    left: 88px; width: 908px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.10);
+    padding: 18px;
+}
+/* 관측 쪽만 액센트 테두리를 얻는다. 여기가 로봇의 자기 보고와 무관한 유일한 증거다. */
+.run-pane--cam {
+    left: 1012px; width: 908px;
+    border-width: 2px;
+    border-color: var(--c-accent);
+    background-color: rgb(3, 6, 9);
+    padding: 0;
+}
+.run-pane__title {
+    position: absolute; left: 18px; top: 14px;
+    color: var(--c-ink-2); font-size: 14px;
+    letter-spacing: 2.2px; -unity-font-style: bold;
+}
+.run-pane__title--on { color: var(--c-accent); }
+.run-pane__source {
+    position: absolute; right: 18px; top: 16px;
+    color: var(--c-ink-4); font-size: 12px;
+}
+.run-pane--cam .run-cam {
+    position: absolute; left: 0; top: 0; right: 0; bottom: 0;
+    height: auto; border-bottom-width: 0;
+}
+
+/* 계기 띠의 열. 절대 배치라 열 하나가 접혀도 나머지가 밀리지 않는다. */
+/*
+  overflow 는 hidden 이다. 열은 폭이 고정인데 안에 들어가는 것은 실측값이라
+  자릿수가 늘어난다. 기본값(visible)이면 넘친 글자가 옆 열의 규칙선을 넘어가
+  이웃 값 위에 겹쳐 그려진다 — 두 열의 값이 한 덩어리로 읽혀 어느 쪽 수인지
+  알 수 없게 된다. 잘리면 잘린 것이 보이므로 고칠 수 있다.
+*/
+.run-col {
+    position: absolute;
+    top: 22px; bottom: 20px;
+    padding-left: 22px; padding-right: 22px;
+    overflow: hidden;
+}
+.run-col--rule { border-left-width: 1px; border-left-color: rgba(255, 255, 255, 0.09); }
+
+
+/* ===== 관측 · CCTV 분할 =====
+   켠 카메라 수에 따라 칸이 1 · 2 · 4 로 나뉜다. 칸 크기는 바인더가 퍼센트로 준다.
+   칸마다 자기 이름과 마지막 프레임 나이를 적는다 — 어느 칸이 늦는지 한 눈에
+   보여야 하고, 하나로 합치면 어느 카메라가 죽었는지 알 수 없다. */
+.run-cam-grid {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 52px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-content: flex-start;
+}
+.run-cam-tile {
+    background-color: rgb(3, 6, 9);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+.run-cam-tile__img { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.run-cam-tile__no-signal {
+    display: none;
+    position: absolute; left: 0; top: 0; right: 0; bottom: 0;
+    -unity-text-align: middle-center;
+    color: var(--c-ink-3); font-size: 18px; letter-spacing: 2px;
+}
+.run-cam-tile--no-signal .run-cam-tile__img { display: none; }
+.run-cam-tile--no-signal .run-cam-tile__no-signal { display: flex; }
+/* 이름표는 영상 위에 얹히므로 자기 바탕을 갖는다. 밝은 프레임에서 글자가 씻긴다. */
+.run-cam-tile__title {
+    position: absolute; left: 8px; top: 8px;
+    color: rgb(205, 218, 226); font-size: 11px;
+    letter-spacing: 1.8px; -unity-font-style: bold;
+    background-color: rgba(3, 6, 9, 0.72);
+    padding-left: 6px; padding-right: 6px; padding-top: 2px; padding-bottom: 2px;
+}
+.run-cam-tile__age {
+    position: absolute; right: 8px; top: 8px;
+    color: var(--c-ink-3); font-size: 11px;
+    background-color: rgba(3, 6, 9, 0.72);
+    padding-left: 6px; padding-right: 6px; padding-top: 2px; padding-bottom: 2px;
+}
+/* 정상 수신은 짧은 초록 점등으로, 지연은 경과 시간으로 표시한다. */
+.run-cam-tile__age--indicator {
+    width: 10px; height: 10px;
+    padding-left: 0; padding-right: 0; padding-top: 0; padding-bottom: 0;
+    border-top-left-radius: 5px; border-top-right-radius: 5px;
+    border-bottom-left-radius: 5px; border-bottom-right-radius: 5px;
+    background-color: rgba(3, 6, 9, 0.72);
+}
+.run-cam-tile__age--receiving { background-color: rgb(62, 207, 112); }
+.run-cam-tile__age--late { color: var(--c-bad); }
+
+/* 아래 띠에 놓인 패널 이름과 수신 요약. 칸 이름표와 자리를 다투지 않는다. */
+.run-cam__bar-title {
+    color: var(--c-accent); font-size: 12px;
+    letter-spacing: 2.2px; -unity-font-style: bold;
+}
+.run-cam__bar-badge {
+    color: var(--c-ink-3); font-size: 12px; margin-right: 12px;
+}
+
+/* ============================ QUALITY · 슬롯 파레토 ============================
+  Docs/ui/mock-05-quality-pareto.svg 11안.
+
+  좌: 슬롯별 불량 건수 파레토. 우: 선택한 슬롯 하나의 상세.
+  두 질문이 경쟁이 아니라 순서라서 한 화면에 붙는다 —
+  파레토가 "어디부터"를 고르고, 우측이 "그게 뭔지"를 끝까지 말한다.
+
+  색 규칙은 화면 전체와 같다. 임계 조회 계약이 없으므로 막대에 상태색(--c-bad /
+  --c-warn)을 주지 않는다. 대신 누적 80% 안에 드는 막대만 밝게 둔다 — 이건 임계
+  판정이 아니라 데이터에서 바로 나오는 구분이라 지어내는 것이 아니다.
+*/
+.pbar-col {
+    position: absolute;
+    bottom: 0;
+    align-items: center;
+    justify-content: flex-end;
+}
+.pbar-col:hover .pbar { background-color: var(--c-ink-2); }
+
+/* 막대 자체. 높이는 바인더가 건수 비율로 준다. */
+.pbar { width: 100%; background-color: var(--c-ink-4); }
+.pbar--major { background-color: var(--c-ink); }          /* 누적 80% 안 */
+.pbar--sel   { background-color: var(--c-accent); }        /* 지금 여기 */
+
+.pbar-count { color: var(--c-ink); font-size: 15px; -unity-font-style: bold; margin-bottom: 6px; }
+.pbar-count--dim { color: var(--c-ink-3); }
+
+/* 축 아래 한 칸 — 그림 · 슬롯 코드 · 불량률. 눌러서 고르는 자리다. */
+.pslot {
+    position: absolute;
+    top: 0;
+    align-items: center;
+}
+.pslot__icon { width: 22px; height: 22px; -unity-background-scale-mode: scale-to-fit; }
+.pslot__code { color: var(--c-ink-2); font-size: 13px; margin-top: 14px; }
+.pslot__rate { color: var(--c-ink-4); font-size: 11px; margin-top: 4px; }
+.pslot__mark { height: 3px; width: 100%; background-color: var(--c-accent); opacity: 0; }
+
+.pslot--sel .pslot__code { color: var(--c-ink); -unity-font-style: bold; }
+.pslot--sel .pslot__mark { opacity: 1; }
+.pslot:hover .pslot__code { color: var(--c-ink); }
+
+/* 축 · 눈금 */
+.paxis { position: absolute; height: 1px; background-color: var(--c-edge); }
+.pgrid { position: absolute; height: 1px; background-color: var(--c-sunk); }
+.ptick { position: absolute; color: var(--c-ink-4); font-size: 11px; }
+.ptail { position: absolute; color: var(--c-ink-4); font-size: 11px; -unity-text-align: middle-center; }
+
+/* 무릎 설명 — 이 화면이 내는 결론이라 액센트를 준다. */
+/* 가로 정렬은 바인더가 무릎 위치를 보고 정한다 — 여기서 고정하면 싸운다. */
+.pknee { position: absolute; color: var(--c-accent); font-size: 15px; -unity-font-style: bold; }
+.pknee__sub { position: absolute; color: var(--c-ink-4); font-size: 11px; }
+
+/* 부품 필터 칩 */
+.pchip {
+    flex-direction: row;
+    align-items: center;
+    height: 26px;
+    padding-left: 6px;
+    padding-right: 8px;
+    margin-right: 8px;
+    background-color: var(--c-sunk);
+}
+.pchip:hover { background-color: var(--c-sunk-2); }
+.pchip--on { background-color: var(--c-accent-wash); }
+.pchip__icon { width: 18px; height: 18px; -unity-background-scale-mode: scale-to-fit; margin-right: 6px; }
+.pchip__name { color: var(--c-ink-2); font-size: 13px; }
+.pchip--on .pchip__name { color: var(--c-accent); -unity-font-style: bold; }
+.pchip__n { color: var(--c-ink-4); font-size: 11px; margin-left: 8px; }
+
+/* ---- 우측: 선택한 슬롯 하나 ---- */
+.pick__icon { width: 56px; height: 56px; -unity-background-scale-mode: scale-to-fit; }
+.pick__code { color: var(--c-ink); font-size: 30px; -unity-font-style: bold; letter-spacing: -0.4px; }
+.pick__part { color: var(--c-ink-3); font-size: 13px; margin-top: 4px; }
+.pick__rate { color: var(--c-ink); font-size: 88px; -unity-font-style: bold; letter-spacing: -4px; }
+.pick__den  { color: var(--c-ink-3); font-size: 17px; }
+
+/* 상세 한 줄 — 왼쪽 라벨, 오른쪽 값. 표가 아니라 정의 목록이다. */
+.prow {
+    flex-direction: row;
+    align-items: center;
+    height: 44px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(255, 255, 255, 0.055);
+}
+.prow__key { color: var(--c-ink-3); font-size: 11px; letter-spacing: 1.2px; -unity-font-style: bold; }
+.prow__val { color: var(--c-ink); font-size: 16px; -unity-text-align: middle-right; flex-grow: 1; }
+.prow__val--miss { color: var(--c-ink-4); font-size: 13px; }
+
+/* 복구 안내는 활성 설비 알람과 구분한다. */
+.alarm-banner { background-color: rgb(47,24,31); border-top-color: rgb(240,71,90); }
+.alarm-banner--recovered { background-color: rgb(22, 35, 41); border-top-color: rgb(143, 166, 180); }
+.alarm-banner--recovered #alarm-label { color: rgb(226, 236, 241); }
+.alarm-banner--recovered #alarm-dot { background-color: rgb(143, 166, 180); }
+.command-result { position: absolute; right: 24px; top: 112px; max-width: 560px; font-size: 15px; background-color: rgb(47, 24, 31); }
+.session-events { position: absolute; left: 112px; right: 24px; bottom: 12px; background-color: var(--c-panel); padding: 10px; border-width: 1px; border-color: var(--c-edge); }
+.session-events .unity-foldout__text { font-size: 15px; color: var(--c-ink); }
+.event-row { white-space: normal; font-size: 14px; padding: 6px; border-bottom-width: 1px; border-bottom-color: var(--c-edge); }
+
+/* 접힌 이벤트 띠의 높이를 비워 계기와 겹치지 않게 한다. 펼친 이력은 하단 전체를 사용한다. */
+.page--run .run-col { top: 14px; bottom: 64px; }
+/* A full-width status strip keeps changing messages out of the instrument columns. */
+.page--run .run-deck { height: 342px; }
+.page--run .run-pane { height: 626px; }
+.page--run .run-col { top: 86px; }
+.run-command-strip { position: absolute; left: 54px; right: 32px; top: 14px; height: 60px; flex-direction: row; align-items: center; border-bottom-width: 1px; border-bottom-color: var(--c-edge); }
+.run-command-strip .run-sect__title { width: 84px; flex-shrink: 0; }
+.run-command-strip .run-sub { width: 150px; flex-shrink: 0; -unity-text-align: middle-right; }
+.run-current Label { flex-shrink: 0; }
+.run-current #unit-phase, .run-current #request-id { white-space: normal; }
+.run-current #now-slot { font-size: 28px; }
+.run-operation-detail { flex-grow: 1; flex-shrink: 1; min-width: 0; font-size: 16px; color: var(--c-ink-2); white-space: normal; margin-left: 16px; margin-right: 20px; }
+.run-calibration { height: 32px; min-height: 32px; max-height: 32px; flex-shrink: 0; border-bottom-width: 1px; border-bottom-color: var(--c-edge); margin-bottom: 8px; overflow: hidden; }
+.run-calibration-state { font-size: 16px; color: var(--c-ink); -unity-font-style: bold; min-width: 0; flex-shrink: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* 상세 원인과 수신 시각은 요약의 툴팁으로 제공해 슬롯 영역 높이를 유지한다. */
+.run-calibration .run-calibration-detail, .run-calibration #calibration-age { display: none; }
+.run-calibration-detail { font-size: 14px; color: var(--c-ink-2); margin-top: 4px; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.run-slot-content { flex-grow: 1; min-height: 0; overflow: hidden; }
+.run-slot-content .run-sect { margin-bottom: 4px; }
+.run-slot-content #progress-now { display: none; }
+.run-slot-content .grp { margin-bottom: 4px; }
+.run-slot-content .grp__head { margin-bottom: 3px; }
+.session-events .unity-foldout__text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.session-events #event-list { height: 240px; }
+.run-calibration-state.bad, .run-operation-detail.bad { color: var(--c-bad); }
+
+/* INSPECT: 판정이 대표 정보이며 시각·원인은 보조 크기로 고정한다. */
+.page--inspect .inspect-camera-body { flex-grow: 1; min-height: 0; padding: 16px; }
+.page--inspect .inspect-video-tabs { height: 40px; margin-bottom: 12px; flex-shrink: 0; }
+.page--inspect .inspect-video-tabs .btn { height: 38px; min-width: 150px; margin-right: 8px; font-size: 15px; }
+.page--inspect .inspect-video-tabs .inspect-tab--on { color: var(--c-accent); border-bottom-width: 2px; border-bottom-color: var(--c-accent); }
+.page--inspect .inspect-camera-frame { flex-grow: 1; min-height: 0; background-color: rgb(20,28,36); }
+.page--inspect .inspect-image { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.page--inspect .inspect-support { color: var(--c-ink-3); font-size: 14px; white-space: normal; flex-shrink: 0; }
+.page--inspect .inspect-camera-body > .inspect-support { margin-top: 8px; }
+.page--inspect .inspect-refresh { width: 112px; height: 34px; font-size: 14px; }
+.page--inspect .inspect-verdict { color: var(--c-ink); font-size: 64px; -unity-font-style: bold; height: 88px; flex-shrink: 0; }
+.page--inspect .inspect-verdict--status { font-size: 36px; }
+.page--inspect .inspect-verdict.bad { color: var(--c-bad-ink); }
+.page--inspect .inspect-verdict.warn { color: var(--c-warn); }
+.page--inspect .inspect-message { font-size: 16px; color: var(--c-ink-2); white-space: normal; min-height: 48px; flex-shrink: 0; }
+.page--inspect .inspect-checks { margin-top: 8px; }
+.page--inspect .inspect-checks Label { font-size: 14px; white-space: normal; }
+.page--inspect .inspect-time-row { border-top-width: 1px; border-top-color: var(--c-edge); padding-top: 12px; margin-top: 12px; flex-shrink: 0; }
+.page--inspect .inspect-time { font-size: 16px; color: var(--c-ink); }
+.page--inspect .inspect-defects-scroll { flex-grow: 1; min-height: 0; }
+.page--inspect #defect-grid > Label { font-size: 15px; white-space: normal; }
+.page--inspect .inspect-units-scroll { height: 78px; padding: 10px 18px; }
+.page--inspect #unit-strip { align-items: center; }
+.page--inspect #unit-strip .chip { min-width: 120px; height: 36px; margin-right: 8px; flex-shrink: 0; }
+.page--inspect #unit-strip .chip__text { font-size: 14px; }
+
+/* JOBS: 선택 상세와 동작은 고정하고 작업 목록·등록 정보만 스크롤한다. */
+.page--jobs .jobs-support { font-size: 14px; color: var(--c-ink-3); white-space: normal; flex-shrink: 0; }
+.page--jobs .job-filter { font-size: 14px; width: 126px; }
+.page--jobs #job-error { max-height: 64px; overflow: hidden; }
+.page--jobs #job-query-state { margin-bottom: 8px; }
+.page--jobs .jobs-list-scroll { flex-grow: 1; min-height: 80px; }
+.page--jobs .jobs-columns { flex-shrink: 0; }
+.page--jobs .jobs-product-cell { flex-grow: 1; flex-shrink: 1; min-width: 0; width: 220px; }
+.page--jobs .jobs-row { flex-direction: row; align-items: center; justify-content: flex-start; -unity-text-align: middle-left; height: 66px; flex-shrink: 0; margin: 0; padding: 0; border-width: 0; border-bottom-width: 1px; border-bottom-color: var(--c-edge); border-left-width: 3px; border-left-color: transparent; background-color: transparent; }
+.page--jobs .jobs-row:hover { background-color: var(--c-sunk-2); }
+.page--jobs .jobs-row--selected { background-color: var(--c-accent-wash); border-left-width: 3px; border-left-color: var(--c-accent); }
+.page--jobs .jobs-row:focus { border-top-width: 1px; border-top-color: var(--c-accent); border-bottom-color: var(--c-accent); }
+.page--jobs .jobs-row .tcell { height: 28px; -unity-text-align: middle-left; font-size: 14px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.page--jobs .job-status { font-size: 14px; flex-shrink: 0; }
+.page--jobs .jobs-row-id { -unity-text-align: middle-left; font-size: 12px; color: var(--c-ink-3); margin-top: 4px; }
+.page--jobs .jobs-detail { border-top-width: 1px; border-top-color: var(--c-edge); margin-top: 12px; padding-top: 14px; flex-shrink: 0; }
+.page--jobs .jobs-detail-title { font-size: 23px; color: var(--c-ink); -unity-font-style: bold; margin-top: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.page--jobs .jobs-metrics { margin-top: 14px; margin-bottom: 12px; }
+.page--jobs .jobs-metric { flex-grow: 1; flex-basis: 0; }
+.page--jobs .jobs-progress { font-size: 32px; color: var(--c-ink); margin-top: 4px; }
+.page--jobs .jobs-results { font-size: 25px; }
+.page--jobs #selected-job-reason { min-height: 38px; }
+.page--jobs .jobs-actions { margin-top: 10px; }
+.page--jobs .jobs-actions .btn { min-width: 132px; height: 40px; font-size: 15px; margin-right: 8px; }
+.page--jobs .jobs-register-scroll { flex-grow: 1; min-height: 0; margin-bottom: 12px; }
+.page--jobs #product-name { font-size: 28px; }
+.page--jobs #start-button, .page--jobs #start-reason { flex-shrink: 0; }
+
+.page--jobs .jobs-row .tcell--num { -unity-text-align: middle-right; }
+.page--jobs .jobs-row .job-status { -unity-text-align: middle-left; padding-left: 8px; }
+
+.page--jobs .jobs-columns .tcell--head { font-size: 12px; }
+
+
+/* SETUP은 운전 전 확인 근거를 읽는 화면이다. 긴 오류 내용은 카드 안에서 줄바꿈한다. */
+.setup-content { position: absolute; left: 112px; right: 24px; top: 172px; bottom: 24px; }
+.setup-summary { padding: 20px 24px; margin-bottom: 16px; flex-shrink: 0; }
+.setup-summary-title { color: var(--c-ink); font-size: 26px; -unity-font-style: bold; margin-top: 6px; margin-bottom: 8px; white-space: normal; }
+.setup-summary-title.bad { color: var(--c-bad); }
+.setup-grid { flex-direction: row; flex-wrap: wrap; }
+.setup-card { width: 49%; margin-right: 1%; margin-bottom: 16px; padding: 20px 24px; flex-shrink: 0; }
+.setup-caption { color: var(--c-ink-3); font-size: 13px; margin-top: 16px; margin-bottom: 5px; }
+.setup-detail { color: var(--c-ink); font-size: 16px; white-space: normal; }
+.setup-detail.bad { color: var(--c-bad); }
+.setup-footnote { color: var(--c-ink-3); font-size: 13px; white-space: normal; margin-top: 14px; }
+.setup-reset-calibration { width: 190px; height: 40px; margin-left: 16px; }
+
+
+/* MANUAL: 트윈 시야를 왼쪽에 확보하고 모든 조작·관측을 오른쪽 한 열에 모은다. */
+.page--manual .manual-banner { position: absolute; left: 112px; top: 164px; right: 24px; height: 46px; flex-direction: row; align-items: center; padding-left: 18px; padding-right: 18px; background-color: rgb(34, 31, 24); border-left-width: 3px; border-left-color: var(--c-warn); }
+.page--manual .manual-banner-title { font-size: 16px; flex-shrink: 0; margin-right: 18px; }
+.page--manual .manual-banner-detail { color: rgb(194, 164, 99); font-size: 13px; white-space: normal; flex-shrink: 1; }
+.page--manual .manual-viewport { position: absolute; left: 112px; top: 226px; width: 1180px; height: 806px; border-width: 1px; border-color: var(--c-edge); }
+.page--manual .manual-viewport-title { position: absolute; left: 18px; top: 14px; }
+.page--manual .manual-viewport-legend { position: absolute; right: 18px; bottom: 14px; }
+.page--manual .manual-controls { position: absolute; left: 1316px; top: 226px; width: 580px; height: 806px; }
+.page--manual .manual-controls .panel__head { flex-shrink: 0; }
+.page--manual .manual-controls-body { min-height: 0; }
+.page--manual .manual-ghost-callout { min-height: 84px; flex-shrink: 0; padding-bottom: 10px; }
+.page--manual .manual-ghost-hint { color: var(--c-ink-2); font-size: 14px; white-space: normal; margin-top: 8px; min-height: 44px; }
+.page--manual .manual-ghost-hint.bad { color: var(--c-bad-ink); }
+.page--manual .manual-ghost-hint.warn { color: var(--c-warn); }
+.page--manual .manual-joint-heading { height: 24px; }
+.page--manual .manual-joint-row { height: 52px; border-bottom-width: 1px; border-bottom-color: var(--c-line); }
+.page--manual .manual-joint-axis { width: 36px; flex-shrink: 0; }
+.page--manual .manual-joint-value { width: 84px; flex-shrink: 0; font-size: 18px; color: var(--c-ink); -unity-text-align: middle-right; }
+.page--manual .manual-joint-value.accent { color: var(--c-accent); }
+.page--manual .manual-joint-heading .manual-joint-value { color: var(--c-ink-3); font-size: 11px; }
+.page--manual .manual-slider-heading { margin-left: 20px; }
+.page--manual .manual-joint-slider { flex-grow: 1; min-width: 0; margin-left: 20px; margin-right: 4px; }
+.page--manual .manual-actions { margin-top: 16px; margin-bottom: 16px; }
+.page--manual .manual-actions .btn { height: 46px; }
+.page--manual .manual-secondary-action { width: 112px; margin-right: 12px; }
+.page--manual .manual-primary-action { flex-grow: 1; font-size: 16px; }
+.page--manual .manual-observations { flex-shrink: 0; border-top-width: 1px; border-top-color: var(--c-edge); padding-top: 8px; margin: 0; }
+.page--manual .manual-observations .unity-foldout__text { font-size: 14px; color: var(--c-ink-2); }
+.page--manual .manual-observations .unity-foldout__content { margin-left: 0; }
+.page--manual .manual-observation-panel { padding-top: 4px; }
+.page--manual .manual-observation-heading { height: 24px; }
+.page--manual .manual-tcp-list { flex-direction: row; flex-wrap: wrap; flex-shrink: 0; }
+.page--manual .manual-tcp-row { width: 33.333%; height: 32px; padding-right: 10px; border-bottom-width: 1px; border-bottom-color: var(--c-line); }
+.page--manual .manual-tcp-axis { width: 40px; font-size: 11px; color: var(--c-ink-3); }
+.page--manual .manual-tcp-value { flex-grow: 1; font-size: 16px; color: var(--c-ink); -unity-text-align: middle-right; }
+.page--manual .manual-tcp-unit { font-size: 11px; margin-left: 6px; }
+.page--manual .manual-gripper-heading { height: 36px; margin-top: 8px; }
+.page--manual .manual-gripper-chip { margin-left: 12px; }
+.page--manual .manual-gripper-unit { font-size: 11px; margin-left: 6px; }
+.page--manual .manual-gripper-actions { margin-top: 10px; }
+.page--manual .manual-gripper-actions .btn { width: 134px; height: 32px; font-size: 11px; margin-right: 8px; }
+
+/* RUN의 표시 영역과 Camera.rect를 일치시켜 UI 뒤로 셀이 잘리지 않게 한다. */
+.run-twin-viewport { position: absolute; left: 0; right: 0; top: 48px; bottom: 0; }
+.run-twin-toolbar {
+    position: absolute; left: 0; right: 0; top: 0; height: 48px;
+    flex-direction: row; align-items: center;
+    padding-left: 12px; padding-right: 12px;
+    background-color: rgb(28, 42, 52);
+}
+.run-twin-toolbar .chip { margin-left: 8px; min-height: 30px; }
+.run-twin-source { position: absolute; left: 14px; top: 60px; font-size: 12px; }
+.run-twin-help { position: absolute; left: 14px; bottom: 12px; font-size: 12px; }
+.page--run.page--focus .run-pane--twin { width: auto; right: 0; height: auto; bottom: 64px; }
+/* 하단 run-deck의 342px 영역을 비워 카메라 조작 바가 가려지지 않게 한다. */
+.page--run .run-pane--cam.run-cam-panel--expanded {
+    left: 88px; right: 0; width: auto; top: 112px; height: auto; bottom: 342px;
+}
+
+.run-alarm-space { position: absolute; left: 88px; right: 0; top: 64px; height: 48px; background-color: rgb(28, 42, 52); }
+.run-view-gutter { position: absolute; left: 996px; width: 16px; top: 112px; height: 698px; background-color: rgb(28, 42, 52); }
+.page--focus .run-view-gutter { display: none; }
+
+/* 실행 확인 창에만 적용해 다른 입력·토글의 크기를 유지한다. */
+.scene-confirmation { color: rgb(242, 246, 250); border-width: 1px; border-color: rgb(105, 126, 147); border-radius: 8px; }
+.scene-confirmation__title { font-size: 25px; -unity-font-style: bold; margin-bottom: 10px; }
+.scene-confirmation__instruction { font-size: 16px; white-space: normal; color: rgb(205, 217, 230); margin-bottom: 20px; }
+.scene-confirmation__operator { flex-direction: column; align-items: stretch; margin-bottom: 18px; }
+.scene-confirmation__operator > .unity-base-field__label { font-size: 17px; color: rgb(242, 246, 250); margin-bottom: 8px; min-width: 0; }
+.scene-confirmation__operator .unity-base-text-field__input { min-height: 46px; font-size: 21px; color: rgb(255, 255, 255); background-color: rgb(13, 22, 31); border-width: 2px; border-color: rgb(130, 153, 175); padding-left: 12px; }
+.scene-confirmation__operator .unity-base-text-field__input:focus { border-color: rgb(105, 196, 255); }
+.scene-confirmation__check { min-height: 52px; margin-top: 4px; margin-bottom: 4px; padding-left: 12px; padding-right: 12px; background-color: rgb(38, 51, 66); border-width: 1px; border-color: rgb(94, 115, 137); border-radius: 5px; }
+.scene-confirmation__check .unity-toggle__input { flex-grow: 1; }
+.scene-confirmation__check .unity-toggle__text { color: rgb(245, 248, 252); font-size: 18px; white-space: normal; }
+.scene-confirmation__check .unity-toggle__checkmark { width: 26px; height: 26px; min-width: 26px; margin-right: 12px; border-width: 2px; border-color: rgb(173, 192, 210); background-color: rgb(15, 25, 35); }
+.scene-confirmation__check--checked { border-color: rgb(105, 196, 255); background-color: rgb(33, 61, 80); }
+.scene-confirmation__check:focus { border-color: rgb(255, 255, 255); }
+.scene-confirmation__progress { font-size: 16px; color: rgb(218, 229, 239); margin-top: 14px; margin-bottom: 10px; }
+.scene-confirmation__submit { height: 48px; font-size: 19px; -unity-font-style: bold; color: rgb(12, 25, 35); background-color: rgb(105, 196, 255); }
+.scene-confirmation__submit:disabled { color: rgb(170, 185, 199); background-color: rgb(52, 66, 81); }
+.scene-confirmation__cancel { height: 40px; margin-top: 8px; font-size: 17px; color: rgb(237, 243, 249); background-color: rgb(48, 61, 76); }
+
+/* 선택 작업 안에서 준비를 확인한다. 이름 입력은 신규 Job 등록에만 둔다. */
+.scene-confirmation--inline { margin-top: 12px; padding: 12px; background-color: rgb(25, 34, 44); }
+.scene-confirmation--inline .scene-confirmation__title { font-size: 18px; margin-bottom: 4px; }
+.scene-confirmation--inline .scene-confirmation__instruction { font-size: 14px; margin-bottom: 6px; }
+.scene-confirmation__checks { flex-direction: row; flex-wrap: wrap; justify-content: space-between; }
+.scene-confirmation--inline .scene-confirmation__check { width: 49%; min-height: 42px; }
+.scene-confirmation--inline .unity-toggle__text { font-size: 15px; }
+.scene-confirmation--inline .scene-confirmation__progress { margin-top: 6px; margin-bottom: 6px; font-size: 14px; }
+.scene-confirmation__actions { flex-direction: row; }
+.scene-confirmation__actions .scene-confirmation__submit { flex-grow: 1; height: 40px; font-size: 16px; }
+.scene-confirmation__actions .scene-confirmation__cancel { width: 110px; margin-top: 0; margin-left: 8px; }
+
+.page--jobs #slot-list { flex-direction: row; flex-wrap: wrap; justify-content: flex-start; }
+.page--jobs .parttile--compact { width: 31%; height: 132px; flex-shrink: 0; margin-right: 2%; margin-bottom: 10px; padding-top: 8px; padding-bottom: 8px; }
+.page--jobs .parttile--compact .parttile__icon { width: 88px; height: 66px; flex-shrink: 0; -unity-background-scale-mode: scale-to-fit; }
+.page--jobs .parttile--compact .parttile__line { margin-top: 8px; justify-content: center; }
+.page--jobs .parttile--compact .parttile__name,
+.page--jobs .parttile--compact .parttile__count { font-size: 14px; }
+.page--jobs .parttile--compact .parttile__stock { font-size: 11px; margin-top: 6px; }

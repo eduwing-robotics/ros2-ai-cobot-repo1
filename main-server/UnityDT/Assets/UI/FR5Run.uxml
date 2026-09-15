@@ -1,0 +1,203 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <ui:Style src="project://database/Assets/UI/FR5Theme.uss" />
+    <ui:Template src="project://database/Assets/UI/FR5Shell.uxml" name="FR5Shell" />
+    <!-- 기본은 트윈과 관측의 좌우 비교이며, 확대 중에도 공통 알람을 유지한다. -->
+    <ui:VisualElement name="fr5-run" class="page page--run fr5--mock">
+
+        <!-- 축소된 Camera.rect 바깥은 이전 프레임을 남길 수 있어 창 사이를 UI로 덮는다. -->
+        <ui:VisualElement class="run-alarm-space" picking-mode="Ignore" />
+        <ui:VisualElement class="run-view-gutter" picking-mode="Ignore" />
+
+        <!-- 진행 레일. 화면에서 크게 움직이는 유일한 것이다. -->
+        <ui:VisualElement name="run-rail" class="run-rail">
+            <ui:VisualElement name="run-progress-fill" class="run-rail__fill" />
+        </ui:VisualElement>
+
+        <ui:VisualElement name="twin-pane" class="run-pane run-pane--twin" picking-mode="Ignore">
+            <ui:VisualElement name="twin-viewport" class="run-twin-viewport" focusable="true" tooltip="왼쪽 드래그: 회전 · 오른쪽/가운데 드래그: 이동 · 휠: 확대/축소" />
+            <ui:VisualElement name="twin-toolbar" class="run-twin-toolbar">
+                <ui:Label text="트윈" class="run-sect__title" />
+                <ui:Button name="twin-overview" text="전체" class="chip" />
+                <ui:Button name="twin-board" text="기판" class="chip" />
+                <ui:Button name="twin-assembly" text="조립부" class="chip" />
+                <ui:Button name="twin-tray" text="부품 트레이" class="chip" tooltip="고정 공급 위치를 중심으로 트레이 구획을 봅니다" />
+                <ui:VisualElement class="spacer" />
+                <ui:Button name="twin-reset" text="시점 초기화" class="chip" />
+            </ui:VisualElement>
+            <ui:Label name="twin-source" text="—" class="run-twin-source on-twin" picking-mode="Ignore" />
+            <ui:Label text="드래그 회전 · 우클릭 드래그 이동 · 휠 확대" class="run-twin-help on-twin" picking-mode="Ignore" />
+        </ui:VisualElement>
+
+        <!-- ==================== 우 · 관측 (카메라) ====================
+          선택 영상 하나를 크게 보거나 분할 버튼으로 두 영상을 비교한다.
+          칸마다 자기 수신기가 붙고, 자기 이름과 마지막 프레임 나이를 스스로 적는다.
+          어느 칸이 늦는지 한 눈에 보여야 하므로 나이는 칸마다 따로 둔다.
+        -->
+        <ui:VisualElement name="cam-panel" class="run-pane run-pane--cam panel--aux">
+            <ui:VisualElement name="cam-grid" class="run-cam-grid">
+                <ui:VisualElement name="cam-tile-1" class="run-cam-tile">
+                    <ui:Image name="cam-image-1" class="run-cam-tile__img" />
+                    <ui:Label text="NO SIGNAL" class="run-cam-tile__no-signal" picking-mode="Ignore" />
+                    <ui:Label name="cam-title-1" text="TRAY" class="run-cam-tile__title" />
+                    <ui:Label name="cam-age-1" text="—" class="run-cam-tile__age" />
+                </ui:VisualElement>
+                <ui:VisualElement name="cam-tile-2" class="run-cam-tile">
+                    <ui:Image name="cam-image-2" class="run-cam-tile__img" />
+                    <ui:Label text="NO SIGNAL" class="run-cam-tile__no-signal" picking-mode="Ignore" />
+                    <ui:Label name="cam-title-2" text="PARTS" class="run-cam-tile__title" />
+                    <ui:Label name="cam-age-2" text="—" class="run-cam-tile__age" />
+                </ui:VisualElement>
+                <ui:VisualElement name="cam-tile-3" class="run-cam-tile">
+                    <ui:Image name="cam-image-3" class="run-cam-tile__img" />
+                    <ui:Label text="NO SIGNAL" class="run-cam-tile__no-signal" picking-mode="Ignore" />
+                    <ui:Label name="cam-title-3" text="컨베이어" class="run-cam-tile__title" />
+                    <ui:Label name="cam-age-3" text="—" class="run-cam-tile__age" />
+                </ui:VisualElement>
+                <ui:VisualElement name="cam-tile-4" class="run-cam-tile">
+                    <ui:Image name="cam-image-4" class="run-cam-tile__img" />
+                    <ui:Label text="NO SIGNAL" class="run-cam-tile__no-signal" picking-mode="Ignore" />
+                    <ui:Label name="cam-title-4" text="조립" class="run-cam-tile__title" />
+                    <ui:Label name="cam-age-4" text="—" class="run-cam-tile__age" />
+                </ui:VisualElement>
+                <ui:VisualElement name="cam-tile-5" class="run-cam-tile">
+                    <ui:Image name="cam-image-5" class="run-cam-tile__img" />
+                    <ui:Label text="NO SIGNAL" class="run-cam-tile__no-signal" picking-mode="Ignore" />
+                    <ui:Label name="cam-title-5" text="CAMERA 3" class="run-cam-tile__title" />
+                    <ui:Label name="cam-age-5" text="—" class="run-cam-tile__age" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!--
+              패널 제목과 수신 배지를 아래 띠로 내린다. 칸마다 자기 이름과 나이를
+              왼쪽 위·오른쪽 위에 적으므로, 패널 제목을 같은 자리에 두면 겹친다.
+            -->
+            <ui:VisualElement class="run-cam__bar">
+                <ui:Label text="관측" class="run-cam__bar-title" />
+                <ui:Button name="cam-chip-1" class="chip chip--accent" style="margin-left:12px;"><ui:Label text="TRAY" class="chip__text" /></ui:Button>
+                <ui:Button name="cam-chip-2" class="chip" style="margin-left:6px;"><ui:Label text="PARTS" class="chip__text" /></ui:Button>
+                <ui:Button name="cam-chip-3" class="chip" style="margin-left:6px;"><ui:Label text="컨베이어" class="chip__text" /></ui:Button>
+                <ui:Button name="cam-chip-4" class="chip" style="margin-left:6px;"><ui:Label text="조립" class="chip__text" /></ui:Button>
+                <ui:Button name="cam-chip-5" class="chip" style="margin-left:6px;"><ui:Label text="CAMERA 3" class="chip__text" /></ui:Button>
+                <ui:VisualElement class="spacer" />
+                <ui:Button name="cam-split" text="분할" class="chip" style="margin-right:12px;" />
+                <ui:Label name="cam-badge" text="—" class="run-cam__bar-badge" />
+                <ui:Button name="cam-expand" class="chip"><ui:Label text="확대" class="chip__text" /></ui:Button>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- ==================== 하단 · 계기 띠 ====================
+          좌우 두 그림이 같은 크기를 지키려면 계기가 가로로 내려와야 한다.
+          열 다섯으로 나누고, Real 전용 열은 Mock 에서 접힌다.
+        -->
+        <ui:VisualElement name="progress-panel" class="run-deck panel--aux">
+            <ui:VisualElement class="run-command-strip">
+                <ui:Label text="작업 상태" class="run-sect__title" />
+                <ui:Label name="operation-detail" text="진행 정보 대기" class="run-operation-detail" />
+                <ui:Label name="operation-age" text="수신 기록 없음" class="run-sub" />
+            </ui:VisualElement>
+
+            <!-- 1. 지금 -->
+            <ui:VisualElement class="run-col run-current" style="left:32px; width:300px;">
+                <ui:Label name="unit-phase" text="—" class="run-now__phase" />
+                <ui:VisualElement class="row" style="margin-top:2px;">
+                    <ui:Label name="now-slot" text="—" class="run-now__slot" />
+                    <ui:Label name="now-part" text="" class="run-now__part" />
+                </ui:VisualElement>
+                <ui:Label name="unit-step" text="—" class="run-sub" style="margin-top:6px;" />
+                <ui:VisualElement class="spacer" />
+                <ui:Label name="recipe-version" text="—" class="run-sect__unit" />
+                <ui:Label name="request-id" text="—" class="run-sect__unit" style="margin-top:2px;" />
+            </ui:VisualElement>
+
+            <!-- 2. 관절 -->
+            <ui:VisualElement class="run-col run-col--rule" style="left:364px; width:290px;">
+                <ui:VisualElement class="run-sect">
+                    <ui:Label text="JOINTS" class="run-sect__title" />
+                    <ui:VisualElement class="spacer" />
+                    <ui:Label text="deg · 로컬 설정 범위" class="run-sect__unit" />
+                </ui:VisualElement>
+                <ui:VisualElement name="joint-list" class="vlist" />
+            </ui:VisualElement>
+
+            <!-- 3. TCP · 안전 (Real 전용) -->
+            <ui:VisualElement class="run-col run-col--rule" style="left:686px; width:290px;">
+                <ui:VisualElement name="pose-block" class="vlist">
+                    <ui:VisualElement class="run-sect">
+                        <ui:Label text="TCP · RPY" class="run-sect__title" />
+                        <ui:VisualElement class="spacer" />
+                        <ui:Label text="mm · deg · base" class="run-sect__unit" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="tcp-row" class="vlist" />
+                </ui:VisualElement>
+                <ui:VisualElement name="safety-block" class="vlist" style="margin-top:12px;">
+                    <ui:VisualElement class="run-sect">
+                        <ui:Label text="SAFETY" class="run-sect__title" />
+                        <ui:VisualElement class="spacer" />
+                        <ui:Label name="real-source" text="—" class="run-sect__unit" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="real-status" class="vlist" />
+                </ui:VisualElement>
+                <ui:Label name="mock-note" text="TCP · RPY · SAFETY — Real 연결에서만 들어온다" class="run-sub wrap" />
+            </ui:VisualElement>
+
+            <!-- 4. 그리퍼 · 워치독 -->
+            <ui:VisualElement class="run-col run-col--rule" style="left:1008px; width:210px;">
+                <ui:VisualElement class="run-sect">
+                    <ui:Label text="GRIPPER" class="run-sect__title" />
+                    <ui:VisualElement class="spacer" />
+                    <!--
+                      단위는 mm 가 아니라 % 다. 바인더가 넣는 값도, 아래 추세선이 그리는
+                      값도 TryGetOpeningPercent 의 열림 백분율이다. mm 라고 적어 두면
+                      "40" 을 40mm 로 읽는다 — 없는 값이 아니라 틀린 단위라 더 나쁘다.
+                    -->
+                    <ui:Label text="열림 % · 30초" class="run-sect__unit" />
+                </ui:VisualElement>
+                <ui:VisualElement class="row">
+                    <ui:VisualElement name="gripper-state-chip" class="chip"><ui:Label name="gripper-state-text" text="—" class="chip__text" /></ui:VisualElement>
+                    <ui:VisualElement class="spacer" />
+                    <ui:Label name="gripper-value" text="—" class="run-val" />
+                </ui:VisualElement>
+                <ui:VisualElement name="gripper-spark" class="spark" style="margin-top:6px;" />
+                <ui:VisualElement class="run-hr" style="margin-top:12px; margin-bottom:12px;" />
+                <ui:VisualElement class="row">
+                    <ui:VisualElement name="watchdog-dot" class="dot" />
+                    <ui:Label text="로봇 상태 수신 경과" tooltip="Unity가 마지막 로봇 상태를 수신한 뒤 경과한 시간입니다. Real: /nonrt_state_data · Mock: /joint_states" class="run-sect__title" style="margin-left:10px;" />
+                    <ui:VisualElement class="spacer" />
+                    <ui:Label name="watchdog-value" text="—" class="run-sub" />
+                </ui:VisualElement>
+                <ui:VisualElement name="watchdog-spark" class="spark" style="margin-top:4px;" />
+            </ui:VisualElement>
+
+            <!-- 5. 좌표 반영 상태 · 슬롯 맵 -->
+            <ui:VisualElement name="run-detail-column" class="run-col run-col--rule" style="left:1250px; right:32px;">
+                <ui:VisualElement name="calibration-panel" class="run-calibration">
+                    <ui:VisualElement class="row">
+                        <ui:Label text="CALIBRATION" class="run-sect__title" />
+                        <ui:VisualElement class="spacer" />
+                        <ui:Label name="calibration-state" text="미수신" class="run-calibration-state" />
+                    </ui:VisualElement>
+                    <ui:Label name="calibration-detail" text="트레이 좌표 수신 대기" class="run-calibration-detail" />
+                    <ui:Label name="calibration-age" text="수신 기록 없음" class="run-sub" />
+                </ui:VisualElement>
+                <ui:VisualElement name="slot-map-content" class="run-slot-content">
+                    <ui:VisualElement class="run-sect">
+                        <ui:Label text="슬롯 구성 · 장착 미확인" class="run-sect__title" />
+                        <ui:VisualElement class="spacer" />
+                        <ui:Label name="progress-now" text="—" class="run-sub" />
+                        <ui:Label name="progress-count" text="—" class="run-val" style="margin-left:16px;" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="progress-groups" class="row vlist" style="flex-grow:1; flex-wrap:wrap; align-items:flex-start;" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!--
+          공통 셸: 상단 바 + 페이지 레일 + 알람 띠.
+          맨 마지막에 둔다. 알람 띠가 페이지 요소 위로 그려져야 하기 때문이다.
+        -->
+        <ui:Foldout name="session-events" text="최근 이벤트" value="false" class="session-events">
+            <ui:ScrollView name="event-list" mode="Vertical" />
+        </ui:Foldout>
+        <ui:Instance template="FR5Shell" name="shell" class="shell-host" picking-mode="Ignore" />
+    </ui:VisualElement>
+</ui:UXML>

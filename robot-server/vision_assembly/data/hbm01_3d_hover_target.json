@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "timestamp_unix": 1788263051.838238,
+  "target_slot": "HBM-01",
+  "position_base_mm": [
+    71.1767420982521,
+    -541.8678302621843,
+    89.31241912132307
+  ],
+  "orientation_xyzw": [
+    -0.011493539679266298,
+    0.9998141104386276,
+    0.010943019614681207,
+    0.010949586072983979
+  ],
+  "source": "display_center_3d_with_placecamera_xy_residual",
+  "dry_run_capture": true,
+  "robot_motion_sent": false
+}

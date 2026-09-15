@@ -1,0 +1,114 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <ui:Style src="project://database/Assets/UI/FR5Theme.uss" />
+    <ui:Template src="project://database/Assets/UI/FR5Shell.uxml" name="FR5Shell" />
+    <!-- ManualJointPanel이 목표와 이동 요청을, FR5ManualBinder가 관측값과 카메라 표시 영역을 소유한다. -->
+    <ui:VisualElement name="fr5-manual" class="page page--manual fr5--mock">
+        <ui:VisualElement class="page-heading">
+            <ui:Label text="MANUAL" class="page-heading__title" />
+            <ui:Label text="/" class="page-heading__divider" />
+            <ui:Label text="수동" class="page-heading__title" />
+            <ui:VisualElement class="spacer" />
+            <ui:Label text="경로 미리보기 · DB 비기록" class="page-heading__meta" />
+        </ui:VisualElement>
+
+        <ui:VisualElement name="manual-banner" class="manual-banner">
+            <ui:Label text="경로 사전 확인" class="warn manual-banner-title" />
+            <ui:Label text="트윈 모델에서 관절 보간 경로를 미리 검사합니다. 모델상 충돌 시 이동 요청을 거부하며, 실제 설비의 안전을 보장하지 않습니다." class="manual-banner-detail" />
+        </ui:VisualElement>
+
+        <!-- 카메라의 표시 영역도 이 창에 맞춰 로봇과 Ghost가 조작 패널 뒤로 숨지 않게 한다. -->
+        <ui:VisualElement name="manual-viewport" picking-mode="Ignore" class="manual-viewport">
+            <ui:Label text="ROBOT VIEW · TWIN + GHOST" picking-mode="Ignore" class="panel__title on-twin manual-viewport-title" />
+            <ui:Label text="수신 자세 / 모델상 관절 보간 미리보기" picking-mode="Ignore" class="page-heading__meta on-twin manual-viewport-legend" />
+        </ui:VisualElement>
+
+        <ui:VisualElement name="jog-panel" class="panel manual-controls">
+            <ui:VisualElement class="panel__spine" />
+            <ui:VisualElement class="panel__head">
+                <ui:Label text="JOINT TARGET · J1 – J6" class="panel__title" />
+                <ui:VisualElement class="spacer" />
+                <ui:Label text="관절 목표 · deg" class="panel__badge" />
+            </ui:VisualElement>
+            <ui:VisualElement class="panel__body manual-controls-body">
+                <ui:VisualElement name="ghost-callout" class="manual-ghost-callout">
+                    <ui:Label text="GHOST · 관절 보간 예정 경로" class="micro" />
+                    <ui:Label name="ghost-hint" text="슬라이더를 조정해 목표와 이동 경로를 확인하세요.&#10;충돌이 감지되면 목표를 수정해야 합니다." class="manual-ghost-hint" />
+                </ui:VisualElement>
+                <ui:VisualElement class="row manual-joint-heading">
+                    <ui:Label text="축" class="micro manual-joint-axis" />
+                    <ui:Label text="실제" class="micro manual-joint-value" />
+                    <ui:Label text="목표" class="micro manual-joint-value" />
+                    <ui:Label text="목표 조정" class="micro manual-slider-heading" />
+                </ui:VisualElement>
+                <ui:VisualElement name="jog-1-row" class="row manual-joint-row">
+                    <ui:Label text="J1" class="value manual-joint-axis" />
+                    <ui:Label name="jog-1-actual" text="—" class="manual-joint-value" />
+                    <ui:Label name="jog-1-target" text="—" class="manual-joint-value accent" />
+                    <ui:Slider name="jog-1-slider" low-value="-175" high-value="175" value="-4.689" class="manual-joint-slider" />
+                </ui:VisualElement>
+                <ui:VisualElement name="jog-2-row" class="row manual-joint-row">
+                    <ui:Label text="J2" class="value manual-joint-axis" />
+                    <ui:Label name="jog-2-actual" text="—" class="manual-joint-value" />
+                    <ui:Label name="jog-2-target" text="—" class="manual-joint-value accent" />
+                    <ui:Slider name="jog-2-slider" low-value="-265" high-value="85" value="-86.951" class="manual-joint-slider" />
+                </ui:VisualElement>
+                <ui:VisualElement name="jog-3-row" class="row manual-joint-row">
+                    <ui:Label text="J3" class="value manual-joint-axis" />
+                    <ui:Label name="jog-3-actual" text="—" class="manual-joint-value" />
+                    <ui:Label name="jog-3-target" text="—" class="manual-joint-value accent" />
+                    <ui:Slider name="jog-3-slider" low-value="-162" high-value="162" value="84.467" class="manual-joint-slider" />
+                </ui:VisualElement>
+                <ui:VisualElement name="jog-4-row" class="row manual-joint-row">
+                    <ui:Label text="J4" class="value manual-joint-axis" />
+                    <ui:Label name="jog-4-actual" text="—" class="manual-joint-value" />
+                    <ui:Label name="jog-4-target" text="—" class="manual-joint-value accent" />
+                    <ui:Slider name="jog-4-slider" low-value="-265" high-value="85" value="-87.516" class="manual-joint-slider" />
+                </ui:VisualElement>
+                <ui:VisualElement name="jog-5-row" class="row manual-joint-row">
+                    <ui:Label text="J5" class="value manual-joint-axis" />
+                    <ui:Label name="jog-5-actual" text="—" class="manual-joint-value" />
+                    <ui:Label name="jog-5-target" text="—" class="manual-joint-value accent" />
+                    <ui:Slider name="jog-5-slider" low-value="-175" high-value="175" value="-90.000" class="manual-joint-slider" />
+                </ui:VisualElement>
+                <ui:VisualElement name="jog-6-row" class="row manual-joint-row">
+                    <ui:Label text="J6" class="value manual-joint-axis" />
+                    <ui:Label name="jog-6-actual" text="—" class="manual-joint-value" />
+                    <ui:Label name="jog-6-target" text="—" class="manual-joint-value accent" />
+                    <ui:Slider name="jog-6-slider" low-value="-175" high-value="175" value="-4.688" class="manual-joint-slider" />
+                </ui:VisualElement>
+                <ui:VisualElement class="row manual-actions">
+                    <ui:Button name="jog-home-button" text="기본 목표" class="btn manual-secondary-action" />
+                    <ui:Button name="jog-cancel-button" text="초기화" class="btn manual-secondary-action" />
+                    <ui:Button name="jog-apply-button" text="이동 요청" class="btn btn--accent manual-primary-action" />
+                </ui:VisualElement>
+
+                <ui:Foldout text="TCP · 그리퍼 관측" value="true" class="manual-observations">
+                    <ui:VisualElement name="tcp-panel" class="manual-observation-panel">
+                        <ui:VisualElement class="row manual-observation-heading">
+                            <ui:Label text="TCP / RPY" class="micro" />
+                            <ui:VisualElement class="spacer" />
+                            <ui:Label text="BASE · mm / deg" class="micro" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="tcp-list" class="manual-tcp-list" />
+                        <ui:VisualElement class="row manual-gripper-heading">
+                            <ui:Label text="GRIPPER" class="micro" />
+                            <ui:VisualElement name="gripper-state-chip" class="chip manual-gripper-chip"><ui:Label name="gripper-state-text" text="—" class="chip__text" /></ui:VisualElement>
+                            <ui:VisualElement class="spacer" />
+                            <ui:Label name="gripper-value" text="—" class="value" />
+                            <ui:Label text="%" class="muted manual-gripper-unit" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="gauge"><ui:VisualElement name="gripper-fill" class="gauge__fill" /></ui:VisualElement>
+                        <ui:VisualElement class="row manual-gripper-actions">
+                            <ui:Button name="gripper-open-button" text="OPEN · 미지원" class="btn" />
+                            <ui:Button name="gripper-close-button" text="CLOSE · 미지원" class="btn" />
+                            <ui:VisualElement class="spacer" />
+                            <ui:Label text="상태 조회 전용" class="micro" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:Foldout>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:Instance template="FR5Shell" name="shell" class="shell-host" picking-mode="Ignore" />
+    </ui:VisualElement>
+</ui:UXML>

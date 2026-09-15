@@ -1,0 +1,130 @@
+{
+  "schema_version": 2,
+  "timestamp_unix": 1788259688.5042632,
+  "frame": "base_link",
+  "status": "physical_place_teaching_in_progress",
+  "placements": {
+    "GPU-01": {
+      "tcp_pose_base_mm_deg": {
+        "x": 38.522178649902344,
+        "y": -521.1871643066406,
+        "z": 88.16085052490234,
+        "a": 179.99771118164062,
+        "b": 0.0007336472626775503,
+        "c": 179.99978637695312
+      },
+      "joint_deg": [
+        82.74945831298828,
+        -78.68168640136719,
+        113.35366821289062,
+        -124.66958618164062,
+        -89.99956512451172,
+        -7.250541687011719
+      ],
+      "status": "operator_confirmed_successful_physical_place_2026-09-01_and_repeat_2026-09-02",
+      "latest_repeat_tcp_pose_base_mm_deg": {
+        "x": 46.556,
+        "y": -515.881,
+        "z": 88.161,
+        "a": 179.998,
+        "b": 0.001,
+        "c": 180.0
+      },
+      "latest_repeat_release_position": 70,
+      "latest_repeat_post_release_vertical_lift_mm": 100.0,
+      "xy_is_dynamic_from_live_board_pose": true
+    },
+    "HBM-01": {
+      "status": "operator_confirmed_successful_physical_place_retaught_2026-09-02",
+      "tcp_pose_base_mm_deg": {
+        "x": 70.35615539550781,
+        "y": -540.073974609375,
+        "z": 88.61563110351562,
+        "a": 179.99627685546875,
+        "b": 0.002484658034518361,
+        "c": 180.0
+      },
+      "joint_deg": [
+        85.36768341064453,
+        -75.7375717163086,
+        109.14906311035156,
+        -123.40757751464844,
+        -89.9978256225586,
+        -4.632314682006836
+      ],
+      "samples": 20,
+      "max_xyz_jitter_mm": 0.004592881646246286,
+      "operator_confirmed_xy_center": true,
+      "operator_confirmed_place_z": true,
+      "previous_tcp_pose_base_mm_deg": {
+        "x": 61.63227081298828,
+        "y": -546.193115234375,
+        "z": 90.53149032592773,
+        "a": 179.9976806640625,
+        "b": 0.0010705116437748075,
+        "c": 179.99978637695312
+      },
+      "natural_hole_predicted_base_mm": [
+        61.895,
+        -546.573,
+        90.531
+      ],
+      "natural_hole_residual_base_mm": [
+        -1.8001494598388703,
+        1.507844970703104,
+        -0.0038584289550840367
+      ],
+      "orientation_recaptured_after_transient_c_value": true,
+      "pose_span_mm_deg": {
+        "x": 0.00606536865234375,
+        "y": 0.003173828125,
+        "z": 0.00409698486328125,
+        "a": 0.0004730224609375,
+        "b": 0.000433680834248662,
+        "c": 0.0006561279296875
+      },
+      "natural_hole_vision_validation": {
+        "status": "operator_confirmed_center_at_final_z_2026-09-01",
+        "dynamic_target_base_mm": [
+          60.339,
+          -545.427,
+          90.327
+        ],
+        "capture_file": "vision_assembly/data/hbm01_hole_corrected_target.json",
+        "capture_jitter_max_mm": 0.0,
+        "operator_confirmed_center": true,
+        "operator_requested_place_z_offset_mm": -0.2,
+        "empty_gripper_closed_position": 18,
+        "final_descent_percent": 20
+      },
+      "vision_anchor_base_xy_mm": [
+        60.339,
+        -545.427
+      ],
+      "vision_anchor_source": "operator_confirmed_successful_physical_HBM-01_place_2026-09-01"
+    },
+    "HBM-02": {
+      "status": "operator_confirmed_successful_physical_place_2026-09-02",
+      "tcp_pose_base_mm_deg": {
+        "x": 60.143646240234375,
+        "y": -530.5593872070312,
+        "z": 89.138,
+        "a": 179.99581909179688,
+        "b": 0.002311931923031807,
+        "c": 180.0
+      },
+      "vision_anchor_base_xy_mm": [
+        60.143646240234375,
+        -530.5593872070312
+      ],
+      "operator_confirmed_xy_center": true,
+      "operator_confirmed_place_z": false,
+      "place_z_source": "reuse HBM-01 operator-requested corrected Z 90.327 mm; current manual capture was XY-only",
+      "manual_capture_tcp_z_mm": 92.24032211303711,
+      "samples": 20,
+      "max_xy_jitter_mm": 0.00518798828125
+    }
+  },
+  "robot_motion_sent": false,
+  "slot_label_correction": "HBM display labels unified with logical assembly order: right column bottom-to-top H1..H4, left column bottom-to-top H5..H8"
+}

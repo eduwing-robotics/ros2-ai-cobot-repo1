@@ -1,0 +1,7 @@
+{
+  "timestamp_unix": 0,
+  "part_center_base_mm": [-527.997, -60.954, 337.880],
+  "long_axis_angle_base_deg": 0.0,
+  "purpose": "restore TrayHome tool_y Base angle to zero at safe height",
+  "robot_motion_authorized": false
+}

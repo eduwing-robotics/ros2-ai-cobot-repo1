@@ -1,0 +1,66 @@
+{
+  "task": "vrm_fixed_slot_seating",
+  "purpose": "physical_validation_evaluated_v4_not_promoted",
+  "training_allowed": false,
+  "illumination": "flash_off",
+  "scenes": [
+    {
+      "physical_scene_id": "20260905_vrm02_empty_only_a",
+      "image": "runtime/inspection/s22_inspection_roi_20260905_135454.png",
+      "labels": {"vrm_01": "FLAT", "vrm_02": "EMPTY", "vrm_03": "FLAT", "vrm_04": "FLAT", "vrm_05": "FLAT"},
+      "other_20_components_empty": true,
+      "label_source": "user_ready_after_vrm02_removal_and_image_checked"
+    },
+    {
+      "physical_scene_id": "20260905_vrm_only_a",
+      "image": "runtime/inspection/s22_inspection_roi_20260905_135111.png",
+      "labels": {"vrm_01": "FLAT", "vrm_02": "FLAT", "vrm_03": "FLAT", "vrm_04": "FLAT", "vrm_05": "FLAT"},
+      "other_20_components_empty": true,
+      "label_source": "user_ready_after_vrm_only_instruction_and_image_checked",
+      "note": "Presence validation; no whole-board normal label."
+    },
+    {
+      "physical_scene_id": "20260905_all_components_empty_a",
+      "image": "runtime/inspection/s22_inspection_roi_20260905_134637.png",
+      "labels": {"vrm_01": "EMPTY", "vrm_02": "EMPTY", "vrm_03": "EMPTY", "vrm_04": "EMPTY", "vrm_05": "EMPTY"},
+      "all_25_components_empty": true,
+      "label_source": "explicit_user_all_components_removed_and_image_checked",
+      "note": "Entire assembly empty, not only VRMs. Validation only."
+    },
+    {
+      "physical_scene_id": "20260905_flat_return_c",
+      "image": "runtime/inspection/s22_inspection_roi_20260905_133256.png",
+      "labels": {"vrm_01": "FLAT", "vrm_02": "FLAT", "vrm_03": "FLAT", "vrm_04": "FLAT", "vrm_05": "FLAT"},
+      "label_source": "user_ready_confirmation_after_explicit_vrm01_flat_return_instruction",
+      "note": "VRM01 reseated; remaining slots unchanged."
+    },
+    {
+      "physical_scene_id": "20260905_vrm01_lip_a",
+      "image": "runtime/inspection/s22_inspection_roi_20260905_124122.png",
+      "labels": {"vrm_01": "SEATING", "vrm_02": "FLAT", "vrm_03": "FLAT", "vrm_04": "FLAT", "vrm_05": "FLAT"},
+      "label_source": "user_ready_confirmation_after_explicit_vrm01_lip_instruction",
+      "note": "VRM01 changed placement visible; physical seating label supplied by user. Other slots unchanged."
+    },
+    {
+      "physical_scene_id": "20260905_flat_return_b",
+      "image": "runtime/inspection/s22_inspection_roi_20260905_122706.png",
+      "labels": {"vrm_01": "FLAT", "vrm_02": "FLAT", "vrm_03": "FLAT", "vrm_04": "FLAT", "vrm_05": "FLAT"},
+      "label_source": "user_ready_confirmation_after_explicit_vrm05_flat_return_instruction",
+      "note": "Normal return after VRM05 lip scene; same session, other slots unchanged. Not an independent setup for every slot."
+    },
+    {
+      "physical_scene_id": "20260905_flat_a",
+      "image": "runtime/inspection/s22_inspection_roi_20260905_122212.png",
+      "labels": {"vrm_01": "FLAT", "vrm_02": "FLAT", "vrm_03": "FLAT", "vrm_04": "FLAT", "vrm_05": "FLAT"},
+      "label_source": "user_ready_confirmation_after_explicit_placement_instruction",
+      "note": "VRM labels only; visible white fragment on GPU excludes whole-board normal assumption."
+    },
+    {
+      "physical_scene_id": "20260905_vrm05_lip_a",
+      "image": "runtime/inspection/s22_inspection_roi_20260905_122437.png",
+      "labels": {"vrm_01": "FLAT", "vrm_02": "FLAT", "vrm_03": "FLAT", "vrm_04": "FLAT", "vrm_05": "SEATING"},
+      "label_source": "user_ready_confirmation_after_explicit_vrm05_lip_instruction",
+      "note": "Visible VRM05 displacement corroborates changed placement; seating height ground truth comes from user, not monocular image."
+    }
+  ]
+}

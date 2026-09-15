@@ -1,0 +1,1804 @@
+{
+  "stable_detections": [
+    {
+      "part_type": "black_block",
+      "display_name": "VRM (\uc804\uc555 \uc870\uc815 \ubaa8\ub4c8)",
+      "center_pixel": [
+        405.34,
+        135.0
+      ],
+      "reference_center_pixel": [
+        623.74,
+        185.59
+      ],
+      "angle_deg": -89.72,
+      "depth_m": 0.486,
+      "camera_xyz_m": [
+        -0.128344,
+        -0.131595,
+        0.486
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.951,
+      "median_detection_confidence": 0.951,
+      "median_mask_shape_score": 0.931,
+      "median_rectangularity": 0.924,
+      "instance_index": 1,
+      "base_xyz_mm": [
+        -753.903,
+        -223.19,
+        -46.048
+      ],
+      "long_axis_angle_base_deg": -179.353,
+      "id": "black_block:d93a1004-d091-405f-a401-e1596f6fbcde",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 1,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "black_block",
+      "display_name": "VRM (\uc804\uc555 \uc870\uc815 \ubaa8\ub4c8)",
+      "center_pixel": [
+        451.53,
+        134.39
+      ],
+      "reference_center_pixel": [
+        693.92,
+        184.3
+      ],
+      "angle_deg": 89.31,
+      "depth_m": 0.4855,
+      "camera_xyz_m": [
+        -0.103438,
+        -0.13177,
+        0.4855
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.952,
+      "median_detection_confidence": 0.952,
+      "median_mask_shape_score": 0.957,
+      "median_rectangularity": 0.957,
+      "instance_index": 2,
+      "base_xyz_mm": [
+        -754.467,
+        -198.288,
+        -45.623
+      ],
+      "long_axis_angle_base_deg": 1.617,
+      "id": "black_block:63ea0c30-bb99-4048-aeda-d975dcafd5b2",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 2,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "black_block",
+      "display_name": "VRM (\uc804\uc555 \uc870\uc815 \ubaa8\ub4c8)",
+      "center_pixel": [
+        492.63,
+        136.51
+      ],
+      "reference_center_pixel": [
+        756.15,
+        187.15
+      ],
+      "angle_deg": 89.29,
+      "depth_m": 0.484,
+      "camera_xyz_m": [
+        -0.081161,
+        -0.130254,
+        0.484
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.967,
+      "median_detection_confidence": 0.967,
+      "median_mask_shape_score": 0.942,
+      "median_rectangularity": 0.932,
+      "instance_index": 3,
+      "base_xyz_mm": [
+        -753.267,
+        -175.984,
+        -44.245
+      ],
+      "long_axis_angle_base_deg": 1.637,
+      "id": "black_block:eaeb89d7-f8dc-43af-a7a0-f9da412585e5",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 3,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "black_block",
+      "display_name": "VRM (\uc804\uc555 \uc870\uc815 \ubaa8\ub4c8)",
+      "center_pixel": [
+        536.93,
+        138.13
+      ],
+      "reference_center_pixel": [
+        823.05,
+        189.23
+      ],
+      "angle_deg": 89.27,
+      "depth_m": 0.484,
+      "camera_xyz_m": [
+        -0.057464,
+        -0.129454,
+        0.484
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.803,
+      "median_detection_confidence": 0.803,
+      "median_mask_shape_score": 0.957,
+      "median_rectangularity": 0.961,
+      "instance_index": 4,
+      "base_xyz_mm": [
+        -752.854,
+        -152.278,
+        -44.347
+      ],
+      "long_axis_angle_base_deg": 1.657,
+      "id": "black_block:a959a828-3efe-494a-8360-0ab8fbec38ee",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 4,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "black_block",
+      "display_name": "VRM (\uc804\uc555 \uc870\uc815 \ubaa8\ub4c8)",
+      "center_pixel": [
+        578.25,
+        136.48
+      ],
+      "reference_center_pixel": [
+        885.34,
+        186.42
+      ],
+      "angle_deg": 89.24,
+      "depth_m": 0.485,
+      "camera_xyz_m": [
+        -0.035442,
+        -0.130388,
+        0.485
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.948,
+      "median_detection_confidence": 0.948,
+      "median_mask_shape_score": 0.957,
+      "median_rectangularity": 0.933,
+      "instance_index": 5,
+      "base_xyz_mm": [
+        -754.177,
+        -130.277,
+        -45.389
+      ],
+      "long_axis_angle_base_deg": 1.687,
+      "id": "black_block:42eef07d-9ce6-48ae-adb0-c41c05305027",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 5,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "black_block",
+      "display_name": "VRM (\uc804\uc555 \uc870\uc815 \ubaa8\ub4c8)",
+      "center_pixel": [
+        406.88,
+        234.4
+      ],
+      "reference_center_pixel": [
+        624.33,
+        335.19
+      ],
+      "angle_deg": 89.34,
+      "depth_m": 0.484,
+      "camera_xyz_m": [
+        -0.126952,
+        -0.077838,
+        0.484
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.91,
+      "median_detection_confidence": 0.91,
+      "median_mask_shape_score": 0.949,
+      "median_rectangularity": 0.935,
+      "instance_index": 6,
+      "base_xyz_mm": [
+        -700.139,
+        -220.921,
+        -45.765
+      ],
+      "long_axis_angle_base_deg": 1.587,
+      "id": "black_block:2c456638-d5d0-4c18-b983-0a802fb997e8",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 6,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "black_block",
+      "display_name": "VRM (\uc804\uc555 \uc870\uc815 \ubaa8\ub4c8)",
+      "center_pixel": [
+        447.63,
+        230.37
+      ],
+      "reference_center_pixel": [
+        686.26,
+        328.61
+      ],
+      "angle_deg": 89.32,
+      "depth_m": 0.4835,
+      "camera_xyz_m": [
+        -0.10507,
+        -0.079923,
+        0.4835
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.926,
+      "median_detection_confidence": 0.926,
+      "median_mask_shape_score": 0.949,
+      "median_rectangularity": 0.947,
+      "instance_index": 7,
+      "base_xyz_mm": [
+        -702.563,
+        -199.074,
+        -45.27
+      ],
+      "long_axis_angle_base_deg": 1.607,
+      "id": "black_block:e10bf643-b38a-459a-a699-2b3e5cc68529",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 7,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "black_block",
+      "display_name": "VRM (\uc804\uc555 \uc870\uc815 \ubaa8\ub4c8)",
+      "center_pixel": [
+        487.44,
+        226.47
+      ],
+      "reference_center_pixel": [
+        746.6,
+        322.27
+      ],
+      "angle_deg": -89.56,
+      "depth_m": 0.484,
+      "camera_xyz_m": [
+        -0.083898,
+        -0.08205,
+        0.484
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.931,
+      "median_detection_confidence": 0.931,
+      "median_mask_shape_score": 0.967,
+      "median_rectangularity": 0.942,
+      "instance_index": 8,
+      "base_xyz_mm": [
+        -705.049,
+        -177.941,
+        -45.771
+      ],
+      "long_axis_angle_base_deg": -179.513,
+      "id": "black_block:2ecc68fc-fc68-41d0-8360-5d7ebebac67a",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 8,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "black_block",
+      "display_name": "VRM (\uc804\uc555 \uc870\uc815 \ubaa8\ub4c8)",
+      "center_pixel": [
+        533.74,
+        223.62
+      ],
+      "reference_center_pixel": [
+        816.57,
+        317.44
+      ],
+      "angle_deg": 89.27,
+      "depth_m": 0.4825,
+      "camera_xyz_m": [
+        -0.058952,
+        -0.083432,
+        0.4825
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.833,
+      "median_detection_confidence": 0.833,
+      "median_mask_shape_score": 0.971,
+      "median_rectangularity": 0.96,
+      "instance_index": 9,
+      "base_xyz_mm": [
+        -706.789,
+        -153.015,
+        -44.309
+      ],
+      "long_axis_angle_base_deg": 1.657,
+      "id": "black_block:5f1599cd-ba95-4273-8328-2282efa69f3f",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 9,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "black_block",
+      "display_name": "VRM (\uc804\uc555 \uc870\uc815 \ubaa8\ub4c8)",
+      "center_pixel": [
+        576.14,
+        222.17
+      ],
+      "reference_center_pixel": [
+        880.46,
+        314.76
+      ],
+      "angle_deg": -89.52,
+      "depth_m": 0.483,
+      "camera_xyz_m": [
+        -0.036412,
+        -0.084146,
+        0.483
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.924,
+      "median_detection_confidence": 0.924,
+      "median_mask_shape_score": 0.962,
+      "median_rectangularity": 0.908,
+      "instance_index": 10,
+      "base_xyz_mm": [
+        -707.885,
+        -130.492,
+        -44.859
+      ],
+      "long_axis_angle_base_deg": -179.553,
+      "id": "black_block:7b84de09-6023-40f0-a805-81c8e72b8140",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 10,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "long_orange",
+      "display_name": "Power Module (\uc804\uc6d0 \ubaa8\ub4c8)",
+      "center_pixel": [
+        692.29,
+        175.01
+      ],
+      "reference_center_pixel": [
+        1055.52,
+        243.04
+      ],
+      "angle_deg": -89.79,
+      "depth_m": 0.483,
+      "camera_xyz_m": [
+        0.02549,
+        -0.109352,
+        0.483
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.988,
+      "median_detection_confidence": 0.988,
+      "median_mask_shape_score": 0.949,
+      "median_rectangularity": 0.929,
+      "instance_index": 1,
+      "base_xyz_mm": [
+        -734.083,
+        -69.006,
+        -44.258
+      ],
+      "long_axis_angle_base_deg": -179.283,
+      "id": "long_orange:4a2016cd-e562-48f5-a6d2-ec796b57133e",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 1,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "long_orange",
+      "display_name": "Power Module (\uc804\uc6d0 \ubaa8\ub4c8)",
+      "center_pixel": [
+        751.08,
+        176.25
+      ],
+      "reference_center_pixel": [
+        1143.16,
+        244.3
+      ],
+      "angle_deg": -87.48,
+      "depth_m": 0.483,
+      "camera_xyz_m": [
+        0.056886,
+        -0.108752,
+        0.483
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.988,
+      "median_detection_confidence": 0.988,
+      "median_mask_shape_score": 0.936,
+      "median_rectangularity": 0.907,
+      "instance_index": 2,
+      "base_xyz_mm": [
+        -733.995,
+        -37.605,
+        -44.379
+      ],
+      "long_axis_angle_base_deg": 178.409,
+      "id": "long_orange:ddbd3564-49c9-4531-b701-0dad88e18a43",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 2,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "long_orange",
+      "display_name": "Power Module (\uc804\uc6d0 \ubaa8\ub4c8)",
+      "center_pixel": [
+        689.16,
+        310.94
+      ],
+      "reference_center_pixel": [
+        1047.92,
+        445.64
+      ],
+      "angle_deg": 89.18,
+      "depth_m": 0.481,
+      "camera_xyz_m": [
+        0.023762,
+        -0.036676,
+        0.481
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.854,
+      "median_detection_confidence": 0.854,
+      "median_mask_shape_score": 0.958,
+      "median_rectangularity": 0.96,
+      "instance_index": 3,
+      "base_xyz_mm": [
+        -661.362,
+        -69.551,
+        -44.568
+      ],
+      "long_axis_angle_base_deg": 1.747,
+      "id": "long_orange:44227fc1-e0ed-4e8f-a02b-d1b721de21b0",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 3,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "long_orange",
+      "display_name": "Power Module (\uc804\uc6d0 \ubaa8\ub4c8)",
+      "center_pixel": [
+        745.22,
+        314.63
+      ],
+      "reference_center_pixel": [
+        1131.35,
+        450.23
+      ],
+      "angle_deg": 89.15,
+      "depth_m": 0.481,
+      "camera_xyz_m": [
+        0.053515,
+        -0.034681,
+        0.481
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.974,
+      "median_detection_confidence": 0.974,
+      "median_mask_shape_score": 0.943,
+      "median_rectangularity": 0.951,
+      "instance_index": 4,
+      "base_xyz_mm": [
+        -659.853,
+        -39.77,
+        -44.728
+      ],
+      "long_axis_angle_base_deg": 1.776,
+      "id": "long_orange:9109d824-ce4d-4152-9658-3a45d854468e",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 4,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "long_orange",
+      "display_name": "Power Module (\uc804\uc6d0 \ubaa8\ub4c8)",
+      "center_pixel": [
+        853.97,
+        174.23
+      ],
+      "reference_center_pixel": [
+        1295.84,
+        240.31
+      ],
+      "angle_deg": -86.53,
+      "depth_m": 0.484,
+      "camera_xyz_m": [
+        0.111976,
+        -0.109986,
+        0.484
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.977,
+      "median_detection_confidence": 0.977,
+      "median_mask_shape_score": 0.93,
+      "median_rectangularity": 0.903,
+      "instance_index": 5,
+      "base_xyz_mm": [
+        -736.157,
+        17.454,
+        -45.519
+      ],
+      "long_axis_angle_base_deg": 177.459,
+      "id": "long_orange:d26d5258-6764-47f3-afbe-da8103bc91e1",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 5,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "long_orange",
+      "display_name": "Power Module (\uc804\uc6d0 \ubaa8\ub4c8)",
+      "center_pixel": [
+        941.17,
+        172.79
+      ],
+      "reference_center_pixel": [
+        1424.49,
+        237.35
+      ],
+      "angle_deg": 89.04,
+      "depth_m": 0.484,
+      "camera_xyz_m": [
+        0.158599,
+        -0.110819,
+        0.484
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.913,
+      "median_detection_confidence": 0.913,
+      "median_mask_shape_score": 0.958,
+      "median_rectangularity": 0.97,
+      "instance_index": 6,
+      "base_xyz_mm": [
+        -737.748,
+        64.057,
+        -45.644
+      ],
+      "long_axis_angle_base_deg": 1.886,
+      "id": "long_orange:3b32c3ae-d90a-41e7-b507-85ccc8589095",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 6,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "long_orange",
+      "display_name": "Power Module (\uc804\uc6d0 \ubaa8\ub4c8)",
+      "center_pixel": [
+        842.99,
+        306.27
+      ],
+      "reference_center_pixel": [
+        1276.49,
+        436.29
+      ],
+      "angle_deg": 89.1,
+      "depth_m": 0.481,
+      "camera_xyz_m": [
+        0.10548,
+        -0.039158,
+        0.481
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.902,
+      "median_detection_confidence": 0.902,
+      "median_mask_shape_score": 0.959,
+      "median_rectangularity": 0.97,
+      "instance_index": 7,
+      "base_xyz_mm": [
+        -665.173,
+        12.115,
+        -44.755
+      ],
+      "long_axis_angle_base_deg": 1.826,
+      "id": "long_orange:3735fd11-fbda-4ace-8c97-a18f24337dee",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 7,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "long_orange",
+      "display_name": "Power Module (\uc804\uc6d0 \ubaa8\ub4c8)",
+      "center_pixel": [
+        935.28,
+        308.49
+      ],
+      "reference_center_pixel": [
+        1412.47,
+        438.13
+      ],
+      "angle_deg": 89.05,
+      "depth_m": 0.483,
+      "camera_xyz_m": [
+        0.15511,
+        -0.038118,
+        0.483
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.935,
+      "median_detection_confidence": 0.935,
+      "median_mask_shape_score": 0.958,
+      "median_rectangularity": 0.973,
+      "instance_index": 8,
+      "base_xyz_mm": [
+        -665.005,
+        61.748,
+        -46.948
+      ],
+      "long_axis_angle_base_deg": 1.876,
+      "id": "long_orange:ad8b9a70-3716-46cc-a71d-68d6e7de5a6a",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 8,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "marked_white",
+      "display_name": "Inductor (\uc778\ub355\ud130)",
+      "center_pixel": [
+        390.16,
+        381.0
+      ],
+      "reference_center_pixel": [
+        596.35,
+        555.65
+      ],
+      "angle_deg": 0.74,
+      "depth_m": 0.479,
+      "camera_xyz_m": [
+        -0.134556,
+        0.00058,
+        0.479
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.827,
+      "median_detection_confidence": 0.827,
+      "median_mask_shape_score": 0.82,
+      "median_rectangularity": 0.784,
+      "instance_index": 1,
+      "base_xyz_mm": [
+        -621.488,
+        -227.237,
+        -43.239
+      ],
+      "long_axis_angle_base_deg": 90.193,
+      "id": "marked_white:a14b4053-3884-4504-adad-d360fc3ff25f",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 1,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "marked_white",
+      "display_name": "Inductor (\uc778\ub355\ud130)",
+      "center_pixel": [
+        432.61,
+        379.51
+      ],
+      "reference_center_pixel": [
+        660.79,
+        552.59
+      ],
+      "angle_deg": 0.73,
+      "depth_m": 0.484,
+      "camera_xyz_m": [
+        -0.113245,
+        -0.000208,
+        0.484
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.897,
+      "median_detection_confidence": 0.897,
+      "median_mask_shape_score": 0.828,
+      "median_rectangularity": 0.842,
+      "instance_index": 2,
+      "base_xyz_mm": [
+        -622.782,
+        -205.961,
+        -48.281
+      ],
+      "long_axis_angle_base_deg": 90.203,
+      "id": "marked_white:1dac4792-fa5c-4465-9237-fa1ac682c826",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 2,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "marked_white",
+      "display_name": "Inductor (\uc778\ub355\ud130)",
+      "center_pixel": [
+        385.35,
+        452.94
+      ],
+      "reference_center_pixel": [
+        587.8,
+        663.63
+      ],
+      "angle_deg": -0.65,
+      "depth_m": 0.478,
+      "camera_xyz_m": [
+        -0.136768,
+        0.038595,
+        0.478
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.819,
+      "median_detection_confidence": 0.819,
+      "median_mask_shape_score": 0.82,
+      "median_rectangularity": 0.834,
+      "instance_index": 3,
+      "base_xyz_mm": [
+        -583.43,
+        -228.831,
+        -43.443
+      ],
+      "long_axis_angle_base_deg": 91.583,
+      "id": "marked_white:3c05bcae-73b4-4f1e-97cb-db745561cda3",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 3,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "marked_white",
+      "display_name": "Inductor (\uc778\ub355\ud130)",
+      "center_pixel": [
+        432.97,
+        452.19
+      ],
+      "reference_center_pixel": [
+        660.03,
+        661.42
+      ],
+      "angle_deg": 0.86,
+      "depth_m": 0.478,
+      "camera_xyz_m": [
+        -0.111743,
+        0.038226,
+        0.478
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.859,
+      "median_detection_confidence": 0.859,
+      "median_mask_shape_score": 0.844,
+      "median_rectangularity": 0.875,
+      "instance_index": 4,
+      "base_xyz_mm": [
+        -584.206,
+        -203.815,
+        -43.513
+      ],
+      "long_axis_angle_base_deg": 90.072,
+      "id": "marked_white:f409c103-50a6-4bd7-8a4b-91c03316629a",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 4,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "right_white_brown",
+      "display_name": "SMD Capacitor (SMD \ucee4\ud328\uc2dc\ud130)",
+      "center_pixel": [
+        498.48,
+        373.76
+      ],
+      "reference_center_pixel": [
+        760.51,
+        542.71
+      ],
+      "angle_deg": -89.28,
+      "depth_m": 0.481,
+      "camera_xyz_m": [
+        -0.077541,
+        -0.00327,
+        0.481
+      ],
+      "observation_frames": 39,
+      "median_cad_area_match_score": 0.863,
+      "median_detection_confidence": 0.863,
+      "median_mask_shape_score": 0.88,
+      "median_rectangularity": 0.852,
+      "instance_index": 1,
+      "base_xyz_mm": [
+        -626.328,
+        -170.3,
+        -45.301
+      ],
+      "long_axis_angle_base_deg": -179.793,
+      "id": "right_white_brown:3cc5d807-26d4-4095-a24f-c281a6b326bf",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 1,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "right_white_brown",
+      "display_name": "SMD Capacitor (SMD \ucee4\ud328\uc2dc\ud130)",
+      "center_pixel": [
+        523.26,
+        372.73
+      ],
+      "reference_center_pixel": [
+        797.89,
+        540.71
+      ],
+      "angle_deg": 89.27,
+      "depth_m": 0.482,
+      "camera_xyz_m": [
+        -0.064516,
+        -0.003816,
+        0.482
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.857,
+      "median_detection_confidence": 0.857,
+      "median_mask_shape_score": 0.921,
+      "median_rectangularity": 0.9,
+      "instance_index": 2,
+      "base_xyz_mm": [
+        -627.117,
+        -157.289,
+        -46.326
+      ],
+      "long_axis_angle_base_deg": 1.657,
+      "id": "right_white_brown:44966c92-4a1e-4c44-a79b-4374ee034983",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 2,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "right_white_brown",
+      "display_name": "SMD Capacitor (SMD \ucee4\ud328\uc2dc\ud130)",
+      "center_pixel": [
+        547.48,
+        372.38
+      ],
+      "reference_center_pixel": [
+        834.37,
+        539.72
+      ],
+      "angle_deg": 89.26,
+      "depth_m": 0.481,
+      "camera_xyz_m": [
+        -0.051529,
+        -0.003999,
+        0.481
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.934,
+      "median_detection_confidence": 0.934,
+      "median_mask_shape_score": 0.943,
+      "median_rectangularity": 0.934,
+      "instance_index": 3,
+      "base_xyz_mm": [
+        -627.48,
+        -144.303,
+        -45.363
+      ],
+      "long_axis_angle_base_deg": 1.667,
+      "id": "right_white_brown:b73e0301-e7eb-424e-99a3-8259d9455d0f",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 3,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "right_white_brown",
+      "display_name": "SMD Capacitor (SMD \ucee4\ud328\uc2dc\ud130)",
+      "center_pixel": [
+        568.22,
+        373.82
+      ],
+      "reference_center_pixel": [
+        865.53,
+        541.47
+      ],
+      "angle_deg": 89.25,
+      "depth_m": 0.481,
+      "camera_xyz_m": [
+        -0.040485,
+        -0.00324,
+        0.481
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.904,
+      "median_detection_confidence": 0.904,
+      "median_mask_shape_score": 0.956,
+      "median_rectangularity": 0.933,
+      "instance_index": 4,
+      "base_xyz_mm": [
+        -626.901,
+        -133.249,
+        -45.423
+      ],
+      "long_axis_angle_base_deg": 1.677,
+      "id": "right_white_brown:93c8eb5d-9e79-4a4c-91b4-4f7c72d6938a",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 4,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "right_white_brown",
+      "display_name": "SMD Capacitor (SMD \ucee4\ud328\uc2dc\ud130)",
+      "center_pixel": [
+        592.12,
+        372.87
+      ],
+      "reference_center_pixel": [
+        901.43,
+        539.61
+      ],
+      "angle_deg": 89.23,
+      "depth_m": 0.481,
+      "camera_xyz_m": [
+        -0.027832,
+        -0.003748,
+        0.481
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.95,
+      "median_detection_confidence": 0.95,
+      "median_mask_shape_score": 0.964,
+      "median_rectangularity": 0.944,
+      "instance_index": 5,
+      "base_xyz_mm": [
+        -627.615,
+        -120.606,
+        -45.448
+      ],
+      "long_axis_angle_base_deg": 1.697,
+      "id": "right_white_brown:bddcf901-9c01-4f9a-a74a-71e2cd72ec30",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 5,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "right_white_brown",
+      "display_name": "SMD Capacitor (SMD \ucee4\ud328\uc2dc\ud130)",
+      "center_pixel": [
+        505.7,
+        435.02
+      ],
+      "reference_center_pixel": [
+        770.24,
+        634.11
+      ],
+      "angle_deg": 75.47,
+      "depth_m": 0.479,
+      "camera_xyz_m": [
+        -0.073373,
+        0.029168,
+        0.479
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.899,
+      "median_detection_confidence": 0.899,
+      "median_mask_shape_score": 0.908,
+      "median_rectangularity": 0.819,
+      "instance_index": 6,
+      "base_xyz_mm": [
+        -593.915,
+        -165.6,
+        -44.349
+      ],
+      "long_axis_angle_base_deg": 15.449,
+      "id": "right_white_brown:58e68425-9fd3-49f6-8ded-6e2954f5270f",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 6,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "right_white_brown",
+      "display_name": "SMD Capacitor (SMD \ucee4\ud328\uc2dc\ud130)",
+      "center_pixel": [
+        530.45,
+        433.87
+      ],
+      "reference_center_pixel": [
+        807.55,
+        631.86
+      ],
+      "angle_deg": 89.27,
+      "depth_m": 0.481,
+      "camera_xyz_m": [
+        -0.060506,
+        0.028696,
+        0.481
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.946,
+      "median_detection_confidence": 0.946,
+      "median_mask_shape_score": 0.946,
+      "median_rectangularity": 0.946,
+      "instance_index": 7,
+      "base_xyz_mm": [
+        -594.66,
+        -152.75,
+        -46.375
+      ],
+      "long_axis_angle_base_deg": 1.657,
+      "id": "right_white_brown:4b5299aa-97c8-4939-b49a-8df280fdea20",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 7,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "right_white_brown",
+      "display_name": "SMD Capacitor (SMD \ucee4\ud328\uc2dc\ud130)",
+      "center_pixel": [
+        550.96,
+        431.9
+      ],
+      "reference_center_pixel": [
+        838.43,
+        628.47
+      ],
+      "angle_deg": 89.26,
+      "depth_m": 0.48,
+      "camera_xyz_m": [
+        -0.049554,
+        0.02758,
+        0.48
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.94,
+      "median_detection_confidence": 0.94,
+      "median_mask_shape_score": 0.938,
+      "median_rectangularity": 0.915,
+      "instance_index": 8,
+      "base_xyz_mm": [
+        -595.921,
+        -141.814,
+        -45.375
+      ],
+      "long_axis_angle_base_deg": 1.667,
+      "id": "right_white_brown:0f14f85f-acf7-495c-bd00-6bf7c0752d2c",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 8,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "right_white_brown",
+      "display_name": "SMD Capacitor (SMD \ucee4\ud328\uc2dc\ud130)",
+      "center_pixel": [
+        573.81,
+        434.4
+      ],
+      "reference_center_pixel": [
+        872.72,
+        631.71
+      ],
+      "angle_deg": -89.16,
+      "depth_m": 0.48,
+      "camera_xyz_m": [
+        -0.037452,
+        0.028914,
+        0.48
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.877,
+      "median_detection_confidence": 0.877,
+      "median_mask_shape_score": 0.889,
+      "median_rectangularity": 0.816,
+      "instance_index": 9,
+      "base_xyz_mm": [
+        -594.785,
+        -129.692,
+        -45.457
+      ],
+      "long_axis_angle_base_deg": -179.913,
+      "id": "right_white_brown:d49ea341-127c-4c3b-aff4-932285c906c6",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 9,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "right_white_brown",
+      "display_name": "SMD Capacitor (SMD \ucee4\ud328\uc2dc\ud130)",
+      "center_pixel": [
+        594.6,
+        432.63
+      ],
+      "reference_center_pixel": [
+        903.96,
+        628.61
+      ],
+      "angle_deg": 89.23,
+      "depth_m": 0.48,
+      "camera_xyz_m": [
+        -0.026442,
+        0.028028,
+        0.48
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.945,
+      "median_detection_confidence": 0.945,
+      "median_mask_shape_score": 0.866,
+      "median_rectangularity": 0.836,
+      "instance_index": 10,
+      "base_xyz_mm": [
+        -595.85,
+        -118.698,
+        -45.465
+      ],
+      "long_axis_angle_base_deg": 1.697,
+      "id": "right_white_brown:927bed60-08bc-4405-8332-3958fd02e191",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 10,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "gpu",
+      "display_name": "GPU",
+      "center_pixel": [
+        441.85,
+        575.95
+      ],
+      "reference_center_pixel": [
+        671.23,
+        846.13
+      ],
+      "angle_deg": -86.79,
+      "depth_m": 0.474,
+      "camera_xyz_m": [
+        -0.106042,
+        0.102731,
+        0.474
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.835,
+      "median_detection_confidence": 0.835,
+      "median_mask_shape_score": 0.968,
+      "median_rectangularity": 0.949,
+      "instance_index": 1,
+      "base_xyz_mm": [
+        -519.708,
+        -197.057,
+        -41.587
+      ],
+      "long_axis_angle_base_deg": 177.719,
+      "id": "gpu:36dd0f0f-bf21-458e-9259-99a276a86daa",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 1,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "gpu",
+      "display_name": "GPU",
+      "center_pixel": [
+        577.41,
+        577.86
+      ],
+      "reference_center_pixel": [
+        875.28,
+        845.12
+      ],
+      "angle_deg": -84.28,
+      "depth_m": 0.475,
+      "camera_xyz_m": [
+        -0.03516,
+        0.103966,
+        0.475
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.759,
+      "median_detection_confidence": 0.759,
+      "median_mask_shape_score": 0.962,
+      "median_rectangularity": 0.955,
+      "instance_index": 2,
+      "base_xyz_mm": [
+        -519.66,
+        -126.168,
+        -42.857
+      ],
+      "long_axis_angle_base_deg": 175.21,
+      "id": "gpu:d47f84b7-58f6-4ada-abaa-842f8ad86ec7",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 2,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "hbm",
+      "display_name": "HBM",
+      "center_pixel": [
+        748.72,
+        436.89
+      ],
+      "reference_center_pixel": [
+        1133.83,
+        631.6
+      ],
+      "angle_deg": 89.15,
+      "depth_m": 0.479,
+      "camera_xyz_m": [
+        0.055117,
+        0.030171,
+        0.479
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.956,
+      "median_detection_confidence": 0.956,
+      "median_mask_shape_score": 0.931,
+      "median_rectangularity": 0.973,
+      "instance_index": 1,
+      "base_xyz_mm": [
+        -595.005,
+        -37.112,
+        -44.799
+      ],
+      "long_axis_angle_base_deg": 1.776,
+      "id": "hbm:243b368d-93ca-41ef-b246-42998e68df47",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 1,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "hbm",
+      "display_name": "HBM",
+      "center_pixel": [
+        803.13,
+        436.66
+      ],
+      "reference_center_pixel": [
+        1214.51,
+        630.09
+      ],
+      "angle_deg": 89.12,
+      "depth_m": 0.482,
+      "camera_xyz_m": [
+        0.084416,
+        0.030206,
+        0.482
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.955,
+      "median_detection_confidence": 0.955,
+      "median_mask_shape_score": 0.955,
+      "median_rectangularity": 0.988,
+      "instance_index": 2,
+      "base_xyz_mm": [
+        -595.542,
+        -7.828,
+        -47.894
+      ],
+      "long_axis_angle_base_deg": 1.806,
+      "id": "hbm:8011015f-cd0c-481e-9644-bee894073cf3",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 2,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "hbm",
+      "display_name": "HBM",
+      "center_pixel": [
+        749.06,
+        488.22
+      ],
+      "reference_center_pixel": [
+        1133.2,
+        707.64
+      ],
+      "angle_deg": 89.15,
+      "depth_m": 0.48,
+      "camera_xyz_m": [
+        0.055354,
+        0.05736,
+        0.48
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.961,
+      "median_detection_confidence": 0.961,
+      "median_mask_shape_score": 0.903,
+      "median_rectangularity": 0.964,
+      "instance_index": 3,
+      "base_xyz_mm": [
+        -567.868,
+        -36.439,
+        -46.665
+      ],
+      "long_axis_angle_base_deg": 1.776,
+      "id": "hbm:63a10482-2d58-455d-aae4-f0f5934ce6f3",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 3,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "hbm",
+      "display_name": "HBM",
+      "center_pixel": [
+        802.37,
+        487.23
+      ],
+      "reference_center_pixel": [
+        1212.22,
+        704.9
+      ],
+      "angle_deg": 89.12,
+      "depth_m": 0.482,
+      "camera_xyz_m": [
+        0.084048,
+        0.057173,
+        0.482
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.958,
+      "median_detection_confidence": 0.958,
+      "median_mask_shape_score": 0.954,
+      "median_rectangularity": 0.975,
+      "instance_index": 4,
+      "base_xyz_mm": [
+        -568.586,
+        -7.76,
+        -48.752
+      ],
+      "long_axis_angle_base_deg": 1.806,
+      "id": "hbm:39181ca2-70af-460c-8a35-69a793af0830",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 4,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "hbm",
+      "display_name": "HBM",
+      "center_pixel": [
+        749.63,
+        543.1
+      ],
+      "reference_center_pixel": [
+        1132.83,
+        788.85
+      ],
+      "angle_deg": 89.15,
+      "depth_m": 0.477,
+      "camera_xyz_m": [
+        0.055413,
+        0.086062,
+        0.477
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.917,
+      "median_detection_confidence": 0.917,
+      "median_mask_shape_score": 0.928,
+      "median_rectangularity": 0.969,
+      "instance_index": 5,
+      "base_xyz_mm": [
+        -539.09,
+        -35.905,
+        -44.581
+      ],
+      "long_axis_angle_base_deg": 1.776,
+      "id": "hbm:12557ee0-6813-4899-9e16-c5a3579632d3",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 5,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "hbm",
+      "display_name": "HBM",
+      "center_pixel": [
+        802.45,
+        540.84
+      ],
+      "reference_center_pixel": [
+        1211.12,
+        784.11
+      ],
+      "angle_deg": -89.01,
+      "depth_m": 0.48,
+      "camera_xyz_m": [
+        0.083748,
+        0.085386,
+        0.48
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.962,
+      "median_detection_confidence": 0.962,
+      "median_mask_shape_score": 0.97,
+      "median_rectangularity": 0.934,
+      "instance_index": 6,
+      "base_xyz_mm": [
+        -540.323,
+        -7.596,
+        -47.65
+      ],
+      "long_axis_angle_base_deg": 179.938,
+      "id": "hbm:72644d59-210c-4daf-b18a-ab8cc67fe401",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 6,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "hbm",
+      "display_name": "HBM",
+      "center_pixel": [
+        747.22,
+        592.18
+      ],
+      "reference_center_pixel": [
+        1128.17,
+        861.49
+      ],
+      "angle_deg": 89.15,
+      "depth_m": 0.477,
+      "camera_xyz_m": [
+        0.0542,
+        0.111936,
+        0.477
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.943,
+      "median_detection_confidence": 0.943,
+      "median_mask_shape_score": 0.944,
+      "median_rectangularity": 0.961,
+      "instance_index": 7,
+      "base_xyz_mm": [
+        -513.213,
+        -36.699,
+        -45.401
+      ],
+      "long_axis_angle_base_deg": 1.776,
+      "id": "hbm:a5bb47f0-15f3-41a1-a107-16df4755869b",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 7,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "hbm",
+      "display_name": "HBM",
+      "center_pixel": [
+        799.4,
+        594.19
+      ],
+      "reference_center_pixel": [
+        1205.4,
+        862.96
+      ],
+      "angle_deg": -88.91,
+      "depth_m": 0.479,
+      "camera_xyz_m": [
+        0.081932,
+        0.113455,
+        0.479
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.962,
+      "median_detection_confidence": 0.962,
+      "median_mask_shape_score": 0.946,
+      "median_rectangularity": 0.94,
+      "instance_index": 8,
+      "base_xyz_mm": [
+        -512.21,
+        -8.954,
+        -47.538
+      ],
+      "long_axis_angle_base_deg": 179.838,
+      "id": "hbm:5ba54f1a-e5b3-48d4-87e4-88bbc427677a",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 8,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "hbm",
+      "display_name": "HBM",
+      "center_pixel": [
+        888.64,
+        434.25
+      ],
+      "reference_center_pixel": [
+        1340.8,
+        624.69
+      ],
+      "angle_deg": 89.07,
+      "depth_m": 0.482,
+      "camera_xyz_m": [
+        0.129859,
+        0.028951,
+        0.482
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.791,
+      "median_detection_confidence": 0.791,
+      "median_mask_shape_score": 0.949,
+      "median_rectangularity": 0.968,
+      "instance_index": 9,
+      "base_xyz_mm": [
+        -597.536,
+        37.589,
+        -48.002
+      ],
+      "long_axis_angle_base_deg": 1.856,
+      "id": "hbm:a1637518-2015-4c7d-9d4f-43163cfca2f4",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 9,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "hbm",
+      "display_name": "HBM",
+      "center_pixel": [
+        946.41,
+        434.36
+      ],
+      "reference_center_pixel": [
+        1425.7,
+        623.62
+      ],
+      "angle_deg": -89.2,
+      "depth_m": 0.481,
+      "camera_xyz_m": [
+        0.160403,
+        0.02896,
+        0.481
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.891,
+      "median_detection_confidence": 0.891,
+      "median_mask_shape_score": 0.927,
+      "median_rectangularity": 0.951,
+      "instance_index": 10,
+      "base_xyz_mm": [
+        -597.993,
+        68.132,
+        -47.102
+      ],
+      "long_axis_angle_base_deg": -179.873,
+      "id": "hbm:a7777f65-02a0-4013-860f-13c2135ca496",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 10,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "hbm",
+      "display_name": "HBM",
+      "center_pixel": [
+        893.17,
+        481.44
+      ],
+      "reference_center_pixel": [
+        1346.32,
+        694.21
+      ],
+      "angle_deg": 89.07,
+      "depth_m": 0.48,
+      "camera_xyz_m": [
+        0.131856,
+        0.053912,
+        0.48
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.95,
+      "median_detection_confidence": 0.95,
+      "median_mask_shape_score": 0.979,
+      "median_rectangularity": 0.977,
+      "instance_index": 11,
+      "base_xyz_mm": [
+        -572.56,
+        39.997,
+        -46.804
+      ],
+      "long_axis_angle_base_deg": 1.856,
+      "id": "hbm:3797b2ad-ac53-4da2-a37e-30fbc047f108",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 11,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "hbm",
+      "display_name": "HBM",
+      "center_pixel": [
+        947.69,
+        485.6
+      ],
+      "reference_center_pixel": [
+        1426.3,
+        699.04
+      ],
+      "angle_deg": 89.04,
+      "depth_m": 0.478,
+      "camera_xyz_m": [
+        0.16007,
+        0.055853,
+        0.478
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.96,
+      "median_detection_confidence": 0.96,
+      "median_mask_shape_score": 0.945,
+      "median_rectangularity": 0.975,
+      "instance_index": 12,
+      "base_xyz_mm": [
+        -571.016,
+        68.246,
+        -44.959
+      ],
+      "long_axis_angle_base_deg": 1.886,
+      "id": "hbm:c3e6c544-7596-4b1b-8642-6d1aa525df4b",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 12,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "hbm",
+      "display_name": "HBM",
+      "center_pixel": [
+        892.95,
+        530.6
+      ],
+      "reference_center_pixel": [
+        1344.83,
+        766.66
+      ],
+      "angle_deg": 89.07,
+      "depth_m": 0.478,
+      "camera_xyz_m": [
+        0.131156,
+        0.079623,
+        0.478
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.951,
+      "median_detection_confidence": 0.951,
+      "median_mask_shape_score": 0.965,
+      "median_rectangularity": 0.968,
+      "instance_index": 13,
+      "base_xyz_mm": [
+        -546.79,
+        39.72,
+        -45.622
+      ],
+      "long_axis_angle_base_deg": 1.856,
+      "id": "hbm:d30fe5d1-595c-44a1-8f8c-91ac910f87bc",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 13,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "hbm",
+      "display_name": "HBM",
+      "center_pixel": [
+        948.72,
+        537.93
+      ],
+      "reference_center_pixel": [
+        1426.52,
+        776.01
+      ],
+      "angle_deg": 89.04,
+      "depth_m": 0.4785,
+      "camera_xyz_m": [
+        0.160846,
+        0.083653,
+        0.4785
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.964,
+      "median_detection_confidence": 0.964,
+      "median_mask_shape_score": 0.945,
+      "median_rectangularity": 0.962,
+      "instance_index": 14,
+      "base_xyz_mm": [
+        -543.262,
+        69.469,
+        -46.347
+      ],
+      "long_axis_angle_base_deg": 1.886,
+      "id": "observation:e801d8f5252318a91601c6e0833771e929935e1883009b2c9bbfc08c5a667e03",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 14,
+      "source_identity_scope": "observation_cell"
+    },
+    {
+      "part_type": "hbm",
+      "display_name": "HBM",
+      "center_pixel": [
+        891.01,
+        579.52
+      ],
+      "reference_center_pixel": [
+        1340.79,
+        838.75
+      ],
+      "angle_deg": 89.07,
+      "depth_m": 0.48,
+      "camera_xyz_m": [
+        0.13069,
+        0.105922,
+        0.48
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.962,
+      "median_detection_confidence": 0.962,
+      "median_mask_shape_score": 0.96,
+      "median_rectangularity": 0.961,
+      "instance_index": 15,
+      "base_xyz_mm": [
+        -520.564,
+        39.672,
+        -48.457
+      ],
+      "long_axis_angle_base_deg": 1.856,
+      "id": "hbm:1306a28c-a584-4bf2-9a88-20faa5273087",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 15,
+      "source_identity_scope": "tracked_cell"
+    },
+    {
+      "part_type": "hbm",
+      "display_name": "HBM",
+      "center_pixel": [
+        950.16,
+        588.69
+      ],
+      "reference_center_pixel": [
+        1427.37,
+        850.57
+      ],
+      "angle_deg": 89.04,
+      "depth_m": 0.479,
+      "camera_xyz_m": [
+        0.161702,
+        0.110544,
+        0.479
+      ],
+      "observation_frames": 40,
+      "median_cad_area_match_score": 0.941,
+      "median_detection_confidence": 0.941,
+      "median_mask_shape_score": 0.945,
+      "median_rectangularity": 0.955,
+      "instance_index": 16,
+      "base_xyz_mm": [
+        -516.418,
+        70.758,
+        -47.705
+      ],
+      "long_axis_angle_base_deg": 1.886,
+      "id": "hbm:5cb0e737-d34b-410b-aadb-b850bbac6800",
+      "tray_registration_id": "005180c7-5065-410e-ad0e-495a0e930c56:6",
+      "source_observation_id": "005180c7-5065-410e-ad0e-495a0e930c56:6:1789365565737343262",
+      "calibration_instance_index": 16,
+      "source_identity_scope": "tracked_cell"
+    }
+  ]
+}

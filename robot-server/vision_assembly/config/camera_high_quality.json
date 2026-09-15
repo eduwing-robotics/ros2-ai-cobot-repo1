@@ -1,0 +1,9 @@
+{
+  "camera": "Intel RealSense D435",
+  "rgb_profile": "1280x720x15",
+  "depth_profile": "1280x720x15",
+  "align_depth_to_color": true,
+  "save_rgb": "native-resolution lossless PNG",
+  "resolution_source": "Connected device rs-enumerate-devices, 2026-09-05",
+  "note": "Restored validated assembly profile by operator request, 2026-09-05. Board reference pixels are calibrated at 1280x720."
+}

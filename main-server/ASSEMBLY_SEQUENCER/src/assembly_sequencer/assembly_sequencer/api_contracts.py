@@ -1,0 +1,43 @@
+"""Real consumer declarations; execution and validation belong to RealBackend.
+
+Wire identifiers retain provider versions. No legacy fallback or runtime registry.
+Durations are client observation limits, not equipment safety settings.
+"""
+
+ROBOT_STATUS = '/real/robot/status'
+ASSEMBLY_STATUS = '/real/assembly/status'
+ASSEMBLY_COMMAND = '/real/assembly/command'
+ASSEMBLY_EVENT = '/real/assembly/event'
+CONVEYOR_STATE = '/conveyor/state'
+CONVEYOR_ASSEMBLY = '/conveyor/move_to_assembly'
+CONVEYOR_INSPECTION = '/conveyor/move_to_inspection'
+CONVEYOR_STOP = '/conveyor/stop'
+ASSEMBLY_SCHEMA = 'fr5.assembly_execution/v2'
+VISION_SUBMIT = '/vision/inspection/submit'
+VISION_GET = '/vision/inspection/get'
+VISION_IMAGE = '/vision/inspection/get_image'
+VISION_HEALTH = '/vision/inspection/health'
+VISION_TRANSPORT = 'ros2'
+VISION_STATUS_ACCEPTED = 'ACCEPTED'
+VISION_STATUS_RUNNING = 'RUNNING'
+VISION_STATUS_COMPLETED = 'COMPLETED'
+VISION_STATUS_FAILED = 'FAILED'
+VISION_DECISION_PASS = 'PASS'
+VISION_DECISION_FAIL = 'FAIL'
+VISION_DECISION_UNKNOWN = 'UNKNOWN'
+VISION_IMAGE_FILENAME = '02_annotated_report.png'
+VISION_IMAGE_MIME_TYPE = 'image/png'
+VISION_CHUNK_BYTES = 65536
+VISION_MAX_IMAGE_BYTES = 67108864
+CONVEYOR_SCHEMA_VERSION = 1
+SERVICE_TIMEOUT_SECONDS = 5.0
+CONVEYOR_FRESHNESS_SECONDS = 1.0
+WAIT_TICK_SECONDS = 0.1
+CONVEYOR_TIMEOUT_SECONDS = 35.0
+CONTROL_TIMEOUT_SECONDS = 60.0
+ASSEMBLY_TIMEOUT_SECONDS = 1800.0
+ASSEMBLY_POLL_SECONDS = 2.0
+VISION_TIMEOUT_SECONDS = 330.0
+VISION_REQUEST_TIMEOUT_SECONDS = 10.0
+VISION_POLL_SECONDS = 1.0
+CONTROL_STATUS_FRESHNESS_SECONDS = 3.0

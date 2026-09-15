@@ -1,0 +1,36 @@
+{
+  "schema": "fr5.full_fixed_cycle_run/v1",
+  "started_unix": 1788439455.430256,
+  "cycle_id": "20260903-212540",
+  "plan_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/full_25_plan_2026-09-03.json",
+  "transfer_z_mm": 350.0,
+  "speeds_percent": {
+    "travel": 20,
+    "rotation": 15,
+    "vertical": 10
+  },
+  "preflight": {
+    "passed": true,
+    "waypoints": 300,
+    "minimum_joint_margin_deg": 37.814,
+    "maximum_joint_step_deg": 93.911
+  },
+  "completed_slots": [
+    "GPU-01",
+    "HBM-01",
+    "HBM-02",
+    "HBM-03"
+  ],
+  "status": "stopped_on_error",
+  "last_verified_tcp": [
+    61.1271858215332,
+    -504.5794677734375,
+    188.6654815673828,
+    -179.98597717285156,
+    -0.0018189429538324475,
+    -179.2679443359375
+  ],
+  "last_gripper_position": 25,
+  "error": "RuntimeError: FR5 safety fault during motion: abnormal_stop=1, main_error_code=1, sub_error_code=149, cmdpointerror=149",
+  "stopped_unix": 1788439881.9582891
+}

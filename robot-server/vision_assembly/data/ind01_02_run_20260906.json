@@ -1,0 +1,87 @@
+{
+  "schema": "fr5.full_fixed_cycle_run/v2",
+  "started_unix": 1788676470.7046413,
+  "cycle_id": "20260906-152918",
+  "plan_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/last_non_smd_plan_20260906.json",
+  "plan_sha256": "2fbac9a285cc20802ea89b699f1ae82c7b6d0da5f7c3d275ae2de140f4cb63e7",
+  "motion_profile": "smooth_combined_transfer_v1",
+  "selected_slots": [
+    "IND-01",
+    "IND-02"
+  ],
+  "motion_completed_slots": [
+    "IND-01",
+    "IND-02"
+  ],
+  "grasp_verified_slots": [],
+  "placement_verified_slots": [],
+  "part_held_candidate": false,
+  "status": "motion_complete_awaiting_physical_verification",
+  "preflight": {
+    "passed": true,
+    "waypoints": 46,
+    "minimum_joint_soft_limit_margin_deg": 52.323173999999995,
+    "maximum_joint_step_deg": 41.36440999999999,
+    "minimum_j6_deg": -10.646935,
+    "maximum_j6_deg": 100.715996,
+    "j6_operational_bounds_deg": [
+      -178.0,
+      178.0
+    ]
+  },
+  "controller_global_speed_percent": 40,
+  "speed_contract": {
+    "command_percent": {
+      "travel": 25,
+      "combined_rotation": 25,
+      "vertical": 10
+    },
+    "effective_percent": {
+      "travel": 10.0,
+      "combined_rotation": 10.0,
+      "vertical": 4.0
+    },
+    "hover_clearance_mm": 100.0,
+    "slow_zone_mm": 50.0
+  },
+  "controller_global_speed_set_unix": 1788676471.2075753,
+  "gripper_current_samples_percent": {
+    "IND-01": 0.0,
+    "IND-02": 0.0
+  },
+  "tray_inspections": [
+    {
+      "slot": "IND-01",
+      "stage": "tray_after_inspect",
+      "timestamp_ros_ns": 1788676506702377930,
+      "picked_slot": "IND-01",
+      "removed_slots": [
+        "IND-01"
+      ],
+      "evidence": "picked_cell_absent_not_physical_holding_proof",
+      "distinct_consecutive_frames": 3
+    },
+    {
+      "slot": "IND-02",
+      "stage": "tray_after_inspect",
+      "timestamp_ros_ns": 1788676558939759033,
+      "picked_slot": "IND-02",
+      "removed_slots": [
+        "IND-01",
+        "IND-02"
+      ],
+      "evidence": "picked_cell_absent_not_physical_holding_proof",
+      "distinct_consecutive_frames": 3
+    }
+  ],
+  "last_verified_tcp": [
+    105.17320251464844,
+    -559.3776245117188,
+    188.98834228515625,
+    179.9806365966797,
+    0.00020863815734628588,
+    -179.23944091796875
+  ],
+  "last_gripper_position": 20,
+  "completed_unix": 1788676574.093984
+}

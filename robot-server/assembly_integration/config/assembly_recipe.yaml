@@ -1,0 +1,73 @@
+recipe_version: assembly-r1
+frame: base_link
+
+coordinate_acquisition:
+  mode: fixed_fixture_cycle_snapshot
+  board_capture: once_per_cycle_at_PlaceCamera
+  board_slot_count: 25
+  tray_capture: once_per_cycle_at_TrayHome
+  tray_part_count: 25
+  reuse_frozen_coordinates_between_parts: true
+  recapture_if: [pcb_or_fixture_moved, tray_moved, collision_or_unexpected_contact, failed_grasp, invalid_vision_quality]
+  snapshot_file: ../../vision_assembly/data/fixed_cycle_snapshot.json
+
+# Motion/gripper values are deliberately not duplicated here. The real executor
+# must load vision_assembly/config/part_gripper_recipes.json so validated values
+# remain the single source of truth.
+robot_recipe_file: ../../vision_assembly/config/part_gripper_recipes.json
+physical_board_file: ../../vision_assembly/config/physical_board.json
+
+part_mapping:
+  HBM: hbm
+  PM: long_orange
+  GPU: gpu
+  CAP: right_white_brown
+  IND: marked_white
+  VRM: black_block
+
+sequence:
+  before_all: [move_conveyor_to_assembly, ensure_camera_calibrated]
+  per_step: [home, item_ready, pick, home, assembly_ready, place, release, vertical_retract, verify_vertical_retract]
+  after_all: [move_conveyor_to_inspection, inspect_assembled_pcb, transfer_assembled_pcb]
+
+placement_safety:
+  pre_place_clearance_mm: 20.0
+  pre_place_descent_speed_percent: 20
+  final_place_descent_speed_percent: 10
+  retract_dz_mm: 100.0
+  retract_speed_percent: 20
+  preserve_place_xy_and_orientation: true
+  require_motion_done_before_next_step: true
+  forbid_rotation_or_horizontal_motion_before_retract: true
+  require_two_stage_vertical_place_approach: true
+
+# real_execution_ready remains false until every board slot and placement Z has
+# been physically taught and validated. Progress/DB/Unity simulation is allowed.
+real_execution_ready: false
+
+steps:
+  - {order: 1, part_id: GPU, slot_code: GPU-01}
+  - {order: 2, part_id: HBM, slot_code: HBM-01}
+  - {order: 3, part_id: HBM, slot_code: HBM-02}
+  - {order: 4, part_id: HBM, slot_code: HBM-03}
+  - {order: 5, part_id: HBM, slot_code: HBM-04}
+  - {order: 6, part_id: HBM, slot_code: HBM-05}
+  - {order: 7, part_id: HBM, slot_code: HBM-06}
+  - {order: 8, part_id: HBM, slot_code: HBM-07}
+  - {order: 9, part_id: HBM, slot_code: HBM-08}
+  - {order: 10, part_id: PM, slot_code: PM-01}
+  - {order: 11, part_id: PM, slot_code: PM-02}
+  - {order: 12, part_id: PM, slot_code: PM-03}
+  - {order: 13, part_id: PM, slot_code: PM-04}
+  - {order: 14, part_id: VRM, slot_code: VRM-01}
+  - {order: 15, part_id: VRM, slot_code: VRM-02}
+  - {order: 16, part_id: VRM, slot_code: VRM-03}
+  - {order: 17, part_id: VRM, slot_code: VRM-04}
+  - {order: 18, part_id: VRM, slot_code: VRM-05}
+  - {order: 19, part_id: IND, slot_code: IND-01}
+  - {order: 20, part_id: IND, slot_code: IND-02}
+  - {order: 21, part_id: CAP, slot_code: CAP-01}
+  - {order: 22, part_id: CAP, slot_code: CAP-02}
+  - {order: 23, part_id: CAP, slot_code: CAP-03}
+  - {order: 24, part_id: CAP, slot_code: CAP-04}
+  - {order: 25, part_id: CAP, slot_code: CAP-05}

@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "mode": "smd_trayhome_xyz_plus_close_angle",
+  "timestamp_unix": 1788177254.7777998,
+  "robot_motion_authorized": false,
+  "part_type": "right_white_brown",
+  "display_name": "SMD Capacitor",
+  "instance_index": 1,
+  "part_center_base_mm": [
+    -633.34,
+    -170.954,
+    -49.078
+  ],
+  "long_axis_angle_base_deg": 87.636,
+  "position_source": "TrayHome full-tray detection",
+  "angle_source": "SMD close-view robust OBB only",
+  "coarse_file": "vision_assembly/data/smd_1_trayhome_coarse.json",
+  "fine_file": "vision_assembly/data/smd_1_close_angle.json"
+}

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S22 · 검사 결과 리포트</title><style>$css</style></head>
+<body><main>
+<header><div><span class="eyebrow">KSMC / VISION INSPECTION</span><h1>검사 결과 리포트</h1>
+<p class="muted">S22 하이브리드 검사 · 저장 사례 · 실시간 화면 아님</p></div>
+<div class="verdict"><span>원본 최종 판정</span><strong>$decision</strong></div></header>
+<section class="metrics" aria-label="원본 결과 요약">
+<div><span>검사 대상 슬롯</span><strong>$expected</strong></div>
+<div><span>확정 불량 항목</span><strong>$confirmed</strong></div>
+<div><span>의심 후보 항목</span><strong>$advisory</strong></div>
+<div><span>UNKNOWN 슬롯</span><strong>$unknown</strong></div></section>
+<section class="panel"><div class="panel-head"><div><h2>검사 이미지</h2><span class="muted">원본 · 히트맵 · 오버레이 / 표시 내용 변경 없음</span></div>
+<div class="controls"><button id="fit" type="button">화면 맞춤</button><button id="actual" type="button">원본 크기</button>
+<label class="zoom-label" for="zoom">확대 <output id="zoom-value">100%</output></label><input id="zoom" aria-label="화면 맞춤 기준 확대율" type="range" min="100" max="300" step="10" value="100">
+<a href="02_annotated_report.png" target="_blank" rel="noopener">새 창 ↗</a></div></div>
+<div id="viewport" tabindex="0" aria-label="확대 시 스크롤할 수 있는 검사 이미지"><img id="report-image" src="02_annotated_report.png" alt="수정하지 않은 S22 검사 결과: 원본, 히트맵, 오버레이"></div>
+<p class="image-note">확대는 표시 크기만 바꿉니다. 새로운 세부 정보나 검출 결과를 생성하지 않습니다.</p></section>
+<section class="panel"><div class="panel-head"><div><h2>부품별 검출 내용 <span id="finding-count">$finding_count</span></h2>
+<span class="muted">검출된 항목의 목록입니다. 모든 슬롯의 정상 여부를 뜻하지 않습니다.</span></div>
+<label class="search">검출 항목 검색 <input id="search" type="search" placeholder="예: GPU, 방향, HBM-03" autocomplete="off"></label></div>
+<div class="table-wrap"><table><thead><tr><th>슬롯 / 부품</th><th>검출 내용</th><th>실제 판정</th><th>상세 정보</th></tr></thead><tbody>$findings</tbody></table></div>
+<p class="empty">$no_findings</p><p id="no-match" class="empty" hidden>검색 결과가 없습니다. 검색은 표만 필터링하며 이미지와 판정은 바꾸지 않습니다.</p>
+<p id="filter-status" class="muted" role="status" aria-live="polite"></p></section>
+<details class="panel all-slots"><summary>전체 슬롯 판정 확인</summary><div class="slot-grid">$slots</div></details>
+<section class="panel"><div class="panel-head"><div><h2>촬영 품질과 내부 검사 신호</h2>
+<p>$quality_label</p><span class="muted">$quality_flags</span></div></div>
+<details class="all-slots"><summary>실행 불가 검사 $unavailable개</summary>
+<p class="muted">검사기 실행 실패로 히트맵이 비어 있을 수 있습니다. 빈 화면을 정상으로 해석하지 마세요.</p><ul>$unavailable_rows</ul></details>
+<details class="all-slots"><summary>화면에 그리지 않은 내부 신호 $undisplayed개</summary>
+<p class="muted">아래는 확정 불량 목록이 아닙니다. 신뢰도·독립 근거가 부족한 내부 신호도 남겨, 표시가 없음을 정상으로 오해하지 않도록 합니다.</p>
+<div class="table-wrap"><table><thead><tr><th>내부 슬롯 ID</th><th>검사 단계</th><th>원본 신호 / 권한</th><th>근거</th></tr></thead><tbody>$diagnostic_rows</tbody></table></div>
+</details></section>
+<footer><div><strong>자료 정보</strong><dl class="metadata"><dt>촬영 시각</dt><dd>$captured_at</dd><dt>검사 시각</dt><dd>$inspected_at</dd>
+<dt>검사 ID</dt><dd>$inspection_id</dd><dt>생산 연결</dt><dd>$binding</dd></dl></div>
+<div class="downloads"><a download href="inspection_result.json">JSON 다운로드</a><a download href="02_annotated_report.png">PNG 다운로드</a><a href="provenance.json">보존 기록</a></div>
+<p>UNKNOWN / ADVISORY_ONLY는 확정 정상·불량이 아닙니다. 이 저장 사례는 전체 정확도나 서버 전달 성공을 증명하지 않습니다. JSON·PNG는 원본 그대로 보존합니다.</p></footer>
+<noscript><p>확대·검색은 JavaScript가 필요합니다. 이미지 새 창과 원본 파일 링크는 그대로 사용할 수 있습니다.</p></noscript>
+</main><script>$js</script></body></html>

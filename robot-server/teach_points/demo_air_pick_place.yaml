@@ -1,0 +1,63 @@
+schema_version: "1.0"
+teach_set_id: demo_air_pick_place
+status: provisional
+execution_enabled: false
+units:
+  length: mm
+  angle: deg
+frame_id: base
+tool_id: unconfirmed
+source:
+  method: fairino_webapp_screenshot
+  captured_at: "2026-08-17T14:58:14+09:00"
+  screenshot: null
+points:
+  home_test:
+    recorded: true
+    target_type: joint
+    joints:
+      j1: 0.0
+      j2: -90.0
+      j3: 90.0
+      j4: -90.0
+      j5: -90.0
+      j6: 0.0
+    tcp: null
+    note: "Operator-provided candidate home; Cartesian pose and collision-free PTP path are not yet verified."
+  demo_center:
+    recorded: true
+    tcp:
+      x: -473.719
+      y: -115.109
+      z: 298.928
+      rx: 177.289
+      ry: -0.859
+      rz: 93.097
+    joints:
+      j1: 1.857
+      j2: -91.264
+      j3: 93.835
+      j4: -89.870
+      j5: -90.917
+      j6: -1.198
+  demo_pick_hover:
+    recorded: false
+  demo_pick_low:
+    recorded: false
+  demo_safe_transfer:
+    recorded: false
+  demo_place_hover:
+    recorded: false
+  demo_place_low:
+    recorded: false
+safety:
+  initial_speed_percent_max: 10
+  blending_allowed: false
+  gripper_commands_allowed: false
+  requires_clearance_review: true
+  requires_plan_only_validation: true
+notes:
+  - "Values are transcription candidates from the named screenshot."
+  - "The original screenshot path was machine-specific and is not present in this repository."
+  - "Tool frame, payload, physical clearance, and reachability are not yet verified."
+  - "This file must not directly authorize robot motion."

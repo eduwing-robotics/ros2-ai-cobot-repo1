@@ -1,0 +1,38 @@
+{
+  "reference_id": "343a8303-eaab-408c-ae62-498b84651d5f",
+  "authority": "ADVISORY_ONLY",
+  "slots": {
+    "hbm_01": {
+      "path": "runtime/inspection/hybrid_fixed_slot/20260908_174947_620562/fixed_slots/hbm/hbm_01.png",
+      "sha256": "4c364c567642153d57e10f9a0fd9c26bbbe4dfdde8343a8b10a01e7969b39fc5"
+    },
+    "hbm_02": {
+      "path": "runtime/inspection/hybrid_fixed_slot/20260908_174947_620562/fixed_slots/hbm/hbm_02.png",
+      "sha256": "122191bf5660668c27761f1ff6036d63acae8876db53ff8e03a617844b8ce241"
+    },
+    "hbm_03": {
+      "path": "runtime/inspection/hybrid_fixed_slot/20260908_174947_620562/fixed_slots/hbm/hbm_03.png",
+      "sha256": "668bc0774895e3a22e76198b4a84fd46bd5303fa8175d0a276a016adc510c3c6"
+    },
+    "hbm_04": {
+      "path": "runtime/inspection/hybrid_fixed_slot/20260908_174947_620562/fixed_slots/hbm/hbm_04.png",
+      "sha256": "e907201317a87a6c438f062b8614e16f60fa8d44423265235dad01f1255ea423"
+    },
+    "hbm_05": {
+      "path": "runtime/inspection/hybrid_fixed_slot/20260908_174947_620562/fixed_slots/hbm/hbm_05.png",
+      "sha256": "aafe8f3330c6d191584f8273dc5cd14b66a2d1f0d4a6957957009293b01231e8"
+    },
+    "hbm_06": {
+      "path": "runtime/inspection/hybrid_fixed_slot/20260908_174947_620562/fixed_slots/hbm/hbm_06.png",
+      "sha256": "868b12783749283f7bd991fb64bef33119525f33d5e61801208e2d22577678c9"
+    },
+    "hbm_07": {
+      "path": "runtime/inspection/hybrid_fixed_slot/20260908_174947_620562/fixed_slots/hbm/hbm_07.png",
+      "sha256": "5742299f3a5dcffc3270983a970485e3aa77fd171306a9c3236778fbb43e18e9"
+    },
+    "hbm_08": {
+      "path": "runtime/inspection/hybrid_fixed_slot/20260908_174947_620562/fixed_slots/hbm/hbm_08.png",
+      "sha256": "9c2f43cf61447442cf3992e197f1d44228fdcd896ba57ba6078a7028dff1feff"
+    }
+  }
+}

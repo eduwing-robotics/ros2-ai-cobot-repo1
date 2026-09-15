@@ -1,0 +1,269 @@
+// 역할: 페이지를 UIDocument 단위로 전환한다.
+//
+// 페이지는 최상위 계층이므로 어느 패널에도 종속되지 않는다(Docs/UI.md).
+// 각 페이지는 자기 GameObject 에 UIDocument 하나 + 바인더를 갖고, 라우터는
+// 활성 페이지의 UIDocument 만 켠다. 비활성 페이지는 Update 가 돌지 않는다.
+//
+// 각 페이지 UXML 은 nav-run / nav-jobs / nav-inspect / nav-manual / nav-setup
+// 이라는 같은 이름의 버튼을 갖고 있으므로, 라우터가 모든 문서에서 한 번에 등록한다.
+
+using System;
+using MainUnity.Runtime.Robot.Assembly;
+using UnityEngine;
+using UnityEngine.UIElements;
+
+namespace MainUnity.UI
+{
+    public enum FR5Page
+    {
+        Run,
+        Inspect,
+        Manual,
+        Quality,
+        Setup,
+    }
+
+    [DisallowMultipleComponent]
+    public sealed class FR5PageRouter : MonoBehaviour
+    {
+        [Serializable]
+        public sealed class PageEntry
+        {
+            public FR5Page page;
+
+            [Tooltip("이 페이지의 UIDocument 입니다. 비우면 그 페이지는 없는 것으로 봅니다.")]
+            public UIDocument document;
+
+            [Tooltip("아직 화면이 없는 페이지는 꺼 둡니다. 레일에서 눌러도 넘어가지 않습니다.")]
+            public bool available = true;
+        }
+
+        [Header("페이지")]
+        [SerializeField] FR5Page startPage = FR5Page.Run;
+        [SerializeField] PageEntry[] pages =
+        {
+            new PageEntry { page = FR5Page.Run },
+            new PageEntry { page = FR5Page.Inspect },
+            new PageEntry { page = FR5Page.Manual },
+            new PageEntry { page = FR5Page.Setup },
+        };
+
+        static readonly (FR5Page Page, string Button)[] NavButtons =
+        {
+            (FR5Page.Run, "nav-jobs"),
+            (FR5Page.Inspect, "nav-inspect"),
+            (FR5Page.Manual, "nav-manual"),
+            (FR5Page.Setup, "nav-setup"),
+        };
+
+        readonly System.Collections.Generic.HashSet<UIDocument> wiredDocuments =
+            new System.Collections.Generic.HashSet<UIDocument>();
+
+        UIDocument jobsDocument;
+        FR5InspectBinder inspectBinder;
+        AssemblyProgressManager assemblyProgress;
+        bool progressSubscribed;
+        bool runRequested;
+        FR5Page current;
+
+        /// <summary>현재 열린 페이지다.</summary>
+        public FR5Page Current => current;
+
+        void OnEnable()
+        {
+            wiredDocuments.Clear();
+            current = startPage;
+
+            // Run은 JOBS와 페이지 번호를 공유하므로 시작 시 운전 문서를 명시적으로 선택한다.
+            runRequested = startPage == FR5Page.Run;
+
+            ResolveJobsDocument();
+            inspectBinder = GetComponentInChildren<FR5InspectBinder>(true);
+            ResolveProgress();
+            Apply();
+        }
+
+        void OnDisable()
+        {
+            if (progressSubscribed && assemblyProgress != null)
+                assemblyProgress.ProgressChanged -= OnProgressChanged;
+            progressSubscribed = false;
+        }
+
+        void Update()
+        {
+            if (ResolveProgress() && current == FR5Page.Run)
+                Apply();
+            // UIDocument 는 활성화된 뒤에야 rootVisualElement 를 만든다. 켜진 문서 중
+            // 아직 등록하지 않은 것만 한 번씩 등록한다.
+            //
+            // 매 프레임 다시 등록하면 안 된다. Clickable 을 새로 갈아끼우면 PointerDown 을
+            // 받은 인스턴스와 PointerUp 을 받는 인스턴스가 달라져 클릭이 완결되지 않는다.
+            // (전환이 먹지 않던 원인이 이것이었다)
+            foreach (PageEntry entry in pages)
+                WireDocument(entry?.document);
+            WireDocument(jobsDocument);
+        }
+
+        void ResolveJobsDocument()
+        {
+            if (jobsDocument != null) return;
+
+            FR5RequestBinder binder = GetComponentInChildren<FR5RequestBinder>(true);
+            jobsDocument = binder != null ? binder.GetComponent<UIDocument>() : null;
+        }
+
+        bool ResolveProgress()
+        {
+            AssemblyProgressManager next = GetComponent<UIMaster>()?.AssemblyProgress;
+            if (next == assemblyProgress)
+            {
+                if (!progressSubscribed && assemblyProgress != null)
+                {
+                    assemblyProgress.ProgressChanged += OnProgressChanged;
+                    progressSubscribed = true;
+                }
+                return false;
+            }
+
+            if (progressSubscribed && assemblyProgress != null)
+                assemblyProgress.ProgressChanged -= OnProgressChanged;
+            assemblyProgress = next;
+            progressSubscribed = false;
+            if (assemblyProgress != null)
+            {
+                assemblyProgress.ProgressChanged += OnProgressChanged;
+                progressSubscribed = true;
+            }
+            return true;
+        }
+
+        void OnProgressChanged(AssemblyProgressFrame frame)
+        {
+            if (current == FR5Page.Run)
+                Apply();
+        }
+
+        void WireDocument(UIDocument document)
+        {
+            if (document == null || wiredDocuments.Contains(document)) return;
+
+            VisualElement root = document.rootVisualElement;
+            if (root == null) return;
+
+            Wire(root);
+            wiredDocuments.Add(document);
+        }
+
+        /// <summary>한 문서의 nav 버튼을 한 번만 등록한다.</summary>
+        void Wire(VisualElement root)
+        {
+            Button run = root.Q<Button>("nav-run");
+            if (run != null)
+                run.clicked += OpenMonitor;
+
+            foreach ((FR5Page target, string buttonName) in NavButtons)
+            {
+                Button button = root.Q<Button>(buttonName);
+                if (button == null) continue;
+
+                FR5Page captured = target;
+                button.clicked += () => Go(captured);
+                button.SetEnabled(IsAvailable(target));
+            }
+
+            RefreshNavigationVisuals(root);
+        }
+
+        public void Go(FR5Page page)
+        {
+            if (!IsAvailable(page)) return;
+            runRequested = false;
+            current = page;
+            Apply();
+        }
+
+        /// <summary>JOBS 행에서 선택한 Job의 검사 이력을 연다.</summary>
+        internal void OpenInspect(string jobId, int unitId = 0)
+        {
+            if (string.IsNullOrEmpty(jobId) || IsAvailable(FR5Page.Inspect) == false) return;
+            inspectBinder?.ShowJob(jobId, unitId);
+            Go(FR5Page.Inspect);
+        }
+
+        /// <summary>진행 상태와 무관하게 RUN 운전 현황 화면을 연다.</summary>
+        public void OpenMonitor()
+        {
+            if (!IsAvailable(FR5Page.Run)) return;
+            runRequested = true;
+            current = FR5Page.Run;
+            Apply();
+        }
+
+        bool IsAvailable(FR5Page page)
+        {
+            foreach (PageEntry e in pages)
+                if (e != null && e.page == page)
+                    return e.available && e.document != null;
+            return false;
+        }
+
+        /// <summary>활성 페이지 하나만 켠다. 나머지는 꺼서 Update 비용을 없앤다.</summary>
+        void Apply()
+        {
+            UIDocument selected = DocumentFor(current);
+            foreach (PageEntry entry in pages)
+            {
+                // 파괴 중인 문서를 만날 수 있다. gameObject 까지 확인한다.
+                if (entry?.document == null || entry.document.gameObject == null) continue;
+                SetDocumentActive(entry.document, entry.document == selected);
+            }
+            SetDocumentActive(jobsDocument, jobsDocument == selected);
+            RefreshNavigationVisuals();
+        }
+        void RefreshNavigationVisuals()
+        {
+            foreach (PageEntry entry in pages)
+                RefreshNavigationVisuals(entry?.document?.rootVisualElement);
+            RefreshNavigationVisuals(jobsDocument?.rootVisualElement);
+        }
+
+        void RefreshNavigationVisuals(VisualElement root)
+        {
+            if (root == null) return;
+
+            bool runActive = runRequested && current == FR5Page.Run;
+            root.Q<Button>("nav-run")?.EnableInClassList("tab--on", runActive);
+            foreach ((FR5Page target, string buttonName) in NavButtons)
+                root.Q<Button>(buttonName)?.EnableInClassList("tab--on",
+                    !runActive && target == current);
+        }
+
+
+
+        UIDocument DocumentFor(FR5Page page)
+        {
+            if (page == FR5Page.Run && !runRequested && jobsDocument != null)
+                return jobsDocument;
+
+            foreach (PageEntry entry in pages)
+                if (entry != null && entry.page == page)
+                    return entry.document;
+            return null;
+        }
+
+        void SetDocumentActive(UIDocument document, bool on)
+        {
+            if (document == null || document.gameObject == null) return;
+
+            // 꺼지는 문서는 비주얼 트리가 사라지므로 등록 기록도 지운다.
+            // 다시 켜질 때 Update 가 새 트리에 한 번 등록한다.
+            if (!on) wiredDocuments.Remove(document);
+
+            if (document.gameObject.activeSelf != on)
+                document.gameObject.SetActive(on);
+            if (document.enabled != on)
+                document.enabled = on;
+        }
+    }
+}

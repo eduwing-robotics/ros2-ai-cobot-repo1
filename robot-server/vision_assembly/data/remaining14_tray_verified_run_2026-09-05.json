@@ -1,0 +1,130 @@
+{
+  "schema": "fr5.full_fixed_cycle_run/v2",
+  "started_unix": 1788592277.5369666,
+  "cycle_id": "20260905-160425",
+  "plan_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/remaining14_route_checked_2026-09-05.json",
+  "plan_sha256": "d1e0e84fa9bb7acf0351f52f680ff0714614f98779b15cc537495a6abed75191",
+  "motion_profile": "smooth_combined_transfer_v1",
+  "selected_slots": [
+    "HBM-03",
+    "HBM-04",
+    "HBM-05",
+    "HBM-06",
+    "HBM-07",
+    "HBM-08",
+    "PM-02",
+    "PM-03",
+    "PM-04",
+    "VRM-02",
+    "VRM-03",
+    "VRM-04",
+    "VRM-05",
+    "IND-02"
+  ],
+  "motion_completed_slots": [
+    "HBM-03"
+  ],
+  "grasp_verified_slots": [],
+  "placement_verified_slots": [],
+  "part_held_candidate": false,
+  "status": "stopped_on_error",
+  "preflight": {
+    "passed": true,
+    "waypoints": 422,
+    "minimum_joint_soft_limit_margin_deg": 37.987838999999994,
+    "maximum_joint_step_deg": 93.49798600000001,
+    "minimum_j6_deg": -81.407677,
+    "maximum_j6_deg": 170.624466,
+    "j6_operational_bounds_deg": [
+      -178.0,
+      178.0
+    ]
+  },
+  "controller_global_speed_percent": 40,
+  "speed_contract": {
+    "command_percent": {
+      "travel": 25,
+      "combined_rotation": 25,
+      "vertical": 10
+    },
+    "effective_percent": {
+      "travel": 10.0,
+      "combined_rotation": 10.0,
+      "vertical": 4.0
+    },
+    "hover_clearance_mm": 100.0,
+    "slow_zone_mm": 50.0
+  },
+  "controller_global_speed_set_unix": 1788592279.9330206,
+  "tray_inspections": [
+    {
+      "slot": "HBM-03",
+      "stage": "tray_before_inspect",
+      "timestamp_ros_ns": 1788592329673958740,
+      "remaining_slots": [
+        "HBM-03",
+        "HBM-04",
+        "HBM-05",
+        "HBM-06",
+        "HBM-07",
+        "HBM-08",
+        "PM-04",
+        "PM-02",
+        "PM-03",
+        "VRM-02",
+        "VRM-03",
+        "VRM-04",
+        "VRM-05",
+        "IND-02"
+      ],
+      "removed_slots": [],
+      "evidence": "tray_inventory_only_not_holding_proof",
+      "distinct_consecutive_frames": 3
+    },
+    {
+      "slot": "HBM-03",
+      "stage": "tray_after_inspect",
+      "timestamp_ros_ns": 1788592365167020508,
+      "remaining_slots": [
+        "HBM-04",
+        "HBM-06",
+        "HBM-05",
+        "HBM-08",
+        "HBM-07",
+        "PM-04",
+        "PM-02",
+        "PM-03",
+        "VRM-02",
+        "VRM-03",
+        "VRM-04",
+        "VRM-05",
+        "IND-02"
+      ],
+      "removed_slots": [
+        "HBM-03"
+      ],
+      "evidence": "tray_inventory_only_not_holding_proof",
+      "distinct_consecutive_frames": 3
+    }
+  ],
+  "gripper_current_samples_percent": {
+    "HBM-03": 0.0
+  },
+  "last_verified_tcp": [
+    -527.99755859375,
+    -60.95643997192383,
+    337.8782958984375,
+    179.9998016357422,
+    0.00023460517695639282,
+    89.9997787475586
+  ],
+  "last_gripper_position": 25,
+  "stop_motion_on_error": {
+    "command": "StopMotion()",
+    "attempted_unix": 1788592446.979276,
+    "response": "0",
+    "succeeded": true
+  },
+  "error": "RuntimeError: TrayHome inspection timeout: tray quality gate failed for hbm:2: median_detection_confidence=0.390 < 0.550",
+  "stopped_unix": 1788592446.9797432
+}

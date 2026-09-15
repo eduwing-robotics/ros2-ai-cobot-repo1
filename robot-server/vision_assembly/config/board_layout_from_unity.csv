@@ -1,0 +1,25 @@
+slot_id,recipe,source_name,x_board_mm,y_board_mm,long_axis_deg,size_x_mm,size_y_mm,height_mm_nominal
+gpu_01,gpu,nvidia,1.57,-0.3202,-90.0,29.7166,57.1065,6.6383
+hbm_01,hbm,Sk_hynix,-24.0005,-24.5,-90.0,10.2466,14.31,9.8151
+hbm_02,hbm,Sk_hynix (1),-24.0005,-8.3,-90.0,10.2466,14.31,9.8151
+hbm_03,hbm,Sk_hynix (2),-24.0005,8.2,-90.0,10.2466,14.31,9.8151
+hbm_04,hbm,Sk_hynix (3),-24.0005,24.1,-90.0,10.2466,14.31,9.8151
+hbm_05,hbm,Sk_hynix (4),23.6995,-24.5,-90.0,10.2466,14.31,9.8151
+hbm_06,hbm,Sk_hynix (5),23.6995,-8.3,-90.0,10.2466,14.31,9.8151
+hbm_07,hbm,Sk_hynix (6),23.6995,8.2,-90.0,10.2466,14.31,9.8151
+hbm_08,hbm,Sk_hynix (7),23.6995,24.1,-90.0,10.2466,14.31,9.8151
+left_black_block_01,left_black_block,BlackBox1,61.51,-36.46,-90.0,11.0,14.0,5.2025
+left_black_block_02,left_black_block,BlackBox1 (1),61.51,-18.2,-90.0,11.0,14.0,5.2025
+left_black_block_03,left_black_block,BlackBox1 (2),61.51,-0.2,-90.0,11.0,14.0,5.2025
+left_black_block_04,left_black_block,BlackBox1 (3),61.51,18.06,-90.0,11.0,14.0,5.2025
+left_black_block_05,left_black_block,BlackBox1 (4),61.51,36.6,-90.0,11.0,14.0,5.2025
+long_orange_01,long_orange,YellowBar (1),-46.9196,0.3109,-90.0,12.13,59.9891,4.7848
+long_orange_02,long_orange,YellowBar (2),0.1409,-44.0304,-0.0,12.13,59.9891,4.7848
+long_orange_03,long_orange,YellowBar (3),0.1409,43.8696,-0.0,12.13,59.9891,4.7848
+long_orange_04,long_orange,YellowBar,47.4855,0.3109,-90.0,12.13,59.9891,4.7848
+right_white_black_01,right_white_black,cap_Big,-60.1027,32.972,-90.0,9.3686,9.3686,8.5222
+right_white_black_02,right_white_black,cap_Big (1),-60.1027,44.432,-90.0,9.3686,9.3686,8.5222
+right_white_brown_01,right_white_brown,cap_small (3),-60.5003,-33.2355,-90.0,3.8361,6.8013,3.0238
+right_white_brown_02,right_white_brown,cap_small (2),-60.5003,-15.9355,-90.0,3.8361,6.8013,3.0238
+right_white_brown_03,right_white_brown,cap_small (1),-60.5003,0.8645,-90.0,3.8361,6.8013,3.0238
+right_white_brown_04,right_white_brown,cap_small,-60.5003,18.2669,-90.0,3.8361,6.8013,3.0238

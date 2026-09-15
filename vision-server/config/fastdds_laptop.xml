@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This laptop: ROS cell Wi-Fi + wired Ethernet, never the GoPro-only WLAN.
+     Keep SHM for local camera/ROI/control. UDP congestion drops packets instead
+     of stalling DDS writers; existing freshness watchdogs still reject loss.
+     Robot DDS is restricted to eth0 on the robot. Keep wlo1 here for team
+     camera consumers; the robot Ethernet link does not carry team WLAN data. -->
+<dds xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
+  <profiles>
+    <transport_descriptors>
+      <transport_descriptor>
+        <transport_id>ksmc_udp</transport_id>
+        <type>UDPv4</type>
+        <!-- Explicit per-socket buffers within this host's existing 4 MiB
+             limits. Camera bursts overflowed the 208 KiB system default. -->
+        <sendBufferSize>4194304</sendBufferSize>
+        <receiveBufferSize>4194304</receiveBufferSize>
+        <!-- Match each destination to its real subnet. Without filtering,
+             DDS may also attempt team-WLAN traffic from the robot-only NIC,
+             filling two output queues for the same remote camera readers.
+             Fast DDS 2.14+ allowlist keeps the same three interfaces and SHM. -->
+        <netmask_filter>ON</netmask_filter>
+        <interfaces>
+          <allowlist>
+            <interface name="lo" netmask_filter="ON"/>
+            <interface name="wlo1" netmask_filter="ON"/>
+            <interface name="enp129s0" netmask_filter="ON"/>
+          </allowlist>
+        </interfaces>
+        <non_blocking_send>true</non_blocking_send>
+      </transport_descriptor>
+      <transport_descriptor>
+        <transport_id>ksmc_shm</transport_id>
+        <type>SHM</type>
+        <!-- Local rqt raw frames are 1.56-2.77 MB, exceeding the default
+             512 KiB segment. Leave room for several in-flight frames. -->
+        <segment_size>33554432</segment_size>
+      </transport_descriptor>
+    </transport_descriptors>
+    <participant profile_name="ksmc_laptop" is_default_profile="true">
+      <rtps>
+        <userTransports>
+          <transport_id>ksmc_udp</transport_id>
+          <transport_id>ksmc_shm</transport_id>
+        </userTransports>
+        <useBuiltinTransports>false</useBuiltinTransports>
+      </rtps>
+    </participant>
+  </profiles>
+</dds>

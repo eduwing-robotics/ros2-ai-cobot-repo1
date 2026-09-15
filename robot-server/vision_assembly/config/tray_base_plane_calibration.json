@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "status": "OPERATOR_VISUALLY_VALIDATED",
+  "method": "registered_tray_reference_pixel_to_base_xy_affine",
+  "source_method": "adapted_from_charuco_board_plane_pick_in_vision-robot-conveyor-control",
+  "reference_image": "vision_assembly/data/tray_reference_no_tape.jpg",
+  "physical_outer_edge_measurements_mm": {
+    "top": 355.0,
+    "bottom": 355.0,
+    "left": 310.0,
+    "right": 305.0,
+    "measurement_source": "user_measurement_2026-08-30",
+    "top_left_to_bottom_right_diagonal": 467.0,
+    "top_right_to_bottom_left_diagonal": 470.0,
+    "status": "GEOMETRY_CANDIDATE_NEEDS_BASE_ANCHORS",
+    "required_next": [
+      "two accurately centered part reference_pixel/base_xy_mm anchors"
+    ],
+    "warning": "Least-squares geometry residual slightly exceeds the 0.5 mm process target; validate with independent anchors before robot motion.",
+    "fitted_corners_tray_mm": {
+      "top_left": [0.0, 0.0],
+      "top_right": [355.0, 0.0],
+      "bottom_right": [354.9084, 304.5568],
+      "bottom_left": [0.4521, 309.5636]
+    },
+    "fit_residual_rms_mm": 0.5563,
+    "fit_residual_max_mm": 0.6739
+  },
+  "points": [
+    {
+      "id": "gpu_anchor_1",
+      "reference_pixel": [617.1, 836.0],
+      "base_xy_mm": [-525.1332, -219.6051],
+      "part_type": "gpu",
+      "location": "gpu_section_left_upper",
+      "method": "operator_visual_centering_at_noncontact_height",
+      "tcp_z_mm_at_capture": -33.8145,
+      "tool_id": 1,
+      "tcp_rz_deg": 91.8083,
+      "status": "CANDIDATE_NEEDS_VALIDATION",
+      "notes": [
+        "Initial automatic hover was adjusted by cumulative Base +Y 1.05 mm.",
+        "Operator confirmed visual centering after manual descent to about 7.5 mm above detected GPU surface.",
+        "Physical gripper observed open at 100, while robot state reported gripper_position=0 with gripper_feedback_valid=true; do not use this point to calibrate jaw opening."
+      ]
+    },
+    {
+      "id": "gpu_anchor_2",
+      "reference_pixel": [905.2, 855.4],
+      "base_xy_mm": [-519.3687, -119.6542],
+      "part_type": "gpu",
+      "location": "gpu_section_right_lower",
+      "method": "operator_visual_centering_at_noncontact_height",
+      "tcp_z_mm_at_capture": -17.3053,
+      "tool_id": 1,
+      "tcp_rz_deg": 91.8862,
+      "status": "CANDIDATE_NEEDS_INDEPENDENT_VALIDATION",
+      "notes": [
+        "Automatic hover was adjusted by Base +Y 1.05 mm, matching gpu_anchor_1 correction direction and magnitude.",
+        "Operator judged the resulting alignment to be reasonably centered.",
+        "Robot state at capture: manual mode, motion done, no alarm or collision signal.",
+        "The registered reference pixel is from the markerless tray view; retain candidate status until an independent third-position residual is measured.",
+        "Physical gripper was previously observed open at 100 while robot feedback reported position 0; do not use this point to calibrate jaw opening."
+      ]
+    },
+    {
+      "id": "gpu_validation_3",
+      "reference_pixel": [778.52, 844.13],
+      "base_xy_mm": [-520.9599, -163.7237],
+      "part_type": "gpu",
+      "location": "gpu_section_operator_selected_third_position",
+      "method": "two_anchor_similarity_prediction_confirmed_by_operator_at_noncontact_height",
+      "tcp_z_mm_at_capture": -22.6997,
+      "tool_id": 1,
+      "tcp_rz_deg": 89.9993,
+      "status": "VISUAL_VALIDATION_PASSED",
+      "notes": [
+        "Predicted from gpu_anchor_1 and gpu_anchor_2 before motion; no manual XY correction was applied at this position.",
+        "Operator confirmed the gripper center was aligned with the GPU center.",
+        "This validates repeatability at a third location for demonstration use, but is not a metrology-grade proof of +/-0.5 mm absolute accuracy.",
+        "Robot reached the target in AUTO with motion done and no alarm or collision signal; no gripper actuation occurred."
+      ]
+    }
+  ],
+  "requirements": {
+    "minimum_points": 3,
+    "recommended_points": 6,
+    "distribution": "use widely separated points around the tray, not three points in one bin",
+    "maximum_validation_residual_mm": 0.5
+  },
+  "robot_motion_authorized": false
+}

@@ -1,0 +1,198 @@
+{
+  "schema": "fr5.full_fixed_cycle_run/v2",
+  "started_unix": 1788607528.6401603,
+  "cycle_id": "20260905-201721",
+  "plan_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/restart_HBM_plan_20260905.json",
+  "plan_sha256": "e5ed44ccc68c76a21a8948b9429aba3a8f935bbeb5683cf57e1a808cdcfea1d8",
+  "motion_profile": "smooth_combined_transfer_v1",
+  "selected_slots": [
+    "HBM-01",
+    "HBM-02",
+    "HBM-03",
+    "HBM-04",
+    "HBM-05",
+    "HBM-06",
+    "HBM-07",
+    "HBM-08"
+  ],
+  "motion_completed_slots": [
+    "HBM-01",
+    "HBM-02",
+    "HBM-03",
+    "HBM-04",
+    "HBM-05",
+    "HBM-06",
+    "HBM-07",
+    "HBM-08"
+  ],
+  "grasp_verified_slots": [],
+  "placement_verified_slots": [],
+  "part_held_candidate": false,
+  "status": "motion_complete_awaiting_physical_verification",
+  "preflight": {
+    "passed": true,
+    "waypoints": 169,
+    "minimum_joint_soft_limit_margin_deg": 37.355705,
+    "maximum_joint_step_deg": 94.40755899999999,
+    "minimum_j6_deg": -14.75176,
+    "maximum_j6_deg": 1.638013,
+    "j6_operational_bounds_deg": [
+      -178.0,
+      178.0
+    ]
+  },
+  "controller_global_speed_percent": 40,
+  "speed_contract": {
+    "command_percent": {
+      "travel": 25,
+      "combined_rotation": 25,
+      "vertical": 10
+    },
+    "effective_percent": {
+      "travel": 10.0,
+      "combined_rotation": 10.0,
+      "vertical": 4.0
+    },
+    "hover_clearance_mm": 100.0,
+    "slow_zone_mm": 50.0
+  },
+  "controller_global_speed_set_unix": 1788607529.800087,
+  "gripper_current_samples_percent": {
+    "HBM-01": 0.0,
+    "HBM-02": 0.0,
+    "HBM-03": 0.0,
+    "HBM-04": 0.0,
+    "HBM-05": 0.0,
+    "HBM-06": 0.0,
+    "HBM-07": 0.0,
+    "HBM-08": 0.0
+  },
+  "tray_inspections": [
+    {
+      "slot": "HBM-01",
+      "stage": "tray_after_inspect",
+      "timestamp_ros_ns": 1788607554812352295,
+      "picked_slot": "HBM-01",
+      "removed_slots": [
+        "HBM-01"
+      ],
+      "evidence": "picked_cell_absent_not_physical_holding_proof",
+      "distinct_consecutive_frames": 3
+    },
+    {
+      "slot": "HBM-02",
+      "stage": "tray_after_inspect",
+      "timestamp_ros_ns": 1788607600446893066,
+      "picked_slot": "HBM-02",
+      "removed_slots": [
+        "HBM-01",
+        "HBM-02"
+      ],
+      "evidence": "picked_cell_absent_not_physical_holding_proof",
+      "distinct_consecutive_frames": 3
+    },
+    {
+      "slot": "HBM-03",
+      "stage": "tray_after_inspect",
+      "timestamp_ros_ns": 1788607645680837891,
+      "picked_slot": "HBM-03",
+      "removed_slots": [
+        "HBM-01",
+        "HBM-02",
+        "HBM-03"
+      ],
+      "evidence": "picked_cell_absent_not_physical_holding_proof",
+      "distinct_consecutive_frames": 3
+    },
+    {
+      "slot": "HBM-04",
+      "stage": "tray_after_inspect",
+      "timestamp_ros_ns": 1788607691714822998,
+      "picked_slot": "HBM-04",
+      "removed_slots": [
+        "HBM-01",
+        "HBM-02",
+        "HBM-03",
+        "HBM-04"
+      ],
+      "evidence": "picked_cell_absent_not_physical_holding_proof",
+      "distinct_consecutive_frames": 3
+    },
+    {
+      "slot": "HBM-05",
+      "stage": "tray_after_inspect",
+      "timestamp_ros_ns": 1788607736613741943,
+      "picked_slot": "HBM-05",
+      "removed_slots": [
+        "HBM-01",
+        "HBM-02",
+        "HBM-03",
+        "HBM-04",
+        "HBM-05"
+      ],
+      "evidence": "picked_cell_absent_not_physical_holding_proof",
+      "distinct_consecutive_frames": 3
+    },
+    {
+      "slot": "HBM-06",
+      "stage": "tray_after_inspect",
+      "timestamp_ros_ns": 1788607781580495361,
+      "picked_slot": "HBM-06",
+      "removed_slots": [
+        "HBM-01",
+        "HBM-02",
+        "HBM-03",
+        "HBM-04",
+        "HBM-05",
+        "HBM-06"
+      ],
+      "evidence": "picked_cell_absent_not_physical_holding_proof",
+      "distinct_consecutive_frames": 3
+    },
+    {
+      "slot": "HBM-07",
+      "stage": "tray_after_inspect",
+      "timestamp_ros_ns": 1788607826413921631,
+      "picked_slot": "HBM-07",
+      "removed_slots": [
+        "HBM-01",
+        "HBM-02",
+        "HBM-03",
+        "HBM-04",
+        "HBM-05",
+        "HBM-06",
+        "HBM-07"
+      ],
+      "evidence": "picked_cell_absent_not_physical_holding_proof",
+      "distinct_consecutive_frames": 3
+    },
+    {
+      "slot": "HBM-08",
+      "stage": "tray_after_inspect",
+      "timestamp_ros_ns": 1788607871915307861,
+      "picked_slot": "HBM-08",
+      "removed_slots": [
+        "HBM-01",
+        "HBM-02",
+        "HBM-03",
+        "HBM-04",
+        "HBM-05",
+        "HBM-06",
+        "HBM-07",
+        "HBM-08"
+      ],
+      "evidence": "picked_cell_absent_not_physical_holding_proof",
+      "distinct_consecutive_frames": 3
+    }
+  ],
+  "last_verified_tcp": [
+    13.970715522766113,
+    -494.4091491699219,
+    190.20730590820312,
+    179.97140502929688,
+    0.005708200857043266,
+    -178.8141326904297
+  ],
+  "last_gripper_position": 25,
+  "completed_unix": 1788607886.6601365
+}

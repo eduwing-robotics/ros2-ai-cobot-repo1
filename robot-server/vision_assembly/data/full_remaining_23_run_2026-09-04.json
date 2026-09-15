@@ -1,0 +1,76 @@
+{
+  "schema": "fr5.full_fixed_cycle_run/v2",
+  "started_unix": 1788494228.8208003,
+  "cycle_id": "20260904-120524",
+  "plan_file": "/home/juchan-yoon/FR5_robot_control/vision_assembly/data/full_remaining_23_plan_2026-09-04.json",
+  "plan_sha256": "247e876058a95a0f2b00878e4d1770fccb455581754403f27d82067949bf2338",
+  "motion_profile": "smooth_combined_transfer_v1",
+  "selected_slots": [
+    "HBM-02",
+    "HBM-03",
+    "HBM-04",
+    "HBM-05",
+    "HBM-06",
+    "HBM-07",
+    "HBM-08",
+    "PM-01",
+    "PM-02",
+    "PM-03",
+    "PM-04",
+    "VRM-01",
+    "VRM-02",
+    "VRM-03",
+    "VRM-04",
+    "VRM-05",
+    "IND-01",
+    "IND-02",
+    "CAP-01",
+    "CAP-02",
+    "CAP-03",
+    "CAP-04",
+    "CAP-05"
+  ],
+  "motion_completed_slots": [
+    "HBM-02",
+    "HBM-03"
+  ],
+  "grasp_verified_slots": [],
+  "placement_verified_slots": [],
+  "part_held_candidate": false,
+  "status": "stopped_on_error",
+  "preflight": {
+    "passed": true,
+    "waypoints": 323,
+    "minimum_joint_soft_limit_margin_deg": 37.79993399999999,
+    "maximum_joint_step_deg": 94.944614,
+    "minimum_j6_deg": -93.30883,
+    "maximum_j6_deg": 89.249199,
+    "j6_operational_bounds_deg": [
+      -178.0,
+      178.0
+    ]
+  },
+  "controller_global_speed_percent": 100,
+  "controller_global_speed_set_unix": 1788494230.2078118,
+  "gripper_current_samples_percent": {
+    "HBM-02": 0.0,
+    "HBM-03": 0.0
+  },
+  "last_verified_tcp": [
+    56.73614501953125,
+    -511.3973693847656,
+    189.0302276611328,
+    -179.99478149414062,
+    -0.00026952888583764434,
+    -179.9804229736328
+  ],
+  "last_gripper_position": 25,
+  "stop_motion_on_error": {
+    "command": "StopMotion()",
+    "attempted_unix": 1788494269.9406736,
+    "response": "0",
+    "succeeded": true
+  },
+  "error": "RuntimeError: FR5 safety fault during motion: abnormal_stop=1",
+  "stopped_unix": 1788494269.941149
+}

@@ -1,0 +1,16 @@
+# Local outputs and credentials; component-specific rules remain in each directory.
+**/__pycache__/
+**/.pytest_cache/
+**/build/
+**/install/
+**/log/
+**/runtime/
+**/.venv*/
+**/config/ksmc.env
+**/launch/.env.mock
+**/launch/.env.real
+**/Library/
+**/Temp/
+**/Logs/
+
+**/.venv*

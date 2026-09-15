@@ -1,0 +1,9 @@
+inspection:
+  camera: s22
+  exact_count: true
+  unknown_class: fail
+  stable_frames: 3
+  max_age_sec: 2.0
+  detection_topic: /vision/detections
+  result_topic: /vision/inspection
+  service: /vision/run_inspection

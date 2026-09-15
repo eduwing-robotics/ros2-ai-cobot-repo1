@@ -1,0 +1,303 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900" role="img" aria-labelledby="title desc">
+  <title id="title">FR5 Digital Twin Control UI Layout</title>
+  <desc id="desc">A dark industrial control dashboard wireframe for monitoring a FAIRINO FR5 robot through ROS joint states, manually jogging six joints, controlling a gripper, stopping motion, changing camera view, and reading watchdog events.</desc>
+
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#081019"/>
+      <stop offset="1" stop-color="#101b28"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#152333"/>
+      <stop offset="1" stop-color="#111d2a"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#32d6c0"/>
+      <stop offset="1" stop-color="#55a8ff"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#02070d" flood-opacity=".38"/>
+    </filter>
+    <style>
+      text { font-family: Inter, Pretendard, "Noto Sans KR", system-ui, sans-serif; }
+      .label { fill:#71869b; font-size:11px; font-weight:700; letter-spacing:1.4px; }
+      .body { fill:#b9c8d6; font-size:13px; }
+      .value { fill:#edf6ff; font-size:14px; font-weight:700; }
+      .muted { fill:#6f8498; font-size:12px; }
+      .tiny { fill:#8297ab; font-size:10px; }
+      .heading { fill:#f2f8ff; font-size:18px; font-weight:750; }
+      .card { fill:url(#panel); stroke:#24384b; stroke-width:1; }
+      .line { stroke:#273b4d; stroke-width:1; }
+      .track { stroke:#30485c; stroke-width:5; stroke-linecap:round; }
+      .track-active { stroke:#34d3bd; stroke-width:5; stroke-linecap:round; }
+    </style>
+  </defs>
+
+  <rect width="1440" height="900" fill="url(#bg)"/>
+
+  <!-- Left navigation: one operational screen, no speculative page tree. -->
+  <g id="navigation">
+    <rect x="0" y="0" width="72" height="900" fill="#0a131e"/>
+    <rect x="0" y="0" width="72" height="72" fill="#101d2a"/>
+    <circle cx="36" cy="36" r="19" fill="none" stroke="#39d5c0" stroke-width="2"/>
+    <path d="M24 37h8l4-11 5 20 4-9h4" fill="none" stroke="#39d5c0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <g transform="translate(0 100)">
+      <rect x="12" y="0" width="48" height="48" rx="12" fill="#173044"/>
+      <path d="M25 31l7-13 7 9 8-5" fill="none" stroke="#52a9ff" stroke-width="2" stroke-linecap="round"/>
+      <text x="36" y="62" class="tiny" text-anchor="middle">CELL</text>
+    </g>
+    <g transform="translate(0 188)">
+      <rect x="12" y="0" width="48" height="48" rx="12" fill="none" stroke="#1f3345"/>
+      <circle cx="27" cy="28" r="5" fill="none" stroke="#6f8498" stroke-width="2"/>
+      <circle cx="43" cy="20" r="5" fill="none" stroke="#6f8498" stroke-width="2"/>
+      <path d="M31 25l8-3m4 3v9" fill="none" stroke="#6f8498" stroke-width="2"/>
+      <text x="36" y="62" class="tiny" text-anchor="middle">JOINT</text>
+    </g>
+    <g transform="translate(0 276)">
+      <rect x="12" y="0" width="48" height="48" rx="12" fill="none" stroke="#1f3345"/>
+      <circle cx="36" cy="24" r="4" fill="#34d3bd"/>
+      <path d="M27 18a13 13 0 0 1 18 0M22 13a20 20 0 0 1 28 0M27 31a13 13 0 0 0 18 0" fill="none" stroke="#6f8498" stroke-width="2" stroke-linecap="round"/>
+      <text x="36" y="62" class="tiny" text-anchor="middle">ROS</text>
+    </g>
+    <g transform="translate(0 364)">
+      <rect x="12" y="0" width="48" height="48" rx="12" fill="none" stroke="#1f3345"/>
+      <path d="M25 18h22M25 25h18M25 32h14" stroke="#6f8498" stroke-width="2" stroke-linecap="round"/>
+      <text x="36" y="62" class="tiny" text-anchor="middle">LOG</text>
+    </g>
+    <g transform="translate(0 812)">
+      <circle cx="36" cy="24" r="15" fill="#172535" stroke="#2a4054"/>
+      <path d="M36 15v18M27 24h18" stroke="#71869b" stroke-width="2"/>
+      <text x="36" y="55" class="tiny" text-anchor="middle">SETUP</text>
+    </g>
+  </g>
+
+  <!-- Global status bar -->
+  <g id="top-status">
+    <rect x="72" y="0" width="1368" height="72" fill="#0d1824"/>
+    <text x="96" y="29" class="label">FAIRINO FR5</text>
+    <text x="96" y="52" class="heading">Digital Twin Control</text>
+    <text x="293" y="51" class="tiny">LAYOUT CONCEPT · SAMPLE DATA</text>
+
+    <g transform="translate(798 18)">
+      <rect width="145" height="36" rx="18" fill="#102d2c" stroke="#24554f"/>
+      <circle cx="19" cy="18" r="5" fill="#37d5a8"/>
+      <text x="33" y="22" class="value" font-size="12">ROS CONNECTED</text>
+    </g>
+    <g transform="translate(955 18)">
+      <rect width="178" height="36" rx="18" fill="#152637" stroke="#29445b"/>
+      <text x="16" y="14" class="tiny">TOPIC</text>
+      <text x="16" y="28" class="value" font-size="12">/joint_states</text>
+      <text x="150" y="23" fill="#37d5a8" font-size="12" font-weight="700">50 Hz</text>
+    </g>
+    <g transform="translate(1145 18)">
+      <rect width="168" height="36" rx="18" fill="#102d2c" stroke="#24554f"/>
+      <path d="M17 18l6 6 11-13" fill="none" stroke="#37d5a8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="43" y="22" class="value" font-size="12">WATCHDOG OK</text>
+    </g>
+    <g transform="translate(1325 18)">
+      <rect width="91" height="36" rx="18" fill="#172535" stroke="#29445b"/>
+      <text x="45" y="22" class="value" font-size="12" text-anchor="middle">09:42:17</text>
+    </g>
+  </g>
+
+  <!-- Main 3D workcell viewport -->
+  <g id="workcell-viewport" filter="url(#shadow)">
+    <rect x="88" y="88" width="886" height="650" rx="14" fill="#0d1924" stroke="#263b4e"/>
+    <g>
+      <rect x="89" y="89" width="884" height="648" fill="#0c1722"/>
+      <circle cx="615" cy="332" r="300" fill="#132333" opacity=".62"/>
+
+      <!-- floor grid -->
+      <g stroke="#1c3345" stroke-width="1" opacity=".7">
+        <path d="M110 656L590 400 954 566M110 706L590 430 954 606M210 738L610 454 954 646M360 738L635 475 954 686M520 738L666 496 954 726"/>
+        <path d="M206 605L556 738M320 545L704 738M430 487L846 738M535 430L974 655M640 391L974 548"/>
+      </g>
+
+      <!-- conveyor and workpiece -->
+      <path d="M610 545l240-123 93 50-244 130z" fill="#203548" stroke="#446078" stroke-width="2"/>
+      <path d="M699 602v38l244-128v-40z" fill="#142636" stroke="#354f65"/>
+      <path d="M610 545v37l89 58v-38z" fill="#182d3e" stroke="#354f65"/>
+      <g stroke="#4a6a82" stroke-width="2">
+        <path d="M651 525l90 51M700 500l91 50M750 475l91 49M800 450l91 49"/>
+      </g>
+      <path d="M815 443l45-23 35 19-46 24z" fill="#ffb65c" stroke="#ffd19b"/>
+      <text x="855" y="408" class="tiny" text-anchor="middle">WORKPIECE</text>
+
+      <!-- pedestal -->
+      <path d="M360 600l150-79 104 57-153 82z" fill="#243b4f" stroke="#4a667d" stroke-width="2"/>
+      <path d="M461 660v45l153-83v-44z" fill="#162a3a" stroke="#354f65"/>
+      <path d="M360 600v43l101 62v-45z" fill="#1b3041" stroke="#354f65"/>
+
+      <!-- simplified FR5 robot -->
+      <g id="robot" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M486 562L500 478L552 408L630 370L686 303L761 278" stroke="#d9e8f3" stroke-width="24"/>
+        <path d="M486 562L500 478L552 408" stroke="#6eb7ff" stroke-width="7" opacity=".5"/>
+        <g fill="#10202d" stroke="#55a8ff" stroke-width="4">
+          <circle cx="486" cy="562" r="22"/>
+          <circle cx="500" cy="478" r="18"/>
+          <circle cx="552" cy="408" r="18"/>
+          <circle cx="630" cy="370" r="16"/>
+          <circle cx="686" cy="303" r="15"/>
+          <circle cx="761" cy="278" r="14"/>
+        </g>
+        <path d="M774 265l35-20m-35 33l43 9" stroke="#34d3bd" stroke-width="8"/>
+        <circle cx="782" cy="273" r="8" fill="#34d3bd" stroke="none"/>
+      </g>
+
+      <!-- joint labels -->
+      <g class="tiny">
+        <g transform="translate(450 548)"><rect width="31" height="19" rx="9" fill="#142a3a"/><text x="15" y="13" text-anchor="middle">J1</text></g>
+        <g transform="translate(468 454)"><rect width="31" height="19" rx="9" fill="#142a3a"/><text x="15" y="13" text-anchor="middle">J2</text></g>
+        <g transform="translate(517 385)"><rect width="31" height="19" rx="9" fill="#142a3a"/><text x="15" y="13" text-anchor="middle">J3</text></g>
+        <g transform="translate(602 340)"><rect width="31" height="19" rx="9" fill="#142a3a"/><text x="15" y="13" text-anchor="middle">J4</text></g>
+        <g transform="translate(655 276)"><rect width="31" height="19" rx="9" fill="#142a3a"/><text x="15" y="13" text-anchor="middle">J5</text></g>
+        <g transform="translate(742 245)"><rect width="31" height="19" rx="9" fill="#142a3a"/><text x="15" y="13" text-anchor="middle">J6</text></g>
+      </g>
+
+      <!-- viewport header overlays -->
+      <g transform="translate(108 108)">
+        <rect width="166" height="53" rx="10" fill="#0a141ed9" stroke="#253a4c"/>
+        <text x="14" y="20" class="label">LIVE WORKCELL</text>
+        <circle cx="17" cy="37" r="4" fill="#37d5a8"/>
+        <text x="29" y="41" class="body">FR5 Articulation</text>
+      </g>
+      <g transform="translate(715 108)">
+        <rect width="238" height="40" rx="10" fill="#0a141ed9" stroke="#253a4c"/>
+        <rect x="5" y="5" width="103" height="30" rx="7" fill="#1e3b50"/>
+        <text x="56" y="24" class="value" font-size="11" text-anchor="middle">FRONT CAM</text>
+        <text x="169" y="24" class="body" text-anchor="middle">GLOBAL CAM</text>
+      </g>
+
+      <!-- data overlays -->
+      <g transform="translate(108 666)">
+        <rect width="260" height="50" rx="10" fill="#0a141ed9" stroke="#253a4c"/>
+        <text x="14" y="19" class="label">ROBOT MODE</text>
+        <text x="14" y="39" fill="#45dbc5" font-size="14" font-weight="750">KINEMATIC SHADOW</text>
+        <text x="195" y="39" class="tiny">ROS → UNITY</text>
+      </g>
+      <g transform="translate(773 666)">
+        <rect width="180" height="50" rx="10" fill="#0a141ed9" stroke="#253a4c"/>
+        <text x="14" y="19" class="label">CAMERA</text>
+        <text x="14" y="39" class="body">Orbit · Pan · Focus</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- Right control rail -->
+  <g id="control-panel" filter="url(#shadow)">
+    <rect x="990" y="88" width="434" height="650" rx="14" class="card"/>
+    <text x="1014" y="120" class="heading">Robot Control</text>
+    <text x="1399" y="118" class="tiny" text-anchor="end">6-AXIS · FR5</text>
+
+    <!-- control mode -->
+    <g transform="translate(1014 136)">
+      <rect width="386" height="42" rx="10" fill="#0d1824" stroke="#2a4053"/>
+      <rect x="4" y="4" width="188" height="34" rx="8" fill="url(#accent)" opacity=".9"/>
+      <text x="98" y="26" fill="#06151b" font-size="12" font-weight="800" text-anchor="middle">SHADOW FOLLOW</text>
+      <text x="289" y="26" class="body" text-anchor="middle">MANUAL JOG</text>
+    </g>
+    <text x="1015" y="197" class="muted">Shadow: ROS angle (°) · Jog: target speed (°/s)</text>
+
+    <!-- joint table headers -->
+    <text x="1015" y="225" class="label">JOINT</text>
+    <text x="1287" y="225" class="label" text-anchor="end">TARGET</text>
+    <text x="1399" y="225" class="label" text-anchor="end">ACTUAL</text>
+
+    <!-- joint rows -->
+    <g id="joint-rows">
+      <g transform="translate(1014 239)">
+        <text x="0" y="16" class="value">J1</text><text x="28" y="16" class="muted">BASE</text>
+        <text x="0" y="35" class="tiny">−175°</text><line x1="57" y1="31" x2="246" y2="31" class="track"/><line x1="151" y1="31" x2="246" y2="31" class="track-active"/><circle cx="151" cy="31" r="7" fill="#34d3bd"/>
+        <text x="274" y="25" class="value" text-anchor="end">0.0°</text><text x="386" y="25" class="value" text-anchor="end">0.0°</text>
+      </g>
+      <line x1="1014" y1="284" x2="1400" y2="284" class="line"/>
+      <g transform="translate(1014 294)">
+        <text x="0" y="16" class="value">J2</text><text x="28" y="16" class="muted">SHOULDER</text>
+        <text x="0" y="35" class="tiny">−265°</text><line x1="57" y1="31" x2="246" y2="31" class="track"/><line x1="199" y1="31" x2="246" y2="31" class="track-active"/><circle cx="199" cy="31" r="7" fill="#34d3bd"/>
+        <text x="274" y="25" class="value" text-anchor="end">0.0°</text><text x="386" y="25" class="value" text-anchor="end">0.0°</text>
+      </g>
+      <line x1="1014" y1="339" x2="1400" y2="339" class="line"/>
+      <g transform="translate(1014 349)">
+        <text x="0" y="16" class="value">J3</text><text x="28" y="16" class="muted">ELBOW</text>
+        <text x="0" y="35" class="tiny">−162°</text><line x1="57" y1="31" x2="246" y2="31" class="track"/><line x1="151" y1="31" x2="246" y2="31" class="track-active"/><circle cx="151" cy="31" r="7" fill="#34d3bd"/>
+        <text x="274" y="25" class="value" text-anchor="end">0.0°</text><text x="386" y="25" class="value" text-anchor="end">0.0°</text>
+      </g>
+      <line x1="1014" y1="394" x2="1400" y2="394" class="line"/>
+      <g transform="translate(1014 404)">
+        <text x="0" y="16" class="value">J4</text><text x="28" y="16" class="muted">WRIST 1</text>
+        <text x="0" y="35" class="tiny">−265°</text><line x1="57" y1="31" x2="246" y2="31" class="track"/><line x1="199" y1="31" x2="246" y2="31" class="track-active"/><circle cx="199" cy="31" r="7" fill="#34d3bd"/>
+        <text x="274" y="25" class="value" text-anchor="end">0.0°</text><text x="386" y="25" class="value" text-anchor="end">0.0°</text>
+      </g>
+      <line x1="1014" y1="449" x2="1400" y2="449" class="line"/>
+      <g transform="translate(1014 459)">
+        <text x="0" y="16" class="value">J5</text><text x="28" y="16" class="muted">WRIST 2</text>
+        <text x="0" y="35" class="tiny">−175°</text><line x1="57" y1="31" x2="246" y2="31" class="track"/><line x1="151" y1="31" x2="246" y2="31" class="track-active"/><circle cx="151" cy="31" r="7" fill="#34d3bd"/>
+        <text x="274" y="25" class="value" text-anchor="end">0.0°</text><text x="386" y="25" class="value" text-anchor="end">0.0°</text>
+      </g>
+      <line x1="1014" y1="504" x2="1400" y2="504" class="line"/>
+      <g transform="translate(1014 514)">
+        <text x="0" y="16" class="value">J6</text><text x="28" y="16" class="muted">TOOL</text>
+        <text x="0" y="35" class="tiny">−175°</text><line x1="57" y1="31" x2="246" y2="31" class="track"/><line x1="151" y1="31" x2="246" y2="31" class="track-active"/><circle cx="151" cy="31" r="7" fill="#34d3bd"/>
+        <text x="274" y="25" class="value" text-anchor="end">0.0°</text><text x="386" y="25" class="value" text-anchor="end">0.0°</text>
+      </g>
+    </g>
+
+    <!-- Gripper and motion stop -->
+    <g transform="translate(1014 566)">
+      <rect width="386" height="72" rx="10" fill="#0e1b28" stroke="#294054"/>
+      <text x="14" y="21" class="label">GRIPPER · 0–40 mm</text>
+      <rect x="14" y="32" width="112" height="28" rx="7" fill="#1b3549"/>
+      <text x="70" y="51" class="value" font-size="11" text-anchor="middle">OPEN</text>
+      <rect x="134" y="32" width="112" height="28" rx="7" fill="#152738" stroke="#324b60"/>
+      <text x="190" y="51" class="body" text-anchor="middle">CLOSE</text>
+      <text x="370" y="51" class="value" text-anchor="end">40 mm</text>
+    </g>
+    <g transform="translate(1014 650)">
+      <rect width="386" height="64" rx="10" fill="#39191d" stroke="#7d343a" stroke-width="1.5"/>
+      <rect x="12" y="12" width="40" height="40" rx="20" fill="#ef5863"/>
+      <rect x="25" y="25" width="14" height="14" rx="2" fill="#fff1f2"/>
+      <text x="68" y="29" fill="#fff0f1" font-size="14" font-weight="800">STOP ALL JOINTS</text>
+      <text x="68" y="47" fill="#d79ba0" font-size="11">Hold current pose · disable shadow follow</text>
+    </g>
+  </g>
+
+  <!-- Bottom telemetry and events -->
+  <g id="telemetry">
+    <rect x="88" y="754" width="1336" height="130" rx="14" class="card"/>
+    <line x1="454" y1="770" x2="454" y2="868" class="line"/>
+    <line x1="897" y1="770" x2="897" y2="868" class="line"/>
+
+    <g transform="translate(112 775)">
+      <text class="label">ROS CONNECTION</text>
+      <circle cx="5" cy="31" r="5" fill="#37d5a8"/>
+      <text x="19" y="35" class="value">127.0.0.1 : 10000</text>
+      <text x="0" y="62" class="muted">Topic</text>
+      <text x="64" y="62" class="body">/joint_states</text>
+      <text x="0" y="86" class="muted">Last RX</text>
+      <text x="64" y="86" class="body">18 ms ago</text>
+    </g>
+
+    <g transform="translate(478 775)">
+      <text class="label">SAFETY WATCHDOG</text>
+      <text x="0" y="35" class="muted">State</text>
+      <text x="75" y="35" fill="#37d5a8" font-size="13" font-weight="750">HEALTHY</text>
+      <text x="0" y="62" class="muted">Timeout</text>
+      <text x="75" y="62" class="body">250 ms</text>
+      <text x="180" y="62" class="muted">Interpolation</text>
+      <text x="284" y="62" class="body">50 ms</text>
+      <text x="0" y="86" class="muted">Action</text>
+      <text x="75" y="86" class="body">Hold pose when signal expires</text>
+    </g>
+
+    <g transform="translate(921 775)">
+      <text class="label">EVENTS</text>
+      <text x="0" y="35" fill="#37d5a8" font-size="11" font-weight="700">09:42:17</text>
+      <text x="76" y="35" class="body">Joint state accepted · j1…j6</text>
+      <text x="0" y="61" fill="#55a8ff" font-size="11" font-weight="700">09:42:16</text>
+      <text x="76" y="61" class="body">Shadow follow enabled</text>
+      <text x="0" y="87" fill="#71869b" font-size="11" font-weight="700">09:42:12</text>
+      <text x="76" y="87" class="body">FR5 URDF articulation ready</text>
+    </g>
+  </g>
+</svg>

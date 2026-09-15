@@ -1,0 +1,108 @@
+{
+  "reviewed_unix": 1788609087.7884066,
+  "robot_commands_sent_during_review": false,
+  "operator_requested_stop": true,
+  "resume_requires_orientation_review": true,
+  "evidence": {
+    "gpu_restart_single_run_20260905.json": {
+      "sha256": "e338b7d3553ab5b34d6121e0b13c0e9501ac1403d755a42aee15bae1438f96d0",
+      "status": "motion_complete_awaiting_physical_verification",
+      "motion_completed_slots": [
+        "GPU-01"
+      ],
+      "held_slot": null,
+      "error": null
+    },
+    "restart_HBM_run_20260905.json": {
+      "sha256": "6ab61a056839d7d4089a1bc022d811b090bb29c35af77196603fd5da497d5c80",
+      "status": "motion_complete_awaiting_physical_verification",
+      "motion_completed_slots": [
+        "HBM-01",
+        "HBM-02",
+        "HBM-03",
+        "HBM-04",
+        "HBM-05",
+        "HBM-06",
+        "HBM-07",
+        "HBM-08"
+      ],
+      "held_slot": null,
+      "error": null
+    },
+    "restart_PM_run_20260905.json": {
+      "sha256": "0a548bfe1e174bece460316c392f17412ac5e871f4a132d8b410344928da6e6c",
+      "status": "motion_complete_awaiting_physical_verification",
+      "motion_completed_slots": [
+        "PM-01",
+        "PM-02",
+        "PM-03",
+        "PM-04"
+      ],
+      "held_slot": null,
+      "error": null
+    },
+    "restart_VRM_run_20260905.json": {
+      "sha256": "6f8ec0dfec5f8a5a22197a9952b02f170e2635d04ec0d274cb2b5b9c731282fd",
+      "status": "stopped_on_error",
+      "motion_completed_slots": [
+        "VRM-01",
+        "VRM-02"
+      ],
+      "held_slot": "VRM-03",
+      "error": "RuntimeError: FR5 safety fault during motion: abnormal_stop=1"
+    },
+    "restart_PM_plan_20260905.json": {
+      "sha256": "614f488f1de902374d8c0c2f2379f24c1e711a23d288b3757d9426a4ec594617",
+      "status": "planned_not_executed",
+      "motion_completed_slots": null,
+      "held_slot": null,
+      "error": null
+    },
+    "restart_VRM_plan_20260905.json": {
+      "sha256": "cdd4b010779957000874fac98bfc6ba6569dc65f159689a3b7f782a7c89fb53c",
+      "status": "planned_not_executed",
+      "motion_completed_slots": null,
+      "held_slot": null,
+      "error": null
+    }
+  },
+  "vrm_success_reference": {
+    "date": "2026-09-04",
+    "tcp": [
+      -22.275007247924805,
+      -556.5762329101562,
+      85.99830627441406,
+      179.99302673339844,
+      0.0036289342679083347,
+      179.99868774414062
+    ],
+    "j6_deg": -13.068291664123535,
+    "source": "2026-09-04 session, state sampled at 11:03:54 UTC"
+  },
+  "latest_read_only_state": {
+    "controller_timestamp": 1788608794,
+    "tcp": [
+      -745.06884765625,
+      -177.5264129638672,
+      87.94818878173828,
+      179.9873046875,
+      -0.001920921728014946,
+      86.06689453125
+    ],
+    "j6_deg": 9.576814651489258,
+    "motion_done": 1,
+    "abnormal_stop": 1,
+    "gripper_position": 24,
+    "held_part_physically_confirmed": false
+  },
+  "operator_findings": [
+    "PM-03/04 placement center mismatch",
+    "VRM opposite gripper placement direction; operator stopped run"
+  ],
+  "suspected_pm_causes": [
+    "slot-specific 90deg orientation and grasp eccentricity compensation",
+    "legacy Board correction [0.002,3.999] mm on PM-03/04",
+    "board movement reported before recapture"
+  ],
+  "causes_not_fully_proven": true
+}

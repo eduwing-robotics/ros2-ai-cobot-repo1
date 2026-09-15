@@ -1,0 +1,15 @@
+string name
+int32 class_id
+float32 score
+int32 x
+int32 y
+int32 width
+int32 height
+float32 angle_deg
+bool angle_valid
+float32 depth_m
+bool depth_valid
+float32 camera_x_m
+float32 camera_y_m
+float32 camera_z_m
+bool position_valid

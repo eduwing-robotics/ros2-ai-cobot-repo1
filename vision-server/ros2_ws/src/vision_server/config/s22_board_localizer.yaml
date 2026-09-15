@@ -1,0 +1,13 @@
+s22_board_localizer:
+  calibration_file: vision_assembly/data/s22_plane_calibration.json
+  base_frame: base
+  stations: [assembly, inspection]
+  detection_timeout_sec: 0.75
+  require_quality_pass: true
+  coverage_margin_normalized: 0.01
+
+  # Physical PCB dimensions. The fixture handle is removed by conveyor_roi
+  # before the polygon reaches this node.
+  board_long_mm: 139.0
+  board_short_mm: 110.0
+  max_size_error_mm: 30.0

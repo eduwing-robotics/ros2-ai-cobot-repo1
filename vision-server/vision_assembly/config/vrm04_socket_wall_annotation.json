@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "status": "USER_IDENTIFIED_REFERENCE_EDGE_NOT_CALIBRATED",
+  "runtime_enabled": false,
+  "slot": "vrm_04",
+  "reference_image": "runtime/inspection/s22_inspection_roi_20260905_141311.png",
+  "reference_sha256": "dd080f50aac190b473a622993f128819d08d917444ca4d06fec52d0b832f5074",
+  "display_reference": "vision_assembly/segmentation/runs/vrm_fixed_boundary_negative_v1/socket_wall_probe/comparison.jpg",
+  "user_selection": "Topmost panel, line 2",
+  "candidate_index_one_based": 2,
+  "crop_origin_px": [3, 305],
+  "selected_line_crop_px": [[159,55],[159,185]],
+  "selected_line_registered_board_px": [[162,360],[162,490]],
+  "scope": "Only VRM4 in this registered reference; do not copy wall coordinates to other slots",
+  "limitation": "User identifies wall in image, not metric accuracy, wall slope, full lower-corner coverage, height/parallax correction or transfer calibration."
+}
