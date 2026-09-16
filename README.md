@@ -36,14 +36,22 @@ Unity 기반 디지털 트윈과 공정·설비 상태를 확인하는 통합관
 
 ### 조립 대상과 공정 결과
 
-<table width="100%">
-  <tr><th width="50%">PACKAGE · 반도체 패키지 모형</th><th width="50%">INSPECTION · 조립 결과 확인</th></tr>
-  <tr><td align="center"><br><strong>6종 · 25개 부품</strong><br><br>GPU 1 · HBM 8 · Power Module 4<br>VRM 5 · Inductor 2 · SMD Capacitor 5<br><br><em>완성 모형 사진 추가 예정</em><br><br></td><td align="center"><br><strong>촬영 · 검사 · 이력 조회</strong><br><br>S22 기판 촬영 · 슬롯별 검사<br>결과 이미지 · Unity INSPECT<br><br><em>검사 결과 화면 추가 예정</em><br><br></td></tr>
-</table>
+#### PACKAGE · 반도체 패키지 모형
 
-<!-- 아래 사진을 추가할 때 위 표의 '사진/화면 추가 예정' 부분을 img 요소로 교체하세요. -->
-<!-- <img src="assets/images/assembled-package.png" alt="25개 부품을 배치한 패키지 모형" width="95%" /> -->
-<!-- <img src="assets/images/inspection-result.png" alt="Unity 검사 결과 화면" width="95%" /> -->
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/01fe4664-0886-4061-999f-e36306dd532a" alt="25개 부품을 배치한 반도체 패키지 모형" width="640" />
+</p>
+
+**6종 · 25개 부품** — GPU 1 · HBM 8 · Power Module 4 · VRM 5 · Inductor 2 · SMD Capacitor 5
+
+#### INSPECTION · 조립 결과 확인
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/ae4f3c64-bbbb-41ce-a59f-b36bb83b02aa" alt="정상 기판 검사 결과 — 원본·PatchCore 히트맵·오버레이" width="100%" />
+</p>
+
+S22로 촬영한 기판의 **원본 → PatchCore 히트맵 → 검사 근거 오버레이**를 나란히 확인합니다. 위 사례는 **운영 판정 FINAL PASS · 표시 후보 0건**이며, 검사 결과와 이미지는 Unity INSPECT에서 조회합니다. 히트맵 색상은 정상 기준 대비 외관 차이를 뜻하며, 그 자체가 불량 확정이나 품질 인증을 의미하지는 않습니다.
+
 <p align="center">
   <img src="MAIN_SERVER/templates/images/defect-report-sample.jpg" width="560" alt="불량대책서 표준양식 작성 예시">
 </p>
@@ -462,7 +470,7 @@ DB 접속 정보·카메라 인증 정보·장비별 환경 설정, 학습 가�
 | 문서 상단 | 전체 공정 영상 URL | 컨베이어·일반 부품·SMD·검사까지 대표 흐름 |
 | 문서 상단 | 디지털 트윈 통합관제 영상 등록 완료 | DT_GUI_통합관제.mp4 |
 | 4. 작업공간 | 구역 표시 사진 등록 완료 | 트레이·FR5·그리퍼/D435·컨베이어·검사 구역·조립 구역 |
-| 2. 프로젝트 주제 | `assets/images/assembled-package.png` | 25개 부품을 배치한 완성 모형 |
+| 2. 프로젝트 주제 | 완성 기판·검사 결과 사진 등록 완료 | 25개 부품 모형과 원본·히트맵·오버레이 |
 | 12. 핵심 기술 | `assets/images/assembly-vision.png` | 기판·트레이 인식 결과 |
 | 12. 핵심 기술 | `assets/images/smd-reobservation.png` | SMD 근접 재관측 화면 |
 | 12. 핵심 기술 | `assets/images/inspection-result.png` | 원본·히트맵·슬롯 판정과 Unity 결과 |
