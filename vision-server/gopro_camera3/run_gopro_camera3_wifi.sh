@@ -5,6 +5,20 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/../scripts/ksmc_env.sh"
 set -u
 
+# Opt-in per-process transport; do not change the common cell RMW or bashrc.
+if [[ -n "${KSMC_GOPRO_RMW:-}" ]]; then
+  case "${KSMC_GOPRO_RMW}" in
+    rmw_fastrtps_cpp) export RMW_IMPLEMENTATION=rmw_fastrtps_cpp ;;
+    rmw_cyclonedds_cpp)
+      gopro_dds_profile="${KSMC_GOPRO_CYCLONEDDS_PROFILE:-${SCRIPT_DIR}/../config/cyclonedds_gopro_laptop.xml}"
+      [[ -r "$gopro_dds_profile" ]] || { echo '[ERROR] GoPro Cyclone DDS profile is unreadable.' >&2; exit 2; }
+      export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      export CYCLONEDDS_URI="file://${gopro_dds_profile}"
+      ;;
+    *) echo '[ERROR] Unsupported KSMC_GOPRO_RMW.' >&2; exit 2 ;;
+  esac
+fi
+
 GOPRO_RUNTIME_DIR="${SCRIPT_DIR}/../runtime"
 mkdir -p "${GOPRO_RUNTIME_DIR}"
 exec 9>"${GOPRO_RUNTIME_DIR}/gopro_camera3.lock"

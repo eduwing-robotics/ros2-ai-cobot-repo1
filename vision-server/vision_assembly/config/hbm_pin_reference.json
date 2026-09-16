@@ -1,38 +1,40 @@
 {
-  "reference_id": "343a8303-eaab-408c-ae62-498b84651d5f",
+  "reference_id": "user_normal_20260914_210030_190048",
+  "previous_reference_id": "343a8303-eaab-408c-ae62-498b84651d5f",
+  "label_basis": "User-labelled normal board; separate captures and archived defect replay; advisory only",
   "authority": "ADVISORY_ONLY",
   "slots": {
     "hbm_01": {
-      "path": "runtime/inspection/hybrid_fixed_slot/20260908_174947_620562/fixed_slots/hbm/hbm_01.png",
-      "sha256": "4c364c567642153d57e10f9a0fd9c26bbbe4dfdde8343a8b10a01e7969b39fc5"
+      "path": "runtime/inspection/hybrid_fixed_slot/20260914_210030_190048/fixed_slots/hbm/hbm_01.png",
+      "sha256": "8438ba54e738a37206e5346a6f83b4d8876f8e8dc0c1d092121245da61e6dd7b"
     },
     "hbm_02": {
-      "path": "runtime/inspection/hybrid_fixed_slot/20260908_174947_620562/fixed_slots/hbm/hbm_02.png",
-      "sha256": "122191bf5660668c27761f1ff6036d63acae8876db53ff8e03a617844b8ce241"
+      "path": "runtime/inspection/hybrid_fixed_slot/20260914_210030_190048/fixed_slots/hbm/hbm_02.png",
+      "sha256": "2772e0841592e67484b2046da55a952a13e21927573c5facadf1d9184adea0cb"
     },
     "hbm_03": {
-      "path": "runtime/inspection/hybrid_fixed_slot/20260908_174947_620562/fixed_slots/hbm/hbm_03.png",
-      "sha256": "668bc0774895e3a22e76198b4a84fd46bd5303fa8175d0a276a016adc510c3c6"
+      "path": "runtime/inspection/hybrid_fixed_slot/20260914_210030_190048/fixed_slots/hbm/hbm_03.png",
+      "sha256": "df43ea154a2d6c6444c6507359a714fb1202c9e417aed36e3e82129d42dcfd53"
     },
     "hbm_04": {
-      "path": "runtime/inspection/hybrid_fixed_slot/20260908_174947_620562/fixed_slots/hbm/hbm_04.png",
-      "sha256": "e907201317a87a6c438f062b8614e16f60fa8d44423265235dad01f1255ea423"
+      "path": "runtime/inspection/hybrid_fixed_slot/20260914_210030_190048/fixed_slots/hbm/hbm_04.png",
+      "sha256": "9957fbd976577e4e43acde70323c7da83b1dfc50007dc6b9d08062bf74991e21"
     },
     "hbm_05": {
-      "path": "runtime/inspection/hybrid_fixed_slot/20260908_174947_620562/fixed_slots/hbm/hbm_05.png",
-      "sha256": "aafe8f3330c6d191584f8273dc5cd14b66a2d1f0d4a6957957009293b01231e8"
+      "path": "runtime/inspection/hybrid_fixed_slot/20260914_210030_190048/fixed_slots/hbm/hbm_05.png",
+      "sha256": "54c6a5d89e6365676ed02d323a0c7c6a1c9cf971c24359ab33b807fba10784fc"
     },
     "hbm_06": {
-      "path": "runtime/inspection/hybrid_fixed_slot/20260908_174947_620562/fixed_slots/hbm/hbm_06.png",
-      "sha256": "868b12783749283f7bd991fb64bef33119525f33d5e61801208e2d22577678c9"
+      "path": "runtime/inspection/hybrid_fixed_slot/20260914_210030_190048/fixed_slots/hbm/hbm_06.png",
+      "sha256": "25da326bbfa5fb73b04f6fa2be8670e6a250226a60225cecdcd98b9103533a61"
     },
     "hbm_07": {
-      "path": "runtime/inspection/hybrid_fixed_slot/20260908_174947_620562/fixed_slots/hbm/hbm_07.png",
-      "sha256": "5742299f3a5dcffc3270983a970485e3aa77fd171306a9c3236778fbb43e18e9"
+      "path": "runtime/inspection/hybrid_fixed_slot/20260914_210030_190048/fixed_slots/hbm/hbm_07.png",
+      "sha256": "85c8630b3eb6af0ac49f81dd0f01f6e05ef8f6a15e89cd1b523cb1a728c8dab7"
     },
     "hbm_08": {
-      "path": "runtime/inspection/hybrid_fixed_slot/20260908_174947_620562/fixed_slots/hbm/hbm_08.png",
-      "sha256": "9c2f43cf61447442cf3992e197f1d44228fdcd896ba57ba6078a7028dff1feff"
+      "path": "runtime/inspection/hybrid_fixed_slot/20260914_210030_190048/fixed_slots/hbm/hbm_08.png",
+      "sha256": "33345a690c3cb69a8e0449a180dda500e640f9d14c9df3b53a6dce21d5725ef2"
     }
   }
 }

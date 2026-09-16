@@ -17,11 +17,21 @@
     "limitation": "Small height-only defects may no longer receive a displayed seating candidate. This is scope reduction, not improved detection accuracy."
   },
   "hbm_pin_candidate_scope": {
+    "normal_reference_update": "2026-09-14 user-labelled normal capture210030_190048 now pins the reference. Separate captures210219_730052 and210342_852873 evaluated without fitting; zero HBM candidates in the latter, one in the former. Archived physical control retains three candidate slots. Thresholds and authority unchanged; fixed-slot comparison still confounds pose/occlusion and is not body-relative pin localization.",
+    "reference_quality_gate": "2026-09-14: same-side individual reference or visible-anchor insufficiency prevents long-band gap nomination; raw gap retained, UNKNOWN not PASS. Independent qualified-side per-pin candidates remain enabled. This reduces coverage of near-total dark/occluded pin rows rather than certifying their normality.",
     "provider": "same-slot reference-relative long pin-band gap plus legacy per-pin near-absence evidence and candidate circles",
     "authority": "ADVISORY_ONLY",
     "reference_manifest": "vision_assembly/config/hbm_pin_reference.json",
     "limitations": "Does not certify single-pin defects, total dark-band absence, height, or placement. Missing reference, uncertain presence or invalid alignment abstains. No candidate is not PASS.",
     "validation": "Developmental same-session normal and partial-loss replay only; no production authority."
+  },
+  "gpu_crack_candidate_scope": {
+    "provider": "gpu_surface_crack.inspect_gpu_crack",
+    "authority": "ADVISORY_ONLY",
+    "scope": "Visible transverse dark ridge below GPU logo when optical contrast suffices; original fixed provider crop, no local pose normalization. Supplemental lighting was not confirmed for the development capture.",
+    "public_category": "SURFACE_ANOMALY with GPU_TRANSVERSE_DARK_CRACK_CANDIDATE detail; existing ROS services and schema unchanged.",
+    "fragment_evidence": "2026-09-14 development repair: Hough near-horizontal fragments with strong blackhat >=12, minimum line span 0.06 crop width and bilateral raw median contrast >=8, darkest local ridge +/-3 and background offsets8--10px. Original contour rule retained; no local pose warp. Four current repeated defect views used as development data, not independent validation.",
+    "limitations": "Development candidate: print seams, shadows and scratches not excluded. Weak frontal image abstains, absence is not PASS. Matched grazing-light normal/defect holdout remains required."
   },
   "sensor_contract": {
     "primary_inspection_camera": "S22 optical still",
@@ -104,6 +114,8 @@
     }
   ],
   "provider_contract": {
+    "inductor_model_selection": "2026-09-14: inductor_current_candidate_v3_20260914 selected provisionally after stored controls and one fresh capture without Inductor surface nomination. Thresholds unchanged; ADVISORY_ONLY, no pose normalization, no certified PASS or broad lighting validation.",
+    "normal_only_surface_policy": "2026-09-14: normal_p99 appearance drift alone cannot nominate inductor SURFACE?; retain scores/maps and UNKNOWN. Controlled fail_min and independent orientation/position checks remain enabled.",
     "required_output_fields": [
       "stage_id",
       "slot_id",

@@ -1,6 +1,6 @@
 # Vision/AI 작업 기록
 
-Latest grouped record: [Camera transport and overlay trials with rollback](docs/logs/vision.md#2026-09-14-camera-transport-and-overlay-trials-with-rollback). Detailed entries are maintained there only; historical entries below are preserved.
+Latest grouped record: [Main integration of outstanding local vision changes](docs/logs/vision.md#2026-09-16-main-integration-of-outstanding-local-vision-changes). Detailed entries are maintained there only; historical entries below are preserved.
 
 ## 2026-09-05 정상 복귀 확인 및 사용자 충격 전후 재촬영 묶음
 

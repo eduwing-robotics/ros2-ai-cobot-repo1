@@ -18,6 +18,28 @@ def test_reference_required():
     assert check_hbm_pin_bands(sample(), "PRESENT").status == "UNKNOWN"
 
 
+def test_runtime_gap_on_insufficient_reference_side_abstains(tmp_path, monkeypatch):
+    import hbm_individual_pins
+    reference = sample()
+    p = tmp_path / "ref.png"
+    cv2.imwrite(str(p), reference)
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(json.dumps({"reference_id": "test", "slots": {
+        "hbm_08": {"path": "ref.png", "sha256": hashlib.sha256(p.read_bytes()).hexdigest()}}}))
+    image = reference.copy()
+    image[28:145, 118:149] = 35
+    def deficient(*args):
+        return [dict(side=s, status="NOT_INSPECTABLE", reason="REFERENCE_PIN_ANCHORS_INSUFFICIENT",
+                     reference_peaks=2, missing_indices=[], uncertain_indices=[],
+                     evidence_ratio=[], defect_points_px=[]) for s in ("left", "right")]
+    monkeypatch.setattr(hbm_individual_pins, "compare", deficient)
+    r = inspect_hbm_pins("hbm_08", image, "PRESENT", True, tmp_path, manifest)
+    assert r.status == "UNKNOWN"
+    assert r.measured["candidate_sides"] == []
+    assert r.measured["reference_insufficient_gap_sides"] == ["right"]
+    assert r.measured["bands"]["right"]["gap_increase_from_reference"] >= .35
+
+
 def test_identical_is_not_certified_pass():
     r = check_hbm_pin_bands(sample(), "PRESENT", sample())
     assert r.status == "UNKNOWN"

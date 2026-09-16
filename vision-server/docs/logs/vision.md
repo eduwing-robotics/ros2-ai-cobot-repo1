@@ -1,5 +1,377 @@
 # AI/Vision 작업 기록
 
+## 2026-09-16 Main integration of outstanding local vision changes
+
+Integrated the previously uncommitted laptop changes into the relocated
+`vision-server/` tree, initially on main `e46c19a`, then rebased onto the team's
+README-only update `2703bc4` before push. Preserved the team's portable
+synthetic test fixture and README updates. Included GPU transverse crack
+advisory evidence and non-occluding visualization, HBM reference/observation
+quality gates and reference manifest, the selected September 14 Inductor model
+path and normal-only appearance nomination restriction, audit/replay tools,
+tests, and the existing detailed development records below.
+
+The S22-independent hybrid contract, fixed-slot geometry, raw UNKNOWN/strict
+fusion and ADVISORY_ONLY provider authority remain intact. Existing provisional
+public/demo policy and ROS service schemas are not changed by this integration.
+No new model training or measured accuracy claim is made. The selected weights,
+hashed HBM reference images and other runtime assets remain outside Git; the
+README documents deployment prerequisites. Missing assets are not evidence of
+normality. GoPro DDS remains opt-in, with Fast DDS the unchanged default.
+
+Validation in the isolated merged checkout: 361 hybrid/DDS tests passed and
+3 captured-image tests skipped because local fixtures were unavailable; 333
+conveyor, launcher, inspection-contract and camera regression tests passed.
+No robot/conveyor command, camera capture, server restart, DB access or device
+network reconfiguration occurred. Hardware E2E and deployed model/image checks
+remain operator deployment tasks. The original dirty laptop tree was preserved.
+
+## 2026-09-15 Non-occluding GPU crack presentation visualization
+
+- User reported the OpenCV crack marker obscured the visible ridge in the
+  presentation image. Detection criteria, candidate coordinates, fusion,
+  authority and ROS result schema remain unchanged. Replaced the on-ridge
+  2px rectangle with a 1px callout box padded6px plus an external arrow/label.
+  Original pixels inside every reported crack region are left untouched.
+- Added gpu_crack_detail.png when a GPU crack candidate exists: enlarged
+  side-by-side GPU original and marked view. Multiple overlapping Hough
+  fragments are merged into one enclosing presentation callout so repeated
+  labels do not cover evidence. The original panel has no annotation.
+- Replayed source s22_inspection_roi_20260914_213528.png on host GPU. Output
+  gpu_crack_ppt_asset_20260915/20260915_093211_573358 remains operational
+  FAIL with the existing GPU pin/crack evidence. Directly inspected the detail
+  output; the below-logo ridge remains visible inside the detached cyan box.
+  Tests:81 hybrid/crack tests passed. No capture, training, threshold/model,
+  camera, ROS endpoint, DB, robot or conveyor command change.
+- Copied final presentation assets and an evidence-scoped caption/script to
+  `ppt 자료용`: GPU_크랙_원본_검출비교.png,
+  GPU_크랙_전체검사_FAIL.png, 정상기판_전체검사_PASS.png and
+  GPU_크랙_발표자료_설명.txt. Limit remains: this is a developmental visible
+  ridge candidate, not certified physical-crack or all-crack accuracy.
+
+## 2026-09-14 Ambient-light comparison completes operational PASS
+
+- Repeat with user signalling ready:ROS6252e79c-b1ca-4a37-b93c-2a1b28f12c7d,
+  capture21:13:38/report211347_556403 again publicPASS25/FAIL0, zero findings.
+  Two consecutive ambient-condition operational PASS results, not independent
+  accuracy validation. No model/threshold/reference changes or motion; original
+  validated fusion limitations remain. This repeat is not training data.
+
+- User signalled ready after request to turn off supplemental light and leave
+  parts unchanged. Captured via existing ROS inspection315ef8eb-24ac-4d2f-9f01-
+  60e4ad8fdb19 at21:09:36; report hybrid_fixed_slot/20260914_210945_182070.
+  Public result COMPLETED, PASS25/FAIL0, zero findings. No decision override,
+  model/reference/threshold change or additional training in this comparison.
+- Relative to supplemental-light source210333/report210525_110962 saved replay,
+  all five VRM state predictions become CORRECT, confidence0.9780--0.9970
+  (previous0.3641--0.8865 UNKNOWN). Independent presence0.9944--0.9997,
+  no conflicts; prior VRM03 conflict and VRM05 low presence disappear. Supports
+  illumination-domain sensitivity of ambient-trained state model; one user-
+  prepared comparison without measured illuminance does not prove sole cause,
+  exact unchanged physical pose, or production accuracy.
+- PM01 raw corrected residual remains1.2412mm (previous1.5542mm), still above
+  underlying0.75mm tolerance. Existing confidence/severity display gates no
+  longer nominate it. This is NOT a calibrated position PASS or position fix.
+  Raw validated_decision remains UNKNOWN under unchanged fail-safe fusion;
+  public PASS is the existing provisional operational disposition.
+- Inspected original capture and verified public result/raw evidence. No robot
+  or conveyor motion commands, DB writes, server restart or camera settings
+  changes. Retain current ambient lighting for repeatable inspection; controlled
+  defective-parts repeat and independently varied scenes still required.
+
+## 2026-09-14 HBM normal reference supplementation with separate captures
+
+- User labels current board entirely normal and authorizes new capture/reference
+  supplementation. Reviewed the fixed fusion contract. Acquired three new ROS
+  captures without robot/conveyor movement:1353e7b8/report210030_190048 for the
+  normal reference,3705594a/report210219_730052 and8470f6a9/report210342_852873
+  for separate evaluation. Full UUIDs and source hashes are retained in API
+  archives and candidate audit manifests. Related repeated physical scene,
+  not independent production accuracy or independent part holdout.
+- Added audit_hbm_normal_reference.py: validates source hash/registration,
+  rejects reference/evaluation reuse, builds isolated pinned normal references,
+  compares unchanged runtime checks and keeps raw UNKNOWN evidence. This is
+  reference supplementation, NOT neural model/backbone retraining or a
+  body-relative pin localization implementation. No pin thresholds relaxed.
+- Initial stored normal comparisons:7 candidate slots ->1. Later fresh comparison
+  of210219 plus205735:7->1, remainingHBM05. Final separate210342:3->0.
+  Artifacts runtime/inspection/hbm_reference_{candidate,fresh_validation,
+  final_holdout}_20260914 contain per-side evidence and source provenance.
+  New references reduce insufficient-observation occurrences in the initial
+  comparison8->2, but UNKNOWN remains UNKNOWN, not certified PASS.
+- Archived known-defect report20260909_152411_663985 retains the same three
+  pin-candidate slotsHBM01/04/07 after reference update. Eight synthetic
+  right-band occlusion controls all nominate; synthetic controls do not qualify
+  physical single-pin accuracy. GPU crack regression unchanged:current4/4
+  candidates, archivednormal23 zero candidates(3 abstentions), oldcracks0/2.
+  GPU pin/crack code and model remain unchanged by this work.
+- Selected hashed reference user_normal_20260914_210030_190048 in
+  hbm_pin_reference.json; previous capture20260908_174947_620562 retained on
+  disk and previous reference ID recorded. Runtime reads reference each check;
+  no ROS/conveyor server restart required. Preserve ADVISORY_ONLY authority,
+  raw fail-safe fusion, S22 independence and separate position/direction checks.
+- PM01 corrected position residual repeats near1.49--1.51mm (tolerance0.75mm).
+  Did not learn inspected board displacement as normal or modify position
+  offsets/tolerances; physical socket/CAD truth remains unresolved. Other
+  presence rejection/VRM warnings can still prevent whole-board PASS.
+- Added three hash/alignment audit tests. Updated the Inductor default-path
+  assertion to the already selected v3 while preserving exact GPU-root assertion;
+  an initial run had92pass/1stale-path failure, not a successful final run.
+  No motion commands, DB writes, camera settings changes or forced PASS labels.
+- Final93tests pass; git diff --check passes. Full host-GPU saved-image replay
+  hbm_reference_final_replay_20260914/20260914_210525_110962 loads selected
+  references and Inductor v3:zeroHBM/Inductor displayed candidates. Remaining
+  PM01POSE? and VRM01DIR?, plus presence-not-confirmed, keep overall operational
+  FAIL. GPU pins uncertain, no qualified crack ridge; neither is certified PASS.
+  This replay uses the separate210333 capture, not a new fourth capture.
+
+## 2026-09-14 Inductor retraining and fresh-capture release rejection
+
+- Follow-up authorized by user: candidate_v3 adds only the user-labelled normal
+  Inductor crops from204638_625525; that capture is training data, not a holdout.
+  Stored26normal/79controlled-defect replay retains unchanged thresholds:
+  normal_max0.39439812, defect_min0.45529243. Eight archived normals calibrate
+  maps. Fresh ROS4b9c6fb0-420d-4aaf-88db-905b044feef2, capture20:57:26,
+  report205735_914602 completes with no Inductor surface candidate. V3 remains
+  the provisional advisory default; this is one fresh check, not accuracy proof.
+  Overall still FAIL: HBM06/07/08 individual-pin candidates, PM01 pose candidate,
+  and presence-not-confirmed operational rejection. User now labels the entire
+  board normal; these unresolved warnings must not be silently relabelled as
+  real defects or suppressed to force PASS. No other component trained.
+  Current90hybrid/GPU/HBM tests pass in the PatchCore venv (system Python
+  lacks torch and cannot collect them). No motion or camera configuration change.
+
+- User authorized an Inductor-only training experiment. Reviewed the fusion
+  contract; GPU pin/crack providers, slot pose/direction checks and advisory
+  authority remain unchanged. No D435 dependency or geometric normalization.
+- Extended train_inductor_morning_candidate.py with isolated previous/output
+  paths, explicit normal reports, hashed holdouts and train/evaluation duplicate
+  rejection. Photometric variants do not move or rotate components. Original
+  models/datasets remain preserved; development decision thresholds are unchanged
+  (pass_max 0.40231666, fail_min 0.43910779).
+- Candidate runtime/inspection/patchcore/inductor_current_candidate_20260914
+  failed current stored normal holdouts (maximum 0.66842496); it was not selected.
+  Its copied dataset replaced existing morning-named crops only inside that
+  isolated candidate. The subsequent unique-filename fix preserves additions.
+- Candidate inductor_current_candidate_v2_20260914 added report202207_020385
+  as training data; this scene is no longer a holdout. Reports202531_682221 and
+  203437_222129 remain held out. Stored evaluation: 26 normal crops maximum
+  0.36040699, 79 controlled defect cases minimum 0.46169412. These related
+  development scenes and controlled appearance/direction cases do not establish
+  production accuracy or microcrack coverage. Normal-map calibration used eight
+  archived normal crops; fail thresholds were not recalibrated.
+- Full saved replay204419_684710 removed both Inductor surface candidates.
+  The candidate was briefly selected for one fresh ROS release check, then
+  rejected: inspection cfeac991-cb29-4328-bec3-455dd28f5c5a, captured20:46:29,
+  report runtime/inspection/hybrid_fixed_slot/20260914_204638_625525/hybrid_report.json,
+  again nominates both normal Inductor surfaces (IND01 score0.56735879,
+  IND02 score0.45094252 exceed
+  fail_min). Overall operational FAIL, seven advisory findings; validated
+  decision remains UNKNOWN. GPU has no qualified crack ridge and uncertain
+  white-pin pattern, not certified PASS. Stored holdout success is not a fix.
+- Default model selection restored to inductor_morning_candidate_20260907;
+  rejected candidates retained for diagnosis. Idle inference worker recycling
+  loads the restored default on next submission; ROS endpoints stay unchanged.
+  Existing normal false positives remain a limitation. Need additional separately
+  captured, labelled lighting controls before promotion, not threshold relaxation.
+- Verification: 90 hybrid/GPU/HBM tests passed before final path rollback;
+  actual training, calibration, stored integration and fresh ROS inspection ran.
+  No robot/conveyor motion commands, DB writes or camera settings changes.
+
+## 2026-09-14 GPU fragmented-crack replay repair
+
+- User signalled ready after request to replace GPU with a normal one while
+  maintaining position/lighting. Fresh ROS7790b645 source203428/report203437_222129
+  completes with no GPU pin or crack candidate; viewed GPU crop has no earlier
+  transverse groove. This is one user-labelled normal replacement, not broad
+  accuracy validation; equal lighting was instructed but not measured. Overall
+  operational19PASS/6FAIL from HBM08 pins, IND01/02 surface, PM01 pose,
+  VRM01/02 direction. Do not call the whole board PASS or silently relabel those
+  other findings as physically verified defects. No thresholds/references/models
+  changed using this normal capture. Overview restored; no motion/DB writes.
+- User authorizes stored-photo repair after different lighting repeats missed
+  the same below-logo groove. Diagnosed short response components: missed
+  crops had width32--40px,height10--16px, failing original bounding-box aspect
+  and width tests; box medians also dilute dark-line contrast. Added Hough
+  near-horizontal fragment evidence with bilateral original-gray contrast.
+  Strong response12 and contrast8 unchanged; effective fragment length now
+  0.06width, +/-3ridge samples, background8--10px, slope<=0.27. This is a
+  developmental shape/sampling change, not merely an accuracy-neutral refactor.
+  No pose normalization, model training, threshold promotion or fusion change.
+- `replay_gpu_crack_controls.py` saves hashes/evidence to
+  `runtime/inspection/gpu_crack_fragment_repair_20260914/validation.json`:
+  four recent user-labelled defective views all nominate the below-logo ridge;
+  23 archived normal surface crops have zero candidates, but three lack an ROI
+  and therefore abstain. The other20 have no candidate, not certified PASS.
+  Different crop framing/illumination means these are NOT matched independent
+  negatives. Two older physical-crack crops are still missed. Current four
+  repeated views are development data of one GPU, not a general accuracy test.
+- Full saved host-GPU replay source202522 ->
+  gpu_crack_fragment_full_replay_20260914/20260914_203047_413356 confirms GPU
+  PINS?+SURFACE?, explicit crack detail, crop boxes near[247,649,290,657].
+  Viewed report verifies boxes lie on the same groove. Existing Inductor01/02
+  false surface flags and PM01 position candidate remain. New crack stage now
+  maps to SURFACE? in evidence audit instead of being incorrectly described
+  as an undrawn raw flag. 90 focused hybrid/pin/crack tests passed; diff/JSON
+  checks passed. Public service names/categories and demo provenance retained.
+- No fresh capture, robot/conveyor motion, camera configuration, DB write or
+  training in this repair. After no active stored inspections was confirmed,
+  retired idle private worker PID297051; existing server recreates it with
+  new code next request. Fresh ROS repeat and matched current normal GPU at
+  identical position/lighting remain necessary. Broader crack directions,
+  print seams/shadows and normal Inductor appearance drift remain unresolved.
+
+## 2026-09-14 GPU pin and transverse crack candidate integration
+
+- Fresh actual ROS roundtrip77b00f08 completed: source201145,
+  report hybrid_fixed_slot/20260914_201154_859671. GPU finding contains both
+  PIN_DEFECT and SURFACE_ANOMALY and the explicit transverse-crack detail.
+  Crack box[239,645,324,665], contrast11,length85px; viewed report confirms
+  the box lies on the user-labelled below-logo groove. Operational22PASS/3FAIL:
+  GPU01, IND01 surface (still false-positive against user label), VRM04 position
+  0.713mm vs0.700mm candidate gate. Supplemental lighting readiness is implied
+  by user go-ahead, not instrumentally verified. Raw crack provider remains
+  ADVISORY_ONLY, not calibrated physical-crack confirmation. S22 overview
+  restored; no robot/conveyor motion, training, DB write or threshold change.
+- User requests both GPU white-pin and below-logo crack detection. Retained
+  existing GPU pin continuity provider; added original-RGB OpenCV dark-ridge
+  candidate below the green logo, bounded to the package interior. Horizontal
+  black-hat response, minimum length/aspect and raw surrounding contrast reject
+  short specks and diagonal print texture in synthetic controls. No learned
+  weight, local component warp, placement/orientation rule or fusion change.
+- The user subsequently clarified supplemental lighting was NOT applied to
+  the latest capture. Previous attribution of increased contrast to grazing
+  light is withdrawn: actual lighting change is unconfirmed. Source200436 is
+  simply the latest user-labelled defective GPU capture, not a controlled
+  grazing-light experiment. No new physical capture was requested in this task.
+- Saved full host-GPU replay source200436 ->
+  gpu_crack_candidate_replay_20260914/20260914_200847_224336 reports GPU PINS?
+  plus SURFACE?, details GPU_WHITE_PIN_PATTERN_DEFECT and
+  GPU_TRANSVERSE_DARK_CRACK_CANDIDATE. Crack crop box[239,645,325,666],
+  raw local contrast11, length86px. Old source195832 abstains; archived
+  reference174947 also abstains (not a new matched normal holdout). Public
+  category remains existing SURFACE_ANOMALY with crack detail, existing ROS
+  service identifiers/schema unchanged. Added crack-box visualization for
+  subsequent reports; the saved full replay predates that display-only edit.
+- 89 targeted tests passed: synthetic visible groove, blank/diagonal texture,
+  invalid presence/alignment/logo, pin and surface categories together,
+  prior hybrid and HBM regressions. diff/JSON checks passed. All observations
+  remain ADVISORY_ONLY; provisional/demo disposition retains its existing
+  provenance. Absence is UNKNOWN, not certified normality. This detects only
+  a visible transverse dark groove in a bounded below-logo region: print seams,
+  shadow and scratches remain alternative causes, and frontal/oblique or other
+  crack directions may be missed. Matched normal/defect capture still required;
+  no claim of trained crack-model accuracy or all-crack coverage.
+- Verified no stored RUNNING/ACCEPTED inspections and retired only idle private
+  worker PID286576 so the existing ROS server loads the new code next request.
+  No server/conveyor/robot restart or motion, DB write, training, camera setting
+  or stop-line change. Actual fresh ROS roundtrip of this new provider awaits
+  user lighting readiness; prior HBM gate live roundtrip is recorded separately.
+
+## 2026-09-14 HBM pin observation gates and surface nomination audit
+
+- User signalled ready for a lighting repeat. Actual ROS capture03ef81da at
+  20:04:36/report200445_867595 shows the below-logo horizontal dark ridge much
+  more clearly. Diagnostic response19.5051 versus previous4.3622; this is a
+  lighting-sensitive contrast measurement, not a calibrated crack score.
+  Operational21PASS/4FAIL: CAP02 seating, GPU01 pins, IND01/02 surface. HBM
+  candidates absent, but the changed illumination adds normal-part warnings.
+  No CRACK finding generated. Audit saved as lighting_repeat.json; original
+  GPU crop retained for presentation evidence. No runtime/model/threshold
+  change, training, motion or DB write; S22 overview restored. Need a matched
+  known-normal GPU under the same lighting before adopting any dark-ridge rule.
+- Follow-up user locates the actual GPU crack below the logo. Added offline
+  `audit_gpu_lower_surface.py`: green-logo orientation and central lower-face
+  horizontal black-hat response, JSON only, no runtime defect vote. Latest crop
+  response4.3622, available archived normal responses2.1016--3.5859;
+  two archived crack responses4.7422 and2.3047 overlap normals. Three archived
+  normals abstain because the lower face cannot be located. Different crop
+  scales/framing/printed instances are confounds: these are diagnostic pixels,
+  not calibrated comparable defect scores. Evidence in
+  `runtime/inspection/gpu_lower_surface_audit_20260914/diagnosis.json`.
+  No new threshold/model or capture; no motion/DB write. Lower central dark
+  ridge is visible, but the failed separation means no automatic CRACK vote
+  was added. Grazing-light repeat is required to investigate physical contrast.
+- User labelled the current assembled board normal except for GPU pin and
+  crack defects and requested false-positive repair for presentation capture.
+  Reviewed the actual hybrid HBM adapter, not the GPU provider's all-package
+  debug drawing. CAD display geometry and the five returned detail geometries
+  matched the archived inspection exactly; this does not verify a teammate's
+  separate Unity scene geometry. Provider crops remain in their training frame.
+- HBM long-gap nomination now abstains on the same side when the individual
+  provider has insufficient reference or visible sample anchors. Raw band gaps,
+  reference quality, per-pin evidence and independent qualified-side candidates
+  are preserved. This is reduced dark/occluded-row coverage, not body-following
+  pin detection, validated normality or improved pose invariance. Updated the
+  contract annotations without changing independent pose/orientation or fusion.
+- Removed normal-p99-only Inductor surface nomination. Controlled fail_min
+  nomination and all raw surface evidence remain enabled. The actual active
+  Inductor model DOES have a developmental fail_min of 0.4391077905893326;
+  therefore this change does not resolve its current normal-surface false flag.
+  Initial diagnosis that this scene used only normal_p99 was incorrect.
+- 87 targeted hybrid/pin tests passed, including deficient-reference gap
+  abstention, other-side candidate preservation and controlled-threshold versus
+  normal-baseline nomination. git diff --check passed. Saved pre-final-gate
+  replay at reference_quality_repair_host_20260914/20260914_195257_272803
+  retained HBM05/08 and IND01; it is not final validation. A separate sandbox
+  replay had unavailable providers and is not release evidence.
+- First ROS repeat 9f215237 used cached pre-edit code in the persistent worker.
+  After COMPLETED was verified, terminated only idle worker PID140269; the
+  existing server recreated it on next request. Final ROS capture d411f791,
+  source195832 SHA256 ba71fca140df76b1cf1c1eb2d45f8c2149a98f8e4e5b8975dd6f80d2c7855d8c,
+  report hybrid_fixed_slot/20260914_195841_232935: operational FAIL, 23PASS/2FAIL
+  in public demo disposition, GPU01 PINS? and IND01 SURFACE?. All eight raw
+  HBM pin stages UNKNOWN (reference/observation deficient), not validated PASS.
+  IND01 score0.5897356271743774 still exceeds the unchanged developmental limit.
+- Two actual ROS captures were requested; S22 overview restored. No robot or
+  conveyor motion command, DB write, training, reference promotion or camera
+  configuration change. GPU crack is not detected by this repair; historical
+  crack-model overlap and printed-texture ambiguity remain. Need defect-location
+  ground truth and independent normal/defect acquisition before crack claims;
+  Inductor appearance drift and actual body-relative pin tracking remain open.
+
+## 2026-09-14 GoPro-only Cyclone DDS trial and Fast DDS recovery
+
+- User authorized sender-side DDS testing while preparing, not running, the
+  next process. Added an opt-in `KSMC_GOPRO_RMW` override only to the Wi-Fi
+  GoPro launcher. The shared environment, bashrc, S22/ROI/control/inspection
+  RMW, topics, QoS, JPEG quality and source/output frame rates were not changed.
+  An experimental Cyclone 0.10.5 profile selects only laptop wlo1, SPDP
+  multicast/unicast data, 1400-B messages, 1280-B fragments and 4-MiB buffers.
+  This profile is NOT the active final configuration.
+- Six offline launcher/profile tests passed; shell syntax and diff checks
+  passed. A domain-219 local interoperability check sent thirty 128-KiB
+  diagnostic payloads from Cyclone to Fast DDS: all thirty arrived byte-exact.
+  This only validated compatibility, not remote performance.
+- Before switching, fresh state was ASSEMBLY_STOP/moving=false, with no active
+  inspection. GoPro was bundle-owned, so normally restarted the exact bundle,
+  retaining execute/confirm-motion for the new controller and leaving S22/ROI
+  running. No robot, nonzero conveyor, reset, capture or DB command was sent.
+  Controller lifecycle can emit its existing zero-speed safety commands; its
+  instance/motion identity is renewed by restart. User was told to wait before
+  starting the process. No teammate settings or remote control processes changed.
+- In a temporary read-only Fast DDS receiver on the previously authorized
+  robot's WLAN, the pre-trial 16-second sample received GoPro 14.675 FPS with
+  max gap 0.398 s and overlay 27.768 FPS/max gap 0.343 s. Cyclone trial received
+  GoPro 7.970 FPS/max gap 0.531 s (120 unique frames), so it was rejected, NOT
+  promoted as a fix. S22/overlay in that trial were 29.471/27.767 FPS, with
+  gaps 0.068/0.070 s. These sequential samples are not a controlled benchmark
+  isolating DDS vendor from packet sizing or varying wireless load.
+- FINAL: removed the site-specific Cyclone opt-in and restarted the exact bundle
+  after fresh IDLE/moving=false/no-active-inspection checks. Live GoPro PID125997
+  reports rmw_fastrtps_cpp with no CYCLONEDDS_URI. Armed bundle PID125924 and
+  controller instance 82980df3-e4d7-493a-bbe8-47c3eea45d92 were verified IDLE,
+  moving=false, armed=true, vision_ready=true, command_receiver_connected=true.
+  Final 16-second robot-WLAN sample: GoPro238 frames/15.000 FPS/max gap69.64 ms;
+  S22475/29.624 FPS/max48.17 ms; overlay451/28.674 FPS/max69.77 ms; one publisher
+  each, all timestamps unique. A separate local 12-second GoPro sample had
+  177 frames/14.751 FPS/max269 ms, so no zero-stutter guarantee is made.
+- Retained only opt-in experiment support, clearly marked inactive, plus tests.
+  Camera3 stays 1280x720/JPEG75/15 FPS and overlay stays 960/JPEG78/30-FPS cap.
+  The original two teammate PCs (.5/.14), loaded Unity operation and long-term
+  jitter remain unverified. The healthy final independent receiver does not
+  prove the earlier shared-network problem is permanently resolved.
+
 ## 2026-09-14 Camera transport and overlay trials with rollback
 
 - FINAL RECOVERY: at the user's explicit request, restored the 30-FPS overlay

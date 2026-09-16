@@ -99,6 +99,7 @@ def assess_capture_quality(image_bgr, reference_bgr, static_mask, *, alignment_v
 
 STAGE_CODES = {'presence': {'MISSING?'}, 'pose': {'POSE?', 'RIGHT?', 'ROT?', 'SEATING?'},
                'orientation': {'DIR?', 'ROT?'}, 'pins': {'PINS?'}, 'surface': {'SURFACE?'},
+               'surface_crack': {'SURFACE?'},
                'vrm_boundary': {'RIGHT?', 'ROT?'}}
 
 

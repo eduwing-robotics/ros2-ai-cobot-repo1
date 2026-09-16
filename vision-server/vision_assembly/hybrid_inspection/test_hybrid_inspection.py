@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from collections import Counter
 from pathlib import Path
+from types import SimpleNamespace
 import json
 import sys
 
@@ -113,7 +114,25 @@ def test_inductor_model_promotion_does_not_change_gpu_model():
     from main import DEFAULT_INDUCTOR_PATCHCORE_MODELS, DEFAULT_GPU_PATCHCORE_MODELS
     assert DEFAULT_GPU_PATCHCORE_MODELS == PROJECT_DIR / 'runtime/inspection/patchcore/pcb_components_strict_v4'
     assert DEFAULT_INDUCTOR_PATCHCORE_MODELS != DEFAULT_GPU_PATCHCORE_MODELS
-    assert DEFAULT_INDUCTOR_PATCHCORE_MODELS == PROJECT_DIR / 'runtime/inspection/patchcore/inductor_morning_candidate_20260907/models'
+    assert DEFAULT_INDUCTOR_PATCHCORE_MODELS == PROJECT_DIR / 'runtime/inspection/patchcore/inductor_current_candidate_v3_20260914/models'
+
+
+def test_crack_callout_preserves_crack_pixels():
+    from main import _draw_crack_callout
+    image = np.full((100, 140, 3), 37, dtype=np.uint8)
+    before = image[50:56, 45:86].copy()
+    _draw_crack_callout(image, (45, 50, 85, 55), (255, 255, 0))
+    assert np.array_equal(image[50:56, 45:86], before)
+    assert np.any(image != 37)
+
+
+def test_gpu_crack_detail_keeps_unmarked_original_panel():
+    from main import _render_gpu_crack_detail
+    slot = SimpleNamespace(crop_bgr=np.full((100, 80, 3), 37, dtype=np.uint8))
+    detail = _render_gpu_crack_detail(slot, [[20, 50, 55, 55]])
+    assert detail is not None
+    assert detail.shape[0] == 804
+    assert np.all(detail[44:, :608] == 37)
 
 
 def test_missing_display_precedence_preserves_raw_codes():
@@ -362,6 +381,21 @@ def test_advisory_candidates_do_not_claim_confirmed_defect() -> None:
     assert candidates[0]["codes"] == ["DIR?", "POSE?", "SURFACE?"]
     assert candidates[0]["authority"] == "ADVISORY_ONLY"
     assert candidates[0]["confirmed_defect"] is False
+
+
+def test_normal_only_inductor_score_does_not_nominate_surface() -> None:
+    row = {"slot_id": "inductor_01", "component_type": "INDUCTOR", "stages": {
+        "presence": {"status": "UNKNOWN", "predicted_state": "PRESENT", "authority": "ADVISORY_ONLY"},
+        "pose": {"status": "UNKNOWN", "measured": {}, "limits": {}},
+        "orientation": {"status": "UNKNOWN"},
+        "surface": {"component_key": "inductor", "status": "UNKNOWN", "authority": "ADVISORY_ONLY",
+                    "score": .9, "normal_p99": .3, "fail_min": None}}}
+    assert build_advisory_candidates([row]) == []
+    row["stages"]["orientation"] = {"status": "FAIL", "reason": "MARK_ROTATED"}
+    assert build_advisory_candidates([row])[0]["codes"] == ["DIR?"]
+    row["stages"]["orientation"] = {"status": "UNKNOWN"}
+    row["stages"]["surface"]["fail_min"] = .7
+    assert build_advisory_candidates([row])[0]["codes"] == ["SURFACE?"]
 
 
 def test_patchcore_map_uses_absolute_normal_baseline() -> None:

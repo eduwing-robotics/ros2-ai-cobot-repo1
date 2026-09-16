@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Laptop GoPro preview only. Never apply to conveyor/inspection or copy
+     this interface name onto teammate PCs. Existing ROS topic/QoS is retained.
+     EXPERIMENTAL, NOT ENABLED: 2026-09-14 remote trial regressed and was rolled
+     back to Fast DDS. See docs/logs/vision.md before any further activation. -->
+<CycloneDDS xmlns="https://cdds.io/config">
+  <Domain Id="any">
+    <General>
+      <Interfaces>
+        <NetworkInterface name="wlo1"/>
+      </Interfaces>
+      <AllowMulticast>spdp</AllowMulticast>
+      <MaxMessageSize>1400 B</MaxMessageSize>
+      <FragmentSize>1280 B</FragmentSize>
+    </General>
+    <Internal>
+      <SocketReceiveBufferSize min="4 MiB"/>
+      <SocketSendBufferSize min="4 MiB"/>
+    </Internal>
+  </Domain>
+</CycloneDDS>

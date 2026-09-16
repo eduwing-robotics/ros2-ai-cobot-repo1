@@ -18,6 +18,15 @@ cp config/ksmc.env.example config/ksmc.env
 `runtime/inspection/reference/s22_package_legs_golden.png`와 학습 모델도 필요합니다.
 저장소 병합만으로 장비별 모델·보정 환경이 설치되지는 않습니다.
 
+2026-09-16 최신 현장 수정 반영분도 아래 Git 제외 자산을 별도로 준비해야 합니다.
+- 인덕터 모델: `runtime/inspection/patchcore/inductor_current_candidate_v3_20260914/models/`
+- HBM 기준 이미지: `vision_assembly/config/hbm_pin_reference.json`에 기록된 8개 경로와 SHA-256에 일치하는 이미지
+
+경로는 이 `vision-server/` 폴더 기준입니다. 모델·기준 이미지 누락을 정상 판정으로
+대체하지 않으며, Git 업데이트만으로 기존 장비의 runtime 자산이 이동되지는 않습니다.
+GoPro 전용 Cyclone DDS 설정은 실험용 선택 기능이며 기본값은 Fast DDS입니다.
+과거 원격 시험에서 악화돼 되돌렸으므로 예제의 주석을 해제해 일괄 적용하지 마세요.
+
 ## 구성
 
 - `camera2_scrcpy/`, `gopro_camera3/`: 카메라 영상 수신·전송

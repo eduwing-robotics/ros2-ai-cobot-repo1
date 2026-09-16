@@ -1,5 +1,26 @@
 # 카메라 작업 기록
 
+## 2026-09-16 Main integration of optional GoPro DDS configuration
+
+Added the previously local per-process DDS selector, commented environment
+example, experimental laptop profile and offline tests to main. The profile
+remains disabled by default; the prior unsuccessful remote trial and Fast DDS
+rollback below remain the applicable measured evidence. No quality/FPS/topic,
+control RMW or device configuration was changed or activated in this task.
+Hybrid/DDS tests (361 passed, 3 image-fixture skips) and the separate camera,
+conveyor and API regression group (333 passed) completed in an isolated tree.
+No camera/server restart, robot or conveyor command was issued. Remote playback
+was not tested; the host-specific interface must not be copied blindly.
+
+## 2026-09-14 GoPro-only DDS comparison, restored Fast DDS
+
+Tested an opt-in laptop GoPro Cyclone profile without changing quality, topics,
+S22/ROI or teammate settings. Remote GoPro reception regressed to 7.97 FPS, so
+the trial was disabled and Fast DDS restored. Final independent WLAN probe:
+GoPro15 FPS/max gap69.64 ms; direct teammate playback remains unverified.
+Checks, bundle lifecycle scope, no-motion caveats and limits are in the
+[grouped vision log](vision.md#2026-09-14-gopro-only-cyclone-dds-trial-and-fast-dds-recovery).
+
 ## 2026-09-14 Camera transport and overlay rollback
 
 Final follow-up: restored 30-FPS overlay/display timing at the user's request;

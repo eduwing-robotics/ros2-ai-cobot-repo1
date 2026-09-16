@@ -41,6 +41,20 @@ def inspect_hbm_pins(slot_id, crop_bgr, presence_state, alignment_valid,
                                if side["status"] not in ("PASS", "FAIL")]
             reference_sides = [side["side"] for side in individual
                                if side["reason"] == "REFERENCE_PIN_ANCHORS_INSUFFICIENT"]
+            # A bright speck cannot qualify a reference whose individual pin
+            # anchors are insufficient. Keep the raw gap for diagnosis, but
+            # do not turn reference deficiency into a sample defect.
+            gap_sides = evidence.measured.get("candidate_sides", [])
+            evidence.measured["reference_insufficient_gap_sides"] = [
+                side for side in gap_sides if side in reference_sides]
+            evidence.measured["observation_insufficient_gap_sides"] = [
+                side for side in gap_sides if side in uncertain_sides and side not in reference_sides]
+            evidence.measured["candidate_sides"] = [
+                side for side in gap_sides if side not in uncertain_sides]
+            if evidence.status == "FAIL" and not evidence.measured["candidate_sides"]:
+                evidence.status = "UNKNOWN"
+                evidence.reason = ("HBM_PIN_REFERENCE_INSUFFICIENT" if reference_sides
+                                   else "HBM_PIN_OBSERVATION_INSUFFICIENT_RECAPTURE")
             sample_sides = [side for side in uncertain_sides if side not in reference_sides]
             evidence.measured["observation_quality"] = {
                 "status": "INSUFFICIENT" if uncertain_sides else "NO_EXISTING_ABSTENTION",

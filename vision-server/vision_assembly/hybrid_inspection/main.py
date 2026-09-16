@@ -38,6 +38,7 @@ from opencv_inspectors import (  # noqa: E402
     estimate_common_projection_bias,
 )
 from hbm_pin_bands import inspect_hbm_pins  # noqa: E402
+from gpu_surface_crack import inspect_gpu_crack  # noqa: E402
 from patchcore_inspector import ComponentPatchCoreInspector, PatchCoreEvidence  # noqa: E402
 from package_leg_inspector import inspect as inspect_package_legs  # noqa: E402
 from predict_component_patchcore import _restore_slot_map, _trim_map_to_slot  # noqa: E402
@@ -64,7 +65,7 @@ DEFAULT_PATCHCORE_MODELS = (
     PROJECT_DIR / "runtime/inspection/patchcore/pcb_components_smd_v3"
 )
 DEFAULT_INDUCTOR_PATCHCORE_MODELS = (
-    PROJECT_DIR / "runtime/inspection/patchcore/inductor_morning_candidate_20260907/models"
+    PROJECT_DIR / "runtime/inspection/patchcore/inductor_current_candidate_v3_20260914/models"
 )
 # GPU must not follow Inductor-only model promotions.
 DEFAULT_GPU_PATCHCORE_MODELS = (
@@ -557,6 +558,9 @@ def build_advisory_candidates(slot_reports: list[dict[str, Any]]) -> list[dict[s
         if pins.get("status") == "FAIL":
             codes.append("PINS?")
             details.append(str(pins.get("reason", "PIN_PATTERN_FAIL")))
+        if stages.get("surface_crack", {}).get("status") == "FAIL":
+            codes.append("SURFACE?")
+            details.append(str(stages["surface_crack"]["reason"]))
         # Keep the summary readable: weak auxiliary mask geometry remains in
         # JSON but only strong candidates are drawn on the operator image.
         measured_pose = pose.get("measured", {})
@@ -910,13 +914,13 @@ def build_advisory_candidates(slot_reports: list[dict[str, Any]]) -> list[dict[s
             and fail_min is not None
             and float(score) >= float(fail_min)
         ):
-            codes.append("SURFACE?")
+            if "SURFACE?" not in codes:
+                codes.append("SURFACE?")
             details.append(
                 f"PATCHCORE_SCORE_{float(score):.3f}_ABOVE_CONTROLLED_FAIL_MIN_{float(fail_min):.3f}"
             )
-        if fail_min is None and inductor_anomaly_visible(surface) and not codes:
-            codes.append("SURFACE?")
-            details.append("INDUCTOR_PATCHCORE_ABOVE_1_20_NORMAL_P99_DISPLAY_ONLY_NOT_DEFECT_THRESHOLD")
+        # A normal-only baseline measures appearance drift, not a controlled
+        # defect threshold. Preserve maps/scores without a surface nomination.
         if not codes:
             continue
         primary = max(codes, key=lambda item: CANDIDATE_PRIORITY[item])
@@ -932,6 +936,8 @@ def build_advisory_candidates(slot_reports: list[dict[str, Any]]) -> list[dict[s
                 ],
                 "primary_code": primary,
                 "pin_points_crop_px": pins.get("measured", {}).get("defect_points_crop_px", []),
+                "crack_regions_crop_px": [c["bbox_crop_px"] for c in
+                    stages.get("surface_crack", {}).get("measured", {}).get("candidates", [])],
                 "details": details,
                 "authority": "ADVISORY_ONLY",
                 "confirmed_defect": False,
@@ -1054,6 +1060,12 @@ def _annotate_candidates(
             point = (int(round(ox + px)), int(round(oy + py)))
             if 0 <= point[0] < canvas.shape[1] and 0 <= point[1] < canvas.shape[0]:
                 cv2.circle(canvas, point, 6, CANDIDATE_COLORS["PINS?"], 2, cv2.LINE_AA)
+        for rx0, ry0, rx1, ry1 in candidate.get("crack_regions_crop_px", []):
+            ox, oy = slot.crop_origin_px
+            _draw_crack_callout(
+                canvas, (ox + rx0, oy + ry0, ox + rx1, oy + ry1),
+                CANDIDATE_COLORS["SURFACE?"],
+            )
         label = f"{slot.slot_id} {'/'.join(display_codes(candidate['codes']))}"
         (text_w, text_h), baseline = cv2.getTextSize(
             label, cv2.FONT_HERSHEY_SIMPLEX, 0.48, 1
@@ -1076,6 +1088,67 @@ def _annotate_candidates(
             1,
             cv2.LINE_AA,
         )
+    return canvas
+
+
+def _draw_crack_callout(
+    canvas: np.ndarray,
+    crack_xyxy: tuple[int, int, int, int],
+    color: tuple[int, int, int],
+    padding: int = 6,
+) -> None:
+    """Point at a crack without painting over its evidence pixels."""
+    rx0, ry0, rx1, ry1 = (int(value) for value in crack_xyxy)
+    height, width = canvas.shape[:2]
+    x0, y0 = max(0, rx0 - padding), max(0, ry0 - padding)
+    x1, y1 = min(width - 1, rx1 + padding), min(height - 1, ry1 + padding)
+    if x1 <= x0 or y1 <= y0:
+        return
+    cv2.rectangle(canvas, (x0, y0), (x1, y1), color, 1, cv2.LINE_AA)
+    center_x = max(0, min(width - 1, (rx0 + rx1) // 2))
+    tip_y = max(0, min(height - 1, ry0 - padding - 2))
+    arrow_y = max(0, tip_y - 20)
+    cv2.arrowedLine(
+        canvas, (center_x, arrow_y), (center_x, tip_y), color, 1,
+        cv2.LINE_AA, tipLength=0.30,
+    )
+    cv2.putText(
+        canvas, "CRACK?", (max(0, center_x - 27), max(10, arrow_y - 3)),
+        cv2.FONT_HERSHEY_SIMPLEX, 0.38, color, 1, cv2.LINE_AA,
+    )
+
+
+def _render_gpu_crack_detail(
+    slot: FixedSlot,
+    crack_regions: list[list[int]],
+) -> np.ndarray | None:
+    """Side-by-side enlarged original and non-occluding crack callout."""
+    if slot.crop_bgr is None or not crack_regions:
+        return None
+    original = slot.crop_bgr.copy()
+    marked = original.copy()
+    # Multiple Hough fragments can describe the same physical ridge.  Present
+    # one enclosing callout so repeated labels do not hide the evidence.
+    merged = (
+        min(region[0] for region in crack_regions),
+        min(region[1] for region in crack_regions),
+        max(region[2] for region in crack_regions),
+        max(region[3] for region in crack_regions),
+    )
+    _draw_crack_callout(marked, merged, CANDIDATE_COLORS["SURFACE?"])
+    scale = max(1.0, 760.0 / float(original.shape[0]))
+    size = (int(round(original.shape[1] * scale)), int(round(original.shape[0] * scale)))
+    original = cv2.resize(original, size, interpolation=cv2.INTER_CUBIC)
+    marked = cv2.resize(marked, size, interpolation=cv2.INTER_CUBIC)
+    header = 44
+    canvas = np.full((size[1] + header, size[0] * 2 + 16, 3), (15, 15, 18), np.uint8)
+    canvas[header:, :size[0]] = original
+    canvas[header:, size[0] + 16:] = marked
+    cv2.putText(canvas, "GPU ORIGINAL", (10, 29),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.58, (235, 235, 235), 1, cv2.LINE_AA)
+    cv2.putText(canvas, "CRACK DETECTION", (size[0] + 26, 29),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.58, CANDIDATE_COLORS["SURFACE?"], 1,
+                cv2.LINE_AA)
     return canvas
 
 
@@ -1518,6 +1591,10 @@ def inspect_pcb(
             boundary_items[slot.slot_id] = stages["vrm_boundary"]
         if slot.component_type == "GPU":
             stages["pins"] = _provider_dict(gpu_pin_result)
+            stages["surface_crack"] = _provider_dict(inspect_gpu_crack(
+                slot.crop_bgr, stages["presence"].get("predicted_state", "UNKNOWN"),
+                registered.alignment_reason == "OK" and registered.alignment_score >=
+                float(cropper.config["global_alignment"]["minimum_score"])))
         elif slot.component_type == "HBM":
             stages["pins"] = _provider_dict(inspect_hbm_pins(
                 slot.slot_id, slot.crop_bgr,
@@ -1643,6 +1720,23 @@ def inspect_pcb(
     )
     report_image_path = run_dir / "hybrid_report.png"
     cv2.imwrite(str(report_image_path), report_image, [cv2.IMWRITE_PNG_COMPRESSION, 2])
+    gpu_crack_detail_path = None
+    gpu_crack_candidate = next(
+        (item for item in advisory_candidates
+         if item["slot_id"] == "ai_gpu" and item.get("crack_regions_crop_px")),
+        None,
+    )
+    if gpu_crack_candidate is not None:
+        gpu_slot = next(slot for slot in slots if slot.slot_id == "ai_gpu")
+        gpu_crack_detail = _render_gpu_crack_detail(
+            gpu_slot, gpu_crack_candidate["crack_regions_crop_px"]
+        )
+        if gpu_crack_detail is not None:
+            gpu_crack_detail_path = run_dir / "gpu_crack_detail.png"
+            cv2.imwrite(
+                str(gpu_crack_detail_path), gpu_crack_detail,
+                [cv2.IMWRITE_PNG_COMPRESSION, 2],
+            )
     heat_only_path = run_dir / "patchcore_excess_map.png"
     cv2.imwrite(
         str(heat_only_path), heat_only, [cv2.IMWRITE_PNG_COMPRESSION, 2]
@@ -1850,6 +1944,9 @@ def inspect_pcb(
             "patchcore_unverified_full_heatmap_overlay": str(full_heatmap_path),
             "gpu_pin_continuity_debug": (
                 str(pin_debug_path) if pin_debug_path is not None else None
+            ),
+            "gpu_crack_detail": (
+                str(gpu_crack_detail_path) if gpu_crack_detail_path is not None else None
             ),
             "aligned_board": str(aligned_path),
         },
