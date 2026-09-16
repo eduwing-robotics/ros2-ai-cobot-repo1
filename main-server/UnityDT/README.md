@@ -1,8 +1,120 @@
-# UnityDT
+# UnityDT · 작업자 화면과 디지털 트윈
 
-HBM 조립체의 작업자 화면과 디지털 트윈을 소유하는 Unity 프로젝트입니다.
+> 로봇 조립 셀을 3D로 재현하고, 작업자가 생산을 **등록 → 감시 → 결과 확인**까지 한곳에서 처리하는 Unity 애플리케이션입니다.
 
-## 역할과 책임
+![RUN 화면 · Mock 모드](Docs/images/run-mock.jpg)
+
+*RUN 화면(Mock 모드). 왼쪽은 조립 셀의 3D 트윈, 오른쪽은 로봇 카메라 영상, 아래는 관절 각도·그리퍼·25개 슬롯 장착 현황입니다.*
+
+## 이 프로젝트가 하는 일
+
+협동로봇 FAIRINO FR5가 반도체 패키지 보드(HBM Accelerator Package Board)에 부품 25개를 조립하고, 컨베이어로 옮겨 비전 검사를 받는 제조 셀이 있습니다. UnityDT는 이 셀의 **작업자 화면**입니다.
+
+- 실제 설비의 상태를 3D 장면과 계기판으로 보여 줍니다.
+- 작업자가 제품과 목표 수량을 골라 생산 작업을 등록하고 실행·일시정지·취소합니다.
+- 검사 결과와 불량 위치를 확인합니다.
+- **Mock 모드**로는 실제 로봇 없이도 같은 화면에서 전체 공정을 시연하고 검증할 수 있습니다.
+
+### 디지털 트윈이란?
+
+실제 설비의 상태를 가상 공간에 그대로 복제한 모델입니다. 이 프로젝트에서는 로봇이 보내는 관절 각도로 3D 로봇을 똑같이 움직이고, 카메라가 인식한 기판·부품 위치를 3D 장면에 배치합니다. 작업자는 현장에 가지 않고도 로봇이 지금 무엇을 하는지 볼 수 있습니다.
+
+## 화면 구성
+
+| 화면 | 작업자가 여기서 판단하는 것 |
+|---|---|
+| **RUN** 운전 현황 | 작업이 정상 진행 중인지, 개입이 필요한지 |
+| **JOBS** 작업 | 제품·목표 PASS 수량으로 작업 등록, 실행·취소·검사 기록 확인 |
+| **INSPECT** 검사 | 검사 결과와 불량 근거 확인 후 후속 조치 |
+| **MANUAL** 수동 | 목표 자세를 반투명 "Ghost" 로봇으로 미리보기 |
+| **SETUP** 설정 | 연결 상태·카메라·좌표 보정이 운전 전에 준비됐는지 |
+
+![JOBS 화면](Docs/images/jobs.jpg)
+
+*JOBS 화면. 제품을 고르면 필요한 부품 6종(HBM·PM·GPU·CAP·IND·VRM)과 조회 당시 재고가 표시되고, 목표 PASS 수량으로 작업을 등록합니다. 왼쪽 목록에서 작업 상태와 시도 횟수를 확인합니다.*
+
+![RUN 화면 · Real 모드 수신 중단](Docs/images/run-real-stale.jpg)
+
+*Real 모드에서 로봇·카메라 신호가 끊긴 상황. 마지막 값을 현재 값처럼 보여 주지 않고 "수신 중단 · 상태 미확인"과 경과 시간을 표시합니다.*
+
+## 어떻게 동작하나요?
+
+```mermaid
+flowchart LR
+    UI["작업자 화면<br/>(UI Toolkit)"] --> SC["Scenario<br/>자동 조립 흐름"]
+    SC --> RM["RobotMaster<br/>Mock / Real 선택"]
+    RM -->|Mock| MK["Mock backend"]
+    RM -->|Real| RL["Real backend"]
+    MK & RL -->|"ROS 2 (TCP 중계)"| ROS["Assembly Sequencer<br/>로봇·센서"]
+    UI -->|HTTP| MS["MainServer<br/>작업·검사 조회"]
+```
+
+### 설계에서 신경 쓴 점
+
+1. **Mock과 Real을 같은 화면 코드로**
+   화면과 공정 흐름(Scenario)은 `IRobotControl` 같은 인터페이스만 사용합니다. 실행 시 `RobotMaster`가 Mock 또는 Real 구현을 끼워 넣기 때문에, 화면 코드를 고치지 않고 시뮬레이션과 실제 설비를 오갈 수 있습니다.
+2. **"요청 접수"와 "완료"를 구분**
+   버튼을 눌러 요청이 전달됐다고 성공을 표시하지 않습니다. 설비가 실제로 끝났다고 알려 줄 때만 완료로 표시하고, 실패와 시간 초과는 숨기지 않고 보여 줍니다.
+3. **오래된 데이터는 오래됐다고 표시**
+   상태가 일정 시간 갱신되지 않으면 조작 버튼을 막고 마지막 수신 시각을 보여 줍니다. 화면이 멈춘 값을 사실처럼 보여 주는 일을 막기 위해서입니다.
+4. **카메라 관측을 트윈에 부드럽게 반영**
+   기판 위치는 흔들림을 줄이도록 보간해서 옮기고, 로봇이 부품을 잡고 놓는 이벤트에 맞춰 3D 부품을 그리퍼에 붙였다 뗍니다. 이는 표시용이며 생산 기록을 바꾸지 않습니다.
+5. **Ghost 미리보기**
+   수동 목표 자세를 반투명 로봇으로 먼저 보여 줘, 실제로 움직이기 전에 결과를 눈으로 확인합니다.
+
+## 기술 스택
+
+| 분야 | 사용 기술 |
+|---|---|
+| 엔진 | Unity 6 (6000.3), Universal Render Pipeline |
+| UI | UI Toolkit (UXML 화면 7개 + USS 테마) |
+| 통신 | Unity ROS-TCP Connector (ROS 2), HTTP (MainServer) |
+| 테스트 | Unity Test Framework, PlayMode 통합 테스트 |
+
+## 폴더 구조
+
+```text
+UnityDT/
+├── Assets/
+│   ├── Scenes/SampleScene.unity     # 조립 셀 장면
+│   ├── UI/                          # FR5Shell·Run·Request·Inspect·Manual·Quality·Setup (UXML), 테마 USS
+│   ├── src/
+│   │   ├── Runtime/Scenario/        # 자동 조립 흐름
+│   │   ├── Runtime/Robot/
+│   │   │   ├── Interface/           # Mock·Real 공통 계약
+│   │   │   ├── Mock/  Real/         # 구현체
+│   │   │   ├── Status/              # 로봇·그리퍼 상태 수신
+│   │   │   └── Assembly/            # 조립 진행 표시
+│   │   ├── Runtime/RobotGhost/      # Ghost 미리보기
+│   │   ├── Runtime/Camera/          # 영상 수신, 기판·트레이 관측 반영
+│   │   ├── Runtime/ConveyBelt/      # Mock 컨베이어
+│   │   └── Static/ItemManager.cs    # 기판·슬롯·부품 인스턴스 관리
+│   └── Tests/PlayMode/              # Mock 조립 통합 테스트
+└── Docs/                            # UI 책임·설계 원칙, README 이미지
+```
+
+## 실행
+
+1. Unity Hub에서 `UnityDT` 폴더를 Unity **6000.3.21f1**로 엽니다.
+2. `Assets/Scenes/SampleScene.unity`를 엽니다.
+3. **Robotics > ROS Settings**에서 ROS 2를 선택하고, Endpoint가 실행되는 PC의 IP와 포트 `10000`을 입력합니다.
+4. 서버와 Sequencer를 [최상단 실행 절차](../README.md#실행)에 따라 같은 모드(Mock/Real)로 실행한 뒤 Play를 누릅니다.
+
+## 관련 문서
+
+- [Unity UI 책임과 화면 구조](Docs/UI.md)
+- [HMI 화면 설계 원칙](Docs/ui-design.md)
+- [전체 시스템 아키텍처](../docs/architecture/index.md)
+- [공개 API 목록](../README.md#공개-api)
+
+---
+
+## 구현 상세
+
+아래는 개발·운영자를 위한 상세 동작 기준입니다.
+
+<details>
+<summary>역할과 설계 경계</summary>
 
 - Scene과 Asset, 작업자 UI와 3D 상태 표현
 - Scenario의 상위 업무 흐름
@@ -12,8 +124,6 @@ HBM 조립체의 작업자 화면과 디지털 트윈을 소유하는 Unity 프�
 
 생산 DB 쓰기, Job·Unit 상태 전이, ROS 전송 중계와 설비의 실제 완료 판정은 소유하지 않습니다.
 
-## 설계 경계
-
 Scenario는 주입된 자동 조립 계약만 사용합니다. UI와 Scenario는 구체 Mock/Real 구현을 참조하거나 캐스팅하지 않습니다.
 
 자동 조립과 수동 조작은 별도 계약입니다. 자동 흐름은 수동 명령을 조합해 만들지 않으며, 수동 UI는 생산 Job 상태를 변경하지 않습니다.
@@ -22,7 +132,10 @@ Scenario는 주입된 자동 조립 계약만 사용합니다. UI와 Scenario는
 
 요청 수락은 완료가 아닙니다. Unity는 backend가 실제 완료를 반환한 뒤에만 성공을 표시하고 실패와 timeout을 사용자에게 전달합니다.
 
-## 조립체 씬 객체
+</details>
+
+<details>
+<summary>조립체 씬 객체와 관측 반영</summary>
 
 `ItemManager`가 프리팹 슬롯·공급 위치와 현재 Job의 기판 인스턴스를 소유합니다.
 Real에서는 Play 중 유효하고 안정된 기판 관측으로 Job 없이도 PCB와 25개 슬롯을 표시합니다.
@@ -44,6 +157,22 @@ RUN 카메라 패널은 Real에서 컨베이어 정지선·조립 인식·CAMERA
 Mock에서 ROBOT·BOARD 영상을 표시합니다. 카메라 버튼은 해당 영상을 단독 표시하고,
 분할 버튼은 두 열의 격자로 표시하며, 세 영상은 2×2 격자의 세 칸을 사용합니다.
 카메라 확대 영역은 하단 계기 띠 위까지 표시해 카메라 조작 버튼을 유지합니다.
+
+Scene의 `ItemManager`에는 기존 motherboard 프리팹, `TransSpots/BoardSpawnPoint`,
+`Items`, `Items/CompletedBoards`를 연결합니다. 슬롯은 프리팹 내부 Transform을,
+공급 위치는 `Items/SupplyPoints`의 고정 Transform을 참조합니다.
+Mock은 Unit별 공급 부품을 새로 생성하므로 완료품의 장착 부품을 회수하지 않습니다.
+
+Mock 피드백의 `unit_id`로 투입·완료를 연결합니다. Real의 `BeginUnit`·`CompleteUnit`도
+동일한 ItemManager를 사용합니다. Real 자동조립은 공통 ROS service에 요청하고
+`runtime_mode=real`과 일치하는 Job 상태·DB 저장 완료를 확인합니다.
+Real은 Sequencer의 네 단계 공정 완료와 DB 동기화를 기다리고 준비 거절·실패·판정 보류를 호출자에게 전달합니다.
+요청 수락이나 통신 연결만으로 성공을 반환하지 않습니다.
+
+</details>
+
+<details>
+<summary>트레이 부품 시각화와 재시작 복원</summary>
 
 `TrayPartCalibrator`는 생산 실행 여부와 무관하게 `/real/robot/event`를 수신합니다.
 로컬 실행도 원래 트레이 객체·등록/관측 세대와 Pick 시작을 대조한 뒤 GRASP/RELEASE의
@@ -88,24 +217,10 @@ Scene·컴포넌트 이름·ROS 접속 주소별로 분리하며, 관측 갱신�
 끝나지 않은 동안에는 중복 요청하지 않습니다. 무한 로딩이나 근거 없는 진행률은 표시하지 않습니다.
 이 복구는 시각화 전용이며 로봇 동작 재요청과 생산 DB 상태 변경을 수행하지 않습니다.
 
+</details>
 
-Scene의 `ItemManager`에는 기존 motherboard 프리팹, `TransSpots/BoardSpawnPoint`,
-`Items`, `Items/CompletedBoards`를 연결합니다. 슬롯은 프리팹 내부 Transform을,
-공급 위치는 `Items/SupplyPoints`의 고정 Transform을 참조합니다.
-Mock은 Unit별 공급 부품을 새로 생성하므로 완료품의 장착 부품을 회수하지 않습니다.
-
-Mock 피드백의 `unit_id`로 투입·완료를 연결합니다. Real의 `BeginUnit`·`CompleteUnit`도
-동일한 ItemManager를 사용합니다. Real 자동조립은 공통 ROS service에 요청하고
-`runtime_mode=real`과 일치하는 Job 상태·DB 저장 완료를 확인합니다.
-Real은 Sequencer의 네 단계 공정 완료와 DB 동기화를 기다리고 준비 거절·실패·판정 보류를 호출자에게 전달합니다.
-요청 수락이나 통신 연결만으로 성공을 반환하지 않습니다.
-
-## 문서
-
-- [Unity UI 책임](Docs/UI.md)
-- [HMI 설계 원칙](Docs/ui-design.md)
-- [전체 시스템 아키텍처](../docs/architecture/index.md)
-- [공개 API 목록](../docs/API.md)
+<details>
+<summary>JOBS 실행 확인과 일시정지·재개·취소</summary>
 
 JOBS의 작업 실행은 공통 Scenario 계약으로 현장 확인 UI를 전달합니다. Real에서는 운영자 ID와
 그리퍼 비움·빈 PCB·트레이 25개·고정 지그 확인을 기본 미선택 상태로 받고, 해당 실행 UUID와
@@ -114,8 +229,6 @@ Mock은 이 확인 UI를 호출하지 않습니다. 전송 결과가 불명확�
 명시적으로 거절되면 다음 시도에서 새 확인을 받습니다. 다음 Unit 대기에도 새 확인을 받으며,
 재접속 시 상태 조회로 진행을 복구합니다. 검사 결과와 이미지는 기존 INSPECT 화면에서 조회합니다.
 UI 완료 대기는 기존 1800초 제한을 유지합니다. UI 대기 종료는 원격 설비 정지를 뜻하지 않습니다.
-
-### 조립 일시정지·재개·취소
 
 공통 셸의 일시정지 버튼은 정지 확인 후 재개 버튼으로 바뀝니다. Real 작업 취소 버튼은 Scenario → Sequencer → 로봇 production API를 사용합니다. 일시정지는 전달된 동작 종료 후 반영되며 취소는 실제 정지와 DB 반영까지 기다립니다. 요청 처리 중에는 중복 조작을 막고 미확인·거절 사유를 화면에 표시합니다. 현재 Real 제어 범위는 로봇 조립 단계이며 컨베이어·검사 단계 및 Mock 취소는 지원하지 않습니다.
 
@@ -133,3 +246,5 @@ Real 조작 버튼은 Scenario 인터페이스를 통해 Sequencer의 조작 불
 공통 셸의 불량 알림은 현재 Job의 최근 FAIL Unit과 대책서 발송 상태별 건수를 표시합니다.
 불량 상세 보기는 해당 Unit의 검사 화면을 직접 선택하며, 생산 재개·확인 팝업은 표시하지 않습니다.
 조회 실패 시 마지막 알림에 상태 재확인 필요를 표시합니다.
+
+</details>

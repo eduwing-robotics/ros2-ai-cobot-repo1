@@ -46,8 +46,9 @@
                 <ui:Label name="inspection-context" text="조회 중" class="inspect-support" />
                 <ui:Label name="verdict-value" text="조회 중" class="inspect-verdict inspect-verdict--status" />
                 <ui:Label name="inspection-message" text="검사 기록을 불러오고 있습니다." class="inspect-message" />
-                <ui:VisualElement name="check-list" class="vlist inspect-checks" />
-                <ui:VisualElement class="spacer" />
+                <ui:ScrollView mode="Vertical" class="inspect-checks-scroll">
+                    <ui:VisualElement name="check-list" class="vlist inspect-checks" />
+                </ui:ScrollView>
                 <ui:VisualElement class="row inspect-time-row">
                     <ui:Label text="검사 시각 · 로컬" class="inspect-support" />
                     <ui:VisualElement class="spacer" />

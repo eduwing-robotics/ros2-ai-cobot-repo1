@@ -63,14 +63,14 @@ Vision `record_json`은 `transport="ros2"`, 요청과 동일한 `inspection_id`�
 | `transfer_assembled_pcb` | `job_id`, `unit_id`, `operation_id`, `assembled_pcb` | 검사 위치 이송 좌표 등록과 workflow 재개 |
 | `pause` | `job_id` | 활성 작업 일시정지 요청 |
 | `resume` | `job_id` | 활성 작업 재개 요청 |
-| `cancel` | `job_id` | 로봇 조립 중 작업 취소 요청 (Real) |
+| `cancel` | `job_id` | 활성 작업 취소 요청 |
 
 `observations`, `conveyor_arrived`, `conveyor_failed`, `transfer_assembled_pcb`는 Mock 전용입니다.
 Real은 이 명령들을 `INVALID_REQUEST`로 거절하며 Unity 신호를 물리 설비 완료로 사용하지 않습니다.
 Mock에서는 `start`를 거절하고 기존 observations와 영속 Job 결합 방식을 유지합니다.
 `pause`·`resume`·`cancel`은 활성 Job과 대조합니다. Real에서는 로봇 조립 중 production v2 제어로 전달하며 컨베이어 이동·검사 단계에서는 거절합니다. 일시정지는 `after_dispatched_motion` 방식입니다. 제어마다 새 `control_id`와 증가하는 `control_sequence`를 사용하고 재개에는 확인된 `pause_control_id`를 포함합니다.
 
-응답 성공은 요청 전달이며 완료가 아닙니다. status의 `control_pending`이 해제되고 해당 제어 ID와 실제 상태가 일치해야 완료입니다. pause는 `paused`·`stop_verified=true`·`resume_available=true`, resume은 `running`, cancel은 `cancelled`·`stop_verified=true`·`recovery_required=false`를 확인합니다. 취소 완료는 Job `CANCELLED`와 Unit 실패로 기록하고, 기존 상태 계약의 `FAILED`·`EXECUTION_CANCELLED`로 반환합니다. 제어 거절·60초 확인 만료는 `CONTROL_UNCONFIRMED`이며 실제 실행을 완료 처리하지 않습니다. Mock 취소는 미지원입니다.
+Real 제어의 응답 성공은 요청 전달이며 완료가 아닙니다. status의 `control_pending`이 해제되고 해당 제어 ID와 실제 상태가 일치해야 완료입니다. pause는 `paused`·`stop_verified=true`·`resume_available=true`, resume은 `running`, cancel은 `cancelled`·`stop_verified=true`·`recovery_required=false`를 확인합니다. 제어 거절·60초 확인 만료는 `CONTROL_UNCONFIRMED`이며 실제 실행을 완료 처리하지 않습니다. Mock 취소는 진행 Unit을 즉시 실패 처리하고 Job을 `CANCELLED`로 확정합니다. 두 모드 모두 취소된 실행은 기존 상태 계약의 `FAILED`·`EXECUTION_CANCELLED`로 반환합니다.
 
 알 수 없는 필드와 누락된 필드는 `INVALID_REQUEST`입니다. `job_id`는 UUID 문자열이며 status를 제외한 모든 명령에서 현재 Job과 대조합니다.
 

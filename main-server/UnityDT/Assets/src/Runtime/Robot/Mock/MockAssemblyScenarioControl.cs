@@ -77,6 +77,7 @@ namespace MainUnity.Runtime.Robot.Mock
         int expectedStepCount;
         int heldStepOrder = -1;
         int lastPlacedStepOrder = -1;
+        readonly List<string> placedSlotCodes = new();
         bool serviceRegistered;
         Vector3 assembledPcbPositionFromTcp;
         Quaternion assembledPcbRotationFromTcp = Quaternion.identity;
@@ -296,6 +297,7 @@ namespace MainUnity.Runtime.Robot.Mock
             expectedStepCount = observations.Length;
             heldStepOrder = -1;
             lastPlacedStepOrder = 0;
+            placedSlotCodes.Clear();
             assembledPcbHeld = false;
             assembledPcbTransferred = false;
             inspectionTransferStarted = false;
@@ -451,6 +453,8 @@ namespace MainUnity.Runtime.Robot.Mock
                 {
                     expectedStepCount = snapshot.expected_step_count;
                     lastPlacedStepOrder = snapshot.placed_count;
+                    placedSlotCodes.Clear();
+                    placedSlotCodes.AddRange(snapshot.placed_slot_codes);
                     assembledPcbTransferred = true;
                     terminal = snapshot.active ? new TaskCompletionSource<string>() : null;
                     Report(snapshot.active ? AssemblyState.Placed : AssemblyState.Completed, null);
@@ -516,6 +520,7 @@ namespace MainUnity.Runtime.Robot.Mock
             heldStepOrder = -1;
             lastPlacedStepOrder = 0;
             activeJobId = snapshot.job_id;
+            placedSlotCodes.Clear();
             activeUnitId = snapshot.unit_id;
             assembledPcbHeld = false;
             assembledPcbTransferred = false;
@@ -1136,6 +1141,7 @@ namespace MainUnity.Runtime.Robot.Mock
             heldStepOrder = -1;
             lastPlacedStepOrder = 0;
             assembledPcbHeld = false;
+            placedSlotCodes.Clear();
             assembledPcbTransferred = false;
             inspectionTransferStarted = false;
             assemblyConveyorStarted = false;
@@ -1213,6 +1219,7 @@ namespace MainUnity.Runtime.Robot.Mock
                 item.rotation = slot.rotation *
                     Quaternion.Euler(0f, resumeRotationOffsetDegrees, 0f);
             lastPlacedStepOrder = feedback.step_order;
+            placedSlotCodes.Add(feedback.slot_code);
             heldItem = null;
             heldPartId = string.Empty;
             heldSlotCode = string.Empty;
@@ -1259,10 +1266,10 @@ namespace MainUnity.Runtime.Robot.Mock
             return new AssembledPcbTransfer
             {
                 source = ToRosPoseRequest(
-                    new Pose(assembledPcbPicker.position, assembledPcbPicker.rotation),
+                    new Pose(assembledPcbPicker.position, sourceTcpRotation),
                     "assembled PCB source"),
                 target = ToRosPoseRequest(
-                    new Pose(assembledPcbDropPoint.position, assembledPcbDropPoint.rotation),
+                    new Pose(assembledPcbDropPoint.position, DownwardTcpRotation(assembledPcbDropPoint.rotation)),
                     "assembled PCB target")
             };
         }
@@ -1358,20 +1365,28 @@ namespace MainUnity.Runtime.Robot.Mock
                         throw new InvalidOperationException(
                             "Mock pickup offset must be finite for: " + slotGroup.RequiredItemType);
 
-                    Quaternion pickupRotation = item.rotation * Quaternion.Euler(0f,
-                        itemGroup.PickVertically ? 90f : 0f, 0f);
+                    // Parallel jaws share a grasp axis after a half turn. Keep it
+                    // near the normal supply approach in [-180, 0) Unity degrees,
+                    // preserving the part's yaw instead of mirroring it.
+                    float pickupYaw = Mathf.Repeat(item.rotation.eulerAngles.y +
+                        (itemGroup.PickVertically ? 90f : 0f), 180f) - 180f;
+                    Quaternion pickupRotation = Quaternion.AngleAxis(pickupYaw, Vector3.up) *
+                        Quaternion.AngleAxis(180f, Vector3.forward);
                     Pose pickup = new(item.position + new Vector3(itemGroup.PickupOffsetXZ.x,
                         0f, itemGroup.PickupOffsetXZ.y), pickupRotation);
-                    Quaternion tcpRotation = DownwardTcpRotation(pickup.rotation);
+                    Quaternion tcpRotation = pickup.rotation;
+                    Vector3 gripPosition = Quaternion.Inverse(tcpRotation) * (item.position - pickup.position);
+                    Quaternion gripRotation = Quaternion.Inverse(tcpRotation) * item.rotation;
                     slotTargets[slot.name] = (slotGroup.RequiredItemType, item, slot,
-                        Quaternion.Inverse(tcpRotation) * (item.position - pickup.position),
-                        Quaternion.Inverse(tcpRotation) * item.rotation);
-                    Vector3 gripOffset = Quaternion.Inverse(item.rotation) *
-                        (pickup.position - item.position);
+                        gripPosition, gripRotation);
                     Pose slotPose = itemManager.GetSlotPose(slot);
-                    Pose placement = new(slotPose.position + assemblyOffset +
-                        slotPose.rotation * gripOffset,
-                        slotPose.rotation);
+                    // Match recovery's part-to-slot orientation. Solve the TCP
+                    // from the grasp offset so supply yaw cannot leak into placement.
+                    Quaternion partRotation = slotPose.rotation *
+                        Quaternion.Euler(0f, resumeRotationOffsetDegrees, 0f);
+                    Quaternion placementRotation = partRotation * Quaternion.Inverse(gripRotation);
+                    Pose placement = new(slotPose.position + assemblyOffset -
+                        placementRotation * gripPosition, placementRotation);
 
                     observations.Add(new MockObservation
                     {
@@ -1407,7 +1422,6 @@ namespace MainUnity.Runtime.Robot.Mock
 
         RosPoseRequest ToRosPoseRequest(Pose tcpTarget, string targetName)
         {
-            tcpTarget.rotation = DownwardTcpRotation(tcpTarget.rotation);
             if (!control.TryGetRosTcpTarget(tcpTarget, out Vector3 positionMillimeters,
                     out Quaternion rotation))
                 throw new InvalidOperationException(
@@ -1490,7 +1504,11 @@ namespace MainUnity.Runtime.Robot.Mock
                 feedback != null ? feedback.slot_code : heldSlotCode,
                 feedback != null ? feedback.error_code : string.Empty,
                 feedback != null ? feedback.message : error,
-                Time.realtimeSinceStartupAsDouble));
+                Time.realtimeSinceStartupAsDouble)
+            {
+                PlacedSlotCodes = placedSlotCodes.ToArray(),
+                UnitId = activeUnitId
+            });
         }
 
         void EnsureRosConnection()

@@ -326,7 +326,7 @@ def parse_command(raw, expected_recipe_version, runtime_mode="mock"):
     command_name = command.get("command")
     allowed = ({"start", "pause", "resume", "cancel", "force_cancel"} if runtime_mode == "real" else {
         "observations", "conveyor_arrived", "conveyor_failed",
-        "transfer_assembled_pcb", "pause", "resume",
+        "transfer_assembled_pcb", "pause", "resume", "cancel",
     })
     if command_name not in allowed:
         raise ValueError(f"unsupported {runtime_mode} assembly command: {command_name}")

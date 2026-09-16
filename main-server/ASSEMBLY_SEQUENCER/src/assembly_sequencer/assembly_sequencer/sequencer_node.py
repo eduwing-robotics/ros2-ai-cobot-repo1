@@ -295,8 +295,6 @@ class AssemblySequencer(Node):
                 self.active["control_pending"] = True
                 self.active["message"] = command_type + " 요청 · 실제 상태 확인 중"
                 return self.set_response(response, True, job_id)
-            if command_type == "cancel":
-                return self.set_response(response, False, job_id, "NOT_READY", "Mock cancel is unsupported")
             try:
                 await self.backend.set_paused(job_id, command_type == "pause")
             except Exception as error:

@@ -2,12 +2,12 @@
 
 기준 계약은 `src/assembly_sequencer/assembly_sequencer/api_contracts.py`이다.
 컨베이어는 `std_srvs/srv/Trigger`, Vision 검사는 `vision_interfaces/srv`를 사용한다.
-`OUT/Vsion/API_CONTRACT.md`의 HTTP multipart 계약은 이 Sequencer가 소비하는 ROS API가 아니다.
+외부 Vision 서비스의 HTTP multipart 계약은 이 Sequencer가 소비하는 ROS API가 아니다.
 
 ## 1. 환경 준비
 
 ```bash
-cd /home/codlab/Main_Unity/ASSEMBLY_SEQUENCER
+cd ASSEMBLY_SEQUENCER
 source /opt/ros/jazzy/setup.bash
 source install/setup.bash
 export ROS_DOMAIN_ID=5

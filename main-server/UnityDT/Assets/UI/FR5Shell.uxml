@@ -59,7 +59,7 @@
                 <ui:VisualElement name="link-joint-dot" class="dot" />
                 <ui:Label name="link-joint-age" text="ROS" class="muted" style="margin-left:8px; margin-right:14px; font-size:12px;" />
                 <ui:VisualElement name="link-image-dot" class="dot" />
-                <ui:Label name="link-image-age" text="CAM" class="muted" style="margin-left:8px; margin-right:14px; font-size:12px;" />
+                <ui:Label name="link-image-age" text="기준 영상" class="muted" style="margin-left:8px; margin-right:14px; font-size:12px;" />
                 <ui:VisualElement name="link-api-dot" class="dot" />
                 <ui:Label name="link-api-label" text="API·DB" class="muted" style="margin-left:8px; margin-right:14px; font-size:12px;" />
                 <ui:VisualElement name="link-sequencer-dot" class="dot" />

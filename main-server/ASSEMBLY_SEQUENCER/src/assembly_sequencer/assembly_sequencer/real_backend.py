@@ -553,6 +553,7 @@ class RealBackend:
             deadline = time.monotonic() + api.ASSEMBLY_TIMEOUT_SECONDS
             self._display_wait = ("로봇 조립 완료 대기", deadline)
             next_query = time.monotonic() + api.ASSEMBLY_POLL_SECONDS
+            consecutive_status_timeouts = 0
             previous = None
             while time.monotonic() < deadline:
                 with self._lock:
@@ -588,7 +589,16 @@ class RealBackend:
                         raise error
                     on_progress(data)
                 if time.monotonic() >= next_query:
-                    status = await self._read_status(self._assembly_status_client)
+                    try:
+                        status = await self._read_status(self._assembly_status_client)
+                    except TimeoutError:
+                        consecutive_status_timeouts += 1
+                        if consecutive_status_timeouts >= api.ASSEMBLY_STATUS_TIMEOUT_LIMIT:
+                            raise
+                        next_query = time.monotonic() + api.ASSEMBLY_POLL_SECONDS
+                        await self._wait_tick()
+                        continue
+                    consecutive_status_timeouts = 0
                     production = status.get("production_contract", {})
                     if production.get("execution_id") not in (None, request["execution_id"]):
                         raise RuntimeError("Robot status changed to another execution.")

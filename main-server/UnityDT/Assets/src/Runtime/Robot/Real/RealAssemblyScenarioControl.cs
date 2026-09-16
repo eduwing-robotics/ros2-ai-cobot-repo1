@@ -128,6 +128,7 @@ namespace MainUnity.Runtime.Robot.Real
             public string recipe_version;
             public string state;
             public int placed_count;
+            public string[] placed_slot_codes;
             public string runtime_mode;
             public int expected_step_count;
             public int held_step_order;
@@ -566,7 +567,9 @@ namespace MainUnity.Runtime.Robot.Real
                 CurrentSlotCode = snapshot.current_slot_code,
                 CurrentAction = snapshot.current_action,
                 CurrentPhase = snapshot.current_phase,
-                CurrentEvent = snapshot.current_event
+                CurrentEvent = snapshot.current_event,
+                PlacedSlotCodes = snapshot.placed_slot_codes,
+                UnitId = snapshot.unit_id
             });
         }
 
