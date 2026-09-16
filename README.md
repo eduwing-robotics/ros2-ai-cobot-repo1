@@ -116,6 +116,10 @@ UR-13의 사람 감지 연동 정지는 추가 구현·검증 대상입니다. �
 
 ### 하드웨어 아키텍처
 
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/ff44869f-7377-42d0-892f-da9adcb5cc26" alt="KSMC 하드웨어 아키텍처" width="100%" />
+</p>
+
 | 장치 | 역할 |
 |---|---|
 | FAIRINO FR5 + PGEA-100-40 | 부품 파지·이동·조립 |
@@ -134,6 +138,13 @@ UR-13의 사람 감지 연동 정지는 추가 구현·검증 대상입니다. �
 <!-- ![6종 부품과 트레이](assets/images/parts-tray.png) -->
 
 ### 소프트웨어 아키텍처
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/3e32bb99-12f6-4e80-8af6-7ef7fd72ad9e" alt="KSMC 소프트웨어 아키텍처" width="100%" />
+</p>
+
+<details>
+<summary>서버 간 데이터 흐름 요약</summary>
 
 ```mermaid
 flowchart TB
@@ -157,6 +168,8 @@ flowchart TB
 ```
 
 관제·로봇·비전 PC의 실행 환경을 분리합니다. Unity의 실제 로봇 표현과 다음 동작 미리보기는 서로 다른 정보이며, 공정 진행은 장비의 실제 완료 결과를 기준으로 처리합니다.
+
+</details>
 
 ## 8. 운영 시나리오
 
