@@ -218,7 +218,7 @@ Unity 기반 디지털 트윈과 공정·설비 상태를 확인하는 통합관
 <tr><th width="50%">3D 모델링</th><th width="50%">제작한 기판 모형</th></tr>
 <tr>
 <td align="center"><img src="https://github.com/user-attachments/assets/9254360e-84c5-4cbe-90d3-062b73c9ff14" alt="패키지 기판 3D 모델링" height="240" /></td>
-<td align="center"><img src="https://github.com/user-attachments/assets/ad49eb08-92a3-460f-ac78-3074aa9c4261" alt="3D 출력 후 제작한 패키지 기판 모형" height="240" /></td>
+<td align="center"><img src="https://github.com/user-attachments/assets/a8212b66-2ca5-4f14-ad35-00be3a0651c9" alt="3D 출력 후 제작한 패키지 기판 모형" height="240" /></td>
 </tr>
 <tr><td>부품별 형상과 배치, 기판의 조립 위치를 모델링했습니다.</td><td>3D 출력한 기판·부품 모형을 조립 및 비전 인식 실험에 사용했습니다.</td></tr>
 </table>
