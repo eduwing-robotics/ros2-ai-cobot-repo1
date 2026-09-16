@@ -8,14 +8,14 @@ FR5 협동로봇 · D435 조립 비전 · 컨베이어 · S22 검사 · Unity �
 
 관리자는 Unity에서 공정을 시작·제어하고, 장비 상태와 진행 단계, 검사 결과를 확인할 수 있습니다.
 
-<table width="100%">
-  <tr><th colspan="2">KSMC DEMO · 전체 공정 시연</th></tr>
-  <tr><td colspan="2" align="center"><br><strong>기판 이송 → 비전 인식 → 부품 조립 → 검사 → 결과 확인</strong><br><br>시연 영상 추가 예정<br><br></td></tr>
-  <tr><td align="center" width="50%"><strong>실물 조립</strong><br>일반 부품 20개 · SMD 5개</td><td align="center" width="50%"><strong>디지털 트윈</strong><br>실시간 상태 · INSPECT 결과 조회</td></tr>
-</table>
+### 시연 영상 · 디지털 트윈 통합관제
 
-<!-- 전체 공정 영상: GitHub에 업로드한 영상 URL을 이 자리에 단독 줄로 삽입하세요. -->
-<!-- 디지털 트윈 영상: GitHub에 업로드한 영상 URL을 이 자리에 단독 줄로 삽입하세요. -->
+https://github.com/user-attachments/assets/40f07c0c-eaa9-4121-b7cc-1ee656a76587
+
+Unity 기반 디지털 트윈과 공정·설비 상태를 확인하는 통합관제 시연 영상입니다.
+
+<!-- 추가 실물 조립 영상: GitHub에 업로드한 영상 URL을 이 자리에 단독 줄로 삽입하세요. -->
+
 
 ---
 
@@ -398,12 +398,12 @@ README의 섹션 구성·팀 표·시연 및 모델 소개 배치는 [하모니 
 <details>
 <summary><strong>사진·영상 교체 가이드</strong></summary>
 
-사진은 아래 제안 경로에 추가한 뒤 해당 절의 주석을 해제하면 됩니다. 영상은 GitHub 편집 화면에 업로드해 생성된 URL을 독립된 줄에 넣으면 재생 형태로 표시할 수 있습니다. 아직 미디어 파일은 추가하지 않았습니다.
+사진은 아래 제안 경로에 추가한 뒤 해당 절의 주석을 해제하면 됩니다. 영상은 GitHub 편집 화면에 업로드해 생성된 URL을 독립된 줄에 넣으면 재생 형태로 표시할 수 있습니다. 상단에는 디지털 트윈 통합관제 영상을 등록했습니다. 나머지 사진·영상은 추후 추가합니다.
 
 | 넣을 위치 | 제안 파일·영상 | 담을 내용 |
 |---|---|---|
 | 문서 상단 | 전체 공정 영상 URL | 컨베이어·일반 부품·SMD·검사까지 대표 흐름 |
-| 문서 상단 | 디지털 트윈 영상 URL | 실제 로봇 상태와 Unity, 검사 결과 조회 |
+| 문서 상단 | 디지털 트윈 통합관제 영상 등록 완료 | DT_GUI_통합관제.mp4 |
 | 4. 작업공간 | `assets/images/cell-overview.png` | 전체 셀과 장비 이름 |
 | 2. 프로젝트 주제 | `assets/images/assembled-package.png` | 25개 부품을 배치한 완성 모형 |
 | 7. 하드웨어 | `assets/images/gripper-d435.png` | 제작 핑거와 아래를 향한 D435 |
