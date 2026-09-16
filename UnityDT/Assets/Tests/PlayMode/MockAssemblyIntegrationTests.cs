@@ -869,6 +869,53 @@ namespace MainUnity.Tests.PlayMode
                 var runtime = (Transform[])Field(supplyGroup, "RuntimeItems").GetValue(supplyGroup);
                 item1 = runtime[1];
                 item2 = runtime[0];
+                // Exercise the actual observation boundary with the skewed supply
+                // angles seen in the scene, both jaw directions, and an off-centre grip.
+                var flu = AppDomain.CurrentDomain.GetAssemblies()
+                    .Select(a => a.GetType("Unity.Robotics.ROSTCPConnector.ROSGeometry.FLU"))
+                    .First(t => t != null);
+                var fromRosRotation = flu.GetMethod("ConvertToRUF", new[] { typeof(Quaternion) });
+                var fromRosPosition = flu.GetMethod("ConvertToRUF", new[] { typeof(Vector3) });
+                Pose Decode(object observation, string name)
+                {
+                    object pose = Field(observation, name).GetValue(observation);
+                    var p = (float[])Field(pose, "xyz_mm").GetValue(pose);
+                    var q = (float[])Field(pose, "xyzw").GetValue(pose);
+                    return new Pose((Vector3)fromRosPosition.Invoke(null,
+                        new object[] { new Vector3(p[0], p[1], p[2]) / 1000f }),
+                        (Quaternion)fromRosRotation.Invoke(null,
+                        new object[] { new Quaternion(q[0], q[1], q[2], q[3]) }));
+                }
+                Quaternion originalItemRotation = item2.rotation;
+                Quaternion originalSlotRotation = slot2.rotation;
+                foreach (bool vertical in new[] { false, true })
+                foreach (float yaw in new[] { 358.233f, 179.992f, 187.188f, 191.165f, 269.807f })
+                foreach (float slotYaw in new[] { 90f, 180f })
+                {
+                    Field(supplyGroup, "pickVertically").SetValue(supplyGroup, vertical);
+                    Field(supplyGroup, "pickupOffsetXZ").SetValue(supplyGroup, new Vector2(0.012f, -0.008f));
+                    item2.rotation = Quaternion.Euler(0f, yaw, 0f);
+                    slot2.rotation = Quaternion.Euler(0f, slotYaw, 0f);
+                    object observation = ((Array)Invoke(control, "BuildObservations", false)).GetValue(0);
+                    Pose source = Decode(observation, "source");
+                    Pose target = Decode(observation, "target");
+                    Quaternion relativeRotation = Quaternion.Inverse(source.rotation) * item2.rotation;
+                    Vector3 relativePosition = Quaternion.Inverse(source.rotation) * (item2.position - source.position);
+                    Assert.That(Quaternion.Angle(target.rotation * relativeRotation,
+                        slot2.rotation * Quaternion.Euler(0f, 90f, 0f)), Is.LessThan(0.05f));
+                    Assert.That(Vector3.Distance(target.position + target.rotation * relativePosition,
+                        slot2.position + Vector3.forward *
+                        (((Transform)Field(control, "assembledPcbAssemblyStopPoint").GetValue(control)).position.z -
+                        board.position.z)), Is.LessThan(0.00001f));
+                    item2.rotation = Quaternion.Euler(0f, yaw + 180f, 0f);
+                    Pose equivalent = Decode(((Array)Invoke(control, "BuildObservations", false)).GetValue(0), "source");
+                    Assert.That(Quaternion.Angle(source.rotation, equivalent.rotation), Is.LessThan(0.05f),
+                        "Half-turn supply rotations must not flip the pickup TCP.");
+                }
+                item2.rotation = originalItemRotation;
+                slot2.rotation = originalSlotRotation;
+                Field(supplyGroup, "pickVertically").SetValue(supplyGroup, false);
+                Field(supplyGroup, "pickupOffsetXZ").SetValue(supplyGroup, Vector2.zero);
                 Array observations = (Array)Invoke(control, "BuildObservations", false);
                 for (int i = 0; i < observations.Length; i++)
                     foreach (string poseName in new[] { "source", "target" })
