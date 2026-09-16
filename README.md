@@ -145,33 +145,6 @@ S22로 촬영한 기판의 **원본 → PatchCore 히트맵 → 검사 근거 �
   <img src="https://github.com/user-attachments/assets/3e32bb99-12f6-4e80-8af6-7ef7fd72ad9e" alt="KSMC 소프트웨어 아키텍처" width="100%" />
 </p>
 
-<details>
-<summary>서버 간 데이터 흐름 요약</summary>
-
-```mermaid
-flowchart TB
-  UI[Unity GUI · 디지털 트윈] <-->|작업 요청 · 이력 조회| M[MainServer]
-  M <--> DB[(PostgreSQL)]
-  S[AssemblySequencer] <--> DB
-  S <-->|조립 명령 · 상태 · 완료| R[Robot Server · FR5]
-  D[D435 · 조립 비전] -->|기판 · 부품 좌표| R
-  S <-->|이동 요청 · 도착| C[Vision Server · 컨베이어]
-  S <-->|검사 요청 · 결과 · 이미지| V[Vision Server · S22 검사]
-  R -->|실제 로봇 상태| E[ROS-TCP Endpoint]
-  S -->|공정 상태| E
-  E --> UI
-  G[GoPro · 셀 모니터링] --> UI
-  classDef main fill:#eaf0fb,stroke:#3c60b9,color:#182c50;
-  classDef robot fill:#edf5f3,stroke:#368579,color:#173d37;
-  classDef vision fill:#f4effb,stroke:#8060a8,color:#39274f;
-  class UI,M,S,DB,E main;
-  class R,D robot;
-  class C,V,G vision;
-```
-
-관제·로봇·비전 PC의 실행 환경을 분리합니다. Unity의 실제 로봇 표현과 다음 동작 미리보기는 서로 다른 정보이며, 공정 진행은 장비의 실제 완료 결과를 기준으로 처리합니다.
-
-</details>
 
 ## 8. 운영 시나리오
 
