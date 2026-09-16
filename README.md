@@ -44,6 +44,9 @@ Unity 기반 디지털 트윈과 공정·설비 상태를 확인하는 통합관
 <!-- 아래 사진을 추가할 때 위 표의 '사진/화면 추가 예정' 부분을 img 요소로 교체하세요. -->
 <!-- <img src="assets/images/assembled-package.png" alt="25개 부품을 배치한 패키지 모형" width="95%" /> -->
 <!-- <img src="assets/images/inspection-result.png" alt="Unity 검사 결과 화면" width="95%" /> -->
+<p align="center">
+  <img src="templates/images/defect-report-sample.jpg" width="560" alt="불량대책서 표준양식 작성 예시">
+</p>
 
 실제 반도체 제조용 미세 조립 장비가 아닌, 로봇·비전·검사·관제의 통합을 검증하기 위한 제작 모형입니다.
 
