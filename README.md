@@ -405,7 +405,7 @@ Unity 디지털 트윈은 FR5의 실제 관절값과 비전 관측, 공정 완�
 | 구분 | 확인 내용 | 해석 범위 |
 |---|---|---|
 | 실물 조립 기록 | 2026-09-08 단일 런처 호출로 25개 배치·해제 동작 완료 | 동작 완료 기록이며 25개 모두의 안착 품질 합격을 뜻하지 않음 |
-| 통합 소프트웨어 점검 | 2026-09-15 기록 기준 **1,735 passed · 3 skipped** | 로봇·Sequencer·컨베이어·검사 코드 테스트; 실제 장비 운전 제외 |
+| 통합 소프트웨어 점검 | 2026-09-15 기록 기준 **1,735 passed · 3 skipped** | 로봇·Cell Orchestrator·컨베이어·검사 코드 테스트; 실제 장비 운전 제외 |
 | 공통 검사 인터페이스 | 3개 서비스 정의의 제공자·소비자 일치 확인 | 메시지 계약 확인이며 네트워크·실물 응답 검증과 별도 |
 | 정적 점검 | Python 683개 구문 및 실행 스크립트·구조 점검 | 코드 구문·구조 점검 |
 
@@ -492,7 +492,7 @@ S22로 촬영한 기판의 **원본 → PatchCore 히트맵 → 검사 근거 �
 
 ```text
 .
-├── main-server/       # Unity · MainServer · Sequencer · DB · ROS-TCP Endpoint
+├── main-server/       # Unity · MainServer · Cell Orchestrator · DB · ROS-TCP Endpoint
 ├── robot-server/      # FR5 · D435 · 좌표 보정 · 부품별 조립 실행
 ├── vision-server/     # S22 검사 · 컨베이어 · GoPro · 카메라 수신
 ├── docs/integration/  # 통합 출처 · 운영 절차 · 검증 기록
@@ -614,7 +614,7 @@ python3 scripts/check_integration.py
 
 1. 같은 Real ROS domain과 네트워크를 설정하고 공통 메시지를 준비합니다.
 2. 로봇·카메라·컨베이어·검사 서비스를 각 PC에서 실행합니다.
-3. MainServer와 Real Sequencer를 실행합니다.
+3. MainServer와 Real Cell Orchestrator를 실행합니다.
 4. Unity에서 연결 상태와 관측·장비 준비 상태를 확인한 뒤 작업을 시작합니다.
 
 기준 배치에서는 로봇 스택이 Unity Endpoint를 실행하므로, 관제 측에서 중복 실행하지 않습니다. 아래 두 명령은 각각 별도 터미널에서 실행합니다.
