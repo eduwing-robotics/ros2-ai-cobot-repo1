@@ -191,7 +191,7 @@ Unity 기반 디지털 트윈과 공정·설비 상태를 확인하는 통합관
 ### 소프트웨어 아키텍처
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/3e32bb99-12f6-4e80-8af6-7ef7fd72ad9e" alt="KSMC 소프트웨어 아키텍처" width="100%" />
+  <img src="https://github.com/user-attachments/assets/b1942b14-01a6-43db-aa88-1d431b04e259" alt="KSMC 소프트웨어 아키텍처" width="100%" />
 </p>
 
 ## 7. 로봇 작업공간 구성
