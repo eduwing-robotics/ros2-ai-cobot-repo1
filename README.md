@@ -254,26 +254,7 @@ flowchart TB
 
 담당 브랜치의 소스·이력을 서버별 디렉터리로 통합했습니다. 각 영역의 기존 내부 경로를 유지하며 동명 ROS 패키지를 서로 덮어쓰지 않습니다.
 
-## 12. 프로젝트 타임라인
-
-| 단계 | 주요 작업 |
-|---|---|
-| 1. 기획·역할 분담 | 공정 시나리오, 요구사항과 서버 간 책임 협의 |
-| 2. 하드웨어 설계·제작 | 트레이·기판·핑거·카메라 브래킷 설계 및 3D 출력, 셀 배치 |
-| 3. 개별 기능 개발 | 로봇 제어·비전 인식·좌표 보정·컨베이어·GUI·DB 구현 |
-| 4. 조립·검사 개선 | 부품별 레시피, SMD 재관측, 촬영·검사 및 상태 처리 보완 |
-| 5. 공정 통합 | 이송 → 조립 → 검사 → 결과 조회 연동 |
-| 6. 검증·문서화 | 실물 작업 기록, 소프트웨어 회귀 점검과 main 통합 |
-
-
-<table width="100%">
-  <tr><th>PROJECT TIMELINE · 개발 일정</th></tr>
-  <tr><td align="center"><br>기획 → 하드웨어 제작 → 기능 개발 → 공정 통합 → 검증<br><br><em>실제 개발 일정 · 작업 이력 이미지 추가 예정</em><br><br></td></tr>
-</table>
-
-<!-- <img src="assets/images/development-timeline.png" alt="프로젝트 개발 일정" width="100%" /> -->
-
-## 13. 핵심 기술과 문제 해결
+## 12. 핵심 기술과 문제 해결
 
 | 과제 | 적용 기술·접근 | 의미 |
 |---|---|---|
@@ -295,9 +276,9 @@ flowchart TB
 <!-- ![SMD 근접 재관측](assets/images/smd-reobservation.png) -->
 <!-- ![검사 결과](assets/images/inspection-result.png) -->
 
-## 14. 구현 결과와 검증
+## 13. 구현 결과와 검증
 
-### 14.1 기록으로 확인한 범위
+### 13.1 기록으로 확인한 범위
 
 | 구분 | 확인 내용 | 해석 범위 |
 |---|---|---|
@@ -308,23 +289,99 @@ flowchart TB
 
 근거: [실물 사이클 기록](robot-server/docs/FR5_CYCLE_LAUNCHER_KO.md) · [통합 검증 기록](docs/integration/VALIDATION.md)
 
-### 14.2 검사 결과의 의미
+### 13.2 검사 결과의 의미
 
 현재 S22 검사는 **임시 PASS/FAIL 운영 정책**을 사용합니다. 화면에 표시하는 운영 판정(`operational_decision`)과 엄격한 검증 판정(`validated_decision`)을 구분해 보존합니다. PatchCore 히트맵의 이상 후보는 그 자체로 확정 불량이 아니며, 핀·표면·안착 등 미검증 범위는 별도로 남깁니다.
 
 소프트웨어 테스트 통과, 로봇 동작 완료, 최종 조립 품질 합격은 서로 다른 결과입니다. 반복 조립 성공률과 검사 정확도는 별도의 실물·라벨 데이터 평가가 필요합니다.
 
+## 14. 프로젝트 타임라인
+
+### Jira 작업 이력
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/a6cc5cda-8bf4-4532-ae09-7dc948d5645b" alt="KSMC Jira 프로젝트 타임라인" width="100%" />
+</p>
+
+**프로젝트 기간 [ 2026년 8월 3일 ~ 2026년 9월 17일 ]**
+
+<details>
+<summary>단계별 주요 작업</summary>
+
+| 단계 | 주요 작업 |
+|---|---|
+| 1. 기획·역할 분담 | 공정 시나리오, 요구사항과 서버 간 책임 협의 |
+| 2. 하드웨어 설계·제작 | 트레이·기판·핑거·카메라 브래킷 설계 및 3D 출력, 셀 배치 |
+| 3. 개별 기능 개발 | 로봇 제어·비전 인식·좌표 보정·컨베이어·GUI·DB 구현 |
+| 4. 조립·검사 개선 | 부품별 레시피, SMD 재관측, 촬영·검사 및 상태 처리 보완 |
+| 5. 공정 통합 | 이송 → 조립 → 검사 → 결과 조회 연동 |
+| 6. 검증·문서화 | 실물 작업 기록, 소프트웨어 회귀 점검과 main 통합 |
+
+</details>
+
 ## 15. 프로젝트 기술 스택
 
-| 영역 | 사용 기술·장비 |
-|---|---|
-| OS·미들웨어 | Ubuntu 24.04 · ROS 2 Jazzy · ROS-TCP Endpoint |
-| 로봇·센서 | FAIRINO FR5 · PGEA-100-40 · RealSense D435 · Galaxy S22 · GoPro |
-| 조립 비전 | OpenCV · YOLO segmentation · SIFT/RANSAC · Hand–Eye calibration |
-| 검사 비전 | OpenCV · YOLO 보조 검출 · PatchCore · 슬롯별 검사 규칙 |
-| 서버·데이터 | Python · ROS 2 서비스·토픽 · PostgreSQL |
-| GUI·디지털 트윈 | Unity · C# · 실시간 상태 표시 · 동작 미리보기 |
-| 개발·검증 | Python · C++ · Git/GitHub · pytest |
+### Robot & Middleware
+
+<p>
+  <img alt="Ubuntu 24.04" src="https://img.shields.io/badge/Ubuntu%2024.04-E95420?style=for-the-badge&logo=ubuntu&logoColor=white" />
+  <img alt="ROS 2 Jazzy" src="https://img.shields.io/badge/ROS%202--Jazzy-22314E?style=for-the-badge&logo=ros&logoColor=white" />
+  <img alt="FAIRINO FR5" src="https://img.shields.io/badge/FAIRINO%20FR5-0085CA?style=for-the-badge" />
+  <img alt="PGEA-100-40" src="https://img.shields.io/badge/PGEA--100--40-00A6A6?style=for-the-badge" />
+  <img alt="ROS-TCP Endpoint" src="https://img.shields.io/badge/ROS--TCP%20Endpoint-22314E?style=for-the-badge&logo=ros&logoColor=white" />
+</p>
+
+### Vision & AI
+
+<p>
+  <img alt="OpenCV" src="https://img.shields.io/badge/OpenCV-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white" />
+  <img alt="YOLO segmentation" src="https://img.shields.io/badge/YOLO%20Segmentation-111F68?style=for-the-badge" />
+  <img alt="PatchCore" src="https://img.shields.io/badge/PatchCore-6A1B9A?style=for-the-badge" />
+  <img alt="SIFT / RANSAC" src="https://img.shields.io/badge/SIFT%20%2F%20RANSAC-EF6C00?style=for-the-badge" />
+  <img alt="Hand-Eye Calibration" src="https://img.shields.io/badge/Hand--Eye%20Calibration-00796B?style=for-the-badge" />
+</p>
+
+### Cameras & Sensors
+
+<p>
+  <img alt="RealSense D435" src="https://img.shields.io/badge/RealSense%20D435-0071C5?style=for-the-badge&logo=intel&logoColor=white" />
+  <img alt="Galaxy S22" src="https://img.shields.io/badge/Galaxy%20S22-1428A0?style=for-the-badge&logo=samsung&logoColor=white" />
+  <img alt="GoPro" src="https://img.shields.io/badge/GoPro-00AEEF?style=for-the-badge&logo=gopro&logoColor=white" />
+</p>
+
+### Backend & Data
+
+<p>
+  <img alt="Python" src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" />
+  <img alt="C++" src="https://img.shields.io/badge/C%2B%2B-00599C?style=for-the-badge&logo=cplusplus&logoColor=white" />
+  <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" />
+  <img alt="HTTP / REST" src="https://img.shields.io/badge/HTTP%20%2F%20REST-005571?style=for-the-badge" />
+  <img alt="ROS 2 Services & Topics" src="https://img.shields.io/badge/ROS%202%20Services%20%2F%20Topics-22314E?style=for-the-badge&logo=ros&logoColor=white" />
+</p>
+
+### GUI & Digital Twin
+
+<p>
+  <img alt="Unity" src="https://img.shields.io/badge/Unity-181717?style=for-the-badge&logo=unity&logoColor=white" />
+  <img alt="C#" src="https://img.shields.io/badge/C%23-512BD4?style=for-the-badge&logo=dotnet&logoColor=white" />
+  <img alt="Digital Twin" src="https://img.shields.io/badge/Digital%20Twin-1F6FEB?style=for-the-badge" />
+  <img alt="UDP Video Stream" src="https://img.shields.io/badge/UDP%20Video%20Stream-7B1FA2?style=for-the-badge" />
+</p>
+
+### Integration & Validation
+
+<p>
+  <img alt="pytest" src="https://img.shields.io/badge/pytest-0A9EDC?style=for-the-badge&logo=pytest&logoColor=white" />
+  <img alt="Git" src="https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=white" />
+  <img alt="GitHub" src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white" />
+</p>
+
+### 협업·프로젝트 관리
+
+<p>
+  <img alt="Jira" src="https://img.shields.io/badge/Jira-0052CC?style=for-the-badge&logo=jira&logoColor=white" />
+  <img alt="Confluence" src="https://img.shields.io/badge/Confluence-172B4D?style=for-the-badge&logo=confluence&logoColor=white" />
+</p>
 
 ## 16. 설치와 실행
 
@@ -406,10 +463,10 @@ DB 접속 정보·카메라 인증 정보·장비별 환경 설정, 학습 가�
 | 문서 상단 | 디지털 트윈 통합관제 영상 등록 완료 | DT_GUI_통합관제.mp4 |
 | 4. 작업공간 | 구역 표시 사진 등록 완료 | 트레이·FR5·그리퍼/D435·컨베이어·검사 구역·조립 구역 |
 | 2. 프로젝트 주제 | `assets/images/assembled-package.png` | 25개 부품을 배치한 완성 모형 |
-| 13. 핵심 기술 | `assets/images/assembly-vision.png` | 기판·트레이 인식 결과 |
-| 13. 핵심 기술 | `assets/images/smd-reobservation.png` | SMD 근접 재관측 화면 |
-| 13. 핵심 기술 | `assets/images/inspection-result.png` | 원본·히트맵·슬롯 판정과 Unity 결과 |
-| 12. 로드맵 | `assets/images/development-timeline.png` | 실제 개발 일정·작업 이력 |
+| 12. 핵심 기술 | `assets/images/assembly-vision.png` | 기판·트레이 인식 결과 |
+| 12. 핵심 기술 | `assets/images/smd-reobservation.png` | SMD 근접 재관측 화면 |
+| 12. 핵심 기술 | `assets/images/inspection-result.png` | 원본·히트맵·슬롯 판정과 Unity 결과 |
+| 14. 프로젝트 타임라인 | Jira 작업 이력 이미지 등록 완료 | 2026.08.03 ~ 2026.09.17 |
 
 </details>
 
