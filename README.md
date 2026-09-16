@@ -428,7 +428,7 @@ S22로 촬영한 기판의 **원본 → PatchCore 히트맵 → 검사 근거 �
 **검사에서 FAIL이 확정되면 불량 건별 XLSX 대책서가 자동 생성됩니다.** 시스템이 검사 데이터를 채우고, 원인·대책 판단은 담당자가 작성합니다. 아래는 자동 생성되는 불량대책서의 예시입니다.
 
 <p align="center">
-  <img src="main-server/MAIN_SERVER/templates/images/defect-report-sample.jpg" width="560" alt="불량대책서 표준양식 작성 예시">
+  <img src="https://github.com/user-attachments/assets/d6ae19be-e40d-4fb1-a0fb-a116870fb463" width="560" alt="불량대책서 표준양식 작성 예시">
 </p>
 
 <details>
