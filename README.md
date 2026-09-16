@@ -251,7 +251,7 @@ S22로 촬영한 기판의 **원본 → PatchCore 히트맵 → 검사 근거 �
 
 관련 기록: [비전 안정화](robot-server/docs/VISION_STABILITY_KO_20260911.md) · [트레이 촬영 신뢰성](robot-server/docs/TRAY_CAPTURE_RELIABILITY_KO_20260913.md) · [SMD 근접 뷰 경로](robot-server/docs/SINGLE_MOVEL_TRAY_RETURN_SMD_VIEW_KO_20260910.md) · [검사 구성과 제한사항](vision-server/vision_assembly/README.md)
 
-### 트레이 부품 인식 · PPT 11페이지
+### 트레이 부품 인식
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/c47aaa6c-09c4-41d3-8097-951ae9f4c7a6" alt="D435 트레이 부품 검출 결과" width="850" />
@@ -259,7 +259,7 @@ S22로 촬영한 기판의 **원본 → PatchCore 히트맵 → 검사 근거 �
 
 트레이를 정합한 뒤 YOLO segmentation으로 부품 영역을 검출하고, 중심·방향·깊이를 계산해 Pick 목표를 만듭니다. 사진에는 <strong>2세트(50개)</strong>가 보이며, 실제 조립에는 <strong>1세트(25개)</strong>를 선택합니다.
 
-### 부품별 관측·파지 보완 · PPT 12페이지
+### 부품별 관측·파지 보완
 
 <table>
   <tr><th width="33%">IND · 검출 보완</th><th width="33%">VRM · 깊이 안정화</th><th width="34%">SMD · 근접 재관측</th></tr>
@@ -275,7 +275,7 @@ S22로 촬영한 기판의 **원본 → PatchCore 히트맵 → 검사 근거 �
   </tr>
 </table>
 
-### 정상 기판 검사 결과 · PPT 17페이지
+### 정상 기판 검사 결과
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/dafcbf18-1c0a-4bc1-a179-501efd2784ac" alt="정상 기판 검사 원본·히트맵·오버레이" width="100%" />
@@ -470,9 +470,9 @@ DB 접속 정보·카메라 인증 정보·장비별 환경 설정, 학습 가�
 | 문서 상단 | 디지털 트윈 통합관제 영상 등록 완료 | DT_GUI_통합관제.mp4 |
 | 4. 작업공간 | 구역 표시 사진 등록 완료 | 트레이·FR5·그리퍼/D435·컨베이어·검사 구역·조립 구역 |
 | 2. 프로젝트 주제 | 완성 기판·검사 결과 사진 등록 완료 | 25개 부품 모형과 원본·히트맵·오버레이 |
-| 12. 핵심 기술 | PPT 11페이지 이미지 등록 완료 | 트레이 부품 검출 결과 |
-| 12. 핵심 기술 | PPT 12페이지 이미지 3장 등록 완료 | IND·VRM·SMD 보완 사례 |
-| 12. 핵심 기술 | PPT 17페이지 이미지 등록 완료 | 정상 기판 검사 결과 |
+| 12. 핵심 기술 | 이미지 등록 완료 | 트레이 부품 검출 결과 |
+| 12. 핵심 기술 | 이미지 3장 등록 완료 | IND·VRM·SMD 보완 사례 |
+| 12. 핵심 기술 | 이미지 등록 완료 | 정상 기판 검사 결과 |
 | 14. 프로젝트 타임라인 | Jira 작업 이력 이미지 등록 완료 | 2026.08.03 ~ 2026.09.17 |
 
 </details>
