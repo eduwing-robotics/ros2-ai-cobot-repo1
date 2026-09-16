@@ -322,9 +322,9 @@ Unity 기반 디지털 트윈과 공정·설비 상태를 확인하는 통합관
 ### 부품별 관측·파지 보완
 
 <table>
-  <tr><th width="33%">IND · 검출 보완</th><th width="33%">VRM · 깊이 안정화</th><th width="34%">SMD · 근접 재관측</th></tr>
+  <tr><th width="33%">INDUCTOR · 검출 보완</th><th width="33%">VRM · 깊이 안정화</th><th width="34%">SMD · 근접 재관측</th></tr>
   <tr>
-    <td align="center"><img src="https://github.com/user-attachments/assets/792b0080-e893-4e1a-a2b3-f33831ead48c" alt="IND 관측 사진" height="180" /></td>
+    <td align="center"><img src="https://github.com/user-attachments/assets/792b0080-e893-4e1a-a2b3-f33831ead48c" alt="INDUCTOR 관측 사진" height="180" /></td>
     <td align="center"><img src="https://github.com/user-attachments/assets/ff4e4801-e27e-40f4-bd51-fb966153ea20" alt="VRM 깊이 관측에 사용한 트레이 사진" width="100%" /></td>
     <td align="center"><img src="https://github.com/user-attachments/assets/e9a1b46b-390c-4ee0-9589-74d18cd909a2" alt="SMD 5개 근접 재관측 결과" width="100%" /></td>
   </tr>
@@ -511,10 +511,18 @@ S22로 촬영한 기판의 **원본 → PatchCore 히트맵 → 검사 근거 �
 <p>
   <img alt="Ubuntu 24.04" src="https://img.shields.io/badge/Ubuntu%2024.04-E95420?style=for-the-badge&logo=ubuntu&logoColor=white" />
   <img alt="ROS 2 Jazzy" src="https://img.shields.io/badge/ROS%202--Jazzy-22314E?style=for-the-badge&logo=ros&logoColor=white" />
+  <img alt="MoveIt 2" src="https://img.shields.io/badge/MoveIt%202-0072B8?style=for-the-badge&amp;logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI%2BPGcgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik00IDIxaDE2TTcgMjF2LTRoMTB2NE0xMiAxN2wtNS02IDUtNyA2IDUtMyA1TTE1IDE0bDMgMiAzLTMiLz48Y2lyY2xlIGN4PSI3IiBjeT0iMTEiIHI9IjIiLz48Y2lyY2xlIGN4PSIxMiIgY3k9IjQiIHI9IjIiLz48L2c%2BPC9zdmc%2B" />
   <img alt="TurtleBot3" src="https://img.shields.io/badge/TurtleBot3-0085CA?style=for-the-badge&logo=ros&logoColor=white" />
   <img alt="FAIRINO FR5" src="https://img.shields.io/badge/FAIRINO%20FR5-0085CA?style=for-the-badge" />
   <img alt="PGEA-100-40" src="https://img.shields.io/badge/PGEA--100--40-00A6A6?style=for-the-badge" />
   <img alt="ROS-TCP Endpoint" src="https://img.shields.io/badge/ROS--TCP%20Endpoint-22314E?style=for-the-badge&logo=ros&logoColor=white" />
+</p>
+
+### 3D Modeling & Fabrication
+
+<p>
+  <img alt="Blender" src="https://img.shields.io/badge/Blender-E87D0D?style=for-the-badge&amp;logo=blender&amp;logoColor=white" />
+  <img alt="OrcaSlicer" src="https://img.shields.io/badge/OrcaSlicer-00A6A6?style=for-the-badge&amp;logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI%2BPGcgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNNCAyMVYzaDE2djE4SDRNNCA3aDE2TTEyIDd2NW0tMyAwaDZsLTMgMy0zLTNNNyAyMXYtNGgxMHY0Ii8%2BPC9nPjwvc3ZnPg%3D%3D" />
 </p>
 
 ### Vision & AI
@@ -640,7 +648,7 @@ DB 접속 정보·카메라 인증 정보·장비별 환경 설정, 학습 가�
 | 12. 디지털 트윈 | 관제·관측·트윈 화면 5장 등록 완료 | 실제 로봇 동기화, 기판·트레이 위치 보정 |
 | 13. 구현 결과 | 검사 결과 사진 등록 완료 | 원본·히트맵·오버레이와 불량대책서 예시 |
 | 11. 핵심 기술 | 이미지 등록 완료 | 트레이 부품 검출 결과 |
-| 11. 핵심 기술 | 이미지 3장 등록 완료 | IND·VRM·SMD 보완 사례 |
+| 11. 핵심 기술 | 이미지 3장 등록 완료 | INDUCTOR·VRM·SMD 보완 사례 |
 | 13. 구현 결과 | 반복 검사 사례 이미지 등록 완료 | 정상 기판 검사 결과 |
 | 15. 프로젝트 타임라인 | Jira 작업 이력 이미지 등록 완료 | 2026.08.03 ~ 2026.09.17 |
 
