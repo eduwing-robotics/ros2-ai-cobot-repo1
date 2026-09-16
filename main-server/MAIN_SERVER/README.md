@@ -33,10 +33,10 @@
 검사에서 불량 한 건이 확정되면, 그 불량 전용 대책서 한 장이 곧바로 발행됩니다. **시스템은 사실을 채우고, 사람은 판단만 씁니다.**
 
 <p align="center">
-  <img src="templates/images/defect-report-sample.jpg" width="560" alt="불량대책서 표준양식 작성 예시">
+  <img src="templates/images/defect-report-sample.png" width="560" alt="불량대책서 표준양식 작성 예시">
 </p>
 
-*최신 표준양식으로 발행한 QA-D20 작성 예시(종결본). 흰 칸은 시스템이 자동으로 채우고, 노란 칸은 담당자가 작성합니다. 담당자 이름은 모자이크 처리했습니다.*
+*최신 표준양식으로 발행한 QA-D21-GPU-CRACK 작성 예시(종결본). 흰 칸은 시스템이 자동으로 채우고, 노란 칸은 담당자가 작성합니다.*
 
 1. Sequencer가 검사 FAIL을 확정하는 같은 DB 트랜잭션에서 발행 대기를 함께 기록합니다.
 2. 생성기(`generate_defect_reports.py --watch`)가 2초마다 새 대기 건을 확인합니다.
@@ -53,7 +53,7 @@
 | 무결성 | 이미지는 보관 루트 기준 경로·형식(JPEG/PNG)·크기를 검사한 뒤 원자적으로 확정하고, 기존 파일은 덮어쓰지 않음 |
 | 전송 | 기본은 로컬 생성. email 모드에서만 발송하며, 실패 시 같은 Message-ID로 재시도하고 수신 도메인 허용 목록을 적용 |
 
-![대체품 후보 시트](templates/images/defect-alternatives.jpg)
+![대체품 후보 시트](templates/images/defect-alternatives.png)
 
 *같은 문서의 대체품 시트. 부품 데이터시트에서 같은 범주 부품의 정격·공급사·단가를 자동으로 붙입니다. 추천 순위가 아니며, 호환성 검증과 변경 승인을 거친 뒤에만 적용합니다.*
 
