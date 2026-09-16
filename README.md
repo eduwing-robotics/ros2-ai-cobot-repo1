@@ -21,17 +21,12 @@ Unity 기반 디지털 트윈과 공정·설비 상태를 확인하는 통합관
 
 ## 1. 팀 구성 및 역할
 
-<table width="960">
-  <thead>
-    <tr><th width="140" align="center">담⁠당⁠자</th><th width="220" align="center">담당 파트</th><th width="600" align="center">주요 기여</th></tr>
-  </thead>
-  <tbody>
-    <tr><td width="140" height="64" align="center" valign="middle">손⁠영⁠빈<br>(⁠팀⁠장⁠)</td><td width="220" height="64" align="left" valign="middle">로봇 ·<br>조립 비전</td><td width="600" height="64" align="left" valign="middle">FR5 · ROS 2 제어, D435 · YOLO segmentation · OpenCV 인식, Hand–Eye 좌표 변환, 부품별 조립 · SMD 재관측</td></tr>
-    <tr><td width="140" height="64" align="center" valign="middle">박⁠태⁠진</td><td width="220" height="64" align="left" valign="middle">하드웨어</td><td width="600" height="64" align="left" valign="middle">공정 배치, 부품 트레이 · 기판 모형 설계 및 3D 출력, 그리퍼 핑거 · 카메라 브래킷 구성</td></tr>
-    <tr><td width="140" height="64" align="center" valign="middle">임⁠현⁠찬</td><td width="220" height="64" align="left" valign="middle">검사 비전 ·<br>컨베이어</td><td width="600" height="64" align="left" valign="middle">S22 촬영, YOLO · PatchCore · OpenCV 기반 검사, 컨베이어 이송 · 정지, GoPro 영상 연동</td></tr>
-    <tr><td width="140" height="64" align="center" valign="middle">김⁠현⁠수</td><td width="220" height="64" align="left" valign="middle">Main · GUI ·<br>디지털 트윈 · DB</td><td width="600" height="64" align="left" valign="middle">Unity 관제, MainServer, 공정 순서 제어, PostgreSQL 작업 · 검사 이력 관리</td></tr>
-  </tbody>
-</table>
+| 담⁠당⁠자 | 담당 파트 | 주요 기여 |
+| :---: | :---: | --- |
+| 손⁠영⁠빈<br>(⁠팀⁠장⁠) | 로봇 ·<br>조립 비전 | FR5 · ROS 2 제어, D435 · YOLO segmentation · OpenCV 인식, Hand–Eye 좌표 변환, 부품별 조립 · SMD 재관측 |
+| 박⁠태⁠진 | 하드웨어 | 공정 배치, 부품 트레이 · 기판 모형 설계 및 3D 출력, 그리퍼 핑거 · 카메라 브래킷 구성 |
+| 임⁠현⁠찬 | 검사 비전 ·<br>컨베이어 | S22 촬영, YOLO · PatchCore · OpenCV 기반 검사, 컨베이어 이송 · 정지, GoPro 영상 연동 |
+| 김⁠현⁠수 | Main · GUI ·<br>디지털 트윈 · DB | Unity 관제, MainServer, 공정 순서 제어, PostgreSQL 작업 · 검사 이력 관리 |
 
 ## 2. 프로젝트 주제
 
@@ -41,8 +36,8 @@ Unity 기반 디지털 트윈과 공정·설비 상태를 확인하는 통합관
 
 ### 조립 대상과 공정 결과
 
-<table width="960">
-  <tr><th width="480">PACKAGE · 반도체 패키지 모형</th><th width="480">INSPECTION · 조립 결과 확인</th></tr>
+<table width="100%">
+  <tr><th width="50%">PACKAGE · 반도체 패키지 모형</th><th width="50%">INSPECTION · 조립 결과 확인</th></tr>
   <tr><td align="center"><br><strong>6종 · 25개 부품</strong><br><br>GPU 1 · HBM 8 · Power Module 4<br>VRM 5 · Inductor 2 · SMD Capacitor 5<br><br><em>완성 모형 사진 추가 예정</em><br><br></td><td align="center"><br><strong>촬영 · 검사 · 이력 조회</strong><br><br>S22 기판 촬영 · 슬롯별 검사<br>결과 이미지 · Unity INSPECT<br><br><em>검사 결과 화면 추가 예정</em><br><br></td></tr>
 </table>
 
@@ -64,8 +59,8 @@ Unity 기반 디지털 트윈과 공정·설비 상태를 확인하는 통합관
 
 ## 4. 로봇 작업공간 구성
 
-<table width="960">
-  <tr><th width="960">ROBOT CELL · 작업공간 구성</th></tr>
+<table width="100%">
+  <tr><th>ROBOT CELL · 작업공간 구성</th></tr>
   <tr><td align="center"><br><strong>부품 트레이 → FR5 조립 구역 → 컨베이어 → S22 검사 구역</strong><br><br>전체 셀 배치 사진 추가 예정<br><br></td></tr>
 </table>
 
@@ -82,26 +77,21 @@ Unity 기반 디지털 트윈과 공정·설비 상태를 확인하는 통합관
 
 다음은 프로젝트에서 정의한 요구사항입니다. **필수·권장은 우선순위이며, 구현 완료 또는 성능 검증 표시가 아닙니다.**
 
-<table width="960">
-  <thead>
-    <tr><th width="100" align="center">ID</th><th width="760" align="center">사용자 요구사항</th><th width="100" align="center">우선순위</th></tr>
-  </thead>
-  <tbody>
-    <tr><td width="100" height="64" align="center" valign="middle">UR-01</td><td width="760" height="64" align="left" valign="middle">로봇팔은 배치할 부품을 집을 수 있어야 한다.</td><td width="100" height="64" align="center" valign="middle">필수</td></tr>
-    <tr><td width="100" height="64" align="center" valign="middle">UR-02</td><td width="760" height="64" align="left" valign="middle">로봇팔은 조립 부품을 지정된 위치에 배치할 수 있어야 한다.</td><td width="100" height="64" align="center" valign="middle">필수</td></tr>
-    <tr><td width="100" height="64" align="center" valign="middle">UR-03</td><td width="760" height="64" align="left" valign="middle">컨베이어 벨트는 조립 대상 패키지 기판을 작업 위치까지 운반할 수 있어야 한다.</td><td width="100" height="64" align="center" valign="middle">필수</td></tr>
-    <tr><td width="100" height="64" align="center" valign="middle">UR-04</td><td width="760" height="64" align="left" valign="middle">컨베이어 벨트는 조립 및 검사에 필요한 지정 위치에서 일시 정지할 수 있어야 한다.</td><td width="100" height="64" align="center" valign="middle">필수</td></tr>
-    <tr><td width="100" height="64" align="center" valign="middle">UR-05</td><td width="760" height="64" align="left" valign="middle">컨베이어 벨트는 조립이 완료될 경우 운반을 재개할 수 있어야 한다.</td><td width="100" height="64" align="center" valign="middle">필수</td></tr>
-    <tr><td width="100" height="64" align="center" valign="middle">UR-06</td><td width="760" height="64" align="left" valign="middle">관리자는 현재 조립 및 검사 공정의 진행 상황을 확인할 수 있어야 한다.</td><td width="100" height="64" align="center" valign="middle">필수</td></tr>
-    <tr><td width="100" height="64" align="center" valign="middle">UR-07</td><td width="760" height="64" align="left" valign="middle">관리자는 로봇팔 및 주요 장비의 연결 상태와 동작 상태를 확인할 수 있어야 한다.</td><td width="100" height="64" align="center" valign="middle">필수</td></tr>
-    <tr><td width="100" height="64" align="center" valign="middle">UR-08</td><td width="760" height="64" align="left" valign="middle">관리자는 진행 중인 자동 작업을 일시 정지하고 재개할 수 있어야 한다.</td><td width="100" height="64" align="center" valign="middle">필수</td></tr>
-    <tr><td width="100" height="64" align="center" valign="middle">UR-09</td><td width="760" height="64" align="left" valign="middle">관리자는 조립 완료 후 검사 결과를 정상 또는 불량으로 확인할 수 있어야 한다.</td><td width="100" height="64" align="center" valign="middle">필수</td></tr>
-    <tr><td width="100" height="64" align="center" valign="middle">UR-10</td><td width="760" height="64" align="left" valign="middle">관리자는 수행된 작업 이력과 검사 결과를 확인할 수 있어야 한다.</td><td width="100" height="64" align="center" valign="middle">필수</td></tr>
-    <tr><td width="100" height="64" align="center" valign="middle">UR-11</td><td width="760" height="64" align="left" valign="middle">관리자는 남은 부품 수량을 확인할 수 있어야 한다.</td><td width="100" height="64" align="center" valign="middle">권장</td></tr>
-    <tr><td width="100" height="64" align="center" valign="middle">UR-12</td><td width="760" height="64" align="left" valign="middle">관리자는 로봇팔의 이동 경로 및 동작 계획을 확인할 수 있어야 한다.</td><td width="100" height="64" align="center" valign="middle">권장</td></tr>
-    <tr><td width="100" height="64" align="center" valign="middle">UR-13</td><td width="760" height="64" align="left" valign="middle">카메라에 사람이 인식되면 로봇팔은 즉시 작업을 정지할 수 있어야 한다.</td><td width="100" height="64" align="center" valign="middle">권장</td></tr>
-  </tbody>
-</table>
+| ID | 사용자 요구사항 | 우선순위 |
+|---|---|---|
+| UR-01 | 로봇팔은 배치할 부품을 집을 수 있어야 한다. | 필수 |
+| UR-02 | 로봇팔은 조립 부품을 지정된 위치에 배치할 수 있어야 한다. | 필수 |
+| UR-03 | 컨베이어 벨트는 조립 대상 패키지 기판을 작업 위치까지 운반할 수 있어야 한다. | 필수 |
+| UR-04 | 컨베이어 벨트는 조립 및 검사에 필요한 지정 위치에서 일시 정지할 수 있어야 한다. | 필수 |
+| UR-05 | 컨베이어 벨트는 조립이 완료될 경우 운반을 재개할 수 있어야 한다. | 필수 |
+| UR-06 | 관리자는 현재 조립 및 검사 공정의 진행 상황을 확인할 수 있어야 한다. | 필수 |
+| UR-07 | 관리자는 로봇팔 및 주요 장비의 연결 상태와 동작 상태를 확인할 수 있어야 한다. | 필수 |
+| UR-08 | 관리자는 진행 중인 자동 작업을 일시 정지하고 재개할 수 있어야 한다. | 필수 |
+| UR-09 | 관리자는 조립 완료 후 검사 결과를 정상 또는 불량으로 확인할 수 있어야 한다. | 필수 |
+| UR-10 | 관리자는 수행된 작업 이력과 검사 결과를 확인할 수 있어야 한다. | 필수 |
+| UR-11 | 관리자는 남은 부품 수량을 확인할 수 있어야 한다. | 권장 |
+| UR-12 | 관리자는 로봇팔의 이동 경로 및 동작 계획을 확인할 수 있어야 한다. | 권장 |
+| UR-13 | 카메라에 사람이 인식되면 로봇팔은 즉시 작업을 정지할 수 있어야 한다. | 권장 |
 
 UR-13의 사람 감지 연동 정지는 추가 구현·검증 대상입니다. 일반 작업 일시정지는 이미 전송된 동작 완료 후 대기하는 방식이므로 비상정지와 구분합니다.
 
@@ -109,23 +99,18 @@ UR-13의 사람 감지 연동 정지는 추가 구현·검증 대상입니다. �
 
 발표 자료의 상세 SR 표를 대체하지 않고, 통합 저장소에서 각 요구를 담당하는 구성을 요약합니다.
 
-<table width="960">
-  <thead>
-    <tr><th width="190" align="center">기능</th><th width="540" align="center">시스템에서 처리하는 내용</th><th width="230" align="center">담당 구성</th></tr>
-  </thead>
-  <tbody>
-    <tr><td width="190" height="64" align="center" valign="middle">작업 등록·조회</td><td width="540" height="64" align="left" valign="middle">작업 요청 검증, Job·Unit 생성과 진행·결과 조회</td><td width="230" height="64" align="left" valign="middle">MainServer · PostgreSQL</td></tr>
-    <tr><td width="190" height="64" align="center" valign="middle">공정 순서 제어</td><td width="540" height="64" align="left" valign="middle">이송·조립·검사 요청과 완료 이벤트를 연결</td><td width="230" height="64" align="left" valign="middle">AssemblySequencer</td></tr>
-    <tr><td width="190" height="64" align="center" valign="middle">기판 위치 인식</td><td width="540" height="64" align="left" valign="middle">기판의 위치·자세를 인식하고 슬롯별 배치 목표 생성</td><td width="230" height="64" align="left" valign="middle">D435 · OpenCV</td></tr>
-    <tr><td width="190" height="64" align="center" valign="middle">부품 인식</td><td width="540" height="64" align="left" valign="middle">트레이 정합, 부품 종류·중심·방향·깊이 계산</td><td width="230" height="64" align="left" valign="middle">SIFT/RANSAC · YOLO segmentation</td></tr>
-    <tr><td width="190" height="64" align="center" valign="middle">로봇 좌표 변환</td><td width="540" height="64" align="left" valign="middle">카메라 관측을 Hand–Eye·로봇 자세·TCP 기준과 연결</td><td width="230" height="64" align="left" valign="middle">Robot Server</td></tr>
-    <tr><td width="190" height="64" align="center" valign="middle">부품 조립</td><td width="540" height="64" align="left" valign="middle">부품별 파지, 상승·이동·배치·해제 및 SMD 추가 보정</td><td width="230" height="64" align="left" valign="middle">FR5 실행기 · 조립 레시피</td></tr>
-    <tr><td width="190" height="64" align="center" valign="middle">컨베이어 제어</td><td width="540" height="64" align="left" valign="middle">요청한 작업 위치로 이송하고 도착·정지 상태 제공</td><td width="230" height="64" align="left" valign="middle">Vision Server · 컨베이어 노드</td></tr>
-    <tr><td width="190" height="64" align="center" valign="middle">조립 검사</td><td width="540" height="64" align="left" valign="middle">S22 새 촬영, 슬롯 검사·이상 후보와 결과 이미지 생성</td><td width="230" height="64" align="left" valign="middle">하이브리드 검사 파이프라인</td></tr>
-    <tr><td width="190" height="64" align="center" valign="middle">상태·결과 표시</td><td width="540" height="64" align="left" valign="middle">실제 장비 상태, 가상 로봇, 검사 결과·이력 표시</td><td width="230" height="64" align="left" valign="middle">Unity · ROS-TCP Endpoint</td></tr>
-    <tr><td width="190" height="64" align="center" valign="middle">중지·복구</td><td width="540" height="64" align="left" valign="middle">실행 상태·오류·복구 필요 여부 확인 및 운영자 제어</td><td width="230" height="64" align="left" valign="middle">Sequencer · Robot Server</td></tr>
-  </tbody>
-</table>
+| 기능 | 시스템에서 처리하는 내용 | 담당 구성 |
+|---|---|---|
+| 작업 등록·조회 | 작업 요청 검증, Job·Unit 생성과 진행·결과 조회 | MainServer · PostgreSQL |
+| 공정 순서 제어 | 이송·조립·검사 요청과 완료 이벤트를 연결 | AssemblySequencer |
+| 기판 위치 인식 | 기판의 위치·자세를 인식하고 슬롯별 배치 목표 생성 | D435 · OpenCV |
+| 부품 인식 | 트레이 정합, 부품 종류·중심·방향·깊이 계산 | SIFT/RANSAC · YOLO segmentation |
+| 로봇 좌표 변환 | 카메라 관측을 Hand–Eye·로봇 자세·TCP 기준과 연결 | Robot Server |
+| 부품 조립 | 부품별 파지, 상승·이동·배치·해제 및 SMD 추가 보정 | FR5 실행기 · 조립 레시피 |
+| 컨베이어 제어 | 요청한 작업 위치로 이송하고 도착·정지 상태 제공 | Vision Server · 컨베이어 노드 |
+| 조립 검사 | S22 새 촬영, 슬롯 검사·이상 후보와 결과 이미지 생성 | 하이브리드 검사 파이프라인 |
+| 상태·결과 표시 | 실제 장비 상태, 가상 로봇, 검사 결과·이력 표시 | Unity · ROS-TCP Endpoint |
+| 중지·복구 | 실행 상태·오류·복구 필요 여부 확인 및 운영자 제어 | Sequencer · Robot Server |
 
 ## 7. 시스템 아키텍처
 
@@ -249,41 +234,31 @@ flowchart TB
 └── README.md          # 프로젝트 공통 안내
 ```
 
-<table width="960">
-  <thead>
-    <tr><th width="240" align="center">문서</th><th width="720" align="center">내용</th></tr>
-  </thead>
-  <tbody>
-    <tr><td width="240" height="64" align="center" valign="middle"><a href="main-server/README.md">Main Server</a></td><td width="720" height="64" align="left" valign="middle">Unity·서버·DB 구성과 Mock/Real 실행</td></tr>
-    <tr><td width="240" height="64" align="center" valign="middle"><a href="robot-server/README.md">Robot Server</a></td><td width="720" height="64" align="left" valign="middle">로봇·조립 비전 환경과 실행</td></tr>
-    <tr><td width="240" height="64" align="center" valign="middle"><a href="vision-server/README.md">Vision Server</a></td><td width="720" height="64" align="left" valign="middle">검사·컨베이어·영상 구성</td></tr>
-    <tr><td width="240" height="64" align="center" valign="middle"><a href="docs/integration/OPERATIONS.md">통합 운영 안내</a></td><td width="720" height="64" align="left" valign="middle">PC별 환경, 실행 순서, Endpoint 소유권</td></tr>
-    <tr><td width="240" height="64" align="center" valign="middle"><a href="docs/integration/VALIDATION.md">통합 검증</a></td><td width="720" height="64" align="left" valign="middle">테스트 결과와 실물 검증 범위</td></tr>
-    <tr><td width="240" height="64" align="center" valign="middle"><a href="docs/integration/sources.json">통합 출처</a></td><td width="720" height="64" align="left" valign="middle">담당 브랜치별 기준 커밋</td></tr>
-  </tbody>
-</table>
+| 문서 | 내용 |
+|---|---|
+| [Main Server](main-server/README.md) | Unity·서버·DB 구성과 Mock/Real 실행 |
+| [Robot Server](robot-server/README.md) | 로봇·조립 비전 환경과 실행 |
+| [Vision Server](vision-server/README.md) | 검사·컨베이어·영상 구성 |
+| [통합 운영 안내](docs/integration/OPERATIONS.md) | PC별 환경, 실행 순서, Endpoint 소유권 |
+| [통합 검증](docs/integration/VALIDATION.md) | 테스트 결과와 실물 검증 범위 |
+| [통합 출처](docs/integration/sources.json) | 담당 브랜치별 기준 커밋 |
 
 담당 브랜치의 소스·이력을 서버별 디렉터리로 통합했습니다. 각 영역의 기존 내부 경로를 유지하며 동명 ROS 패키지를 서로 덮어쓰지 않습니다.
 
 ## 12. 프로젝트 타임라인
 
-<table width="960">
-  <thead>
-    <tr><th width="240" align="center">단계</th><th width="720" align="center">주요 작업</th></tr>
-  </thead>
-  <tbody>
-    <tr><td width="240" height="64" align="center" valign="middle">1. 기획·역할 분담</td><td width="720" height="64" align="left" valign="middle">공정 시나리오, 요구사항과 서버 간 책임 협의</td></tr>
-    <tr><td width="240" height="64" align="center" valign="middle">2. 하드웨어 설계·제작</td><td width="720" height="64" align="left" valign="middle">트레이·기판·핑거·카메라 브래킷 설계 및 3D 출력, 셀 배치</td></tr>
-    <tr><td width="240" height="64" align="center" valign="middle">3. 개별 기능 개발</td><td width="720" height="64" align="left" valign="middle">로봇 제어·비전 인식·좌표 보정·컨베이어·GUI·DB 구현</td></tr>
-    <tr><td width="240" height="64" align="center" valign="middle">4. 조립·검사 개선</td><td width="720" height="64" align="left" valign="middle">부품별 레시피, SMD 재관측, 촬영·검사 및 상태 처리 보완</td></tr>
-    <tr><td width="240" height="64" align="center" valign="middle">5. 공정 통합</td><td width="720" height="64" align="left" valign="middle">이송 → 조립 → 검사 → 결과 조회 연동</td></tr>
-    <tr><td width="240" height="64" align="center" valign="middle">6. 검증·문서화</td><td width="720" height="64" align="left" valign="middle">실물 작업 기록, 소프트웨어 회귀 점검과 main 통합</td></tr>
-  </tbody>
-</table>
+| 단계 | 주요 작업 |
+|---|---|
+| 1. 기획·역할 분담 | 공정 시나리오, 요구사항과 서버 간 책임 협의 |
+| 2. 하드웨어 설계·제작 | 트레이·기판·핑거·카메라 브래킷 설계 및 3D 출력, 셀 배치 |
+| 3. 개별 기능 개발 | 로봇 제어·비전 인식·좌표 보정·컨베이어·GUI·DB 구현 |
+| 4. 조립·검사 개선 | 부품별 레시피, SMD 재관측, 촬영·검사 및 상태 처리 보완 |
+| 5. 공정 통합 | 이송 → 조립 → 검사 → 결과 조회 연동 |
+| 6. 검증·문서화 | 실물 작업 기록, 소프트웨어 회귀 점검과 main 통합 |
 
 
-<table width="960">
-  <tr><th width="960">PROJECT TIMELINE · 개발 일정</th></tr>
+<table width="100%">
+  <tr><th>PROJECT TIMELINE · 개발 일정</th></tr>
   <tr><td align="center"><br>기획 → 하드웨어 제작 → 기능 개발 → 공정 통합 → 검증<br><br><em>실제 개발 일정 · 작업 이력 이미지 추가 예정</em><br><br></td></tr>
 </table>
 
@@ -291,25 +266,20 @@ flowchart TB
 
 ## 13. 핵심 기술과 문제 해결
 
-<table width="960">
-  <thead>
-    <tr><th width="240" align="center">과제</th><th width="430" align="center">적용 기술·접근</th><th width="290" align="center">의미</th></tr>
-  </thead>
-  <tbody>
-    <tr><td width="240" height="64" align="center" valign="middle">기판 위치·방향 변화</td><td width="430" height="64" align="left" valign="middle">OpenCV 기판 특징과 자세 추정, 슬롯 배치 목표 변환</td><td width="290" height="64" align="left" valign="middle">먼저 본 기판을 기준으로 조립 위치 결정</td></tr>
-    <tr><td width="240" height="64" align="center" valign="middle">트레이 위치 변화와 부품 검출</td><td width="430" height="64" align="left" valign="middle">SIFT·RANSAC 정합 + YOLO segmentation</td><td width="290" height="64" align="left" valign="middle">트레이 기준과 실제 부품 마스크를 함께 사용</td></tr>
-    <tr><td width="240" height="64" align="center" valign="middle">영상 좌표를 로봇 동작에 연결</td><td width="430" height="64" align="left" valign="middle">D435 정렬 깊이, Hand–Eye, 로봇 자세·TCP 변환</td><td width="290" height="64" align="left" valign="middle">픽셀 위치를 로봇 기준 목표로 변환</td></tr>
-    <tr><td width="240" height="64" align="center" valign="middle">작은 부품·불안정한 깊이</td><td width="430" height="64" align="left" valign="middle">부품별 관측 조건, 유효 깊이·반복 관측 확인</td><td width="290" height="64" align="left" valign="middle">배경 깊이와 불안정한 관측의 영향 완화</td></tr>
-    <tr><td width="240" height="64" align="center" valign="middle">작은 SMD의 파지·배치 오차</td><td width="430" height="64" align="left" valign="middle">근접 뷰 재관측과 추가 보정</td><td width="290" height="64" align="left" valign="middle">초기 전체 트레이 관측만으로 작업하지 않음</td></tr>
-    <tr><td width="240" height="64" align="center" valign="middle">오래된 영상·잘못 연결된 결과</td><td width="430" height="64" align="left" valign="middle">새 촬영·소스 바인딩 및 요청별 완료 확인</td><td width="290" height="64" align="left" valign="middle">현재 작업에 해당하는 관측·결과 사용</td></tr>
-    <tr><td width="240" height="64" align="center" valign="middle">검사 근거 해석</td><td width="430" height="64" align="left" valign="middle">슬롯 검사 + YOLO 보조 + PatchCore 이상 후보</td><td width="290" height="64" align="left" valign="middle">히트맵을 확정 불량과 구분하여 기록</td></tr>
-  </tbody>
-</table>
+| 과제 | 적용 기술·접근 | 의미 |
+|---|---|---|
+| 기판 위치·방향 변화 | OpenCV 기판 특징과 자세 추정, 슬롯 배치 목표 변환 | 먼저 본 기판을 기준으로 조립 위치 결정 |
+| 트레이 위치 변화와 부품 검출 | SIFT·RANSAC 정합 + YOLO segmentation | 트레이 기준과 실제 부품 마스크를 함께 사용 |
+| 영상 좌표를 로봇 동작에 연결 | D435 정렬 깊이, Hand–Eye, 로봇 자세·TCP 변환 | 픽셀 위치를 로봇 기준 목표로 변환 |
+| 작은 부품·불안정한 깊이 | 부품별 관측 조건, 유효 깊이·반복 관측 확인 | 배경 깊이와 불안정한 관측의 영향 완화 |
+| 작은 SMD의 파지·배치 오차 | 근접 뷰 재관측과 추가 보정 | 초기 전체 트레이 관측만으로 작업하지 않음 |
+| 오래된 영상·잘못 연결된 결과 | 새 촬영·소스 바인딩 및 요청별 완료 확인 | 현재 작업에 해당하는 관측·결과 사용 |
+| 검사 근거 해석 | 슬롯 검사 + YOLO 보조 + PatchCore 이상 후보 | 히트맵을 확정 불량과 구분하여 기록 |
 
 관련 기록: [비전 안정화](robot-server/docs/VISION_STABILITY_KO_20260911.md) · [트레이 촬영 신뢰성](robot-server/docs/TRAY_CAPTURE_RELIABILITY_KO_20260913.md) · [SMD 근접 뷰 경로](robot-server/docs/SINGLE_MOVEL_TRAY_RETURN_SMD_VIEW_KO_20260910.md) · [검사 구성과 제한사항](vision-server/vision_assembly/README.md)
 
-<table width="960">
-  <tr><th width="320">기판 · 트레이 인식</th><th width="320">SMD 재관측</th><th width="320">검사 결과</th></tr>
+<table width="100%">
+  <tr><th width="33%">기판 · 트레이 인식</th><th width="33%">SMD 재관측</th><th width="34%">검사 결과</th></tr>
   <tr><td align="center"><br>중심 · 방향 · 깊이<br><br><em>인식 화면 추가 예정</em><br><br></td><td align="center"><br>근접 관측 · 추가 보정<br><br><em>비교 화면 추가 예정</em><br><br></td><td align="center"><br>원본 · 히트맵 · 슬롯 판정<br><br><em>검사 화면 추가 예정</em><br><br></td></tr>
 </table>
 <!-- ![기판 및 트레이 인식](assets/images/assembly-vision.png) -->
@@ -320,17 +290,12 @@ flowchart TB
 
 ### 14.1 기록으로 확인한 범위
 
-<table width="960">
-  <thead>
-    <tr><th width="190" align="center">구분</th><th width="430" align="center">확인 내용</th><th width="340" align="center">해석 범위</th></tr>
-  </thead>
-  <tbody>
-    <tr><td width="190" height="64" align="center" valign="middle">실물 조립 기록</td><td width="430" height="64" align="left" valign="middle">2026-09-08 단일 런처 호출로 25개 배치·해제 동작 완료</td><td width="340" height="64" align="left" valign="middle">동작 완료 기록이며 25개 모두의 안착 품질 합격을 뜻하지 않음</td></tr>
-    <tr><td width="190" height="64" align="center" valign="middle">통합 소프트웨어 점검</td><td width="430" height="64" align="left" valign="middle">2026-09-15 기록 기준 <strong>1,735 passed · 3 skipped</strong></td><td width="340" height="64" align="left" valign="middle">로봇·Sequencer·컨베이어·검사 코드 테스트; 실제 장비 운전 제외</td></tr>
-    <tr><td width="190" height="64" align="center" valign="middle">공통 검사 인터페이스</td><td width="430" height="64" align="left" valign="middle">3개 서비스 정의의 제공자·소비자 일치 확인</td><td width="340" height="64" align="left" valign="middle">메시지 계약 확인이며 네트워크·실물 응답 검증과 별도</td></tr>
-    <tr><td width="190" height="64" align="center" valign="middle">정적 점검</td><td width="430" height="64" align="left" valign="middle">Python 683개 구문 및 실행 스크립트·구조 점검</td><td width="340" height="64" align="left" valign="middle">코드 구문·구조 점검</td></tr>
-  </tbody>
-</table>
+| 구분 | 확인 내용 | 해석 범위 |
+|---|---|---|
+| 실물 조립 기록 | 2026-09-08 단일 런처 호출로 25개 배치·해제 동작 완료 | 동작 완료 기록이며 25개 모두의 안착 품질 합격을 뜻하지 않음 |
+| 통합 소프트웨어 점검 | 2026-09-15 기록 기준 **1,735 passed · 3 skipped** | 로봇·Sequencer·컨베이어·검사 코드 테스트; 실제 장비 운전 제외 |
+| 공통 검사 인터페이스 | 3개 서비스 정의의 제공자·소비자 일치 확인 | 메시지 계약 확인이며 네트워크·실물 응답 검증과 별도 |
+| 정적 점검 | Python 683개 구문 및 실행 스크립트·구조 점검 | 코드 구문·구조 점검 |
 
 근거: [실물 사이클 기록](robot-server/docs/FR5_CYCLE_LAUNCHER_KO.md) · [통합 검증 기록](docs/integration/VALIDATION.md)
 
@@ -342,20 +307,15 @@ flowchart TB
 
 ## 15. 프로젝트 기술 스택
 
-<table width="960">
-  <thead>
-    <tr><th width="240" align="center">영역</th><th width="720" align="center">사용 기술·장비</th></tr>
-  </thead>
-  <tbody>
-    <tr><td width="240" height="64" align="center" valign="middle">OS·미들웨어</td><td width="720" height="64" align="left" valign="middle">Ubuntu 24.04 · ROS 2 Jazzy · ROS-TCP Endpoint</td></tr>
-    <tr><td width="240" height="64" align="center" valign="middle">로봇·센서</td><td width="720" height="64" align="left" valign="middle">FAIRINO FR5 · PGEA-100-40 · RealSense D435 · Galaxy S22 · GoPro</td></tr>
-    <tr><td width="240" height="64" align="center" valign="middle">조립 비전</td><td width="720" height="64" align="left" valign="middle">OpenCV · YOLO segmentation · SIFT/RANSAC · Hand–Eye calibration</td></tr>
-    <tr><td width="240" height="64" align="center" valign="middle">검사 비전</td><td width="720" height="64" align="left" valign="middle">OpenCV · YOLO 보조 검출 · PatchCore · 슬롯별 검사 규칙</td></tr>
-    <tr><td width="240" height="64" align="center" valign="middle">서버·데이터</td><td width="720" height="64" align="left" valign="middle">Python · ROS 2 서비스·토픽 · PostgreSQL</td></tr>
-    <tr><td width="240" height="64" align="center" valign="middle">GUI·디지털 트윈</td><td width="720" height="64" align="left" valign="middle">Unity · C# · 실시간 상태 표시 · 동작 미리보기</td></tr>
-    <tr><td width="240" height="64" align="center" valign="middle">개발·검증</td><td width="720" height="64" align="left" valign="middle">Python · C++ · Git/GitHub · pytest</td></tr>
-  </tbody>
-</table>
+| 영역 | 사용 기술·장비 |
+|---|---|
+| OS·미들웨어 | Ubuntu 24.04 · ROS 2 Jazzy · ROS-TCP Endpoint |
+| 로봇·센서 | FAIRINO FR5 · PGEA-100-40 · RealSense D435 · Galaxy S22 · GoPro |
+| 조립 비전 | OpenCV · YOLO segmentation · SIFT/RANSAC · Hand–Eye calibration |
+| 검사 비전 | OpenCV · YOLO 보조 검출 · PatchCore · 슬롯별 검사 규칙 |
+| 서버·데이터 | Python · ROS 2 서비스·토픽 · PostgreSQL |
+| GUI·디지털 트윈 | Unity · C# · 실시간 상태 표시 · 동작 미리보기 |
+| 개발·검증 | Python · C++ · Git/GitHub · pytest |
 
 ## 16. 설치와 실행
 
@@ -373,16 +333,11 @@ python3 scripts/check_integration.py
 
 **저장소 루트에서 전체 `colcon build`를 실행하지 않습니다.** 담당 PC의 workspace를 별도로 준비합니다.
 
-<table width="960">
-  <thead>
-    <tr><th width="140" align="center">PC</th><th width="240" align="center">작업 디렉터리</th><th width="580" align="center">먼저 준비할 항목</th></tr>
-  </thead>
-  <tbody>
-    <tr><td width="140" height="64" align="center" valign="middle">관제</td><td width="240" height="64" align="left" valign="middle"><code>main-server</code></td><td width="580" height="64" align="left" valign="middle">PostgreSQL 스키마·계정, 모드별 설정, Unity 프로젝트</td></tr>
-    <tr><td width="140" height="64" align="center" valign="middle">로봇</td><td width="240" height="64" align="left" valign="middle"><code>robot-server</code></td><td width="580" height="64" align="left" valign="middle">FR5·D435, Hand–Eye·TCP 보정, 교시점, 학습 모델</td></tr>
-    <tr><td width="140" height="64" align="center" valign="middle">비전</td><td width="240" height="64" align="left" valign="middle"><code>vision-server</code></td><td width="580" height="64" align="left" valign="middle">S22·GoPro, 컨베이어, 정상 기준 이미지, 검사 모델</td></tr>
-  </tbody>
-</table>
+| PC | 작업 디렉터리 | 먼저 준비할 항목 |
+|---|---|---|
+| 관제 | `main-server` | PostgreSQL 스키마·계정, 모드별 설정, Unity 프로젝트 |
+| 로봇 | `robot-server` | FR5·D435, Hand–Eye·TCP 보정, 교시점, 학습 모델 |
+| 비전 | `vision-server` | S22·GoPro, 컨베이어, 정상 기준 이미지, 검사 모델 |
 
 설치·빌드 명령은 각 [Main](main-server/README.md#실행), [Robot](robot-server/README.md), [Vision](vision-server/docs/CONVEYOR_VISION_SERVER.md) 안내를 따릅니다. 기존 개별 저장소 경로 예시는 통합 저장소의 해당 서버 디렉터리로 바꿉니다.
 
@@ -411,20 +366,15 @@ Mock은 domain 42, Real은 domain 5를 사용합니다. 세부 설정과 Endpoin
 
 ## 17. 현재 한계와 확장 목표
 
-<table width="960">
-  <thead>
-    <tr><th width="480" align="center">현재 확보한 기반</th><th width="480" align="center">다음 검증·개선 목표</th></tr>
-  </thead>
-  <tbody>
-    <tr><td width="480" height="64" align="center" valign="middle">25개 모형 부품의 파지·배치 실행</td><td width="480" height="64" align="left" valign="middle">반복 횟수·조건을 명시한 조립 성공률과 안착 오차 측정</td></tr>
-    <tr><td width="480" height="64" align="center" valign="middle">정지한 기판의 인식·조립</td><td width="480" height="64" align="left" valign="middle">기판 위치·조명 변화에 따른 인식·조립 안정성 평가</td></tr>
-    <tr><td width="480" height="64" align="center" valign="middle">SMD 근접 재관측·보정</td><td width="480" height="64" align="left" valign="middle">파지 편차·크기 변화에 대한 반복 시험</td></tr>
-    <tr><td width="480" height="64" align="center" valign="middle">S22 슬롯 검사와 이상 후보 표시</td><td width="480" height="64" align="left" valign="middle">불량 종류별 라벨 데이터 확보 및 정확도·미검출 평가</td></tr>
-    <tr><td width="480" height="64" align="center" valign="middle">완료 이벤트 기반 장비 연동</td><td width="480" height="64" align="left" valign="middle">전체 실물 공정 반복 실행과 통신 장애·복구 시험</td></tr>
-    <tr><td width="480" height="64" align="center" valign="middle">Unity 상태·이력 확인</td><td width="480" height="64" align="left" valign="middle">운전 데이터 축적과 공정 시간 분석</td></tr>
-    <tr><td width="480" height="64" align="center" valign="middle">GoPro 모니터링</td><td width="480" height="64" align="left" valign="middle">사람 감지와 정지 연동의 별도 구현·검증</td></tr>
-  </tbody>
-</table>
+| 현재 확보한 기반 | 다음 검증·개선 목표 |
+|---|---|
+| 25개 모형 부품의 파지·배치 실행 | 반복 횟수·조건을 명시한 조립 성공률과 안착 오차 측정 |
+| 정지한 기판의 인식·조립 | 기판 위치·조명 변화에 따른 인식·조립 안정성 평가 |
+| SMD 근접 재관측·보정 | 파지 편차·크기 변화에 대한 반복 시험 |
+| S22 슬롯 검사와 이상 후보 표시 | 불량 종류별 라벨 데이터 확보 및 정확도·미검출 평가 |
+| 완료 이벤트 기반 장비 연동 | 전체 실물 공정 반복 실행과 통신 장애·복구 시험 |
+| Unity 상태·이력 확인 | 운전 데이터 축적과 공정 시간 분석 |
+| GoPro 모니터링 | 사람 감지와 정지 연동의 별도 구현·검증 |
 
 이동 중인 기판을 추적하는 조립은 현재 운전 방식에 포함하지 않습니다.
 
@@ -441,21 +391,16 @@ README의 섹션 구성·팀 표·시연 및 모델 소개 배치는 [하모니 
 
 사진은 아래 제안 경로에 추가한 뒤 해당 절의 주석을 해제하면 됩니다. 영상은 GitHub 편집 화면에 업로드해 생성된 URL을 독립된 줄에 넣으면 재생 형태로 표시할 수 있습니다. 상단에는 디지털 트윈 통합관제 영상을 등록했습니다. 나머지 사진·영상은 추후 추가합니다.
 
-<table width="960">
-  <thead>
-    <tr><th width="190" align="center">넣을 위치</th><th width="390" align="center">제안 파일·영상</th><th width="380" align="center">담을 내용</th></tr>
-  </thead>
-  <tbody>
-    <tr><td width="190" height="64" align="center" valign="middle">문서 상단</td><td width="390" height="64" align="left" valign="middle">전체 공정 영상 URL</td><td width="380" height="64" align="left" valign="middle">컨베이어·일반 부품·SMD·검사까지 대표 흐름</td></tr>
-    <tr><td width="190" height="64" align="center" valign="middle">문서 상단</td><td width="390" height="64" align="left" valign="middle">디지털 트윈 통합관제 영상 등록 완료</td><td width="380" height="64" align="left" valign="middle">DT_GUI_통합관제.mp4</td></tr>
-    <tr><td width="190" height="64" align="center" valign="middle">4. 작업공간</td><td width="390" height="64" align="left" valign="middle"><code>assets/images/cell-overview.png</code></td><td width="380" height="64" align="left" valign="middle">전체 셀과 장비 이름</td></tr>
-    <tr><td width="190" height="64" align="center" valign="middle">2. 프로젝트 주제</td><td width="390" height="64" align="left" valign="middle"><code>assets/images/assembled-package.png</code></td><td width="380" height="64" align="left" valign="middle">25개 부품을 배치한 완성 모형</td></tr>
-    <tr><td width="190" height="64" align="center" valign="middle">13. 핵심 기술</td><td width="390" height="64" align="left" valign="middle"><code>assets/images/assembly-vision.png</code></td><td width="380" height="64" align="left" valign="middle">기판·트레이 인식 결과</td></tr>
-    <tr><td width="190" height="64" align="center" valign="middle">13. 핵심 기술</td><td width="390" height="64" align="left" valign="middle"><code>assets/images/smd-reobservation.png</code></td><td width="380" height="64" align="left" valign="middle">SMD 근접 재관측 화면</td></tr>
-    <tr><td width="190" height="64" align="center" valign="middle">13. 핵심 기술</td><td width="390" height="64" align="left" valign="middle"><code>assets/images/inspection-result.png</code></td><td width="380" height="64" align="left" valign="middle">원본·히트맵·슬롯 판정과 Unity 결과</td></tr>
-    <tr><td width="190" height="64" align="center" valign="middle">12. 로드맵</td><td width="390" height="64" align="left" valign="middle"><code>assets/images/development-timeline.png</code></td><td width="380" height="64" align="left" valign="middle">실제 개발 일정·작업 이력</td></tr>
-  </tbody>
-</table>
+| 넣을 위치 | 제안 파일·영상 | 담을 내용 |
+|---|---|---|
+| 문서 상단 | 전체 공정 영상 URL | 컨베이어·일반 부품·SMD·검사까지 대표 흐름 |
+| 문서 상단 | 디지털 트윈 통합관제 영상 등록 완료 | DT_GUI_통합관제.mp4 |
+| 4. 작업공간 | `assets/images/cell-overview.png` | 전체 셀과 장비 이름 |
+| 2. 프로젝트 주제 | `assets/images/assembled-package.png` | 25개 부품을 배치한 완성 모형 |
+| 13. 핵심 기술 | `assets/images/assembly-vision.png` | 기판·트레이 인식 결과 |
+| 13. 핵심 기술 | `assets/images/smd-reobservation.png` | SMD 근접 재관측 화면 |
+| 13. 핵심 기술 | `assets/images/inspection-result.png` | 원본·히트맵·슬롯 판정과 Unity 결과 |
+| 12. 로드맵 | `assets/images/development-timeline.png` | 실제 개발 일정·작업 이력 |
 
 </details>
 
