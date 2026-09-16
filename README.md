@@ -85,7 +85,57 @@ S22로 촬영한 기판의 **원본 → PatchCore 히트맵 → 검사 근거 �
 - **05 · 검사 구역** — 조립을 마친 기판을 이송·정지한 뒤 카메라로 촬영해 조립 상태를 검사하고, 검사 결과를 Unity 관제 화면으로 전달합니다.
 - **06 · 조립 구역** — 사진 앞쪽 첫 번째 기판이 놓인 위치입니다. 컨베이어를 정지한 뒤 기판의 위치·자세를 인식하고, FR5가 트레이의 부품을 집어 정밀 배치·조립합니다.
 
-## 5. 사용자 요구사항 (User Requirements)
+## 5. 하드웨어 모델링 및 제작
+
+조립 공정에 필요한 **패키지 기판 모형, 그리퍼 핑거, 카메라 브래킷, 기판 트레이, 컨베이어 구조**를 설계했습니다. 하드웨어 형상과 배치를 먼저 검토하고, 제작한 장치에 로봇·비전 제어를 연결했습니다.
+
+### 5.1 패키지 기판 · 설계에서 제작까지
+
+<table>
+<tr><th width="50%">3D 모델링</th><th width="50%">제작한 기판 모형</th></tr>
+<tr>
+<td align="center"><img src="https://github.com/user-attachments/assets/9254360e-84c5-4cbe-90d3-062b73c9ff14" alt="패키지 기판 3D 모델링" height="240" /></td>
+<td align="center"><img src="https://github.com/user-attachments/assets/6016b4a1-6a5b-4b12-90b4-9a3f6b1c3a70" alt="3D 출력 후 제작한 패키지 기판 모형" height="240" /></td>
+</tr>
+<tr><td>부품별 형상과 배치, 기판의 조립 위치를 모델링했습니다.</td><td>3D 출력한 기판·부품 모형을 조립 및 비전 인식 실험에 사용했습니다.</td></tr>
+</table>
+
+### 5.2 로봇 말단 · 카메라 브래킷과 그리퍼 핑거
+
+<table>
+<tr><th width="50%">D435 카메라 브래킷</th><th width="50%">제작 그리퍼 핑거</th></tr>
+<tr>
+<td align="center"><img src="https://github.com/user-attachments/assets/5b958a59-ef4d-4d29-a8e2-db76f68f338a" alt="D435 카메라 브래킷 모델링" height="240" /></td>
+<td align="center"><img src="https://github.com/user-attachments/assets/4cfa2f0c-cddd-415c-9291-ce2ffa1ff72b" alt="그리퍼 핑거 모델링" height="240" /></td>
+</tr>
+<tr><td>그리퍼 옆에 D435를 고정하여 기판과 부품을 관측하는 Eye-in-Hand 장착 구조입니다.</td><td>패키지 모형 부품을 집기 위한 핑거 형상을 설계하여 PGEA-100-40 그리퍼에 적용했습니다.</td></tr>
+</table>
+
+### 5.3 기판 지지 · 이송 구조
+
+<table>
+<tr><th width="50%">Board Tray</th><th width="50%">Conveyor</th></tr>
+<tr>
+<td align="center"><img src="https://github.com/user-attachments/assets/6efa3b60-dceb-40be-a8d2-4411cfff10e0" alt="기판 트레이 조립 구조 모델링" height="220" /></td>
+<td align="center"><img src="https://github.com/user-attachments/assets/42c4922b-2990-47f5-840d-b20087dbc86e" alt="컨베이어 프레임과 구동부 모델링" height="220" /></td>
+</tr>
+<tr><td>기판과 지지판·가이드의 결합 구조를 모델링하고 배치를 검토했습니다.</td><td>기판 이송을 위한 프레임, 벨트 지지부와 구동부의 배치를 설계했습니다.</td></tr>
+</table>
+
+<details>
+<summary><strong>하드웨어 설계 기록</strong></summary>
+
+- [MainBoard](https://ros2-ai-cobot-project-01-team-01.atlassian.net/wiki/spaces/KSMC/pages/2031617/MainBoard)
+- [Intel D435 Bracket / Gripper](https://ros2-ai-cobot-project-01-team-01.atlassian.net/wiki/spaces/KSMC/pages/622627/Intel+D435+Braket+Gripper)
+- [Board Tray](https://ros2-ai-cobot-project-01-team-01.atlassian.net/wiki/spaces/KSMC/pages/9011205/Board+Tray)
+- [Conveyor](https://ros2-ai-cobot-project-01-team-01.atlassian.net/wiki/spaces/KSMC/pages/98718/Conveyor)
+
+설계 과정의 모델링 이미지와 제작 사진입니다. 세부 형상은 제작·조정 단계에 따라 달라질 수 있습니다.
+
+</details>
+
+
+## 6. 사용자 요구사항 (User Requirements)
 
 발표자료의 사용자 요구사항입니다. 필수·권장은 우선순위이며, 구현·검증 결과는 별도 항목에서 설명합니다.
 
@@ -105,7 +155,7 @@ S22로 촬영한 기판의 **원본 → PatchCore 히트맵 → 검사 근거 �
 | UR-12 | 관리자는 로봇팔의 이동 경로 및 동작 계획을 확인할 수 있어야 한다. | 권장 |
 | UR-13 | 카메라에 사람이 인식되면 로봇팔은 즉시 작업을 정지할 수 있어야 한다. | 권장 |
 
-## 6. 시스템 요구사항 (System Requirements)
+## 7. 시스템 요구사항 (System Requirements)
 
 발표자료의 ID·기능명·요구사항·우선순위를 기준으로 정리했습니다.
 
@@ -131,7 +181,7 @@ S22로 촬영한 기판의 **원본 → PatchCore 히트맵 → 검사 근거 �
 
 ---
 
-## 7. 시스템 아키텍처
+## 8. 시스템 아키텍처
 
 ### 하드웨어 아키텍처
 
@@ -146,7 +196,7 @@ S22로 촬영한 기판의 **원본 → PatchCore 히트맵 → 검사 근거 �
 </p>
 
 
-## 8. 운영 시나리오
+## 9. 운영 시나리오
 
 아래는 정상·불량·긴급 정지 상황의 **설계 시나리오**입니다. NG Rack 자동 분류·이송, 크랙 판별, 즉시 정지·재개 등의 구현·검증 여부는 별도로 확인하며, 현재 검증 범위는 ‘구현 결과와 검증’ 항목을 기준으로 합니다.
 
@@ -183,7 +233,7 @@ S22로 촬영한 기판의 **원본 → PatchCore 히트맵 → 검사 근거 �
 5. 시스템은 **비상 정지 발생 이력을 기록한다.**
 6. 비상 상황이 해제되고 관리자가 **작업 재개 명령을 입력하면 공정을 재개한다.**
 
-## 9. 시퀀스 다이어그램
+## 10. 시퀀스 다이어그램
 
 운영 시나리오의 장비 간 명령·응답과 작업 순서를 나타낸 설계 다이어그램입니다.
 
@@ -205,7 +255,7 @@ S22로 촬영한 기판의 **원본 → PatchCore 히트맵 → 검사 근거 �
   <img src="https://github.com/user-attachments/assets/d1b9d9c3-3dfe-4ef0-a3dc-024cf3029abe" alt="Scenario 3. 긴급 정지 흐름 시퀀스 다이어그램" width="100%" />
 </p>
 
-## 10. 공정 상태 다이어그램
+## 11. 공정 상태 다이어그램
 
 정상·불량 분기와 긴급 정지·재개를 포함한 공정 설계 상태도입니다.
 
@@ -213,7 +263,7 @@ S22로 촬영한 기판의 **원본 → PatchCore 히트맵 → 검사 근거 �
   <img src="https://github.com/user-attachments/assets/d2154269-4dbd-490e-83a9-f5a8761a3716" alt="KSMC 공정 상태 다이어그램" width="100%" />
 </p>
 
-## 11. 소스 구성
+## 12. 소스 구성
 
 ```text
 .
@@ -237,7 +287,7 @@ S22로 촬영한 기판의 **원본 → PatchCore 히트맵 → 검사 근거 �
 
 담당 브랜치의 소스·이력을 서버별 디렉터리로 통합했습니다. 각 영역의 기존 내부 경로를 유지하며 동명 ROS 패키지를 서로 덮어쓰지 않습니다.
 
-## 12. 핵심 기술과 문제 해결
+## 13. 핵심 기술과 문제 해결
 
 | 과제 | 적용 기술·접근 | 의미 |
 |---|---|---|
@@ -283,9 +333,9 @@ S22로 촬영한 기판의 **원본 → PatchCore 히트맵 → 검사 근거 �
 
 정상 기준을 보강한 뒤 **25개 슬롯 운영 PASS · 표시 후보 0건**을 확인한 사례입니다. 발표자료의 동일 기판·주변광 조건에서 3회 연속 운영 PASS 기록은 독립 샘플 정확도 평가와 구분합니다. 히트맵은 정상 대비 외관 차이를 보여주며, 색 반응만으로 불량을 확정하지 않습니다.
 
-## 13. 구현 결과와 검증
+## 14. 구현 결과와 검증
 
-### 13.1 기록으로 확인한 범위
+### 14.1 기록으로 확인한 범위
 
 | 구분 | 확인 내용 | 해석 범위 |
 |---|---|---|
@@ -296,13 +346,13 @@ S22로 촬영한 기판의 **원본 → PatchCore 히트맵 → 검사 근거 �
 
 근거: [실물 사이클 기록](robot-server/docs/FR5_CYCLE_LAUNCHER_KO.md) · [통합 검증 기록](docs/integration/VALIDATION.md)
 
-### 13.2 검사 결과의 의미
+### 14.2 검사 결과의 의미
 
 현재 S22 검사는 **임시 PASS/FAIL 운영 정책**을 사용합니다. 화면에 표시하는 운영 판정(`operational_decision`)과 엄격한 검증 판정(`validated_decision`)을 구분해 보존합니다. PatchCore 히트맵의 이상 후보는 그 자체로 확정 불량이 아니며, 핀·표면·안착 등 미검증 범위는 별도로 남깁니다.
 
 소프트웨어 테스트 통과, 로봇 동작 완료, 최종 조립 품질 합격은 서로 다른 결과입니다. 반복 조립 성공률과 검사 정확도는 별도의 실물·라벨 데이터 평가가 필요합니다.
 
-## 14. 프로젝트 타임라인
+## 15. 프로젝트 타임라인
 
 ### Jira 작업 이력
 
@@ -326,7 +376,7 @@ S22로 촬영한 기판의 **원본 → PatchCore 히트맵 → 검사 근거 �
 
 </details>
 
-## 15. 프로젝트 기술 스택
+## 16. 프로젝트 기술 스택
 
 ### Robot & Middleware
 
@@ -392,9 +442,9 @@ S22로 촬영한 기판의 **원본 → PatchCore 히트맵 → 검사 근거 �
   <img alt="GitHub" src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white" />
 </p>
 
-## 16. 설치와 실행
+## 17. 설치와 실행
 
-### 16.1 저장소 준비와 정적 점검
+### 17.1 저장소 준비와 정적 점검
 
 ```bash
 git clone https://github.com/eduwing-robotics/ros2-ai-cobot-repo1.git
@@ -404,7 +454,7 @@ python3 scripts/check_integration.py
 
 점검 스크립트는 소스 구조·구문·공통 인터페이스를 확인하며 로봇이나 컨베이어를 움직이지 않습니다. 위 명령이 전체 테스트 1,735개를 실행하는 것은 아닙니다.
 
-### 16.2 PC별 설치
+### 17.2 PC별 설치
 
 **저장소 루트에서 전체 `colcon build`를 실행하지 않습니다.** 담당 PC의 workspace를 별도로 준비합니다.
 
@@ -416,7 +466,7 @@ python3 scripts/check_integration.py
 
 설치·빌드 명령은 각 [Main](main-server/README.md#실행), [Robot](robot-server/README.md), [Vision](vision-server/docs/CONVEYOR_VISION_SERVER.md) 안내를 따릅니다. 기존 개별 저장소 경로 예시는 통합 저장소의 해당 서버 디렉터리로 바꿉니다.
 
-### 16.3 통합 실행 순서
+### 17.3 통합 실행 순서
 
 1. 같은 Real ROS domain과 네트워크를 설정하고 공통 메시지를 준비합니다.
 2. 로봇·카메라·컨베이어·검사 서비스를 각 PC에서 실행합니다.
@@ -439,7 +489,7 @@ ros2 launch launch/assembly_real.launch.py start_endpoint:=false
 
 Mock은 domain 42, Real은 domain 5를 사용합니다. 세부 설정과 Endpoint 배치 변경은 [통합 운영 안내](docs/integration/OPERATIONS.md)를 기준으로 합니다.
 
-## 17. 현재 한계와 확장 목표
+## 18. 현재 한계와 확장 목표
 
 | 현재 확보한 기반 | 다음 검증·개선 목표 |
 |---|---|
@@ -453,7 +503,7 @@ Mock은 domain 42, Real은 domain 5를 사용합니다. 세부 설정과 Endpoin
 
 이동 중인 기판을 추적하는 조립은 현재 운전 방식에 포함하지 않습니다.
 
-## 18. 로컬 준비 항목과 문서 출처
+## 19. 로컬 준비 항목과 문서 출처
 
 DB 접속 정보·카메라 인증 정보·장비별 환경 설정, 학습 가중치, 정상 기준 이미지와 실행 데이터는 각 장비에서 별도로 준비합니다. 비밀번호·토큰은 README나 Git에 기록하지 않습니다. 저장소를 받는 것만으로 현장 모델·보정값·DB가 설치되지는 않습니다.
 
@@ -471,11 +521,12 @@ DB 접속 정보·카메라 인증 정보·장비별 환경 설정, 학습 가�
 | 문서 상단 | 전체 공정 영상 URL | 컨베이어·일반 부품·SMD·검사까지 대표 흐름 |
 | 문서 상단 | 디지털 트윈 통합관제 영상 등록 완료 | DT_GUI_통합관제.mp4 |
 | 4. 작업공간 | 구역 표시 사진 등록 완료 | 트레이·FR5·그리퍼/D435·컨베이어·검사 구역·조립 구역 |
+| 5. 하드웨어 모델링 | 모델링·제작 사진 6장 등록 완료 | 기판·브래킷·핑거·트레이·컨베이어 |
 | 2. 프로젝트 주제 | 완성 기판·검사 결과 사진 등록 완료 | 25개 부품 모형과 원본·히트맵·오버레이 |
-| 12. 핵심 기술 | 이미지 등록 완료 | 트레이 부품 검출 결과 |
-| 12. 핵심 기술 | 이미지 3장 등록 완료 | IND·VRM·SMD 보완 사례 |
-| 12. 핵심 기술 | 이미지 등록 완료 | 정상 기판 검사 결과 |
-| 14. 프로젝트 타임라인 | Jira 작업 이력 이미지 등록 완료 | 2026.08.03 ~ 2026.09.17 |
+| 13. 핵심 기술 | 이미지 등록 완료 | 트레이 부품 검출 결과 |
+| 13. 핵심 기술 | 이미지 3장 등록 완료 | IND·VRM·SMD 보완 사례 |
+| 13. 핵심 기술 | 이미지 등록 완료 | 정상 기판 검사 결과 |
+| 15. 프로젝트 타임라인 | Jira 작업 이력 이미지 등록 완료 | 2026.08.03 ~ 2026.09.17 |
 
 </details>
 
