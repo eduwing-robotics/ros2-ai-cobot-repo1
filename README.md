@@ -333,6 +333,7 @@ S22로 촬영한 기판의 **원본 → PatchCore 히트맵 → 검사 근거 �
 <p>
   <img alt="Ubuntu 24.04" src="https://img.shields.io/badge/Ubuntu%2024.04-E95420?style=for-the-badge&logo=ubuntu&logoColor=white" />
   <img alt="ROS 2 Jazzy" src="https://img.shields.io/badge/ROS%202--Jazzy-22314E?style=for-the-badge&logo=ros&logoColor=white" />
+  <img alt="TurtleBot3" src="https://img.shields.io/badge/TurtleBot3-0085CA?style=for-the-badge&logo=ros&logoColor=white" />
   <img alt="FAIRINO FR5" src="https://img.shields.io/badge/FAIRINO%20FR5-0085CA?style=for-the-badge" />
   <img alt="PGEA-100-40" src="https://img.shields.io/badge/PGEA--100--40-00A6A6?style=for-the-badge" />
   <img alt="ROS-TCP Endpoint" src="https://img.shields.io/badge/ROS--TCP%20Endpoint-22314E?style=for-the-badge&logo=ros&logoColor=white" />
@@ -379,8 +380,6 @@ S22로 촬영한 기판의 **원본 → PatchCore 히트맵 → 검사 근거 �
 
 <p>
   <img alt="pytest" src="https://img.shields.io/badge/pytest-0A9EDC?style=for-the-badge&logo=pytest&logoColor=white" />
-  <img alt="Git" src="https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=white" />
-  <img alt="GitHub" src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white" />
 </p>
 
 ### 협업·프로젝트 관리
@@ -388,6 +387,9 @@ S22로 촬영한 기판의 **원본 → PatchCore 히트맵 → 검사 근거 �
 <p>
   <img alt="Jira" src="https://img.shields.io/badge/Jira-0052CC?style=for-the-badge&logo=jira&logoColor=white" />
   <img alt="Confluence" src="https://img.shields.io/badge/Confluence-172B4D?style=for-the-badge&logo=confluence&logoColor=white" />
+  <img alt="Slack" src="https://img.shields.io/badge/Slack-4A154B?style=for-the-badge&logo=slack&logoColor=white" />
+  <img alt="Git" src="https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=white" />
+  <img alt="GitHub" src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white" />
 </p>
 
 ## 16. 설치와 실행
