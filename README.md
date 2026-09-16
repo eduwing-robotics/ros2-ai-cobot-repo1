@@ -39,10 +39,12 @@ Unity 기반 디지털 트윈과 공정·설비 상태를 확인하는 통합관
 #### PACKAGE · 반도체 패키지 모형
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/01fe4664-0886-4061-999f-e36306dd532a" alt="25개 부품을 배치한 반도체 패키지 모형" width="640" />
+  <img src="https://github.com/user-attachments/assets/d28f4c94-296b-4c99-a254-02a0874d164c" alt="KSMC 패키지 기판 구성 — 6종 25개 부품 위치" width="100%" />
 </p>
 
-**6종 · 25개 부품** — GPU 1 · HBM 8 · Power Module 4 · VRM 5 · Inductor 2 · SMD Capacitor 5
+**6종 · 25개 부품** — 01 GPU 1 · 02 HBM 8 · 03 Power Module 4 · 04 VRM 5 · 05 Inductor 2 · 06 SMD Capacitor 5
+
+실제 기판 사진을 바탕으로 부품 종류별 위치와 수량을 표시한 구성도입니다. [기판 원본 사진 보기](https://github.com/user-attachments/assets/01fe4664-0886-4061-999f-e36306dd532a)
 
 #### INSPECTION · 조립 결과 확인
 
