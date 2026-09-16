@@ -193,30 +193,25 @@ flowchart TB
 
 ## 9. 시퀀스 다이어그램
 
-```mermaid
-sequenceDiagram
-  participant U as Unity
-  participant M as MainServer / DB
-  participant S as Sequencer
-  participant C as 컨베이어
-  participant R as FR5 / D435
-  participant V as S22 검사
-  U->>M: 작업 등록
-  S->>M: 실행할 작업 조회 · 상태 갱신
-  S->>C: 조립 위치 이송 요청
-  C-->>S: 해당 요청의 도착 · 정지
-  S->>R: 조립 시작
-  R->>R: 기판 관측 → 트레이 인식 → 경로 점검
-  R->>R: 일반 부품 조립 → SMD 재관측 · 조립
-  R-->>S: 진행 이벤트 · 조립 완료
-  S->>C: 검사 위치 이송 요청
-  C-->>S: 해당 요청의 도착 · 정지
-  S->>V: 촬영 · 검사 요청
-  V-->>S: 검사 결과 · 이미지
-  S->>M: 생산 상태 · 검사 이력 반영
-  U->>M: 결과 조회
-  M-->>U: 작업 결과 · 검사 기록
-```
+운영 시나리오의 장비 간 명령·응답과 작업 순서를 나타낸 설계 다이어그램입니다.
+
+### Scenario 1. 정상 작업 흐름
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/1165c8e6-3b05-466a-96b2-33be678b0f59" alt="Scenario 1. 정상 작업 흐름 시퀀스 다이어그램" width="100%" />
+</p>
+
+### Scenario 2. 불량 발생 흐름
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/14eeb746-b26b-4611-ab2b-6c7edfa50d08" alt="Scenario 2. 불량 발생 흐름 시퀀스 다이어그램" width="100%" />
+</p>
+
+### Scenario 3. 긴급 정지 흐름
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/d1b9d9c3-3dfe-4ef0-a3dc-024cf3029abe" alt="Scenario 3. 긴급 정지 흐름 시퀀스 다이어그램" width="100%" />
+</p>
 
 ## 10. 공정 상태 다이어그램
 
