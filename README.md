@@ -428,7 +428,7 @@ S22로 촬영한 기판의 **원본 → PatchCore 히트맵 → 검사 근거 �
 **검사에서 FAIL이 확정되면 불량 건별 XLSX 대책서가 자동 생성됩니다.** 시스템이 검사 데이터를 채우고, 원인·대책 판단은 담당자가 작성합니다. 아래는 자동 생성되는 불량대책서의 예시입니다.
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/d6ae19be-e40d-4fb1-a0fb-a116870fb463" width="560" alt="불량대책서 표준양식 작성 예시">
+  <img src="main-server/MAIN_SERVER/templates/images/defect-report-sample.png" width="560" alt="불량대책서 표준양식 작성 예시">
 </p>
 
 ### 대체 부품 후보 검토 예시
@@ -436,7 +436,7 @@ S22로 촬영한 기판의 **원본 → PatchCore 히트맵 → 검사 근거 �
 불량 발생 후 후속 검토에 활용하는 **현재 부품·대체 후보 비교 자료**입니다. 제조사·부품명, 핵심 정격, 공급사, 단가와 가격 확인일을 함께 확인합니다. 후보는 내부 검토용이며, 실제 적용에는 핀·패키지·정격·열·수명에 대한 호환성 검증과 변경 승인이 필요합니다.
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/cce2deb5-5dcf-4012-8988-7cff70e85f08" alt="현재 부품과 대체 부품 후보 비교 — 내부 검토용 예시" width="1100" />
+  <img src="main-server/MAIN_SERVER/templates/images/defect-alternatives.png" alt="현재 부품과 대체 부품 후보 비교 — 내부 검토용 예시" width="1100" />
 </p>
 
 <details>
