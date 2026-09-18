@@ -12,7 +12,7 @@ FR5 협동로봇 · D435 조립 비전 · 컨베이어 · S22 검사 · Unity �
 
 ### 시연 영상 · 디지털 트윈 통합관제
 
-https://github.com/user-attachments/assets/40f07c0c-eaa9-4121-b7cc-1ee656a76587
+https://github.com/user-attachments/assets/6dd38fe5-7f25-4b12-a220-0e808d542e0e
 
 Unity 기반 디지털 트윈과 공정·설비 상태를 확인하는 통합관제 시연 영상입니다.
 
